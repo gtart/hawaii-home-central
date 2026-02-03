@@ -1,0 +1,67 @@
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { FadeInSection } from '@/components/effects/FadeInSection'
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+
+export const metadata: Metadata = {
+  title: 'Directory',
+  description: 'A curated directory of vetted contractors and trades in Hawaiʻi, built on real referrals and verified work.',
+}
+
+export default function DirectoryPage() {
+  return (
+    <div className="pt-32 pb-24 px-6">
+      <div className="max-w-3xl mx-auto text-center">
+        <FadeInSection>
+          <Badge variant="accent" className="mb-4">Coming Soon</Badge>
+          <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6">
+            Trusted Pros Directory
+          </h1>
+          <p className="text-lg text-cream/70 mb-8 max-w-2xl mx-auto">
+            A curated directory of vetted contractors and trades, built on real referrals and verified work. We&apos;re not about paid listings—we&apos;re about trust.
+          </p>
+        </FadeInSection>
+
+        <FadeInSection delay={100}>
+          <div className="bg-basalt-50 rounded-card p-8 mb-8">
+            <h2 className="font-serif text-2xl text-cream mb-4">
+              How We&apos;re Building It
+            </h2>
+            <ul className="text-left text-cream/70 space-y-3">
+              <li className="flex gap-3">
+                <span className="text-sandstone">→</span>
+                <span>Real referrals from homeowners with completed projects</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-sandstone">→</span>
+                <span>Verified licenses and insurance</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-sandstone">→</span>
+                <span>Transparent reviews from actual clients</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-sandstone">→</span>
+                <span>Specialty and location-based filtering</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-sandstone">→</span>
+                <span>No pay-to-play rankings</span>
+              </li>
+            </ul>
+          </div>
+        </FadeInSection>
+
+        <FadeInSection delay={200}>
+          <p className="text-cream/50 mb-6">
+            Be first to access the directory when it launches.
+          </p>
+          <Link href="/early-access">
+            <Button size="lg">Get Early Access</Button>
+          </Link>
+        </FadeInSection>
+      </div>
+    </div>
+  )
+}
