@@ -3,15 +3,15 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/Badge'
-import type { ChecklistItemData } from '@/data/fair-bid-checklist'
+import type { HoldPointItemData } from '@/data/hold-points'
 
-interface ChecklistItemProps {
-  item: ChecklistItemData
+interface SpecCardProps {
+  item: HoldPointItemData
   isChecked: boolean
   onToggle: (id: string) => void
 }
 
-export function ChecklistItem({ item, isChecked, onToggle }: ChecklistItemProps) {
+export function SpecCard({ item, isChecked, onToggle }: SpecCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   return (
@@ -31,9 +31,6 @@ export function ChecklistItem({ item, isChecked, onToggle }: ChecklistItemProps)
             isChecked ? 'line-through text-cream/40' : 'text-cream/80'
           )}
         >
-          {item.priority === 'essential' && (
-            <Badge variant="accent" className="mr-2 relative -top-px">Essential</Badge>
-          )}
           {item.label}
           {item.hawaiiCallout && (
             <Badge variant="accent" className="ml-2 relative -top-px">HI</Badge>
@@ -67,13 +64,26 @@ export function ChecklistItem({ item, isChecked, onToggle }: ChecklistItemProps)
       <div
         className={cn(
           'overflow-hidden transition-all duration-200 ease-out',
-          isExpanded ? 'max-h-96 opacity-100 mt-3' : 'max-h-0 opacity-0'
+          isExpanded ? 'max-h-[32rem] opacity-100 mt-3' : 'max-h-0 opacity-0'
         )}
       >
         <div className="pl-7 space-y-3">
-          <p className="text-cream/60 text-sm leading-relaxed">
-            {item.detail}
-          </p>
+          <div>
+            <p className="text-sandstone text-xs font-medium uppercase tracking-wider mb-1">
+              Why this matters
+            </p>
+            <p className="text-cream/60 text-sm leading-relaxed">
+              {item.whyItMatters}
+            </p>
+          </div>
+          <div>
+            <p className="text-sandstone text-xs font-medium uppercase tracking-wider mb-1">
+              What to confirm
+            </p>
+            <p className="text-cream/60 text-sm leading-relaxed">
+              {item.whatToConfirm}
+            </p>
+          </div>
           {item.hawaiiCallout && (
             <div className="border-l-2 border-sandstone pl-4">
               <div className="flex items-center gap-2 mb-1">

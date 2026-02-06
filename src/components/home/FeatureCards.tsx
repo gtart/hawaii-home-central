@@ -9,8 +9,8 @@ const FEATURES = [
     badge: 'Coming Soon',
   },
   {
-    title: 'Hawaiʻi Playbooks',
-    description: 'Step-by-step guides for common projects, tailored for local conditions, regulations, and best practices.',
+    title: 'Playbooks & Tools',
+    description: 'Interactive checklists, project binders, and step-by-step guides tailored for Hawaiʻi conditions and regulations.',
     href: '/resources',
     badge: 'Live',
   },
@@ -18,12 +18,6 @@ const FEATURES = [
     title: 'Trusted Pros Directory',
     description: 'A curated directory of vetted contractors and trades, built on real referrals and verified work.',
     href: '/directory',
-    badge: 'Coming Soon',
-  },
-  {
-    title: 'Homeowner Tools',
-    description: 'Practical tools to help you stay organized: bid checklists, project binders, upkeep reminders, and more.',
-    href: '/resources',
     badge: 'Coming Soon',
   },
 ]

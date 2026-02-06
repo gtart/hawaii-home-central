@@ -37,9 +37,11 @@ export default function ResourcesPage() {
                 description="Know exactly what to look for when comparing contractor bids. 11 critical sections with Hawai&#x02BB;i-specific callouts."
                 badge="Live"
               />
-              <CardStatic
-                title="Specs That Must Be Complete Before Ordering"
-                description="The material and finish decisions that need to be locked in before your contractor can order\u2014and why delays happen."
+              <Card
+                href="/resources/playbooks/hold-points"
+                title="Hold Points: Specs to Lock In By Stage"
+                description="The decisions that must be finalized before each construction phase\u2014and what happens when they\u2019re not."
+                badge="Live"
               />
               <CardStatic
                 title="Hidden Costs & Contingencies"
