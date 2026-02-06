@@ -5,12 +5,17 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
-const NAV_LINKS = [
+interface NavLink {
+  href: string
+  label: string
+  matchMode?: 'exact' | 'prefix'
+}
+
+const NAV_LINKS: NavLink[] = [
   { href: '/about', label: 'About' },
-  { href: '/guides', label: 'Guides' },
+  { href: '/resources', label: 'Resources', matchMode: 'prefix' },
   { href: '/stories', label: 'Stories' },
   { href: '/directory', label: 'Directory' },
-  { href: '/tools', label: 'Tools' },
   { href: '/early-access', label: 'Early Access' },
   { href: '/contact', label: 'Contact' },
 ]
@@ -30,6 +35,11 @@ export function Navigation() {
   useEffect(() => {
     setIsMobileMenuOpen(false)
   }, [pathname])
+
+  const isLinkActive = (link: NavLink) =>
+    link.matchMode === 'prefix'
+      ? pathname === link.href || pathname.startsWith(link.href + '/')
+      : pathname === link.href
 
   return (
     <header
@@ -64,11 +74,11 @@ export function Navigation() {
                   href={link.href}
                   className={cn(
                     'text-sm transition-colors',
-                    pathname === link.href
+                    isLinkActive(link)
                       ? 'text-sandstone'
                       : 'text-cream/70 hover:text-cream'
                   )}
-                  aria-current={pathname === link.href ? 'page' : undefined}
+                  aria-current={isLinkActive(link) ? 'page' : undefined}
                 >
                   {link.label}
                 </Link>
@@ -110,11 +120,11 @@ export function Navigation() {
                   href={link.href}
                   className={cn(
                     'block py-2 text-base transition-colors',
-                    pathname === link.href
+                    isLinkActive(link)
                       ? 'text-sandstone'
                       : 'text-cream/70 hover:text-cream'
                   )}
-                  aria-current={pathname === link.href ? 'page' : undefined}
+                  aria-current={isLinkActive(link) ? 'page' : undefined}
                 >
                   {link.label}
                 </Link>
