@@ -48,9 +48,11 @@ export default function ResourcesPage() {
                 description="A Hawai&#x02BB;i reality check on the costs that don&apos;t show up in the initial bid but always show up on the invoice."
                 badge="Hawai&#x02BB;i Focus"
               />
-              <CardStatic
+              <Card
+                href="/resources/playbooks/responsibility-matrix"
                 title="Responsibility Matrix"
-                description="Who handles what? A clear breakdown of homeowner vs. contractor responsibilities to prevent misunderstandings."
+                description="Clarify who owns commonly-missed renovation responsibilities before they become disputes."
+                badge="Live"
               />
             </div>
           </section>
