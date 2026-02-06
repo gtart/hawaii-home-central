@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { EmailGate } from '@/components/forms/EmailGate'
 import { ShareButton } from '@/components/resources/ShareButton'
 import { StageSelector } from '@/components/resources/StageSelector'
@@ -53,7 +54,61 @@ function useHoldPointsState() {
     })
   }, [])
 
-  return { checkedItems, toggle, isLoaded }
+  const resetStage = useCallback((itemIds: string[]) => {
+    setCheckedItems((prev) => {
+      const next = { ...prev }
+      for (const id of itemIds) {
+        delete next[id]
+      }
+      localStorage.setItem(HOLDPOINTS_STORAGE_KEY, JSON.stringify(next))
+      return next
+    })
+  }, [])
+
+  return { checkedItems, toggle, resetStage, isLoaded }
+}
+
+function renderStageItems(
+  items: HoldPointItemData[],
+  checkedItems: Record<string, boolean>,
+  toggle: (id: string) => void
+) {
+  const hasGroups = items.some((item) => item.group)
+
+  if (!hasGroups) {
+    return items.map((item) => (
+      <SpecCard
+        key={item.id}
+        item={item}
+        isChecked={!!checkedItems[item.id]}
+        onToggle={toggle}
+      />
+    ))
+  }
+
+  const groups = new Map<string, HoldPointItemData[]>()
+  for (const item of items) {
+    const group = item.group ?? 'Other'
+    const existing = groups.get(group) ?? []
+    existing.push(item)
+    groups.set(group, existing)
+  }
+
+  return Array.from(groups).map(([groupName, groupItems]) => (
+    <div key={groupName}>
+      <p className="text-cream/50 text-xs font-medium uppercase tracking-wider mb-2 mt-4 first:mt-0">
+        {groupName}
+      </p>
+      {groupItems.map((item) => (
+        <SpecCard
+          key={item.id}
+          item={item}
+          isChecked={!!checkedItems[item.id]}
+          onToggle={toggle}
+        />
+      ))}
+    </div>
+  ))
 }
 
 function PreviewContent() {
@@ -71,15 +126,15 @@ function PreviewContent() {
         <ul className="text-cream/60 space-y-2 text-sm">
           <li className="flex gap-3">
             <span className="text-sandstone">&rarr;</span>
-            <span>5 construction stages with spec decisions that must be locked in</span>
+            <span>5 construction stages from ordering through closeout</span>
           </li>
           <li className="flex gap-3">
             <span className="text-sandstone">&rarr;</span>
-            <span>Interactive checkboxes that save your progress</span>
+            <span>Category-first spec decisions for kitchen and bath renovations</span>
           </li>
           <li className="flex gap-3">
             <span className="text-sandstone">&rarr;</span>
-            <span>Expandable detail explaining why each decision matters and what to confirm</span>
+            <span>Expandable detail: why it matters, what it impacts, and what to ask your contractor</span>
           </li>
           <li className="flex gap-3">
             <span className="text-sandstone">&rarr;</span>
@@ -92,11 +147,12 @@ function PreviewContent() {
 }
 
 export function PlaybookContent() {
-  const { checkedItems, toggle, isLoaded } = useHoldPointsState()
+  const { checkedItems, toggle, resetStage, isLoaded } = useHoldPointsState()
   const [activeStageId, setActiveStageId] = useState(HOLD_POINT_STAGES[0].id)
 
   const activeStage = HOLD_POINT_STAGES.find((s) => s.id === activeStageId) ?? HOLD_POINT_STAGES[0]
   const status = isLoaded ? getStageStatus(activeStage.items, checkedItems) : 'not-locked'
+  const hasCheckedInStage = activeStage.items.some((item) => checkedItems[item.id])
 
   return (
     <div className="pt-32 pb-24 px-6">
@@ -135,23 +191,27 @@ export function PlaybookContent() {
               />
 
               <div key={activeStageId} className="animate-fade-in">
-                <div className="flex items-center gap-3 mb-4">
-                  <h2 className="font-serif text-xl text-sandstone">{activeStage.title}</h2>
-                  <Badge variant={status === 'locked' ? 'accent' : 'default'}>
-                    {STATUS_LABELS[status]}
-                  </Badge>
+                <div className="flex items-center justify-between gap-3 mb-1">
+                  <div className="flex items-center gap-3">
+                    <h2 className="font-serif text-xl text-sandstone">{activeStage.title}</h2>
+                    <Badge variant={status === 'locked' ? 'accent' : 'default'}>
+                      {STATUS_LABELS[status]}
+                    </Badge>
+                  </div>
+                  {hasCheckedInStage && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => resetStage(activeStage.items.map((i) => i.id))}
+                    >
+                      Reset
+                    </Button>
+                  )}
                 </div>
                 <p className="text-cream/50 text-sm mb-6">{activeStage.subtitle}</p>
 
                 <div className="bg-basalt-50 rounded-card p-6">
-                  {activeStage.items.map((item) => (
-                    <SpecCard
-                      key={item.id}
-                      item={item}
-                      isChecked={!!checkedItems[item.id]}
-                      onToggle={toggle}
-                    />
-                  ))}
+                  {renderStageItems(activeStage.items, checkedItems, toggle)}
                 </div>
               </div>
             </>

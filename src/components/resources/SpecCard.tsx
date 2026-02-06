@@ -24,23 +24,35 @@ export function SpecCard({ item, isChecked, onToggle }: SpecCardProps) {
           onChange={() => onToggle(item.id)}
           className="mt-1 h-4 w-4 shrink-0 rounded border-cream/30 bg-basalt-50 accent-sandstone cursor-pointer"
         />
-        <label
-          htmlFor={item.id}
-          className={cn(
-            'flex-1 text-sm leading-relaxed cursor-pointer transition-colors',
-            isChecked ? 'line-through text-cream/40' : 'text-cream/80'
-          )}
-        >
-          {item.label}
-          {item.hawaiiCallout && (
-            <Badge variant="accent" className="ml-2 relative -top-px">HI</Badge>
-          )}
-        </label>
+        <div className="flex-1 min-w-0">
+          <label
+            htmlFor={item.id}
+            className={cn(
+              'flex items-center gap-2 cursor-pointer transition-colors',
+              isChecked ? 'line-through text-cream/40' : 'text-cream/80'
+            )}
+          >
+            <span className="text-sm font-medium uppercase tracking-wider">
+              {item.category}
+            </span>
+            {item.hawaiiCallout && (
+              <Badge variant="accent" className="relative -top-px">HI</Badge>
+            )}
+          </label>
+          <p
+            className={cn(
+              'text-sm mt-0.5 transition-colors',
+              isChecked ? 'text-cream/30' : 'text-cream/50'
+            )}
+          >
+            {item.summary}
+          </p>
+        </div>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           aria-expanded={isExpanded}
           aria-label={isExpanded ? 'Collapse detail' : 'Expand detail'}
-          className="shrink-0 p-1 text-cream/40 hover:text-cream/70 transition-colors"
+          className="shrink-0 p-1 mt-0.5 text-cream/40 hover:text-cream/70 transition-colors"
         >
           <svg
             width="16"
@@ -64,24 +76,32 @@ export function SpecCard({ item, isChecked, onToggle }: SpecCardProps) {
       <div
         className={cn(
           'overflow-hidden transition-all duration-200 ease-out',
-          isExpanded ? 'max-h-[32rem] opacity-100 mt-3' : 'max-h-0 opacity-0'
+          isExpanded ? 'max-h-[40rem] opacity-100 mt-3' : 'max-h-0 opacity-0'
         )}
       >
         <div className="pl-7 space-y-3">
           <div>
             <p className="text-sandstone text-xs font-medium uppercase tracking-wider mb-1">
-              Why this matters
+              Why it matters
             </p>
             <p className="text-cream/60 text-sm leading-relaxed">
-              {item.whyItMatters}
+              {item.why}
             </p>
           </div>
           <div>
             <p className="text-sandstone text-xs font-medium uppercase tracking-wider mb-1">
-              What to confirm
+              Impacts
             </p>
             <p className="text-cream/60 text-sm leading-relaxed">
-              {item.whatToConfirm}
+              {item.impacts}
+            </p>
+          </div>
+          <div>
+            <p className="text-sandstone text-xs font-medium uppercase tracking-wider mb-1">
+              Ask your contractor
+            </p>
+            <p className="text-cream/60 text-sm leading-relaxed italic">
+              &ldquo;{item.ask}&rdquo;
             </p>
           </div>
           {item.hawaiiCallout && (
