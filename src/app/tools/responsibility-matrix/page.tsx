@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { Button } from '@/components/ui/Button'
 import { breadcrumbSchema, faqSchema } from '@/lib/structured-data'
+import { RESPONSIBILITY_ITEMS, STAGES } from '@/data/responsibility-matrix'
 
 export const metadata: Metadata = {
   title: 'Responsibility Matrix \u2014 Assign Who Owns Each Renovation Task',
@@ -28,6 +29,11 @@ const FAQ_ITEMS = [
   },
 ]
 
+const highVarianceItems = RESPONSIBILITY_ITEMS.filter((i) => i.variance === 'high')
+
+// Preview: first 6 items
+const PREVIEW_ITEMS = RESPONSIBILITY_ITEMS.slice(0, 6)
+
 export default function ResponsibilityMatrixLandingPage() {
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', href: '/' },
@@ -52,46 +58,86 @@ export default function ResponsibilityMatrixLandingPage() {
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6">
               Responsibility Matrix
             </h1>
-            <p className="text-lg text-cream/70 mb-8 leading-relaxed">
+            <p className="text-lg text-cream/70 mb-4 leading-relaxed">
               Assign who owns the easy-to-miss tasks&mdash;so nothing gets assumed. Not a contract, just a clarity baseline to confirm handoffs before work begins.
+            </p>
+            <p className="text-cream/50 text-sm mb-8">
+              {RESPONSIBILITY_ITEMS.length} tasks &middot; {STAGES.length} stages &middot; {highVarianceItems.length} high-variance &middot;{' '}
+              <Link href="/resources/playbooks/responsibility-matrix" className="text-sandstone/70 hover:text-sandstone underline">
+                Read the full guide free &rarr;
+              </Link>
             </p>
           </FadeInSection>
 
-          <FadeInSection delay={100}>
+          {/* Data preview */}
+          <FadeInSection delay={50}>
             <div className="bg-basalt-50 rounded-card p-6 mb-8">
-              <h2 className="font-serif text-xl text-sandstone mb-3">
-                What this tool does
+              <h2 className="font-serif text-xl text-sandstone mb-4">
+                Preview: What&rsquo;s inside
               </h2>
-              <p className="text-cream/70 text-sm leading-relaxed mb-3">
-                The Responsibility Matrix covers 16 commonly-missed tasks across 5 project stages: Ordering, Rough-In, Close Walls, Waterproof/Tile, and Closeout. For each task, you assign an owner: Homeowner, GC/Contractor, Trade/Sub, Vendor/Supplier, Shared, or TBD.
-              </p>
-              <p className="text-cream/60 text-sm leading-relaxed">
-                High-variance items&mdash;tasks where ownership varies significantly from project to project&mdash;are flagged so you know which ones need the most attention.
+              <div className="space-y-3">
+                {PREVIEW_ITEMS.map((item) => (
+                  <div key={item.id} className="py-3 border-b border-cream/5 last:border-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className="text-cream/80 text-sm font-medium">{item.category}</span>
+                      {item.variance === 'high' && (
+                        <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-sandstone/20 text-sandstone">
+                          High variance
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-cream/50 mb-1">
+                      <span>Often:</span>
+                      <span className="text-cream/70 font-medium">{item.oftenOwner}</span>
+                      <span className="text-cream/20">&middot;</span>
+                      <span>{item.stage}</span>
+                    </div>
+                    <p className="text-cream/60 text-sm leading-relaxed italic">
+                      &ldquo;{item.clarifyQuestion}&rdquo;
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-cream/40 text-xs mt-4 pt-3 border-t border-cream/5">
+                + {RESPONSIBILITY_ITEMS.length - PREVIEW_ITEMS.length} more tasks across {STAGES.length} stages
               </p>
             </div>
           </FadeInSection>
 
-          <FadeInSection delay={200}>
+          {/* High-variance callout */}
+          <FadeInSection delay={100}>
+            <div className="bg-basalt-50 rounded-card p-6 mb-8">
+              <h2 className="font-serif text-xl text-sandstone mb-3">
+                High-variance items
+              </h2>
+              <p className="text-cream/50 text-xs mb-4">
+                These {highVarianceItems.length} tasks vary the most between projects&mdash;especially in Hawai&#x02BB;i where contractor availability is limited and informal handoff assumptions are more common.
+              </p>
+              <div className="space-y-2">
+                {highVarianceItems.slice(0, 4).map((item) => (
+                  <div key={item.id} className="bg-sandstone/10 border border-sandstone/20 rounded-lg p-3">
+                    <p className="text-sandstone/90 text-xs font-medium mb-1">{item.category}</p>
+                    <p className="text-cream/60 text-xs leading-relaxed">{item.commonMismatch}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </FadeInSection>
+
+          {/* What you get when you sign in */}
+          <FadeInSection delay={150}>
             <div className="bg-basalt-50 rounded-card p-6 mb-8">
               <h2 className="font-serif text-xl text-sandstone mb-4">
-                Key features
+                What you get when you sign in
               </h2>
               <ul className="text-cream/60 space-y-2 text-sm">
                 <li className="flex gap-3">
                   <span className="text-sandstone shrink-0">&rarr;</span>
-                  <span>16 commonly-missed responsibilities across 5 project stages</span>
+                  <span>Assign owners from a dropdown for each task</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-sandstone shrink-0">&rarr;</span>
-                  <span>6 owner options with &ldquo;Often&rdquo; guidance for typical projects</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-sandstone shrink-0">&rarr;</span>
-                  <span>High-variance flags for tasks that vary most between projects</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-sandstone shrink-0">&rarr;</span>
-                  <span>Notes field for documenting specific agreements</span>
+                  <span>Notes field to document specific agreements</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-sandstone shrink-0">&rarr;</span>
@@ -99,13 +145,14 @@ export default function ResponsibilityMatrixLandingPage() {
                 </li>
                 <li className="flex gap-3">
                   <span className="text-sandstone shrink-0">&rarr;</span>
-                  <span>Progress saved to your account across devices</span>
+                  <span>Saved to your account&mdash;pick up on any device</span>
                 </li>
               </ul>
             </div>
           </FadeInSection>
 
-          <FadeInSection delay={300}>
+          {/* FAQ */}
+          <FadeInSection delay={200}>
             <div className="bg-basalt-50 rounded-card p-6 mb-8">
               <h2 className="font-serif text-xl text-sandstone mb-4">
                 Frequently asked questions
@@ -125,7 +172,7 @@ export default function ResponsibilityMatrixLandingPage() {
             </div>
           </FadeInSection>
 
-          <FadeInSection delay={400}>
+          <FadeInSection delay={250}>
             <div className="text-center">
               <Link href="/login?callbackUrl=/app/tools/responsibility-matrix">
                 <Button size="lg">

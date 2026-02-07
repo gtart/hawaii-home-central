@@ -14,7 +14,7 @@ interface NavLink {
 
 const NAV_LINKS: NavLink[] = [
   { href: '/about', label: 'About' },
-  { href: '/resources', label: 'Resources', matchMode: 'prefix' },
+  { href: '/resources', label: 'Tools & Guides', matchMode: 'prefix' },
   { href: '/stories', label: 'Stories' },
   { href: '/directory', label: 'Directory' },
   { href: '/early-access', label: 'Early Access' },
@@ -37,10 +37,15 @@ export function Navigation() {
     setIsMobileMenuOpen(false)
   }, [pathname])
 
-  const isLinkActive = (link: NavLink) =>
-    link.matchMode === 'prefix'
-      ? pathname === link.href || pathname.startsWith(link.href + '/')
-      : pathname === link.href
+  const isLinkActive = (link: NavLink) => {
+    if (link.matchMode === 'prefix') {
+      if (pathname === link.href || pathname.startsWith(link.href + '/')) return true
+      // Tools & Guides also covers /tools/* paths
+      if (link.href === '/resources' && pathname.startsWith('/tools')) return true
+      return false
+    }
+    return pathname === link.href
+  }
 
   return (
     <header
