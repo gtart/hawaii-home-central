@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /login
+Disallow: /auth/
+Disallow: /api/
+Sitemap: https://hawaiihomecentral.com/sitemap.xml

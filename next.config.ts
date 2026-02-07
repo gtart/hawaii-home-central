@@ -10,9 +10,9 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: '/tools',
-        destination: '/resources',
-        permanent: true,
+        source: '/tools/:slug/run',
+        destination: '/app/tools/:slug',
+        permanent: false,
       },
     ]
   },

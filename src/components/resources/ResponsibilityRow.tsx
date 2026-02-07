@@ -26,10 +26,18 @@ export function ResponsibilityRow({
 }: ResponsibilityRowProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
+  const showUseTypical = selectedOwner !== item.oftenOwner
+
   return (
     <div className="py-3 border-b border-cream/5 last:border-b-0">
       <div className="flex items-start gap-3">
-        <div className="flex-1 min-w-0">
+        {/* Clickable header area */}
+        <button
+          type="button"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex-1 min-w-0 text-left"
+          aria-expanded={isExpanded}
+        >
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium uppercase tracking-wider text-cream/80">
               {item.category}
@@ -38,43 +46,69 @@ export function ResponsibilityRow({
               <Badge variant="accent">High variance</Badge>
             )}
           </div>
-          <p className="text-xs text-cream/40 mt-0.5">
-            Often: {item.oftenOwner}
-          </p>
-          <select
-            value={selectedOwner}
-            onChange={(e) =>
-              onOwnerChange(item.id, e.target.value as OwnerOption | '')
-            }
-            aria-label={`Owner for ${item.category}`}
-            className={cn(
-              'mt-1.5 px-3 py-1.5 rounded-input text-sm',
-              'bg-basalt-50 border border-cream/20',
-              'hover:border-cream/30',
-              'focus:outline-none focus:border-sandstone focus:ring-1 focus:ring-sandstone',
-              'appearance-none pr-7',
-              selectedOwner ? 'text-cream' : 'text-cream/40'
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-xs text-cream/40">
+              Often: {item.oftenOwner}
+            </span>
+            {showUseTypical && (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onOwnerChange(item.id, item.oftenOwner)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.stopPropagation()
+                    e.preventDefault()
+                    onOwnerChange(item.id, item.oftenOwner)
+                  }
+                }}
+                className="text-xs text-sandstone/70 hover:text-sandstone cursor-pointer transition-colors"
+              >
+                Use
+              </span>
             )}
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23f5f0e8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' opacity='0.4'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 0.5rem center',
-              backgroundSize: '0.75rem',
-            }}
-          >
-            <option value="">-- Select owner --</option>
-            {OWNER_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-        </div>
+          </div>
+        </button>
+
+        {/* Owner select — outside the clickable header */}
+        <select
+          value={selectedOwner}
+          onChange={(e) =>
+            onOwnerChange(item.id, e.target.value as OwnerOption | '')
+          }
+          aria-label={`Owner for ${item.category}`}
+          className={cn(
+            'shrink-0 mt-0.5 px-3 py-1.5 rounded-input text-sm',
+            'bg-basalt-50 border border-cream/20',
+            'hover:border-cream/30',
+            'focus:outline-none focus:border-sandstone focus:ring-1 focus:ring-sandstone',
+            'appearance-none pr-7',
+            selectedOwner ? 'text-cream' : 'text-cream/40'
+          )}
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23f5f0e8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' opacity='0.4'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 0.5rem center',
+            backgroundSize: '0.75rem',
+          }}
+        >
+          <option value="">-- Select --</option>
+          {OWNER_OPTIONS.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+
+        {/* Expand chevron with larger tap target */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           aria-expanded={isExpanded}
           aria-label={isExpanded ? 'Collapse detail' : 'Expand detail'}
-          className="shrink-0 p-1 mt-0.5 text-cream/40 hover:text-cream/70 transition-colors"
+          className="shrink-0 p-2 -mr-1 text-cream/40 hover:text-cream/70 transition-colors"
         >
           <svg
             width="16"

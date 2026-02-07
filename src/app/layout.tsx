@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { Playfair_Display, Inter } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
+import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Navigation } from '@/components/layout/Navigation'
 import { Footer } from '@/components/layout/Footer'
 import { NoiseOverlay } from '@/components/effects/NoiseOverlay'
@@ -23,7 +25,7 @@ export const metadata: Metadata = {
     template: '%s | Hawaii Home Central',
   },
   description:
-    'A Hawaiʻi-first guide to renovating, maintaining, and loving your home—built from real homeowner pain. Practical playbooks, real lessons, and a trust-first pros directory.',
+    'A Hawaiʻi-first guide to renovating, maintaining, and loving your home—built from real homeowner pain. Practical guides and tools, real lessons, and a trust-first pros directory.',
   keywords: [
     'Hawaii renovation',
     'home improvement Hawaii',
@@ -60,12 +62,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
       <body className="bg-basalt text-cream font-sans antialiased min-h-screen flex flex-col">
-        <Navigation />
-        <main id="main-content" className="flex-1">
-          {children}
-        </main>
-        <Footer />
+        <AuthProvider>
+          <Navigation />
+          <main id="main-content" className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </AuthProvider>
         <NoiseOverlay />
+        <Analytics />
       </body>
     </html>
   )

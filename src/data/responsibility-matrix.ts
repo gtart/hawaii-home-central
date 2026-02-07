@@ -206,6 +206,72 @@ export const RESPONSIBILITY_ITEMS: ResponsibilityItemData[] = [
       'Homeowners assume full protection; bid includes minimal protection.',
   },
   {
+    id: 'backing-blocking',
+    category: 'Backing & Blocking for Wall-Hung Items',
+    variance: 'high',
+    oftenOwner: 'GC / Contractor',
+    stage: 'Close Walls',
+    includes: [
+      'Grab bar blocking',
+      'Heavy mirror / TV mount backing',
+      'Wall-hung vanity support',
+      'Accessory mounting points',
+    ],
+    clarifyQuestion:
+      'Who specifies where blocking is needed, and who verifies it is installed before walls close?',
+    commonMismatch:
+      'Blocking is omitted because nobody specified accessories early enough; adding it later means opening finished walls.',
+  },
+  {
+    id: 'waterproofing-warranty',
+    category: 'Waterproofing System & Warranty',
+    variance: 'high',
+    oftenOwner: 'Trade / Sub',
+    stage: 'Waterproof / Tile',
+    includes: [
+      'Membrane / system selection',
+      'Warranty ownership and registration',
+      'Inspection before tile',
+    ],
+    clarifyQuestion:
+      'Who selects the waterproofing system, who warranties it, and is there an inspection before tile goes on?',
+    commonMismatch:
+      'Homeowner assumes lifetime warranty; it may only cover materials, not labor to fix a leak.',
+  },
+  {
+    id: 'tile-layout-grout',
+    category: 'Tile Layout, Edges & Grout',
+    variance: 'high',
+    oftenOwner: 'Shared',
+    stage: 'Waterproof / Tile',
+    includes: [
+      'Layout starting point and centering',
+      'Edge trim / bullnose selection',
+      'Grout width and color',
+      'Pattern alignment across surfaces',
+    ],
+    clarifyQuestion:
+      'Who approves the tile layout on-site before installation begins, and who selects edge trim and grout?',
+    commonMismatch:
+      'No layout approval happens; tile is installed off-center or with inconsistent cuts at edges.',
+  },
+  {
+    id: 'shower-glass-template',
+    category: 'Shower Glass Measurement & Template',
+    variance: 'high',
+    oftenOwner: 'Trade / Sub',
+    stage: 'Waterproof / Tile',
+    includes: [
+      'Template timing after tile',
+      'Measurement handoff to glass vendor',
+      'Lead time coordination',
+    ],
+    clarifyQuestion:
+      'Who coordinates the glass template timing, and who ensures measurements happen after tile is complete?',
+    commonMismatch:
+      'Glass ordered before tile is done; dimensions don\u2019t match finished walls, causing reorder and delay.',
+  },
+  {
     id: 'patch-paint-finish',
     category: 'Patch / Paint / Finish Repair at Scope Edges',
     variance: 'high',

@@ -34,7 +34,7 @@ export default function EarlyAccessPage() {
               What You&apos;ll Get
             </h2>
             <ul className="text-cream/60 space-y-2">
-              <li>Early access to new guides and playbooks</li>
+              <li>Early access to new guides and tools</li>
               <li>First look at renovation stories</li>
               <li>Priority access to the pros directory</li>
               <li>Beta access to homeowner tools</li>

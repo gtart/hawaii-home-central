@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { UserMenu } from '@/components/auth/UserMenu'
 
 interface NavLink {
   href: string
@@ -67,28 +68,33 @@ export function Navigation() {
           </Link>
 
           {/* Desktop Navigation */}
-          <ul className="hidden lg:flex items-center gap-8">
-            {NAV_LINKS.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className={cn(
-                    'text-sm transition-colors',
-                    isLinkActive(link)
-                      ? 'text-sandstone'
-                      : 'text-cream/70 hover:text-cream'
-                  )}
-                  aria-current={isLinkActive(link) ? 'page' : undefined}
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <div className="hidden lg:flex items-center gap-8">
+            <ul className="flex items-center gap-8">
+              {NAV_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className={cn(
+                      'text-sm transition-colors',
+                      isLinkActive(link)
+                        ? 'text-sandstone'
+                        : 'text-cream/70 hover:text-cream'
+                    )}
+                    aria-current={isLinkActive(link) ? 'page' : undefined}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <UserMenu />
+          </div>
 
-          {/* Mobile menu button */}
-          <button
-            className="lg:hidden p-2 text-cream hover:text-sandstone transition-colors"
+          {/* Mobile: UserMenu + hamburger */}
+          <div className="lg:hidden flex items-center gap-3">
+            <UserMenu />
+            <button
+              className="p-2 text-cream hover:text-sandstone transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-expanded={isMobileMenuOpen}
             aria-label="Toggle navigation menu"
@@ -109,6 +115,7 @@ export function Navigation() {
               )}
             </svg>
           </button>
+          </div>
         </div>
 
         {/* Mobile menu */}

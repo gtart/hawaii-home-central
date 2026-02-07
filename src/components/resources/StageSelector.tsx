@@ -72,8 +72,8 @@ export function StageSelector({ stages, activeStageId, onSelect, checkedItems }:
         })}
       </div>
 
-      {/* Mobile: flex-wrap grid, no scrolling */}
-      <div className="md:hidden flex flex-wrap justify-center gap-x-6 gap-y-4">
+      {/* Mobile: vertical list */}
+      <div className="md:hidden flex flex-col gap-1">
         {stages.map((stage, index) => {
           const state = getStepState(stage, checkedItems, stage.id === activeStageId)
           const checkedCount = stage.items.filter((item) => checkedItems[item.id]).length
@@ -82,18 +82,21 @@ export function StageSelector({ stages, activeStageId, onSelect, checkedItems }:
             <button
               key={stage.id}
               onClick={() => onSelect(stage.id)}
-              className="flex flex-col items-center text-center w-[4.5rem]"
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left w-full',
+                state === 'active' && 'bg-cream/5'
+              )}
             >
               <div
                 className={cn(
-                  'w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors',
+                  'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium shrink-0 transition-colors',
                   state === 'active' && 'bg-sandstone text-basalt',
                   state === 'completed' && 'bg-sandstone/30 text-sandstone',
                   state === 'default' && 'border border-cream/20 text-cream/40'
                 )}
               >
                 {state === 'completed' ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 ) : (
@@ -102,13 +105,13 @@ export function StageSelector({ stages, activeStageId, onSelect, checkedItems }:
               </div>
               <span
                 className={cn(
-                  'text-[10px] mt-1.5 leading-tight',
+                  'text-sm flex-1 transition-colors',
                   state === 'active' ? 'text-sandstone font-medium' : 'text-cream/50'
                 )}
               >
                 {stage.title}
               </span>
-              <span className="text-[10px] text-cream/30 mt-0.5">
+              <span className="text-xs text-cream/30 shrink-0">
                 {checkedCount}/{stage.items.length}
               </span>
             </button>

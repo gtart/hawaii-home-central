@@ -33,7 +33,7 @@ export function HeroSection() {
         </h1>
 
         <p className="text-lg md:text-xl text-cream/70 mb-12 max-w-3xl mx-auto leading-relaxed">
-          Practical playbooks, real lessons, and a trust-first pros directory—made for Hawaiʻi&apos;s realities: from condos to older single-wall homes, humidity, salt air, termites, permitting, supply delays, and tight scheduling.
+          Practical guides and tools, real lessons, and a trust-first pros directory—made for Hawaiʻi&apos;s realities: from condos to older single-wall homes, humidity, salt air, termites, permitting, supply delays, and tight scheduling.
         </p>
 
         <div className="max-w-md mx-auto">

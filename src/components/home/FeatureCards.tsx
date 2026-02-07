@@ -9,7 +9,7 @@ const FEATURES = [
     badge: 'Coming Soon',
   },
   {
-    title: 'Playbooks & Tools',
+    title: 'Guides & Tools',
     description: 'Interactive checklists, project binders, and step-by-step guides tailored for Hawaiʻi conditions and regulations.',
     href: '/resources',
     badge: 'Live',
