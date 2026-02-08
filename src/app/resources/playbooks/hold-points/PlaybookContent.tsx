@@ -59,14 +59,11 @@ function ReadOnlyItem({ item }: { item: HoldPointItemData }) {
 }
 
 const REALITY_ITEMS = [
-  { label: 'Shipping', text: '4\u20138 weeks beyond mainland lead times' },
-  { label: 'Salt air', text: 'Marine-grade hardware required' },
-  { label: 'Humidity', text: 'Mold risk; ventilation matters more' },
-  { label: 'Termites', text: 'Post-and-pier foundations vulnerable' },
-  { label: 'Electrical', text: 'Older homes: undersized panels' },
-  { label: 'Permits', text: 'Vary by county; budget extra time' },
-  { label: 'Appliances', text: 'Limited stock and service networks' },
-  { label: 'Tile overage', text: 'Order 10\u201315% extra; restocks take weeks' },
+  { label: 'Shipping', text: '4\u20138 weeks and 15\u201330% above mainland prices' },
+  { label: 'Materials', text: 'Salt air, UV, and humidity are hard on finishes. Plan accordingly' },
+  { label: 'Permits', text: 'Vary by county. Budget extra time' },
+  { label: 'Older homes', text: 'Termite damage, lead paint, undersized panels. Budget for surprises' },
+  { label: 'Contingency', text: '10\u201315% is standard. In Hawai\u02BBi, lean higher' },
 ]
 
 export function PlaybookContent() {

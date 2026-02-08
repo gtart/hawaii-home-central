@@ -113,27 +113,14 @@ export function PlaybookContent() {
           <h2 className="font-serif text-xl text-sandstone mb-4">
             How to Use This in Hawai&#x02BB;i
           </h2>
-          <div className="text-cream/60 text-sm space-y-3 leading-relaxed">
-            <p>
-              Responsibility clarity matters more on islands where the
-              contractor pool is smaller and working relationships tend to be
-              longer. When there are fewer options, assumptions about
-              &ldquo;who does what&rdquo; can persist across projects&mdash;even
-              when they don&rsquo;t fit yours.
-            </p>
-            <p>
-              Inter-island coordination (shipping, sub availability, inspector
-              schedules) creates handoff points that mainland projects
-              don&rsquo;t have. On top of that, local customs around shared work
-              and informal agreements can blur lines that should be clear.
-            </p>
-            <p>
-              Use this matrix before work starts. Walk through each item with
-              your contractor and agree on who owns it. The
-              &ldquo;Often&rdquo; column shows the typical owner, but every
-              project is different.
-            </p>
-          </div>
+          <p className="text-cream/60 text-sm leading-relaxed">
+            Responsibility clarity matters more when the contractor pool is
+            smaller and working relationships tend to be stronger, like here
+            in Hawai&#x02BB;i. Use this sheet before the work starts. Walk
+            through each item with your contractor and agree who owns what.
+            The &ldquo;Often&rdquo; column shows the typical owner, but every
+            project is different.
+          </p>
         </div>
 
         {/* Filter */}

@@ -33,23 +33,19 @@ export default function ResourcesPage() {
               <ul className="text-cream/60 space-y-2 text-sm">
                 <li className="flex gap-3">
                   <span className="text-sandstone shrink-0">&bull;</span>
-                  <span>Material shipping adds 4&ndash;8 weeks and 15&ndash;30% to mainland prices. Plan lead times accordingly.</span>
+                  <span>Material shipping adds 4&ndash;8 weeks and 15&ndash;30% to mainland prices.</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-sandstone shrink-0">&bull;</span>
-                  <span>Salt air, UV, and humidity are hard on building materials. Marine-grade hardware and UV-resistant finishes matter.</span>
+                  <span>Salt air, UV, and humidity are hard on materials. Plan your finishes accordingly.</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-sandstone shrink-0">&bull;</span>
-                  <span>Permitting varies by county with different processes, fees, and timelines. Budget extra time.</span>
+                  <span>Budget extra time for permitting. Processes, fees, and timelines vary by county.</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-sandstone shrink-0">&bull;</span>
-                  <span>Fewer contractors means fewer competitive bids. Vet carefully, but expect less price competition.</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-sandstone shrink-0">&bull;</span>
-                  <span>Older homes commonly have termite damage, lead paint, and undersized electrical panels. Budget for surprises.</span>
+                  <span>Older homes commonly have termite damage, lead paint, and undersized panels. Budget for surprises.</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-sandstone shrink-0">&bull;</span>

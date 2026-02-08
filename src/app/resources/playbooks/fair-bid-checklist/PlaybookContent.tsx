@@ -87,23 +87,11 @@ export function PlaybookContent() {
           <ul className="text-cream/60 space-y-2 text-sm">
             <li className="flex gap-3">
               <span className="text-sandstone shrink-0">&bull;</span>
-              <span>Shipping surcharges for materials are real&mdash;15&ndash;30% above mainland prices, plus 2&ndash;6 weeks for delivery. Confirm if the bid includes freight.</span>
+              <span>Material shipping adds 15&ndash;30% above mainland prices. Items can take 2&ndash;8 weeks. Confirm if the bid includes freight.</span>
             </li>
             <li className="flex gap-3">
               <span className="text-sandstone shrink-0">&bull;</span>
-              <span>Older homes (pre-1978) commonly have lead paint and asbestos. Abatement adds significant cost and must be handled by licensed professionals.</span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-sandstone shrink-0">&bull;</span>
-              <span>Limited subcontractor availability means fewer competitive bids. One or two subs may dominate a specialty on your island.</span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-sandstone shrink-0">&bull;</span>
-              <span>Permitting varies by county (Honolulu, Maui, Hawai&#x02BB;i, Kaua&#x02BB;i) with different processes, fees, and timelines.</span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-sandstone shrink-0">&bull;</span>
-              <span>Inspection wait times can swing from days to weeks depending on your county and the time of year.</span>
+              <span>Older homes (pre-1978) may contain lead paint, asbestos, or canec (sugarcane fiberboard). Abatement adds cost and requires licensed professionals.</span>
             </li>
             <li className="flex gap-3">
               <span className="text-sandstone shrink-0">&bull;</span>
