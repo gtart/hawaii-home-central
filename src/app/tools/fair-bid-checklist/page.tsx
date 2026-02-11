@@ -6,26 +6,26 @@ import { breadcrumbSchema, faqSchema } from '@/lib/structured-data'
 import { CHECKLIST_SECTIONS } from '@/data/fair-bid-checklist'
 
 export const metadata: Metadata = {
-  title: 'Fair Bid Checklist \u2014 Compare Contractor Bids Apples-to-Apples',
+  title: 'Fair Bid Checklist — Compare Contractor Bids Apples-to-Apples',
   description:
-    'Free interactive checklist: compare contractor bids fairly. 11 sections, 44 items covering scope, labor, materials, permits, timeline, and more. Built for Hawai\u02BBi homeowners.',
+    'Free interactive checklist: compare contractor bids fairly. 11 sections, 44 items covering scope, labor, materials, permits, timeline, and more. Built for Hawaiʻi homeowners.',
 }
 
 const FAQ_ITEMS = [
   {
-    question: 'Why can\u2019t I just compare the bottom-line price on each bid?',
+    question: 'Why can’t I just compare the bottom-line price on each bid?',
     answer:
-      'Bottom-line price comparisons are misleading because bids often exclude different items. One bid might include demolition, permits, and dumpster fees while another assumes you\u2019ll handle them. This checklist surfaces those gaps so you\u2019re comparing the same scope.',
+      'Bottom-line price comparisons are misleading because bids often exclude different items. One bid might include demolition, permits, and dumpster fees while another assumes you’ll handle them. This checklist surfaces those gaps so you’re comparing the same scope.',
   },
   {
     question: 'What are the most commonly missed items in a contractor bid?',
     answer:
-      'The most commonly missed items include: demolition scope and debris removal, permit fees and inspection costs, material allowances vs. actual selections, change-order pricing terms, warranty terms and exclusions, and final cleaning. In Hawai\u02BBi, hazmat abatement for older homes is another frequent gap.',
+      'The most commonly missed items include: demolition scope and debris removal, permit fees and inspection costs, material allowances vs. actual selections, change-order pricing terms, warranty terms and exclusions, and final cleaning. In Hawaiʻi, hazmat abatement for older homes is another frequent gap.',
   },
   {
     question: 'How many items should I check before signing a contract?',
     answer:
-      'Focus on the essential items first\u2014these cover the areas where gaps cause the most disputes. The remaining nice-to-know items provide additional protection but aren\u2019t deal-breakers for every project.',
+      'Focus on the essential items first—these cover the areas where gaps cause the most disputes. The remaining nice-to-know items provide additional protection but aren’t deal-breakers for every project.',
   },
 ]
 

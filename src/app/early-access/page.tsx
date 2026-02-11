@@ -1,30 +1,33 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { FadeInSection } from '@/components/effects/FadeInSection'
-import { EarlyAccessForm } from '@/components/forms/EarlyAccessForm'
+import { EarlyAccessSignupForm } from '@/components/forms/EarlyAccessSignupForm'
 
 export const metadata: Metadata = {
   title: 'Early Access',
-  description: 'Join the early access list for Hawaii Home Central. Be the first to access our guides, stories, directory, and tools.',
+  description: 'Be the first to try our renovation basics, checklists, and pro directory when Hawaii Home Central launches.',
 }
 
 export default function EarlyAccessPage() {
   return (
     <div className="pt-32 pb-24 px-6">
-      <div className="max-w-xl mx-auto">
+      <div className="max-w-md mx-auto">
         <FadeInSection>
-          <div className="text-center mb-12">
+          <div className="text-center mb-10">
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6">
               Get Early Access
             </h1>
             <p className="text-lg text-cream/70">
-              Join our early access list and be the first to know when we launch new guides, stories, and tools. Early subscribers get priority access to everything we build.
+              Be the first to try our renovation basics, checklists, and pro directory when we launch.
             </p>
           </div>
         </FadeInSection>
 
         <FadeInSection delay={100}>
           <div className="bg-basalt-50 rounded-card p-8">
-            <EarlyAccessForm />
+            <Suspense fallback={null}>
+              <EarlyAccessSignupForm />
+            </Suspense>
           </div>
         </FadeInSection>
 
@@ -34,11 +37,10 @@ export default function EarlyAccessPage() {
               What You&apos;ll Get
             </h2>
             <ul className="text-cream/60 space-y-2">
-              <li>Early access to new guides and tools</li>
-              <li>First look at renovation stories</li>
-              <li>Priority access to the pros directory</li>
-              <li>Beta access to homeowner tools</li>
-              <li>Occasional insights and tips (no spam, we promise)</li>
+              <li>Priority access to interactive renovation checklists</li>
+              <li>First look at renovation basics and stories</li>
+              <li>Early access to the verified pros directory</li>
+              <li>Beta access to homeowner planning tools</li>
             </ul>
           </div>
         </FadeInSection>

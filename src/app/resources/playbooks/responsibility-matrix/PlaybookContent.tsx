@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useSession, signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
+import { SignInPill } from '@/components/auth/SignInPill'
 import {
   RESPONSIBILITY_ITEMS,
   STAGES,
@@ -37,7 +38,7 @@ function ReadOnlyItem({ item }: { item: ResponsibilityItemData }) {
         onClick={() => setOpen(!open)}
         className="text-sandstone/60 text-xs mt-3 hover:text-sandstone transition-colors cursor-pointer"
       >
-        {open ? 'Hide detail \u25B2' : 'More detail \u25BC'}
+        {open ? 'Hide detail ▲' : 'More detail ▼'}
       </button>
 
       {open && (
@@ -121,6 +122,11 @@ export function PlaybookContent() {
             The &ldquo;Often&rdquo; column shows the typical owner, but every
             project is different.
           </p>
+        </div>
+
+        {/* Sign-in pill */}
+        <div className="mb-8">
+          <SignInPill appToolPath="/app/tools/responsibility-matrix" label="Sign in to assign owners interactively" />
         </div>
 
         {/* Filter */}

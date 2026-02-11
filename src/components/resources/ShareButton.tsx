@@ -12,14 +12,16 @@ export function ShareButton({ title, url }: ShareButtonProps) {
   const [canNativeShare, setCanNativeShare] = useState(false)
   const [copied, setCopied] = useState(false)
   const [showFallback, setShowFallback] = useState(false)
+  const [shareUrl, setShareUrl] = useState(url || '')
 
   useEffect(() => {
     if (typeof navigator !== 'undefined' && 'share' in navigator) {
       setCanNativeShare(true)
     }
-  }, [])
-
-  const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '')
+    if (!url) {
+      setShareUrl(window.location.href)
+    }
+  }, [url])
 
   async function handleNativeShare() {
     try {

@@ -5,6 +5,7 @@ import { useSession, signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { ShareButton } from '@/components/resources/ShareButton'
 import { Button } from '@/components/ui/Button'
+import { SignInPill } from '@/components/auth/SignInPill'
 import { HOLD_POINT_STAGES } from '@/data/hold-points'
 import type { HoldPointItemData } from '@/data/hold-points'
 
@@ -24,7 +25,7 @@ function ReadOnlyItem({ item }: { item: HoldPointItemData }) {
         onClick={() => setOpen(!open)}
         className="text-sandstone/60 text-xs mt-3 hover:text-sandstone transition-colors cursor-pointer"
       >
-        {open ? 'Hide detail \u25B2' : 'More detail \u25BC'}
+        {open ? 'Hide detail ▲' : 'More detail ▼'}
       </button>
 
       {open && (
@@ -59,11 +60,11 @@ function ReadOnlyItem({ item }: { item: HoldPointItemData }) {
 }
 
 const REALITY_ITEMS = [
-  { label: 'Shipping', text: '4\u20138 weeks and 15\u201330% above mainland prices' },
+  { label: 'Shipping', text: '4–8 weeks and 15–30% above mainland prices' },
   { label: 'Materials', text: 'Salt air, UV, and humidity are hard on finishes. Plan accordingly' },
   { label: 'Permits', text: 'Vary by county. Budget extra time' },
   { label: 'Older homes', text: 'Termite damage, lead paint, undersized panels. Budget for surprises' },
-  { label: 'Contingency', text: '10\u201315% is standard. In Hawai\u02BBi, lean higher' },
+  { label: 'Contingency', text: '10–15% is standard. In Hawaiʻi, lean higher' },
 ]
 
 export function PlaybookContent() {
@@ -110,6 +111,11 @@ export function PlaybookContent() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Sign-in pill */}
+        <div className="mb-8">
+          <SignInPill appToolPath="/app/tools/hold-points" label="Sign in to track decisions interactively" />
         </div>
 
         {/* Filter */}

@@ -5,6 +5,7 @@ import { useSession, signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { ShareButton } from '@/components/resources/ShareButton'
 import { Button } from '@/components/ui/Button'
+import { SignInPill } from '@/components/auth/SignInPill'
 import { CHECKLIST_SECTIONS } from '@/data/fair-bid-checklist'
 import type { ChecklistItemData } from '@/data/fair-bid-checklist'
 
@@ -104,13 +105,18 @@ export function PlaybookContent() {
           </ul>
         </div>
 
+        {/* Sign-in pill */}
+        <div className="mb-8">
+          <SignInPill appToolPath="/app/tools/fair-bid-checklist" label="Sign in to check items off interactively" />
+        </div>
+
         {/* Filter controls */}
         <div className="flex flex-wrap items-center gap-3 mb-8">
           <span className="text-cream/40 text-xs">Filter:</span>
           {([
             { key: 'all' as FilterMode, label: 'All items' },
             { key: 'essential' as FilterMode, label: 'Essentials only' },
-            { key: 'hawaii' as FilterMode, label: 'Hawai\u02BBi callouts' },
+            { key: 'hawaii' as FilterMode, label: 'Hawaiʻi callouts' },
           ]).map((opt) => (
             <button
               key={opt.key}

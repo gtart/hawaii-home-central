@@ -7,6 +7,54 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// ─── Enums ────────────────────────────────────────────
+
+enum ContentType {
+  GUIDE
+  STORY
+}
+
+enum ContentStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+}
+
+enum GeoScope {
+  STATEWIDE
+  OAHU
+  MAUI
+  KAUAI
+  HAWAII_ISLAND
+  LANAI
+  MOLOKAI
+  OTHER
+}
+
+enum CollectionLayout {
+  TILES
+  CARDS
+  LIST
+}
+
+enum FeedbackVote {
+  UP
+  DOWN
+}
+
+enum FeedbackVoteContext {
+  UP
+  DOWN
+  NONE
+}
+
+enum AdminRole {
+  ADMIN
+  EDITOR
+}
+
+// ─── Auth (existing) ──────────────────────────────────
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -20,10 +68,14 @@ model User {
   newsletterOptInAt        DateTime?
   newsletterUnsubscribedAt DateTime?
   newsletterUnsubToken     String?   @unique @default(cuid())
+  hasSeenNewsletterPrompt  Boolean   @default(false)
 
-  toolResults ToolResult[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  toolResults      ToolResult[]
+  settingsUpdated  SiteSetting[]
+  contentFeedback  ContentFeedback[]
+  privateFeedback  ContentPrivateFeedback[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model Account {
@@ -71,4 +123,186 @@ model ToolResult {
 
   @@unique([userId, toolKey])
   @@index([userId])
+}
+
+// ─── CMS ──────────────────────────────────────────────
+
+model SiteSetting {
+  key         String   @id
+  value       String
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+}
+
+model Content {
+  id                   String        @id @default(cuid())
+  contentType          ContentType
+  title                String
+  slug                 String        @unique
+  dek                  String?
+  bodyMd               String
+  status               ContentStatus @default(DRAFT)
+  publishAt            DateTime?
+  publishedAt          DateTime?
+  authorName           String?
+  metaTitle            String?
+  metaDescription      String?
+  canonicalUrl         String?
+  ogImageUrl           String?
+  geoScope             GeoScope?
+  geoPlace             String?
+  robotsNoIndex        Boolean       @default(false)
+  primaryCollectionId  String?
+  primaryCollection    Collection?   @relation("PrimaryCollection", fields: [primaryCollectionId], references: [id], onDelete: SetNull)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  tags             ContentTag[]
+  collectionItems  CollectionItem[]
+  images           ContentImage[]
+  feedback         ContentFeedback[]
+  privateFeedback  ContentPrivateFeedback[]
+  relationsFrom    ContentRelation[] @relation("RelationFrom")
+  relationsTo      ContentRelation[] @relation("RelationTo")
+
+  @@index([contentType, status])
+  @@index([status, publishedAt])
+}
+
+model Tag {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  isPrimary   Boolean      @default(false)
+  contentTags ContentTag[]
+}
+
+model ContentTag {
+  contentId String
+  tagId     String
+  content   Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([contentId, tagId])
+}
+
+model Collection {
+  id            String           @id @default(cuid())
+  title         String
+  slug          String           @unique
+  description   String?
+  heroImageUrl  String?
+  layout        CollectionLayout @default(TILES)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  items          CollectionItem[]
+  primaryContent Content[]        @relation("PrimaryCollection")
+}
+
+model CollectionItem {
+  id           String     @id @default(cuid())
+  collectionId String
+  contentId    String
+  priority     Int        @default(0)
+  pinned       Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  content      Content    @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, contentId])
+  @@index([collectionId, priority])
+}
+
+model ContentRelation {
+  id            String   @id @default(cuid())
+  fromContentId String
+  toContentId   String
+  priority      Int      @default(0)
+  createdAt     DateTime @default(now())
+  fromContent   Content  @relation("RelationFrom", fields: [fromContentId], references: [id], onDelete: Cascade)
+  toContent     Content  @relation("RelationTo", fields: [toContentId], references: [id], onDelete: Cascade)
+
+  @@unique([fromContentId, toContentId])
+  @@index([fromContentId, priority])
+}
+
+model ContentImage {
+  id        String   @id @default(cuid())
+  contentId String?
+  url       String
+  alt       String?
+  caption   String?
+  credit    String?
+  sourceUrl String?
+  width     Int?
+  height    Int?
+  createdAt DateTime @default(now())
+  content   Content? @relation(fields: [contentId], references: [id], onDelete: SetNull)
+
+  @@index([contentId])
+}
+
+model ContentFeedback {
+  id        String       @id @default(cuid())
+  contentId String
+  vote      FeedbackVote
+  userId    String?
+  anonId    String?
+  createdAt DateTime     @default(now())
+  content   Content      @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  user      User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([contentId, userId])
+  @@unique([contentId, anonId])
+  @@index([contentId])
+}
+
+model ContentPrivateFeedback {
+  id          String               @id @default(cuid())
+  contentId   String
+  voteContext  FeedbackVoteContext?
+  name        String?
+  email       String?
+  message     String
+  userId      String?
+  anonId      String?
+  pageUrl     String?
+  referrer    String?
+  userAgent   String?
+  ipHash      String?
+  country     String?
+  region      String?
+  city        String?
+  createdAt   DateTime             @default(now())
+  content     Content              @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  user        User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([contentId, createdAt])
+}
+
+model AdminAllowlist {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  role      AdminRole
+  createdAt DateTime  @default(now())
+}
+
+// ─── Early Access ────────────────────────────────────
+
+enum SignupSource {
+  FORM
+  GOOGLE
+}
+
+model EarlyAccessSignup {
+  id        String       @id @default(cuid())
+  email     String       @unique
+  name      String?
+  source    SignupSource  @default(FORM)
+  userId    String?
+  createdAt DateTime     @default(now())
+
+  @@index([createdAt])
 }

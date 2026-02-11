@@ -19,6 +19,17 @@ export function LoginContent() {
     }
   }, [session, callbackUrl, router])
 
+  // Already signed in — show redirect message, not the form
+  if (session?.user) {
+    return (
+      <div className="pt-32 pb-24 px-6">
+        <div className="max-w-sm mx-auto text-center">
+          <p className="text-cream/50 text-sm">Redirecting...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-sm mx-auto">

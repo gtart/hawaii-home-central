@@ -6,7 +6,7 @@ import { breadcrumbSchema, faqSchema } from '@/lib/structured-data'
 import { RESPONSIBILITY_ITEMS, STAGES } from '@/data/responsibility-matrix'
 
 export const metadata: Metadata = {
-  title: 'Responsibility Matrix \u2014 Assign Who Owns Each Renovation Task',
+  title: 'Responsibility Matrix — Assign Who Owns Each Renovation Task',
   description:
     'Free interactive tool: assign ownership for 16 commonly-missed renovation responsibilities. Prevent handoff gaps between homeowner, contractor, and subs.',
 }
@@ -15,7 +15,7 @@ const FAQ_ITEMS = [
   {
     question: 'What is a responsibility matrix for home renovation?',
     answer:
-      'A responsibility matrix is a simple tool that assigns ownership for each task in a renovation project. It clarifies who handles what\u2014homeowner, general contractor, subcontractor, or vendor\u2014so nothing falls through the cracks between parties.',
+      'A responsibility matrix is a simple tool that assigns ownership for each task in a renovation project. It clarifies who handles what—homeowner, general contractor, subcontractor, or vendor—so nothing falls through the cracks between parties.',
   },
   {
     question: 'Why do renovation responsibilities get dropped between parties?',
@@ -25,7 +25,7 @@ const FAQ_ITEMS = [
   {
     question: 'How is this different from a scope of work?',
     answer:
-      'A scope of work describes what will be done. A responsibility matrix describes who does it. They\u2019re complementary\u2014the scope defines the tasks, and the matrix assigns them. This tool focuses on the 16 tasks most commonly left unassigned.',
+      'A scope of work describes what will be done. A responsibility matrix describes who does it. They’re complementary—the scope defines the tasks, and the matrix assigns them. This tool focuses on the 16 tasks most commonly left unassigned.',
   },
 ]
 

@@ -6,9 +6,9 @@ import { breadcrumbSchema, faqSchema } from '@/lib/structured-data'
 import { HOLD_POINT_STAGES } from '@/data/hold-points'
 
 export const metadata: Metadata = {
-  title: 'Hold Points Tool \u2014 Lock Specs Before Construction Moves On',
+  title: 'Hold Points Tool — Lock Specs Before Construction Moves On',
   description:
-    'Free interactive tool: track the spec decisions that must be locked before each construction stage. 5 stages, 23 hold-point items, with Hawai\u02BBi-specific callouts for island renovations.',
+    'Free interactive tool: track the spec decisions that must be locked before each construction stage. 5 stages, 23 hold-point items, with Hawaiʻi-specific callouts for island renovations.',
 }
 
 const FAQ_ITEMS = [
@@ -18,9 +18,9 @@ const FAQ_ITEMS = [
       'A hold point is a stage in construction where work should not proceed until certain decisions are resolved. Once you pass a hold point, changes become expensive, disruptive, or impossible.',
   },
   {
-    question: 'Why do hold points matter for Hawai\u02BBi renovations?',
+    question: 'Why do hold points matter for Hawaiʻi renovations?',
     answer:
-      'Hawai\u02BBi renovations face unique challenges: shipping delays for materials (add 4\u20138 weeks), limited local stock for appliances and fixtures, salt-air corrosion requiring marine-grade materials, and humidity considerations for finishes. Locking decisions early is even more critical when lead times are longer.',
+      'Hawaiʻi renovations face unique challenges: shipping delays for materials (add 4–8 weeks), limited local stock for appliances and fixtures, salt-air corrosion requiring marine-grade materials, and humidity considerations for finishes. Locking decisions early is even more critical when lead times are longer.',
   },
   {
     question: 'How many hold points does a typical kitchen or bath renovation have?',

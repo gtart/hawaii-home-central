@@ -201,7 +201,7 @@ export const RESPONSIBILITY_ITEMS: ResponsibilityItemData[] = [
       'Dumpster / disposal',
     ],
     clarifyQuestion:
-      'What site protection and cleanup is included daily, and what\u2019s excluded (dumpster, hauling, disposal fees)?',
+      'What site protection and cleanup is included daily, and what’s excluded (dumpster, hauling, disposal fees)?',
     commonMismatch:
       'Homeowners assume full protection; bid includes minimal protection.',
   },
@@ -269,7 +269,7 @@ export const RESPONSIBILITY_ITEMS: ResponsibilityItemData[] = [
     clarifyQuestion:
       'Who coordinates the glass template timing, and who ensures measurements happen after tile is complete?',
     commonMismatch:
-      'Glass ordered before tile is done; dimensions don\u2019t match finished walls, causing reorder and delay.',
+      'Glass ordered before tile is done; dimensions don’t match finished walls, causing reorder and delay.',
   },
   {
     id: 'patch-paint-finish',
@@ -299,7 +299,7 @@ export const RESPONSIBILITY_ITEMS: ResponsibilityItemData[] = [
       'Manufacturer claims process',
     ],
     clarifyQuestion:
-      'What\u2019s covered under labor warranty vs manufacturer warranty, and who handles claims?',
+      'What’s covered under labor warranty vs manufacturer warranty, and who handles claims?',
     commonMismatch:
       'When something fails, everyone points to someone else.',
   },

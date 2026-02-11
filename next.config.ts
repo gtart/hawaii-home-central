@@ -5,14 +5,19 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: '/guides',
-        destination: '/resources',
-        permanent: true,
-      },
-      {
         source: '/tools/:slug/run',
         destination: '/app/tools/:slug',
         permanent: false,
+      },
+      {
+        source: '/guides/:path*',
+        destination: '/hawaii-home-renovation/:path*',
+        permanent: true,
+      },
+      {
+        source: '/guides',
+        destination: '/hawaii-home-renovation',
+        permanent: true,
       },
     ]
   },

@@ -3,7 +3,7 @@ import { PlaybookContent } from './PlaybookContent'
 
 export const metadata: Metadata = {
   title: 'Fair Bid Checklist',
-  description: 'A comprehensive checklist for comparing contractor bids in Hawai\u02BBi. 11 sections covering scope, labor, materials, allowances, permits, timeline, change orders, and more.',
+  description: 'A comprehensive checklist for comparing contractor bids in Hawaiʻi. 11 sections covering scope, labor, materials, allowances, permits, timeline, change orders, and more.',
   keywords: [
     'contractor bid checklist',
     'Hawaii contractor',

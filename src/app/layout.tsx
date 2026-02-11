@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Playfair_Display, Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/components/auth/AuthProvider'
+import { NewsletterPromptWrapper } from '@/components/auth/NewsletterPromptWrapper'
 import { Navigation } from '@/components/layout/Navigation'
 import { Footer } from '@/components/layout/Footer'
 import { NoiseOverlay } from '@/components/effects/NoiseOverlay'
@@ -68,6 +69,7 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
+          <NewsletterPromptWrapper />
         </AuthProvider>
         <NoiseOverlay />
         <Analytics />

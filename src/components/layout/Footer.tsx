@@ -1,7 +1,14 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 export function Footer() {
+  const pathname = usePathname()
   const currentYear = new Date().getFullYear()
+
+  // Hide footer on admin pages
+  if (pathname.startsWith('/admin')) return null
 
   return (
     <footer className="border-t border-cream/10 mt-auto">
@@ -15,7 +22,7 @@ export function Footer() {
               Hawaii Home Central
             </Link>
             <p className="mt-2 text-sm text-cream/50">
-              A Hawaiʻi-first guide to renovating, maintaining, and loving your home.
+              A Hawai&#x02BB;i-first guide to renovating, maintaining, and loving your home.
             </p>
           </div>
 

@@ -5,7 +5,7 @@ import { CardStatic } from '@/components/ui/CardStatic'
 
 export const metadata: Metadata = {
   title: 'Tools & Guides',
-  description: 'Practical tools for Hawai\u02BBi homeowners. Fair bid checklists, renovation guides, budget trackers, and more\u2014built for local conditions.',
+  description: 'Practical tools for Hawaiʻi homeowners. Fair bid checklists, renovation guides, budget trackers, and more—built for local conditions.',
 }
 
 export default function ResourcesPage() {
@@ -103,7 +103,7 @@ export default function ResourcesPage() {
               <Card
                 href="/resources/playbooks/hold-points"
                 title="Hold Points: Specs to Lock In By Stage"
-                description="The decisions that must be finalized before each construction phase\u2014and what happens when they\u2019re not."
+                description="The decisions that must be finalized before each construction phase — and what happens when they're not."
                 badge="Live"
               />
               <Card
@@ -119,7 +119,7 @@ export default function ResourcesPage() {
               />
               <CardStatic
                 title="Project Binder"
-                description="Organize your contracts, photos, receipts, and communications in one shared space. No file storage\u2014just structure."
+                description="Organize your contracts, photos, receipts, and communications in one shared space. No file storage — just structure."
               />
               <CardStatic
                 title="Budget Tracker"

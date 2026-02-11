@@ -2,7 +2,8 @@
 
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { cn } from '@/lib/utils'
-import { EarlyAccessForm } from '@/components/forms/EarlyAccessForm'
+import { Suspense } from 'react'
+import { EarlyAccessSignupForm } from '@/components/forms/EarlyAccessSignupForm'
 
 export function HeroSection() {
   const prefersReducedMotion = useReducedMotion()
@@ -37,7 +38,9 @@ export function HeroSection() {
         </p>
 
         <div className="max-w-md mx-auto">
-          <EarlyAccessForm />
+          <Suspense fallback={null}>
+            <EarlyAccessSignupForm />
+          </Suspense>
         </div>
       </div>
     </section>
