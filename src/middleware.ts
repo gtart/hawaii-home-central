@@ -1,15 +1,20 @@
-import NextAuth from 'next-auth'
-import { authConfig } from './auth.config'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-const { auth } = NextAuth(authConfig)
+export function middleware(req: NextRequest) {
+  // Auth.js v5 session cookie names
+  const hasSession =
+    req.cookies.has('__Secure-authjs.session-token') ||
+    req.cookies.has('authjs.session-token')
 
-export default auth((req) => {
-  if (!req.auth) {
+  if (!hasSession) {
     const loginUrl = new URL('/login', req.url)
     loginUrl.searchParams.set('callbackUrl', req.nextUrl.pathname)
-    return Response.redirect(loginUrl)
+    return NextResponse.redirect(loginUrl)
   }
-})
+
+  return NextResponse.next()
+}
 
 export const config = {
   matcher: ['/app/:path*', '/admin/:path*'],
