@@ -7,15 +7,15 @@ import { breadcrumbSchema } from '@/lib/structured-data'
 export const metadata: Metadata = {
   title: 'Free Renovation Tools',
   description:
-    'Free interactive tools for Hawai\u02BBi homeowners: hold-point checklists, bid comparison tools, and responsibility matrices. Built for real renovation projects.',
+    'Free interactive tools for Hawai\u02BBi homeowners: decision-point checklists, bid comparison tools, and responsibility matrices. Built for real renovation projects.',
 }
 
 const TOOLS = [
   {
-    title: 'Hold Points',
+    title: 'Decision Points',
     description:
       'Track the spec decisions that must be locked before each construction stage. 5 stages, 24 items, with Hawai\u02BBi-specific callouts.',
-    href: '/tools/hold-points',
+    href: '/tools/decision-points',
   },
   {
     title: 'Fair Bid Checklist',

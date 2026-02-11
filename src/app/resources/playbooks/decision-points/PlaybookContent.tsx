@@ -6,10 +6,10 @@ import Link from 'next/link'
 import { ShareButton } from '@/components/resources/ShareButton'
 import { Button } from '@/components/ui/Button'
 import { SignInPill } from '@/components/auth/SignInPill'
-import { HOLD_POINT_STAGES } from '@/data/hold-points'
-import type { HoldPointItemData } from '@/data/hold-points'
+import { DECISION_POINT_STAGES } from '@/data/decision-points'
+import type { DecisionPointItemData } from '@/data/decision-points'
 
-function ReadOnlyItem({ item }: { item: HoldPointItemData }) {
+function ReadOnlyItem({ item }: { item: DecisionPointItemData }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -80,16 +80,16 @@ export function PlaybookContent() {
             Tools &amp; Guides
           </Link>
           <span className="mx-2">/</span>
-          <span className="text-cream/60">Hold Points</span>
+          <span className="text-cream/60">Decision Points</span>
         </nav>
 
         {/* Hero */}
         <div className="flex items-start justify-between gap-4 mb-2">
           <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
-            Hold Points
+            Decision Points
           </h1>
           <div className="shrink-0 mt-2">
-            <ShareButton title="Hold Points: Specs You Must Lock In By Stage — Hawaii Home Central" />
+            <ShareButton title="Decision Points: Specs You Must Lock In By Stage — Hawaii Home Central" />
           </div>
         </div>
         <p className="text-cream/70 text-lg mb-8 leading-relaxed">
@@ -115,7 +115,7 @@ export function PlaybookContent() {
 
         {/* Sign-in pill */}
         <div className="mb-8">
-          <SignInPill appToolPath="/app/tools/hold-points" label="Sign in to track decisions interactively" />
+          <SignInPill appToolPath="/app/tools/decision-points" label="Sign in to track decisions interactively" />
         </div>
 
         {/* Filter */}
@@ -135,7 +135,7 @@ export function PlaybookContent() {
 
         {/* Full stage-by-stage content */}
         <div className="space-y-10">
-          {HOLD_POINT_STAGES.map((stage) => {
+          {DECISION_POINT_STAGES.map((stage) => {
             const filtered = hawaiiOnly
               ? stage.items.filter((i) => i.hawaiiCallout)
               : stage.items
@@ -168,7 +168,7 @@ export function PlaybookContent() {
               <p className="text-cream/70 text-sm mb-4">
                 You&apos;re signed in. Track your decisions interactively.
               </p>
-              <Link href="/app/tools/hold-points">
+              <Link href="/app/tools/decision-points">
                 <Button size="lg" className="w-full sm:w-auto">
                   Open interactive tool &rarr;
                 </Button>
@@ -184,7 +184,7 @@ export function PlaybookContent() {
                 decision, see your progress summary, and pick up on any device.
               </p>
               <Button
-                onClick={() => signIn('google', { callbackUrl: '/app/tools/hold-points' })}
+                onClick={() => signIn('google', { callbackUrl: '/app/tools/decision-points' })}
                 variant="secondary"
                 size="lg"
                 className="inline-flex items-center justify-center gap-3"

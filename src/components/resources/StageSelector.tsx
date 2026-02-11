@@ -1,17 +1,17 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import type { HoldPointStageData } from '@/data/hold-points'
+import type { DecisionPointStageData } from '@/data/decision-points'
 
 interface StageSelectorProps {
-  stages: HoldPointStageData[]
+  stages: DecisionPointStageData[]
   activeStageId: string
   onSelect: (stageId: string) => void
   checkedItems: Record<string, boolean>
 }
 
 function getStepState(
-  stage: HoldPointStageData,
+  stage: DecisionPointStageData,
   checkedItems: Record<string, boolean>,
   isActive: boolean
 ): 'default' | 'active' | 'completed' {

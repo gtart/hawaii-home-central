@@ -3,51 +3,51 @@ import Link from 'next/link'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { Button } from '@/components/ui/Button'
 import { breadcrumbSchema, faqSchema } from '@/lib/structured-data'
-import { HOLD_POINT_STAGES } from '@/data/hold-points'
+import { DECISION_POINT_STAGES } from '@/data/decision-points'
 
 export const metadata: Metadata = {
-  title: 'Hold Points Tool — Lock Specs Before Construction Moves On',
+  title: 'Decision Points Tool — Lock Specs Before Construction Moves On',
   description:
-    'Free interactive tool: track the spec decisions that must be locked before each construction stage. 5 stages, 23 hold-point items, with Hawaiʻi-specific callouts for island renovations.',
+    'Free interactive tool: track the spec decisions that must be locked before each construction stage. 5 stages, 23 decision-point items, with Hawaiʻi-specific callouts for island renovations.',
 }
 
 const FAQ_ITEMS = [
   {
-    question: 'What is a hold point in construction?',
+    question: 'What is a decision point in construction?',
     answer:
-      'A hold point is a stage in construction where work should not proceed until certain decisions are resolved. Once you pass a hold point, changes become expensive, disruptive, or impossible.',
+      'A decision point is a stage in construction where work should not proceed until certain choices are locked in. Once you pass a decision point, changes become expensive, disruptive, or impossible.',
   },
   {
-    question: 'Why do hold points matter for Hawaiʻi renovations?',
+    question: 'Why do decision points matter for Hawaiʻi renovations?',
     answer:
       'Hawaiʻi renovations face unique challenges: shipping delays for materials (add 4–8 weeks), limited local stock for appliances and fixtures, salt-air corrosion requiring marine-grade materials, and humidity considerations for finishes. Locking decisions early is even more critical when lead times are longer.',
   },
   {
-    question: 'How many hold points does a typical kitchen or bath renovation have?',
+    question: 'How many decision points does a typical kitchen or bath renovation have?',
     answer:
-      'This tool covers 23 hold-point items across 5 construction stages: Order Long-Lead, Rough-In, Close Walls, Waterproof / Tile, and Closeout. Each item represents a decision that must be finalized before that stage begins.',
+      'This tool covers 23 decision-point items across 5 construction stages: Order Long-Lead, Rough-In, Close Walls, Waterproof / Tile, and Closeout. Each item represents a decision that must be finalized before that stage begins.',
   },
 ]
 
 // Show first 8 items across stages as a preview
-const PREVIEW_ITEMS = HOLD_POINT_STAGES.flatMap((stage) =>
+const PREVIEW_ITEMS = DECISION_POINT_STAGES.flatMap((stage) =>
   stage.items.slice(0, 2).map((item) => ({ ...item, stageTitle: stage.title }))
 ).slice(0, 8)
 
-const PREVIEW_CALLOUTS = HOLD_POINT_STAGES.flatMap((stage) =>
+const PREVIEW_CALLOUTS = DECISION_POINT_STAGES.flatMap((stage) =>
   stage.items.filter((item) => item.hawaiiCallout)
 ).slice(0, 3)
 
-export default function HoldPointsLandingPage() {
+export default function DecisionPointsLandingPage() {
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', href: '/' },
     { name: 'Tools', href: '/tools' },
-    { name: 'Hold Points', href: '/tools/hold-points' },
+    { name: 'Decision Points', href: '/tools/decision-points' },
   ])
   const faq = faqSchema(FAQ_ITEMS)
 
-  const totalItems = HOLD_POINT_STAGES.reduce((sum, s) => sum + s.items.length, 0)
-  const totalCallouts = HOLD_POINT_STAGES.reduce(
+  const totalItems = DECISION_POINT_STAGES.reduce((sum, s) => sum + s.items.length, 0)
+  const totalCallouts = DECISION_POINT_STAGES.reduce(
     (sum, s) => sum + s.items.filter((i) => i.hawaiiCallout).length,
     0
   )
@@ -66,14 +66,14 @@ export default function HoldPointsLandingPage() {
         <div className="max-w-3xl mx-auto">
           <FadeInSection>
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6">
-              Hold Points
+              Decision Points
             </h1>
             <p className="text-lg text-cream/70 mb-4 leading-relaxed">
               The costliest renovation mistakes happen when decisions are made after construction moves on. This tool shows what must be locked in before each stage&mdash;so you catch gaps before they become change orders.
             </p>
             <p className="text-cream/50 text-sm mb-8">
-              {HOLD_POINT_STAGES.length} stages &middot; {totalItems} decisions &middot; {totalCallouts} Hawai&#x02BB;i callouts &middot;{' '}
-              <Link href="/resources/playbooks/hold-points" className="text-sandstone/70 hover:text-sandstone underline">
+              {DECISION_POINT_STAGES.length} stages &middot; {totalItems} decisions &middot; {totalCallouts} Hawai&#x02BB;i callouts &middot;{' '}
+              <Link href="/resources/playbooks/decision-points" className="text-sandstone/70 hover:text-sandstone underline">
                 Read the full guide free &rarr;
               </Link>
             </p>
@@ -100,7 +100,7 @@ export default function HoldPointsLandingPage() {
                 ))}
               </div>
               <p className="text-cream/40 text-xs mt-4 pt-3 border-t border-cream/5">
-                + {totalItems - PREVIEW_ITEMS.length} more decisions across {HOLD_POINT_STAGES.length} stages
+                + {totalItems - PREVIEW_ITEMS.length} more decisions across {DECISION_POINT_STAGES.length} stages
               </p>
             </div>
           </FadeInSection>
@@ -175,7 +175,7 @@ export default function HoldPointsLandingPage() {
 
           <FadeInSection delay={250}>
             <div className="text-center">
-              <Link href="/login?callbackUrl=/app/tools/hold-points">
+              <Link href="/login?callbackUrl=/app/tools/decision-points">
                 <Button size="lg">
                   Sign in to use this tool &rarr;
                 </Button>

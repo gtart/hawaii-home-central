@@ -31,8 +31,8 @@ export default function AppPage() {
         <FadeInSection delay={100}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card
-              href="/app/tools/hold-points"
-              title="Hold Points"
+              href="/app/tools/decision-points"
+              title="Decision Points"
               description="Lock in material and finish decisions before each construction stage. Track what&apos;s decided and what&apos;s still open."
               badge="Live"
             />

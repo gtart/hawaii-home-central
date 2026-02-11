@@ -67,8 +67,8 @@ export default function ResourcesPage() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card
-                href="/resources/playbooks/hold-points"
-                title="Hold Points"
+                href="/resources/playbooks/decision-points"
+                title="Decision Points"
                 description="What must be locked in before each construction stage. 5 stages, 23 decisions, with Hawai&#x02BB;i callouts."
                 badge="Free to read"
               />
@@ -101,8 +101,8 @@ export default function ResourcesPage() {
                 badge="Live"
               />
               <Card
-                href="/resources/playbooks/hold-points"
-                title="Hold Points: Specs to Lock In By Stage"
+                href="/resources/playbooks/decision-points"
+                title="Decision Points: Specs to Lock In By Stage"
                 description="The decisions that must be finalized before each construction phase — and what happens when they're not."
                 badge="Live"
               />

@@ -1,4 +1,4 @@
-export interface HoldPointItemData {
+export interface DecisionPointItemData {
   id: string
   category: string
   summary: string
@@ -9,14 +9,14 @@ export interface HoldPointItemData {
   hawaiiCallout?: string
 }
 
-export interface HoldPointStageData {
+export interface DecisionPointStageData {
   id: string
   title: string
   subtitle: string
-  items: HoldPointItemData[]
+  items: DecisionPointItemData[]
 }
 
-export const HOLD_POINT_STAGES: HoldPointStageData[] = [
+export const DECISION_POINT_STAGES: DecisionPointStageData[] = [
   {
     id: 'order-long-lead',
     title: 'Order Long-Lead',

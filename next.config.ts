@@ -19,6 +19,21 @@ const nextConfig: NextConfig = {
         destination: '/hawaii-home-renovation',
         permanent: true,
       },
+      {
+        source: '/tools/hold-points',
+        destination: '/tools/decision-points',
+        permanent: true,
+      },
+      {
+        source: '/resources/playbooks/hold-points',
+        destination: '/resources/playbooks/decision-points',
+        permanent: true,
+      },
+      {
+        source: '/app/tools/hold-points',
+        destination: '/app/tools/decision-points',
+        permanent: true,
+      },
     ]
   },
 }

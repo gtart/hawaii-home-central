@@ -6,14 +6,14 @@ import { Button } from '@/components/ui/Button'
 import { ShareButton } from '@/components/resources/ShareButton'
 import { StageSelector } from '@/components/resources/StageSelector'
 import { SpecCard } from '@/components/resources/SpecCard'
-import { HOLD_POINT_STAGES } from '@/data/hold-points'
-import type { HoldPointItemData } from '@/data/hold-points'
+import { DECISION_POINT_STAGES } from '@/data/decision-points'
+import type { DecisionPointItemData } from '@/data/decision-points'
 import { useToolState } from '@/hooks/useToolState'
 
 type StageStatus = 'not-locked' | 'partially-locked' | 'locked'
 
 function getStageStatus(
-  items: HoldPointItemData[],
+  items: DecisionPointItemData[],
   checkedItems: Record<string, boolean>
 ): StageStatus {
   const checkedCount = items.filter((item) => checkedItems[item.id]).length
@@ -29,7 +29,7 @@ const STATUS_LABELS: Record<StageStatus, string> = {
 }
 
 function renderStageItems(
-  items: HoldPointItemData[],
+  items: DecisionPointItemData[],
   checkedItems: Record<string, boolean>,
   toggle: (id: string) => void
 ) {
@@ -46,7 +46,7 @@ function renderStageItems(
     ))
   }
 
-  const groups = new Map<string, HoldPointItemData[]>()
+  const groups = new Map<string, DecisionPointItemData[]>()
   for (const item of items) {
     const group = item.group ?? 'Other'
     const existing = groups.get(group) ?? []
@@ -75,7 +75,7 @@ function StageDecisionSummary({
   items,
   checkedItems,
 }: {
-  items: HoldPointItemData[]
+  items: DecisionPointItemData[]
   checkedItems: Record<string, boolean>
 }) {
   const total = items.length
@@ -112,10 +112,10 @@ export function ToolContent() {
       defaultValue: {},
     })
 
-  const [activeStageId, setActiveStageId] = useState(HOLD_POINT_STAGES[0].id)
+  const [activeStageId, setActiveStageId] = useState(DECISION_POINT_STAGES[0].id)
 
   const activeStage =
-    HOLD_POINT_STAGES.find((s) => s.id === activeStageId) ?? HOLD_POINT_STAGES[0]
+    DECISION_POINT_STAGES.find((s) => s.id === activeStageId) ?? DECISION_POINT_STAGES[0]
   const status = isLoaded
     ? getStageStatus(activeStage.items, checkedItems)
     : 'not-locked'
@@ -142,13 +142,13 @@ export function ToolContent() {
       <div className="max-w-3xl mx-auto">
         <div className="flex items-start justify-between gap-4 mb-2">
           <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
-            Hold Points
+            Decision Points
           </h1>
           <div className="shrink-0 mt-2 flex items-center gap-3">
             {isSyncing && (
               <span className="text-xs text-cream/30">Saving...</span>
             )}
-            <ShareButton title="Hold Points &mdash; Hawaii Home Central" />
+            <ShareButton title="Decision Points &mdash; Hawaii Home Central" />
           </div>
         </div>
         <p className="text-cream/70 text-lg mb-8 leading-relaxed">
@@ -159,22 +159,22 @@ export function ToolContent() {
 
         <div className="bg-basalt-50 rounded-card p-6 mb-8">
           <h2 className="font-serif text-xl text-sandstone mb-3">
-            What is a hold point?
+            What is a decision point?
           </h2>
           <p className="text-cream/70 text-sm leading-relaxed mb-3">
-            A hold point is a stage in construction where work should not proceed
-            until certain decisions are resolved.
+            A decision point is a stage in construction where work should not
+            proceed until certain choices are locked in.
           </p>
           <p className="text-cream/60 text-sm leading-relaxed italic">
-            Once you pass a hold point, changes become expensive, disruptive, or
-            impossible.
+            Once you pass a decision point, changes become expensive, disruptive,
+            or impossible.
           </p>
         </div>
 
         {isLoaded && (
           <>
             <StageSelector
-              stages={HOLD_POINT_STAGES}
+              stages={DECISION_POINT_STAGES}
               activeStageId={activeStageId}
               onSelect={setActiveStageId}
               checkedItems={checkedItems}

@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/Badge'
-import type { HoldPointItemData } from '@/data/hold-points'
+import type { DecisionPointItemData } from '@/data/decision-points'
 
 interface SpecCardProps {
-  item: HoldPointItemData
+  item: DecisionPointItemData
   isChecked: boolean
   onToggle: (id: string) => void
 }
