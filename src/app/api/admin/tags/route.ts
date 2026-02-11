@@ -10,14 +10,26 @@ export async function GET() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const tags = await prisma.tag.findMany({
-    orderBy: [{ isPrimary: 'desc' }, { name: 'asc' }],
-    include: {
-      _count: { select: { contentTags: true } },
-    },
-  })
+  // Use raw query to avoid Prisma client cache issues with isPrimary field
+  const tags = await prisma.$queryRaw<
+    { id: string; slug: string; name: string; isPrimary: boolean }[]
+  >`
+    SELECT t.id, t.slug, t.name, t."isPrimary",
+      (SELECT COUNT(*)::int FROM "ContentTag" ct WHERE ct."tagId" = t.id) as "contentCount"
+    FROM "Tag" t
+    ORDER BY t."isPrimary" DESC, t.name ASC
+  `
 
-  return NextResponse.json(tags)
+  // Shape to match expected format
+  return NextResponse.json(
+    tags.map((t) => ({
+      id: t.id,
+      slug: t.slug,
+      name: t.name,
+      isPrimary: t.isPrimary,
+      _count: { contentTags: (t as Record<string, unknown>).contentCount as number },
+    }))
+  )
 }
 
 export async function PATCH(req: Request) {
@@ -34,10 +46,10 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
   }
 
-  const tag = await prisma.tag.update({
-    where: { id },
-    data: { isPrimary },
-  })
+  // Use raw query to avoid Prisma client cache issues
+  await prisma.$executeRaw`
+    UPDATE "Tag" SET "isPrimary" = ${isPrimary} WHERE id = ${id}
+  `
 
-  return NextResponse.json(tag)
+  return NextResponse.json({ id, isPrimary })
 }

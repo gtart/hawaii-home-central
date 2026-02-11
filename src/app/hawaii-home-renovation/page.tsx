@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 }
 
 export default async function RenovationBasicsPage() {
-  const [guides, primaryTags] = await Promise.all([
+  const [guides, allTags] = await Promise.all([
     prisma.content.findMany({
       where: { contentType: 'GUIDE', status: 'PUBLISHED' },
       orderBy: { publishedAt: 'desc' },
@@ -21,17 +21,20 @@ export default async function RenovationBasicsPage() {
         dek: true,
         geoScope: true,
         tags: {
-          where: { tag: { isPrimary: true } },
           select: { tagId: true },
         },
       },
     }),
-    prisma.tag.findMany({
-      where: { isPrimary: true },
-      orderBy: { name: 'asc' },
-      select: { id: true, name: true, slug: true },
-    }),
+    prisma.$queryRaw<{ id: string; name: string; slug: string; isPrimary: boolean }[]>`
+      SELECT id, name, slug, "isPrimary" FROM "Tag" ORDER BY name ASC
+    `,
   ])
+
+  const primaryTags = allTags
+    .filter((t) => t.isPrimary)
+    .map((t) => ({ id: t.id, name: t.name, slug: t.slug }))
+
+  const primaryTagIds = new Set(primaryTags.map((t) => t.id))
 
   const articles = guides.map((g) => ({
     id: g.id,
@@ -39,7 +42,9 @@ export default async function RenovationBasicsPage() {
     slug: g.slug,
     dek: g.dek,
     geoScope: g.geoScope,
-    primaryTagIds: g.tags.map((t) => t.tagId),
+    primaryTagIds: g.tags
+      .filter((t) => primaryTagIds.has(t.tagId))
+      .map((t) => t.tagId),
   }))
 
   return (
