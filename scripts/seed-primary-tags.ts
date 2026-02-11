@@ -3,10 +3,10 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 const PRIMARY_TAGS = [
-  'Getting Started',
+  'Planning Your Renovation',
   'Permits & Regulations',
   'Budgeting & Financing',
-  'Finding Contractors',
+  'Working with Contractors',
   'Materials & Climate',
   'Kitchen & Bath',
   'Structural & Exterior',

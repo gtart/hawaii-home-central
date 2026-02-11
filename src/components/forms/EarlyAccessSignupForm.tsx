@@ -81,9 +81,9 @@ export function EarlyAccessSignupForm() {
           You&apos;re on the list!
         </h3>
         <p className="text-cream/70 leading-relaxed">
-          Mahalo! We&apos;ll send you an email when Hawaii Home Central is ready
-          for early access — including priority access to checklists, renovation
-          basics, and tools.
+          Mahalo! We&apos;ll email you when Hawaii Home Central officially
+          launches. In the meantime, feel free to sign in with Google to
+          preview what we&apos;re building.
         </p>
       </div>
     )
@@ -142,12 +142,11 @@ export function EarlyAccessSignupForm() {
             fill="#EA4335"
           />
         </svg>
-        Sign Up with Google
+        Sign in with Google for Early Preview
       </Button>
 
       <p className="text-xs text-cream/50 text-center">
-        Be first to access renovation basics, checklists, and the pros directory.
-        No spam. Unsubscribe anytime.
+        The site is in beta and actively changing. Your patience is appreciated as we build.
       </p>
     </div>
   )

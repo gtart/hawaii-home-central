@@ -6,7 +6,7 @@ import { RenovationBasicsList } from '@/components/content/RenovationBasicsList'
 export const metadata: Metadata = {
   title: 'Hawaii Home Renovation Basics',
   description:
-    'Learn the fundamentals of home renovation in Hawaiʻi — from permitting to materials to working with contractors. Free to read, no sign-in required.',
+    'Manage your expectations, set the right ones with your contractor and suppliers, and get the home you want with the least stress possible.',
 }
 
 export default async function RenovationBasicsPage() {
@@ -55,8 +55,9 @@ export default async function RenovationBasicsPage() {
             Renovation Basics
           </h1>
           <p className="text-cream/70 text-lg mb-10 max-w-2xl">
-            Learn the fundamentals of home renovation in Hawai&#x02BB;i — from
-            permitting to materials to working with contractors.
+            Learn the fundamentals to help you manage your expectations, set
+            the right ones with your contractor and suppliers, and get the
+            home you want with the least stress possible.
           </p>
         </FadeInSection>
 

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 
 export const metadata: Metadata = {
   title: 'Directory',
-  description: 'A curated directory of vetted contractors and trades in Hawaiʻi, built on real referrals and verified work.',
+  description: 'A curated directory of vetted contractors and trades in Hawaiʻi, built on referrals from homeowners and trusted professionals.',
 }
 
 export default function DirectoryPage() {
@@ -19,7 +19,7 @@ export default function DirectoryPage() {
             Trusted Pros Directory
           </h1>
           <p className="text-lg text-cream/70 mb-8 max-w-2xl mx-auto">
-            A curated directory of vetted contractors and trades, built on real referrals and verified work. We&apos;re not about paid listings—we&apos;re about trust.
+            A curated directory of vetted contractors and trades, built on referrals from homeowners and trusted professionals in the industry.
           </p>
         </FadeInSection>
 
@@ -31,7 +31,7 @@ export default function DirectoryPage() {
             <ul className="text-left text-cream/70 space-y-3">
               <li className="flex gap-3">
                 <span className="text-sandstone">→</span>
-                <span>Real referrals from homeowners with completed projects</span>
+                <span>Referrals from homeowners and trusted professionals in the trades</span>
               </li>
               <li className="flex gap-3">
                 <span className="text-sandstone">→</span>
@@ -44,10 +44,6 @@ export default function DirectoryPage() {
               <li className="flex gap-3">
                 <span className="text-sandstone">→</span>
                 <span>Specialty and location-based filtering</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-sandstone">→</span>
-                <span>No pay-to-play rankings</span>
               </li>
             </ul>
           </div>
