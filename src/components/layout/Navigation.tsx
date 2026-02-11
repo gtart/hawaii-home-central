@@ -79,12 +79,17 @@ export function Navigation() {
 
         <nav className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link
-              href="/"
-              className="font-serif text-xl text-sandstone hover:text-sandstone-light transition-colors"
-            >
-              Hawaii Home Central
-            </Link>
+            <div className="flex items-center gap-2.5">
+              <Link
+                href="/"
+                className="font-serif text-xl text-sandstone hover:text-sandstone-light transition-colors"
+              >
+                Hawaii Home Central
+              </Link>
+              <span className="hidden sm:inline-block text-[10px] font-medium tracking-wide uppercase text-sandstone/70 bg-sandstone/10 border border-sandstone/20 rounded-full px-2 py-0.5 leading-tight">
+                Beta
+              </span>
+            </div>
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8">

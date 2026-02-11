@@ -85,6 +85,25 @@ export default async function StoriesPage() {
             ))}
           </div>
         )}
+
+        <FadeInSection delay={stories.length > 0 ? stories.length * 50 + 50 : 100}>
+          <div className="mt-16 border-t border-cream/10 pt-8 text-center">
+            <h2 className="font-serif text-xl text-cream mb-3">
+              Have a Story to Share?
+            </h2>
+            <p className="text-cream/60 text-sm leading-relaxed max-w-lg mx-auto mb-4">
+              We&apos;re always looking for real renovation experiences from
+              Hawai&#x02BB;i homeowners. You can choose to stay anonymous — we
+              just need to verify your story&apos;s authenticity.
+            </p>
+            <a
+              href="mailto:hello@hawaiihomecentral.com"
+              className="text-sandstone hover:text-sandstone-light transition-colors text-sm font-medium"
+            >
+              hello@hawaiihomecentral.com
+            </a>
+          </div>
+        </FadeInSection>
       </div>
     </div>
   )
