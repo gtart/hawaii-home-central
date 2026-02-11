@@ -40,7 +40,7 @@ export async function GET(request: Request) {
       publishedAt: true,
       updatedAt: true,
       primaryCollection: { select: { title: true } },
-      tags: { select: { tag: { select: { name: true } } } },
+      tags: { select: { tag: { select: { id: true, name: true } } } },
     },
   })
 
@@ -72,6 +72,7 @@ export async function POST(request: Request) {
     robotsNoIndex,
     primaryCollectionId,
     tags,
+    primaryTags,
     collectionIds,
     relatedIds,
   } = body
@@ -105,18 +106,7 @@ export async function POST(request: Request) {
       geoPlace: geoPlace || null,
       robotsNoIndex: robotsNoIndex ?? false,
       primaryCollectionId: primaryCollectionId || null,
-      tags: tags?.length
-        ? {
-            create: tags.map((tagName: string) => ({
-              tag: {
-                connectOrCreate: {
-                  where: { slug: generateSlug(tagName) },
-                  create: { slug: generateSlug(tagName), name: tagName.trim() },
-                },
-              },
-            })),
-          }
-        : undefined,
+      tags: undefined,
       collectionItems: collectionIds?.length
         ? {
             create: collectionIds.map((cid: string, i: number) => ({
@@ -135,6 +125,43 @@ export async function POST(request: Request) {
         : undefined,
     },
   })
+
+  // Sync primary tags
+  if (primaryTags?.length) {
+    for (const tagName of primaryTags as string[]) {
+      const tagSlug = generateSlug(tagName)
+      const tag = await prisma.tag.upsert({
+        where: { slug: tagSlug },
+        create: { slug: tagSlug, name: tagName.trim() },
+        update: {},
+      })
+      await prisma.$executeRaw`UPDATE "Tag" SET "isPrimary" = true WHERE id = ${tag.id}`
+      await prisma.contentTag.create({
+        data: { contentId: content.id, tagId: tag.id },
+      })
+    }
+  }
+
+  // Sync regular tags
+  if (tags?.length) {
+    for (const tagName of tags as string[]) {
+      const tagSlug = generateSlug(tagName)
+      const tag = await prisma.tag.upsert({
+        where: { slug: tagSlug },
+        create: { slug: tagSlug, name: tagName.trim() },
+        update: {},
+      })
+      // Skip if already added as primary tag
+      const exists = await prisma.contentTag.findUnique({
+        where: { contentId_tagId: { contentId: content.id, tagId: tag.id } },
+      })
+      if (!exists) {
+        await prisma.contentTag.create({
+          data: { contentId: content.id, tagId: tag.id },
+        })
+      }
+    }
+  }
 
   return NextResponse.json({ id: content.id, slug: content.slug })
 }

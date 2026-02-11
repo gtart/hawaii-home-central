@@ -225,9 +225,9 @@ export function ImportWizard() {
             <div className="text-xs text-cream/30 space-y-1">
               <p>
                 <strong className="text-cream/50">Columns:</strong> id (optional, for updates), title, slug,
-                contentType, status, dek, authorName, bodyMd, tags (pipe-delimited),
-                collectionSlugs (pipe-delimited), publishAt, metaTitle, metaDescription,
-                canonicalUrl, ogImageUrl, geoScope, geoPlace, robotsNoIndex
+                contentType, status, dek, authorName, bodyMd, primaryTags (pipe-delimited categories),
+                tags (pipe-delimited), collectionSlugs (pipe-delimited), publishAt, metaTitle,
+                metaDescription, canonicalUrl, ogImageUrl, geoScope, geoPlace, robotsNoIndex
               </p>
               <p>
                 <strong className="text-cream/50">Tip:</strong> Include the <code className="text-cream/40">id</code> column

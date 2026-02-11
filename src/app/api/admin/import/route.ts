@@ -128,7 +128,30 @@ export async function POST(request: Request) {
         })
       }
 
-      // Tags (shared for both create and update)
+      // Primary tags (shared for both create and update)
+      const addedTagIds = new Set<string>()
+      if (row.primaryTags) {
+        const tagNames = row.primaryTags
+          .split('|')
+          .map((t: string) => t.trim())
+          .filter(Boolean)
+
+        for (const tagName of tagNames) {
+          const tagSlug = generateSlug(tagName)
+          const tag = await prisma.tag.upsert({
+            where: { slug: tagSlug },
+            create: { name: tagName, slug: tagSlug },
+            update: {},
+          })
+          await prisma.$executeRaw`UPDATE "Tag" SET "isPrimary" = true WHERE id = ${tag.id}`
+          await prisma.contentTag.create({
+            data: { contentId, tagId: tag.id },
+          })
+          addedTagIds.add(tag.id)
+        }
+      }
+
+      // Regular tags (shared for both create and update)
       if (row.tags) {
         const tagNames = row.tags
           .split('|')
@@ -142,9 +165,11 @@ export async function POST(request: Request) {
             create: { name: tagName, slug: tagSlug },
             update: {},
           })
-          await prisma.contentTag.create({
-            data: { contentId, tagId: tag.id },
-          })
+          if (!addedTagIds.has(tag.id)) {
+            await prisma.contentTag.create({
+              data: { contentId, tagId: tag.id },
+            })
+          }
         }
       }
 

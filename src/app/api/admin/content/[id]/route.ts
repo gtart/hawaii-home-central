@@ -70,6 +70,7 @@ export async function PUT(
     robotsNoIndex,
     primaryCollectionId,
     tags,
+    primaryTags,
     collectionIds,
     relatedIds,
   } = body
@@ -120,10 +121,31 @@ export async function PUT(
     },
   })
 
-  // Sync tags
-  if (tags !== undefined) {
+  // Sync tags (primary + regular)
+  if (tags !== undefined || primaryTags !== undefined) {
     await prisma.contentTag.deleteMany({ where: { contentId: id } })
-    if (tags.length > 0) {
+
+    const addedTagIds = new Set<string>()
+
+    // Primary tags first
+    if (primaryTags?.length) {
+      for (const tagName of primaryTags as string[]) {
+        const tagSlug = generateSlug(tagName)
+        const tag = await prisma.tag.upsert({
+          where: { slug: tagSlug },
+          create: { slug: tagSlug, name: tagName.trim() },
+          update: {},
+        })
+        await prisma.$executeRaw`UPDATE "Tag" SET "isPrimary" = true WHERE id = ${tag.id}`
+        await prisma.contentTag.create({
+          data: { contentId: id, tagId: tag.id },
+        })
+        addedTagIds.add(tag.id)
+      }
+    }
+
+    // Regular tags
+    if (tags?.length) {
       for (const tagName of tags as string[]) {
         const tagSlug = generateSlug(tagName)
         const tag = await prisma.tag.upsert({
@@ -131,9 +153,12 @@ export async function PUT(
           create: { slug: tagSlug, name: tagName.trim() },
           update: {},
         })
-        await prisma.contentTag.create({
-          data: { contentId: id, tagId: tag.id },
-        })
+        if (!addedTagIds.has(tag.id)) {
+          await prisma.contentTag.create({
+            data: { contentId: id, tagId: tag.id },
+          })
+          addedTagIds.add(tag.id)
+        }
       }
     }
   }

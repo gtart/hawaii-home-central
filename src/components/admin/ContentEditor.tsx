@@ -63,9 +63,13 @@ export function ContentEditor({ initial, defaultType }: ContentEditorProps) {
   const [geoPlace, setGeoPlace] = useState(initial?.geoPlace ?? '')
 
   // Tags
-  const [tagsInput, setTagsInput] = useState(
-    initial?.tags?.map((t) => t.tag.name).join(', ') ?? ''
-  )
+  const [tagsInput, setTagsInput] = useState('')
+
+  // Primary tags (categories)
+  interface PrimaryTag { id: string; name: string; slug: string }
+  const [allPrimaryTags, setAllPrimaryTags] = useState<PrimaryTag[]>([])
+  const [selectedPrimaryTagIds, setSelectedPrimaryTagIds] = useState<Set<string>>(new Set())
+  const [newCategoryInput, setNewCategoryInput] = useState('')
 
   // Collections
   const [allCollections, setAllCollections] = useState<Collection[]>([])
@@ -87,9 +91,6 @@ export function ContentEditor({ initial, defaultType }: ContentEditorProps) {
   const [relatedSearch, setRelatedSearch] = useState('')
   const [relatedResults, setRelatedResults] = useState<RelatedItem[]>([])
 
-  // Primary tags (for display)
-  const [primaryTagNames, setPrimaryTagNames] = useState<string[]>([])
-
   // UI state
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
@@ -110,8 +111,35 @@ export function ContentEditor({ initial, defaultType }: ContentEditorProps) {
       .catch(() => {})
     fetch('/api/admin/tags')
       .then((r) => r.json())
-      .then((data: { name: string; isPrimary: boolean }[]) => {
-        setPrimaryTagNames(data.filter((t) => t.isPrimary).map((t) => t.name.toLowerCase()))
+      .then((data: { id: string; name: string; slug: string; isPrimary: boolean }[]) => {
+        const primary = data
+          .filter((t) => t.isPrimary)
+          .map((t) => ({ id: t.id, name: t.name, slug: t.slug }))
+        setAllPrimaryTags(primary)
+
+        // Split initial tags into primary vs regular
+        if (initial?.tags) {
+          const primarySlugs = new Set(primary.map((p) => p.slug))
+          const primaryIds = new Set<string>()
+          const regularNames: string[] = []
+
+          for (const ct of initial.tags) {
+            const tagSlug = ct.tag.name
+              .toLowerCase()
+              .replace(/['']/g, '')
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, '')
+            const matchedPrimary = primary.find((p) => p.slug === tagSlug)
+            if (matchedPrimary) {
+              primaryIds.add(matchedPrimary.id)
+            } else {
+              regularNames.push(ct.tag.name)
+            }
+          }
+
+          setSelectedPrimaryTagIds(primaryIds)
+          setTagsInput(regularNames.join(', '))
+        }
       })
       .catch(() => {})
   }, [])
@@ -175,6 +203,10 @@ export function ContentEditor({ initial, defaultType }: ContentEditorProps) {
         .filter(Boolean)
       const finalStatus = overrideStatus || status
 
+      const selectedPrimaryNames = allPrimaryTags
+        .filter((t) => selectedPrimaryTagIds.has(t.id))
+        .map((t) => t.name)
+
       const payload = {
         title,
         slug,
@@ -193,6 +225,7 @@ export function ContentEditor({ initial, defaultType }: ContentEditorProps) {
         robotsNoIndex,
         primaryCollectionId: primaryCollectionId || null,
         tags,
+        primaryTags: selectedPrimaryNames,
         collectionIds: selectedCollectionIds,
         relatedIds: related.map((r) => r.id),
       }
@@ -227,8 +260,8 @@ export function ContentEditor({ initial, defaultType }: ContentEditorProps) {
     [
       title, slug, contentType, dek, bodyMd, status, publishAt, authorName,
       metaTitle, metaDescription, canonicalUrl, ogImageUrl, geoScope, geoPlace,
-      robotsNoIndex, primaryCollectionId, tagsInput, selectedCollectionIds,
-      related, isEdit, initial?.id, router,
+      robotsNoIndex, primaryCollectionId, tagsInput, selectedPrimaryTagIds,
+      allPrimaryTags, selectedCollectionIds, related, isEdit, initial?.id, router,
     ]
   )
 
@@ -365,6 +398,71 @@ export function ContentEditor({ initial, defaultType }: ContentEditorProps) {
         )}
       </div>
 
+      {/* Category (Primary Tags) */}
+      <div className="bg-basalt-50 rounded-card p-6">
+        <h3 className="text-sm text-cream/70 font-medium mb-1">Category</h3>
+        <p className="text-xs text-cream/30 mb-3">
+          Select which Table of Contents section(s) this article belongs to.
+        </p>
+        {allPrimaryTags.length > 0 ? (
+          <div className="space-y-1.5 mb-3">
+            {allPrimaryTags.map((pt) => (
+              <label key={pt.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedPrimaryTagIds.has(pt.id)}
+                  onChange={() => {
+                    setSelectedPrimaryTagIds((prev) => {
+                      const next = new Set(prev)
+                      if (next.has(pt.id)) next.delete(pt.id)
+                      else next.add(pt.id)
+                      return next
+                    })
+                  }}
+                  className="rounded border-cream/20 bg-transparent text-sandstone focus:ring-sandstone"
+                />
+                <span className="text-cream/70">{pt.name}</span>
+              </label>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-cream/30 mb-3">Loading categories...</p>
+        )}
+        <div className="flex gap-2">
+          <input
+            value={newCategoryInput}
+            onChange={(e) => setNewCategoryInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                const name = newCategoryInput.trim()
+                if (!name) return
+                const slug = name
+                  .toLowerCase()
+                  .replace(/['']/g, '')
+                  .replace(/[^a-z0-9]+/g, '-')
+                  .replace(/^-+|-+$/g, '')
+                // Check if already exists (case-insensitive)
+                const existing = allPrimaryTags.find((t) => t.slug === slug)
+                if (existing) {
+                  setSelectedPrimaryTagIds((prev) => new Set([...prev, existing.id]))
+                } else {
+                  const tempId = `new-${slug}`
+                  setAllPrimaryTags((prev) => [...prev, { id: tempId, name, slug }])
+                  setSelectedPrimaryTagIds((prev) => new Set([...prev, tempId]))
+                }
+                setNewCategoryInput('')
+              }
+            }}
+            placeholder="Add new category..."
+            className={`${inputClass} flex-1`}
+          />
+          <span className="text-xs text-cream/20 self-center whitespace-nowrap">
+            Press Enter
+          </span>
+        </div>
+      </div>
+
       {/* Tags */}
       <div className="bg-basalt-50 rounded-card p-6">
         <label className={labelClass}>Tags (comma-separated)</label>
@@ -374,32 +472,6 @@ export function ContentEditor({ initial, defaultType }: ContentEditorProps) {
           placeholder="hawaii, renovation, permits"
           className={inputClass}
         />
-        {tagsInput && primaryTagNames.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {tagsInput
-              .split(',')
-              .map((t) => t.trim())
-              .filter(Boolean)
-              .map((tag) => {
-                const isPrimary = primaryTagNames.includes(tag.toLowerCase())
-                return (
-                  <span
-                    key={tag}
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${
-                      isPrimary
-                        ? 'bg-sandstone/20 text-sandstone'
-                        : 'bg-cream/10 text-cream/50'
-                    }`}
-                  >
-                    {tag}
-                    {isPrimary && (
-                      <span className="ml-1 text-[10px] opacity-60">primary</span>
-                    )}
-                  </span>
-                )
-              })}
-          </div>
-        )}
       </div>
 
       {/* Geo */}
