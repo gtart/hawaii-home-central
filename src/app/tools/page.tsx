@@ -30,9 +30,9 @@ const TOOLS = [
     href: '/tools/responsibility-matrix',
   },
   {
-    title: 'Finish Decisions',
+    title: 'Selections Tracker',
     description:
-      'Track finish and appliance decisions by room. Record specs, vendors, needed-by stages, and multiple links per item.',
+      "Track finish and appliance selections by room. Compare options, record specs, mark what you've selected.",
     href: '/tools/finish-decisions',
   },
 ]
