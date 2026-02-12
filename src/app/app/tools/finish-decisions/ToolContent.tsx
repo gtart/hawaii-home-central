@@ -215,22 +215,38 @@ function migrateToV3(payload: any): FinishDecisionsPayloadV3 {
 function AddRoomModal({
   onClose,
   onAdd,
+  existingRooms,
 }: {
   onClose: () => void
   onAdd: (type: RoomTypeV3, name: string, useDefaults: boolean) => void
+  existingRooms: RoomV3[]
 }) {
   const [roomType, setRoomType] = useState<RoomTypeV3>('kitchen')
   const [roomName, setRoomName] = useState('')
   const [useDefaults, setUseDefaults] = useState(true)
   const [error, setError] = useState('')
 
-  // Auto-fill name based on type
+  // Auto-fill name based on type with auto-increment for duplicates
   useEffect(() => {
-    if (!roomName) {
-      const label = ROOM_TYPE_OPTIONS_V3.find((opt) => opt.value === roomType)?.label
-      setRoomName(label || '')
+    const label = ROOM_TYPE_OPTIONS_V3.find((opt) => opt.value === roomType)?.label || ''
+
+    // Find existing rooms with similar names
+    const existingNames = existingRooms.map((r) => r.name.toLowerCase())
+
+    // Check if base name exists
+    if (!existingNames.includes(label.toLowerCase())) {
+      setRoomName(label)
+    } else {
+      // Find next available number
+      let counter = 2
+      let newName = `${label} #${counter}`
+      while (existingNames.includes(newName.toLowerCase())) {
+        counter++
+        newName = `${label} #${counter}`
+      }
+      setRoomName(newName)
     }
-  }, [roomType, roomName])
+  }, [roomType, existingRooms])
 
   const handleAdd = () => {
     if (!roomName.trim()) {
@@ -405,7 +421,11 @@ function RoomsListView({
       )}
 
       {showAddModal && (
-        <AddRoomModal onClose={() => setShowAddModal(false)} onAdd={onAddRoom} />
+        <AddRoomModal
+          onClose={() => setShowAddModal(false)}
+          onAdd={onAddRoom}
+          existingRooms={rooms}
+        />
       )}
     </>
   )
