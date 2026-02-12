@@ -13,24 +13,19 @@ export const metadata: Metadata = {
 
 const FAQ_ITEMS = [
   {
-    question: 'How does comparing options work?',
+    question: 'How does room-first organization work?',
     answer:
-      'Each decision (like "Countertop") can have 2–3 options you\'re considering (Quartz vs Granite vs Soapstone). Add specs, vendor, cost, and links to each option, then pick your winner with a radio button. This keeps all your research organized in one place.',
+      'Start by adding a room or area (Kitchen, Bathroom, Living Room, etc.). When you create a room, you can choose to pre-load it with typical decision categories for that room type. For example, a Kitchen gets Countertop, Cabinetry, Appliances, Flooring, and more. Then drill into each room to see its decisions.',
   },
   {
-    question: 'What are starter packs?',
+    question: 'How do I compare options?',
     answer:
-      'When you add a room, you pick a room type (Kitchen, Bathroom, Exterior, etc.) and the tool pre-populates common decision categories for that room type. For example, a Kitchen starter pack includes Countertop, Cabinetry, Appliances, Flooring, Backsplash, and more. You can delete what you don\'t need and add your own.',
+      'Each decision (like "Countertop") can have 2–3 options you\'re considering (Quartz vs Granite vs Soapstone). Add specs, notes, and links to each option. Mark one as selected with a checkbox when you\'ve decided. This keeps all your research organized and easy to compare.',
   },
   {
     question: 'How many finish decisions does a typical renovation have?',
     answer:
-      'A kitchen or bathroom renovation typically involves 15–30 finish decisions. A whole-house renovation can have 50–100+. This tool helps you organize them by room, category, and status so you always know what\'s decided and what\'s still open.',
-  },
-  {
-    question: 'When do I need to lock in finish decisions?',
-    answer:
-      'It depends on the construction stage. Appliances and fixtures often need to be ordered during the "Long-Lead" phase (8+ weeks before installation). Tile, countertops, and cabinetry must be locked before fabrication. Paint and hardware can wait until closeout. This tool tracks the "needed-by" stage for each decision.',
+      'A kitchen or bathroom renovation typically involves 8–15 finish decisions. A whole-house renovation can have 30–50+. This tool helps you organize them by room and status so you always know what\'s decided and what\'s still open.',
   },
 ]
 
@@ -100,9 +95,8 @@ export default async function FinishDecisionsLandingPage() {
               Finish Decisions
             </h1>
             <p className="text-lg text-cream/70 mb-4 max-w-3xl mx-auto text-center leading-relaxed">
-              Organize decisions by room. Compare multiple options for each choice
-              (Quartz vs Granite, Wolf vs Thermador). Track specs, vendors, costs, and
-              links. Start with pre-loaded decision categories or build your own.
+              Add rooms or areas. Each room gets default decisions. Compare options for each
+              choice (Quartz vs Granite). Track specs, notes, and links. Simple, room-first organization.
             </p>
             <p className="text-cream/50 text-sm mb-12 max-w-2xl mx-auto text-center">
               Built for Hawai&#x02BB;i homeowners tackling real renovation projects.
@@ -115,8 +109,8 @@ export default async function FinishDecisionsLandingPage() {
                 Preview: What You&apos;ll Track
               </h2>
               <p className="text-cream/60 text-sm mb-6">
-                Organize decisions by room. Each decision can have multiple options to
-                compare. Track specs, vendor, cost, and links for every option.
+                Room-first organization. Each decision can have multiple options to compare.
+                Track specs, notes, and links for every option.
               </p>
               <div className="space-y-3">
                 {PREVIEW_ITEMS.map((item, i) => (
@@ -157,38 +151,37 @@ export default async function FinishDecisionsLandingPage() {
                 <li className="flex gap-2">
                   <span className="text-sandstone">→</span>
                   <span>
-                    <strong className="text-cream">Room Manager</strong> — Add rooms
-                    (Kitchen, Bathroom, etc.) and auto-populate decision categories with
-                    starter packs
+                    <strong className="text-cream">Room-First Organization</strong> — Add
+                    rooms (Kitchen, Bathroom, Living Room, etc.) with default decisions
+                    pre-loaded
                   </span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-sandstone">→</span>
                   <span>
                     <strong className="text-cream">Compare Options</strong> — Add 2-3
-                    options per decision (Quartz vs Granite) and pick your winner
+                    options per decision (Quartz vs Granite) and mark your winner
                   </span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-sandstone">→</span>
                   <span>
-                    <strong className="text-cream">Full Details Per Option</strong> —
-                    Record specs, vendor, cost estimate, multiple links, and notes for
-                    each option
+                    <strong className="text-cream">Track Details</strong> — Record specs,
+                    notes, and multiple links for each option
                   </span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-sandstone">→</span>
                   <span>
-                    <strong className="text-cream">Filters & Search</strong> — Find
-                    decisions by room, status, or keyword search
+                    <strong className="text-cream">Room-Scoped Search</strong> — Find
+                    decisions within a room by keyword
                   </span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-sandstone">→</span>
                   <span>
-                    <strong className="text-cream">Progress Tracking</strong> — See
-                    decisions by status: Exploring, Decided, Ordered, Complete
+                    <strong className="text-cream">Simple Statuses</strong> — Track
+                    progress: Deciding, Shortlist, Selected, Ordered, Done
                   </span>
                 </li>
                 <li className="flex gap-2">
