@@ -428,6 +428,116 @@ function RoomsListView({
 }
 
 // ============================================================================
+// SEARCH RESULTS VIEW
+// ============================================================================
+
+function SearchResultsView({
+  rooms,
+  searchQuery,
+  onClearSearch,
+  onSelectDecision,
+}: {
+  rooms: RoomV3[]
+  searchQuery: string
+  onClearSearch: () => void
+  onSelectDecision: (roomId: string, decisionId: string) => void
+}) {
+  // Filter all rooms and decisions
+  const results = useMemo(() => {
+    const query = searchQuery.toLowerCase()
+
+    return rooms
+      .map((room) => {
+        const matchingDecisions = room.decisions.filter((decision) => {
+          const searchable = [
+            decision.title,
+            decision.notes,
+            ...decision.options.flatMap((opt) => [
+              opt.name,
+              opt.notes,
+              ...opt.urls.map((u) => u.url),
+            ]),
+          ]
+            .join(' ')
+            .toLowerCase()
+
+          return searchable.includes(query)
+        })
+
+        return { room, decisions: matchingDecisions }
+      })
+      .filter((r) => r.decisions.length > 0)
+  }, [rooms, searchQuery])
+
+  const totalResults = results.reduce((sum, r) => sum + r.decisions.length, 0)
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-4 mb-2">
+        <h1 className="font-serif text-4xl md:text-5xl text-sandstone">Search Results</h1>
+        <div className="shrink-0 mt-2">
+          <ShareButton title="Finish Decisions &mdash; Hawaii Home Central" />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between mb-6">
+        <p className="text-cream/70 text-lg">
+          {totalResults} result{totalResults !== 1 ? 's' : ''} across {results.length} room
+          {results.length !== 1 ? 's' : ''}
+        </p>
+        <Button variant="secondary" onClick={onClearSearch}>
+          Clear Search
+        </Button>
+      </div>
+
+      {results.length === 0 ? (
+        <div className="bg-basalt-50 rounded-card p-12 text-center">
+          <p className="text-cream/50">No results found for &quot;{searchQuery}&quot;</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {results.map(({ room, decisions }) => (
+            <div key={room.id} className="bg-basalt-50 rounded-card p-4">
+              <h3 className="text-lg text-sandstone mb-3 font-medium">{room.name}</h3>
+              <div className="space-y-2">
+                {decisions.map((decision) => {
+                  const selectedOption = decision.options.find((opt) => opt.isSelected)
+
+                  return (
+                    <div
+                      key={decision.id}
+                      onClick={() => onSelectDecision(room.id, decision.id)}
+                      className="bg-basalt rounded-card p-3 cursor-pointer hover:bg-basalt/80 transition-colors"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-cream font-medium">{decision.title}</span>
+                        <Badge variant={STATUS_CONFIG_V3[decision.status].variant}>
+                          {STATUS_CONFIG_V3[decision.status].label}
+                        </Badge>
+                      </div>
+                      {decision.notes && (
+                        <div className="text-sm text-cream/60 mt-1 line-clamp-2">
+                          {decision.notes}
+                        </div>
+                      )}
+                      {selectedOption && (
+                        <div className="text-sm text-sandstone/70 mt-1">
+                          → {selectedOption.name}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================================================
 // ROOM DETAIL VIEW
 // ============================================================================
 
@@ -436,40 +546,55 @@ function RoomDetailView({
   onBack,
   onUpdateRoom,
   onDeleteRoom,
-  searchQuery,
-  onSearchChange,
+  expandedDecisionId,
+  setExpandedDecisionId,
 }: {
   room: RoomV3
   onBack: () => void
   onUpdateRoom: (updates: Partial<RoomV3>) => void
   onDeleteRoom: () => void
-  searchQuery: string
-  onSearchChange: (query: string) => void
+  expandedDecisionId: string | null
+  setExpandedDecisionId: (id: string | null) => void
 }) {
-  const [expandedDecisionId, setExpandedDecisionId] = useState<string | null>(null)
   const [newDecisionTitle, setNewDecisionTitle] = useState('')
+  const [sortColumn, setSortColumn] = useState<'title' | 'status' | 'notes' | 'options'>('title')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
-  // Filter decisions by search (room-scoped for now)
-  const filteredDecisions = useMemo(() => {
-    if (!searchQuery) return room.decisions
+  // Handle column header click for sorting
+  const handleSort = (column: 'title' | 'status' | 'notes' | 'options') => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortColumn(column)
+      setSortDirection('asc')
+    }
+  }
 
-    const query = searchQuery.toLowerCase()
-    return room.decisions.filter((decision) => {
-      const searchable = [
-        decision.title,
-        decision.notes,
-        ...decision.options.flatMap((opt) => [
-          opt.name,
-          opt.notes,
-          ...opt.urls.map((u) => u.url),
-        ]),
-      ]
-        .join(' ')
-        .toLowerCase()
+  // Sort decisions based on current sort column and direction
+  const sortedDecisions = useMemo(() => {
+    const sorted = [...room.decisions].sort((a, b) => {
+      let comparison = 0
 
-      return searchable.includes(query)
+      switch (sortColumn) {
+        case 'title':
+          comparison = a.title.localeCompare(b.title)
+          break
+        case 'status':
+          comparison = a.status.localeCompare(b.status)
+          break
+        case 'notes':
+          comparison = (a.notes || '').localeCompare(b.notes || '')
+          break
+        case 'options':
+          comparison = a.options.length - b.options.length
+          break
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison
     })
-  }, [room.decisions, searchQuery])
+
+    return sorted
+  }, [room.decisions, sortColumn, sortDirection])
 
   const handleAddDecision = () => {
     if (!newDecisionTitle.trim()) return
@@ -589,75 +714,147 @@ function RoomDetailView({
         </div>
       </div>
 
-      <div className="bg-basalt-50 rounded-card p-4 mb-6">
-        <Input
-          placeholder="Search this room..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
-      </div>
+      {/* Decisions Table */}
+      <div className="bg-basalt-50 rounded-card overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-cream/10">
+              <th
+                onClick={() => handleSort('title')}
+                className="text-left px-4 py-3 text-sm font-medium text-cream/70 cursor-pointer hover:text-cream transition-colors"
+              >
+                <div className="flex items-center gap-1">
+                  Decision
+                  {sortColumn === 'title' && (
+                    <span className="text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  )}
+                </div>
+              </th>
+              <th
+                onClick={() => handleSort('status')}
+                className="text-left px-4 py-3 text-sm font-medium text-cream/70 cursor-pointer hover:text-cream transition-colors"
+              >
+                <div className="flex items-center gap-1">
+                  Status
+                  {sortColumn === 'status' && (
+                    <span className="text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  )}
+                </div>
+              </th>
+              <th
+                onClick={() => handleSort('notes')}
+                className="text-left px-4 py-3 text-sm font-medium text-cream/70 cursor-pointer hover:text-cream transition-colors"
+              >
+                <div className="flex items-center gap-1">
+                  Notes
+                  {sortColumn === 'notes' && (
+                    <span className="text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  )}
+                </div>
+              </th>
+              <th
+                onClick={() => handleSort('options')}
+                className="text-center px-4 py-3 text-sm font-medium text-cream/70 cursor-pointer hover:text-cream transition-colors"
+              >
+                <div className="flex items-center justify-center gap-1">
+                  Options
+                  {sortColumn === 'options' && (
+                    <span className="text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  )}
+                </div>
+              </th>
+              <th className="text-right px-4 py-3 text-sm font-medium text-cream/70"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* Quick Add Decision Row - Top */}
+            <tr className="border-b border-cream/10 bg-basalt/30">
+              <td colSpan={5} className="px-4 py-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add decision (e.g., Countertop)"
+                    value={newDecisionTitle}
+                    onChange={(e) => setNewDecisionTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddDecision()
+                    }}
+                    className="flex-1"
+                  />
+                  <Button size="sm" onClick={handleAddDecision}>
+                    Add
+                  </Button>
+                </div>
+              </td>
+            </tr>
 
-      <div className="bg-basalt-50 rounded-card p-4 mb-6">
-        <h2 className="text-sm font-medium text-cream/70 mb-3">Quick Add Decision</h2>
-        <div className="flex gap-2">
-          <Input
-            placeholder="New decision title (e.g., Countertop)"
-            value={newDecisionTitle}
-            onChange={(e) => setNewDecisionTitle(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleAddDecision()
-            }}
-          />
-          <Button onClick={handleAddDecision}>Add</Button>
-        </div>
-      </div>
+            {/* Decision Rows */}
+            {room.decisions.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-center py-12 text-cream/50">
+                  No decisions yet. Add your first decision above!
+                </td>
+              </tr>
+            ) : (
+              sortedDecisions.map((decision) => (
+                <DecisionRow
+                  key={decision.id}
+                  decision={decision}
+                  isExpanded={expandedDecisionId === decision.id}
+                  onToggle={() =>
+                    setExpandedDecisionId(expandedDecisionId === decision.id ? null : decision.id)
+                  }
+                  onUpdateDecision={(updates) => updateDecision(decision.id, updates)}
+                  onDeleteDecision={() => {
+                    if (confirm(`Delete "${decision.title}"? This will also delete all options.`)) {
+                      deleteDecision(decision.id)
+                    }
+                  }}
+                  onAddOption={() => addOption(decision.id)}
+                  onUpdateOption={(optionId, updates) =>
+                    updateOption(decision.id, optionId, updates)
+                  }
+                  onDeleteOption={(optionId) => {
+                    if (confirm('Delete this option?')) {
+                      deleteOption(decision.id, optionId)
+                    }
+                  }}
+                />
+              ))
+            )}
 
-      {filteredDecisions.length === 0 ? (
-        <div className="text-center py-12 text-cream/50">
-          {room.decisions.length === 0 ? (
-            <p>No decisions yet. Add your first decision above!</p>
-          ) : (
-            <p>No decisions match your search.</p>
-          )}
-        </div>
-      ) : (
-        <div className="bg-basalt-50 rounded-card">
-          {filteredDecisions.map((decision) => (
-            <DecisionCard
-              key={decision.id}
-              decision={decision}
-              isExpanded={expandedDecisionId === decision.id}
-              onToggle={() =>
-                setExpandedDecisionId(expandedDecisionId === decision.id ? null : decision.id)
-              }
-              onUpdateDecision={(updates) => updateDecision(decision.id, updates)}
-              onDeleteDecision={() => {
-                if (confirm(`Delete "${decision.title}"? This will also delete all options.`)) {
-                  deleteDecision(decision.id)
-                }
-              }}
-              onAddOption={() => addOption(decision.id)}
-              onUpdateOption={(optionId, updates) =>
-                updateOption(decision.id, optionId, updates)
-              }
-              onDeleteOption={(optionId) => {
-                if (confirm('Delete this option?')) {
-                  deleteOption(decision.id, optionId)
-                }
-              }}
-            />
-          ))}
-        </div>
-      )}
+            {/* Quick Add Decision Row - Bottom */}
+            {room.decisions.length > 0 && (
+              <tr className="border-t border-cream/10 bg-basalt/30">
+                <td colSpan={5} className="px-4 py-2">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add decision (e.g., Countertop)"
+                      value={newDecisionTitle}
+                      onChange={(e) => setNewDecisionTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleAddDecision()
+                      }}
+                      className="flex-1"
+                    />
+                    <Button size="sm" onClick={handleAddDecision}>
+                      Add
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </>
   )
 }
 
 // ============================================================================
-// DECISION CARD
+// DECISION ROW
 // ============================================================================
 
-function DecisionCard({
+function DecisionRow({
   decision,
   isExpanded,
   onToggle,
@@ -679,41 +876,51 @@ function DecisionCard({
   const selectedOption = decision.options.find((opt) => opt.isSelected)
 
   return (
-    <div className="border-b border-cream/10 last:border-0">
-      <div className="py-3 px-4 hover:bg-basalt-50/50 transition-colors">
-        <div className="flex items-center gap-3">
-          <span
-            onClick={onToggle}
-            className="text-cream font-medium flex-1 cursor-pointer"
-          >
-            {decision.title}
-          </span>
+    <>
+      {/* Main Table Row */}
+      <tr
+        className="border-b border-cream/10 hover:bg-basalt-50/50 transition-colors cursor-pointer"
+        onClick={onToggle}
+      >
+        <td className="px-4 py-3">
+          <div className="text-cream font-medium">{decision.title}</div>
+          {selectedOption && (
+            <div className="text-xs text-sandstone/70 mt-0.5">→ {selectedOption.name}</div>
+          )}
+        </td>
+        <td className="px-4 py-3">
           <Badge variant={STATUS_CONFIG_V3[decision.status].variant}>
             {STATUS_CONFIG_V3[decision.status].label}
           </Badge>
+        </td>
+        <td className="px-4 py-3">
+          {decision.notes && (
+            <div className="text-sm text-cream/60 line-clamp-2 max-w-md">{decision.notes}</div>
+          )}
+        </td>
+        <td className="px-4 py-3 text-center">
           <span className="text-xs text-cream/40">
             {decision.options.length} option{decision.options.length !== 1 ? 's' : ''}
           </span>
+        </td>
+        <td className="px-4 py-3 text-right">
           <button
             onClick={(e) => {
               e.stopPropagation()
               onDeleteDecision()
             }}
-            className="text-cream/40 hover:text-red-400 text-xs shrink-0"
+            className="text-cream/40 hover:text-red-400 text-xs"
           >
             Delete
           </button>
-        </div>
-        {selectedOption && (
-          <div className="text-sm text-sandstone/70 mt-1">→ {selectedOption.name}</div>
-        )}
-        {decision.notes && (
-          <div className="text-sm text-cream/50 mt-1 line-clamp-2">{decision.notes}</div>
-        )}
-      </div>
+        </td>
+      </tr>
 
+      {/* Expanded Row - Decision Details */}
       {isExpanded && (
-        <div className="bg-basalt p-6 mb-4 mx-4 rounded-card space-y-4">
+        <tr>
+          <td colSpan={5} className="px-4 py-4 bg-basalt">
+            <div className="space-y-4">
           {/* Decision fields */}
           <div className="pb-4 border-b border-cream/10">
             <h3 className="text-sm font-medium text-cream/70 mb-3">Decision Details</h3>
@@ -772,15 +979,17 @@ function DecisionCard({
             )}
           </div>
 
-          {/* Delete decision */}
-          <div className="pt-4 border-t border-cream/10">
-            <Button variant="ghost" onClick={onDeleteDecision}>
-              Delete Decision
-            </Button>
-          </div>
-        </div>
+              {/* Delete decision */}
+              <div className="pt-4 border-t border-cream/10">
+                <Button variant="ghost" onClick={onDeleteDecision}>
+                  Delete Decision
+                </Button>
+              </div>
+            </div>
+          </td>
+        </tr>
       )}
-    </div>
+    </>
   )
 }
 
@@ -924,6 +1133,7 @@ export function ToolContent() {
 
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [expandedDecisionId, setExpandedDecisionId] = useState<string | null>(null)
 
   // Auto-migrate on load
   useEffect(() => {
@@ -995,8 +1205,30 @@ export function ToolContent() {
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-4xl mx-auto">
+        {/* Global Search Bar */}
+        {isLoaded && state.version === 3 && (
+          <div className="mb-6">
+            <Input
+              placeholder="Search all decisions and rooms..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        )}
+
         {isLoaded && state.version === 3 ? (
-          currentRoom ? (
+          searchQuery ? (
+            <SearchResultsView
+              rooms={v3State.rooms}
+              searchQuery={searchQuery}
+              onClearSearch={() => setSearchQuery('')}
+              onSelectDecision={(roomId, decisionId) => {
+                setCurrentRoomId(roomId)
+                setExpandedDecisionId(decisionId)
+                setSearchQuery('')
+              }}
+            />
+          ) : currentRoom ? (
             <RoomDetailView
               room={currentRoom}
               onBack={() => {
@@ -1013,8 +1245,8 @@ export function ToolContent() {
                   handleDeleteRoom(currentRoom.id)
                 }
               }}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
+              expandedDecisionId={expandedDecisionId}
+              setExpandedDecisionId={setExpandedDecisionId}
             />
           ) : (
             <RoomsListView
