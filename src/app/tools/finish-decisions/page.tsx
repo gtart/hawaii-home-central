@@ -13,9 +13,14 @@ export const metadata: Metadata = {
 
 const FAQ_ITEMS = [
   {
-    question: 'Why track finish decisions separately from my checklist?',
+    question: 'How does comparing options work?',
     answer:
-      'Finish decisions require more detail than a simple checkbox: you need specs, vendor info, links to products, and deadlines by construction stage. This tool gives each decision its own record so nothing gets forgotten or misspecified.',
+      'Each decision (like "Countertop") can have 2–3 options you\'re considering (Quartz vs Granite vs Soapstone). Add specs, vendor, cost, and links to each option, then pick your winner with a radio button. This keeps all your research organized in one place.',
+  },
+  {
+    question: 'What are starter packs?',
+    answer:
+      'When you add a room, you pick a room type (Kitchen, Bathroom, Exterior, etc.) and the tool pre-populates common decision categories for that room type. For example, a Kitchen starter pack includes Countertop, Cabinetry, Appliances, Flooring, Backsplash, and more. You can delete what you don\'t need and add your own.',
   },
   {
     question: 'How many finish decisions does a typical renovation have?',
@@ -25,12 +30,7 @@ const FAQ_ITEMS = [
   {
     question: 'When do I need to lock in finish decisions?',
     answer:
-      'It depends on the construction stage. Appliances and fixtures often need to be ordered during the "Long-Lead" phase (8+ weeks before installation). Tile, countertops, and cabinetry must be locked before fabrication. Paint and hardware can wait until closeout. This tool tracks the "needed-by" stage for each item.',
-  },
-  {
-    question: 'What happens if I change my mind after locking in a decision?',
-    answer:
-      'Changing decisions late causes delays and change orders. If the material has been ordered or fabricated, you\'ll likely pay restocking fees or eat the cost. This tool helps you avoid that by surfacing what must be decided and when.',
+      'It depends on the construction stage. Appliances and fixtures often need to be ordered during the "Long-Lead" phase (8+ weeks before installation). Tile, countertops, and cabinetry must be locked before fabrication. Paint and hardware can wait until closeout. This tool tracks the "needed-by" stage for each decision.',
   },
 ]
 
@@ -100,9 +100,9 @@ export default async function FinishDecisionsLandingPage() {
               Finish Decisions
             </h1>
             <p className="text-lg text-cream/70 mb-4 max-w-3xl mx-auto text-center leading-relaxed">
-              Track every finish and appliance choice across rooms and construction
-              stages. Record specs, vendors, needed-by deadlines, and links so nothing
-              gets forgotten or misspecified.
+              Organize decisions by room. Compare multiple options for each choice
+              (Quartz vs Granite, Wolf vs Thermador). Track specs, vendors, costs, and
+              links. Start with pre-loaded decision categories or build your own.
             </p>
             <p className="text-cream/50 text-sm mb-12 max-w-2xl mx-auto text-center">
               Built for Hawai&#x02BB;i homeowners tackling real renovation projects.
@@ -115,8 +115,8 @@ export default async function FinishDecisionsLandingPage() {
                 Preview: What You&apos;ll Track
               </h2>
               <p className="text-cream/60 text-sm mb-6">
-                Each finish decision gets its own record with category, status, specs,
-                vendor, needed-by stage, links, and notes.
+                Organize decisions by room. Each decision can have multiple options to
+                compare. Track specs, vendor, cost, and links for every option.
               </p>
               <div className="space-y-3">
                 {PREVIEW_ITEMS.map((item, i) => (
@@ -157,43 +157,45 @@ export default async function FinishDecisionsLandingPage() {
                 <li className="flex gap-2">
                   <span className="text-sandstone">→</span>
                   <span>
-                    <strong className="text-cream">Quick Add</strong> — Add a new
-                    decision in seconds (room, category, name, status)
+                    <strong className="text-cream">Room Manager</strong> — Add rooms
+                    (Kitchen, Bathroom, etc.) and auto-populate decision categories with
+                    starter packs
                   </span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-sandstone">→</span>
                   <span>
-                    <strong className="text-cream">Full Details</strong> — Record
-                    specs, vendor, needed-by stage, multiple links, and notes
+                    <strong className="text-cream">Compare Options</strong> — Add 2-3
+                    options per decision (Quartz vs Granite) and pick your winner
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-sandstone">→</span>
+                  <span>
+                    <strong className="text-cream">Full Details Per Option</strong> —
+                    Record specs, vendor, cost estimate, multiple links, and notes for
+                    each option
                   </span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-sandstone">→</span>
                   <span>
                     <strong className="text-cream">Filters & Search</strong> — Find
-                    decisions by room, status, category, or keyword
+                    decisions by room, status, or keyword search
                   </span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-sandstone">→</span>
                   <span>
-                    <strong className="text-cream">Progress Summary</strong> — See
-                    how many decisions are in progress, locked, or done
+                    <strong className="text-cream">Progress Tracking</strong> — See
+                    decisions by status: Exploring, Decided, Ordered, Complete
                   </span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-sandstone">→</span>
                   <span>
                     <strong className="text-cream">Multi-Device Sync</strong> — Your
-                    progress saves to your account. Pick up on any device.
-                  </span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-sandstone">→</span>
-                  <span>
-                    <strong className="text-cream">Duplicate & Organize</strong> —
-                    Copy decisions to other rooms, delete mistakes, filter by any field
+                    data saves to your account. Pick up on any device.
                   </span>
                 </li>
               </ul>
