@@ -57,21 +57,24 @@ function migrateV1toV3(v1: V1FinishDecisionsPayload): FinishDecisionsPayloadV3 {
     const decisions: DecisionV3[] = []
 
     categoriesMap.forEach((categoryItems, category) => {
-      const options: OptionV3[] = categoryItems.map((item) => ({
-        id: crypto.randomUUID(),
-        name: item.name,
-        specs: item.specs || '',
-        notes: item.where
-          ? `${item.notes}\n\nWhere: ${item.where}`.trim()
-          : item.notes || '',
-        urls: item.links.map((link) => ({
-          id: link.id,
-          label: link.label || '',
-          url: link.url,
-        })),
-        createdAt: item.createdAt || new Date().toISOString(),
-        updatedAt: item.updatedAt || new Date().toISOString(),
-      }))
+      const options: OptionV3[] = categoryItems.map((item) => {
+        // Combine specs, notes, and where into single notes field
+        const noteParts = [item.specs, item.notes, item.where ? `Where: ${item.where}` : '']
+          .filter(Boolean)
+          .join('\n\n')
+
+        return {
+          id: crypto.randomUUID(),
+          name: item.name,
+          notes: noteParts.trim(),
+          urls: item.links.map((link) => ({
+            id: link.id,
+            url: link.url,
+          })),
+          createdAt: item.createdAt || new Date().toISOString(),
+          updatedAt: item.updatedAt || new Date().toISOString(),
+        }
+      })
 
       // Map V1 status to V3
       const v1Status = categoryItems[0].status
@@ -85,8 +88,7 @@ function migrateV1toV3(v1: V1FinishDecisionsPayload): FinishDecisionsPayloadV3 {
         id: crypto.randomUUID(),
         title: category,
         status: v3Status,
-        specs: '',
-        notes: '',
+        notes: '', // V1 didn't have decision-level notes
         options,
         createdAt: categoryItems[0].createdAt || new Date().toISOString(),
         updatedAt: categoryItems[0].updatedAt || new Date().toISOString(),
@@ -127,27 +129,22 @@ function migrateV2toV3(v2: V2FinishDecisionsPayload): FinishDecisionsPayloadV3 {
       const decisionOptions = v2.options.filter((o) => o.decisionId === decision.id)
 
       const options: OptionV3[] = decisionOptions.map((option) => {
-        // Combine notes, where, cost
-        let combinedNotes = option.notes || ''
-        if (option.where) {
-          combinedNotes = combinedNotes
-            ? `${combinedNotes}\n\nWhere: ${option.where}`
-            : `Where: ${option.where}`
-        }
-        if (option.estimatedCost) {
-          combinedNotes = combinedNotes
-            ? `${combinedNotes}\nCost: ${option.estimatedCost}`
-            : `Cost: ${option.estimatedCost}`
-        }
+        // Combine specs, notes, where, and cost into single notes field
+        const noteParts = [
+          option.specs,
+          option.notes,
+          option.where ? `Where: ${option.where}` : '',
+          option.estimatedCost ? `Cost: ${option.estimatedCost}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n\n')
 
         return {
           id: option.id,
           name: option.name,
-          specs: option.specs || '',
-          notes: combinedNotes.trim(),
+          notes: noteParts.trim(),
           urls: option.links.map((link) => ({
             id: link.id,
-            label: link.label || '',
             url: link.url,
           })),
           isSelected: decision.selectedOptionId === option.id,
@@ -168,8 +165,7 @@ function migrateV2toV3(v2: V2FinishDecisionsPayload): FinishDecisionsPayloadV3 {
         id: decision.id,
         title: decision.category,
         status: v3Status,
-        specs: '', // V2 didn't have decision-level specs
-        notes: decision.notes || '',
+        notes: decision.notes || '', // V2 didn't have decision-level specs
         options,
         createdAt: decision.createdAt,
         updatedAt: decision.updatedAt,
@@ -453,7 +449,7 @@ function RoomDetailView({
   const [expandedDecisionId, setExpandedDecisionId] = useState<string | null>(null)
   const [newDecisionTitle, setNewDecisionTitle] = useState('')
 
-  // Filter decisions by search
+  // Filter decisions by search (room-scoped for now)
   const filteredDecisions = useMemo(() => {
     if (!searchQuery) return room.decisions
 
@@ -461,11 +457,9 @@ function RoomDetailView({
     return room.decisions.filter((decision) => {
       const searchable = [
         decision.title,
-        decision.specs,
         decision.notes,
         ...decision.options.flatMap((opt) => [
           opt.name,
-          opt.specs,
           opt.notes,
           ...opt.urls.map((u) => u.url),
         ]),
@@ -484,7 +478,6 @@ function RoomDetailView({
       id: crypto.randomUUID(),
       title: newDecisionTitle.trim(),
       status: 'deciding',
-      specs: '',
       notes: '',
       options: [],
       createdAt: new Date().toISOString(),
@@ -526,7 +519,6 @@ function RoomDetailView({
         {
           id: crypto.randomUUID(),
           name: '',
-          specs: '',
           notes: '',
           urls: [],
           createdAt: new Date().toISOString(),
@@ -688,21 +680,35 @@ function DecisionCard({
 
   return (
     <div className="border-b border-cream/10 last:border-0">
-      <div
-        onClick={onToggle}
-        className="py-3 px-4 cursor-pointer hover:bg-basalt-50/50 transition-colors"
-      >
+      <div className="py-3 px-4 hover:bg-basalt-50/50 transition-colors">
         <div className="flex items-center gap-3">
-          <span className="text-cream font-medium flex-1">{decision.title}</span>
+          <span
+            onClick={onToggle}
+            className="text-cream font-medium flex-1 cursor-pointer"
+          >
+            {decision.title}
+          </span>
           <Badge variant={STATUS_CONFIG_V3[decision.status].variant}>
             {STATUS_CONFIG_V3[decision.status].label}
           </Badge>
           <span className="text-xs text-cream/40">
             {decision.options.length} option{decision.options.length !== 1 ? 's' : ''}
           </span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onDeleteDecision()
+            }}
+            className="text-cream/40 hover:text-red-400 text-xs shrink-0"
+          >
+            Delete
+          </button>
         </div>
         {selectedOption && (
           <div className="text-sm text-sandstone/70 mt-1">→ {selectedOption.name}</div>
+        )}
+        {decision.notes && (
+          <div className="text-sm text-cream/50 mt-1 line-clamp-2">{decision.notes}</div>
         )}
       </div>
 
@@ -730,21 +736,11 @@ function DecisionCard({
               />
 
               <div>
-                <label className="block text-sm text-cream/70 mb-1.5">Specs</label>
-                <textarea
-                  value={decision.specs}
-                  onChange={(e) => onUpdateDecision({ specs: e.target.value })}
-                  className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[80px]"
-                  placeholder="Decision-level specifications..."
-                />
-              </div>
-
-              <div>
                 <label className="block text-sm text-cream/70 mb-1.5">Notes</label>
                 <textarea
                   value={decision.notes}
                   onChange={(e) => onUpdateDecision({ notes: e.target.value })}
-                  className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[60px]"
+                  className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[100px]"
                   placeholder="General notes about this decision..."
                 />
               </div>
@@ -802,7 +798,6 @@ function OptionEditor({
   onDelete: () => void
 }) {
   const [newUrl, setNewUrl] = useState('')
-  const [newLabel, setNewLabel] = useState('')
 
   const handleAddUrl = () => {
     if (!newUrl.trim()) return
@@ -813,13 +808,11 @@ function OptionEditor({
         {
           id: crypto.randomUUID(),
           url: newUrl.trim(),
-          label: newLabel.trim(),
         },
       ],
     })
 
     setNewUrl('')
-    setNewLabel('')
   }
 
   const handleRemoveUrl = (urlId: string) => {
@@ -859,7 +852,7 @@ function OptionEditor({
           onChange={(e) => onUpdate({ name: e.target.value })}
         />
 
-        {/* URLs Section - URL first, bigger */}
+        {/* URLs Section */}
         <div>
           <label className="block text-sm text-cream/70 mb-2">URLs</label>
           {option.urls.length > 0 && (
@@ -872,7 +865,7 @@ function OptionEditor({
                     rel="noopener noreferrer"
                     className="text-sandstone hover:text-sandstone-light text-sm flex-1 truncate"
                   >
-                    {url.label || url.url}
+                    {url.url}
                   </a>
                   <button
                     onClick={() => handleRemoveUrl(url.id)}
@@ -885,37 +878,21 @@ function OptionEditor({
             </div>
           )}
           <div className="flex gap-2">
-            <div className="flex-[7]">
-              <Input placeholder="URL (required)" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} />
-            </div>
-            <div className="flex-[3]">
-              <Input
-                placeholder="Label (optional)"
-                value={newLabel}
-                onChange={(e) => setNewLabel(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-2 mt-2">
+            <Input
+              placeholder="URL"
+              value={newUrl}
+              onChange={(e) => setNewUrl(e.target.value)}
+              className="flex-1"
+            />
             <Button size="sm" variant="secondary" onClick={handleAddUrl}>
-              Add URL
+              Add
             </Button>
-            {newUrl && !isValidUrl(newUrl) && (
-              <p className="text-yellow-500 text-xs">
-                URL should start with http:// or https://
-              </p>
-            )}
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm text-cream/70 mb-1.5">Specs</label>
-          <textarea
-            value={option.specs}
-            onChange={(e) => onUpdate({ specs: e.target.value })}
-            className="w-full bg-basalt text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[80px]"
-            placeholder="Detailed specifications..."
-          />
+          {newUrl && !isValidUrl(newUrl) && (
+            <p className="text-yellow-500 text-xs mt-1">
+              URL should start with http:// or https://
+            </p>
+          )}
         </div>
 
         <div>
@@ -923,8 +900,8 @@ function OptionEditor({
           <textarea
             value={option.notes}
             onChange={(e) => onUpdate({ notes: e.target.value })}
-            className="w-full bg-basalt text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[60px]"
-            placeholder="Notes specific to this option..."
+            className="w-full bg-basalt text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[100px]"
+            placeholder="Specs, notes, details about this option..."
           />
         </div>
       </div>
@@ -976,7 +953,6 @@ export function ToolContent() {
             id: crypto.randomUUID(),
             title,
             status: 'deciding' as StatusV3,
-            specs: '',
             notes: '',
             options: [],
             createdAt: new Date().toISOString(),

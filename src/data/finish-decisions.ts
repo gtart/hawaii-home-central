@@ -151,19 +151,17 @@ export const STATUS_CONFIG_V3 = {
 
 export type StatusV3 = keyof typeof STATUS_CONFIG_V3
 
-// Link (simplified)
+// Link (simplified - just URL, no label)
 export interface LinkV3 {
   id: string
-  label: string // Optional
-  url: string // Required
+  url: string
 }
 
 // Option (nested in decision)
 export interface OptionV3 {
   id: string
   name: string
-  specs: string
-  notes: string
+  notes: string // Combined specs + notes
   urls: LinkV3[]
   isSelected?: boolean // Marks the chosen option
   createdAt: string
@@ -175,8 +173,7 @@ export interface DecisionV3 {
   id: string
   title: string // "Countertop" (was "category" in V2)
   status: StatusV3
-  specs: string // Decision-level specs
-  notes: string
+  notes: string // Combined specs + notes
   options: OptionV3[] // Nested
   createdAt: string
   updatedAt: string
