@@ -48,6 +48,12 @@ export default function AppPage() {
               description="Assign who owns commonly-missed renovation tasks. Prevent disputes by clarifying handoffs upfront."
               badge="Live"
             />
+            <Card
+              href="/app/tools/finish-decisions"
+              title="Finish Decisions"
+              description="Track finish and appliance choices across rooms. Record specs, vendors, needed-by stages, and links for every decision."
+              badge="Live"
+            />
           </div>
         </FadeInSection>
       </div>

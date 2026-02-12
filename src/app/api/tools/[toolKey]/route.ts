@@ -2,7 +2,12 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 
-const VALID_TOOL_KEYS = ['hold_points', 'fair_bid_checklist', 'responsibility_matrix']
+const VALID_TOOL_KEYS = [
+  'hold_points',
+  'fair_bid_checklist',
+  'responsibility_matrix',
+  'finish_decisions',
+]
 
 export async function GET(
   _request: Request,

@@ -29,6 +29,12 @@ const TOOLS = [
       'Assign who owns 16 commonly-missed renovation tasks so nothing gets assumed or dropped between parties.',
     href: '/tools/responsibility-matrix',
   },
+  {
+    title: 'Finish Decisions',
+    description:
+      'Track finish and appliance decisions by room. Record specs, vendors, needed-by stages, and multiple links per item.',
+    href: '/tools/finish-decisions',
+  },
 ]
 
 export default function ToolsIndexPage() {

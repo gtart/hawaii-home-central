@@ -3,7 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 interface UseToolStateOptions<T> {
-  toolKey: 'hold_points' | 'fair_bid_checklist' | 'responsibility_matrix'
+  toolKey:
+    | 'hold_points'
+    | 'fair_bid_checklist'
+    | 'responsibility_matrix'
+    | 'finish_decisions'
   localStorageKey: string
   defaultValue: T
 }
