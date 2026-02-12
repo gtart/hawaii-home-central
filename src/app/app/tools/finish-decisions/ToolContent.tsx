@@ -312,6 +312,8 @@ function RoomsListView({
   onDeleteRoom,
   searchQuery,
   onSearchChange,
+  viewMode,
+  onViewModeChange,
 }: {
   rooms: RoomV3[]
   onAddRoom: (type: RoomTypeV3, name: string, useDefaults: boolean) => void
@@ -319,6 +321,8 @@ function RoomsListView({
   onDeleteRoom: (roomId: string) => void
   searchQuery: string
   onSearchChange: (query: string) => void
+  viewMode: 'grid' | 'table'
+  onViewModeChange: (mode: 'grid' | 'table') => void
 }) {
   const [showAddModal, setShowAddModal] = useState(false)
 
@@ -344,8 +348,18 @@ function RoomsListView({
         />
       </div>
 
-      <div className="mb-6">
+      <div className="flex gap-2 mb-6">
         <Button onClick={() => setShowAddModal(true)}>Add Room or Area</Button>
+
+        {rooms.length > 0 && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => onViewModeChange(viewMode === 'grid' ? 'table' : 'grid')}
+          >
+            {viewMode === 'grid' ? 'Table View' : 'Grid View'}
+          </Button>
+        )}
       </div>
 
       {rooms.length === 0 ? (
@@ -544,6 +558,162 @@ function SearchResultsView({
               </div>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================================================
+// ALL DECISIONS VIEW - Shows decisions from all rooms in a table
+// ============================================================================
+
+function AllDecisionsView({
+  rooms,
+  onUpdateDecision,
+  onDeleteDecision,
+  onAddOption,
+  onUpdateOption,
+  onDeleteOption,
+  onSelectOption,
+}: {
+  rooms: RoomV3[]
+  onUpdateDecision: (roomId: string, decisionId: string, updates: Partial<DecisionV3>) => void
+  onDeleteDecision: (roomId: string, decisionId: string) => void
+  onAddOption: (
+    roomId: string,
+    decisionId: string,
+    option: Omit<OptionV3, 'id' | 'createdAt' | 'updatedAt'>
+  ) => void
+  onUpdateOption: (
+    roomId: string,
+    decisionId: string,
+    optionId: string,
+    updates: Partial<OptionV3>
+  ) => void
+  onDeleteOption: (roomId: string, decisionId: string, optionId: string) => void
+  onSelectOption: (roomId: string, decisionId: string, optionId: string) => void
+}) {
+  const [sortBy, setSortBy] = useState<'room' | 'title' | 'status'>('room')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [expandedDecisionId, setExpandedDecisionId] = useState<string | null>(null)
+
+  // Flatten all decisions from all rooms
+  const allDecisions = useMemo(() => {
+    return rooms.flatMap((room) =>
+      room.decisions.map((decision) => ({
+        ...decision,
+        roomId: room.id,
+        roomName: room.name,
+        roomType: room.type,
+      }))
+    )
+  }, [rooms])
+
+  // Sort decisions
+  const sortedDecisions = useMemo(() => {
+    const sorted = [...allDecisions].sort((a, b) => {
+      let comparison = 0
+      if (sortBy === 'room') {
+        comparison = a.roomName.localeCompare(b.roomName)
+      } else if (sortBy === 'title') {
+        comparison = a.title.localeCompare(b.title)
+      } else if (sortBy === 'status') {
+        comparison = a.status.localeCompare(b.status)
+      }
+      return sortOrder === 'desc' ? -comparison : comparison
+    })
+    return sorted
+  }, [allDecisions, sortBy, sortOrder])
+
+  const toggleSort = (column: typeof sortBy) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(column)
+      setSortOrder('asc')
+    }
+  }
+
+  const totalCount = allDecisions.length
+  const decidingCount = allDecisions.filter(
+    (d) => d.status === 'deciding' || d.status === 'shortlist'
+  ).length
+  const selectedCount = allDecisions.filter((d) => d.status === 'selected').length
+  const orderedCount = allDecisions.filter((d) => d.status === 'ordered').length
+  const doneCount = allDecisions.filter((d) => d.status === 'done').length
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="font-serif text-2xl text-sandstone mb-2">All Selections</h2>
+        <p className="text-cream/70">
+          {totalCount} selection{totalCount !== 1 ? 's' : ''} across {rooms.length} room
+          {rooms.length !== 1 ? 's' : ''}
+        </p>
+        <div className="flex gap-4 mt-3 text-sm text-cream/60">
+          {decidingCount > 0 && <span>{decidingCount} deciding</span>}
+          {selectedCount > 0 && <span>{selectedCount} selected</span>}
+          {orderedCount > 0 && <span>{orderedCount} ordered</span>}
+          {doneCount > 0 && <span>{doneCount} done</span>}
+        </div>
+      </div>
+
+      {/* Empty State */}
+      {totalCount === 0 ? (
+        <div className="text-center py-12 text-cream/50">
+          <p>No selections yet. Add a room to get started.</p>
+        </div>
+      ) : (
+        /* Table */
+        <div className="bg-basalt-50 rounded-card overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-basalt border-b border-cream/10">
+              <tr>
+                <th
+                  onClick={() => toggleSort('room')}
+                  className="px-4 py-3 text-left text-sm font-medium text-cream/80 cursor-pointer hover:text-cream"
+                >
+                  Room {sortBy === 'room' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
+                <th
+                  onClick={() => toggleSort('title')}
+                  className="px-4 py-3 text-left text-sm font-medium text-cream/80 cursor-pointer hover:text-cream"
+                >
+                  Selection {sortBy === 'title' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
+                <th
+                  onClick={() => toggleSort('status')}
+                  className="px-4 py-3 text-left text-sm font-medium text-cream/80 cursor-pointer hover:text-cream"
+                >
+                  Status {sortBy === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-cream/80">Notes</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-cream/80">Options</th>
+                <th className="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedDecisions.map((decision) => (
+                <DecisionRow
+                  key={`${decision.roomId}-${decision.id}`}
+                  decision={decision}
+                  roomId={decision.roomId}
+                  roomName={decision.roomName}
+                  isExpanded={expandedDecisionId === decision.id}
+                  onToggleExpand={() =>
+                    setExpandedDecisionId(expandedDecisionId === decision.id ? null : decision.id)
+                  }
+                  onUpdateDecision={onUpdateDecision}
+                  onDeleteDecision={onDeleteDecision}
+                  onUpdateOption={onUpdateOption}
+                  onDeleteOption={onDeleteOption}
+                  onSelectOption={onSelectOption}
+                />
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
@@ -865,17 +1035,17 @@ function RoomDetailView({
                   onToggle={() =>
                     setExpandedDecisionId(expandedDecisionId === decision.id ? null : decision.id)
                   }
-                  onUpdateDecision={(updates) => updateDecision(decision.id, updates)}
+                  onUpdateDecision={(updates: Partial<DecisionV3>) => updateDecision(decision.id, updates)}
                   onDeleteDecision={() => {
                     if (confirm(`Delete "${decision.title}"? This will also delete all options.`)) {
                       deleteDecision(decision.id)
                     }
                   }}
                   onAddOption={() => addOption(decision.id)}
-                  onUpdateOption={(optionId, updates) =>
+                  onUpdateOption={(optionId: string, updates: Partial<OptionV3>) =>
                     updateOption(decision.id, optionId, updates)
                   }
-                  onDeleteOption={(optionId) => {
+                  onDeleteOption={(optionId: string) => {
                     if (confirm('Delete this option?')) {
                       deleteOption(decision.id, optionId)
                     }
@@ -896,32 +1066,100 @@ function RoomDetailView({
 
 function DecisionRow({
   decision,
+  roomId,
+  roomName,
   isExpanded,
   onToggle,
+  onToggleExpand,
   onUpdateDecision,
   onDeleteDecision,
   onAddOption,
   onUpdateOption,
   onDeleteOption,
+  onSelectOption,
 }: {
   decision: DecisionV3
+  roomId?: string
+  roomName?: string
   isExpanded: boolean
-  onToggle: () => void
-  onUpdateDecision: (updates: Partial<DecisionV3>) => void
-  onDeleteDecision: () => void
-  onAddOption: () => void
-  onUpdateOption: (optionId: string, updates: Partial<OptionV3>) => void
-  onDeleteOption: (optionId: string) => void
+  onToggle?: () => void
+  onToggleExpand?: () => void
+  onUpdateDecision: ((updates: Partial<DecisionV3>) => void) | ((roomId: string, decisionId: string, updates: Partial<DecisionV3>) => void)
+  onDeleteDecision: (() => void) | ((roomId: string, decisionId: string) => void)
+  onAddOption?: (() => void) | ((roomId: string, decisionId: string, option: Omit<OptionV3, 'id' | 'createdAt' | 'updatedAt'>) => void)
+  onUpdateOption: ((optionId: string, updates: Partial<OptionV3>) => void) | ((roomId: string, decisionId: string, optionId: string, updates: Partial<OptionV3>) => void)
+  onDeleteOption: ((optionId: string) => void) | ((roomId: string, decisionId: string, optionId: string) => void)
+  onSelectOption?: (roomId: string, decisionId: string, optionId: string) => void
 }) {
+  const handleToggle = onToggleExpand || onToggle || (() => {})
   const selectedOption = decision.options.find((opt) => opt.isSelected)
+
+  // Wrapper functions to handle both calling signatures
+  const handleUpdateDecision = (updates: Partial<DecisionV3>) => {
+    if (roomId) {
+      ;(onUpdateDecision as (roomId: string, decisionId: string, updates: Partial<DecisionV3>) => void)(
+        roomId,
+        decision.id,
+        updates
+      )
+    } else {
+      ;(onUpdateDecision as (updates: Partial<DecisionV3>) => void)(updates)
+    }
+  }
+
+  const handleDeleteDecision = () => {
+    if (roomId) {
+      ;(onDeleteDecision as (roomId: string, decisionId: string) => void)(roomId, decision.id)
+    } else {
+      ;(onDeleteDecision as () => void)()
+    }
+  }
+
+  const handleUpdateOption = (optionId: string, updates: Partial<OptionV3>) => {
+    if (roomId) {
+      ;(onUpdateOption as (roomId: string, decisionId: string, optionId: string, updates: Partial<OptionV3>) => void)(
+        roomId,
+        decision.id,
+        optionId,
+        updates
+      )
+    } else {
+      ;(onUpdateOption as (optionId: string, updates: Partial<OptionV3>) => void)(optionId, updates)
+    }
+  }
+
+  const handleDeleteOption = (optionId: string) => {
+    if (roomId) {
+      ;(onDeleteOption as (roomId: string, decisionId: string, optionId: string) => void)(
+        roomId,
+        decision.id,
+        optionId
+      )
+    } else {
+      ;(onDeleteOption as (optionId: string) => void)(optionId)
+    }
+  }
+
+  const handleSelectOption = (optionId: string) => {
+    if (onSelectOption && roomId) {
+      onSelectOption(roomId, decision.id, optionId)
+    }
+  }
 
   return (
     <>
       {/* Main Table Row */}
       <tr
         className="border-b border-cream/10 hover:bg-basalt-50/50 transition-colors cursor-pointer"
-        onClick={onToggle}
+        onClick={handleToggle}
       >
+        {/* Room Column - Only show when roomName is provided (for AllDecisionsView) */}
+        {roomName && (
+          <td className="px-4 py-3">
+            <span className="text-cream/70 text-sm">{roomName}</span>
+          </td>
+        )}
+
         <td className="px-4 py-3">
           <div className="text-cream font-medium">{decision.title}</div>
           {selectedOption && (
@@ -947,7 +1185,7 @@ function DecisionRow({
           <button
             onClick={(e) => {
               e.stopPropagation()
-              onDeleteDecision()
+              handleDeleteDecision()
             }}
             className="text-cream/40 hover:text-red-400 text-xs"
           >
@@ -959,7 +1197,7 @@ function DecisionRow({
       {/* Expanded Row - Decision Details */}
       {isExpanded && (
         <tr>
-          <td colSpan={5} className="px-4 py-4 bg-basalt">
+          <td colSpan={roomName ? 6 : 5} className="px-4 py-4 bg-basalt">
             <div className="space-y-4">
           {/* Decision fields */}
           <div className="pb-4 border-b border-cream/10">
@@ -969,13 +1207,13 @@ function DecisionRow({
               <Input
                 label="Title"
                 value={decision.title}
-                onChange={(e) => onUpdateDecision({ title: e.target.value })}
+                onChange={(e) => handleUpdateDecision({ title: e.target.value })}
               />
 
               <Select
                 label="Status"
                 value={decision.status}
-                onChange={(e) => onUpdateDecision({ status: e.target.value as StatusV3 })}
+                onChange={(e) => handleUpdateDecision({ status: e.target.value as StatusV3 })}
                 options={Object.entries(STATUS_CONFIG_V3).map(([key, config]) => ({
                   value: key,
                   label: config.label,
@@ -986,7 +1224,7 @@ function DecisionRow({
                 <label className="block text-sm text-cream/70 mb-1.5">Notes</label>
                 <textarea
                   value={decision.notes}
-                  onChange={(e) => onUpdateDecision({ notes: e.target.value })}
+                  onChange={(e) => handleUpdateDecision({ notes: e.target.value })}
                   className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[100px]"
                   placeholder="General notes about this decision..."
                 />
@@ -998,9 +1236,15 @@ function DecisionRow({
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-cream/70">Options to Compare</h3>
-              <Button size="sm" variant="secondary" onClick={onAddOption}>
-                Add Option
-              </Button>
+              {onAddOption && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => (onAddOption as () => void)()}
+                >
+                  Add Option
+                </Button>
+              )}
             </div>
 
             {decision.options.length === 0 ? (
@@ -1012,8 +1256,10 @@ function DecisionRow({
                 <OptionEditor
                   key={option.id}
                   option={option}
-                  onUpdate={(updates) => onUpdateOption(option.id, updates)}
-                  onDelete={() => onDeleteOption(option.id)}
+                  isSelected={option.isSelected}
+                  onUpdate={(updates) => handleUpdateOption(option.id, updates)}
+                  onDelete={() => handleDeleteOption(option.id)}
+                  onSelect={onSelectOption ? () => handleSelectOption(option.id) : undefined}
                 />
               ))
             )}
@@ -1021,7 +1267,7 @@ function DecisionRow({
 
               {/* Delete decision */}
               <div className="pt-4 border-t border-cream/10">
-                <Button variant="ghost" onClick={onDeleteDecision}>
+                <Button variant="ghost" onClick={handleDeleteDecision}>
                   Delete Decision
                 </Button>
               </div>
@@ -1039,12 +1285,16 @@ function DecisionRow({
 
 function OptionEditor({
   option,
+  isSelected,
   onUpdate,
   onDelete,
+  onSelect,
 }: {
   option: OptionV3
+  isSelected?: boolean
   onUpdate: (updates: Partial<OptionV3>) => void
   onDelete: () => void
+  onSelect?: () => void
 }) {
   const [newUrl, setNewUrl] = useState('')
 
@@ -1173,6 +1423,7 @@ export function ToolContent() {
 
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
   const [expandedDecisionId, setExpandedDecisionId] = useState<string | null>(null)
 
   // Auto-migrate on load
@@ -1277,6 +1528,99 @@ export function ToolContent() {
               expandedDecisionId={expandedDecisionId}
               setExpandedDecisionId={setExpandedDecisionId}
             />
+          ) : viewMode === 'table' ? (
+            <AllDecisionsView
+              rooms={v3State.rooms}
+              onUpdateDecision={(roomId, decisionId, updates) => {
+                handleUpdateRoom(roomId, {
+                  decisions: v3State.rooms
+                    .find((r) => r.id === roomId)
+                    ?.decisions.map((d) => (d.id === decisionId ? { ...d, ...updates } : d)),
+                })
+              }}
+              onDeleteDecision={(roomId, decisionId) => {
+                const room = v3State.rooms.find((r) => r.id === roomId)
+                const decision = room?.decisions.find((d) => d.id === decisionId)
+                if (decision && confirm(`Delete "${decision.title}"? This will also delete all options.`)) {
+                  handleUpdateRoom(roomId, {
+                    decisions: room!.decisions.filter((d) => d.id !== decisionId),
+                  })
+                }
+              }}
+              onAddOption={(roomId, decisionId, option) => {
+                const room = v3State.rooms.find((r) => r.id === roomId)
+                if (!room) return
+                handleUpdateRoom(roomId, {
+                  decisions: room.decisions.map((d) =>
+                    d.id === decisionId
+                      ? {
+                          ...d,
+                          options: [
+                            ...d.options,
+                            {
+                              ...option,
+                              id: crypto.randomUUID(),
+                              createdAt: new Date().toISOString(),
+                              updatedAt: new Date().toISOString(),
+                            },
+                          ],
+                        }
+                      : d
+                  ),
+                })
+              }}
+              onUpdateOption={(roomId, decisionId, optionId, updates) => {
+                const room = v3State.rooms.find((r) => r.id === roomId)
+                if (!room) return
+                handleUpdateRoom(roomId, {
+                  decisions: room.decisions.map((d) =>
+                    d.id === decisionId
+                      ? {
+                          ...d,
+                          options: d.options.map((opt) =>
+                            opt.id === optionId ? { ...opt, ...updates, updatedAt: new Date().toISOString() } : opt
+                          ),
+                          updatedAt: new Date().toISOString(),
+                        }
+                      : d
+                  ),
+                })
+              }}
+              onDeleteOption={(roomId, decisionId, optionId) => {
+                const room = v3State.rooms.find((r) => r.id === roomId)
+                if (!room) return
+                handleUpdateRoom(roomId, {
+                  decisions: room.decisions.map((d) =>
+                    d.id === decisionId
+                      ? {
+                          ...d,
+                          options: d.options.filter((opt) => opt.id !== optionId),
+                          updatedAt: new Date().toISOString(),
+                        }
+                      : d
+                  ),
+                })
+              }}
+              onSelectOption={(roomId, decisionId, optionId) => {
+                const room = v3State.rooms.find((r) => r.id === roomId)
+                if (!room) return
+                handleUpdateRoom(roomId, {
+                  decisions: room.decisions.map((d) =>
+                    d.id === decisionId
+                      ? {
+                          ...d,
+                          options: d.options.map((opt) => ({
+                            ...opt,
+                            isSelected: opt.id === optionId,
+                            updatedAt: new Date().toISOString(),
+                          })),
+                          updatedAt: new Date().toISOString(),
+                        }
+                      : d
+                  ),
+                })
+              }}
+            />
           ) : (
             <RoomsListView
               rooms={v3State.rooms}
@@ -1295,6 +1639,8 @@ export function ToolContent() {
               }}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
             />
           )
         ) : !isLoaded ? (
