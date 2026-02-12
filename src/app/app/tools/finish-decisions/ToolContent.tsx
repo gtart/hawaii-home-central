@@ -325,13 +325,13 @@ function RoomsListView({
   return (
     <>
       <div className="flex items-start justify-between gap-4 mb-2">
-        <h1 className="font-serif text-4xl md:text-5xl text-sandstone">Finish Decisions</h1>
+        <h1 className="font-serif text-4xl md:text-5xl text-sandstone">Selections Tracker</h1>
         <div className="shrink-0 mt-2">
-          <ShareButton title="Finish Decisions &mdash; Hawaii Home Central" />
+          <ShareButton title="Selections Tracker &mdash; Hawaii Home Central" />
         </div>
       </div>
       <p className="text-cream/70 text-lg mb-8 leading-relaxed">
-        Organize decisions by room or area. Track options, compare choices, mark what you've
+        Organize selections by room or area. Track options, compare choices, mark what you've
         selected.
       </p>
 
@@ -489,7 +489,7 @@ function SearchResultsView({
       <div className="flex items-center justify-between gap-4 mb-2">
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone">Search Results</h1>
         <div className="shrink-0 mt-2">
-          <ShareButton title="Finish Decisions &mdash; Hawaii Home Central" />
+          <ShareButton title="Selections Tracker &mdash; Hawaii Home Central" />
         </div>
       </div>
 
@@ -746,7 +746,7 @@ function RoomDetailView({
               {stats.ordered > 0 && <span>· {stats.ordered} ordered</span>}
             </div>
           </div>
-          <ShareButton title={`${room.name} — Finish Decisions`} />
+          <ShareButton title={`${room.name} — Selections Tracker`} />
         </div>
       </div>
 
