@@ -4,6 +4,7 @@ import { FadeInSection } from '@/components/effects/FadeInSection'
 import { Button } from '@/components/ui/Button'
 import { breadcrumbSchema, faqSchema } from '@/lib/structured-data'
 import { RESPONSIBILITY_ITEMS, STAGES } from '@/data/responsibility-matrix'
+import { auth } from '@/auth'
 
 export const metadata: Metadata = {
   title: 'Responsibility Matrix — Assign Who Owns Each Renovation Task',
@@ -34,7 +35,8 @@ const highVarianceItems = RESPONSIBILITY_ITEMS.filter((i) => i.variance === 'hig
 // Preview: first 6 items
 const PREVIEW_ITEMS = RESPONSIBILITY_ITEMS.slice(0, 6)
 
-export default function ResponsibilityMatrixLandingPage() {
+export default async function ResponsibilityMatrixLandingPage() {
+  const session = await auth()
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', href: '/' },
     { name: 'Tools', href: '/tools' },
@@ -174,14 +176,24 @@ export default function ResponsibilityMatrixLandingPage() {
 
           <FadeInSection delay={250}>
             <div className="text-center">
-              <Link href="/login?callbackUrl=/app/tools/responsibility-matrix">
-                <Button size="lg">
-                  Sign in to use this tool &rarr;
-                </Button>
-              </Link>
-              <p className="text-cream/40 text-xs mt-3">
-                Free to use. Google sign-in. No spam.
-              </p>
+              {session?.user ? (
+                <Link href="/app/tools/responsibility-matrix">
+                  <Button size="lg">
+                    Go to Tool &rarr;
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login?callbackUrl=/app/tools/responsibility-matrix">
+                    <Button size="lg">
+                      Sign in to use this tool &rarr;
+                    </Button>
+                  </Link>
+                  <p className="text-cream/40 text-xs mt-3">
+                    Free to use. Google sign-in. No spam.
+                  </p>
+                </>
+              )}
             </div>
           </FadeInSection>
         </div>

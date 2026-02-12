@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { Button } from '@/components/ui/Button'
 import { breadcrumbSchema, faqSchema } from '@/lib/structured-data'
+import { auth } from '@/auth'
 
 export const metadata: Metadata = {
   title: 'Finish Decisions Tracker — Track Every Material and Appliance Choice',
@@ -73,7 +74,8 @@ const PREVIEW_ITEMS = [
   },
 ]
 
-export default function FinishDecisionsLandingPage() {
+export default async function FinishDecisionsLandingPage() {
+  const session = await auth()
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', href: '/' },
     { name: 'Tools', href: '/tools' },
@@ -216,14 +218,24 @@ export default function FinishDecisionsLandingPage() {
 
           <FadeInSection delay={400}>
             <div className="text-center">
-              <Link href="/login?callbackUrl=/app/tools/finish-decisions">
-                <Button variant="primary" size="lg">
-                  Get Started — It&apos;s Free
-                </Button>
-              </Link>
-              <p className="text-cream/40 text-sm mt-4">
-                Sign in with Google. No credit card required.
-              </p>
+              {session?.user ? (
+                <Link href="/app/tools/finish-decisions">
+                  <Button variant="primary" size="lg">
+                    Go to Tool &rarr;
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login?callbackUrl=/app/tools/finish-decisions">
+                    <Button variant="primary" size="lg">
+                      Get Started — It&apos;s Free
+                    </Button>
+                  </Link>
+                  <p className="text-cream/40 text-sm mt-4">
+                    Sign in with Google. No credit card required.
+                  </p>
+                </>
+              )}
             </div>
           </FadeInSection>
         </div>

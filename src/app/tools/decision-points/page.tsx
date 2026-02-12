@@ -4,6 +4,7 @@ import { FadeInSection } from '@/components/effects/FadeInSection'
 import { Button } from '@/components/ui/Button'
 import { breadcrumbSchema, faqSchema } from '@/lib/structured-data'
 import { DECISION_POINT_STAGES } from '@/data/decision-points'
+import { auth } from '@/auth'
 
 export const metadata: Metadata = {
   title: 'Decision Points Tool — Lock Specs Before Construction Moves On',
@@ -38,7 +39,8 @@ const PREVIEW_CALLOUTS = DECISION_POINT_STAGES.flatMap((stage) =>
   stage.items.filter((item) => item.hawaiiCallout)
 ).slice(0, 3)
 
-export default function DecisionPointsLandingPage() {
+export default async function DecisionPointsLandingPage() {
+  const session = await auth()
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', href: '/' },
     { name: 'Tools', href: '/tools' },
@@ -175,14 +177,24 @@ export default function DecisionPointsLandingPage() {
 
           <FadeInSection delay={250}>
             <div className="text-center">
-              <Link href="/login?callbackUrl=/app/tools/decision-points">
-                <Button size="lg">
-                  Sign in to use this tool &rarr;
-                </Button>
-              </Link>
-              <p className="text-cream/40 text-xs mt-3">
-                Free to use. Google sign-in. No spam.
-              </p>
+              {session?.user ? (
+                <Link href="/app/tools/decision-points">
+                  <Button size="lg">
+                    Go to Tool &rarr;
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login?callbackUrl=/app/tools/decision-points">
+                    <Button size="lg">
+                      Sign in to use this tool &rarr;
+                    </Button>
+                  </Link>
+                  <p className="text-cream/40 text-xs mt-3">
+                    Free to use. Google sign-in. No spam.
+                  </p>
+                </>
+              )}
             </div>
           </FadeInSection>
         </div>
