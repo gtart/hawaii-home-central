@@ -310,11 +310,15 @@ function RoomsListView({
   onAddRoom,
   onSelectRoom,
   onDeleteRoom,
+  searchQuery,
+  onSearchChange,
 }: {
   rooms: RoomV3[]
   onAddRoom: (type: RoomTypeV3, name: string, useDefaults: boolean) => void
   onSelectRoom: (roomId: string) => void
   onDeleteRoom: (roomId: string) => void
+  searchQuery: string
+  onSearchChange: (query: string) => void
 }) {
   const [showAddModal, setShowAddModal] = useState(false)
 
@@ -330,6 +334,15 @@ function RoomsListView({
         Organize decisions by room or area. Track options, compare choices, mark what you've
         selected.
       </p>
+
+      {/* Global Search */}
+      <div className="mb-6">
+        <Input
+          placeholder="Search all rooms and decisions..."
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+        />
+      </div>
 
       <div className="mb-6">
         <Button onClick={() => setShowAddModal(true)}>Add Room or Area</Button>
@@ -557,6 +570,7 @@ function RoomDetailView({
   setExpandedDecisionId: (id: string | null) => void
 }) {
   const [newDecisionTitle, setNewDecisionTitle] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [sortColumn, setSortColumn] = useState<'title' | 'status' | 'notes' | 'options'>('title')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
@@ -595,6 +609,28 @@ function RoomDetailView({
 
     return sorted
   }, [room.decisions, sortColumn, sortDirection])
+
+  // Filter decisions by search query
+  const filteredDecisions = useMemo(() => {
+    if (!searchQuery) return sortedDecisions
+
+    const query = searchQuery.toLowerCase()
+    return sortedDecisions.filter((decision) => {
+      const searchable = [
+        decision.title,
+        decision.notes,
+        ...decision.options.flatMap((opt) => [
+          opt.name,
+          opt.notes,
+          ...opt.urls.map((u) => u.url),
+        ]),
+      ]
+        .join(' ')
+        .toLowerCase()
+
+      return searchable.includes(query)
+    })
+  }, [sortedDecisions, searchQuery])
 
   const handleAddDecision = () => {
     if (!newDecisionTitle.trim()) return
@@ -714,6 +750,15 @@ function RoomDetailView({
         </div>
       </div>
 
+      {/* Room-Scoped Search */}
+      <div className="mb-6">
+        <Input
+          placeholder="Search this room..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
       {/* Decisions Table */}
       <div className="bg-basalt-50 rounded-card overflow-hidden">
         <table className="w-full">
@@ -769,33 +814,35 @@ function RoomDetailView({
           <tbody>
             {/* Quick Add Decision Row - Top */}
             <tr className="border-b border-cream/10 bg-basalt/30">
-              <td colSpan={5} className="px-4 py-2">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Add decision (e.g., Countertop)"
-                    value={newDecisionTitle}
-                    onChange={(e) => setNewDecisionTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleAddDecision()
-                    }}
-                    className="flex-1"
-                  />
-                  <Button size="sm" onClick={handleAddDecision}>
-                    Add
-                  </Button>
-                </div>
+              <td colSpan={3} className="px-4 py-2">
+                <Input
+                  placeholder="Add decision (e.g., Countertop)"
+                  value={newDecisionTitle}
+                  onChange={(e) => setNewDecisionTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleAddDecision()
+                  }}
+                />
+              </td>
+              <td className="px-4 py-2"></td>
+              <td className="px-4 py-2 text-right">
+                <Button size="sm" onClick={handleAddDecision}>
+                  Add
+                </Button>
               </td>
             </tr>
 
             {/* Decision Rows */}
-            {room.decisions.length === 0 ? (
+            {filteredDecisions.length === 0 ? (
               <tr>
                 <td colSpan={5} className="text-center py-12 text-cream/50">
-                  No decisions yet. Add your first decision above!
+                  {room.decisions.length === 0
+                    ? 'No decisions yet. Add your first decision above!'
+                    : 'No decisions match your search.'}
                 </td>
               </tr>
             ) : (
-              sortedDecisions.map((decision) => (
+              filteredDecisions.map((decision) => (
                 <DecisionRow
                   key={decision.id}
                   decision={decision}
@@ -825,21 +872,21 @@ function RoomDetailView({
             {/* Quick Add Decision Row - Bottom */}
             {room.decisions.length > 0 && (
               <tr className="border-t border-cream/10 bg-basalt/30">
-                <td colSpan={5} className="px-4 py-2">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Add decision (e.g., Countertop)"
-                      value={newDecisionTitle}
-                      onChange={(e) => setNewDecisionTitle(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleAddDecision()
-                      }}
-                      className="flex-1"
-                    />
-                    <Button size="sm" onClick={handleAddDecision}>
-                      Add
-                    </Button>
-                  </div>
+                <td colSpan={3} className="px-4 py-2">
+                  <Input
+                    placeholder="Add decision (e.g., Countertop)"
+                    value={newDecisionTitle}
+                    onChange={(e) => setNewDecisionTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddDecision()
+                    }}
+                  />
+                </td>
+                <td className="px-4 py-2"></td>
+                <td className="px-4 py-2 text-right">
+                  <Button size="sm" onClick={handleAddDecision}>
+                    Add
+                  </Button>
                 </td>
               </tr>
             )}
@@ -1205,17 +1252,6 @@ export function ToolContent() {
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-4xl mx-auto">
-        {/* Global Search Bar */}
-        {isLoaded && state.version === 3 && (
-          <div className="mb-6">
-            <Input
-              placeholder="Search all decisions and rooms..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        )}
-
         {isLoaded && state.version === 3 ? (
           searchQuery ? (
             <SearchResultsView
@@ -1264,6 +1300,8 @@ export function ToolContent() {
                   handleDeleteRoom(roomId)
                 }
               }}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
             />
           )
         ) : !isLoaded ? (
