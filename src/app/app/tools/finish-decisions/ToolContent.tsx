@@ -571,6 +571,7 @@ function RoomDetailView({
 }) {
   const [newDecisionTitle, setNewDecisionTitle] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [showAddForm, setShowAddForm] = useState(false)
   const [sortColumn, setSortColumn] = useState<'title' | 'status' | 'notes' | 'options'>('title')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
@@ -651,6 +652,7 @@ function RoomDetailView({
     })
 
     setNewDecisionTitle('')
+    setShowAddForm(false)
     setExpandedDecisionId(newDecision.id)
   }
 
@@ -750,14 +752,47 @@ function RoomDetailView({
         </div>
       </div>
 
-      {/* Room-Scoped Search */}
-      <div className="mb-6">
+      {/* Room-Scoped Search and Add Button */}
+      <div className="mb-6 flex gap-3 items-start">
         <Input
           placeholder="Search this room..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          className="flex-1"
         />
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => setShowAddForm(!showAddForm)}
+        >
+          + Add Selection
+        </Button>
       </div>
+
+      {/* Add Selection Form */}
+      {showAddForm && (
+        <div className="mb-6 bg-basalt-50 rounded-card p-4">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Selection title (e.g., Countertop)"
+              value={newDecisionTitle}
+              onChange={(e) => setNewDecisionTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleAddDecision()
+                if (e.key === 'Escape') setShowAddForm(false)
+              }}
+              autoFocus
+              className="flex-1"
+            />
+            <Button size="sm" onClick={handleAddDecision}>
+              Add
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setShowAddForm(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Decisions Table */}
       <div className="bg-basalt-50 rounded-card overflow-hidden">
@@ -812,33 +847,13 @@ function RoomDetailView({
             </tr>
           </thead>
           <tbody>
-            {/* Quick Add Decision Row - Top */}
-            <tr className="border-b border-cream/10 bg-basalt/30">
-              <td colSpan={3} className="px-4 py-2">
-                <Input
-                  placeholder="Add decision (e.g., Countertop)"
-                  value={newDecisionTitle}
-                  onChange={(e) => setNewDecisionTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleAddDecision()
-                  }}
-                />
-              </td>
-              <td className="px-4 py-2"></td>
-              <td className="px-4 py-2 text-right">
-                <Button size="sm" onClick={handleAddDecision}>
-                  Add
-                </Button>
-              </td>
-            </tr>
-
             {/* Decision Rows */}
             {filteredDecisions.length === 0 ? (
               <tr>
                 <td colSpan={5} className="text-center py-12 text-cream/50">
                   {room.decisions.length === 0
-                    ? 'No decisions yet. Add your first decision above!'
-                    : 'No decisions match your search.'}
+                    ? 'No selections yet. Click "+ Add Selection" to get started.'
+                    : 'No selections match your search.'}
                 </td>
               </tr>
             ) : (
@@ -867,28 +882,6 @@ function RoomDetailView({
                   }}
                 />
               ))
-            )}
-
-            {/* Quick Add Decision Row - Bottom */}
-            {room.decisions.length > 0 && (
-              <tr className="border-t border-cream/10 bg-basalt/30">
-                <td colSpan={3} className="px-4 py-2">
-                  <Input
-                    placeholder="Add decision (e.g., Countertop)"
-                    value={newDecisionTitle}
-                    onChange={(e) => setNewDecisionTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleAddDecision()
-                    }}
-                  />
-                </td>
-                <td className="px-4 py-2"></td>
-                <td className="px-4 py-2 text-right">
-                  <Button size="sm" onClick={handleAddDecision}>
-                    Add
-                  </Button>
-                </td>
-              </tr>
             )}
           </tbody>
         </table>
