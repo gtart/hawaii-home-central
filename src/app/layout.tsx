@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import { Playfair_Display, Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/components/auth/AuthProvider'
@@ -73,6 +74,18 @@ export default function RootLayout({
         </AuthProvider>
         <NoiseOverlay />
         <Analytics />
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-G64TMLBFEC"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-G64TMLBFEC');
+          `}
+        </Script>
       </body>
     </html>
   )
