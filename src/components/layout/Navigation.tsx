@@ -86,7 +86,7 @@ export function Navigation() {
               >
                 Hawaii Home Central
               </Link>
-              <span className="hidden sm:inline-block text-[10px] font-medium tracking-wide uppercase text-sandstone/70 bg-sandstone/10 border border-sandstone/20 rounded-full px-2 py-0.5 leading-tight">
+              <span className="inline-block text-[10px] font-medium tracking-wide uppercase text-sandstone/70 bg-sandstone/10 border border-sandstone/20 rounded-full px-2 py-0.5 leading-tight">
                 Beta
               </span>
             </div>
