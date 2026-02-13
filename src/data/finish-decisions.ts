@@ -175,6 +175,7 @@ export interface DecisionV3 {
   status: StatusV3
   notes: string // Combined specs + notes
   options: OptionV3[] // Nested
+  dismissedSuggestionKeys?: string[] // Heuristic guidance dismissed by user
   createdAt: string
   updatedAt: string
 }

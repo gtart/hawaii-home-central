@@ -6,7 +6,7 @@ import { breadcrumbSchema, faqSchema } from '@/lib/structured-data'
 import { auth } from '@/auth'
 
 export const metadata: Metadata = {
-  title: 'Finish Decisions Tracker — Track Every Material and Appliance Choice',
+  title: 'Decision Tracker — Track Every Material and Finish Choice',
   description:
     'Free interactive tracker for renovation finish decisions. Track appliances, countertops, flooring, fixtures, and more across rooms and construction stages. Save specs, vendors, and links.',
 }
@@ -35,13 +35,13 @@ const PREVIEW_ITEMS = [
     room: 'Kitchen',
     category: 'Appliance',
     name: 'Range (36" Gas)',
-    status: 'Final',
+    status: 'Selected',
   },
   {
     room: 'Kitchen',
     category: 'Countertop',
     name: 'Quartz - Calacatta Gold',
-    status: 'Awaiting Approval',
+    status: 'Shortlist',
   },
   {
     room: 'Master Bath',
@@ -53,13 +53,13 @@ const PREVIEW_ITEMS = [
     room: 'Master Bath',
     category: 'Fixture',
     name: 'Freestanding Tub',
-    status: 'Final',
+    status: 'Ordered',
   },
   {
     room: 'Kitchen',
     category: 'Flooring',
     name: 'LVP - Oak Grey 7"',
-    status: 'Complete',
+    status: 'Done',
   },
   {
     room: 'Whole House',
@@ -74,7 +74,7 @@ export default async function FinishDecisionsLandingPage() {
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', href: '/' },
     { name: 'Tools', href: '/tools' },
-    { name: 'Finish Decisions', href: '/tools/finish-decisions' },
+    { name: 'Decision Tracker', href: '/tools/finish-decisions' },
   ])
   const faq = faqSchema(FAQ_ITEMS)
 
@@ -92,7 +92,7 @@ export default async function FinishDecisionsLandingPage() {
         <div className="max-w-4xl mx-auto">
           <FadeInSection>
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6 text-center">
-              Finish Decisions
+              Decision Tracker
             </h1>
             <p className="text-lg text-cream/70 mb-4 max-w-3xl mx-auto text-center leading-relaxed">
               Add rooms or areas. Each room gets default decisions. Compare options for each
@@ -127,9 +127,9 @@ export default async function FinishDecisionsLandingPage() {
                     <span className="text-cream flex-1">{item.name}</span>
                     <span
                       className={`text-xs px-2 py-1 rounded ${
-                        item.status === 'Complete'
+                        item.status === 'Done'
                           ? 'bg-cream/10 text-cream/50'
-                          : item.status === 'Final'
+                          : item.status === 'Selected' || item.status === 'Ordered'
                             ? 'bg-sandstone/20 text-sandstone'
                             : 'bg-basalt-50 text-cream/70'
                       }`}
@@ -173,15 +173,22 @@ export default async function FinishDecisionsLandingPage() {
                 <li className="flex gap-2">
                   <span className="text-sandstone">→</span>
                   <span>
-                    <strong className="text-cream">Room-Scoped Search</strong> — Find
-                    decisions within a room by keyword
+                    <strong className="text-cream">Search &amp; Filter</strong> — Search
+                    across all rooms. Filter by status with one-click chips.
                   </span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-sandstone">→</span>
                   <span>
-                    <strong className="text-cream">Simple Statuses</strong> — Track
-                    progress: Deciding, Shortlist, Selected, Ordered, Done
+                    <strong className="text-cream">Built-In Guidance</strong> — Each
+                    decision shows timing milestones, coordination watchouts, and practical advice.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-sandstone">→</span>
+                  <span>
+                    <strong className="text-cream">By Milestone View</strong> — See all
+                    decisions grouped by construction milestone for scheduling clarity.
                   </span>
                 </li>
                 <li className="flex gap-2">

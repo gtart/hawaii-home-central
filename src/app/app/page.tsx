@@ -50,8 +50,8 @@ export default function AppPage() {
             />
             <Card
               href="/app/tools/finish-decisions"
-              title="Finish Decisions"
-              description="Track finish and appliance choices across rooms. Record specs, vendors, needed-by stages, and links for every decision."
+              title="Decision Tracker"
+              description="Track every material and finish decision by room. Compare options, record specs and links, and mark progress from deciding to done."
               badge="Live"
             />
           </div>

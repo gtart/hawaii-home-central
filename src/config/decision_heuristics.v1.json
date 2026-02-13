@@ -1,0 +1,273 @@
+{
+  "version": 1,
+  "milestones": [
+    { "id": "order-long-lead", "label": "Order Long-Lead Items" },
+    { "id": "lock-rough-in", "label": "Lock Rough-In" },
+    { "id": "close-walls", "label": "Close Walls" },
+    { "id": "waterproof-tile", "label": "Waterproof + Tile" },
+    { "id": "closeout", "label": "Closeout" }
+  ],
+  "impacts": [
+    { "id": "cabinet-openings", "label": "Cabinet openings / clearances" },
+    { "id": "plumbing-rough-in", "label": "Plumbing rough-in" },
+    { "id": "electrical-rough-in", "label": "Electrical rough-in" },
+    { "id": "countertop-template", "label": "Countertop template" },
+    { "id": "tile-layout", "label": "Tile layout / waterproofing" },
+    { "id": "framing", "label": "Framing / blocking" },
+    { "id": "hvac", "label": "HVAC / ventilation" },
+    { "id": "structural", "label": "Structural / load path" },
+    { "id": "door-schedule", "label": "Door schedule / hardware" },
+    { "id": "paint-schedule", "label": "Paint / finish schedule" }
+  ],
+  "rules": [
+    {
+      "id": "cabinets",
+      "match": { "any": ["cabinet", "cabinetry", "millwork"] },
+      "emits": {
+        "milestones": ["order-long-lead"],
+        "impacts": ["cabinet-openings", "countertop-template", "electrical-rough-in"],
+        "advice": [
+          "Confirm appliance specs and clearances before finalizing cabinet layout.",
+          "Confirm outlet and hood locations before rough-in."
+        ]
+      }
+    },
+    {
+      "id": "countertop",
+      "match": { "any": ["countertop", "counter top", "granite", "quartz", "marble slab"] },
+      "emits": {
+        "milestones": ["order-long-lead", "close-walls"],
+        "impacts": ["countertop-template", "plumbing-rough-in"],
+        "advice": [
+          "Countertop template usually happens after cabinets are set — order material early.",
+          "Confirm sink cutout and faucet hole count before template."
+        ]
+      }
+    },
+    {
+      "id": "appliance-range",
+      "match": { "any": ["range", "stove", "cooktop", "oven"] },
+      "emits": {
+        "milestones": ["order-long-lead", "lock-rough-in"],
+        "impacts": ["cabinet-openings", "electrical-rough-in", "hvac"],
+        "advice": [
+          "Verify gas vs. electric and required circuit/BTU before rough-in.",
+          "Hood CFM must match range output — check local code for makeup air."
+        ]
+      }
+    },
+    {
+      "id": "appliance-fridge",
+      "match": { "any": ["refrigerator", "fridge"] },
+      "emits": {
+        "milestones": ["order-long-lead"],
+        "impacts": ["cabinet-openings", "electrical-rough-in", "plumbing-rough-in"],
+        "advice": [
+          "If counter-depth or built-in, confirm exact dimensions before cabinet order.",
+          "Water line needed if ice maker or water dispenser."
+        ]
+      }
+    },
+    {
+      "id": "appliance-dishwasher",
+      "match": { "any": ["dishwasher"] },
+      "emits": {
+        "milestones": ["lock-rough-in"],
+        "impacts": ["cabinet-openings", "plumbing-rough-in", "electrical-rough-in"],
+        "advice": [
+          "Confirm panel-ready vs. standard — affects cabinet order.",
+          "Verify electrical: hardwired vs. cord-and-plug."
+        ]
+      }
+    },
+    {
+      "id": "sink-faucet",
+      "match": { "any": ["sink", "faucet", "basin"] },
+      "emits": {
+        "milestones": ["lock-rough-in"],
+        "impacts": ["plumbing-rough-in", "countertop-template"],
+        "advice": [
+          "Undermount vs. drop-in affects countertop template — decide early.",
+          "Faucet hole count must match sink and countertop configuration."
+        ]
+      }
+    },
+    {
+      "id": "flooring",
+      "match": { "any": ["flooring", "floor", "hardwood", "lvp", "vinyl plank", "laminate"] },
+      "emits": {
+        "milestones": ["close-walls"],
+        "impacts": ["framing", "door-schedule"],
+        "advice": [
+          "Floor thickness affects door clearance — decide before door hardware.",
+          "If radiant heat, flooring choice must be compatible."
+        ]
+      }
+    },
+    {
+      "id": "tile",
+      "match": { "any": ["tile", "backsplash", "wall tile", "floor tile", "mosaic"] },
+      "emits": {
+        "milestones": ["waterproof-tile"],
+        "impacts": ["tile-layout", "plumbing-rough-in", "framing"],
+        "advice": [
+          "Large-format tile may need additional substrate prep — confirm with installer.",
+          "Niche locations need blocking set before waterproofing."
+        ]
+      }
+    },
+    {
+      "id": "vanity",
+      "match": { "any": ["vanity", "bathroom cabinet"] },
+      "emits": {
+        "milestones": ["order-long-lead"],
+        "impacts": ["plumbing-rough-in", "countertop-template", "electrical-rough-in"],
+        "advice": [
+          "Confirm vanity width and plumbing offset before rough-in.",
+          "If wall-hung, blocking must be set during framing."
+        ]
+      }
+    },
+    {
+      "id": "toilet",
+      "match": { "any": ["toilet", "water closet"] },
+      "emits": {
+        "milestones": ["lock-rough-in"],
+        "impacts": ["plumbing-rough-in", "framing"],
+        "advice": [
+          "Confirm rough-in distance (10\" or 12\") before ordering.",
+          "Wall-hung toilets need carrier frame set during framing."
+        ]
+      }
+    },
+    {
+      "id": "shower-tub",
+      "match": { "any": ["shower", "tub", "bathtub", "shower system", "rain head"] },
+      "emits": {
+        "milestones": ["lock-rough-in", "waterproof-tile"],
+        "impacts": ["plumbing-rough-in", "framing", "tile-layout"],
+        "advice": [
+          "Valve trim style must be chosen before rough-in — rough valve is brand-specific.",
+          "Shower pan or tub alcove dimensions affect framing and tile layout."
+        ]
+      }
+    },
+    {
+      "id": "fixtures",
+      "match": { "any": ["fixture", "bath fixture", "towel bar", "robe hook", "tp holder"] },
+      "emits": {
+        "milestones": ["closeout"],
+        "impacts": ["framing"],
+        "advice": [
+          "Heavy fixtures (grab bars, towel warmers) need blocking behind tile."
+        ]
+      }
+    },
+    {
+      "id": "lighting",
+      "match": { "any": ["lighting", "light fixture", "pendant", "chandelier", "recessed", "sconce"] },
+      "emits": {
+        "milestones": ["lock-rough-in"],
+        "impacts": ["electrical-rough-in", "framing"],
+        "advice": [
+          "Confirm fixture locations and switch groupings before electrical rough-in.",
+          "Heavy fixtures need junction box rated for weight."
+        ]
+      }
+    },
+    {
+      "id": "paint",
+      "match": { "any": ["paint", "wall color", "accent wall"] },
+      "emits": {
+        "milestones": ["closeout"],
+        "impacts": ["paint-schedule"],
+        "advice": [
+          "Paint is one of the last decisions — but test large swatches before committing."
+        ]
+      }
+    },
+    {
+      "id": "window-treatments",
+      "match": { "any": ["window treatment", "blinds", "shades", "curtain", "drapes"] },
+      "emits": {
+        "milestones": ["closeout"],
+        "impacts": ["framing", "electrical-rough-in"],
+        "advice": [
+          "Motorized shades need power — decide before electrical rough-in.",
+          "Measure after windows and trim are fully installed."
+        ]
+      }
+    },
+    {
+      "id": "doors",
+      "match": { "any": ["door", "entry door", "interior door", "sliding door", "pocket door"] },
+      "emits": {
+        "milestones": ["order-long-lead", "close-walls"],
+        "impacts": ["door-schedule", "framing", "structural"],
+        "advice": [
+          "Custom or oversized doors have long lead times — order early.",
+          "Pocket doors need header and track set during framing."
+        ]
+      }
+    },
+    {
+      "id": "hardware",
+      "match": { "any": ["hardware", "door hardware", "cabinet hardware", "knob", "pull", "handle"] },
+      "emits": {
+        "milestones": ["closeout"],
+        "impacts": ["door-schedule"],
+        "advice": [
+          "Cabinet hardware can wait — but test placement on a sample door before ordering bulk."
+        ]
+      }
+    },
+    {
+      "id": "windows",
+      "match": { "any": ["window", "window unit", "skylight"] },
+      "emits": {
+        "milestones": ["order-long-lead"],
+        "impacts": ["framing", "structural", "hvac"],
+        "advice": [
+          "Custom windows can take 8–16 weeks — order as early as possible.",
+          "Window size changes affect header sizing and structural framing."
+        ]
+      }
+    },
+    {
+      "id": "stairs",
+      "match": { "any": ["stair", "tread", "riser", "handrail", "baluster", "newel"] },
+      "emits": {
+        "milestones": ["close-walls"],
+        "impacts": ["framing", "structural"],
+        "advice": [
+          "Stair dimensions are code-driven — confirm rise/run before ordering treads.",
+          "Metal or cable rail systems need specific post spacing during framing."
+        ]
+      }
+    },
+    {
+      "id": "mirror",
+      "match": { "any": ["mirror", "medicine cabinet"] },
+      "emits": {
+        "milestones": ["closeout"],
+        "impacts": ["electrical-rough-in", "framing"],
+        "advice": [
+          "Recessed medicine cabinets need framing depth — confirm before closing walls.",
+          "Lighted mirrors need electrical — decide before rough-in."
+        ]
+      }
+    },
+    {
+      "id": "closet",
+      "match": { "any": ["closet", "closet door", "closet system", "wardrobe"] },
+      "emits": {
+        "milestones": ["close-walls"],
+        "impacts": ["framing", "electrical-rough-in"],
+        "advice": [
+          "Built-in closet systems need specific wall dimensions — confirm before drywall.",
+          "Add outlets and lighting inside closets before closing walls."
+        ]
+      }
+    }
+  ]
+}
