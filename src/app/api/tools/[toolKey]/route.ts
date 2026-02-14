@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { ensureCurrentProperty } from '@/lib/property'
 
 const VALID_TOOL_KEYS = [
   'hold_points',
@@ -22,6 +23,9 @@ export async function GET(
   if (!VALID_TOOL_KEYS.includes(toolKey)) {
     return NextResponse.json({ error: 'Invalid tool key' }, { status: 400 })
   }
+
+  // Ensure user has a property (lazy init + backfill)
+  await ensureCurrentProperty(session.user.id)
 
   const result = await prisma.toolResult.findUnique({
     where: {
@@ -55,6 +59,9 @@ export async function PUT(
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
   }
 
+  // Ensure user has a property (lazy init + backfill)
+  const propertyId = await ensureCurrentProperty(session.user.id)
+
   await prisma.toolResult.upsert({
     where: {
       userId_toolKey: { userId: session.user.id, toolKey },
@@ -62,9 +69,11 @@ export async function PUT(
     create: {
       userId: session.user.id,
       toolKey,
+      propertyId,
       payload: body.payload,
     },
     update: {
+      propertyId,
       payload: body.payload,
     },
   })

@@ -1,9 +1,14 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { Button } from '@/components/ui/Button'
 import { breadcrumbSchema, faqSchema } from '@/lib/structured-data'
 import { auth } from '@/auth'
+import {
+  DEFAULT_DECISIONS_BY_ROOM_TYPE,
+  ROOM_TYPE_OPTIONS_V3,
+} from '@/data/finish-decisions'
 
 export const metadata: Metadata = {
   title: 'Decision Tracker — Track Every Material and Finish Choice',
@@ -29,48 +34,13 @@ const FAQ_ITEMS = [
   },
 ]
 
-// Preview sample items
-const PREVIEW_ITEMS = [
-  {
-    room: 'Kitchen',
-    category: 'Appliance',
-    name: 'Range (36" Gas)',
-    status: 'Selected',
-  },
-  {
-    room: 'Kitchen',
-    category: 'Countertop',
-    name: 'Quartz - Calacatta Gold',
-    status: 'Shortlist',
-  },
-  {
-    room: 'Master Bath',
-    category: 'Tile',
-    name: '12x24 Porcelain - Matte White',
-    status: 'Deciding',
-  },
-  {
-    room: 'Master Bath',
-    category: 'Fixture',
-    name: 'Freestanding Tub',
-    status: 'Ordered',
-  },
-  {
-    room: 'Kitchen',
-    category: 'Flooring',
-    name: 'LVP - Oak Grey 7"',
-    status: 'Done',
-  },
-  {
-    room: 'Whole House',
-    category: 'Paint',
-    name: 'Interior Walls - SW Alabaster',
-    status: 'Deciding',
-  },
-]
+// Show a curated set of room types for the starter view
+const STARTER_ROOMS = ['kitchen', 'bathroom', 'living_room', 'bedroom', 'doors', 'windows'] as const
 
 export default async function FinishDecisionsLandingPage() {
   const session = await auth()
+  if (session?.user) redirect('/app/tools/finish-decisions')
+
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', href: '/' },
     { name: 'Tools', href: '/tools' },
@@ -103,98 +73,95 @@ export default async function FinishDecisionsLandingPage() {
             </p>
           </FadeInSection>
 
+          {/* Room type browser — real data, not a teaser */}
           <FadeInSection delay={100}>
             <div className="bg-basalt-50 rounded-card p-8 mb-12">
-              <h2 className="font-serif text-2xl text-sandstone mb-4">
-                Preview: What You&apos;ll Track
+              <h2 className="font-serif text-2xl text-sandstone mb-2">
+                What You&apos;ll Track By Room
               </h2>
               <p className="text-cream/60 text-sm mb-6">
-                Room-first organization. Each decision can have multiple options to compare.
-                Track specs, notes, and links for every option.
+                Each room type comes pre-loaded with typical decisions. Here&apos;s what a real project looks like.
               </p>
-              <div className="space-y-3">
-                {PREVIEW_ITEMS.map((item, i) => (
-                  <div
-                    key={i}
-                    className="bg-basalt rounded-card p-3 flex items-center gap-3 text-sm"
-                  >
-                    {item.room && (
-                      <span className="text-xs text-cream/50 bg-basalt-50 px-2 py-1 rounded">
-                        {item.room}
-                      </span>
-                    )}
-                    <span className="text-xs text-sandstone/70">{item.category}</span>
-                    <span className="text-cream flex-1">{item.name}</span>
-                    <span
-                      className={`text-xs px-2 py-1 rounded ${
-                        item.status === 'Done'
-                          ? 'bg-cream/10 text-cream/50'
-                          : item.status === 'Selected' || item.status === 'Ordered'
-                            ? 'bg-sandstone/20 text-sandstone'
-                            : 'bg-basalt-50 text-cream/70'
-                      }`}
-                    >
-                      {item.status}
-                    </span>
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {STARTER_ROOMS.map((roomType) => {
+                  const label = ROOM_TYPE_OPTIONS_V3.find((r) => r.value === roomType)?.label ?? roomType
+                  const decisions = DEFAULT_DECISIONS_BY_ROOM_TYPE[roomType] ?? []
+                  return (
+                    <div key={roomType} className="bg-basalt rounded-card p-4">
+                      <h3 className="text-cream font-medium text-sm mb-2">{label}</h3>
+                      <div className="flex flex-wrap gap-1.5">
+                        {decisions.map((d) => (
+                          <span
+                            key={d}
+                            className="text-xs text-cream/60 bg-basalt-50 px-2 py-1 rounded"
+                          >
+                            {d}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
+              <p className="text-cream/40 text-xs mt-4">
+                + {ROOM_TYPE_OPTIONS_V3.length - STARTER_ROOMS.length} more room types available. Add custom decisions to any room.
+              </p>
             </div>
           </FadeInSection>
 
           <FadeInSection delay={200}>
             <div className="bg-basalt-50 rounded-card p-8 mb-12">
               <h2 className="font-serif text-2xl text-sandstone mb-4">
-                What You Get When You Sign In
+                Features
               </h2>
               <ul className="space-y-3 text-cream/70">
                 <li className="flex gap-2">
-                  <span className="text-sandstone">→</span>
+                  <span className="text-sandstone">&rarr;</span>
                   <span>
-                    <strong className="text-cream">Room-First Organization</strong> — Add
+                    <strong className="text-cream">Room-First Organization</strong> &mdash; Add
                     rooms (Kitchen, Bathroom, Living Room, etc.) with default decisions
                     pre-loaded
                   </span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-sandstone">→</span>
+                  <span className="text-sandstone">&rarr;</span>
                   <span>
-                    <strong className="text-cream">Compare Options</strong> — Add 2-3
+                    <strong className="text-cream">Compare Options</strong> &mdash; Add 2-3
                     options per decision (Quartz vs Granite) and mark your winner
                   </span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-sandstone">→</span>
+                  <span className="text-sandstone">&rarr;</span>
                   <span>
-                    <strong className="text-cream">Track Details</strong> — Record specs,
+                    <strong className="text-cream">Track Details</strong> &mdash; Record specs,
                     notes, and multiple links for each option
                   </span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-sandstone">→</span>
+                  <span className="text-sandstone">&rarr;</span>
                   <span>
-                    <strong className="text-cream">Search &amp; Filter</strong> — Search
+                    <strong className="text-cream">Search &amp; Filter</strong> &mdash; Search
                     across all rooms. Filter by status with one-click chips.
                   </span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-sandstone">→</span>
+                  <span className="text-sandstone">&rarr;</span>
                   <span>
-                    <strong className="text-cream">Built-In Guidance</strong> — Each
+                    <strong className="text-cream">Built-In Guidance</strong> &mdash; Each
                     decision shows timing milestones, coordination watchouts, and practical advice.
                   </span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-sandstone">→</span>
+                  <span className="text-sandstone">&rarr;</span>
                   <span>
-                    <strong className="text-cream">By Milestone View</strong> — See all
+                    <strong className="text-cream">By Milestone View</strong> &mdash; See all
                     decisions grouped by construction milestone for scheduling clarity.
                   </span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-sandstone">→</span>
+                  <span className="text-sandstone">&rarr;</span>
                   <span>
-                    <strong className="text-cream">Multi-Device Sync</strong> — Your
+                    <strong className="text-cream">Multi-Device Sync</strong> &mdash; Your
                     data saves to your account. Pick up on any device.
                   </span>
                 </li>
@@ -220,24 +187,14 @@ export default async function FinishDecisionsLandingPage() {
 
           <FadeInSection delay={400}>
             <div className="text-center">
-              {session?.user ? (
-                <Link href="/app/tools/finish-decisions">
-                  <Button variant="primary" size="lg">
-                    Go to Tool &rarr;
-                  </Button>
-                </Link>
-              ) : (
-                <>
-                  <Link href="/login?callbackUrl=/app/tools/finish-decisions">
-                    <Button variant="primary" size="lg">
-                      Get Started — It&apos;s Free
-                    </Button>
-                  </Link>
-                  <p className="text-cream/40 text-sm mt-4">
-                    Sign in with Google. No credit card required.
-                  </p>
-                </>
-              )}
+              <Link href="/login?callbackUrl=/app/tools/finish-decisions">
+                <Button variant="primary" size="lg">
+                  Personalize This for Your Home &mdash; Free Account
+                </Button>
+              </Link>
+              <p className="text-cream/40 text-sm mt-4">
+                Sign in with Google. No credit card required.
+              </p>
             </div>
           </FadeInSection>
         </div>

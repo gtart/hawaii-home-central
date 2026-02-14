@@ -6,58 +6,8 @@ import Link from 'next/link'
 import { ShareButton } from '@/components/resources/ShareButton'
 import { Button } from '@/components/ui/Button'
 import { SignInPill } from '@/components/auth/SignInPill'
+import { ReadOnlyDecisionItem } from '@/components/resources/ReadOnlyDecisionItem'
 import { DECISION_POINT_STAGES } from '@/data/decision-points'
-import type { DecisionPointItemData } from '@/data/decision-points'
-
-function ReadOnlyItem({ item }: { item: DecisionPointItemData }) {
-  const [open, setOpen] = useState(false)
-
-  return (
-    <div className="bg-basalt-50 rounded-card p-5">
-      <p className="text-sandstone/70 text-xs font-medium uppercase tracking-wider">
-        {item.category}
-      </p>
-      <p className="text-cream/80 text-sm mt-2 leading-relaxed">
-        {item.summary}
-      </p>
-
-      <button
-        onClick={() => setOpen(!open)}
-        className="text-sandstone/60 text-xs mt-3 hover:text-sandstone transition-colors cursor-pointer"
-      >
-        {open ? 'Hide detail ▲' : 'More detail ▼'}
-      </button>
-
-      {open && (
-        <div className="mt-3 space-y-3 text-sm border-t border-cream/5 pt-3">
-          <div>
-            <span className="text-cream/50 font-medium">Why it matters: </span>
-            <span className="text-cream/60">{item.why}</span>
-          </div>
-          <div>
-            <span className="text-cream/50 font-medium">What it impacts: </span>
-            <span className="text-cream/60">{item.impacts}</span>
-          </div>
-          <div>
-            <span className="text-cream/50 font-medium">Ask your contractor: </span>
-            <span className="text-cream/60">{item.ask}</span>
-          </div>
-        </div>
-      )}
-
-      {item.hawaiiCallout && (
-        <div className="mt-3 bg-sandstone/10 border border-sandstone/20 rounded-lg p-3">
-          <p className="text-sandstone/90 text-xs font-medium mb-1">
-            Hawai&#x02BB;i reality
-          </p>
-          <p className="text-cream/60 text-xs leading-relaxed">
-            {item.hawaiiCallout}
-          </p>
-        </div>
-      )}
-    </div>
-  )
-}
 
 const REALITY_ITEMS = [
   { label: 'Shipping', text: '4–8 weeks and 15–30% above mainland prices' },
@@ -77,19 +27,19 @@ export function PlaybookContent() {
         {/* Breadcrumb */}
         <nav className="text-xs text-cream/40 mb-6" aria-label="Breadcrumb">
           <Link href="/resources" className="hover:text-cream/60 transition-colors">
-            Tools &amp; Guides
+            Guides
           </Link>
           <span className="mx-2">/</span>
-          <span className="text-cream/60">Decision Points</span>
+          <span className="text-cream/60">Decision Stages</span>
         </nav>
 
         {/* Hero */}
         <div className="flex items-start justify-between gap-4 mb-2">
           <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
-            Decision Points
+            Decision Stages
           </h1>
           <div className="shrink-0 mt-2">
-            <ShareButton title="Decision Points: Specs You Must Lock In By Stage — Hawaii Home Central" />
+            <ShareButton title="Decision Stages: Specs You Must Lock In By Stage — Hawaii Home Central" />
           </div>
         </div>
         <p className="text-cream/70 text-lg mb-8 leading-relaxed">
@@ -115,7 +65,7 @@ export function PlaybookContent() {
 
         {/* Sign-in pill */}
         <div className="mb-8">
-          <SignInPill appToolPath="/app/tools/decision-points" label="Sign in to track decisions interactively" />
+          <SignInPill appToolPath="/app/tools/finish-decisions" label="Sign in to personalize with Decision Tracker" />
         </div>
 
         {/* Filter */}
@@ -149,7 +99,7 @@ export function PlaybookContent() {
 
                 <div className="space-y-4">
                   {filtered.map((item) => (
-                    <ReadOnlyItem key={item.id} item={item} />
+                    <ReadOnlyDecisionItem key={item.id} item={item} />
                   ))}
                 </div>
               </section>
@@ -157,7 +107,7 @@ export function PlaybookContent() {
           })}
         </div>
 
-        {/* Sign-in CTA */}
+        {/* CTA */}
         <div className="bg-basalt-50 rounded-card p-8 mt-12">
           {status === 'loading' ? (
             <div className="h-20 flex items-center justify-center">
@@ -166,25 +116,25 @@ export function PlaybookContent() {
           ) : session?.user ? (
             <div className="text-center">
               <p className="text-cream/70 text-sm mb-4">
-                You&apos;re signed in. Track your decisions interactively.
+                Personalize this for your home with Decision Tracker.
               </p>
-              <Link href="/app/tools/decision-points">
+              <Link href="/app/tools/finish-decisions">
                 <Button size="lg" className="w-full sm:w-auto">
-                  Open interactive tool &rarr;
+                  Open Decision Tracker &rarr;
                 </Button>
               </Link>
             </div>
           ) : (
             <div className="text-center">
               <h2 className="font-serif text-2xl text-cream mb-3">
-                Track your decisions interactively
+                Personalize this for your home
               </h2>
               <p className="text-cream/60 text-sm mb-6 max-w-lg mx-auto">
-                Sign in to check off items as you lock them in, add notes per
-                decision, see your progress summary, and pick up on any device.
+                Decision Tracker lets you add your rooms, compare material options,
+                track specs, and see everything organized by construction milestone.
               </p>
               <Button
-                onClick={() => signIn('google', { callbackUrl: '/app/tools/decision-points' })}
+                onClick={() => signIn('google', { callbackUrl: '/app/tools/finish-decisions' })}
                 variant="secondary"
                 size="lg"
                 className="inline-flex items-center justify-center gap-3"

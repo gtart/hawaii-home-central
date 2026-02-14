@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/app/tools/hold-points',
-        destination: '/app/tools/decision-points',
+        destination: '/app/tools/finish-decisions',
         permanent: true,
       },
     ]

@@ -1,10 +1,5 @@
-import type { Metadata } from 'next'
-import { ToolContent } from './ToolContent'
+import { redirect } from 'next/navigation'
 
-export const metadata: Metadata = {
-  title: 'Decision Points',
-}
-
-export default function DecisionPointsToolPage() {
-  return <ToolContent />
+export default function DecisionPointsRedirect() {
+  redirect('/app/tools/finish-decisions')
 }

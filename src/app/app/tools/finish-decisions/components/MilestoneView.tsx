@@ -244,13 +244,13 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
         )
       })()}
 
-      {/* Link to Decision Points */}
+      {/* Link to Decision Stages Overview */}
       <div className="text-center pt-2">
         <Link
-          href="/app/tools/decision-points"
+          href="/tools/decision-points"
           className="text-sm text-sandstone/60 hover:text-sandstone transition-colors"
         >
-          Open Decision Points checklist →
+          View Decision Stages Overview →
         </Link>
       </div>
     </div>
