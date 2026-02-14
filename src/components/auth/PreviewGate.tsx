@@ -53,7 +53,7 @@ export function PreviewGate({ previewContent, appToolPath }: PreviewGateProps) {
               Run this tool
             </h2>
             <p className="text-cream/60 text-sm mb-6">
-              Sign in to use this tool and save your progress across devices. No spam, no sales pitches.
+              Sign in to save your progress across devices. No spam, no sales pitches.
             </p>
             <div className="space-y-3">
               <Button

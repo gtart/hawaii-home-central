@@ -8,6 +8,7 @@ interface UseToolStateOptions<T> {
     | 'fair_bid_checklist'
     | 'responsibility_matrix'
     | 'finish_decisions'
+    | 'before_you_sign_notes'
   localStorageKey: string
   defaultValue: T
 }

@@ -66,6 +66,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/tools/decision-points`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/tools/fair-bid-checklist`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/tools/responsibility-matrix`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE_URL}/tools/before-you-sign`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE_URL}/tools/finish-decisions`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
 
     // Stories
     { url: `${BASE_URL}/stories`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },

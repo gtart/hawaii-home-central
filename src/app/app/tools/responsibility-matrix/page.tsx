@@ -1,10 +1,5 @@
-import type { Metadata } from 'next'
-import { ToolContent } from './ToolContent'
+import { redirect } from 'next/navigation'
 
-export const metadata: Metadata = {
-  title: 'Responsibility Matrix',
-}
-
-export default function ResponsibilityMatrixToolPage() {
-  return <ToolContent />
+export default function ResponsibilityMatrixRedirect() {
+  redirect('/app/tools/before-you-sign?tab=handoffs')
 }

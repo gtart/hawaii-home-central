@@ -54,7 +54,7 @@ function ProgressBar({ checkedItems }: { checkedItems: Record<string, boolean> }
   )
 }
 
-export function ToolContent() {
+export function ToolContent({ embedded }: { embedded?: boolean }) {
   const { state: checkedItems, setState: setCheckedItems, isLoaded, isSyncing } =
     useToolState<Record<string, boolean>>({
       toolKey: 'fair_bid_checklist',
@@ -68,64 +68,92 @@ export function ToolContent() {
     setCheckedItems((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
-  return (
-    <div className="pt-32 pb-24 px-6">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-start justify-between gap-4 mb-2">
-          <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
-            Fair Bid Checklist
-          </h1>
-          <div className="shrink-0 mt-2 flex items-center gap-3">
+  const content = (
+    <>
+      {embedded ? (
+        <>
+          <div className="flex items-center justify-between gap-4 mb-2">
+            <h2 className="font-serif text-2xl text-sandstone">
+              Compare Your Quotes
+            </h2>
             {isSyncing && (
               <span className="text-xs text-cream/30">Saving...</span>
             )}
-            <ShareButton title="Fair Bid Checklist &mdash; Hawaii Home Central" />
           </div>
-        </div>
-        <p className="text-cream/70 text-lg mb-8 leading-relaxed">
-          Compare bids apples-to-apples. This checklist surfaces the gaps,
-          exclusions, and assumptions that cause disputes&mdash;before you sign
-          anything.
-        </p>
-
-        <div className="bg-basalt-50 rounded-card p-6 mb-8">
-          <h2 className="font-serif text-xl text-sandstone mb-3">
-            Goal &amp; Definition of Done
-          </h2>
-          <p className="text-cream/70 text-sm leading-relaxed mb-3">
-            The goal of this checklist is to normalize bids and surface gaps
-            early&mdash;before you sign anything.
+          <p className="text-cream/70 text-sm mb-6 leading-relaxed">
+            Make sure you&apos;re comparing the same project&mdash;not just the bottom-line price.
           </p>
-          <p className="text-cream/60 text-sm leading-relaxed italic">
-            You&apos;re ready to compare bids when every section below is
-            clearly answered for each contractor.
-          </p>
-        </div>
-
-        {isLoaded && (
-          <>
-            <ProgressBar checkedItems={checkedItems} />
-            <div className="flex justify-end mb-6">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setShowEssentialsOnly(!showEssentialsOnly)}
-              >
-                {showEssentialsOnly ? 'Show all items' : 'Show essentials only'}
-              </Button>
+        </>
+      ) : (
+        <>
+          <div className="flex items-start justify-between gap-4 mb-2">
+            <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
+              Compare Your Quotes
+            </h1>
+            <div className="shrink-0 mt-2 flex items-center gap-3">
+              {isSyncing && (
+                <span className="text-xs text-cream/30">Saving...</span>
+              )}
+              <ShareButton title="Compare Your Quotes &mdash; Hawaii Home Central" />
             </div>
-          </>
-        )}
+          </div>
+          <p className="text-cream/70 text-lg mb-8 leading-relaxed">
+            Make sure you&apos;re comparing the same project&mdash;not just the
+            bottom-line price. This checklist surfaces the gaps, exclusions, and
+            assumptions that cause disputes.
+          </p>
+        </>
+      )}
 
-        {CHECKLIST_SECTIONS.map((section) => (
-          <ChecklistSection
-            key={section.id}
-            section={section}
-            checkedItems={checkedItems}
-            onToggle={toggle}
-            filterEssentials={showEssentialsOnly}
-          />
-        ))}
+      <div className="bg-basalt-50 rounded-card p-6 mb-8">
+        <h3 className="font-serif text-xl text-sandstone mb-3">
+          You&apos;re ready when&hellip;
+        </h3>
+        <p className="text-cream/70 text-sm leading-relaxed mb-3">
+          Every section below is clearly answered for each contractor
+          you&apos;re comparing.
+        </p>
+        <p className="text-cream/60 text-sm leading-relaxed italic">
+          The goal is to compare the same project&mdash;not just the
+          bottom-line price.
+        </p>
+      </div>
+
+      {isLoaded && (
+        <>
+          <ProgressBar checkedItems={checkedItems} />
+          <div className="flex justify-end mb-6">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowEssentialsOnly(!showEssentialsOnly)}
+            >
+              {showEssentialsOnly ? 'Show all items' : 'Show essentials only'}
+            </Button>
+          </div>
+        </>
+      )}
+
+      {CHECKLIST_SECTIONS.map((section) => (
+        <ChecklistSection
+          key={section.id}
+          section={section}
+          checkedItems={checkedItems}
+          onToggle={toggle}
+          filterEssentials={showEssentialsOnly}
+        />
+      ))}
+    </>
+  )
+
+  if (embedded) {
+    return <div>{content}</div>
+  }
+
+  return (
+    <div className="pt-32 pb-24 px-6">
+      <div className="max-w-3xl mx-auto">
+        {content}
       </div>
     </div>
   )

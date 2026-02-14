@@ -5,34 +5,22 @@ import { Card } from '@/components/ui/Card'
 import { breadcrumbSchema } from '@/lib/structured-data'
 
 export const metadata: Metadata = {
-  title: 'Free Renovation Tools',
+  title: 'Your Renovation Toolkit',
   description:
-    'Free interactive tools for Hawai\u02BBi homeowners: decision-point checklists, bid comparison tools, and responsibility matrices. Built for real renovation projects.',
+    'Free interactive toolkit for Hawai\u02BBi homeowners: bid comparison, task ownership, decision tracking, and more. Built for real renovation projects.',
 }
 
 const TOOLS = [
   {
-    title: 'Decision Points',
+    title: 'Before You Sign',
     description:
-      'Track the spec decisions that must be locked before each construction stage. 5 stages, 24 items, with Hawai\u02BBi-specific callouts.',
-    href: '/tools/decision-points',
-  },
-  {
-    title: 'Fair Bid Checklist',
-    description:
-      'Compare contractor bids apples-to-apples. 11 sections covering scope, labor, materials, permits, and more.',
-    href: '/tools/fair-bid-checklist',
-  },
-  {
-    title: 'Responsibility Matrix',
-    description:
-      'Assign who owns 16 commonly-missed renovation tasks so nothing gets assumed or dropped between parties.',
-    href: '/tools/responsibility-matrix',
+      'Compare quotes, assign who handles what, and agree on the details that cause fights later. Three tools in one.',
+    href: '/tools/before-you-sign',
   },
   {
     title: 'Decision Tracker',
     description:
-      "Track every material and finish decision by room. Compare options, record specs, and mark progress from deciding to done.",
+      'Track every material and finish decision by room. Compare options, record specs, and mark progress from deciding to done.',
     href: '/tools/finish-decisions',
   },
 ]
@@ -53,13 +41,13 @@ export default function ToolsIndexPage() {
         <div className="max-w-4xl mx-auto">
           <FadeInSection>
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6 text-center">
-              Renovation Tools
+              Your Renovation Toolkit
             </h1>
             <p className="text-lg text-cream/70 mb-4 max-w-3xl mx-auto text-center leading-relaxed">
-              Free, interactive tools built for Hawai&#x02BB;i homeowners tackling real renovation projects. Sign in to save your progress across devices.
+              Planning help from start to finish&mdash;what homeowners wish they had before they started.
             </p>
             <p className="text-cream/50 text-sm mb-12 max-w-2xl mx-auto text-center">
-              Each tool is designed to surface the gaps, assumptions, and missed handoffs that cause the most expensive renovation mistakes.
+              Free to use. Sign in to save your progress across devices.
             </p>
           </FadeInSection>
 
@@ -75,12 +63,18 @@ export default function ToolsIndexPage() {
             ))}
           </div>
 
-          <FadeInSection delay={400}>
-            <div className="mt-16 text-center">
+          <FadeInSection delay={300}>
+            <div className="mt-16 text-center space-y-3">
               <p className="text-cream/50 text-sm">
-                Looking for guides and deep-dive content?{' '}
+                New to renovating? Start with the{' '}
+                <Link href="/tools/decision-points" className="text-sandstone hover:text-sandstone-light transition-colors">
+                  Decision Stages Overview &rarr;
+                </Link>
+              </p>
+              <p className="text-cream/50 text-sm">
+                Looking for in-depth guides?{' '}
                 <Link href="/resources" className="text-sandstone hover:text-sandstone-light transition-colors">
-                  Visit Resources
+                  Visit Guides
                 </Link>
               </p>
             </div>

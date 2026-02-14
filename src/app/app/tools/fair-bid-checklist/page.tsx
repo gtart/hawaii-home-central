@@ -1,10 +1,5 @@
-import type { Metadata } from 'next'
-import { ToolContent } from './ToolContent'
+import { redirect } from 'next/navigation'
 
-export const metadata: Metadata = {
-  title: 'Fair Bid Checklist',
-}
-
-export default function FairBidChecklistToolPage() {
-  return <ToolContent />
+export default function FairBidChecklistRedirect() {
+  redirect('/app/tools/before-you-sign?tab=quotes')
 }

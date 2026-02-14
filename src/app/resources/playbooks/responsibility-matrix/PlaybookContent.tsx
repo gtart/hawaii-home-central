@@ -92,15 +92,15 @@ export function PlaybookContent() {
         {/* Breadcrumb */}
         <nav className="text-xs text-cream/40 mb-6" aria-label="Breadcrumb">
           <Link href="/resources" className="hover:text-cream/60 transition-colors">
-            Tools &amp; Guides
+            Guides
           </Link>
           <span className="mx-2">/</span>
-          <span className="text-cream/60">Responsibility Matrix</span>
+          <span className="text-cream/60">Who Handles What</span>
         </nav>
 
         {/* Hero */}
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-2">
-          Responsibility Matrix
+          Who Handles What
         </h1>
         <p className="text-cream/70 text-lg mb-4 leading-relaxed">
           Assign who owns the easy-to-miss tasks&mdash;so nothing gets assumed.
@@ -126,7 +126,7 @@ export function PlaybookContent() {
 
         {/* Sign-in pill */}
         <div className="mb-8">
-          <SignInPill appToolPath="/app/tools/responsibility-matrix" label="Sign in to assign owners interactively" />
+          <SignInPill appToolPath="/app/tools/before-you-sign?tab=handoffs" label="Sign in to assign owners interactively" />
         </div>
 
         {/* Filter */}
@@ -182,7 +182,7 @@ export function PlaybookContent() {
               <p className="text-cream/70 text-sm mb-4">
                 You&apos;re signed in. Assign owners interactively.
               </p>
-              <Link href="/app/tools/responsibility-matrix">
+              <Link href="/app/tools/before-you-sign?tab=handoffs">
                 <Button size="lg" className="w-full sm:w-auto">
                   Open interactive tool &rarr;
                 </Button>
@@ -198,7 +198,7 @@ export function PlaybookContent() {
                 your agreements, and pick up on any device.
               </p>
               <Button
-                onClick={() => signIn('google', { callbackUrl: '/app/tools/responsibility-matrix' })}
+                onClick={() => signIn('google', { callbackUrl: '/app/tools/before-you-sign?tab=handoffs' })}
                 variant="secondary"
                 size="lg"
                 className="inline-flex items-center justify-center gap-3"

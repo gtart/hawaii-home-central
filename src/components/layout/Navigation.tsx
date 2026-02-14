@@ -15,7 +15,7 @@ interface NavLink {
 const NAV_LINKS: NavLink[] = [
   { href: '/about', label: 'About' },
   { href: '/hawaii-home-renovation', label: 'Renovation Basics', matchMode: 'prefix' },
-  { href: '/tools', label: 'Tools', matchMode: 'prefix' },
+  { href: '/tools', label: 'Toolkit', matchMode: 'prefix' },
   { href: '/stories', label: 'Stories' },
   { href: '/directory', label: 'Directory' },
   { href: '/early-access', label: 'Early Access' },

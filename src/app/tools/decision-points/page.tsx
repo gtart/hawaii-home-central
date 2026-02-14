@@ -1,50 +1,39 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { FadeInSection } from '@/components/effects/FadeInSection'
-import { Button } from '@/components/ui/Button'
+import { DecisionStagesOverview } from '@/components/resources/DecisionStagesOverview'
 import { breadcrumbSchema, faqSchema } from '@/lib/structured-data'
 import { DECISION_POINT_STAGES } from '@/data/decision-points'
-import { auth } from '@/auth'
 
 export const metadata: Metadata = {
-  title: 'Decision Points Tool — Lock Specs Before Construction Moves On',
+  title: 'Decision Stages Overview — Renovation Timeline & What to Decide When',
   description:
-    'Free interactive tool: track the spec decisions that must be locked before each construction stage. 5 stages, 23 decision-point items, with Hawaiʻi-specific callouts for island renovations.',
+    'Understand the renovation timeline and what needs to be decided before each construction stage. 5 stages, 24 decisions, with Hawaiʻi-specific callouts for island renovations.',
 }
 
 const FAQ_ITEMS = [
   {
-    question: 'What is a decision point in construction?',
+    question: 'What is a decision stage in construction?',
     answer:
-      'A decision point is a stage in construction where work should not proceed until certain choices are locked in. Once you pass a decision point, changes become expensive, disruptive, or impossible.',
+      'A decision stage is a point in construction where work should not proceed until certain choices are locked in. Once you pass a stage, changes become expensive, disruptive, or impossible.',
   },
   {
-    question: 'Why do decision points matter for Hawaiʻi renovations?',
+    question: 'Why do decision stages matter for Hawaiʻi renovations?',
     answer:
       'Hawaiʻi renovations face unique challenges: shipping delays for materials (add 4–8 weeks), limited local stock for appliances and fixtures, salt-air corrosion requiring marine-grade materials, and humidity considerations for finishes. Locking decisions early is even more critical when lead times are longer.',
   },
   {
-    question: 'How many decision points does a typical kitchen or bath renovation have?',
+    question: 'How many decisions does a typical kitchen or bath renovation involve?',
     answer:
-      'This tool covers 23 decision-point items across 5 construction stages: Order Long-Lead, Rough-In, Close Walls, Waterproof / Tile, and Closeout. Each item represents a decision that must be finalized before that stage begins.',
+      'This overview covers 24 decisions across 5 construction stages: Order Long-Lead, Rough-In, Close Walls, Waterproof / Tile, and Closeout. Each represents a decision that must be finalized before that stage begins.',
   },
 ]
 
-// Show first 8 items across stages as a preview
-const PREVIEW_ITEMS = DECISION_POINT_STAGES.flatMap((stage) =>
-  stage.items.slice(0, 2).map((item) => ({ ...item, stageTitle: stage.title }))
-).slice(0, 8)
-
-const PREVIEW_CALLOUTS = DECISION_POINT_STAGES.flatMap((stage) =>
-  stage.items.filter((item) => item.hawaiiCallout)
-).slice(0, 3)
-
-export default async function DecisionPointsLandingPage() {
-  const session = await auth()
+export default function DecisionStagesPage() {
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', href: '/' },
     { name: 'Tools', href: '/tools' },
-    { name: 'Decision Points', href: '/tools/decision-points' },
+    { name: 'Decision Stages Overview', href: '/tools/decision-points' },
   ])
   const faq = faqSchema(FAQ_ITEMS)
 
@@ -68,10 +57,11 @@ export default async function DecisionPointsLandingPage() {
         <div className="max-w-3xl mx-auto">
           <FadeInSection>
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6">
-              Decision Points
+              Decision Stages Overview
             </h1>
             <p className="text-lg text-cream/70 mb-4 leading-relaxed">
-              The costliest renovation mistakes happen when decisions are made after construction moves on. This tool shows what must be locked in before each stage&mdash;so you catch gaps before they become change orders.
+              Understand the renovation timeline and what needs to be decided before
+              each construction stage&mdash;so you catch gaps before they become change orders.
             </p>
             <p className="text-cream/50 text-sm mb-8">
               {DECISION_POINT_STAGES.length} stages &middot; {totalItems} decisions &middot; {totalCallouts} Hawai&#x02BB;i callouts &middot;{' '}
@@ -81,82 +71,15 @@ export default async function DecisionPointsLandingPage() {
             </p>
           </FadeInSection>
 
-          {/* Data preview */}
-          <FadeInSection delay={50}>
-            <div className="bg-basalt-50 rounded-card p-6 mb-8">
-              <h2 className="font-serif text-xl text-sandstone mb-4">
-                Preview: What&rsquo;s inside
-              </h2>
-              <div className="space-y-3">
-                {PREVIEW_ITEMS.map((item) => (
-                  <div key={item.id} className="py-3 border-b border-cream/5 last:border-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-cream/10 text-cream/40">
-                        {item.stageTitle}
-                      </span>
-                      <span className="text-sandstone/70 text-xs font-medium">{item.category}</span>
-                    </div>
-                    <p className="text-cream/80 text-sm leading-relaxed">{item.summary}</p>
-                    <p className="text-cream/50 text-xs mt-1 leading-relaxed">{item.why}</p>
-                  </div>
-                ))}
-              </div>
-              <p className="text-cream/40 text-xs mt-4 pt-3 border-t border-cream/5">
-                + {totalItems - PREVIEW_ITEMS.length} more decisions across {DECISION_POINT_STAGES.length} stages
-              </p>
-            </div>
-          </FadeInSection>
-
-          {/* Hawaii callout preview */}
           <FadeInSection delay={100}>
-            <div className="bg-basalt-50 rounded-card p-6 mb-8">
-              <h2 className="font-serif text-xl text-sandstone mb-4">
-                Hawai&#x02BB;i-specific callouts
-              </h2>
-              <div className="space-y-3">
-                {PREVIEW_CALLOUTS.map((item) => (
-                  <div key={item.id} className="bg-sandstone/10 border border-sandstone/20 rounded-lg p-3">
-                    <p className="text-sandstone/90 text-xs font-medium mb-1">{item.category}</p>
-                    <p className="text-cream/60 text-xs leading-relaxed">{item.hawaiiCallout}</p>
-                  </div>
-                ))}
-              </div>
-              <p className="text-cream/40 text-xs mt-4">
-                {totalCallouts} items include island-specific guidance
-              </p>
-            </div>
-          </FadeInSection>
-
-          {/* What you get when you sign in */}
-          <FadeInSection delay={150}>
-            <div className="bg-basalt-50 rounded-card p-6 mb-8">
-              <h2 className="font-serif text-xl text-sandstone mb-4">
-                What you get when you sign in
-              </h2>
-              <ul className="text-cream/60 space-y-2 text-sm">
-                <li className="flex gap-3">
-                  <span className="text-sandstone shrink-0">&rarr;</span>
-                  <span>Interactive checkboxes to mark decisions as locked</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-sandstone shrink-0">&rarr;</span>
-                  <span>Notes field for each item to document agreements</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-sandstone shrink-0">&rarr;</span>
-                  <span>Progress summary showing how many decisions remain</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-sandstone shrink-0">&rarr;</span>
-                  <span>Saved to your account&mdash;pick up on any device</span>
-                </li>
-              </ul>
-            </div>
+            <DecisionStagesOverview
+              stages={DECISION_POINT_STAGES}
+            />
           </FadeInSection>
 
           {/* FAQ */}
           <FadeInSection delay={200}>
-            <div className="bg-basalt-50 rounded-card p-6 mb-8">
+            <div className="bg-basalt-50 rounded-card p-6 mt-10">
               <h2 className="font-serif text-xl text-sandstone mb-4">
                 Frequently asked questions
               </h2>
@@ -172,29 +95,6 @@ export default async function DecisionPointsLandingPage() {
                   </div>
                 ))}
               </div>
-            </div>
-          </FadeInSection>
-
-          <FadeInSection delay={250}>
-            <div className="text-center">
-              {session?.user ? (
-                <Link href="/app/tools/decision-points">
-                  <Button size="lg">
-                    Go to Tool &rarr;
-                  </Button>
-                </Link>
-              ) : (
-                <>
-                  <Link href="/login?callbackUrl=/app/tools/decision-points">
-                    <Button size="lg">
-                      Sign in to use this tool &rarr;
-                    </Button>
-                  </Link>
-                  <p className="text-cream/40 text-xs mt-3">
-                    Free to use. Google sign-in. No spam.
-                  </p>
-                </>
-              )}
             </div>
           </FadeInSection>
         </div>

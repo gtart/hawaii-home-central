@@ -56,10 +56,10 @@ export function PlaybookContent() {
         {/* Breadcrumb */}
         <nav className="text-xs text-cream/40 mb-6" aria-label="Breadcrumb">
           <Link href="/resources" className="hover:text-cream/60 transition-colors">
-            Tools &amp; Guides
+            Guides
           </Link>
           <span className="mx-2">/</span>
-          <span className="text-cream/60">Fair Bid Checklist</span>
+          <span className="text-cream/60">Compare Your Quotes</span>
         </nav>
 
         {/* Hero */}
@@ -107,7 +107,7 @@ export function PlaybookContent() {
 
         {/* Sign-in pill */}
         <div className="mb-8">
-          <SignInPill appToolPath="/app/tools/fair-bid-checklist" label="Sign in to check items off interactively" />
+          <SignInPill appToolPath="/app/tools/before-you-sign?tab=quotes" label="Sign in to check items off interactively" />
         </div>
 
         {/* Filter controls */}
@@ -171,7 +171,7 @@ export function PlaybookContent() {
               <p className="text-cream/70 text-sm mb-4">
                 You&apos;re signed in. Check items off interactively.
               </p>
-              <Link href="/app/tools/fair-bid-checklist">
+              <Link href="/app/tools/before-you-sign?tab=quotes">
                 <Button size="lg" className="w-full sm:w-auto">
                   Open interactive tool &rarr;
                 </Button>
@@ -188,7 +188,7 @@ export function PlaybookContent() {
                 device.
               </p>
               <Button
-                onClick={() => signIn('google', { callbackUrl: '/app/tools/fair-bid-checklist' })}
+                onClick={() => signIn('google', { callbackUrl: '/app/tools/before-you-sign?tab=quotes' })}
                 variant="secondary"
                 size="lg"
                 className="inline-flex items-center justify-center gap-3"

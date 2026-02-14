@@ -4,8 +4,8 @@ import { Card } from '@/components/ui/Card'
 import { CardStatic } from '@/components/ui/CardStatic'
 
 export const metadata: Metadata = {
-  title: 'Tools & Guides',
-  description: 'Practical tools for Hawaiʻi homeowners. Fair bid checklists, renovation guides, budget trackers, and more—built for local conditions.',
+  title: 'Guides & Toolkit',
+  description: 'Practical guides and interactive tools for Hawaiʻi homeowners. Bid comparison, decision tracking, renovation guides, and more—built for local conditions.',
 }
 
 export default function ResourcesPage() {
@@ -15,10 +15,10 @@ export default function ResourcesPage() {
         <FadeInSection>
           <div className="text-center mb-16">
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6">
-              Tools &amp; Guides
+              Guides &amp; Toolkit
             </h1>
             <p className="text-lg text-cream/70 max-w-2xl mx-auto">
-              Practical tools to help you navigate your Hawai&#x02BB;i renovation with clarity and confidence. Built from real experience, not theory.
+              Practical guides and tools to help you navigate your Hawai&#x02BB;i renovation with clarity and confidence. Built from real experience, not theory.
             </p>
           </div>
         </FadeInSection>
@@ -63,25 +63,25 @@ export default function ResourcesPage() {
               Start Here (Free)
             </h2>
             <p className="text-cream/50 text-sm mb-6">
-              Read the full content on each page&mdash;no sign-in required. Sign in when you&rsquo;re ready to use the interactive tools.
+              Read the full content on each page&mdash;no sign-in required. Sign in when you&rsquo;re ready to save your progress.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card
                 href="/resources/playbooks/decision-points"
-                title="Decision Points"
-                description="What must be locked in before each construction stage. 5 stages, 23 decisions, with Hawai&#x02BB;i callouts."
+                title="Decision Stages Overview"
+                description="What must be locked in before each construction stage. 5 stages, 24 decisions, with Hawai&#x02BB;i callouts."
                 badge="Free to read"
               />
               <Card
                 href="/resources/playbooks/fair-bid-checklist"
-                title="Fair Bid Checklist"
+                title="Compare Your Quotes"
                 description="What to look for in every contractor bid. 11 sections, 44 items, with essentials flagged."
                 badge="Free to read"
               />
               <Card
                 href="/resources/playbooks/responsibility-matrix"
-                title="Responsibility Matrix"
-                description="Who owns the 16 tasks that get dropped between homeowner, GC, and subs."
+                title="Who Handles What"
+                description="The 16 tasks that get dropped between homeowner, contractor, and subs."
                 badge="Free to read"
               />
             </div>
@@ -91,25 +91,25 @@ export default function ResourcesPage() {
         <FadeInSection delay={100}>
           <section aria-labelledby="tools-heading" className="mb-16">
             <h2 id="tools-heading" className="font-serif text-2xl text-cream mb-6">
-              All Tools
+              Interactive Tools
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card
                 href="/resources/playbooks/fair-bid-checklist"
-                title="Fair Bid Checklist"
+                title="Compare Your Quotes"
                 description="Know exactly what to look for when comparing contractor bids. 11 critical sections with Hawai&#x02BB;i-specific callouts."
                 badge="Live"
               />
               <Card
                 href="/resources/playbooks/decision-points"
-                title="Decision Points: Specs to Lock In By Stage"
-                description="The decisions that must be finalized before each construction phase — and what happens when they're not."
+                title="Decision Stages Overview"
+                description="The decisions that must be finalized before each construction phase&mdash;and what happens when they&apos;re not."
                 badge="Live"
               />
               <Card
                 href="/resources/playbooks/responsibility-matrix"
-                title="Responsibility Matrix"
-                description="Clarify who owns commonly-missed renovation responsibilities before they become disputes."
+                title="Who Handles What"
+                description="Clarify who owns commonly-missed renovation tasks before they become disputes."
                 badge="Live"
               />
               <CardStatic
