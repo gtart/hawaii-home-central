@@ -1,16 +1,34 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(req: Request) {
   try {
+    // Rate limit: 5 signups per hour per IP
+    const { allowed } = await checkRateLimit({
+      key: 'early-access',
+      windowMs: 3600000,
+      maxRequests: 5,
+    })
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'Too many submissions. Try again later.' },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json()
     const { source = 'FORM', name, userId } = body
     const email = (body.email ?? '').trim().toLowerCase()
 
-    if (!email || !EMAIL_RE.test(email)) {
+    if (!email || !EMAIL_RE.test(email) || email.length > 320) {
       return NextResponse.json({ error: 'Invalid email address.' }, { status: 400 })
+    }
+
+    if (name && (typeof name !== 'string' || name.length > 200)) {
+      return NextResponse.json({ error: 'Name too long.' }, { status: 400 })
     }
 
     if (source !== 'FORM' && source !== 'GOOGLE') {

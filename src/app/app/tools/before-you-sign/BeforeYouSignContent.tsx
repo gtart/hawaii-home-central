@@ -3,62 +3,146 @@
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { ToolContent as FairBidContent } from '@/app/app/tools/fair-bid-checklist/ToolContent'
-import { ToolContent as ResponsibilityContent } from '@/app/app/tools/responsibility-matrix/ToolContent'
-import { ThingsToAgreeOn } from './ThingsToAgreeOn'
+import { useBYSState } from './useBYSState'
+import { ALL_TABS } from './beforeYouSignConfig'
+import { ContractorBar } from './components/ContractorBar'
+import { ContractorSummaryCard } from './components/ContractorSummaryCard'
+import { EmptyState } from './components/EmptyState'
+import { ChecklistSingleMode } from './components/ChecklistSingleMode'
+import { CompareGrid } from './components/CompareGrid'
+import type { TabKey } from './types'
 
-type Tab = 'quotes' | 'handoffs' | 'agree'
-
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'quotes', label: 'Compare Your Quotes' },
+const TAB_PILLS: { key: TabKey; label: string }[] = [
+  { key: 'quotes', label: 'Compare Quotes' },
   { key: 'handoffs', label: 'Who Handles What' },
-  { key: 'agree', label: 'Things to Agree On' },
+  { key: 'agree', label: 'Key Agreements' },
 ]
 
-function TabContent() {
+function BYSContent() {
   const searchParams = useSearchParams()
-  const tabParam = searchParams.get('tab') as Tab | null
-  const [activeTab, setActiveTab] = useState<Tab>(
-    tabParam && TABS.some((t) => t.key === tabParam) ? tabParam : 'quotes'
+  const tabParam = searchParams.get('tab') as TabKey | null
+  const [activeTab, setActiveTab] = useState<TabKey>(
+    tabParam && TAB_PILLS.some((t) => t.key === tabParam) ? tabParam : 'quotes'
   )
 
+  const {
+    payload,
+    isLoaded,
+    addContractor,
+    updateContractor,
+    removeContractor,
+    setActiveContractor,
+    setAnswer,
+    getAnswer,
+    addCustomAgreeItem,
+    removeCustomAgreeItem,
+  } = useBYSState()
+
   useEffect(() => {
-    if (tabParam && TABS.some((t) => t.key === tabParam)) {
+    if (tabParam && TAB_PILLS.some((t) => t.key === tabParam)) {
       setActiveTab(tabParam)
     }
   }, [tabParam])
 
-  const handleTabChange = (tab: Tab) => {
+  const handleTabChange = (tab: TabKey) => {
     setActiveTab(tab)
     const url = new URL(window.location.href)
     url.searchParams.set('tab', tab)
     window.history.replaceState({}, '', url.toString())
   }
 
+  if (!isLoaded) {
+    return (
+      <div className="py-12 text-center text-cream/30 text-sm">
+        Loading...
+      </div>
+    )
+  }
+
+  const { contractors, activeContractorId, customAgreeItems } = payload
+  const isCompareMode = activeContractorId === 'all'
+  const activeContractor = contractors.find(
+    (c) => c.id === activeContractorId
+  )
+  const tabConfig = ALL_TABS.find((t) => t.key === activeTab) ?? ALL_TABS[0]
+
   return (
     <>
-      {/* Tab pills */}
-      <div className="flex flex-wrap gap-2 mb-8">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => handleTabChange(tab.key)}
-            className={cn(
-              'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-              activeTab === tab.key
-                ? 'bg-sandstone text-basalt'
-                : 'bg-basalt-50 text-cream/50 border border-cream/10 hover:border-cream/30 hover:text-cream/70'
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {/* Contractor bar or empty state */}
+      {contractors.length === 0 ? (
+        <EmptyState onAdd={addContractor} />
+      ) : (
+        <div className="space-y-4 mb-6">
+          <ContractorBar
+            contractors={contractors}
+            activeContractorId={activeContractorId}
+            onSelect={setActiveContractor}
+            onAdd={addContractor}
+            onRemove={removeContractor}
+            onUpdate={updateContractor}
+          />
 
-      {/* Tab content */}
-      {activeTab === 'quotes' && <FairBidContent embedded />}
-      {activeTab === 'handoffs' && <ResponsibilityContent embedded />}
-      {activeTab === 'agree' && <ThingsToAgreeOn />}
+          {/* Summary card when specific contractor selected */}
+          {activeContractor && (
+            <ContractorSummaryCard
+              contractor={activeContractor}
+              onUpdate={updateContractor}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Only show tabs + content when we have at least one contractor */}
+      {contractors.length > 0 && (
+        <>
+          {/* Tab pills */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {TAB_PILLS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => handleTabChange(tab.key)}
+                className={cn(
+                  'px-4 py-2 rounded-full text-sm font-medium transition-colors',
+                  activeTab === tab.key
+                    ? 'bg-sandstone text-basalt'
+                    : 'bg-basalt-50 text-cream/50 border border-cream/10 hover:border-cream/30 hover:text-cream/70'
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab content */}
+          {isCompareMode ? (
+            <CompareGrid
+              tabConfig={tabConfig}
+              contractors={contractors}
+              getAnswer={getAnswer}
+              setAnswer={setAnswer}
+              customAgreeItems={
+                activeTab === 'agree' ? customAgreeItems : undefined
+              }
+            />
+          ) : (
+            <ChecklistSingleMode
+              tabConfig={tabConfig}
+              contractorId={activeContractorId}
+              getAnswer={getAnswer}
+              setAnswer={setAnswer}
+              customAgreeItems={
+                activeTab === 'agree' ? customAgreeItems : undefined
+              }
+              onAddCustomItem={
+                activeTab === 'agree' ? addCustomAgreeItem : undefined
+              }
+              onRemoveCustomItem={
+                activeTab === 'agree' ? removeCustomAgreeItem : undefined
+              }
+            />
+          )}
+        </>
+      )}
     </>
   )
 }
@@ -66,7 +150,7 @@ function TabContent() {
 export function BeforeYouSignContent() {
   return (
     <div className="pt-32 pb-24 px-6">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-4">
           Before You Sign
         </h1>
@@ -75,7 +159,7 @@ export function BeforeYouSignContent() {
         </p>
 
         <Suspense fallback={null}>
-          <TabContent />
+          <BYSContent />
         </Suspense>
       </div>
     </div>

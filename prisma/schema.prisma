@@ -146,6 +146,17 @@ model Property {
   @@index([userId])
 }
 
+// ─── Rate Limiting ────────────────────────────────────
+
+model RateLimit {
+  id        String   @id @default(cuid())
+  key       String
+  ipHash    String
+  createdAt DateTime @default(now())
+
+  @@index([key, ipHash, createdAt])
+}
+
 // ─── CMS ──────────────────────────────────────────────
 
 model SiteSetting {

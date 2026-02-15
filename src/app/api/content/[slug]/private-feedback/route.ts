@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { headers } from 'next/headers'
-import crypto from 'crypto'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 export async function POST(
   request: Request,
@@ -16,6 +16,18 @@ export async function POST(
     return NextResponse.json({ error: 'Message required' }, { status: 400 })
   }
 
+  if (message.length > 5000) {
+    return NextResponse.json({ error: 'Message too long' }, { status: 400 })
+  }
+
+  if (name && (typeof name !== 'string' || name.length > 200)) {
+    return NextResponse.json({ error: 'Name too long' }, { status: 400 })
+  }
+
+  if (email && (typeof email !== 'string' || email.length > 320)) {
+    return NextResponse.json({ error: 'Invalid email' }, { status: 400 })
+  }
+
   const content = await prisma.content.findFirst({
     where: { slug, status: 'PUBLISHED' },
     select: { id: true },
@@ -25,25 +37,14 @@ export async function POST(
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  // Rate limit: 5 per hour per ipHash+contentId
-  const hdrs = await headers()
-  const ip = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  const dailySalt = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
-  const ipHash = crypto
-    .createHash('sha256')
-    .update(`${ip}:${dailySalt}`)
-    .digest('hex')
-
-  const oneHourAgo = new Date(Date.now() - 3600000)
-  const recentCount = await prisma.contentPrivateFeedback.count({
-    where: {
-      contentId: content.id,
-      ipHash,
-      createdAt: { gte: oneHourAgo },
-    },
+  // Rate limit: 5 per hour per IP per content slug
+  const { allowed, ipHash } = await checkRateLimit({
+    key: `private-feedback:${slug}`,
+    windowMs: 3600000,
+    maxRequests: 5,
   })
 
-  if (recentCount >= 5) {
+  if (!allowed) {
     return NextResponse.json(
       { error: 'Too many submissions. Try again later.' },
       { status: 429 }
@@ -52,6 +53,7 @@ export async function POST(
 
   const session = await auth()
   const userId = session?.user?.id ?? null
+  const hdrs = await headers()
   const userAgent = hdrs.get('user-agent') || null
   const pageUrl = hdrs.get('referer') || null
   const country = hdrs.get('x-vercel-ip-country') || null

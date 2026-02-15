@@ -8,6 +8,8 @@ const VALID_TOOL_KEYS = [
   'fair_bid_checklist',
   'responsibility_matrix',
   'finish_decisions',
+  'before_you_sign',
+  'before_you_sign_notes',
 ]
 
 export async function GET(

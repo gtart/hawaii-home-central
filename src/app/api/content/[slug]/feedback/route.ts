@@ -14,6 +14,10 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid vote' }, { status: 400 })
   }
 
+  if (anonId && (typeof anonId !== 'string' || anonId.length > 100)) {
+    return NextResponse.json({ error: 'Invalid identifier' }, { status: 400 })
+  }
+
   const content = await prisma.content.findFirst({
     where: { slug, status: 'PUBLISHED' },
     select: { id: true },
