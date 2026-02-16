@@ -11,10 +11,18 @@ export interface BYSAnswer {
   notes: string
 }
 
+export type ContractType = 'fixed' | 'time_materials' | 'cost_plus' | 'not_sure' | ''
+
 export interface BYSContractor {
   id: string
   name: string
   notes: string
+  // Pricing fields (all optional for backward compat)
+  totalValue?: string
+  allowances?: string
+  laborEstimate?: string
+  materialsEstimate?: string
+  contractType?: ContractType
 }
 
 export interface BYSCustomAgreeItem {

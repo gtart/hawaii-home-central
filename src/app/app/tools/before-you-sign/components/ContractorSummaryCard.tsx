@@ -73,10 +73,13 @@ export function ContractorSummaryCard({
       </div>
 
       {/* Notes */}
+      <label className="block text-xs text-cream/40 mt-2 mb-1">
+        Private notes (only you can see this)
+      </label>
       <textarea
         value={contractor.notes}
         onChange={(e) => onUpdate(contractor.id, { notes: e.target.value })}
-        placeholder="Add notes about this contractor..."
+        placeholder="e.g., Met on-site Jan 15. Seemed thorough. Asked about permits..."
         className={cn(
           'w-full mt-2 px-3 py-2 rounded-lg text-sm leading-relaxed',
           'bg-basalt border border-cream/15 text-cream',

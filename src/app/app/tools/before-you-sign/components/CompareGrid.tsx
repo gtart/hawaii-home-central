@@ -38,6 +38,7 @@ export function CompareGrid({
     new Set()
   )
   const [showAllItems, setShowAllItems] = useState(false)
+  const [showGapsOnly, setShowGapsOnly] = useState(false)
 
   const tab = tabConfig.key
   const isQuotesTab = tab === 'quotes'
@@ -88,6 +89,21 @@ export function CompareGrid({
     return baseSections.reduce((sum, s) => sum + s.items.length, 0)
   }, [baseSections, isQuotesTab])
 
+  // Filter sections for gaps-only mode
+  const displaySections = useMemo(() => {
+    if (!showGapsOnly) return sections
+    return sections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) =>
+          contractors.some(
+            (c) => getAnswer(tab, c.id, item.id).status === 'unknown'
+          )
+        ),
+      }))
+      .filter((section) => section.items.length > 0)
+  }, [sections, showGapsOnly, tab, contractors, getAnswer])
+
   function toggleSection(sectionId: string) {
     setCollapsedSections((prev) => {
       const next = new Set(prev)
@@ -107,37 +123,54 @@ export function CompareGrid({
 
   return (
     <div className="space-y-4">
-      {/* Essentials / Full toggle (quotes tab only) */}
-      {isQuotesTab && (
-        <div className="flex items-center gap-1 rounded-full bg-basalt-50 border border-cream/10 p-0.5 w-fit">
-          <button
-            type="button"
-            onClick={() => setShowAllItems(false)}
-            className={cn(
-              'px-3 py-1 rounded-full text-xs font-medium transition-colors',
-              !showAllItems
-                ? 'bg-sandstone text-basalt'
-                : 'text-cream/50 hover:text-cream/70'
-            )}
-          >
-            Essentials ({essentialCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAllItems(true)}
-            className={cn(
-              'px-3 py-1 rounded-full text-xs font-medium transition-colors',
-              showAllItems
-                ? 'bg-sandstone text-basalt'
-                : 'text-cream/50 hover:text-cream/70'
-            )}
-          >
-            Full checklist ({totalCount})
-          </button>
-        </div>
-      )}
+      {/* Toggles row */}
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Essentials / Full toggle (quotes tab only) */}
+        {isQuotesTab && (
+          <div className="flex items-center gap-1 rounded-full bg-basalt-50 border border-cream/10 p-0.5 w-fit">
+            <button
+              type="button"
+              onClick={() => setShowAllItems(false)}
+              className={cn(
+                'px-3 py-1 rounded-full text-xs font-medium transition-colors',
+                !showAllItems
+                  ? 'bg-sandstone text-basalt'
+                  : 'text-cream/50 hover:text-cream/70'
+              )}
+            >
+              Essentials ({essentialCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAllItems(true)}
+              className={cn(
+                'px-3 py-1 rounded-full text-xs font-medium transition-colors',
+                showAllItems
+                  ? 'bg-sandstone text-basalt'
+                  : 'text-cream/50 hover:text-cream/70'
+              )}
+            >
+              Full checklist ({totalCount})
+            </button>
+          </div>
+        )}
 
-      {sections.map((section) => {
+        {/* Gaps toggle */}
+        <button
+          type="button"
+          onClick={() => setShowGapsOnly((p) => !p)}
+          className={cn(
+            'text-xs transition-colors',
+            showGapsOnly
+              ? 'text-amber-400 font-medium'
+              : 'text-cream/30 hover:text-cream/50'
+          )}
+        >
+          {showGapsOnly ? 'Showing gaps only' : 'Show gaps only'}
+        </button>
+      </div>
+
+      {displaySections.map((section) => {
         const isCollapsed = collapsedSections.has(section.id)
 
         return (
@@ -409,7 +442,7 @@ function MobileItemCard({
                   'w-2.5 h-2.5 rounded-full',
                   status === 'yes' && 'bg-emerald-400',
                   status === 'no' && 'bg-red-400',
-                  status === 'unknown' && 'bg-cream/15'
+                  status === 'unknown' && 'bg-amber-400/40'
                 )}
                 title={`${c.name}: ${status}`}
               />

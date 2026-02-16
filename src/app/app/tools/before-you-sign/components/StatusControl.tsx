@@ -26,7 +26,7 @@ export function StatusControl({ status, onChange, compact }: StatusControlProps)
           'w-7 h-7 rounded-md flex items-center justify-center text-xs font-medium transition-colors shrink-0',
           status === 'yes' && 'bg-emerald-500/20 text-emerald-400',
           status === 'no' && 'bg-red-400/20 text-red-400',
-          status === 'unknown' && 'bg-cream/5 text-cream/30'
+          status === 'unknown' && 'bg-amber-400/20 text-amber-400'
         )}
         aria-label={`Status: ${status}. Click to change.`}
       >
@@ -59,10 +59,10 @@ export function StatusControl({ status, onChange, compact }: StatusControlProps)
             'px-2.5 py-1.5 text-xs font-medium transition-colors flex items-center gap-1',
             status === s && s === 'yes' && 'bg-emerald-500/20 text-emerald-400',
             status === s && s === 'no' && 'bg-red-400/20 text-red-400',
-            status === s && s === 'unknown' && 'bg-cream/10 text-cream/50',
+            status === s && s === 'unknown' && 'bg-amber-400/20 text-amber-400',
             status !== s && 'text-cream/25 hover:text-cream/50 hover:bg-cream/5'
           )}
-          aria-label={s === 'yes' ? 'Yes' : s === 'no' ? 'No' : 'Unknown'}
+          aria-label={s === 'yes' ? 'Yes' : s === 'no' ? 'No' : 'Incomplete'}
         >
           {s === 'yes' && (
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -77,7 +77,7 @@ export function StatusControl({ status, onChange, compact }: StatusControlProps)
           )}
           {s === 'unknown' && <span>?</span>}
           <span className="hidden sm:inline">
-            {s === 'yes' ? 'Yes' : s === 'no' ? 'No' : '\u2014'}
+            {s === 'yes' ? 'Yes' : s === 'no' ? 'No' : 'Incomplete'}
           </span>
         </button>
       ))}

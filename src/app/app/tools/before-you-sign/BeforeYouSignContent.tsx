@@ -8,13 +8,15 @@ import { useBYSState } from './useBYSState'
 import { ALL_TABS } from './beforeYouSignConfig'
 import { ContractorBar } from './components/ContractorBar'
 import { ContractorSummaryCard } from './components/ContractorSummaryCard'
+import { ContractorSnapshotRow } from './components/ContractorSnapshotRow'
+import { PricingSnapshot } from './components/PricingSnapshot'
 import { EmptyState } from './components/EmptyState'
 import { ChecklistSingleMode } from './components/ChecklistSingleMode'
 import { CompareGrid } from './components/CompareGrid'
 import type { TabKey } from './types'
 
 const TAB_PILLS: { key: TabKey; label: string }[] = [
-  { key: 'quotes', label: 'Compare Quotes' },
+  { key: 'quotes', label: 'Quote Details' },
   { key: 'handoffs', label: 'Who Handles What' },
   { key: 'agree', label: 'Key Agreements' },
 ]
@@ -90,6 +92,12 @@ function BYSContent() {
               onUpdate={updateContractor}
             />
           )}
+
+          {/* Per-contractor progress snapshot */}
+          <ContractorSnapshotRow
+            contractors={contractors}
+            getAnswer={getAnswer}
+          />
         </div>
       )}
 
@@ -113,6 +121,17 @@ function BYSContent() {
               </button>
             ))}
           </div>
+
+          {/* Pricing snapshot (quotes tab only) */}
+          {activeTab === 'quotes' && (
+            <div className="mb-4">
+              <PricingSnapshot
+                contractors={contractors}
+                activeContractorId={activeContractorId}
+                onUpdate={updateContractor}
+              />
+            </div>
+          )}
 
           {/* Tab content */}
           {isCompareMode ? (

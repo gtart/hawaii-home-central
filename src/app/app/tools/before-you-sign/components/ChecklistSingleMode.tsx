@@ -92,6 +92,8 @@ export function ChecklistSingleMode({
     return baseSections.reduce((sum, s) => sum + s.items.length, 0)
   }, [baseSections, isQuotesTab])
 
+  const [showGapsOnly, setShowGapsOnly] = useState(false)
+
   // Overall progress
   const allItemIds = useMemo(
     () => sections.flatMap((s) => s.items.map((i) => i.id)),
@@ -104,6 +106,26 @@ export function ChecklistSingleMode({
       ).length,
     [allItemIds, tab, contractorId, getAnswer]
   )
+  const confirmedCount = useMemo(
+    () =>
+      allItemIds.filter(
+        (id) => getAnswer(tab, contractorId, id).status === 'yes'
+      ).length,
+    [allItemIds, tab, contractorId, getAnswer]
+  )
+
+  // Filter sections for gaps-only mode
+  const displaySections = useMemo(() => {
+    if (!showGapsOnly) return sections
+    return sections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter(
+          (item) => getAnswer(tab, contractorId, item.id).status === 'unknown'
+        ),
+      }))
+      .filter((section) => section.items.length > 0)
+  }, [sections, showGapsOnly, tab, contractorId, getAnswer])
 
   function toggleSection(sectionId: string) {
     setCollapsedSections((prev) => {
@@ -131,10 +153,25 @@ export function ChecklistSingleMode({
       {/* Progress bar */}
       <div className="space-y-1">
         <div className="flex items-center justify-between text-xs text-cream/40">
-          <span>
-            {answeredCount} / {allItemIds.length} verified
-          </span>
-          <span>{progressPct}%</span>
+          <div className="flex items-center gap-3">
+            <span>Answered: {answeredCount} / {allItemIds.length}</span>
+            <span className="text-emerald-400/70">Confirmed: {confirmedCount} / {allItemIds.length}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowGapsOnly((p) => !p)}
+              className={cn(
+                'text-xs transition-colors',
+                showGapsOnly
+                  ? 'text-amber-400 font-medium'
+                  : 'text-cream/30 hover:text-cream/50'
+              )}
+            >
+              {showGapsOnly ? 'Showing gaps only' : 'Show gaps only'}
+            </button>
+            <span>{progressPct}%</span>
+          </div>
         </div>
         <div className="h-1.5 bg-cream/5 rounded-full overflow-hidden">
           <div
@@ -175,7 +212,7 @@ export function ChecklistSingleMode({
       )}
 
       {/* Sections */}
-      {sections.map((section) => {
+      {displaySections.map((section) => {
         const isCollapsed = collapsedSections.has(section.id)
         const sectionItemIds = section.items.map((i) => i.id)
         const sectionAnswered = sectionItemIds.filter(
