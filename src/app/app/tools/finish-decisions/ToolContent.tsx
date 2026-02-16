@@ -17,6 +17,7 @@ import {
   type V2Decision,
   type V2DecisionOption,
   type OptionV3,
+  type RoomSelection,
 } from '@/data/finish-decisions'
 
 // ============================================================================
@@ -253,6 +254,49 @@ export function ToolContent() {
     }))
   }
 
+  // Batch add rooms (from onboarding)
+  const handleBatchAddRooms = (selections: RoomSelection[]) => {
+    const now = new Date().toISOString()
+    const existingNames = v3State.rooms.map((r) => r.name.toLowerCase())
+
+    const newRooms: RoomV3[] = selections.map((sel) => {
+      let name = sel.name
+      if (existingNames.includes(name.toLowerCase())) {
+        let counter = 2
+        while (existingNames.includes(`${sel.name} #${counter}`.toLowerCase())) {
+          counter++
+        }
+        name = `${sel.name} #${counter}`
+      }
+      existingNames.push(name.toLowerCase())
+
+      return {
+        id: crypto.randomUUID(),
+        type: sel.type,
+        name,
+        decisions:
+          sel.template === 'standard'
+            ? DEFAULT_DECISIONS_BY_ROOM_TYPE[sel.type].map((title) => ({
+                id: crypto.randomUUID(),
+                title,
+                status: 'deciding' as StatusV3,
+                notes: '',
+                options: [],
+                createdAt: now,
+                updatedAt: now,
+              }))
+            : [],
+        createdAt: now,
+        updatedAt: now,
+      }
+    })
+
+    setState((prev) => ({
+      ...prev,
+      rooms: [...(prev as FinishDecisionsPayloadV3).rooms, ...newRooms],
+    }))
+  }
+
   // Update room
   const handleUpdateRoom = (roomId: string, updates: Partial<RoomV3>) => {
     setState((prev) => ({
@@ -280,7 +324,7 @@ export function ToolContent() {
         {isLoaded && state.version === 3 ? (
           <DecisionTrackerPage
             rooms={v3State.rooms}
-            onAddRoom={handleAddRoom}
+            onBatchAddRooms={handleBatchAddRooms}
             onUpdateRoom={handleUpdateRoom}
             onDeleteRoom={handleDeleteRoom}
           />

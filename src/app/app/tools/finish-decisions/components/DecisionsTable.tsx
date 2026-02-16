@@ -16,7 +16,7 @@ export function DecisionsTable({
   onDeleteDecision: (decisionId: string) => void
 }) {
   const router = useRouter()
-  const [sortColumn, setSortColumn] = useState<'title' | 'status' | 'updated'>('title')
+  const [sortColumn, setSortColumn] = useState<'title' | 'status' | 'dueDate' | 'updated'>('title')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   const sortedDecisions = useMemo(() => {
@@ -26,6 +26,10 @@ export function DecisionsTable({
         comparison = a.title.localeCompare(b.title)
       } else if (sortColumn === 'status') {
         comparison = a.status.localeCompare(b.status)
+      } else if (sortColumn === 'dueDate') {
+        const aDate = a.dueDate || 'zzzz' // nulls sort last
+        const bDate = b.dueDate || 'zzzz'
+        comparison = aDate.localeCompare(bDate)
       } else if (sortColumn === 'updated') {
         comparison = (a.updatedAt || '').localeCompare(b.updatedAt || '')
       }
@@ -85,6 +89,12 @@ export function DecisionsTable({
               Status{arrow('status')}
             </th>
             <th
+              onClick={() => toggleSort('dueDate')}
+              className="px-3 py-2 text-left text-xs font-medium text-cream/60 cursor-pointer hover:text-cream uppercase tracking-wide hidden sm:table-cell"
+            >
+              Due{arrow('dueDate')}
+            </th>
+            <th
               onClick={() => toggleSort('updated')}
               className="px-3 py-2 text-left text-xs font-medium text-cream/60 cursor-pointer hover:text-cream uppercase tracking-wide hidden sm:table-cell"
             >
@@ -120,6 +130,18 @@ export function DecisionsTable({
                   </Badge>
                 </td>
                 <td className="px-3 py-2.5 hidden sm:table-cell">
+                  {decision.dueDate ? (
+                    <span className="text-xs text-cream/60">
+                      {new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-cream/20">TBD</span>
+                  )}
+                </td>
+                <td className="px-3 py-2.5 hidden sm:table-cell">
                   <span className="text-xs text-cream/40">
                     {formatRelativeDate(decision.updatedAt)}
                   </span>
@@ -142,7 +164,7 @@ export function DecisionsTable({
                       e.stopPropagation()
                       onDeleteDecision(decision.id)
                     }}
-                    className="text-cream/30 hover:text-red-400 text-xs"
+                    className="text-red-400/60 hover:text-red-400 text-xs"
                   >
                     ×
                   </button>

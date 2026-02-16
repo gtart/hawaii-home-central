@@ -135,7 +135,9 @@ export const ROOM_TYPE_OPTIONS_V3 = [
   { value: 'stairs', label: 'Stairs' },
   { value: 'doors', label: 'Doors' },
   { value: 'windows', label: 'Windows' },
-  { value: 'other', label: 'Other' },
+  { value: 'flooring', label: 'Flooring' },
+  { value: 'landscaping', label: 'Landscaping' },
+  { value: 'other', label: 'Custom Area' },
 ] as const
 
 export type RoomTypeV3 = (typeof ROOM_TYPE_OPTIONS_V3)[number]['value']
@@ -175,6 +177,7 @@ export interface DecisionV3 {
   status: StatusV3
   notes: string // Combined specs + notes
   options: OptionV3[] // Nested
+  dueDate?: string | null // ISO date string or null for TBD
   dismissedSuggestionKeys?: string[] // Heuristic guidance dismissed by user
   createdAt: string
   updatedAt: string
@@ -199,6 +202,13 @@ export interface FinishDecisionsPayloadV3 {
 // ============================================================================
 // DEFAULT DECISIONS BY ROOM TYPE
 // ============================================================================
+
+// Used by the onboarding flow for batch room creation
+export interface RoomSelection {
+  type: RoomTypeV3
+  name: string
+  template: 'standard' | 'none'
+}
 
 export const DEFAULT_DECISIONS_BY_ROOM_TYPE: Record<RoomTypeV3, string[]> = {
   kitchen: [
@@ -228,5 +238,7 @@ export const DEFAULT_DECISIONS_BY_ROOM_TYPE: Record<RoomTypeV3, string[]> = {
   stairs: ['Treads', 'Risers', 'Handrail', 'Balusters'],
   doors: ['Entry Door', 'Interior Doors', 'Hardware'],
   windows: ['Window Units', 'Treatments'],
+  flooring: ['Material Type', 'Color & Pattern', 'Underlayment', 'Transitions & Trim'],
+  landscaping: ['Hardscape', 'Softscape & Plants', 'Irrigation', 'Outdoor Lighting', 'Fencing'],
   other: ['Flooring', 'Paint'],
 }

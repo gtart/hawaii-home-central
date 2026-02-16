@@ -101,7 +101,7 @@ export function RoomSection({
               onDeleteRoom()
             }
           }}
-          className="text-cream/30 hover:text-red-400 text-xs ml-2"
+          className="text-red-400/60 hover:text-red-400 text-xs ml-2"
         >
           Delete
         </button>

@@ -18,7 +18,7 @@ const TOOLS = [
     href: '/tools/before-you-sign',
   },
   {
-    title: 'Decision Tracker',
+    title: 'Track Your Decisions',
     description:
       'Track every material and finish decision by room. Compare options, record specs, and mark progress from deciding to done.',
     href: '/tools/finish-decisions',

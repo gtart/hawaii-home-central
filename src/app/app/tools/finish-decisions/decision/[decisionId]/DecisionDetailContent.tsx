@@ -318,6 +318,64 @@ export function DecisionDetailContent() {
           />
         </div>
 
+        {/* Due Date */}
+        <div className="mb-6">
+          <label className="block text-sm text-cream/70 mb-1.5">Due Date</label>
+          <div className="flex items-center gap-3 mb-2">
+            <input
+              type="date"
+              value={foundDecision.dueDate || ''}
+              onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
+              className="bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark]"
+            />
+            {foundDecision.dueDate && (
+              <button
+                onClick={() => updateDecision({ dueDate: null })}
+                className="text-xs text-cream/40 hover:text-cream/70"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: 'Next week', days: 7 },
+              { label: 'In two weeks', days: 14 },
+              { label: 'In a month', days: 30 },
+              { label: 'In several months', days: 90 },
+            ].map((chip) => {
+              const target = new Date()
+              target.setDate(target.getDate() + chip.days)
+              const iso = target.toISOString().split('T')[0]
+              const isActive = foundDecision.dueDate === iso
+
+              return (
+                <button
+                  key={chip.label}
+                  onClick={() => updateDecision({ dueDate: iso })}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                    isActive
+                      ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                      : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              )
+            })}
+            <button
+              onClick={() => updateDecision({ dueDate: null })}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                foundDecision.dueDate === null || foundDecision.dueDate === undefined
+                  ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                  : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+              }`}
+            >
+              TBD
+            </button>
+          </div>
+        </div>
+
         {/* Notes */}
         <div className="mb-8">
           <label className="block text-sm text-cream/70 mb-1.5">Notes</label>
@@ -376,7 +434,7 @@ export function DecisionDetailContent() {
 
         {/* Delete Decision */}
         <div className="pt-6 border-t border-cream/10">
-          <Button variant="ghost" onClick={deleteDecision}>
+          <Button variant="danger" onClick={deleteDecision}>
             Delete Decision
           </Button>
         </div>

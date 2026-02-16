@@ -2,6 +2,7 @@
 
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useState, useEffect } from 'react'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { useBYSState } from './useBYSState'
 import { ALL_TABS } from './beforeYouSignConfig'
@@ -151,6 +152,12 @@ export function BeforeYouSignContent() {
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-6xl mx-auto">
+        <Link
+          href="/tools"
+          className="text-sandstone hover:text-sandstone-light text-sm mb-4 inline-block"
+        >
+          ← Toolkit
+        </Link>
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-4">
           Before You Sign
         </h1>

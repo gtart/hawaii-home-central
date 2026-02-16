@@ -181,16 +181,22 @@ export function CompareGrid({
             >
               {/* Desktop table (md+) */}
               <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm" style={{ tableLayout: 'fixed' }}>
+                  <colgroup>
+                    <col style={{ width: '45%' }} />
+                    {contractors.map((c) => (
+                      <col key={c.id} style={{ width: `${55 / contractors.length}%` }} />
+                    ))}
+                  </colgroup>
                   <thead>
                     <tr className="border-b border-cream/5">
-                      <th className="text-left px-4 py-2 text-cream/40 text-xs font-medium uppercase tracking-wider sticky left-0 bg-basalt-50 min-w-[180px]">
+                      <th className="text-left px-4 py-2 text-cream/40 text-xs font-medium uppercase tracking-wider sticky left-0 bg-basalt-50">
                         Item
                       </th>
                       {contractors.map((c) => (
                         <th
                           key={c.id}
-                          className="text-center px-3 py-2 text-cream/40 text-xs font-medium uppercase tracking-wider min-w-[80px]"
+                          className="text-center px-3 py-2 text-cream/40 text-xs font-medium uppercase tracking-wider"
                         >
                           {c.name}
                         </th>

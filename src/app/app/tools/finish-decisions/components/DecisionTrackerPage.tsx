@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
@@ -9,20 +9,21 @@ import {
   STATUS_CONFIG_V3,
   type RoomV3,
   type StatusV3,
-  type RoomTypeV3,
+  type RoomSelection,
 } from '@/data/finish-decisions'
-import { AddRoomModal } from './AddRoomModal'
+import Link from 'next/link'
 import { RoomSection } from './RoomSection'
 import { MilestoneView } from './MilestoneView'
+import { OnboardingView } from './OnboardingView'
 
 export function DecisionTrackerPage({
   rooms,
-  onAddRoom,
+  onBatchAddRooms,
   onUpdateRoom,
   onDeleteRoom,
 }: {
   rooms: RoomV3[]
-  onAddRoom: (type: RoomTypeV3, name: string, useDefaults: boolean) => void
+  onBatchAddRooms: (selections: RoomSelection[]) => void
   onUpdateRoom: (roomId: string, updates: Partial<RoomV3>) => void
   onDeleteRoom: (roomId: string) => void
 }) {
@@ -32,7 +33,19 @@ export function DecisionTrackerPage({
   )
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilters, setStatusFilters] = useState<StatusV3[]>([])
-  const [showAddModal, setShowAddModal] = useState(false)
+  const [roomFilter, setRoomFilter] = useState<string | null>(null)
+  const [onboardingCollapsed, setOnboardingCollapsed] = useState(true)
+
+  const hasRooms = rooms.length > 0
+
+  // Auto-expand all rooms when transitioning from 0 rooms (onboarding → tracker)
+  const prevRoomCountRef = useRef(rooms.length)
+  useEffect(() => {
+    if (prevRoomCountRef.current === 0 && rooms.length > 0) {
+      setExpandedRooms(new Set(rooms.map((r) => r.id)))
+    }
+    prevRoomCountRef.current = rooms.length
+  }, [rooms])
 
   // Toggle a single room's expansion
   const toggleRoom = (roomId: string) => {
@@ -64,9 +77,14 @@ export function DecisionTrackerPage({
     )
   }
 
-  // Filter rooms and decisions by search query and status filters
+  // Filter rooms and decisions by search query, room filter, and status filters
   const filteredRooms = useMemo(() => {
     let result = rooms
+
+    // Apply room filter
+    if (roomFilter) {
+      result = result.filter((room) => room.id === roomFilter)
+    }
 
     // Apply status filter
     if (statusFilters.length > 0) {
@@ -104,15 +122,23 @@ export function DecisionTrackerPage({
     }
 
     return result
-  }, [rooms, searchQuery, statusFilters])
+  }, [rooms, searchQuery, statusFilters, roomFilter])
 
   // Total counts for summary
   const totalDecisions = rooms.reduce((sum, r) => sum + r.decisions.length, 0)
   const filteredDecisions = filteredRooms.reduce((sum, r) => sum + r.decisions.length, 0)
-  const isFiltering = searchQuery.trim() !== '' || statusFilters.length > 0
+  const isFiltering = searchQuery.trim() !== '' || statusFilters.length > 0 || roomFilter !== null
 
   return (
     <>
+      {/* Breadcrumb */}
+      <Link
+        href="/tools"
+        className="text-sandstone hover:text-sandstone-light text-sm mb-4 inline-block"
+      >
+        ← Toolkit
+      </Link>
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-2">
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone">Decision Tracker</h1>
@@ -125,139 +151,162 @@ export function DecisionTrackerPage({
         progress.
       </p>
 
-      {/* Search */}
-      <div className="mb-4">
-        <Input
-          placeholder="Search all rooms and decisions..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
+      {/* Onboarding — always visible, collapsible when rooms exist */}
+      <OnboardingView
+        onBatchCreate={onBatchAddRooms}
+        collapsed={hasRooms ? onboardingCollapsed : undefined}
+        onToggleCollapse={hasRooms ? () => setOnboardingCollapsed((prev) => !prev) : undefined}
+      />
 
-      {/* Status Filter Chips */}
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, { label: string; variant: 'default' | 'accent' }][]).map(
-          ([status, config]) => {
-            const isActive = statusFilters.includes(status)
-            const count = rooms.reduce(
-              (sum, r) => sum + r.decisions.filter((d) => d.status === status).length,
-              0
-            )
-            if (count === 0) return null
+      {/* Tracker UI — only when rooms exist */}
+      {hasRooms && (
+        <>
+          {/* Search */}
+          <div className="mb-4">
+            <Input
+              placeholder="Search all rooms and decisions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
 
-            return (
+          {/* Room Filter Chips */}
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <button
+              onClick={() => setRoomFilter(null)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                roomFilter === null
+                  ? 'bg-sandstone/20 text-sandstone ring-1 ring-sandstone/40'
+                  : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+              }`}
+            >
+              All Rooms
+            </button>
+            {rooms.map((room) => (
               <button
-                key={status}
-                onClick={() => toggleStatusFilter(status)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                  isActive
-                    ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                key={room.id}
+                onClick={() => setRoomFilter(roomFilter === room.id ? null : room.id)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  roomFilter === room.id
+                    ? 'bg-sandstone/20 text-sandstone ring-1 ring-sandstone/40'
                     : 'bg-cream/10 text-cream/60 hover:text-cream/80'
                 }`}
               >
-                {config.label}
-                <span className="text-[10px] opacity-70">{count}</span>
+                {room.name}
+                <span className="text-[10px] opacity-70 ml-1.5">{room.decisions.length}</span>
               </button>
-            )
-          }
-        )}
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 mb-6">
-        <Button onClick={() => setShowAddModal(true)}>Add Room or Area</Button>
-
-        {/* View Mode Toggle */}
-        {rooms.length > 0 && (
-          <div className="inline-flex rounded-button overflow-hidden border border-cream/20">
-            <button
-              onClick={() => setViewMode('by-room')}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                viewMode === 'by-room'
-                  ? 'bg-sandstone/20 text-sandstone'
-                  : 'text-cream/50 hover:text-cream/70'
-              }`}
-            >
-              By Room
-            </button>
-            <button
-              onClick={() => setViewMode('by-milestone')}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                viewMode === 'by-milestone'
-                  ? 'bg-sandstone/20 text-sandstone'
-                  : 'text-cream/50 hover:text-cream/70'
-              }`}
-            >
-              By Milestone
-            </button>
+            ))}
           </div>
-        )}
 
-        {viewMode === 'by-room' && rooms.length > 0 && (
-          <>
-            <Button size="sm" variant="secondary" onClick={expandAll}>
-              Expand All
-            </Button>
-            <Button size="sm" variant="secondary" onClick={collapseAll}>
-              Collapse All
-            </Button>
-          </>
-        )}
+          {/* Status Filter Chips */}
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, { label: string; variant: 'default' | 'accent' }][]).map(
+              ([status, config]) => {
+                const isActive = statusFilters.includes(status)
+                const count = rooms.reduce(
+                  (sum, r) => sum + r.decisions.filter((d) => d.status === status).length,
+                  0
+                )
+                if (count === 0) return null
 
-        <div className="flex-1" />
+                return (
+                  <button
+                    key={status}
+                    onClick={() => toggleStatusFilter(status)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                      isActive
+                        ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                        : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                    }`}
+                  >
+                    {config.label}
+                    <span className="text-[10px] opacity-70">{count}</span>
+                  </button>
+                )
+              }
+            )}
+          </div>
 
-        {isFiltering && (
-          <span className="text-xs text-cream/50">
-            {filteredDecisions} of {totalDecisions} decisions
-          </span>
-        )}
-      </div>
+          {/* Toolbar */}
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            {/* View Mode Toggle */}
+            <div className="inline-flex rounded-button overflow-hidden border border-cream/20">
+              <button
+                onClick={() => setViewMode('by-room')}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                  viewMode === 'by-room'
+                    ? 'bg-sandstone/20 text-sandstone'
+                    : 'text-cream/50 hover:text-cream/70'
+                }`}
+              >
+                By Room
+              </button>
+              <button
+                onClick={() => setViewMode('by-milestone')}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                  viewMode === 'by-milestone'
+                    ? 'bg-sandstone/20 text-sandstone'
+                    : 'text-cream/50 hover:text-cream/70'
+                }`}
+              >
+                By Milestone
+              </button>
+            </div>
 
-      {/* Content */}
-      {rooms.length === 0 ? (
-        <div className="bg-basalt-50 rounded-card p-12 text-center">
-          <p className="text-cream/50 mb-4">No rooms yet. Add your first room to get started.</p>
-          <Button onClick={() => setShowAddModal(true)}>Add Room or Area</Button>
-        </div>
-      ) : viewMode === 'by-milestone' ? (
-        <MilestoneView rooms={filteredRooms.length > 0 ? filteredRooms : rooms} />
-      ) : filteredRooms.length === 0 ? (
-        <div className="bg-basalt-50 rounded-card p-8 text-center">
-          <p className="text-cream/50">
-            No decisions match your {searchQuery ? 'search' : 'filters'}.
-          </p>
-          <button
-            onClick={() => {
-              setSearchQuery('')
-              setStatusFilters([])
-            }}
-            className="text-sandstone text-sm mt-2 hover:text-sandstone-light"
-          >
-            Clear filters
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filteredRooms.map((room) => (
-            <RoomSection
-              key={room.id}
-              room={room}
-              isExpanded={expandedRooms.has(room.id)}
-              onToggleExpand={() => toggleRoom(room.id)}
-              onUpdateRoom={(updates) => onUpdateRoom(room.id, updates)}
-              onDeleteRoom={() => onDeleteRoom(room.id)}
-            />
-          ))}
-        </div>
-      )}
+            {viewMode === 'by-room' && (
+              <>
+                <Button size="sm" variant="secondary" onClick={expandAll}>
+                  Expand All
+                </Button>
+                <Button size="sm" variant="secondary" onClick={collapseAll}>
+                  Collapse All
+                </Button>
+              </>
+            )}
 
-      {/* Add Room Modal */}
-      {showAddModal && (
-        <AddRoomModal
-          onClose={() => setShowAddModal(false)}
-          onAdd={onAddRoom}
-          existingRooms={rooms}
-        />
+            <div className="flex-1" />
+
+            {isFiltering && (
+              <span className="text-xs text-cream/50">
+                {filteredDecisions} of {totalDecisions} decisions
+              </span>
+            )}
+          </div>
+
+          {/* Content */}
+          {viewMode === 'by-milestone' ? (
+            <MilestoneView rooms={filteredRooms.length > 0 ? filteredRooms : rooms} />
+          ) : filteredRooms.length === 0 ? (
+            <div className="bg-basalt-50 rounded-card p-8 text-center">
+              <p className="text-cream/50">
+                No decisions match your {searchQuery ? 'search' : 'filters'}.
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('')
+                  setStatusFilters([])
+                  setRoomFilter(null)
+                }}
+                className="text-sandstone text-sm mt-2 hover:text-sandstone-light"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredRooms.map((room) => (
+                <RoomSection
+                  key={room.id}
+                  room={room}
+                  isExpanded={expandedRooms.has(room.id)}
+                  onToggleExpand={() => toggleRoom(room.id)}
+                  onUpdateRoom={(updates) => onUpdateRoom(room.id, updates)}
+                  onDeleteRoom={() => onDeleteRoom(room.id)}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </>
   )

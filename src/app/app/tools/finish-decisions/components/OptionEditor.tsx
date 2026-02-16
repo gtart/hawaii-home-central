@@ -60,7 +60,7 @@ export function OptionEditor({
             {option.name || 'Unnamed Option'}
           </span>
         </div>
-        <button onClick={onDelete} className="text-cream/40 hover:text-red-400 text-xs">
+        <button onClick={onDelete} className="text-red-400/60 hover:text-red-400 text-xs">
           Delete
         </button>
       </div>
