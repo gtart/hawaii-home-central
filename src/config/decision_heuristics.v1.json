@@ -1,11 +1,11 @@
 {
   "version": 1,
   "milestones": [
-    { "id": "order-long-lead", "label": "Order Long-Lead Items" },
-    { "id": "lock-rough-in", "label": "Lock Rough-In" },
-    { "id": "close-walls", "label": "Close Walls" },
-    { "id": "waterproof-tile", "label": "Waterproof + Tile" },
-    { "id": "closeout", "label": "Closeout" }
+    { "id": "order-long-lead", "label": "Order early — long lead time" },
+    { "id": "lock-rough-in", "label": "Decide before rough-in" },
+    { "id": "close-walls", "label": "Decide before walls close" },
+    { "id": "waterproof-tile", "label": "Needed for tile & waterproofing" },
+    { "id": "closeout", "label": "Final install phase" }
   ],
   "impacts": [
     { "id": "cabinet-openings", "label": "Cabinet openings / clearances" },

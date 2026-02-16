@@ -7,15 +7,19 @@ import {
   STATUS_CONFIG_V3,
   type DecisionV3,
 } from '@/data/finish-decisions'
+import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
 
 export function DecisionsTable({
   decisions,
+  roomType,
   onDeleteDecision,
 }: {
   decisions: DecisionV3[]
+  roomType: string
   onDeleteDecision: (decisionId: string) => void
 }) {
   const router = useRouter()
+  const heuristicsConfig = useMemo(() => getHeuristicsConfig(), [])
   const [sortColumn, setSortColumn] = useState<'title' | 'status' | 'dueDate' | 'updated'>('title')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
@@ -112,6 +116,14 @@ export function DecisionsTable({
         <tbody>
           {sortedDecisions.map((decision) => {
             const selectedOption = decision.options.find((opt) => opt.isSelected)
+            const hResult = matchDecision(
+              heuristicsConfig,
+              decision.title,
+              roomType,
+              selectedOption?.name,
+              decision.dismissedSuggestionKeys
+            )
+            const milestone = hResult.milestones[0]
 
             return (
               <tr
@@ -123,6 +135,11 @@ export function DecisionsTable({
               >
                 <td className="px-3 py-2.5">
                   <div className="text-cream font-medium text-sm">{decision.title}</div>
+                  {milestone && (
+                    <span className="inline-block mt-0.5 text-[11px] text-sandstone/70 bg-sandstone/10 px-2 py-0.5 rounded-full">
+                      {milestone.label}
+                    </span>
+                  )}
                 </td>
                 <td className="px-3 py-2.5">
                   <Badge variant={STATUS_CONFIG_V3[decision.status].variant}>

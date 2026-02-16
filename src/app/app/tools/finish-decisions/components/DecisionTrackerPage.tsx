@@ -13,7 +13,6 @@ import {
 } from '@/data/finish-decisions'
 import Link from 'next/link'
 import { RoomSection } from './RoomSection'
-import { MilestoneView } from './MilestoneView'
 import { OnboardingView } from './OnboardingView'
 
 export function DecisionTrackerPage({
@@ -27,7 +26,6 @@ export function DecisionTrackerPage({
   onUpdateRoom: (roomId: string, updates: Partial<RoomV3>) => void
   onDeleteRoom: (roomId: string) => void
 }) {
-  const [viewMode, setViewMode] = useState<'by-room' | 'by-milestone'>('by-room')
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(
     () => new Set(rooms.length <= 3 ? rooms.map((r) => r.id) : [])
   )
@@ -229,40 +227,12 @@ export function DecisionTrackerPage({
 
           {/* Toolbar */}
           <div className="flex flex-wrap items-center gap-2 mb-6">
-            {/* View Mode Toggle */}
-            <div className="inline-flex rounded-button overflow-hidden border border-cream/20">
-              <button
-                onClick={() => setViewMode('by-room')}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                  viewMode === 'by-room'
-                    ? 'bg-sandstone/20 text-sandstone'
-                    : 'text-cream/50 hover:text-cream/70'
-                }`}
-              >
-                By Room
-              </button>
-              <button
-                onClick={() => setViewMode('by-milestone')}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                  viewMode === 'by-milestone'
-                    ? 'bg-sandstone/20 text-sandstone'
-                    : 'text-cream/50 hover:text-cream/70'
-                }`}
-              >
-                By Milestone
-              </button>
-            </div>
-
-            {viewMode === 'by-room' && (
-              <>
-                <Button size="sm" variant="secondary" onClick={expandAll}>
-                  Expand All
-                </Button>
-                <Button size="sm" variant="secondary" onClick={collapseAll}>
-                  Collapse All
-                </Button>
-              </>
-            )}
+            <Button size="sm" variant="secondary" onClick={expandAll}>
+              Expand All
+            </Button>
+            <Button size="sm" variant="secondary" onClick={collapseAll}>
+              Collapse All
+            </Button>
 
             <div className="flex-1" />
 
@@ -274,9 +244,7 @@ export function DecisionTrackerPage({
           </div>
 
           {/* Content */}
-          {viewMode === 'by-milestone' ? (
-            <MilestoneView rooms={filteredRooms.length > 0 ? filteredRooms : rooms} />
-          ) : filteredRooms.length === 0 ? (
+          {filteredRooms.length === 0 ? (
             <div className="bg-basalt-50 rounded-card p-8 text-center">
               <p className="text-cream/50">
                 No decisions match your {searchQuery ? 'search' : 'filters'}.

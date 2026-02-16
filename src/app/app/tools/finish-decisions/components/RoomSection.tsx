@@ -159,6 +159,7 @@ export function RoomSection({
           {/* Decisions Table */}
           <DecisionsTable
             decisions={room.decisions}
+            roomType={room.type}
             onDeleteDecision={deleteDecision}
           />
         </div>
