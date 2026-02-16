@@ -12,6 +12,8 @@ interface UseToolStateOptions<T> {
     | 'before_you_sign_notes'
   localStorageKey: string
   defaultValue: T
+  /** When true, skip API calls and only use localStorage. */
+  localOnly?: boolean
 }
 
 interface UseToolStateReturn<T> {
@@ -25,6 +27,7 @@ export function useToolState<T>({
   toolKey,
   localStorageKey,
   defaultValue,
+  localOnly = false,
 }: UseToolStateOptions<T>): UseToolStateReturn<T> {
   const [state, setStateInternal] = useState<T>(defaultValue)
   const [isLoaded, setIsLoaded] = useState(false)
@@ -32,11 +35,27 @@ export function useToolState<T>({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const stateRef = useRef<T>(defaultValue)
 
-  // Load state from API on mount
+  // Load state on mount
   useEffect(() => {
     let cancelled = false
 
     async function load() {
+      if (localOnly) {
+        // Local-only mode: read from localStorage, skip API
+        try {
+          const stored = localStorage.getItem(localStorageKey)
+          if (stored && !cancelled) {
+            const parsed = JSON.parse(stored) as T
+            setStateInternal(parsed)
+            stateRef.current = parsed
+          }
+        } catch {
+          // ignore
+        }
+        if (!cancelled) setIsLoaded(true)
+        return
+      }
+
       try {
         const res = await fetch(`/api/tools/${toolKey}`)
         if (!res.ok) throw new Error('Failed to load')
@@ -87,11 +106,13 @@ export function useToolState<T>({
     return () => {
       cancelled = true
     }
-  }, [toolKey, localStorageKey])
+  }, [toolKey, localStorageKey, localOnly])
 
-  // Debounced save to API
+  // Debounced save to API (skipped in localOnly mode)
   const saveToApi = useCallback(
     (payload: T) => {
+      if (localOnly) return
+
       if (debounceRef.current) clearTimeout(debounceRef.current)
 
       debounceRef.current = setTimeout(async () => {
@@ -109,7 +130,7 @@ export function useToolState<T>({
         }
       }, 500)
     },
-    [toolKey]
+    [toolKey, localOnly]
   )
 
   const setState = useCallback(
@@ -125,7 +146,7 @@ export function useToolState<T>({
           // ignore
         }
 
-        // Debounced write to API
+        // Debounced write to API (no-op in localOnly mode)
         saveToApi(next)
 
         return next

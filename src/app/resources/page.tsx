@@ -1,11 +1,10 @@
 import type { Metadata } from 'next'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { Card } from '@/components/ui/Card'
-import { CardStatic } from '@/components/ui/CardStatic'
 
 export const metadata: Metadata = {
-  title: 'Guides & Toolkit',
-  description: 'Practical guides and interactive tools for Hawaiʻi homeowners. Bid comparison, decision tracking, renovation guides, and more—built for local conditions.',
+  title: 'Guides & Tools',
+  description: 'Practical guides and interactive tools for Hawaiʻi homeowners. Renovation stages, bid comparison, decision tracking, and more—built for local conditions.',
 }
 
 export default function ResourcesPage() {
@@ -15,7 +14,7 @@ export default function ResourcesPage() {
         <FadeInSection>
           <div className="text-center mb-16">
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6">
-              Guides &amp; Toolkit
+              Guides &amp; Tools
             </h1>
             <p className="text-lg text-cream/70 max-w-2xl mx-auto">
               Practical guides and tools to help you navigate your Hawai&#x02BB;i renovation with clarity and confidence. Built from real experience, not theory.
@@ -56,22 +55,28 @@ export default function ResourcesPage() {
           </section>
         </FadeInSection>
 
-        {/* Start here (free) */}
+        {/* Renovation Stages Guide — hero card */}
         <FadeInSection delay={75}>
+          <section className="mb-12">
+            <Card
+              href="/resources/renovation-stages"
+              title="Renovation Stages Guide"
+              description="An interactive walkthrough of every stage in a renovation&mdash;from planning and permits to punch list. See what happens when, what you need to decide, and what&rsquo;s different in Hawai&#x02BB;i."
+              badge="Free &middot; Interactive"
+            />
+          </section>
+        </FadeInSection>
+
+        {/* Free guides */}
+        <FadeInSection delay={100}>
           <section className="mb-16">
             <h2 className="font-serif text-2xl text-cream mb-2">
-              Start Here (Free)
+              Free Guides
             </h2>
             <p className="text-cream/50 text-sm mb-6">
-              Read the full content on each page&mdash;no sign-in required. Sign in when you&rsquo;re ready to save your progress.
+              Read the full content on each page&mdash;no sign-in required.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card
-                href="/resources/playbooks/decision-points"
-                title="Decision Stages Overview"
-                description="What must be locked in before each construction stage. 5 stages, 24 decisions, with Hawai&#x02BB;i callouts."
-                badge="Free to read"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card
                 href="/resources/playbooks/fair-bid-checklist"
                 title="Compare Your Quotes"
@@ -88,46 +93,27 @@ export default function ResourcesPage() {
           </section>
         </FadeInSection>
 
-        <FadeInSection delay={100}>
-          <section aria-labelledby="tools-heading" className="mb-16">
-            <h2 id="tools-heading" className="font-serif text-2xl text-cream mb-6">
+        {/* Interactive tools */}
+        <FadeInSection delay={125}>
+          <section className="mb-16">
+            <h2 className="font-serif text-2xl text-cream mb-2">
               Interactive Tools
             </h2>
+            <p className="text-cream/50 text-sm mb-6">
+              Free to try. Sign in to save your progress across devices.
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card
-                href="/resources/playbooks/fair-bid-checklist"
-                title="Compare Your Quotes"
-                description="Know exactly what to look for when comparing contractor bids. 11 critical sections with Hawai&#x02BB;i-specific callouts."
-                badge="Live"
+                href="/tools/finish-decisions"
+                title="Decision Tracker"
+                description="Track every material and finish decision by room. Compare options, record details, and mark progress from deciding to done."
+                badge="Free to use"
               />
               <Card
-                href="/resources/playbooks/decision-points"
-                title="Decision Stages Overview"
-                description="The decisions that must be finalized before each construction phase&mdash;and what happens when they&apos;re not."
-                badge="Live"
-              />
-              <Card
-                href="/resources/playbooks/responsibility-matrix"
-                title="Who Handles What"
-                description="Clarify who owns commonly-missed renovation tasks before they become disputes."
-                badge="Live"
-              />
-              <CardStatic
-                title="Hidden Costs &amp; Contingencies"
-                description="A Hawai&#x02BB;i reality check on the costs that don&apos;t show up in the initial bid but always show up on the invoice."
-                badge="Hawai&#x02BB;i Focus"
-              />
-              <CardStatic
-                title="Project Binder"
-                description="Organize your contracts, photos, receipts, and communications in one shared space. No file storage — just structure."
-              />
-              <CardStatic
-                title="Budget Tracker"
-                description="Track actual vs. estimated costs across every phase of your project. Know where your money is going."
-              />
-              <CardStatic
-                title="Project Reminders"
-                description="Timely nudges for maintenance tasks, inspection deadlines, and seasonal upkeep tailored to Hawai&#x02BB;i."
+                href="/tools/before-you-sign"
+                title="Before You Sign"
+                description="Compare quotes, assign who handles what, and agree on the details that cause fights later. Three tools in one."
+                badge="Free to use"
               />
             </div>
           </section>

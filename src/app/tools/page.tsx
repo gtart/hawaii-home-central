@@ -5,9 +5,9 @@ import { Card } from '@/components/ui/Card'
 import { breadcrumbSchema } from '@/lib/structured-data'
 
 export const metadata: Metadata = {
-  title: 'Your Renovation Toolkit',
+  title: 'Your Renovation Tools',
   description:
-    'Free interactive toolkit for Hawai\u02BBi homeowners: bid comparison, task ownership, decision tracking, and more. Built for real renovation projects.',
+    'Free interactive tools for Hawai\u02BBi homeowners: bid comparison, task ownership, decision tracking, and more. Built for real renovation projects.',
 }
 
 const TOOLS = [
@@ -18,9 +18,9 @@ const TOOLS = [
     href: '/tools/before-you-sign',
   },
   {
-    title: 'Track Your Decisions',
+    title: 'Decision Tracker',
     description:
-      'Track every material and finish decision by room. Compare options, record specs, and mark progress from deciding to done.',
+      'Track every material and finish decision by room. Compare options, record details, and mark progress from deciding to done.',
     href: '/tools/finish-decisions',
   },
 ]
@@ -41,7 +41,7 @@ export default function ToolsIndexPage() {
         <div className="max-w-4xl mx-auto">
           <FadeInSection>
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6 text-center">
-              Your Renovation Toolkit
+              Your Renovation Tools
             </h1>
             <p className="text-lg text-cream/70 mb-4 max-w-3xl mx-auto text-center leading-relaxed">
               Planning help from start to finish&mdash;what homeowners wish they had before they started.
@@ -66,9 +66,9 @@ export default function ToolsIndexPage() {
           <FadeInSection delay={300}>
             <div className="mt-16 text-center space-y-3">
               <p className="text-cream/50 text-sm">
-                New to renovating? Start with the{' '}
-                <Link href="/tools/decision-points" className="text-sandstone hover:text-sandstone-light transition-colors">
-                  Decision Stages Overview &rarr;
+                New to renovating? Read the{' '}
+                <Link href="/resources/renovation-stages" className="text-sandstone hover:text-sandstone-light transition-colors">
+                  Renovation Stages Guide &rarr;
                 </Link>
               </p>
               <p className="text-cream/50 text-sm">

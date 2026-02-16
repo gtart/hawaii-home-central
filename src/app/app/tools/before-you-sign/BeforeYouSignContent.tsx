@@ -71,9 +71,32 @@ function BYSContent() {
 
   return (
     <>
-      {/* Contractor bar or empty state */}
+      {/* Getting started + empty state */}
       {contractors.length === 0 ? (
-        <EmptyState onAdd={addContractor} />
+        <div>
+          <div className="bg-basalt-50 rounded-card p-6 mb-6">
+            <h2 className="text-cream text-sm font-medium mb-3">How it works</h2>
+            <ol className="space-y-2 text-sm text-cream/60">
+              <li className="flex gap-2">
+                <span className="text-sandstone font-medium shrink-0">1.</span>
+                <span>Add your contractors (even one is fine to start)</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-sandstone font-medium shrink-0">2.</span>
+                <span>Fill in Quote Details &mdash; compare what each bid includes</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-sandstone font-medium shrink-0">3.</span>
+                <span>Assign Who Handles What &mdash; so nothing falls through the cracks</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-sandstone font-medium shrink-0">4.</span>
+                <span>Review Key Agreements &mdash; conversations to have before signing</span>
+              </li>
+            </ol>
+          </div>
+          <EmptyState onAdd={addContractor} />
+        </div>
       ) : (
         <div className="space-y-4 mb-6">
           <ContractorBar
@@ -175,7 +198,7 @@ export function BeforeYouSignContent() {
           href="/tools"
           className="text-sandstone hover:text-sandstone-light text-sm mb-4 inline-block"
         >
-          ← Toolkit
+          &larr; Tools
         </Link>
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-4">
           Before You Sign

@@ -55,13 +55,23 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: '/tools/decision-points',
+        destination: '/resources/renovation-stages',
+        permanent: true,
+      },
+      {
         source: '/tools/hold-points',
-        destination: '/tools/decision-points',
+        destination: '/resources/renovation-stages',
+        permanent: true,
+      },
+      {
+        source: '/resources/playbooks/decision-points',
+        destination: '/resources/renovation-stages',
         permanent: true,
       },
       {
         source: '/resources/playbooks/hold-points',
-        destination: '/resources/playbooks/decision-points',
+        destination: '/resources/renovation-stages',
         permanent: true,
       },
       {

@@ -15,7 +15,8 @@ interface NavLink {
 const NAV_LINKS: NavLink[] = [
   { href: '/about', label: 'About' },
   { href: '/hawaii-home-renovation', label: 'Renovation Basics', matchMode: 'prefix' },
-  { href: '/tools', label: 'Toolkit', matchMode: 'prefix' },
+  { href: '/resources', label: 'Guides', matchMode: 'prefix' },
+  { href: '/tools', label: 'Tools', matchMode: 'prefix' },
   { href: '/stories', label: 'Stories' },
   { href: '/directory', label: 'Directory' },
   { href: '/early-access', label: 'Early Access' },
@@ -43,10 +44,7 @@ export function Navigation() {
 
   const isLinkActive = (link: NavLink) => {
     if (link.matchMode === 'prefix') {
-      if (pathname === link.href || pathname.startsWith(link.href + '/')) return true
-      // Renovation Basics also covers /resources/playbooks/* paths
-      if (link.href === '/hawaii-home-renovation' && pathname.startsWith('/resources/playbooks')) return true
-      return false
+      return pathname === link.href || pathname.startsWith(link.href + '/')
     }
     return pathname === link.href
   }

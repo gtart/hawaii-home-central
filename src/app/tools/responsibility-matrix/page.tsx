@@ -40,7 +40,7 @@ export default async function WhoHandlesWhatPage() {
 
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', href: '/' },
-    { name: 'Toolkit', href: '/tools' },
+    { name: 'Tools', href: '/tools' },
     { name: 'Who Handles What', href: '/tools/responsibility-matrix' },
   ])
   const faq = faqSchema(FAQ_ITEMS)

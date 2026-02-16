@@ -247,10 +247,10 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
       {/* Link to Decision Stages Overview */}
       <div className="text-center pt-2">
         <Link
-          href="/tools/decision-points"
+          href="/resources/renovation-stages"
           className="text-sm text-sandstone/60 hover:text-sandstone transition-colors"
         >
-          View Decision Stages Overview →
+          View Renovation Stages Guide &rarr;
         </Link>
       </div>
     </div>

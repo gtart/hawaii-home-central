@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useToolState } from '@/hooks/useToolState'
+import { LocalModeBanner } from '@/components/guides/LocalModeBanner'
 import { DecisionTrackerPage } from './components/DecisionTrackerPage'
 import {
   DEFAULT_DECISIONS_BY_ROOM_TYPE,
@@ -203,13 +204,18 @@ function migrateToV3(payload: any): FinishDecisionsPayloadV3 {
 // MAIN COMPONENT
 // ============================================================================
 
-export function ToolContent() {
+interface ToolContentProps {
+  localOnly?: boolean
+}
+
+export function ToolContent({ localOnly = false }: ToolContentProps) {
   const { state, setState, isLoaded, isSyncing } = useToolState<
     FinishDecisionsPayloadV3 | any
   >({
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2', // Keep same key for migration
     defaultValue: { version: 3, rooms: [] },
+    localOnly,
   })
 
   // Auto-migrate on load
@@ -220,6 +226,28 @@ export function ToolContent() {
       setState(() => migrated)
     }
   }, [isLoaded, state, setState])
+
+  // Import local data when user signs in for the first time
+  useEffect(() => {
+    if (!isLoaded || localOnly) return
+
+    const v3 = state.version === 3 ? (state as FinishDecisionsPayloadV3) : null
+    if (!v3 || v3.rooms.length > 0) return // Already has account data
+
+    try {
+      const stored = localStorage.getItem('hhc_finish_decisions_v2')
+      if (!stored) return
+
+      const local = JSON.parse(stored)
+      const localV3 = local.version === 3 ? (local as FinishDecisionsPayloadV3) : migrateToV3(local)
+      if (localV3.rooms.length === 0) return
+
+      // Auto-import local rooms into account
+      setState(() => localV3)
+    } catch {
+      // ignore
+    }
+  }, [isLoaded, localOnly, state, setState])
 
   // Ensure we're working with V3 data
   const v3State =
@@ -321,6 +349,9 @@ export function ToolContent() {
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-4xl mx-auto">
+        {localOnly && (
+          <LocalModeBanner signInUrl="/login?callbackUrl=/app/tools/finish-decisions" />
+        )}
         {isLoaded && state.version === 3 ? (
           <DecisionTrackerPage
             rooms={v3State.rooms}

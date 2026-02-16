@@ -28,7 +28,7 @@ const SECTIONS = [
     guide: '/resources/playbooks/responsibility-matrix',
   },
   {
-    title: 'Things to Agree On',
+    title: 'Key Agreements',
     description:
       'Four conversations you should have before signing: change orders, payments, allowances, and communication.',
     href: null,
@@ -41,7 +41,7 @@ export default async function BeforeYouSignLandingPage() {
 
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', href: '/' },
-    { name: 'Toolkit', href: '/tools' },
+    { name: 'Tools', href: '/tools' },
     { name: 'Before You Sign', href: '/tools/before-you-sign' },
   ])
 

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/Badge'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 
 export const metadata: Metadata = {
-  title: 'My Toolkit',
+  title: 'My Tools',
 }
 
 export default function AppPage() {
@@ -15,12 +15,12 @@ export default function AppPage() {
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-4">
               <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
-                My Toolkit
+                My Tools
               </h1>
               <Badge variant="accent">Early Preview</Badge>
             </div>
             <p className="text-cream/70 text-lg leading-relaxed max-w-2xl">
-              Your saved progress across the toolkit. Pick up on any device.
+              Your saved progress. Pick up on any device.
             </p>
             <p className="text-cream/50 text-sm mt-2">
               Actively being built&mdash;your feedback shapes what comes next.

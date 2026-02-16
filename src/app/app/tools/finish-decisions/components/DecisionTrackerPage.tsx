@@ -134,7 +134,7 @@ export function DecisionTrackerPage({
         href="/tools"
         className="text-sandstone hover:text-sandstone-light text-sm mb-4 inline-block"
       >
-        ← Toolkit
+        &larr; Tools
       </Link>
 
       {/* Header */}

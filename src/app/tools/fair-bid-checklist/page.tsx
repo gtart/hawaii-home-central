@@ -48,7 +48,7 @@ export default async function CompareYourQuotesPage() {
 
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', href: '/' },
-    { name: 'Toolkit', href: '/tools' },
+    { name: 'Tools', href: '/tools' },
     { name: 'Compare Your Quotes', href: '/tools/fair-bid-checklist' },
   ])
   const faq = faqSchema(FAQ_ITEMS)

@@ -58,9 +58,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${BASE_URL}/disclaimer`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
 
-    // Renovation Basics hub + playbook guides
+    // Renovation Basics hub + guides
     { url: `${BASE_URL}/hawaii-home-renovation`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${BASE_URL}/resources/playbooks/decision-points`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE_URL}/resources`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE_URL}/resources/renovation-stages`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/resources/playbooks/fair-bid-checklist`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/resources/playbooks/responsibility-matrix`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     ...cmsGuides,
@@ -68,7 +69,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Tools hub + tool landing pages
     { url: `${BASE_URL}/tools`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE_URL}/tools/decision-points`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/tools/fair-bid-checklist`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/tools/responsibility-matrix`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/tools/before-you-sign`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
