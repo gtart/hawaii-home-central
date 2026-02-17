@@ -16,7 +16,7 @@ import { CompareGrid } from './components/CompareGrid'
 import type { TabKey } from './types'
 
 const TAB_PILLS: { key: TabKey; label: string }[] = [
-  { key: 'quotes', label: 'Compare quotes' },
+  { key: 'quotes', label: 'Quotes' },
   { key: 'handoffs', label: 'Who does what' },
   { key: 'agree', label: 'What we agreed to' },
 ]
@@ -99,14 +99,17 @@ function BYSContent() {
         </div>
       ) : (
         <div className="space-y-4 mb-6">
-          <ContractorBar
-            contractors={contractors}
-            activeContractorId={activeContractorId}
-            onSelect={setActiveContractor}
-            onAdd={addContractor}
-            onRemove={removeContractor}
-            onUpdate={updateContractor}
-          />
+          <div>
+            <h2 className="text-xs font-medium text-cream/50 mb-2">Compare contractors</h2>
+            <ContractorBar
+              contractors={contractors}
+              activeContractorId={activeContractorId}
+              onSelect={setActiveContractor}
+              onAdd={addContractor}
+              onRemove={removeContractor}
+              onUpdate={updateContractor}
+            />
+          </div>
 
           {/* Summary card when specific contractor selected */}
           {activeContractor && (

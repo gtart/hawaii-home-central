@@ -2,7 +2,18 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import type { BYSContractor } from '../types'
+import type { BYSContractor, ContractType } from '../types'
+
+function contractTypeLabel(type: ContractType): string {
+  const labels: Record<ContractType, string> = {
+    'fixed': 'Fixed Price',
+    'time_materials': 'Time & Materials',
+    'cost_plus': 'Cost Plus',
+    'not_sure': 'Not sure',
+    '': '',
+  }
+  return labels[type] || type
+}
 
 interface ContractorSummaryCardProps {
   contractor: BYSContractor
@@ -72,8 +83,33 @@ export function ContractorSummaryCard({
         )}
       </div>
 
+      {/* Contract details */}
+      {(contractor.totalValue || contractor.contractType) && (
+        <div className="mt-3 pt-3 border-t border-cream/5">
+          <h3 className="text-xs font-medium text-cream/60 mb-2">Contract Details</h3>
+          <div className="flex flex-wrap gap-4">
+            {contractor.totalValue && (
+              <div>
+                <span className="text-xs text-cream/50">Total Value:</span>
+                <span className="ml-1.5 text-sm text-cream/80 font-medium">
+                  {contractor.totalValue}
+                </span>
+              </div>
+            )}
+            {contractor.contractType && contractTypeLabel(contractor.contractType) && (
+              <div>
+                <span className="text-xs text-cream/50">Type:</span>
+                <span className="ml-1.5 text-sm text-cream/80">
+                  {contractTypeLabel(contractor.contractType)}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Notes */}
-      <label className="block text-xs text-cream/40 mt-2 mb-1">
+      <label className="block text-xs text-cream/40 mt-3 mb-1">
         Private notes (only you can see this)
       </label>
       <textarea
