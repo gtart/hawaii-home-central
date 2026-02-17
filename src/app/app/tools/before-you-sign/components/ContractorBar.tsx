@@ -69,20 +69,6 @@ export function ContractorBar({
 
   return (
     <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
-      {/* "All" pill — compare mode */}
-      <button
-        type="button"
-        onClick={() => onSelect('all')}
-        className={cn(
-          'shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
-          activeContractorId === 'all'
-            ? 'bg-sandstone text-basalt'
-            : 'bg-basalt-50 text-cream/50 border border-cream/10 hover:border-cream/30 hover:text-cream/70'
-        )}
-      >
-        All
-      </button>
-
       {/* Contractor pills */}
       {contractors.map((c) => (
         <div key={c.id} className="relative shrink-0 flex items-center group">
@@ -135,7 +121,7 @@ export function ContractorBar({
                   'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
                   activeContractorId === c.id
                     ? 'bg-sandstone text-basalt'
-                    : 'bg-basalt-50 text-cream/50 border border-cream/10 hover:border-cream/30 hover:text-cream/70'
+                    : 'bg-basalt-50 text-cream/70 border border-cream/10 hover:border-cream/30 hover:text-cream'
                 )}
               >
                 {c.name}
@@ -178,48 +164,6 @@ export function ContractorBar({
           )}
         </div>
       ))}
-
-      {/* Add contractor */}
-      {isAdding ? (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            handleAdd()
-          }}
-          className="shrink-0 flex items-center gap-1"
-        >
-          <input
-            ref={addInputRef}
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onBlur={() => {
-              if (!newName.trim()) setIsAdding(false)
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                setIsAdding(false)
-                setNewName('')
-              }
-            }}
-            placeholder="Contractor name"
-            className="px-3 py-1.5 rounded-full text-sm bg-basalt border border-cream/15 text-cream placeholder:text-cream/30 outline-none focus:border-sandstone w-36"
-          />
-          <button
-            type="submit"
-            className="shrink-0 px-2 py-1.5 text-sm text-sandstone hover:text-sandstone/80 transition-colors"
-          >
-            Add
-          </button>
-        </form>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setIsAdding(true)}
-          className="shrink-0 px-3 py-1.5 rounded-full text-sm text-cream/40 border border-dashed border-cream/15 hover:border-cream/30 hover:text-cream/60 transition-colors"
-        >
-          + Add
-        </button>
-      )}
     </div>
   )
 }

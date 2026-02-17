@@ -2,6 +2,7 @@
 
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useState, useEffect } from 'react'
+import React from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { useBYSState } from './useBYSState'
@@ -27,6 +28,9 @@ function BYSContent() {
   const [activeTab, setActiveTab] = useState<TabKey>(
     tabParam && TAB_PILLS.some((t) => t.key === tabParam) ? tabParam : 'quotes'
   )
+  const [isAddingContractor, setIsAddingContractor] = useState(false)
+  const [newContractorName, setNewContractorName] = useState('')
+  const addInputRef = React.useRef<HTMLInputElement>(null)
 
   const {
     payload,
@@ -53,6 +57,18 @@ function BYSContent() {
     url.searchParams.set('tab', tab)
     window.history.replaceState({}, '', url.toString())
   }
+
+  const handleAddContractor = () => {
+    const trimmed = newContractorName.trim()
+    if (!trimmed) return
+    addContractor(trimmed)
+    setNewContractorName('')
+    setIsAddingContractor(false)
+  }
+
+  React.useEffect(() => {
+    if (isAddingContractor) addInputRef.current?.focus()
+  }, [isAddingContractor])
 
   if (!isLoaded) {
     return (
@@ -113,10 +129,55 @@ function BYSContent() {
 
           {/* Summary card when specific contractor selected */}
           {activeContractor && (
-            <ContractorSummaryCard
-              contractor={activeContractor}
-              onUpdate={updateContractor}
-            />
+            <div>
+              <ContractorSummaryCard
+                contractor={activeContractor}
+                onUpdate={updateContractor}
+              />
+              {/* Add contractor button */}
+              <div className="mt-3">
+                {isAddingContractor ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      handleAddContractor()
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <input
+                      ref={addInputRef}
+                      value={newContractorName}
+                      onChange={(e) => setNewContractorName(e.target.value)}
+                      onBlur={() => {
+                        if (!newContractorName.trim()) setIsAddingContractor(false)
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          setIsAddingContractor(false)
+                          setNewContractorName('')
+                        }
+                      }}
+                      placeholder="Contractor name"
+                      className="px-3 py-2 rounded-lg text-sm bg-basalt border border-cream/15 text-cream placeholder:text-cream/30 outline-none focus:border-sandstone flex-1"
+                    />
+                    <button
+                      type="submit"
+                      className="px-3 py-2 text-sm text-sandstone hover:text-sandstone/80 transition-colors font-medium"
+                    >
+                      Add
+                    </button>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingContractor(true)}
+                    className="text-sm text-cream/60 hover:text-sandstone transition-colors"
+                  >
+                    + Add another contractor
+                  </button>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Per-contractor progress snapshot */}
@@ -124,12 +185,75 @@ function BYSContent() {
             contractors={contractors}
             getAnswer={getAnswer}
           />
+
+          {/* Add contractor button in compare mode */}
+          {!activeContractor && (
+            <div className="mt-3">
+              {isAddingContractor ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    handleAddContractor()
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    ref={addInputRef}
+                    value={newContractorName}
+                    onChange={(e) => setNewContractorName(e.target.value)}
+                    onBlur={() => {
+                      if (!newContractorName.trim()) setIsAddingContractor(false)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setIsAddingContractor(false)
+                        setNewContractorName('')
+                      }
+                    }}
+                    placeholder="Contractor name"
+                    className="px-3 py-2 rounded-lg text-sm bg-basalt border border-cream/15 text-cream placeholder:text-cream/30 outline-none focus:border-sandstone flex-1"
+                  />
+                  <button
+                    type="submit"
+                    className="px-3 py-2 text-sm text-sandstone hover:text-sandstone/80 transition-colors font-medium"
+                  >
+                    Add
+                  </button>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsAddingContractor(true)}
+                  className="text-sm text-cream/60 hover:text-sandstone transition-colors"
+                >
+                  + Add another contractor
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
       {/* Only show tabs + content when we have at least one contractor */}
       {contractors.length > 0 && (
         <>
+          {/* Compare mode toggle */}
+          <div className="mb-4">
+            <h2 className="text-xs font-medium text-cream/50 mb-2">Compare:</h2>
+            <button
+              type="button"
+              onClick={() => setActiveContractor('all')}
+              className={cn(
+                'px-4 py-2 rounded-full text-sm font-medium transition-colors',
+                activeContractorId === 'all'
+                  ? 'bg-sandstone text-basalt'
+                  : 'bg-basalt-50 text-cream/70 border border-cream/10 hover:border-cream/30 hover:text-cream'
+              )}
+            >
+              All contractors
+            </button>
+          </div>
+
           {/* Tab pills */}
           <div className="flex flex-wrap gap-2 mb-6">
             {TAB_PILLS.map((tab) => (
