@@ -16,9 +16,9 @@ import { CompareGrid } from './components/CompareGrid'
 import type { TabKey } from './types'
 
 const TAB_PILLS: { key: TabKey; label: string }[] = [
-  { key: 'quotes', label: 'Quote Details' },
-  { key: 'handoffs', label: 'Who Handles What' },
-  { key: 'agree', label: 'Key Agreements' },
+  { key: 'quotes', label: 'Compare quotes' },
+  { key: 'handoffs', label: 'Who does what' },
+  { key: 'agree', label: 'What we agreed to' },
 ]
 
 function BYSContent() {
@@ -204,7 +204,7 @@ export function BeforeYouSignContent() {
           Contract Comparison Tool
         </h1>
         <p className="text-cream/70 text-lg mb-8 leading-relaxed">
-          Compare quotes, assign handoffs, and avoid surprises.
+          Add each contractor, then mark what&apos;s covered, what&apos;s missing, and jot notes. This helps you compare apples-to-apples.
         </p>
 
         <Suspense fallback={null}>

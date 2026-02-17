@@ -143,8 +143,7 @@ export function DecisionTrackerPage({
         </div>
       </div>
       <p className="text-cream/70 text-lg mb-6 leading-relaxed">
-        Track every selection and decision by room. Compare options, record specs, and mark
-        progress.
+        Track the small choices that can stall a renovation—so you don&apos;t get stuck waiting on one item.
       </p>
 
       {/* Onboarding — always visible, collapsible when rooms exist */}

@@ -67,12 +67,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...cmsGuides,
     ...collectionEntries,
 
-    // Tools hub + tool landing pages
+    // Tools hub (marketing landing)
     { url: `${BASE_URL}/tools`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${BASE_URL}/tools/fair-bid-checklist`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${BASE_URL}/tools/responsibility-matrix`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${BASE_URL}/tools/before-you-sign`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${BASE_URL}/tools/finish-decisions`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
 
     // Stories
     { url: `${BASE_URL}/stories`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },

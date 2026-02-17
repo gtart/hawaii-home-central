@@ -102,23 +102,28 @@ export default function RenovationStagesPage() {
           <FadeInSection delay={300}>
             <div className="mt-12">
               <h2 className="font-serif text-2xl text-cream mb-2 text-center">
-                Ready to start tracking?
+                Use My Tools to stay on track
               </h2>
               <p className="text-cream/50 text-sm mb-6 text-center">
-                These free tools help you put the stages into action for your project.
+                Guides are free to read. My Tools saves your progress (free sign-in).
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                 <Card
-                  href="/tools/finish-decisions"
+                  href="/login?callbackUrl=/app/tools/finish-decisions"
                   title="Decision Tracker"
-                  description="Track every material and finish decision by room. Free to use&mdash;no sign-in required."
+                  description="Track every material and finish decision by room. Compare options, record details, and mark progress from deciding to done."
                 />
                 <Card
-                  href="/tools/before-you-sign"
+                  href="/login?callbackUrl=/app/tools/before-you-sign"
                   title="Contract Comparison Tool"
                   description="Compare contractor quotes, assign who handles what, and agree on the details before you start."
                 />
               </div>
+              <p className="text-center">
+                <Link href="/tools" className="text-sandstone hover:text-sandstone-light text-sm transition-colors">
+                  Learn what you get in My Tools &rarr;
+                </Link>
+              </p>
             </div>
           </FadeInSection>
         </div>
