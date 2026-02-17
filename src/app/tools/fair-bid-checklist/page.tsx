@@ -106,15 +106,14 @@ export default async function CompareYourQuotesPage() {
           <FadeInSection delay={150}>
             <div className="bg-basalt-50 rounded-card p-8 mt-8 text-center">
               <h2 className="font-serif text-2xl text-cream mb-3">
-                Save your progress
+                Use the full comparison tool
               </h2>
               <p className="text-cream/60 text-sm mb-6 max-w-lg mx-auto">
-                Sign in to save your checklist across devices and access all
-                all Contract Comparison tools in one place.
+                Sign in to check items off for each contractor, track what&apos;s covered and what&apos;s missing, and compare bids in one place.
               </p>
               <Link href="/login?callbackUrl=/app/tools/before-you-sign?tab=quotes">
                 <Button size="lg">
-                  Sign in to save your progress &rarr;
+                  Sign in to get started &rarr;
                 </Button>
               </Link>
               <p className="text-cream/40 text-xs mt-3">

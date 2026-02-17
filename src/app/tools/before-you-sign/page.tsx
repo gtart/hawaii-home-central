@@ -78,7 +78,7 @@ export default async function BeforeYouSignLandingPage() {
               agree on the details that cause fights later.
             </p>
             <p className="text-cream/50 text-sm mb-10">
-              Free to use. Sign in to save your progress across devices.
+              Free to use. Sign in to save and track everything across devices.
             </p>
           </FadeInSection>
 
@@ -148,15 +148,14 @@ export default async function BeforeYouSignLandingPage() {
           <FadeInSection delay={300}>
             <div className="bg-basalt-50 rounded-card p-8 text-center">
               <h2 className="font-serif text-2xl text-cream mb-3">
-                Save your progress
+                Get started
               </h2>
               <p className="text-cream/60 text-sm mb-6 max-w-lg mx-auto">
-                Sign in to save everything across devices. All three tools are
-                combined on one page in your account.
+                Sign in to use all three tools together&mdash;compare bids, assign tasks, and track agreements&mdash;with everything saved to your account.
               </p>
               <Link href="/login?callbackUrl=/app/tools/before-you-sign">
                 <Button size="lg">
-                  Sign in to save your progress &mdash; Free
+                  Sign in to get started &mdash; Free
                 </Button>
               </Link>
               <p className="text-cream/40 text-xs mt-3">

@@ -85,8 +85,7 @@ export default async function WhoHandlesWhatPage() {
                 handles it, but every project is different.
               </p>
               <p className="text-cream/60 text-sm leading-relaxed italic">
-                Your selections work instantly on this page. Sign in to save
-                them to your account.
+                Your selections work on this page but aren&apos;t saved. Sign in for the full tool with persistence.
               </p>
             </div>
           </FadeInSection>
@@ -99,15 +98,14 @@ export default async function WhoHandlesWhatPage() {
           <FadeInSection delay={150}>
             <div className="bg-basalt-50 rounded-card p-8 mt-8 text-center">
               <h2 className="font-serif text-2xl text-cream mb-3">
-                Save this for your project
+                Use the full tool
               </h2>
               <p className="text-cream/60 text-sm mb-6 max-w-lg mx-auto">
-                Sign in to save your assignments across devices and access all
-                all Contract Comparison tools in one place.
+                Sign in to save your assignments across devices and access all Contract Comparison tools in one place.
               </p>
               <Link href="/login?callbackUrl=/app/tools/before-you-sign?tab=handoffs">
                 <Button size="lg">
-                  Sign in to save your progress &rarr;
+                  Sign in to get started &rarr;
                 </Button>
               </Link>
               <p className="text-cream/40 text-xs mt-3">
