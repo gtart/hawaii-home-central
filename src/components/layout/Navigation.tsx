@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import { UserMenu } from '@/components/auth/UserMenu'
 
@@ -12,20 +13,26 @@ interface NavLink {
   matchMode?: 'exact' | 'prefix'
 }
 
-const NAV_LINKS: NavLink[] = [
-  { href: '/about', label: 'About' },
-  { href: '/resources', label: 'Guides', matchMode: 'prefix' },
-  { href: '/tools', label: 'Tools', matchMode: 'prefix' },
-  { href: '/stories', label: 'Stories' },
-  { href: '/directory', label: 'Directory' },
-  { href: '/early-access', label: 'Early Access' },
-  { href: '/contact', label: 'Contact' },
-]
-
 export function Navigation() {
+  const { data: session } = useSession()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
+
+  // Compute nav links based on session
+  const navLinks: NavLink[] = [
+    { href: '/about', label: 'About' },
+    { href: '/resources', label: 'Guides', matchMode: 'prefix' },
+    {
+      href: session?.user ? '/app' : '/tools',
+      label: 'My Tools',
+      matchMode: 'prefix'
+    },
+    { href: '/stories', label: 'Stories' },
+    { href: '/directory', label: 'Directory' },
+    { href: '/early-access', label: 'Early Access' },
+    { href: '/contact', label: 'Contact' },
+  ]
 
   // Hide nav on admin pages
   if (pathname.startsWith('/admin')) return null
@@ -42,6 +49,11 @@ export function Navigation() {
   }, [pathname])
 
   const isLinkActive = (link: NavLink) => {
+    // "My Tools" matches both /app and /tools routes
+    if (link.label === 'My Tools') {
+      return pathname.startsWith('/app') || pathname.startsWith('/tools')
+    }
+
     if (link.matchMode === 'prefix') {
       return pathname === link.href || pathname.startsWith(link.href + '/')
     }
@@ -91,7 +103,7 @@ export function Navigation() {
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8">
               <ul className="flex items-center gap-8">
-                {NAV_LINKS.map((link) => (
+                {navLinks.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
@@ -142,7 +154,7 @@ export function Navigation() {
           {/* Mobile menu — opaque background */}
           {isMobileMenuOpen && (
             <ul className="lg:hidden mt-4 py-4 border-t border-cream/10 space-y-2 bg-basalt rounded-b-card">
-              {NAV_LINKS.map((link) => (
+              {navLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}

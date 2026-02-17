@@ -195,10 +195,10 @@ export function BeforeYouSignContent() {
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-6xl mx-auto">
         <Link
-          href="/tools"
+          href="/app"
           className="text-sandstone hover:text-sandstone-light text-sm mb-4 inline-block"
         >
-          &larr; Tools
+          &larr; My Tools
         </Link>
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-4">
           Contract Comparison Tool

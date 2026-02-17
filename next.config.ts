@@ -79,6 +79,26 @@ const nextConfig: NextConfig = {
         destination: '/app/tools/finish-decisions',
         permanent: true,
       },
+      {
+        source: '/tools/fair-bid-checklist',
+        destination: '/resources/playbooks/fair-bid-checklist',
+        permanent: true,
+      },
+      {
+        source: '/tools/responsibility-matrix',
+        destination: '/resources/playbooks/responsibility-matrix',
+        permanent: true,
+      },
+      {
+        source: '/tools/finish-decisions',
+        destination: '/tools',
+        permanent: false,
+      },
+      {
+        source: '/tools/before-you-sign',
+        destination: '/tools',
+        permanent: false,
+      },
     ]
   },
 }

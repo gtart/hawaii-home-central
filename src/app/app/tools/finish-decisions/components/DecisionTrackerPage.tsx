@@ -129,10 +129,10 @@ export function DecisionTrackerPage({
     <>
       {/* Breadcrumb */}
       <Link
-        href="/tools"
+        href="/app"
         className="text-sandstone hover:text-sandstone-light text-sm mb-4 inline-block"
       >
-        &larr; Tools
+        &larr; My Tools
       </Link>
 
       {/* Header */}

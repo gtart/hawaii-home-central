@@ -126,7 +126,7 @@ export function PlaybookContent() {
 
         {/* Sign-in pill */}
         <div className="mb-8">
-          <SignInPill appToolPath="/app/tools/before-you-sign?tab=handoffs" label="Sign in to assign owners interactively" />
+          <SignInPill appToolPath="/app/tools/before-you-sign?tab=handoffs" label="Sign in to use My Tools and assign owners in your workspace" />
         </div>
 
         {/* Filter */}
@@ -191,11 +191,11 @@ export function PlaybookContent() {
           ) : (
             <div className="text-center">
               <h2 className="font-serif text-2xl text-cream mb-3">
-                Assign owners interactively
+                Use My Tools to assign owners
               </h2>
               <p className="text-cream/60 text-sm mb-6 max-w-lg mx-auto">
                 Sign in to assign owners for each item, add notes documenting
-                your agreements, and pick up on any device.
+                your agreements, and access your saved workspace from any device.
               </p>
               <Button
                 onClick={() => signIn('google', { callbackUrl: '/app/tools/before-you-sign?tab=handoffs' })}

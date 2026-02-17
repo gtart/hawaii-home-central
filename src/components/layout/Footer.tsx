@@ -36,8 +36,25 @@ export function Footer() {
   if (pathname.startsWith('/admin')) return null
 
   return (
-    <footer className="border-t border-cream/10 mt-auto">
-      <div className="max-w-7xl mx-auto px-6 py-12">
+    <>
+      {/* Trust block */}
+      <div className="border-t border-cream/5 bg-basalt">
+        <div className="max-w-7xl mx-auto px-6 py-8 text-center">
+          <p className="text-sm text-cream/60 mb-2">
+            We&apos;re homeowners who&apos;ve been through it. We built Hawaii Home Central
+            to help other homeowners get the best out of their partnerships with contractors—and
+            get the most out of what their home has to offer.
+          </p>
+          <p className="text-xs text-cream/40">
+            We&apos;re not contractors or attorneys. This isn&apos;t legal or professional
+            advice—just practical guidance and tools to help you stay organized and informed.
+          </p>
+        </div>
+      </div>
+
+      {/* Existing footer */}
+      <footer className="border-t border-cream/10 mt-auto">
+        <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-center md:text-left">
             <Link
@@ -78,6 +95,7 @@ export function Footer() {
           </div>
         </div>
       </div>
-    </footer>
+      </footer>
+    </>
   )
 }

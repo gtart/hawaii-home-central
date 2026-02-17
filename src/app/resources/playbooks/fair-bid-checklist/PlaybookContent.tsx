@@ -89,8 +89,13 @@ export function PlaybookContent() {
           </ol>
           <p className="text-cream/50 text-sm">
             <strong className="text-sandstone">Want to compare side-by-side?</strong>{' '}
-            Sign in to use the interactive tool&mdash;check items off for each contractor
-            and compare bids against this checklist in one place.
+            <Link
+              href="/login?callbackUrl=/app/tools/before-you-sign?tab=quotes"
+              className="text-sandstone hover:text-sandstone-light underline"
+            >
+              Sign in to use My Tools
+            </Link>{' '}
+            and compare bids in your saved workspace.
           </p>
         </div>
 
