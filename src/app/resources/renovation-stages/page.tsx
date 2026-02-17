@@ -7,9 +7,9 @@ import { breadcrumbSchema, faqSchema } from '@/lib/structured-data'
 import { RENOVATION_STAGES } from '@/data/renovation-stages'
 
 export const metadata: Metadata = {
-  title: 'Renovation Stages Guide — What Happens When & What to Decide',
+  title: 'Plan Your Renovation — What Happens When & What to Decide',
   description:
-    'An interactive guide to every stage of a home renovation in Hawaiʻi. See what happens, what you need to decide, and what to watch out for — from planning to punch list.',
+    'A stage-by-stage guide to every phase of a home renovation in Hawaiʻi. See what happens, what you need to decide, and what to watch out for — from planning to punch list.',
 }
 
 const FAQ_ITEMS = [
@@ -34,7 +34,7 @@ export default function RenovationStagesPage() {
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', href: '/' },
     { name: 'Guides', href: '/resources' },
-    { name: 'Renovation Stages', href: '/resources/renovation-stages' },
+    { name: 'Plan Your Renovation', href: '/resources/renovation-stages' },
   ])
   const faq = faqSchema(FAQ_ITEMS)
 
@@ -50,9 +50,18 @@ export default function RenovationStagesPage() {
       />
       <div className="pt-32 pb-24 px-6">
         <div className="max-w-4xl mx-auto">
+          {/* Visible breadcrumb */}
+          <nav className="text-xs text-cream/40 mb-6" aria-label="Breadcrumb">
+            <Link href="/resources" className="hover:text-cream/60 transition-colors">
+              Guides
+            </Link>
+            <span className="mx-2">/</span>
+            <span className="text-cream/60">Plan Your Renovation</span>
+          </nav>
+
           <FadeInSection>
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6 text-center">
-              Renovation Stages Guide
+              Plan Your Renovation
             </h1>
             <p className="text-lg text-cream/70 mb-4 max-w-3xl mx-auto text-center leading-relaxed">
               Every renovation follows a sequence. Understanding what happens at each
@@ -60,7 +69,7 @@ export default function RenovationStagesPage() {
               avoid surprises, change orders, and delays.
             </p>
             <p className="text-cream/50 text-sm mb-12 max-w-2xl mx-auto text-center">
-              {RENOVATION_STAGES.length} stages &middot; Hawai&#x02BB;i-specific notes throughout &middot; Click any stage to learn more
+              {RENOVATION_STAGES.length} stages &middot; Hawai&#x02BB;i-specific notes throughout
             </p>
           </FadeInSection>
 
@@ -106,7 +115,7 @@ export default function RenovationStagesPage() {
                 />
                 <Card
                   href="/tools/before-you-sign"
-                  title="Before You Sign"
+                  title="Contract Comparison Tool"
                   description="Compare contractor quotes, assign who handles what, and agree on the details before you start."
                 />
               </div>

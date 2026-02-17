@@ -201,7 +201,7 @@ export function BeforeYouSignContent() {
           &larr; Tools
         </Link>
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-4">
-          Before You Sign
+          Contract Comparison Tool
         </h1>
         <p className="text-cream/70 text-lg mb-8 leading-relaxed">
           Compare quotes, assign handoffs, and avoid surprises.

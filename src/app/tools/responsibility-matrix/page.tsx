@@ -103,7 +103,7 @@ export default async function WhoHandlesWhatPage() {
               </h2>
               <p className="text-cream/60 text-sm mb-6 max-w-lg mx-auto">
                 Sign in to save your assignments across devices and access all
-                three &ldquo;Before You Sign&rdquo; tools in one place.
+                all Contract Comparison tools in one place.
               </p>
               <Link href="/login?callbackUrl=/app/tools/before-you-sign?tab=handoffs">
                 <Button size="lg">

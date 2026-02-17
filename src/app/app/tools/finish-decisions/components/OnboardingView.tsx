@@ -6,25 +6,11 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import {
   ROOM_TYPE_OPTIONS_V3,
+  ROOM_EMOJI_MAP,
   DEFAULT_DECISIONS_BY_ROOM_TYPE,
   type RoomTypeV3,
   type RoomSelection,
 } from '@/data/finish-decisions'
-
-const ROOM_EMOJI_MAP: Record<RoomTypeV3, string> = {
-  kitchen: '🍳',
-  bathroom: '🚿',
-  living_room: '🛋️',
-  laundry_room: '🧺',
-  bedroom: '🛏️',
-  hallway: '🏠',
-  stairs: '🪜',
-  doors: '🚪',
-  windows: '🪟',
-  flooring: '🪵',
-  landscaping: '🌿',
-  other: '✏️',
-}
 
 export function OnboardingView({
   onBatchCreate,

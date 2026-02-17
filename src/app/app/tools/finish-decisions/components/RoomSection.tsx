@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
 import {
-  ROOM_TYPE_OPTIONS_V3,
+  ROOM_EMOJI_MAP,
   type RoomV3,
   type DecisionV3,
+  type RoomTypeV3,
 } from '@/data/finish-decisions'
 import { DecisionsTable } from './DecisionsTable'
 
@@ -71,7 +71,7 @@ export function RoomSection({
     }
   }
 
-  const roomTypeLabel = ROOM_TYPE_OPTIONS_V3.find((t) => t.value === room.type)?.label
+  const roomEmoji = ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️'
 
   return (
     <div className="bg-basalt-50 rounded-card overflow-hidden">
@@ -84,11 +84,10 @@ export function RoomSection({
           {isExpanded ? '▼' : '▶'}
         </span>
 
-        <h3 className="text-cream font-medium text-lg flex-1">{room.name}</h3>
-
-        <Badge variant="default" className="text-xs">
-          {roomTypeLabel}
-        </Badge>
+        <h3 className="text-cream font-medium text-lg flex-1">
+          <span className="mr-1.5">{roomEmoji}</span>
+          {room.name}
+        </h3>
 
         <span className="text-xs text-cream/50">
           {summaryParts.join(', ')}
@@ -97,11 +96,21 @@ export function RoomSection({
         <button
           onClick={(e) => {
             e.stopPropagation()
+            setShowAddForm(true)
+          }}
+          className="text-sandstone hover:text-sandstone-light text-xs font-medium"
+        >
+          + Add
+        </button>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
             if (confirm(`Delete ${room.name}? This will also delete all decisions and options.`)) {
               onDeleteRoom()
             }
           }}
-          className="text-red-400/60 hover:text-red-400 text-xs ml-2"
+          className="text-red-400/60 hover:text-red-400 text-xs ml-1"
         >
           Delete
         </button>
@@ -110,51 +119,38 @@ export function RoomSection({
       {/* Expanded Content */}
       {isExpanded && (
         <div className="border-t border-cream/10 px-4 py-4">
-          {/* Add Decision */}
-          <div className="flex items-center gap-2 mb-4">
-            {showAddForm ? (
-              <div className="flex gap-2 flex-1">
-                <Input
-                  placeholder="Decision title (e.g., Countertop)"
-                  value={newDecisionTitle}
-                  onChange={(e) => setNewDecisionTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleAddDecision()
-                    if (e.key === 'Escape') {
-                      setShowAddForm(false)
-                      setNewDecisionTitle('')
-                    }
-                  }}
-                  autoFocus
-                  className="flex-1"
-                />
-                <Button size="sm" onClick={handleAddDecision}>
-                  Add
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
+          {/* Add Decision Form (inline, triggered from header) */}
+          {showAddForm && (
+            <div className="flex gap-2 mb-4">
+              <Input
+                placeholder="Decision title (e.g., Countertop)"
+                value={newDecisionTitle}
+                onChange={(e) => setNewDecisionTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddDecision()
+                  if (e.key === 'Escape') {
                     setShowAddForm(false)
                     setNewDecisionTitle('')
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            ) : (
+                  }
+                }}
+                autoFocus
+                className="flex-1"
+              />
+              <Button size="sm" onClick={handleAddDecision}>
+                Add
+              </Button>
               <Button
                 size="sm"
-                variant="secondary"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setShowAddForm(true)
+                variant="ghost"
+                onClick={() => {
+                  setShowAddForm(false)
+                  setNewDecisionTitle('')
                 }}
               >
-                + Add Decision
+                Cancel
               </Button>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Decisions Table */}
           <DecisionsTable

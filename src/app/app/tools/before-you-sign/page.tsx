@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { BeforeYouSignContent } from './BeforeYouSignContent'
 
 export const metadata: Metadata = {
-  title: 'Before You Sign',
+  title: 'Contract Comparison Tool',
 }
 
 export default function BeforeYouSignPage() {

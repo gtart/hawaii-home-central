@@ -65,17 +65,34 @@ export function PlaybookContent() {
         {/* Hero */}
         <div className="flex items-start justify-between gap-4 mb-2">
           <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
-            Fair Bid Checklist
+            Apples-to-Apples Bid Checklist
           </h1>
           <div className="shrink-0 mt-2">
-            <ShareButton title="Fair Bid Checklist — Hawaii Home Central" />
+            <ShareButton title="Apples-to-Apples Bid Checklist — Hawaii Home Central" />
           </div>
         </div>
-        <p className="text-cream/70 text-lg mb-8 leading-relaxed">
-          Compare bids apples-to-apples. This checklist surfaces the gaps,
-          exclusions, and assumptions that cause disputes&mdash;before you sign
-          anything.
+        <p className="text-cream/70 text-lg mb-6 leading-relaxed">
+          Go through this checklist for each contractor bid. You&apos;ll see exactly
+          what&apos;s covered and what isn&apos;t&mdash;because contractors often include
+          different things around the edges.
         </p>
+
+        {/* How to use */}
+        <div className="bg-cream/5 border border-cream/10 rounded-card p-6 mb-10">
+          <h2 className="font-serif text-lg text-cream mb-3">
+            How to use this checklist
+          </h2>
+          <ol className="text-cream/70 text-sm space-y-2 list-decimal list-inside mb-4">
+            <li>Print or open this page alongside each bid you&apos;ve received.</li>
+            <li>For each section, check whether the bid explicitly covers it, excludes it, or doesn&apos;t mention it.</li>
+            <li>Do this for every bid&mdash;the gaps between them are where disputes start.</li>
+          </ol>
+          <p className="text-cream/50 text-sm">
+            <strong className="text-sandstone">Want to compare side-by-side?</strong>{' '}
+            Sign in to use the interactive tool&mdash;check items off for each contractor
+            and compare bids against this checklist in one place.
+          </p>
+        </div>
 
         {/* Hawaii bid traps */}
         <div className="bg-basalt-50 rounded-card p-6 mb-10">
@@ -107,7 +124,7 @@ export function PlaybookContent() {
 
         {/* Sign-in pill */}
         <div className="mb-8">
-          <SignInPill appToolPath="/app/tools/before-you-sign?tab=quotes" label="Sign in to check items off interactively" />
+          <SignInPill appToolPath="/app/tools/before-you-sign?tab=quotes" label="Sign in to compare bids side-by-side using this checklist" />
         </div>
 
         {/* Filter controls */}
@@ -169,7 +186,7 @@ export function PlaybookContent() {
           ) : session?.user ? (
             <div className="text-center">
               <p className="text-cream/70 text-sm mb-4">
-                You&apos;re signed in. Check items off interactively.
+                You&apos;re signed in. Compare your bids side-by-side.
               </p>
               <Link href="/app/tools/before-you-sign?tab=quotes">
                 <Button size="lg" className="w-full sm:w-auto">
@@ -180,12 +197,12 @@ export function PlaybookContent() {
           ) : (
             <div className="text-center">
               <h2 className="font-serif text-2xl text-cream mb-3">
-                Check items off interactively
+                Compare your bids side-by-side
               </h2>
               <p className="text-cream/60 text-sm mb-6 max-w-lg mx-auto">
-                Sign in to check off items as you review each bid, track your
-                progress across essentials and nice-to-knows, and pick up on any
-                device.
+                Sign in to check off items for each contractor, track what&apos;s
+                covered and what&apos;s missing, and compare bids against this
+                checklist in one place.
               </p>
               <Button
                 onClick={() => signIn('google', { callbackUrl: '/app/tools/before-you-sign?tab=quotes' })}

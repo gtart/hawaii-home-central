@@ -9,9 +9,9 @@ import { auth } from '@/auth'
 import { FairBidPublicContent } from './FairBidPublicContent'
 
 export const metadata: Metadata = {
-  title: 'Compare Your Quotes — Fair Bid Checklist for Hawaiʻi',
+  title: 'Compare Your Quotes — Apples-to-Apples Bid Checklist for Hawaiʻi',
   description:
-    'Free interactive checklist: compare contractor bids fairly. 11 sections, 44 items covering scope, labor, materials, permits, timeline, and more. Built for Hawaiʻi homeowners.',
+    'Free interactive checklist: compare contractor bids fairly. 11 sections, 44 items covering scope, labor, materials, permits, and timeline. Built for Hawaiʻi homeowners.',
 }
 
 const FAQ_ITEMS = [
@@ -110,7 +110,7 @@ export default async function CompareYourQuotesPage() {
               </h2>
               <p className="text-cream/60 text-sm mb-6 max-w-lg mx-auto">
                 Sign in to save your checklist across devices and access all
-                three &ldquo;Before You Sign&rdquo; tools in one place.
+                all Contract Comparison tools in one place.
               </p>
               <Link href="/login?callbackUrl=/app/tools/before-you-sign?tab=quotes">
                 <Button size="lg">

@@ -108,7 +108,7 @@ export function DecisionsTable({
               Opts
             </th>
             <th className="px-3 py-2 text-left text-xs font-medium text-cream/60 uppercase tracking-wide hidden md:table-cell">
-              Selected
+              Notes
             </th>
             <th className="px-3 py-2 w-12"></th>
           </tr>
@@ -168,9 +168,9 @@ export function DecisionsTable({
                     {decision.options.length}
                   </span>
                 </td>
-                <td className="px-3 py-2.5 hidden md:table-cell">
-                  {selectedOption ? (
-                    <span className="text-xs text-sandstone/70">→ {selectedOption.name}</span>
+                <td className="px-3 py-2.5 hidden md:table-cell max-w-[200px]">
+                  {decision.notes ? (
+                    <span className="text-xs text-cream/50 truncate block">{decision.notes}</span>
                   ) : (
                     <span className="text-xs text-cream/20">—</span>
                   )}

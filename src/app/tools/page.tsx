@@ -7,12 +7,12 @@ import { breadcrumbSchema } from '@/lib/structured-data'
 export const metadata: Metadata = {
   title: 'Your Renovation Tools',
   description:
-    'Free interactive tools for Hawai\u02BBi homeowners: bid comparison, task ownership, decision tracking, and more. Built for real renovation projects.',
+    'Free interactive tools for Hawai\u02BBi homeowners: bid comparison, task ownership, and decision tracking. Built for real renovation projects.',
 }
 
 const TOOLS = [
   {
-    title: 'Before You Sign',
+    title: 'Contract Comparison Tool',
     description:
       'Compare quotes, assign who handles what, and agree on the details that cause fights later. Three tools in one.',
     href: '/tools/before-you-sign',
@@ -68,7 +68,7 @@ export default function ToolsIndexPage() {
               <p className="text-cream/50 text-sm">
                 New to renovating? Read the{' '}
                 <Link href="/resources/renovation-stages" className="text-sandstone hover:text-sandstone-light transition-colors">
-                  Renovation Stages Guide &rarr;
+                  Plan Your Renovation &rarr;
                 </Link>
               </p>
               <p className="text-cream/50 text-sm">

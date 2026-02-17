@@ -142,13 +142,29 @@ export const ROOM_TYPE_OPTIONS_V3 = [
 
 export type RoomTypeV3 = (typeof ROOM_TYPE_OPTIONS_V3)[number]['value']
 
+// Room type emoji icons
+export const ROOM_EMOJI_MAP: Record<RoomTypeV3, string> = {
+  kitchen: '🍳',
+  bathroom: '🚿',
+  living_room: '🛋️',
+  laundry_room: '🧺',
+  bedroom: '🛏️',
+  hallway: '🏠',
+  stairs: '🪜',
+  doors: '🚪',
+  windows: '🪟',
+  flooring: '🪵',
+  landscaping: '🌿',
+  other: '✏️',
+}
+
 // Decision Statuses (simplified from V2)
 export const STATUS_CONFIG_V3 = {
-  deciding: { label: 'Deciding', variant: 'default' as const },
-  shortlist: { label: 'Shortlist', variant: 'default' as const },
-  selected: { label: 'Selected', variant: 'accent' as const },
-  ordered: { label: 'Ordered', variant: 'accent' as const },
-  done: { label: 'Done', variant: 'accent' as const },
+  deciding: { label: 'Deciding', variant: 'deciding' as const },
+  shortlist: { label: 'Shortlist', variant: 'shortlist' as const },
+  selected: { label: 'Selected', variant: 'selected' as const },
+  ordered: { label: 'Ordered', variant: 'ordered' as const },
+  done: { label: 'Done', variant: 'done' as const },
 } as const
 
 export type StatusV3 = keyof typeof STATUS_CONFIG_V3

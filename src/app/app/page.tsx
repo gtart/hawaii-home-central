@@ -32,7 +32,7 @@ export default function AppPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card
               href="/app/tools/before-you-sign"
-              title="Before You Sign"
+              title="Contract Comparison Tool"
               description="Compare quotes, assign who handles what, and agree on the details that cause fights later."
               badge="Live"
             />

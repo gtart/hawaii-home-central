@@ -3,8 +3,8 @@ import { FadeInSection } from '@/components/effects/FadeInSection'
 import { Card } from '@/components/ui/Card'
 
 export const metadata: Metadata = {
-  title: 'Guides & Tools',
-  description: 'Practical guides and interactive tools for Hawaiʻi homeowners. Renovation stages, bid comparison, decision tracking, and more—built for local conditions.',
+  title: 'Guides',
+  description: 'Practical guides for Hawaiʻi homeowners. Renovation planning, bid comparison, task ownership, and decision tracking—built for local conditions.',
 }
 
 export default function ResourcesPage() {
@@ -14,10 +14,10 @@ export default function ResourcesPage() {
         <FadeInSection>
           <div className="text-center mb-16">
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6">
-              Guides &amp; Tools
+              Guides
             </h1>
             <p className="text-lg text-cream/70 max-w-2xl mx-auto">
-              Practical guides and tools to help you navigate your Hawai&#x02BB;i renovation with clarity and confidence. Built from real experience, not theory.
+              Practical guides to help you navigate your Hawai&#x02BB;i renovation with clarity and confidence. Built from real experience, not theory.
             </p>
           </div>
         </FadeInSection>
@@ -55,18 +55,6 @@ export default function ResourcesPage() {
           </section>
         </FadeInSection>
 
-        {/* Renovation Stages Guide — hero card */}
-        <FadeInSection delay={75}>
-          <section className="mb-12">
-            <Card
-              href="/resources/renovation-stages"
-              title="Renovation Stages Guide"
-              description="An interactive walkthrough of every stage in a renovation&mdash;from planning and permits to punch list. See what happens when, what you need to decide, and what&rsquo;s different in Hawai&#x02BB;i."
-              badge="Free &middot; Interactive"
-            />
-          </section>
-        </FadeInSection>
-
         {/* Free guides */}
         <FadeInSection delay={100}>
           <section className="mb-16">
@@ -78,8 +66,15 @@ export default function ResourcesPage() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card
+                href="/resources/renovation-stages"
+                title="Plan Your Renovation"
+                description="A stage-by-stage walkthrough of every renovation phase&mdash;from planning and permits to punch list. See what happens when, what to decide, and what&rsquo;s different in Hawai&#x02BB;i."
+                badge="Free"
+                className="md:col-span-2"
+              />
+              <Card
                 href="/resources/playbooks/fair-bid-checklist"
-                title="Compare Your Quotes"
+                title="Apples-to-Apples Bid Checklist"
                 description="What to look for in every contractor bid. 11 sections, 44 items, with essentials flagged."
                 badge="Free to read"
               />
@@ -93,29 +88,21 @@ export default function ResourcesPage() {
           </section>
         </FadeInSection>
 
-        {/* Interactive tools */}
-        <FadeInSection delay={125}>
+        {/* Renovation Basics Library */}
+        <FadeInSection delay={112}>
           <section className="mb-16">
             <h2 className="font-serif text-2xl text-cream mb-2">
-              Interactive Tools
+              Renovation Basics Library
             </h2>
             <p className="text-cream/50 text-sm mb-6">
-              Free to try. Sign in to save your progress across devices.
+              Articles covering the fundamentals of renovating in Hawai&#x02BB;i.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card
-                href="/tools/finish-decisions"
-                title="Decision Tracker"
-                description="Track every material and finish decision by room. Compare options, record details, and mark progress from deciding to done."
-                badge="Free to use"
-              />
-              <Card
-                href="/tools/before-you-sign"
-                title="Before You Sign"
-                description="Compare quotes, assign who handles what, and agree on the details that cause fights later. Three tools in one."
-                badge="Free to use"
-              />
-            </div>
+            <Card
+              href="/hawaii-home-renovation"
+              title="Renovation Basics Library"
+              description="Browse topics from budgeting and permits to materials and timelines&mdash;written for Hawai&#x02BB;i homeowners."
+              badge="Free to read"
+            />
           </section>
         </FadeInSection>
       </div>

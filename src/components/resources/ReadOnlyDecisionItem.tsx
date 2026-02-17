@@ -1,3 +1,9 @@
+/**
+ * @deprecated 2026-02-16
+ * Retained for reference only. Canonical replacement: /resources/renovation-stages
+ * Do NOT import into production UI.
+ */
+
 'use client'
 
 import { useState } from 'react'

@@ -1,9 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
 import { ShareButton } from '@/components/resources/ShareButton'
 import {
   STATUS_CONFIG_V3,
@@ -159,15 +157,6 @@ export function DecisionTrackerPage({
       {/* Tracker UI — only when rooms exist */}
       {hasRooms && (
         <>
-          {/* Search */}
-          <div className="mb-4">
-            <Input
-              placeholder="Search all rooms and decisions..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
           {/* Room Filter Chips */}
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <button
@@ -196,9 +185,18 @@ export function DecisionTrackerPage({
             ))}
           </div>
 
+          {/* Search */}
+          <div className="mb-4">
+            <Input
+              placeholder="Search all rooms and decisions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
           {/* Status Filter Chips */}
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, { label: string; variant: 'default' | 'accent' }][]).map(
+            {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, (typeof STATUS_CONFIG_V3)[StatusV3]][]).map(
               ([status, config]) => {
                 const isActive = statusFilters.includes(status)
                 const count = rooms.reduce(
@@ -227,12 +225,18 @@ export function DecisionTrackerPage({
 
           {/* Toolbar */}
           <div className="flex flex-wrap items-center gap-2 mb-6">
-            <Button size="sm" variant="secondary" onClick={expandAll}>
+            <button
+              onClick={expandAll}
+              className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-cream/10 text-cream/50 hover:text-cream/80 transition-colors"
+            >
               Expand All
-            </Button>
-            <Button size="sm" variant="secondary" onClick={collapseAll}>
+            </button>
+            <button
+              onClick={collapseAll}
+              className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-cream/10 text-cream/50 hover:text-cream/80 transition-colors"
+            >
               Collapse All
-            </Button>
+            </button>
 
             <div className="flex-1" />
 
