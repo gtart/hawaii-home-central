@@ -156,8 +156,18 @@ export function DecisionTrackerPage({
       {/* Tracker UI — only when rooms exist */}
       {hasRooms && (
         <>
-          {/* Room Filter Chips */}
-          <div className="flex flex-wrap items-center gap-2 mb-3">
+          {/* Search */}
+          <div className="mb-3">
+            <Input
+              placeholder="Search all rooms and decisions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          {/* Combined filter row: rooms + status + expand/collapse */}
+          <div className="flex flex-wrap items-center gap-1.5 mb-4">
+            {/* Room filters */}
             <button
               onClick={() => setRoomFilter(null)}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
@@ -179,22 +189,14 @@ export function DecisionTrackerPage({
                 }`}
               >
                 {room.name}
-                <span className="text-[10px] opacity-70 ml-1.5">{room.decisions.length}</span>
+                <span className="text-[10px] opacity-70 ml-1">{room.decisions.length}</span>
               </button>
             ))}
-          </div>
 
-          {/* Search */}
-          <div className="mb-4">
-            <Input
-              placeholder="Search all rooms and decisions..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+            {/* Separator */}
+            <span className="text-cream/15 mx-0.5 select-none hidden sm:inline">|</span>
 
-          {/* Status Filter Chips */}
-          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {/* Status filters */}
             {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, (typeof STATUS_CONFIG_V3)[StatusV3]][]).map(
               ([status, config]) => {
                 const isActive = statusFilters.includes(status)
@@ -208,7 +210,7 @@ export function DecisionTrackerPage({
                   <button
                     key={status}
                     onClick={() => toggleStatusFilter(status)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                       isActive
                         ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
                         : 'bg-cream/10 text-cream/60 hover:text-cream/80'
@@ -220,29 +222,29 @@ export function DecisionTrackerPage({
                 )
               }
             )}
-          </div>
 
-          {/* Toolbar */}
-          <div className="flex flex-wrap items-center gap-2 mb-6">
+            {/* Expand / Collapse + results counter */}
+            <div className="flex-1" />
             <button
               onClick={expandAll}
-              className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-cream/10 text-cream/50 hover:text-cream/80 transition-colors"
+              className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
             >
-              Expand All
+              Expand
             </button>
+            <span className="text-cream/15 select-none">·</span>
             <button
               onClick={collapseAll}
-              className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-cream/10 text-cream/50 hover:text-cream/80 transition-colors"
+              className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
             >
-              Collapse All
+              Collapse
             </button>
-
-            <div className="flex-1" />
-
             {isFiltering && (
-              <span className="text-xs text-cream/50">
-                {filteredDecisions} of {totalDecisions} decisions
-              </span>
+              <>
+                <span className="text-cream/15 select-none">·</span>
+                <span className="text-[11px] text-cream/50">
+                  {filteredDecisions}/{totalDecisions}
+                </span>
+              </>
             )}
           </div>
 

@@ -104,6 +104,8 @@ function BYSContent() {
             selectedContractorIds={selectedContractorIds}
             onToggle={toggleContractorSelection}
             onAdd={addContractor}
+            onRemove={removeContractor}
+            onUpdate={updateContractor}
           />
 
           {/* Progress snapshot */}

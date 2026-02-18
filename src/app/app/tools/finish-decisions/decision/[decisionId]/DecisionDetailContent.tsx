@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -178,6 +178,7 @@ export function DecisionDetailContent() {
     roomType: string
     onDismiss: (key: string) => void
   }) {
+    const [collapsed, setCollapsed] = useState(true)
     const config = getHeuristicsConfig()
     const selectedOption = decision.options.find((opt) => opt.isSelected)
 
@@ -193,83 +194,99 @@ export function DecisionDetailContent() {
       [config, decision.title, roomType, selectedOption?.name, decision.dismissedSuggestionKeys]
     )
 
-    const hasContent =
-      result.milestones.length > 0 || result.impacts.length > 0 || result.advice.length > 0
+    const tipCount =
+      result.milestones.length + result.impacts.length + result.advice.length
+    const hasContent = tipCount > 0
 
     if (!hasContent) return null
 
     return (
-      <div className="mb-8 bg-basalt-50 rounded-card p-4 border border-sandstone/10">
-        <h3 className="text-sm font-medium text-sandstone mb-3">Guidance</h3>
+      <div className="mb-8 bg-basalt-50 rounded-card border border-sandstone/10 overflow-hidden">
+        {/* Clickable header — always visible */}
+        <button
+          type="button"
+          onClick={() => setCollapsed(!collapsed)}
+          className="w-full flex items-center justify-between p-4 text-left hover:bg-basalt-50/80 transition-colors"
+        >
+          <h3 className="text-sm font-medium text-sandstone">
+            Guidance{collapsed ? ` — ${tipCount} tip${tipCount !== 1 ? 's' : ''}` : ''}
+          </h3>
+          <span className="text-cream/30 text-xs">{collapsed ? '▶' : '▼'}</span>
+        </button>
 
-        {/* Timing / Milestones */}
-        {result.milestones.length > 0 && (
-          <div className="mb-3">
-            <span className="text-xs text-cream/50 uppercase tracking-wide">Timing</span>
-            <div className="flex flex-wrap gap-2 mt-1.5">
-              {result.milestones.map((m) => (
-                <span
-                  key={m.id}
-                  className="inline-flex items-center gap-1.5 bg-sandstone/15 text-sandstone text-xs px-2.5 py-1 rounded-full"
-                >
-                  {m.label}
-                  <button
-                    onClick={() => onDismiss(`m:${m.id}`)}
-                    className="text-sandstone/50 hover:text-sandstone/80 ml-0.5"
-                  >
-                    ×
-                  </button>
+        {/* Expandable content */}
+        {!collapsed && (
+          <div className="px-4 pb-4 space-y-3">
+            {/* Timing / Milestones */}
+            {result.milestones.length > 0 && (
+              <div>
+                <span className="text-xs text-cream/50 uppercase tracking-wide">Timing</span>
+                <div className="flex flex-wrap gap-2 mt-1.5">
+                  {result.milestones.map((m) => (
+                    <span
+                      key={m.id}
+                      className="inline-flex items-center gap-1.5 bg-sandstone/15 text-sandstone text-xs px-2.5 py-1 rounded-full"
+                    >
+                      {m.label}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onDismiss(`m:${m.id}`) }}
+                        className="text-sandstone/30 hover:text-sandstone/60 ml-0.5"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Coordination Impacts */}
+            {result.impacts.length > 0 && (
+              <div>
+                <span className="text-xs text-cream/50 uppercase tracking-wide">
+                  Coordination watchouts
                 </span>
-              ))}
-            </div>
-          </div>
-        )}
+                <ul className="mt-1.5 space-y-1">
+                  {result.impacts.map((i) => (
+                    <li
+                      key={i.id}
+                      className="flex items-center justify-between text-sm text-cream/70"
+                    >
+                      <span>• {i.label}</span>
+                      <button
+                        onClick={() => onDismiss(`i:${i.id}`)}
+                        className="text-cream/20 hover:text-cream/50 text-xs ml-2 shrink-0"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-        {/* Coordination Impacts */}
-        {result.impacts.length > 0 && (
-          <div className="mb-3">
-            <span className="text-xs text-cream/50 uppercase tracking-wide">
-              Coordination watchouts
-            </span>
-            <ul className="mt-1.5 space-y-1">
-              {result.impacts.map((i) => (
-                <li
-                  key={i.id}
-                  className="flex items-center justify-between text-sm text-cream/70"
-                >
-                  <span>• {i.label}</span>
-                  <button
-                    onClick={() => onDismiss(`i:${i.id}`)}
-                    className="text-cream/30 hover:text-cream/60 text-xs ml-2 shrink-0"
-                  >
-                    ×
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Advice */}
-        {result.advice.length > 0 && (
-          <div>
-            <span className="text-xs text-cream/50 uppercase tracking-wide">Advice</span>
-            <ul className="mt-1.5 space-y-1.5">
-              {result.advice.map((a) => (
-                <li
-                  key={a.key}
-                  className="flex items-start justify-between text-sm text-cream/60"
-                >
-                  <span className="leading-relaxed">{a.text}</span>
-                  <button
-                    onClick={() => onDismiss(a.key)}
-                    className="text-cream/30 hover:text-cream/60 text-xs ml-2 shrink-0 mt-0.5"
-                  >
-                    ×
-                  </button>
-                </li>
-              ))}
-            </ul>
+            {/* Advice */}
+            {result.advice.length > 0 && (
+              <div>
+                <span className="text-xs text-cream/50 uppercase tracking-wide">Advice</span>
+                <ul className="mt-1.5 space-y-1.5">
+                  {result.advice.map((a) => (
+                    <li
+                      key={a.key}
+                      className="flex items-start justify-between text-sm text-cream/60"
+                    >
+                      <span className="leading-relaxed">{a.text}</span>
+                      <button
+                        onClick={() => onDismiss(a.key)}
+                        className="text-cream/20 hover:text-cream/50 text-xs ml-2 shrink-0 mt-0.5"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -277,25 +294,27 @@ export function DecisionDetailContent() {
   }
 
   return (
-    <div className="pt-32 pb-24 px-6">
+    <div className="pt-20 md:pt-24 pb-24 px-6">
       <div className="max-w-3xl mx-auto">
         {/* Back link */}
         <button
           onClick={() => router.push('/app/tools/finish-decisions')}
-          className="text-sandstone hover:text-sandstone-light text-sm mb-6"
+          className="text-sandstone hover:text-sandstone-light text-sm mb-4"
         >
           ← Back to Decision Tracker
         </button>
 
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-5">
           <div className="flex items-center gap-3 mb-4">
             <Badge variant="default" className="text-xs">
               {foundRoom.name}
             </Badge>
-            <Badge variant="default" className="text-xs">
-              {roomTypeLabel}
-            </Badge>
+            {roomTypeLabel && roomTypeLabel.toLowerCase() !== foundRoom.name.toLowerCase() && (
+              <Badge variant="default" className="text-xs">
+                {roomTypeLabel}
+              </Badge>
+            )}
           </div>
 
           <Input
@@ -306,7 +325,7 @@ export function DecisionDetailContent() {
         </div>
 
         {/* Status */}
-        <div className="mb-6">
+        <div className="mb-4">
           <Select
             label="Status"
             value={foundDecision.status}
@@ -319,7 +338,7 @@ export function DecisionDetailContent() {
         </div>
 
         {/* Due Date */}
-        <div className="mb-6">
+        <div className="mb-4">
           <label className="block text-sm text-cream/70 mb-1.5">Due Date</label>
           <div className="flex items-center gap-3 mb-2">
             <input

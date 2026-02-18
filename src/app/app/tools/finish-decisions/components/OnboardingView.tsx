@@ -57,25 +57,16 @@ export function OnboardingView({
     setCustomOtherName('')
   }
 
-  // Collapsed state — compact clickable bar
+  // Collapsed state — compact text link
   if (collapsed) {
     return (
-      <div
-        className="bg-basalt-50 rounded-card p-4 mb-6 cursor-pointer hover:bg-basalt-50/80 transition-colors"
+      <button
+        type="button"
+        className="text-sm text-sandstone/70 hover:text-sandstone transition-colors mb-4 inline-block"
         onClick={onToggleCollapse}
       >
-        <div className="flex items-center gap-3">
-          <span className="text-cream/40 text-sm select-none">▶</span>
-          <div>
-            <h2 className="font-serif text-xl text-sandstone">
-              What are you renovating?
-            </h2>
-            <p className="text-cream/40 text-sm">
-              Add more rooms to your project
-            </p>
-          </div>
-        </div>
-      </div>
+        + Add rooms to your project
+      </button>
     )
   }
 

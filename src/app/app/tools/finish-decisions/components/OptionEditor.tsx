@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { type OptionV3 } from '@/data/finish-decisions'
@@ -50,17 +51,23 @@ export function OptionEditor({
     <div className="bg-basalt-50 rounded-card p-4 mb-3">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={option.isSelected || false}
-            onChange={(e) => onUpdate({ isSelected: e.target.checked })}
-            className="accent-sandstone"
-          />
-          <span className="text-cream font-medium">
+          <button
+            type="button"
+            onClick={() => onSelect?.()}
+            className={cn(
+              'px-3 py-1 rounded-full text-xs font-medium transition-colors shrink-0',
+              option.isSelected
+                ? 'bg-sandstone text-basalt'
+                : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+            )}
+          >
+            {option.isSelected ? 'Selected' : 'Select'}
+          </button>
+          <span className="text-cream font-medium truncate">
             {option.name || 'Unnamed Option'}
           </span>
         </div>
-        <button onClick={onDelete} className="text-red-400/60 hover:text-red-400 text-xs">
+        <button onClick={onDelete} className="text-red-400/60 hover:text-red-400 text-xs shrink-0">
           Delete
         </button>
       </div>
