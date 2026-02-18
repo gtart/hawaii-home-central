@@ -169,12 +169,14 @@ export function useBYSState() {
   const toggleContractorSelection = useCallback(
     (id: string) => {
       setState((prev) => {
-        const isSelected = prev.selectedContractorIds.includes(id)
+        // Safety: ensure selectedContractorIds exists
+        const currentSelection = prev.selectedContractorIds ?? []
+        const isSelected = currentSelection.includes(id)
         let selectedContractorIds: string[]
 
         if (isSelected) {
           // Deselecting: ensure at least 1 remains selected
-          const newSelection = prev.selectedContractorIds.filter((cId) => cId !== id)
+          const newSelection = currentSelection.filter((cId) => cId !== id)
           if (newSelection.length === 0 && prev.contractors.length > 0) {
             // Don't allow deselecting the last one
             return prev
@@ -182,10 +184,10 @@ export function useBYSState() {
           selectedContractorIds = newSelection
         } else {
           // Selecting: enforce max 4
-          if (prev.selectedContractorIds.length >= 4) {
+          if (currentSelection.length >= 4) {
             return prev
           }
-          selectedContractorIds = [...prev.selectedContractorIds, id]
+          selectedContractorIds = [...currentSelection, id]
         }
 
         return { ...prev, selectedContractorIds }

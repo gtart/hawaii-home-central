@@ -124,22 +124,11 @@ function BYSContent() {
             onAdd={addContractor}
           />
 
-          {/* Summary card when exactly 1 contractor selected */}
-          {singleContractor && (
-            <ContractorSummaryCard
-              contractor={singleContractor}
-              onUpdate={updateContractor}
-              onDelete={removeContractor}
-            />
-          )}
-
-          {/* Progress snapshot when 2+ selected */}
-          {selectedContractors.length > 1 && (
-            <ContractorSnapshotRow
-              contractors={selectedContractors}
-              getAnswer={getAnswer}
-            />
-          )}
+          {/* Progress snapshot */}
+          <ContractorSnapshotRow
+            contractors={selectedContractors}
+            getAnswer={getAnswer}
+          />
         </div>
       )}
 
@@ -169,39 +158,33 @@ function BYSContent() {
             <div className="mb-4">
               <PricingSnapshot
                 contractors={selectedContractors}
-                activeContractorId={isSingleMode ? selectedContractors[0].id : 'all'}
+                activeContractorId="all"
                 onUpdate={updateContractor}
               />
             </div>
           )}
 
-          {/* Tab content */}
-          {isSingleMode && singleContractor ? (
-            <ChecklistSingleMode
-              tabConfig={tabConfig}
-              contractorId={singleContractor.id}
-              getAnswer={getAnswer}
-              setAnswer={setAnswer}
-              customAgreeItems={
-                activeTab === 'agree' ? customAgreeItems : undefined
-              }
-              onAddCustomItem={
-                activeTab === 'agree' ? addCustomAgreeItem : undefined
-              }
-              onRemoveCustomItem={
-                activeTab === 'agree' ? removeCustomAgreeItem : undefined
-              }
-            />
-          ) : (
-            <CompareGrid
-              tabConfig={tabConfig}
-              contractors={selectedContractors}
-              getAnswer={getAnswer}
-              setAnswer={setAnswer}
-              customAgreeItems={
-                activeTab === 'agree' ? customAgreeItems : undefined
-              }
-            />
+          {/* Tab content - always show comparison grid */}
+          <CompareGrid
+            tabConfig={tabConfig}
+            contractors={selectedContractors}
+            getAnswer={getAnswer}
+            setAnswer={setAnswer}
+            customAgreeItems={
+              activeTab === 'agree' ? customAgreeItems : undefined
+            }
+          />
+
+          {/* Summary card when exactly 1 contractor selected */}
+          {singleContractor && (
+            <div className="mt-6">
+              <h3 className="text-xs font-medium text-cream/50 mb-3">Contractor Details</h3>
+              <ContractorSummaryCard
+                contractor={singleContractor}
+                onUpdate={updateContractor}
+                onDelete={removeContractor}
+              />
+            </div>
           )}
         </>
       )}
