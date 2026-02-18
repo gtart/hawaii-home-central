@@ -37,6 +37,7 @@ export function ContractorBar({
   }
 
   return (
+    <div>
     <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
       {/* Contractor pills (multi-select toggles) */}
       {contractors.map((c) => {
@@ -116,6 +117,8 @@ export function ContractorBar({
           You can compare up to 4 at a time. Deselect one to switch.
         </span>
       )}
+    </div>
+    <p className="text-[11px] text-cream/30 mt-1.5">Select up to 4 contractors to compare side by side</p>
     </div>
   )
 }

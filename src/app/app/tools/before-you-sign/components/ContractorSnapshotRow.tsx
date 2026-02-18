@@ -31,7 +31,7 @@ export function ContractorSnapshotRow({
   contractors,
   getAnswer,
 }: ContractorSnapshotRowProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState(false)
 
   const allTabItemIds = useMemo(
     () =>
@@ -68,17 +68,16 @@ export function ContractorSnapshotRow({
   return (
     <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       {stats.map((s) => {
-        const isExpanded = expandedId === s.id
         const c = s.contractor
         return (
           <button
             key={s.id}
             type="button"
-            onClick={() => setExpandedId(isExpanded ? null : s.id)}
+            onClick={() => setExpanded(!expanded)}
             className={cn(
               'bg-basalt-50 rounded-lg border border-cream/10 px-3 py-2 text-left transition-all',
               'hover:border-cream/20',
-              isExpanded && 'border-cream/20'
+              expanded && 'border-cream/20'
             )}
           >
             {/* Collapsed header - always visible */}
@@ -97,7 +96,7 @@ export function ContractorSnapshotRow({
                 strokeLinejoin="round"
                 className={cn(
                   'shrink-0 text-cream/30 transition-transform ml-2',
-                  isExpanded && 'rotate-180'
+                  expanded && 'rotate-180'
                 )}
               >
                 <path d="m6 9 6 6 6-6" />
@@ -108,7 +107,7 @@ export function ContractorSnapshotRow({
             </p>
 
             {/* Expanded details */}
-            {isExpanded && (
+            {expanded && (
               <div className="mt-3 pt-3 border-t border-cream/5 space-y-3">
                 {/* Contract value */}
                 {(c.totalValue || (c.contractType && contractTypeLabel(c.contractType))) && (
