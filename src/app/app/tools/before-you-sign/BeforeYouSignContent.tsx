@@ -38,7 +38,7 @@ function BYSContent() {
     addContractor,
     updateContractor,
     removeContractor,
-    setActiveContractor,
+    toggleContractorSelection,
     setAnswer,
     getAnswer,
     addCustomAgreeItem,
@@ -78,11 +78,12 @@ function BYSContent() {
     )
   }
 
-  const { contractors, activeContractorId, customAgreeItems } = payload
-  const isCompareMode = activeContractorId === 'all'
-  const activeContractor = contractors.find(
-    (c) => c.id === activeContractorId
+  const { contractors, selectedContractorIds, customAgreeItems } = payload
+  const selectedContractors = contractors.filter((c) =>
+    selectedContractorIds.includes(c.id)
   )
+  const isSingleMode = selectedContractorIds.length === 1
+  const singleContractor = isSingleMode ? selectedContractors[0] : null
   const tabConfig = ALL_TABS.find((t) => t.key === activeTab) ?? ALL_TABS[0]
 
   return (
@@ -115,121 +116,29 @@ function BYSContent() {
         </div>
       ) : (
         <div className="space-y-4 mb-6">
-          <div>
-            <h2 className="text-xs font-medium text-cream/50 mb-2">Compare contractors</h2>
-            <ContractorBar
-              contractors={contractors}
-              activeContractorId={activeContractorId}
-              onSelect={setActiveContractor}
-              onAdd={addContractor}
-              onRemove={removeContractor}
-              onUpdate={updateContractor}
-            />
-          </div>
-
-          {/* Summary card when specific contractor selected */}
-          {activeContractor && (
-            <div>
-              <ContractorSummaryCard
-                contractor={activeContractor}
-                onUpdate={updateContractor}
-              />
-              {/* Add contractor button */}
-              <div className="mt-3">
-                {isAddingContractor ? (
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault()
-                      handleAddContractor()
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <input
-                      ref={addInputRef}
-                      value={newContractorName}
-                      onChange={(e) => setNewContractorName(e.target.value)}
-                      onBlur={() => {
-                        if (!newContractorName.trim()) setIsAddingContractor(false)
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') {
-                          setIsAddingContractor(false)
-                          setNewContractorName('')
-                        }
-                      }}
-                      placeholder="Contractor name"
-                      className="px-3 py-2 rounded-lg text-sm bg-basalt border border-cream/15 text-cream placeholder:text-cream/30 outline-none focus:border-sandstone flex-1"
-                    />
-                    <button
-                      type="submit"
-                      className="px-3 py-2 text-sm text-sandstone hover:text-sandstone/80 transition-colors font-medium"
-                    >
-                      Add
-                    </button>
-                  </form>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setIsAddingContractor(true)}
-                    className="text-sm text-cream/60 hover:text-sandstone transition-colors"
-                  >
-                    + Add another contractor
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Per-contractor progress snapshot */}
-          <ContractorSnapshotRow
+          {/* Contractor pills */}
+          <ContractorBar
             contractors={contractors}
-            getAnswer={getAnswer}
+            selectedContractorIds={selectedContractorIds}
+            onToggle={toggleContractorSelection}
+            onAdd={addContractor}
           />
 
-          {/* Add contractor button in compare mode */}
-          {!activeContractor && (
-            <div className="mt-3">
-              {isAddingContractor ? (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    handleAddContractor()
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <input
-                    ref={addInputRef}
-                    value={newContractorName}
-                    onChange={(e) => setNewContractorName(e.target.value)}
-                    onBlur={() => {
-                      if (!newContractorName.trim()) setIsAddingContractor(false)
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        setIsAddingContractor(false)
-                        setNewContractorName('')
-                      }
-                    }}
-                    placeholder="Contractor name"
-                    className="px-3 py-2 rounded-lg text-sm bg-basalt border border-cream/15 text-cream placeholder:text-cream/30 outline-none focus:border-sandstone flex-1"
-                  />
-                  <button
-                    type="submit"
-                    className="px-3 py-2 text-sm text-sandstone hover:text-sandstone/80 transition-colors font-medium"
-                  >
-                    Add
-                  </button>
-                </form>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsAddingContractor(true)}
-                  className="text-sm text-cream/60 hover:text-sandstone transition-colors"
-                >
-                  + Add another contractor
-                </button>
-              )}
-            </div>
+          {/* Summary card when exactly 1 contractor selected */}
+          {singleContractor && (
+            <ContractorSummaryCard
+              contractor={singleContractor}
+              onUpdate={updateContractor}
+              onDelete={removeContractor}
+            />
+          )}
+
+          {/* Progress snapshot when 2+ selected */}
+          {selectedContractors.length > 1 && (
+            <ContractorSnapshotRow
+              contractors={selectedContractors}
+              getAnswer={getAnswer}
+            />
           )}
         </div>
       )}
@@ -237,23 +146,6 @@ function BYSContent() {
       {/* Only show tabs + content when we have at least one contractor */}
       {contractors.length > 0 && (
         <>
-          {/* Compare mode toggle */}
-          <div className="mb-4">
-            <h2 className="text-xs font-medium text-cream/50 mb-2">Compare:</h2>
-            <button
-              type="button"
-              onClick={() => setActiveContractor('all')}
-              className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                activeContractorId === 'all'
-                  ? 'bg-sandstone text-basalt'
-                  : 'bg-basalt-50 text-cream/70 border border-cream/10 hover:border-cream/30 hover:text-cream'
-              )}
-            >
-              All contractors
-            </button>
-          </div>
-
           {/* Tab pills */}
           <div className="flex flex-wrap gap-2 mb-6">
             {TAB_PILLS.map((tab) => (
@@ -276,28 +168,18 @@ function BYSContent() {
           {activeTab === 'quotes' && (
             <div className="mb-4">
               <PricingSnapshot
-                contractors={contractors}
-                activeContractorId={activeContractorId}
+                contractors={selectedContractors}
+                activeContractorId={isSingleMode ? selectedContractors[0].id : 'all'}
                 onUpdate={updateContractor}
               />
             </div>
           )}
 
           {/* Tab content */}
-          {isCompareMode ? (
-            <CompareGrid
-              tabConfig={tabConfig}
-              contractors={contractors}
-              getAnswer={getAnswer}
-              setAnswer={setAnswer}
-              customAgreeItems={
-                activeTab === 'agree' ? customAgreeItems : undefined
-              }
-            />
-          ) : (
+          {isSingleMode && singleContractor ? (
             <ChecklistSingleMode
               tabConfig={tabConfig}
-              contractorId={activeContractorId}
+              contractorId={singleContractor.id}
               getAnswer={getAnswer}
               setAnswer={setAnswer}
               customAgreeItems={
@@ -308,6 +190,16 @@ function BYSContent() {
               }
               onRemoveCustomItem={
                 activeTab === 'agree' ? removeCustomAgreeItem : undefined
+              }
+            />
+          ) : (
+            <CompareGrid
+              tabConfig={tabConfig}
+              contractors={selectedContractors}
+              getAnswer={getAnswer}
+              setAnswer={setAnswer}
+              customAgreeItems={
+                activeTab === 'agree' ? customAgreeItems : undefined
               }
             />
           )}

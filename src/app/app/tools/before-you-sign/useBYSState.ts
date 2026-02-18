@@ -13,7 +13,7 @@ import type {
 const DEFAULT_PAYLOAD: BYSPayload = {
   version: 1,
   contractors: [],
-  activeContractorId: 'all',
+  selectedContractorIds: [],
   answers: { quotes: {}, handoffs: {}, agree: {} },
   customAgreeItems: [],
 }
@@ -25,10 +25,22 @@ function ensureShape(raw: unknown): BYSPayload {
     'version' in raw &&
     (raw as BYSPayload).version === 1
   ) {
-    const p = raw as BYSPayload
+    const p = raw as any
+
+    // Migrate from old activeContractorId to selectedContractorIds
+    let selectedContractorIds: string[] = []
+    if (Array.isArray(p.selectedContractorIds)) {
+      selectedContractorIds = p.selectedContractorIds
+    } else if (typeof p.activeContractorId === 'string' && p.activeContractorId !== 'all') {
+      selectedContractorIds = [p.activeContractorId]
+    } else if (Array.isArray(p.contractors) && p.contractors.length > 0) {
+      selectedContractorIds = [p.contractors[0].id]
+    }
+
     return {
       ...DEFAULT_PAYLOAD,
       ...p,
+      selectedContractorIds,
       answers: {
         quotes: p.answers?.quotes ?? {},
         handoffs: p.answers?.handoffs ?? {},
@@ -95,12 +107,20 @@ export function useBYSState() {
   const addContractor = useCallback(
     (name: string) => {
       const id = `c_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
-      setState((prev) => ({
-        ...prev,
-        contractors: [...prev.contractors, { id, name, notes: '' }],
-        activeContractorId:
-          prev.contractors.length === 0 ? id : prev.activeContractorId,
-      }))
+      setState((prev) => {
+        const selectedContractorIds =
+          prev.contractors.length === 0
+            ? [id] // First contractor: auto-select
+            : prev.selectedContractorIds.length < 4
+            ? [...prev.selectedContractorIds, id] // Add to selection if < 4
+            : prev.selectedContractorIds // Keep existing if at max
+
+        return {
+          ...prev,
+          contractors: [...prev.contractors, { id, name, notes: '' }],
+          selectedContractorIds,
+        }
+      })
       return id
     },
     [setState]
@@ -131,23 +151,45 @@ export function useBYSState() {
             answers[tab] = tabAnswers
           }
         }
-        const activeContractorId =
-          prev.activeContractorId === id
-            ? contractors.length > 0
-              ? contractors[0].id
-              : 'all'
-            : prev.activeContractorId
-        return { ...prev, contractors, answers, activeContractorId }
+        // Remove from selection and ensure at least 1 selected if contractors remain
+        let selectedContractorIds = prev.selectedContractorIds.filter(
+          (cId) => cId !== id
+        )
+        if (selectedContractorIds.length === 0 && contractors.length > 0) {
+          selectedContractorIds = [contractors[0].id]
+        }
+        return { ...prev, contractors, answers, selectedContractorIds }
       })
     },
     [setState]
   )
 
-  // ---- Active contractor ----
+  // ---- Contractor selection (multi-select) ----
 
-  const setActiveContractor = useCallback(
+  const toggleContractorSelection = useCallback(
     (id: string) => {
-      setState((prev) => ({ ...prev, activeContractorId: id }))
+      setState((prev) => {
+        const isSelected = prev.selectedContractorIds.includes(id)
+        let selectedContractorIds: string[]
+
+        if (isSelected) {
+          // Deselecting: ensure at least 1 remains selected
+          const newSelection = prev.selectedContractorIds.filter((cId) => cId !== id)
+          if (newSelection.length === 0 && prev.contractors.length > 0) {
+            // Don't allow deselecting the last one
+            return prev
+          }
+          selectedContractorIds = newSelection
+        } else {
+          // Selecting: enforce max 4
+          if (prev.selectedContractorIds.length >= 4) {
+            return prev
+          }
+          selectedContractorIds = [...prev.selectedContractorIds, id]
+        }
+
+        return { ...prev, selectedContractorIds }
+      })
     },
     [setState]
   )
@@ -238,7 +280,7 @@ export function useBYSState() {
     addContractor,
     updateContractor,
     removeContractor,
-    setActiveContractor,
+    toggleContractorSelection,
     setAnswer,
     getAnswer,
     addCustomAgreeItem,

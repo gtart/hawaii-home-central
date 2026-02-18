@@ -18,14 +18,17 @@ function contractTypeLabel(type: ContractType): string {
 interface ContractorSummaryCardProps {
   contractor: BYSContractor
   onUpdate: (id: string, updates: Partial<BYSContractor>) => void
+  onDelete: (id: string) => void
 }
 
 export function ContractorSummaryCard({
   contractor,
   onUpdate,
+  onDelete,
 }: ContractorSummaryCardProps) {
   const [isEditingName, setIsEditingName] = useState(false)
   const [editName, setEditName] = useState(contractor.name)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -126,6 +129,40 @@ export function ContractorSummaryCard({
         )}
         rows={1}
       />
+
+      {/* Delete button */}
+      <div className="mt-4 pt-4 border-t border-cream/5">
+        {showDeleteConfirm ? (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-cream/60">Delete this contractor?</span>
+            <button
+              type="button"
+              onClick={() => {
+                onDelete(contractor.id)
+                setShowDeleteConfirm(false)
+              }}
+              className="px-3 py-1.5 text-sm text-red-400 hover:text-red-300 font-medium transition-colors"
+            >
+              Yes, delete
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(false)}
+              className="px-3 py-1.5 text-sm text-cream/60 hover:text-cream/80 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="text-sm text-cream/40 hover:text-red-400 transition-colors"
+          >
+            Delete contractor
+          </button>
+        )}
+      </div>
     </div>
   )
 }

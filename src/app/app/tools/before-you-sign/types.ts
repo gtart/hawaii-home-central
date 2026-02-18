@@ -39,7 +39,7 @@ export type BYSAnswers = Record<
 export interface BYSPayload {
   version: 1
   contractors: BYSContractor[]
-  activeContractorId: string // 'all' | contractor id
+  selectedContractorIds: string[] // array of contractor ids (max 4)
   answers: BYSAnswers
   customAgreeItems: BYSCustomAgreeItem[]
 }
