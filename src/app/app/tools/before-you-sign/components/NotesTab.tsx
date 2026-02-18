@@ -69,7 +69,7 @@ function ContractorNotes({
   )
 
   return (
-    <div className="bg-basalt-50 rounded-lg border border-cream/10 p-4">
+    <div className="bg-basalt-50 rounded-lg border border-cream/10 p-4 flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-medium text-cream">{contractor.name}</h3>
         <div className="flex items-center gap-3">
@@ -98,7 +98,7 @@ function ContractorNotes({
           'placeholder:text-cream/25',
           'hover:border-cream/25',
           'focus:outline-none focus:border-sandstone focus:ring-1 focus:ring-sandstone',
-          'resize-y min-h-[120px]'
+          'resize-y min-h-[120px] flex-1'
         )}
         rows={5}
       />
@@ -116,7 +116,12 @@ export function NotesTab({ contractors, onUpdate }: NotesTabProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className={cn(
+      'grid gap-4',
+      contractors.length === 1 && 'grid-cols-1',
+      contractors.length === 2 && 'grid-cols-1 md:grid-cols-2',
+      contractors.length >= 3 && 'grid-cols-1 md:grid-cols-2',
+    )}>
       {contractors.map((c) => (
         <ContractorNotes key={c.id} contractor={c} onUpdate={onUpdate} />
       ))}
