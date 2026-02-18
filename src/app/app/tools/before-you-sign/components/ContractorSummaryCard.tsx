@@ -111,24 +111,13 @@ export function ContractorSummaryCard({
         </div>
       )}
 
-      {/* Notes */}
-      <label className="block text-xs text-cream/40 mt-3 mb-1">
-        Private notes (only you can see this)
-      </label>
-      <textarea
-        value={contractor.notes}
-        onChange={(e) => onUpdate(contractor.id, { notes: e.target.value })}
-        placeholder="e.g., Met on-site Jan 15. Seemed thorough. Asked about permits..."
-        className={cn(
-          'w-full mt-2 px-3 py-2 rounded-lg text-sm leading-relaxed',
-          'bg-basalt border border-cream/15 text-cream',
-          'placeholder:text-cream/30',
-          'hover:border-cream/25',
-          'focus:outline-none focus:border-sandstone focus:ring-1 focus:ring-sandstone',
-          'resize-y min-h-[2.5rem]'
-        )}
-        rows={1}
-      />
+      {/* Notes preview */}
+      {contractor.notes && (
+        <div className="mt-3 pt-3 border-t border-cream/5">
+          <p className="text-xs text-cream/40 mb-1">Notes</p>
+          <p className="text-sm text-cream/60 line-clamp-2">{contractor.notes}</p>
+        </div>
+      )}
 
       {/* Delete button */}
       <div className="mt-4 pt-4 border-t border-cream/5">

@@ -11,6 +11,8 @@ interface ContractorBarProps {
   onAdd: (name: string) => string
 }
 
+const MAX_SELECTED = 4
+
 export function ContractorBar({
   contractors,
   selectedContractorIds,
@@ -19,6 +21,7 @@ export function ContractorBar({
 }: ContractorBarProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [newName, setNewName] = useState('')
+  const [showMaxMessage, setShowMaxMessage] = useState(false)
   const addInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -38,15 +41,26 @@ export function ContractorBar({
       {/* Contractor pills (multi-select toggles) */}
       {contractors.map((c) => {
         const isSelected = selectedContractorIds.includes(c.id)
+        const atMax = selectedContractorIds.length >= MAX_SELECTED && !isSelected
         return (
           <button
             key={c.id}
             type="button"
-            onClick={() => onToggle(c.id)}
+            onClick={() => {
+              if (atMax) {
+                setShowMaxMessage(true)
+                setTimeout(() => setShowMaxMessage(false), 3000)
+                return
+              }
+              setShowMaxMessage(false)
+              onToggle(c.id)
+            }}
             className={cn(
               'shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
               isSelected
                 ? 'bg-sandstone text-basalt'
+                : atMax
+                ? 'bg-basalt-50 text-cream/30 border border-cream/5 cursor-not-allowed'
                 : 'bg-basalt-50 text-cream/70 border border-cream/10 hover:border-cream/30 hover:text-cream'
             )}
           >
@@ -95,6 +109,12 @@ export function ContractorBar({
         >
           + Add
         </button>
+      )}
+      {/* Max selection message */}
+      {showMaxMessage && (
+        <span className="shrink-0 text-xs text-sandstone/70 pl-1">
+          You can compare up to 4 at a time. Deselect one to switch.
+        </span>
       )}
     </div>
   )

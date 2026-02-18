@@ -2,36 +2,31 @@
 
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useState, useEffect } from 'react'
-import React from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { useBYSState } from './useBYSState'
 import { ALL_TABS } from './beforeYouSignConfig'
 import { ContractorBar } from './components/ContractorBar'
-import { ContractorSummaryCard } from './components/ContractorSummaryCard'
 import { ContractorSnapshotRow } from './components/ContractorSnapshotRow'
 import { PricingSnapshot } from './components/PricingSnapshot'
 import { EmptyState } from './components/EmptyState'
-import { ChecklistSingleMode } from './components/ChecklistSingleMode'
 import { CompareGrid } from './components/CompareGrid'
-import type { TabKey } from './types'
+import { NotesTab } from './components/NotesTab'
+import type { ViewTab } from './types'
 
-const TAB_PILLS: { key: TabKey; label: string }[] = [
+const TAB_PILLS: { key: ViewTab; label: string }[] = [
   { key: 'quotes', label: 'Quotes' },
   { key: 'handoffs', label: 'Who does what' },
   { key: 'agree', label: 'What we agreed to' },
+  { key: 'notes', label: 'Notes' },
 ]
 
 function BYSContent() {
   const searchParams = useSearchParams()
-  const tabParam = searchParams.get('tab') as TabKey | null
-  const [activeTab, setActiveTab] = useState<TabKey>(
+  const tabParam = searchParams.get('tab') as ViewTab | null
+  const [activeTab, setActiveTab] = useState<ViewTab>(
     tabParam && TAB_PILLS.some((t) => t.key === tabParam) ? tabParam : 'quotes'
   )
-  const [isAddingContractor, setIsAddingContractor] = useState(false)
-  const [newContractorName, setNewContractorName] = useState('')
-  const addInputRef = React.useRef<HTMLInputElement>(null)
-
   const {
     payload,
     isLoaded,
@@ -51,24 +46,12 @@ function BYSContent() {
     }
   }, [tabParam])
 
-  const handleTabChange = (tab: TabKey) => {
+  const handleTabChange = (tab: ViewTab) => {
     setActiveTab(tab)
     const url = new URL(window.location.href)
     url.searchParams.set('tab', tab)
     window.history.replaceState({}, '', url.toString())
   }
-
-  const handleAddContractor = () => {
-    const trimmed = newContractorName.trim()
-    if (!trimmed) return
-    addContractor(trimmed)
-    setNewContractorName('')
-    setIsAddingContractor(false)
-  }
-
-  React.useEffect(() => {
-    if (isAddingContractor) addInputRef.current?.focus()
-  }, [isAddingContractor])
 
   if (!isLoaded) {
     return (
@@ -82,8 +65,7 @@ function BYSContent() {
   const selectedContractors = contractors.filter((c) =>
     selectedContractorIds.includes(c.id)
   )
-  const isSingleMode = selectedContractorIds.length === 1
-  const singleContractor = isSingleMode ? selectedContractors[0] : null
+  const isNotesTab = activeTab === 'notes'
   const tabConfig = ALL_TABS.find((t) => t.key === activeTab) ?? ALL_TABS[0]
 
   return (
@@ -153,38 +135,36 @@ function BYSContent() {
             ))}
           </div>
 
-          {/* Pricing snapshot (quotes tab only) */}
-          {activeTab === 'quotes' && (
-            <div className="mb-4">
-              <PricingSnapshot
+          {/* Tab content */}
+          {isNotesTab ? (
+            <NotesTab
+              contractors={selectedContractors}
+              onUpdate={updateContractor}
+            />
+          ) : (
+            <>
+              {/* Pricing snapshot (quotes tab only) */}
+              {activeTab === 'quotes' && (
+                <div className="mb-4">
+                  <PricingSnapshot
+                    contractors={selectedContractors}
+                    activeContractorId="all"
+                    onUpdate={updateContractor}
+                  />
+                </div>
+              )}
+
+              {/* Comparison grid */}
+              <CompareGrid
+                tabConfig={tabConfig}
                 contractors={selectedContractors}
-                activeContractorId="all"
-                onUpdate={updateContractor}
+                getAnswer={getAnswer}
+                setAnswer={setAnswer}
+                customAgreeItems={
+                  activeTab === 'agree' ? customAgreeItems : undefined
+                }
               />
-            </div>
-          )}
-
-          {/* Tab content - always show comparison grid */}
-          <CompareGrid
-            tabConfig={tabConfig}
-            contractors={selectedContractors}
-            getAnswer={getAnswer}
-            setAnswer={setAnswer}
-            customAgreeItems={
-              activeTab === 'agree' ? customAgreeItems : undefined
-            }
-          />
-
-          {/* Summary card when exactly 1 contractor selected */}
-          {singleContractor && (
-            <div className="mt-6">
-              <h3 className="text-xs font-medium text-cream/50 mb-3">Contractor Details</h3>
-              <ContractorSummaryCard
-                contractor={singleContractor}
-                onUpdate={updateContractor}
-                onDelete={removeContractor}
-              />
-            </div>
+            </>
           )}
         </>
       )}

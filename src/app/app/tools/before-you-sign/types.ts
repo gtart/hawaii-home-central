@@ -6,6 +6,9 @@ export type TriStatus = 'yes' | 'no' | 'unknown'
 
 export type TabKey = 'quotes' | 'handoffs' | 'agree'
 
+/** TabKey for checklist tabs, plus 'notes' for the freeform notes view */
+export type ViewTab = TabKey | 'notes'
+
 export interface BYSAnswer {
   status: TriStatus
   notes: string
@@ -17,6 +20,7 @@ export interface BYSContractor {
   id: string
   name: string
   notes: string
+  notesUpdatedAt?: string // ISO timestamp of last notes edit
   // Pricing fields (all optional for backward compat)
   totalValue?: string
   allowances?: string
