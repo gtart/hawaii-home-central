@@ -2,31 +2,17 @@
 
 import { Card } from '@/components/ui/Card'
 import { useProject } from '@/contexts/ProjectContext'
-
-const ALL_TOOLS = [
-  {
-    toolKey: 'before_you_sign',
-    href: '/app/tools/before-you-sign',
-    title: 'Contract Comparison Tool',
-    description: 'Compare quotes, assign who handles what, and agree on the details that cause fights later.',
-  },
-  {
-    toolKey: 'finish_decisions',
-    href: '/app/tools/finish-decisions',
-    title: 'Decision Tracker',
-    description: 'Track every material and finish decision by room. Compare options, record specs and links, and mark progress from deciding to done.',
-  },
-]
+import { TOOL_REGISTRY } from '@/lib/tool-registry'
 
 export function ToolGrid() {
   const { currentProject } = useProject()
 
   // Owners see all tools. Members only see tools they have access to.
   const visibleTools = currentProject?.role === 'MEMBER' && currentProject.toolAccess
-    ? ALL_TOOLS.filter((t) =>
+    ? TOOL_REGISTRY.filter((t) =>
         currentProject.toolAccess!.some((a) => a.toolKey === t.toolKey)
       )
-    : ALL_TOOLS
+    : TOOL_REGISTRY
 
   if (visibleTools.length === 0) {
     return (

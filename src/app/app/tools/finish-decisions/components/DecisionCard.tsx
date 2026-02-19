@@ -9,10 +9,12 @@ export function DecisionCard({
   decision,
   milestone,
   onDelete,
+  readOnly = false,
 }: {
   decision: DecisionV3
   milestone?: { label: string } | null
   onDelete: () => void
+  readOnly?: boolean
 }) {
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -54,38 +56,40 @@ export function DecisionCard({
         <h3 className="text-sm font-medium text-cream leading-tight">
           {decision.title || 'Untitled Decision'}
         </h3>
-        <div className="relative shrink-0" ref={menuRef}>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              setMenuOpen(!menuOpen)
-            }}
-            className="p-1 text-cream/30 hover:text-cream/60 transition-colors"
-            aria-label="Decision options"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="5" r="2" />
-              <circle cx="12" cy="12" r="2" />
-              <circle cx="12" cy="19" r="2" />
-            </svg>
-          </button>
-          {menuOpen && (
-            <div className="absolute right-0 top-full mt-1 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg py-1 min-w-[120px]">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setMenuOpen(false)
-                  onDelete()
-                }}
-                className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
-              >
-                Delete
-              </button>
-            </div>
-          )}
-        </div>
+        {!readOnly && (
+          <div className="relative shrink-0" ref={menuRef}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setMenuOpen(!menuOpen)
+              }}
+              className="p-1 text-cream/30 hover:text-cream/60 transition-colors"
+              aria-label="Decision options"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="5" r="2" />
+                <circle cx="12" cy="12" r="2" />
+                <circle cx="12" cy="19" r="2" />
+              </svg>
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg py-1 min-w-[120px]">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setMenuOpen(false)
+                    onDelete()
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Status + due date row */}

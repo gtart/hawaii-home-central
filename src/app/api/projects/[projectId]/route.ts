@@ -71,8 +71,29 @@ export async function DELETE(
     )
   }
 
+  const userId = session.user.id
+
   // Cascade handles ToolInstance, ProjectMember, ProjectToolAccess, ProjectInvite
   await prisma.project.delete({ where: { id: projectId } })
+
+  // If this was the user's current project, switch to another active project
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { currentProjectId: true },
+  })
+
+  if (user?.currentProjectId === projectId) {
+    const nextProject = await prisma.projectMember.findFirst({
+      where: { userId, project: { status: 'ACTIVE' } },
+      select: { projectId: true },
+      orderBy: { project: { createdAt: 'asc' } },
+    })
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { currentProjectId: nextProject?.projectId ?? null },
+    })
+  }
 
   return NextResponse.json({ success: true })
 }

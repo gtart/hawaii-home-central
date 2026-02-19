@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
+import { ensureCurrentProject } from '@/lib/project'
 
 /** GET /api/projects — list all projects where user is a member */
 export async function GET() {
@@ -10,6 +11,9 @@ export async function GET() {
   }
 
   const userId = session.user.id
+
+  // Bootstrap: ensure user has at least one project + membership
+  await ensureCurrentProject(userId)
 
   const memberships = await prisma.projectMember.findMany({
     where: { userId },

@@ -11,6 +11,7 @@ interface ContractorBarProps {
   onAdd: (name: string) => string
   onRemove: (id: string) => void
   onUpdate: (id: string, updates: Partial<BYSContractor>) => void
+  readOnly?: boolean
 }
 
 const MAX_SELECTED = 4
@@ -22,6 +23,7 @@ export function ContractorBar({
   onAdd,
   onRemove,
   onUpdate,
+  readOnly = false,
 }: ContractorBarProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [newName, setNewName] = useState('')
@@ -67,7 +69,7 @@ export function ContractorBar({
 
   return (
     <div>
-      <p className="text-xs text-cream/50 mb-2">Add or select contractors to compare</p>
+      <p className="text-xs text-cream/50 mb-2">{readOnly ? 'Select contractors to view' : 'Add or select contractors to compare'}</p>
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
         {/* Contractor pills */}
         {contractors.map((c) => {
@@ -101,50 +103,52 @@ export function ContractorBar({
           )
         })}
 
-        {/* Add contractor */}
-        {isAdding ? (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleAdd()
-            }}
-            className="shrink-0 flex items-center gap-1"
-          >
-            <input
-              ref={addInputRef}
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onBlur={() => {
-                if (!newName.trim()) setIsAdding(false)
+        {/* Add contractor (hidden for readOnly) */}
+        {!readOnly && (
+          isAdding ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleAdd()
               }}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  setIsAdding(false)
-                  setNewName('')
-                }
-              }}
-              placeholder="Contractor name"
-              className="px-3 py-1.5 rounded-full text-sm bg-basalt border border-cream/15 text-cream placeholder:text-cream/30 outline-none focus:border-sandstone w-36"
-            />
-            <button
-              type="submit"
-              className="shrink-0 px-2 py-1.5 text-sm text-sandstone hover:text-sandstone/80 transition-colors"
+              className="shrink-0 flex items-center gap-1"
             >
-              Add
+              <input
+                ref={addInputRef}
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onBlur={() => {
+                  if (!newName.trim()) setIsAdding(false)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setIsAdding(false)
+                    setNewName('')
+                  }
+                }}
+                placeholder="Contractor name"
+                className="px-3 py-1.5 rounded-full text-sm bg-basalt border border-cream/15 text-cream placeholder:text-cream/30 outline-none focus:border-sandstone w-36"
+              />
+              <button
+                type="submit"
+                className="shrink-0 px-2 py-1.5 text-sm text-sandstone hover:text-sandstone/80 transition-colors"
+              >
+                Add
+              </button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsAdding(true)}
+              className="shrink-0 px-3 py-1.5 rounded-full text-sm text-cream/40 border border-dashed border-cream/15 hover:border-cream/30 hover:text-cream/60 transition-colors"
+            >
+              + Add
             </button>
-          </form>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setIsAdding(true)}
-            className="shrink-0 px-3 py-1.5 rounded-full text-sm text-cream/40 border border-dashed border-cream/15 hover:border-cream/30 hover:text-cream/60 transition-colors"
-          >
-            + Add
-          </button>
+          )
         )}
 
-        {/* Manage toggle */}
-        {contractors.length > 0 && (
+        {/* Manage toggle (hidden for readOnly) */}
+        {!readOnly && contractors.length > 0 && (
           <button
             type="button"
             onClick={() => (isManaging ? closeManagePanel() : openManagePanel())}

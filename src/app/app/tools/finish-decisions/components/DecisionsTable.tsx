@@ -14,10 +14,12 @@ export function DecisionsTable({
   decisions,
   roomType,
   onDeleteDecision,
+  readOnly = false,
 }: {
   decisions: DecisionV3[]
   roomType: string
   onDeleteDecision: (decisionId: string) => void
+  readOnly?: boolean
 }) {
   const router = useRouter()
   const heuristicsConfig = useMemo(() => getHeuristicsConfig(), [])
@@ -97,6 +99,7 @@ export function DecisionsTable({
               decision={decision}
               milestone={milestone}
               onDelete={() => onDeleteDecision(decision.id)}
+              readOnly={readOnly}
             />
           )
         })}
@@ -137,7 +140,7 @@ export function DecisionsTable({
               <th className="px-3 py-2 text-left text-xs font-medium text-cream/60 uppercase tracking-wide">
                 Notes
               </th>
-              <th className="px-3 py-2 w-12"></th>
+              {!readOnly && <th className="px-3 py-2 w-12"></th>}
             </tr>
           </thead>
           <tbody>
@@ -202,17 +205,19 @@ export function DecisionsTable({
                       <span className="text-xs text-cream/20">&mdash;</span>
                     )}
                   </td>
-                  <td className="px-3 py-2.5 text-right">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onDeleteDecision(decision.id)
-                      }}
-                      className="text-red-400/60 hover:text-red-400 text-xs"
-                    >
-                      &times;
-                    </button>
-                  </td>
+                  {!readOnly && (
+                    <td className="px-3 py-2.5 text-right">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDeleteDecision(decision.id)
+                        }}
+                        className="text-red-400/60 hover:text-red-400 text-xs"
+                      >
+                        &times;
+                      </button>
+                    </td>
+                  )}
                 </tr>
               )
             })}

@@ -30,6 +30,9 @@ function BYSContent() {
   const {
     payload,
     isLoaded,
+    access,
+    readOnly,
+    noAccess,
     addContractor,
     updateContractor,
     removeContractor,
@@ -70,32 +73,49 @@ function BYSContent() {
 
   return (
     <>
-      {/* Getting started + empty state */}
-      {contractors.length === 0 ? (
-        <div>
-          <div className="bg-basalt-50 rounded-card p-6 mb-6">
-            <h2 className="text-cream text-sm font-medium mb-3">How it works</h2>
-            <ol className="space-y-2 text-sm text-cream/60">
-              <li className="flex gap-2">
-                <span className="text-sandstone font-medium shrink-0">1.</span>
-                <span>Add your contractors (even one is fine to start)</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-sandstone font-medium shrink-0">2.</span>
-                <span>Fill in Quote Details &mdash; compare what each bid includes</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-sandstone font-medium shrink-0">3.</span>
-                <span>Assign Who Handles What &mdash; so nothing falls through the cracks</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-sandstone font-medium shrink-0">4.</span>
-                <span>Review Key Agreements &mdash; conversations to have before signing</span>
-              </li>
-            </ol>
-          </div>
-          <EmptyState onAdd={addContractor} />
+      <ToolPageHeader
+        toolKey="before_you_sign"
+        title="Contract Comparison Tool"
+        description="Add each contractor, then mark what's covered, what's missing, and jot notes. This helps you compare apples-to-apples."
+        accessLevel={access}
+      />
+
+      {noAccess ? (
+        <div className="bg-basalt-50 rounded-card p-8 text-center">
+          <p className="text-cream/50 mb-2">You don&apos;t have access to this tool for the current project.</p>
+          <a href="/app" className="text-sandstone hover:text-sandstone-light text-sm">Back to My Tools</a>
         </div>
+      ) : contractors.length === 0 ? (
+        readOnly ? (
+          <div className="bg-basalt-50 rounded-card p-8 text-center">
+            <p className="text-cream/50">No contractors have been added yet.</p>
+          </div>
+        ) : (
+          <div>
+            <div className="bg-basalt-50 rounded-card p-6 mb-6">
+              <h2 className="text-cream text-sm font-medium mb-3">How it works</h2>
+              <ol className="space-y-2 text-sm text-cream/60">
+                <li className="flex gap-2">
+                  <span className="text-sandstone font-medium shrink-0">1.</span>
+                  <span>Add your contractors (even one is fine to start)</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-sandstone font-medium shrink-0">2.</span>
+                  <span>Fill in Quote Details &mdash; compare what each bid includes</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-sandstone font-medium shrink-0">3.</span>
+                  <span>Assign Who Handles What &mdash; so nothing falls through the cracks</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-sandstone font-medium shrink-0">4.</span>
+                  <span>Review Key Agreements &mdash; conversations to have before signing</span>
+                </li>
+              </ol>
+            </div>
+            <EmptyState onAdd={addContractor} />
+          </div>
+        )
       ) : (
         <div className="space-y-4 mb-6">
           {/* Contractor pills */}
@@ -106,6 +126,7 @@ function BYSContent() {
             onAdd={addContractor}
             onRemove={removeContractor}
             onUpdate={updateContractor}
+            readOnly={readOnly}
           />
 
           {/* Progress snapshot */}
@@ -178,12 +199,6 @@ export function BeforeYouSignContent() {
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-6xl mx-auto">
-        <ToolPageHeader
-          toolKey="before_you_sign"
-          title="Contract Comparison Tool"
-          description="Add each contractor, then mark what's covered, what's missing, and jot notes. This helps you compare apples-to-apples."
-        />
-
         <Suspense fallback={null}>
           <BYSContent />
         </Suspense>

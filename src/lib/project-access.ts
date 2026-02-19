@@ -80,3 +80,29 @@ export async function getEditShareCount(
 
 /** Maximum non-owner EDIT users per tool per project */
 export const MAX_EDIT_SHARES = 3
+
+export type ToolAccessLevel = 'OWNER' | 'EDIT' | 'VIEW'
+
+/**
+ * Non-throwing access check. Returns the user's effective access level
+ * for a tool, or null if no access.
+ */
+export async function getToolAccessLevel(
+  userId: string,
+  projectId: string,
+  toolKey: string
+): Promise<ToolAccessLevel | null> {
+  const member = await prisma.projectMember.findUnique({
+    where: { projectId_userId: { projectId, userId } },
+  })
+
+  if (!member) return null
+  if (member.role === 'OWNER') return 'OWNER'
+
+  const access = await prisma.projectToolAccess.findUnique({
+    where: { projectId_toolKey_userId: { projectId, toolKey, userId } },
+  })
+
+  if (!access) return null
+  return access.level as 'EDIT' | 'VIEW'
+}

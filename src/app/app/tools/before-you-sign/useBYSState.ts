@@ -52,7 +52,7 @@ function ensureShape(raw: unknown): BYSPayload {
 }
 
 export function useBYSState() {
-  const { state: rawState, setState, isLoaded, isSyncing } =
+  const { state: rawState, setState, isLoaded, isSyncing, access, readOnly, noAccess } =
     useToolState<BYSPayload>({
       toolKey: 'before_you_sign',
       localStorageKey: 'hhc_before_you_sign_v1',
@@ -279,6 +279,9 @@ export function useBYSState() {
     payload,
     isLoaded,
     isSyncing,
+    access,
+    readOnly,
+    noAccess,
     addContractor,
     updateContractor,
     removeContractor,

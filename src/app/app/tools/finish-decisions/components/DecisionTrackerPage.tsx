@@ -16,11 +16,13 @@ export function DecisionTrackerPage({
   onBatchAddRooms,
   onUpdateRoom,
   onDeleteRoom,
+  readOnly = false,
 }: {
   rooms: RoomV3[]
   onBatchAddRooms: (selections: RoomSelection[]) => void
   onUpdateRoom: (roomId: string, updates: Partial<RoomV3>) => void
   onDeleteRoom: (roomId: string) => void
+  readOnly?: boolean
 }) {
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(
     () => new Set(rooms.length <= 3 ? rooms.map((r) => r.id) : [])
@@ -125,12 +127,14 @@ export function DecisionTrackerPage({
 
   return (
     <>
-      {/* Onboarding — always visible, collapsible when rooms exist */}
-      <OnboardingView
-        onBatchCreate={onBatchAddRooms}
-        collapsed={hasRooms ? onboardingCollapsed : undefined}
-        onToggleCollapse={hasRooms ? () => setOnboardingCollapsed((prev) => !prev) : undefined}
-      />
+      {/* Onboarding — hidden for readOnly users */}
+      {!readOnly && (
+        <OnboardingView
+          onBatchCreate={onBatchAddRooms}
+          collapsed={hasRooms ? onboardingCollapsed : undefined}
+          onToggleCollapse={hasRooms ? () => setOnboardingCollapsed((prev) => !prev) : undefined}
+        />
+      )}
 
       {/* Tracker UI — only when rooms exist */}
       {hasRooms && (
@@ -254,6 +258,7 @@ export function DecisionTrackerPage({
                   onToggleExpand={() => toggleRoom(room.id)}
                   onUpdateRoom={(updates) => onUpdateRoom(room.id, updates)}
                   onDeleteRoom={() => onDeleteRoom(room.id)}
+                  readOnly={readOnly}
                 />
               ))}
             </div>

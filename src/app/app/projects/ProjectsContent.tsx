@@ -300,7 +300,7 @@ export function ProjectsContent() {
               Trash ({trashedProjects.length})
             </h2>
             <p className="text-xs text-cream/30 mb-3">
-              Items in trash will be permanently deleted after 30 days.
+              Trashed projects can be restored or permanently deleted.
             </p>
             <div className="space-y-2">
               {trashedProjects.map((p) => renderProjectRow(p, 'trashed'))}

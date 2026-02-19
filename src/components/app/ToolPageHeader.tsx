@@ -1,45 +1,37 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useProject } from '@/contexts/ProjectContext'
 import { ShareToolModal } from './ShareToolModal'
+import { ProjectSwitcher } from './ProjectSwitcher'
 
 interface ToolPageHeaderProps {
   toolKey: string
   title: string
   description: string
+  /** Actual access level from the tool's API response. */
+  accessLevel?: 'OWNER' | 'EDIT' | 'VIEW' | null
   children?: React.ReactNode
 }
 
-export function ToolPageHeader({ toolKey, title, description, children }: ToolPageHeaderProps) {
+export function ToolPageHeader({ toolKey, title, description, accessLevel, children }: ToolPageHeaderProps) {
   const { currentProject } = useProject()
   const [showShare, setShowShare] = useState(false)
-  const [accessLevel, setAccessLevel] = useState<'OWNER' | 'EDIT' | 'VIEW' | null>(null)
 
-  const isOwner = currentProject?.role === 'OWNER'
-
-  // Determine access level for non-owners
-  useEffect(() => {
-    if (!currentProject) return
-    if (isOwner) {
-      setAccessLevel('OWNER')
-      return
-    }
-    // For members, check their access level via the share API
-    // Simple approach: just show VIEW badge for MEMBER role
-    // The actual enforcement happens server-side
-    setAccessLevel(currentProject.role === 'MEMBER' ? 'VIEW' : null)
-  }, [currentProject, isOwner])
+  const isOwner = accessLevel === 'OWNER' || currentProject?.role === 'OWNER'
 
   return (
     <>
-      <Link
-        href="/app"
-        className="text-sandstone hover:text-sandstone-light text-sm mb-4 inline-block"
-      >
-        &larr; My Tools
-      </Link>
+      <div className="flex items-center gap-3 mb-4">
+        <Link
+          href="/app"
+          className="text-sandstone hover:text-sandstone-light text-sm"
+        >
+          &larr; My Tools
+        </Link>
+        <ProjectSwitcher />
+      </div>
 
       <div className="flex items-start justify-between gap-4 mb-4">
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone">

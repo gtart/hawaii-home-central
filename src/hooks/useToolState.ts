@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 
+type AccessLevel = 'OWNER' | 'EDIT' | 'VIEW'
+
 interface UseToolStateOptions<T> {
   toolKey:
     | 'hold_points'
@@ -21,6 +23,12 @@ interface UseToolStateReturn<T> {
   setState: (updater: (prev: T) => T) => void
   isLoaded: boolean
   isSyncing: boolean
+  /** User's access level for this tool. null while loading or in localOnly mode. */
+  access: AccessLevel | null
+  /** True when access is VIEW (edits won't be saved). */
+  readOnly: boolean
+  /** True when user has no access at all (403). */
+  noAccess: boolean
 }
 
 export function useToolState<T>({
@@ -32,8 +40,11 @@ export function useToolState<T>({
   const [state, setStateInternal] = useState<T>(defaultValue)
   const [isLoaded, setIsLoaded] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
+  const [access, setAccess] = useState<AccessLevel | null>(null)
+  const [noAccess, setNoAccess] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const stateRef = useRef<T>(defaultValue)
+  const accessRef = useRef<AccessLevel | null>(null)
 
   // Load state on mount
   useEffect(() => {
@@ -58,10 +69,25 @@ export function useToolState<T>({
 
       try {
         const res = await fetch(`/api/tools/${toolKey}`)
+
+        if (cancelled) return
+
+        if (res.status === 403) {
+          setNoAccess(true)
+          setIsLoaded(true)
+          return
+        }
+
         if (!res.ok) throw new Error('Failed to load')
         const data = await res.json()
 
         if (cancelled) return
+
+        // Store access level from API
+        if (data.access) {
+          setAccess(data.access as AccessLevel)
+          accessRef.current = data.access as AccessLevel
+        }
 
         if (data.payload) {
           setStateInternal(data.payload as T)
@@ -108,10 +134,12 @@ export function useToolState<T>({
     }
   }, [toolKey, localStorageKey, localOnly])
 
-  // Debounced save to API (skipped in localOnly mode)
+  // Debounced save to API (skipped in localOnly mode and VIEW access)
   const saveToApi = useCallback(
     (payload: T) => {
       if (localOnly) return
+      // Don't save if VIEW-only
+      if (accessRef.current === 'VIEW') return
 
       if (debounceRef.current) clearTimeout(debounceRef.current)
 
@@ -146,7 +174,7 @@ export function useToolState<T>({
           // ignore
         }
 
-        // Debounced write to API (no-op in localOnly mode)
+        // Debounced write to API (no-op in localOnly or VIEW mode)
         saveToApi(next)
 
         return next
@@ -155,5 +183,7 @@ export function useToolState<T>({
     [localStorageKey, saveToApi]
   )
 
-  return { state, setState, isLoaded, isSyncing }
+  const readOnly = access === 'VIEW'
+
+  return { state, setState, isLoaded, isSyncing, access, readOnly, noAccess }
 }

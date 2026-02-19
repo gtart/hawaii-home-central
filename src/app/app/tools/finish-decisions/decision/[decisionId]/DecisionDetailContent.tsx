@@ -24,7 +24,7 @@ export function DecisionDetailContent() {
   const router = useRouter()
   const decisionId = params.decisionId as string
 
-  const { state, setState, isLoaded } = useToolState<FinishDecisionsPayloadV3 | any>({
+  const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3 | any>({
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2',
     defaultValue: { version: 3, rooms: [] },
@@ -321,6 +321,7 @@ export function DecisionDetailContent() {
             value={foundDecision.title}
             onChange={(e) => updateDecision({ title: e.target.value })}
             className="text-2xl font-serif"
+            readOnly={readOnly}
           />
         </div>
 
@@ -334,6 +335,7 @@ export function DecisionDetailContent() {
               value: key,
               label: config.label,
             }))}
+            disabled={readOnly}
           />
         </div>
 
@@ -345,9 +347,10 @@ export function DecisionDetailContent() {
               type="date"
               value={foundDecision.dueDate || ''}
               onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
-              className="bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark]"
+              disabled={readOnly}
+              className="bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50"
             />
-            {foundDecision.dueDate && (
+            {!readOnly && foundDecision.dueDate && (
               <button
                 onClick={() => updateDecision({ dueDate: null })}
                 className="text-xs text-cream/40 hover:text-cream/70"
@@ -356,43 +359,45 @@ export function DecisionDetailContent() {
               </button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { label: 'Next week', days: 7 },
-              { label: 'In two weeks', days: 14 },
-              { label: 'In a month', days: 30 },
-              { label: 'In several months', days: 90 },
-            ].map((chip) => {
-              const target = new Date()
-              target.setDate(target.getDate() + chip.days)
-              const iso = target.toISOString().split('T')[0]
-              const isActive = foundDecision.dueDate === iso
+          {!readOnly && (
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'Next week', days: 7 },
+                { label: 'In two weeks', days: 14 },
+                { label: 'In a month', days: 30 },
+                { label: 'In several months', days: 90 },
+              ].map((chip) => {
+                const target = new Date()
+                target.setDate(target.getDate() + chip.days)
+                const iso = target.toISOString().split('T')[0]
+                const isActive = foundDecision.dueDate === iso
 
-              return (
-                <button
-                  key={chip.label}
-                  onClick={() => updateDecision({ dueDate: iso })}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                    isActive
-                      ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
-                      : 'bg-cream/10 text-cream/60 hover:text-cream/80'
-                  }`}
-                >
-                  {chip.label}
-                </button>
-              )
-            })}
-            <button
-              onClick={() => updateDecision({ dueDate: null })}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                foundDecision.dueDate === null || foundDecision.dueDate === undefined
-                  ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
-                  : 'bg-cream/10 text-cream/60 hover:text-cream/80'
-              }`}
-            >
-              TBD
-            </button>
-          </div>
+                return (
+                  <button
+                    key={chip.label}
+                    onClick={() => updateDecision({ dueDate: iso })}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                      isActive
+                        ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                        : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                    }`}
+                  >
+                    {chip.label}
+                  </button>
+                )
+              })}
+              <button
+                onClick={() => updateDecision({ dueDate: null })}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  foundDecision.dueDate === null || foundDecision.dueDate === undefined
+                    ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                    : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                }`}
+              >
+                TBD
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Notes */}
@@ -401,6 +406,7 @@ export function DecisionDetailContent() {
           <textarea
             value={foundDecision.notes}
             onChange={(e) => updateDecision({ notes: e.target.value })}
+            readOnly={readOnly}
             className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[120px]"
             placeholder="General notes about this decision..."
           />
@@ -426,9 +432,11 @@ export function DecisionDetailContent() {
             <h2 className="text-lg font-medium text-cream">
               Options ({foundDecision.options.length})
             </h2>
-            <Button size="sm" variant="secondary" onClick={addOption}>
-              + Add Option
-            </Button>
+            {!readOnly && (
+              <Button size="sm" variant="secondary" onClick={addOption}>
+                + Add Option
+              </Button>
+            )}
           </div>
 
           {foundDecision.options.length === 0 ? (
@@ -452,11 +460,13 @@ export function DecisionDetailContent() {
         </div>
 
         {/* Delete Decision */}
-        <div className="pt-6 border-t border-cream/10">
-          <Button variant="danger" onClick={deleteDecision}>
-            Delete Decision
-          </Button>
-        </div>
+        {!readOnly && (
+          <div className="pt-6 border-t border-cream/10">
+            <Button variant="danger" onClick={deleteDecision}>
+              Delete Decision
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )

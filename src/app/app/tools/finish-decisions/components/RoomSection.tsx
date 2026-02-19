@@ -17,12 +17,14 @@ export function RoomSection({
   onToggleExpand,
   onUpdateRoom,
   onDeleteRoom,
+  readOnly = false,
 }: {
   room: RoomV3
   isExpanded: boolean
   onToggleExpand: () => void
   onUpdateRoom: (updates: Partial<RoomV3>) => void
   onDeleteRoom: () => void
+  readOnly?: boolean
 }) {
   const [newDecisionTitle, setNewDecisionTitle] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
@@ -93,27 +95,31 @@ export function RoomSection({
           {summaryParts.join(', ')}
         </span>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            setShowAddForm(true)
-          }}
-          className="text-sandstone hover:text-sandstone-light text-xs font-medium"
-        >
-          + Add
-        </button>
+        {!readOnly && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowAddForm(true)
+            }}
+            className="text-sandstone hover:text-sandstone-light text-xs font-medium"
+          >
+            + Add
+          </button>
+        )}
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            if (confirm(`Delete ${room.name}? This will also delete all decisions and options.`)) {
-              onDeleteRoom()
-            }
-          }}
-          className="text-red-400/60 hover:text-red-400 text-xs ml-1"
-        >
-          Delete
-        </button>
+        {!readOnly && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (confirm(`Delete ${room.name}? This will also delete all decisions and options.`)) {
+                onDeleteRoom()
+              }
+            }}
+            className="text-red-400/60 hover:text-red-400 text-xs ml-1"
+          >
+            Delete
+          </button>
+        )}
       </div>
 
       {/* Expanded Content */}
@@ -157,6 +163,7 @@ export function RoomSection({
             decisions={room.decisions}
             roomType={room.type}
             onDeleteDecision={deleteDecision}
+            readOnly={readOnly}
           />
         </div>
       )}

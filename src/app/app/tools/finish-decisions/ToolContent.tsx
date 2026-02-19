@@ -210,7 +210,7 @@ interface ToolContentProps {
 }
 
 export function ToolContent({ localOnly = false }: ToolContentProps) {
-  const { state, setState, isLoaded, isSyncing } = useToolState<
+  const { state, setState, isLoaded, isSyncing, access, readOnly, noAccess } = useToolState<
     FinishDecisionsPayloadV3 | any
   >({
     toolKey: 'finish_decisions',
@@ -358,14 +358,21 @@ export function ToolContent({ localOnly = false }: ToolContentProps) {
             toolKey="finish_decisions"
             title="Decision Tracker"
             description="Track the small choices that can stall a renovation—so you don't get stuck waiting on one item."
+            accessLevel={access}
           />
         )}
-        {isLoaded && state.version === 3 ? (
+        {noAccess ? (
+          <div className="bg-basalt-50 rounded-card p-8 text-center">
+            <p className="text-cream/50 mb-2">You don&apos;t have access to this tool for the current project.</p>
+            <a href="/app" className="text-sandstone hover:text-sandstone-light text-sm">Back to My Tools</a>
+          </div>
+        ) : isLoaded && state.version === 3 ? (
           <DecisionTrackerPage
             rooms={v3State.rooms}
             onBatchAddRooms={handleBatchAddRooms}
             onUpdateRoom={handleUpdateRoom}
             onDeleteRoom={handleDeleteRoom}
+            readOnly={readOnly}
           />
         ) : !isLoaded ? (
           <div className="text-center py-12 text-cream/50">
