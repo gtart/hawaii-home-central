@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, Fragment } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import type { RenovationStage } from '@/data/renovation-stages'
+import { BUILD_SUBSTEPS, FINISH_SUBSTEPS } from '@/data/renovation-stages'
 
 interface RenovationStagesFlowchartProps {
   stages: RenovationStage[]
@@ -175,11 +176,8 @@ export function RenovationStagesFlowchart({ stages }: RenovationStagesFlowchartP
               const isActive = index === activeIndex
               const isPast = index < activeIndex
 
-              const showChevronAfter = index === 5 || index === 6
-
               return (
-                <Fragment key={stage.id}>
-                <div className="flex-1">
+                <div key={stage.id} className="flex-1">
                   <button
                     ref={(el) => { stageButtonRefs.current[index] = el }}
                     onClick={() => goToStage(index)}
@@ -228,14 +226,6 @@ export function RenovationStagesFlowchart({ stages }: RenovationStagesFlowchartP
                     </span>
                   </button>
                 </div>
-                {showChevronAfter && (
-                  <div className="flex-none flex items-start justify-center w-4 pt-[10px]" aria-hidden="true">
-                    <svg className="w-3 h-3 text-sandstone/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                )}
-                </Fragment>
               )
             })}
           </div>
@@ -329,6 +319,11 @@ export function RenovationStagesFlowchart({ stages }: RenovationStagesFlowchartP
 
 function StagePreviewCard({ stage }: { stage: RenovationStage }) {
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [substepsOpen, setSubstepsOpen] = useState(false)
+
+  const isBuild = stage.id === 'build'
+  const isFinish = stage.id === 'install-finish'
+  const hasSubsteps = isBuild || isFinish
 
   return (
     <div className="bg-basalt-50 rounded-card p-6 space-y-4 animate-stage-enter">
@@ -342,6 +337,57 @@ function StagePreviewCard({ stage }: { stage: RenovationStage }) {
       <p className="text-sm text-cream/70 leading-relaxed">
         {stage.previewLine}
       </p>
+
+      {/* Substep sequence callout — only for Build and Finish stages */}
+      {hasSubsteps && (() => {
+        const steps = isBuild ? BUILD_SUBSTEPS : FINISH_SUBSTEPS
+        const description = isBuild
+          ? 'This is the most involved part of your renovation. Your contractor manages it, and it typically follows this sequence:'
+          : 'This is where your earlier selections come to life. Work generally follows this order:'
+        const triggerText = isBuild
+          ? 'See the typical build sequence'
+          : 'See how finishes are installed'
+        return (
+          <div className="border border-dashed border-sandstone/25 rounded-lg bg-sandstone/[0.03]">
+            <button
+              type="button"
+              onClick={() => setSubstepsOpen(!substepsOpen)}
+              className={cn(
+                'flex items-center gap-2 w-full px-4 py-3 text-sm transition-colors rounded-lg',
+                substepsOpen ? 'text-sandstone' : 'text-cream/50 hover:text-cream/70'
+              )}
+            >
+              <svg
+                className={cn('w-3.5 h-3.5 transition-transform duration-200 shrink-0', substepsOpen && 'rotate-90')}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="font-medium">{triggerText}</span>
+            </button>
+            {substepsOpen && (
+              <div className="px-4 pb-4 space-y-3">
+                <p className="text-xs text-cream/50 leading-relaxed">{description}</p>
+                <div className="flex flex-wrap items-center gap-y-2">
+                  {steps.map((step, i) => (
+                    <Fragment key={i}>
+                      <span className="text-sm text-cream/80">{step}</span>
+                      {i < steps.length - 1 && (
+                        <svg className="w-4 h-4 text-sandstone/50 mx-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </Fragment>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       <button
         type="button"

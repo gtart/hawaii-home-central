@@ -12,17 +12,19 @@ export interface RenovationStage {
 
 export const BUILD_SUBSTEPS = [
   'Demo & Remove Old Stuff',
-  'Fix or Change What\u2019s Behind the Walls (if needed)',
-  'Run Electrical / Plumbing / A/C',
-  'Inspections (the city checks the work)',
-  'Close the Walls (insulation + drywall)',
+  'Fix or Change What\u2019s Behind the Walls (framing, etc.)',
+  'Run Rough-Ins for Electrical, Plumbing, A/C',
+  'Inspections',
+  'Close the Walls (insulation, drywall, etc.)',
 ]
 
 export const FINISH_SUBSTEPS = [
-  'Paint & waterproofing',
-  'Cabinets & tile',
+  'Waterproofing',
+  'Tile',
   'Flooring',
-  'Fixtures + final electrical',
+  'Cabinets',
+  'Plumbing & Electric Fixtures',
+  'Paint & Final Fixtures',
 ]
 
 export const RENOVATION_STAGES: RenovationStage[] = [
