@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { RenovationStagesFlowchart } from '@/components/guides/RenovationStagesFlowchart'
@@ -74,7 +75,9 @@ export default function RenovationStagesPage() {
           </FadeInSection>
 
           <FadeInSection delay={100}>
-            <RenovationStagesFlowchart stages={RENOVATION_STAGES} />
+            <Suspense fallback={null}>
+              <RenovationStagesFlowchart stages={RENOVATION_STAGES} />
+            </Suspense>
           </FadeInSection>
 
           {/* FAQ */}

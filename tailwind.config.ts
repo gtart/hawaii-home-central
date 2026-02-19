@@ -41,6 +41,8 @@ const config: Config = {
         'gradient-drift': 'gradient-drift 15s ease infinite',
         'fade-in': 'fade-in 0.6s ease-out forwards',
         'fade-in-up': 'fade-in-up 0.6s ease-out forwards',
+        'stage-halo': 'stage-halo 2s ease-in-out infinite',
+        'stage-enter': 'stage-enter 0.3s ease-out forwards',
       },
       keyframes: {
         'gradient-drift': {
@@ -53,6 +55,15 @@ const config: Config = {
         },
         'fade-in-up': {
           '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'stage-halo': {
+          '0%': { transform: 'scale(1)', opacity: '0.6' },
+          '50%': { transform: 'scale(1.25)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '0.6' },
+        },
+        'stage-enter': {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
