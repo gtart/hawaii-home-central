@@ -39,13 +39,7 @@ export function HeroSection() {
           Hawai&#x02BB;i&apos;s humidity, permitting, supply delays, and tight scheduling.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-          <Link
-            href="/early-access"
-            className="inline-flex items-center px-6 py-3 bg-sandstone text-basalt font-medium rounded-button hover:bg-sandstone-light transition-colors"
-          >
-            Get Early Access
-          </Link>
+        <div className="flex items-center justify-center mb-12">
           <Link
             href="/resources/renovation-stages"
             className="text-cream/70 hover:text-cream text-sm transition-colors"

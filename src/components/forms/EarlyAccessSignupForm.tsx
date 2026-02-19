@@ -108,7 +108,7 @@ export function EarlyAccessSignupForm() {
           />
         </div>
         <Button type="submit" disabled={status === 'submitting'}>
-          {status === 'submitting' ? 'Joining...' : 'Get Access'}
+          {status === 'submitting' ? 'Joining...' : 'Notify me when we launch'}
         </Button>
       </form>
 
