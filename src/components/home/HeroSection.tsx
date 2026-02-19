@@ -3,6 +3,7 @@
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { cn } from '@/lib/utils'
 import { Suspense } from 'react'
+import Link from 'next/link'
 import { EarlyAccessSignupForm } from '@/components/forms/EarlyAccessSignupForm'
 
 export function HeroSection() {
@@ -29,13 +30,29 @@ export function HeroSection() {
           id="hero-heading"
           className="font-serif text-4xl md:text-5xl lg:text-6xl text-cream leading-tight mb-8"
         >
-          A Hawaiʻi-first guide to renovating, maintaining, and loving your home—built from real homeowner pain{' '}
-          <span className="text-sandstone">(so you don&apos;t repeat it)</span>.
+          Renovate your Hawai&#x02BB;i home with confidence—
+          <span className="text-sandstone">not guesswork</span>.
         </h1>
 
-        <p className="text-lg md:text-xl text-cream/70 mb-12 max-w-3xl mx-auto leading-relaxed">
-          Practical guides and tools, real lessons, and a trust-first pros directory—made for Hawaiʻi&apos;s realities: from condos to older single-wall homes, humidity, salt air, termites, permitting, supply delays, and tight scheduling.
+        <p className="text-lg md:text-xl text-cream/70 mb-10 max-w-3xl mx-auto leading-relaxed">
+          Free guides, interactive tools, and real homeowner lessons—built for
+          Hawai&#x02BB;i&apos;s humidity, permitting, supply delays, and tight scheduling.
         </p>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+          <Link
+            href="/early-access"
+            className="inline-flex items-center px-6 py-3 bg-sandstone text-basalt font-medium rounded-button hover:bg-sandstone-light transition-colors"
+          >
+            Get Early Access
+          </Link>
+          <Link
+            href="/resources/renovation-stages"
+            className="text-cream/70 hover:text-cream text-sm transition-colors"
+          >
+            See Renovation Stages &rarr;
+          </Link>
+        </div>
 
         <div className="max-w-md mx-auto">
           <Suspense fallback={null}>

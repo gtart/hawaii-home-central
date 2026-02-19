@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import type { RenovationStage } from '@/data/renovation-stages'
 
@@ -10,10 +10,25 @@ interface RenovationStagesFlowchartProps {
 
 export function RenovationStagesFlowchart({ stages }: RenovationStagesFlowchartProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const stageRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const toggle = (id: string) => {
     setExpandedId((prev) => (prev === id ? null : id))
   }
+
+  // Auto-scroll expanded stage into view on mobile
+  useEffect(() => {
+    if (!expandedId) return
+    const el = stageRefs.current[expandedId]
+    if (!el) return
+    // Only auto-scroll on mobile-sized viewports
+    if (window.innerWidth >= 768) return
+    // Small delay to let the DOM expand
+    const timer = setTimeout(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [expandedId])
 
   const expandedStage = stages.find((s) => s.id === expandedId)
 
@@ -65,7 +80,10 @@ export function RenovationStagesFlowchart({ stages }: RenovationStagesFlowchartP
       {/* Mobile: vertical stacked stages */}
       <div className="md:hidden flex flex-col gap-1">
         {stages.map((stage) => (
-          <div key={stage.id}>
+          <div
+            key={stage.id}
+            ref={(el) => { stageRefs.current[stage.id] = el }}
+          >
             <button
               onClick={() => toggle(stage.id)}
               className={cn(
@@ -113,9 +131,18 @@ export function RenovationStagesFlowchart({ stages }: RenovationStagesFlowchartP
               </svg>
             </button>
 
-            {/* Mobile expanded content inline */}
+            {/* Mobile expanded content with left accent bar */}
             {expandedId === stage.id && (
-              <StageDetail stage={stage} />
+              <div className="border-l-2 border-sandstone/20 ml-[22px] pl-4 pb-2">
+                <StageDetail stage={stage} />
+                <button
+                  type="button"
+                  onClick={() => setExpandedId(null)}
+                  className="mt-4 text-xs text-cream/40 hover:text-cream/60 transition-colors"
+                >
+                  Collapse &uarr;
+                </button>
+              </div>
             )}
           </div>
         ))}
