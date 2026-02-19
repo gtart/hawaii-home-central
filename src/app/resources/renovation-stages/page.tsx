@@ -21,7 +21,7 @@ const FAQ_ITEMS = [
   {
     question: 'Why does ordering matter so much in Hawaiʻi?',
     answer:
-      'Shipping to Hawaiʻi adds 4–8 weeks beyond mainland lead times and costs 15–30% more. If you run short on tile or a fixture arrives damaged, the replacement delay can stall your entire project. Ordering early with overage is critical.',
+      'Shipping to Hawaiʻi commonly adds 4–8 weeks beyond mainland lead times and can cost 15–30% more. If you run short on tile or a fixture arrives damaged, the replacement delay can stall your entire project. Ordering early with overage is critical.',
   },
   {
     question: 'When should I lock in my material selections?',

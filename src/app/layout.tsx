@@ -43,12 +43,14 @@ export const metadata: Metadata = {
     title: 'Hawaii Home Central | Renovate with Confidence',
     description:
       'A Hawaiʻi-first guide to renovating, maintaining, and loving your home.',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Hawaii Home Central' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Hawaii Home Central | Renovate with Confidence',
     description:
       'A Hawaiʻi-first guide to renovating, maintaining, and loving your home.',
+    images: ['/og-image.png'],
   },
   robots: {
     index: true,

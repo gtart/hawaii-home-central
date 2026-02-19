@@ -32,7 +32,7 @@ export default function ResourcesPage() {
               <ul className="text-cream/60 space-y-2 text-sm">
                 <li className="flex gap-3">
                   <span className="text-sandstone shrink-0">&bull;</span>
-                  <span>Material shipping adds 4&ndash;8 weeks and 15&ndash;30% to mainland prices.</span>
+                  <span>Material shipping commonly adds 4&ndash;8 weeks and can cost 15&ndash;30% more than mainland prices.</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-sandstone shrink-0">&bull;</span>
@@ -48,9 +48,12 @@ export default function ResourcesPage() {
                 </li>
                 <li className="flex gap-3">
                   <span className="text-sandstone shrink-0">&bull;</span>
-                  <span>A 10&ndash;15% contingency is standard. In Hawai&#x02BB;i, lean toward the higher end.</span>
+                  <span>A 10&ndash;15% contingency is common. In Hawai&#x02BB;i, plan for the higher end.</span>
                 </li>
               </ul>
+              <p className="text-[11px] text-cream/30 mt-3">
+                Timelines and costs vary by island, vendor, and project scope. Use this as planning guidance.
+              </p>
             </div>
           </section>
         </FadeInSection>
