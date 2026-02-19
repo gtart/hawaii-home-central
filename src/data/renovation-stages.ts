@@ -3,97 +3,126 @@ export interface RenovationStage {
   number: number
   title: string
   subtitle: string
-  doThisNow: string
-  topDecisions: string[]
+  previewLine: string
   whatHappens: string
   decisions: string[]
   hawaiiNotes: string[]
   pitfalls: string[]
 }
 
+export const BUILD_SUBSTEPS = [
+  'Demo & Remove Old Stuff',
+  'Fix or Change What\u2019s Behind the Walls (if needed)',
+  'Run Electrical / Plumbing / A/C',
+  'Inspections (the city checks the work)',
+  'Close the Walls (insulation + drywall)',
+]
+
+export const FINISH_SUBSTEPS = [
+  'Paint & waterproofing',
+  'Cabinets & tile',
+  'Flooring',
+  'Fixtures + final electrical',
+]
+
 export const RENOVATION_STAGES: RenovationStage[] = [
   {
-    id: 'plan-budget',
+    id: 'dream',
     number: 1,
-    title: 'Plan & Budget',
-    subtitle: 'Set goals, research costs, build your budget',
-    doThisNow: 'Define your renovation goals, set a realistic budget with contingency, and decide whether you need a designer, architect, or just a contractor.',
-    topDecisions: [
-      'Set a total budget with 10–15% contingency',
-      'Define your scope: which rooms and what level of finish',
-      'Decide if you need a designer or architect',
-    ],
+    title: 'Dream',
+    subtitle: 'Envision the result and set priorities',
+    previewLine:
+      'Decide what you want to change, what \u2018success\u2019 looks like, and what matters most to your household.',
     whatHappens:
-      'This is where you define what you want out of the renovation and what you can realistically spend. You research costs, talk to other homeowners, and start building a list of priorities. Most people underbudget here — especially in Hawaiʻi.',
+      'This is the inspiration phase. You look at your home with fresh eyes and decide what you actually want to change and why. You talk to your household about priorities, visit showrooms or browse ideas, and start building a wish list. Most people skip this step and jump straight into budgets \u2014 but clarity here prevents regret later.',
     decisions: [
-      'Define your goals: what rooms, what level of finish, and what matters most',
-      'Set a realistic total budget including a 10–15% contingency',
-      'Decide whether you need a designer, architect, or just a contractor',
-      'Research rough costs for your project type (kitchen, bath, whole-house)',
+      'What rooms or areas do you want to change?',
+      'What does \u201Cdone\u201D look like for your household?',
+      'What matters most: function, look, resale value, or comfort?',
+      'Are there things you definitely don\u2019t want to change?',
     ],
     hawaiiNotes: [
-      'Material costs run 15–30% above mainland prices due to shipping',
-      'Labor availability is tighter — popular contractors book months out',
-      'Older homes often have hidden issues (termite damage, asbestos, undersized electrical panels) that inflate budgets',
+      'Consider how your home handles humidity, salt air, and UV \u2014 these affect what\u2019s realistic',
+      'Think about indoor/outdoor flow, which matters more in Hawai\u02BBi than most places',
+      'Older homes may have character worth preserving (single-wall construction, post-and-pier)',
+    ],
+    pitfalls: [
+      'Skipping this step and jumping straight into contractor calls',
+      'Letting one person\u2019s vision dominate without household buy-in',
+      'Falling in love with Pinterest ideas that don\u2019t fit your climate or budget',
+    ],
+  },
+  {
+    id: 'define-scope',
+    number: 2,
+    title: 'Define the Scope',
+    subtitle: 'Write down exactly what\u2019s included',
+    previewLine:
+      'Write a clear scope: which rooms, what changes, and what\u2019s included vs not included\u2014so bids are comparable.',
+    whatHappens:
+      'You turn your wish list into a written scope of work. This document spells out exactly what\u2019s being done, what\u2019s not, and what level of finish you expect. It\u2019s what you\u2019ll hand to contractors so they can give you apples-to-apples bids. Without it, every quote covers different things.',
+    decisions: [
+      'Which rooms are in scope and which are not?',
+      'What specific changes are you making (layout, fixtures, finishes)?',
+      'What level of finish: budget, mid-range, or high-end?',
+      'Is there a written scope document you can hand to multiple contractors?',
+    ],
+    hawaiiNotes: [
+      'Confirm material availability before locking in specifics \u2014 some items don\u2019t ship to Hawai\u02BBi or have 8+ week lead times',
+      'Include salt-air and humidity requirements in your scope (marine-grade hardware, mold-resistant drywall, UV-stable finishes)',
+    ],
+    pitfalls: [
+      'Getting bids without a written scope (every quote will cover different things)',
+      'Leaving \u201Callowances\u201D vague \u2014 spell out what\u2019s included in the price',
+      'Assuming the contractor will figure out the details for you',
+    ],
+  },
+  {
+    id: 'set-plan',
+    number: 3,
+    title: 'Set the Plan',
+    subtitle: 'Budget, team, and timeline',
+    previewLine:
+      'Set a realistic budget (with contingency), pick your team (GC/designer/architect), and outline a rough timeline.',
+    whatHappens:
+      'You set a total budget including a contingency cushion, decide who\u2019s on your team (general contractor, designer, architect, or some combination), and map out a rough timeline. This is also when you compare bids and check references. Most people underbudget here \u2014 especially in Hawai\u02BBi.',
+    decisions: [
+      'Set a total budget with 10\u201315% contingency',
+      'Decide if you need a designer, architect, or just a contractor',
+      'Compare contractor bids and check references',
+      'Outline a rough project timeline',
+    ],
+    hawaiiNotes: [
+      'Material costs run 15\u201330% above mainland prices due to shipping',
+      'Labor availability is tighter \u2014 popular contractors book months out',
+      'Older homes often have hidden issues (termite damage, asbestos, undersized electrical) that inflate budgets',
       'Lean toward 15% contingency rather than 10%',
     ],
     pitfalls: [
       'Starting demolition before a budget is set',
       'Forgetting to budget for permits, dumpsters, and temporary housing',
       'Assuming mainland pricing when researching costs online',
-    ],
-  },
-  {
-    id: 'design-scope',
-    number: 2,
-    title: 'Design & Scope',
-    subtitle: 'What are we building? Finalize plans and specs',
-    doThisNow: 'Turn your goals into a detailed plan — floor plans, material selections, and a written scope of work that everyone builds from.',
-    topDecisions: [
-      'Finalize the floor plan and layout',
-      'Select key materials: countertops, cabinets, flooring',
-      'Get a detailed written scope from your contractor',
-    ],
-    whatHappens:
-      'You work with a designer or contractor to turn your goals into a plan — floor plans, elevations, material selections, and a written scope of work. This is the blueprint everyone will build from.',
-    decisions: [
-      'Finalize the floor plan and layout changes',
-      'Choose the level of finish for each room (budget, mid-range, high-end)',
-      'Select key materials: countertops, cabinets, flooring, tile',
-      'Get a detailed written scope of work from your contractor',
-    ],
-    hawaiiNotes: [
-      "Confirm material availability before falling in love with a product \u2014 some items don't ship to Hawai\u02BBi or have 8+ week lead times",
-      'Salt air and humidity affect material choices: marine-grade hardware, mold-resistant drywall, and UV-stable finishes matter here',
-    ],
-    pitfalls: [
-      'Changing the scope after construction starts (this is how budgets blow up)',
-      'Picking materials without checking lead times',
-      'Skipping a written scope — verbal agreements lead to disputes',
+      'Picking the cheapest bid without checking references or scope match',
     ],
   },
   {
     id: 'permits-scheduling',
-    number: 3,
+    number: 4,
     title: 'Permits & Scheduling',
-    subtitle: 'File permits, line up your contractor',
-    doThisNow: 'File for building permits, sign the construction contract with clear terms, and lock in your project start date.',
-    topDecisions: [
-      'Confirm which permits are required and who files them',
-      'Sign the contract with clear payment and change-order terms',
-      'Set the project start date and timeline',
-    ],
+    subtitle: 'File permits, sign the contract, lock dates',
+    previewLine:
+      'Confirm what permits are needed and who files them, then lock a realistic start date and sequence.',
     whatHappens:
-      'Your contractor (or you) files for building permits. You finalize the construction schedule, sign the contract, and confirm start dates. In Hawaiʻi, permitting timelines vary significantly by county.',
+      'Your contractor (or you) files for building permits. You finalize the construction schedule, sign the contract, and confirm start dates. In Hawai\u02BBi, permitting timelines vary significantly by county.',
     decisions: [
       'Confirm which permits are required (building, electrical, plumbing)',
-      'Decide who files — you or the contractor',
-      'Sign the construction contract with clear payment terms',
+      'Decide who files \u2014 you or the contractor',
+      'Sign the construction contract with clear payment and change-order terms',
       'Set the project start date and rough timeline',
     ],
     hawaiiNotes: [
       'Permitting timelines vary by county: Honolulu can take weeks to months; neighbor islands may be faster or slower depending on the scope',
-      "Verify your contractor's license through DCCA (required for work over $1,500)",
+      'Verify your contractor\u2019s license through DCCA (required for work over $1,500)',
       'Some HOAs and historic districts have additional review layers',
     ],
     pitfalls: [
@@ -103,108 +132,100 @@ export const RENOVATION_STAGES: RenovationStage[] = [
     ],
   },
   {
-    id: 'order-early',
-    number: 4,
-    title: 'Order Early',
-    subtitle: 'Items that take weeks to arrive',
-    doThisNow: 'Order every long-lead item before demolition starts — cabinets, appliances, windows, specialty tile, and key fixtures.',
-    topDecisions: [
-      'Lock in cabinet layout and order (4–10 week lead time)',
-      'Confirm and order appliances (share cut sheets with contractor)',
-      'Order specialty tile or stone with 10–15% overage',
-    ],
+    id: 'finalize-choices',
+    number: 5,
+    title: 'Finalize Your Choices',
+    subtitle: 'Lock in materials, fixtures, and finishes',
+    previewLine:
+      'Make the key choices that affect construction\u2014layout, materials, fixtures, and finishes\u2014so work doesn\u2019t stall later.',
     whatHappens:
-      "Before demolition starts, you order anything with a long lead time \u2014 cabinets, appliances, windows, specialty tile, and key fixtures. If these aren't ordered early, the project stalls mid-construction waiting for deliveries.",
+      'Before any ordering or construction begins, you finalize every selection that affects the build: countertops, cabinets, flooring, tile, fixtures, paint colors, and hardware. Changing these after work starts is how budgets blow up and timelines slip.',
     decisions: [
-      'Lock in cabinet layout and order (these take 4–10 weeks)',
+      'Finalize the floor plan and any layout changes',
+      'Select countertops, cabinets, flooring, and tile',
+      'Confirm plumbing fixtures (faucets, showerheads, valves) and share cut sheets',
+      'Choose paint colors, hardware (knobs, pulls, towel bars), and lighting fixtures',
+    ],
+    hawaiiNotes: [
+      'Confirm availability and shipping timelines for every selection \u2014 some products don\u2019t ship to Hawai\u02BBi',
+      'Salt air and humidity affect material choices: marine-grade hardware, mold-resistant drywall, and UV-stable finishes matter here',
+    ],
+    pitfalls: [
+      'Changing the scope after construction starts (this is how budgets blow up)',
+      'Picking materials without checking lead times',
+      'Skipping a written scope \u2014 verbal agreements lead to disputes',
+      'Not confirming appliance dimensions before ordering cabinets',
+    ],
+  },
+  {
+    id: 'order-reserve',
+    number: 6,
+    title: 'Order & Reserve',
+    subtitle: 'Long-lead items that take weeks to arrive',
+    previewLine:
+      'Order long-lead items and reserve critical materials early so your schedule doesn\u2019t get pushed by shipping delays.',
+    whatHappens:
+      'Before demolition starts, you order anything with a long lead time \u2014 cabinets, appliances, windows, specialty tile, and key fixtures. If these aren\u2019t ordered early, the project stalls mid-construction waiting for deliveries.',
+    decisions: [
+      'Lock in cabinet layout and order (these take 4\u201310 weeks)',
       'Confirm appliance models and order (share cut sheets with your contractor)',
       'Order windows and exterior doors (longest lead times)',
-      'Order specialty tile or stone with 10–15% overage',
+      'Order specialty tile or stone with 10\u201315% overage',
       'Confirm plumbing fixture models (faucets, showerheads, valves)',
     ],
     hawaiiNotes: [
-      'Add 4–8 weeks beyond mainland lead times for shipping to Hawaiʻi',
-      'Appliance availability is more limited on-island — confirm local stock or shipping timelines',
+      'Add 4\u20138 weeks beyond mainland lead times for shipping to Hawai\u02BBi',
+      'Appliance availability is more limited on-island \u2014 confirm local stock or shipping timelines',
       'Shipping replacement materials if you run short can add weeks of delay',
       'Order extra and keep leftovers for future repairs',
     ],
     pitfalls: [
       'Ordering cabinets before appliance dimensions are confirmed',
-      'Not checking dye lots on tile — different batches can look different',
+      'Not checking dye lots on tile \u2014 different batches can look different',
       'Assuming your contractor will handle all ordering without discussion',
     ],
   },
   {
-    id: 'demo-prep',
-    number: 5,
-    title: 'Demo & Prep',
-    subtitle: 'Tear-out and site preparation',
-    doThisNow: 'Confirm what stays and what goes, agree on how surprises will be handled, and arrange temporary living if needed.',
-    topDecisions: [
-      'Decide partial demo vs. full gut for each area',
-      'Agree on who approves additional work and at what cost',
-      'Arrange temporary living if kitchen or bath will be unusable',
-    ],
+    id: 'build',
+    number: 7,
+    title: 'Build',
+    subtitle: 'Demo, structural work, and behind-the-walls',
+    previewLine:
+      'Remove what\u2019s there, build what\u2019s changing, and get the behind-the-walls work done and approved before closing things up.',
     whatHappens:
-      'The old finishes, fixtures, and sometimes walls come out. The site is prepped for new work. This is when hidden problems surface — water damage, mold, outdated wiring, or structural issues.',
+      'The old finishes, fixtures, and sometimes walls come out. The site is prepped for new work, and hidden problems surface \u2014 water damage, mold, outdated wiring, or structural issues. Then the behind-the-walls work happens: plumbing pipes, electrical wiring, framing changes, and HVAC ducts. Once inspections pass and walls close, changes become very expensive.',
     decisions: [
       'Confirm what stays and what goes (partial demo vs. full gut)',
       'Decide how to handle surprises: who approves additional work and at what cost',
       'Arrange temporary living if the kitchen or bathroom will be unusable',
+      'Confirm exact locations for all outlets, switches, and light fixtures before walls close',
+      'Lock in plumbing valve positions (shower controls, sink supply lines)',
+      'Finalize any framing or structural changes',
     ],
     hawaiiNotes: [
-      'Homes built before 1978 may have lead paint, asbestos, or canec (sugarcane fiberboard) — testing and proper abatement add time and cost',
+      'Homes built before 1978 may have lead paint, asbestos, or canec (sugarcane fiberboard) \u2014 testing and proper abatement add time and cost',
       'Termite damage is common and often hidden until demo reveals it',
-      'Disposal costs are higher in Hawaiʻi — dumpster availability can be limited',
+      'Disposal costs are higher in Hawai\u02BBi \u2014 dumpster availability can be limited',
+      'Older homes often have undersized electrical panels \u2014 upgrading may be required',
+      'Galvanized or polybutylene plumbing is common in older Hawai\u02BBi homes and may need replacing',
     ],
     pitfalls: [
       'No plan for dealing with hidden damage (this is why contingency matters)',
       'Demo-ing more than planned without discussing cost implications first',
-      "Not protecting areas of the home that aren't being renovated",
-    ],
-  },
-  {
-    id: 'rough-in',
-    number: 6,
-    title: 'Rough-In',
-    subtitle: 'Inside the walls — plumbing, electrical, framing',
-    doThisNow: 'Walk the site and confirm exact locations for every outlet, switch, fixture, and valve before walls close up.',
-    topDecisions: [
-      'Confirm all outlet, switch, and light fixture locations',
-      'Lock in plumbing valve positions (shower controls, supply lines)',
-      'Finalize recessed lighting and ceiling fan placement',
-    ],
-    whatHappens:
-      'This is the work that happens inside the walls before they get closed up: plumbing pipes, electrical wiring, framing changes, and HVAC ducts. Once the walls close, changes become very expensive.',
-    decisions: [
-      'Confirm exact locations for all outlets, switches, and light fixtures',
-      'Lock in plumbing valve positions (shower controls, sink supply lines)',
-      'Finalize any framing or structural changes',
-      'Decide on recessed lighting and ceiling fan locations',
-    ],
-    hawaiiNotes: [
-      'Older homes often have undersized electrical panels — upgrading the panel may be required for modern loads',
-      'Galvanized or polybutylene plumbing is common in older Hawaiʻi homes and may need replacing',
-    ],
-    pitfalls: [
+      'Not protecting areas of the home that aren\u2019t being renovated',
       'Not walking the job site to verify outlet and fixture locations before walls close',
-      'Choosing a wall-mount faucet after deck-mount rough-in is done',
-      'Skipping the inspection — failed inspections discovered later mean opening walls back up',
+      'Skipping the inspection \u2014 failed inspections discovered later mean opening walls back up',
     ],
   },
   {
-    id: 'finishes-install',
-    number: 7,
-    title: 'Finishes & Install',
+    id: 'install-finish',
+    number: 8,
+    title: 'Install & Finish',
     subtitle: 'Countertops, tile, fixtures, paint',
-    doThisNow: 'Confirm tile layouts, schedule countertop templating after cabinets are set, and finalize paint colors and hardware.',
-    topDecisions: [
-      'Confirm tile layout and patterns before installation',
-      'Schedule countertop templating after cabinets are installed',
-      'Choose paint colors and all hardware (knobs, pulls, bars)',
-    ],
+    previewLine:
+      'Install the visible finishes\u2014tile, cabinets, flooring, fixtures\u2014and bring everything to the final look and function.',
     whatHappens:
-      "The visible work begins: drywall, tile, countertops, cabinets, fixtures, and paint. This is when the renovation starts looking like a finished space. It's also when decisions stack up fast.",
+      'The visible work begins: drywall, tile, countertops, cabinets, fixtures, and paint. This is when the renovation starts looking like a finished space. It\u2019s also when decisions stack up fast.',
     decisions: [
       'Confirm tile layout and patterns before installation starts',
       'Schedule countertop templating after cabinets are set',
@@ -212,42 +233,38 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Confirm hardware (knobs, pulls, towel bars, toilet paper holders)',
     ],
     hawaiiNotes: [
-      'Humidity can affect paint drying times and tile adhesion — talk to your contractor about timing',
-      "Waterproofing is critical in bathrooms, especially with Hawai\u02BBi's humidity and occasional flood rains",
+      'Humidity can affect paint drying times and tile adhesion \u2014 talk to your contractor about timing',
+      'Waterproofing is critical in bathrooms, especially with Hawai\u02BBi\u2019s humidity and occasional flood rains',
     ],
     pitfalls: [
       'Changing tile selections after waterproofing is done',
       'Not confirming countertop sink cutout dimensions match the actual sink',
-      'Rushing paint selection — test samples on the actual walls, not just swatches',
+      'Rushing paint selection \u2014 test samples on the actual walls, not just swatches',
     ],
   },
   {
     id: 'punch-list-closeout',
-    number: 8,
+    number: 9,
     title: 'Punch List & Closeout',
     subtitle: 'Final details, inspections, warranty',
-    doThisNow: 'Walk every room with your contractor, document everything that needs fixing, and collect warranty info before making final payment.',
-    topDecisions: [
-      'Document every punch list item room by room',
-      'Confirm all inspections passed and permits closed',
-      'Agree on final payment terms tied to punch list completion',
-    ],
+    previewLine:
+      'Fix the remaining issues, collect warranties/docs, confirm final inspections, and only then make final payments.',
     whatHappens:
       'You walk through the finished project with your contractor and make a list of everything that needs fixing, adjusting, or touching up. Final inspections happen. You get warranty documents and close out the project.',
     decisions: [
-      "Walk every room and document anything that's not right",
+      'Walk every room and document anything that\u2019s not right',
       'Confirm all inspections are passed and permits are closed',
       'Collect warranty info for appliances, countertops, and major systems',
-      'Agree on final payment terms — hold a reasonable amount until punch list is complete',
+      'Agree on final payment terms \u2014 hold a reasonable amount until punch list is complete',
     ],
     hawaiiNotes: [
-      'Get maintenance guidance specific to your climate — salt air corrodes faster, UV fades finishes sooner',
+      'Get maintenance guidance specific to your climate \u2014 salt air corrodes faster, UV fades finishes sooner',
       'Keep leftover tile, paint, and hardware for future touch-ups (replacements take weeks to ship)',
     ],
     pitfalls: [
       'Making final payment before the punch list is done',
       'Not getting lien releases from subcontractors',
-      'Losing warranty documents — keep them in one place',
+      'Losing warranty documents \u2014 keep them in one place',
     ],
   },
 ]

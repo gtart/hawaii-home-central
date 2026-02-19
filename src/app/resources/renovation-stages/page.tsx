@@ -17,7 +17,7 @@ const FAQ_ITEMS = [
   {
     question: 'How many stages are in a typical renovation?',
     answer:
-      'This guide covers 8 stages: Plan & Budget, Design & Scope, Permits & Scheduling, Order Early, Demo & Prep, Rough-In, Finishes & Install, and Punch List & Closeout. Not every renovation goes through all 8 — smaller projects may skip some stages.',
+      'This guide covers 9 stages: Dream, Define the Scope, Set the Plan, Permits & Scheduling, Finalize Your Choices, Order & Reserve, Build, Install & Finish, and Punch List & Closeout. Not every renovation goes through all 9 — smaller projects may skip some stages.',
   },
   {
     question: 'Why does ordering matter so much in Hawaiʻi?',
