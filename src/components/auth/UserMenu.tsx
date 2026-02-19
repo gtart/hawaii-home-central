@@ -82,6 +82,13 @@ export function UserMenu() {
             My Tools
           </Link>
           <Link
+            href="/app/projects"
+            onClick={() => setIsOpen(false)}
+            className="block px-4 py-2 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+          >
+            Projects
+          </Link>
+          <Link
             href="/app/settings"
             onClick={() => setIsOpen(false)}
             className="block px-4 py-2 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"

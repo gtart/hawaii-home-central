@@ -9,8 +9,10 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const userId = session.user.id
+
   const memberships = await prisma.projectMember.findMany({
-    where: { userId: session.user.id },
+    where: { userId },
     include: {
       project: {
         select: { id: true, name: true, status: true, createdAt: true },
@@ -20,9 +22,28 @@ export async function GET() {
   })
 
   const user = await prisma.user.findUniqueOrThrow({
-    where: { id: session.user.id },
+    where: { id: userId },
     select: { currentProjectId: true },
   })
+
+  // For MEMBER roles, include which tools they have access to
+  const memberProjectIds = memberships
+    .filter((m) => m.role === 'MEMBER')
+    .map((m) => m.project.id)
+
+  const toolAccessRows = memberProjectIds.length > 0
+    ? await prisma.projectToolAccess.findMany({
+        where: { userId, projectId: { in: memberProjectIds } },
+        select: { projectId: true, toolKey: true, level: true },
+      })
+    : []
+
+  const toolAccessByProject = new Map<string, { toolKey: string; level: string }[]>()
+  for (const row of toolAccessRows) {
+    const existing = toolAccessByProject.get(row.projectId) || []
+    existing.push({ toolKey: row.toolKey, level: row.level })
+    toolAccessByProject.set(row.projectId, existing)
+  }
 
   return NextResponse.json({
     projects: memberships.map((m) => ({
@@ -31,6 +52,7 @@ export async function GET() {
       status: m.project.status,
       role: m.role,
       createdAt: m.project.createdAt,
+      toolAccess: m.role === 'MEMBER' ? (toolAccessByProject.get(m.project.id) || []) : undefined,
     })),
     currentProjectId: user.currentProjectId,
   })

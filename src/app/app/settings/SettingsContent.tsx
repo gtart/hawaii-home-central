@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useProject } from '@/contexts/ProjectContext'
 
 export function SettingsContent() {
   const { data: session } = useSession()
+  const { projects } = useProject()
   const [optedIn, setOptedIn] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -60,6 +63,26 @@ export function SettingsContent() {
               </span>
             </div>
           </div>
+        </div>
+
+        <div className="bg-basalt-50 rounded-card p-6 mb-6">
+          <h2 className="font-serif text-xl text-cream mb-4">Projects</h2>
+          <div className="space-y-2 mb-4">
+            {projects.filter((p) => p.status === 'ACTIVE').map((p) => (
+              <div key={p.id} className="flex items-center justify-between text-sm">
+                <span className="text-cream/80 truncate">{p.name}</span>
+                <span className="text-cream/30 text-xs shrink-0 ml-2">
+                  {p.role === 'OWNER' ? 'Owner' : 'Shared'}
+                </span>
+              </div>
+            ))}
+          </div>
+          <Link
+            href="/app/projects"
+            className="text-sandstone hover:text-sandstone-light text-sm transition-colors"
+          >
+            Manage projects &rarr;
+          </Link>
         </div>
 
         <div className="bg-basalt-50 rounded-card p-6">

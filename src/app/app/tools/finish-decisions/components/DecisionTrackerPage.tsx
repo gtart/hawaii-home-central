@@ -2,14 +2,12 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Input } from '@/components/ui/Input'
-import { ShareButton } from '@/components/resources/ShareButton'
 import {
   STATUS_CONFIG_V3,
   type RoomV3,
   type StatusV3,
   type RoomSelection,
 } from '@/data/finish-decisions'
-import Link from 'next/link'
 import { RoomSection } from './RoomSection'
 import { OnboardingView } from './OnboardingView'
 
@@ -127,25 +125,6 @@ export function DecisionTrackerPage({
 
   return (
     <>
-      {/* Breadcrumb */}
-      <Link
-        href="/app"
-        className="text-sandstone hover:text-sandstone-light text-sm mb-4 inline-block"
-      >
-        &larr; My Tools
-      </Link>
-
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-2">
-        <h1 className="font-serif text-4xl md:text-5xl text-sandstone">Decision Tracker</h1>
-        <div className="shrink-0 mt-2">
-          <ShareButton title="Decision Tracker &mdash; Hawaii Home Central" />
-        </div>
-      </div>
-      <p className="text-cream/70 text-lg mb-6 leading-relaxed">
-        Track the small choices that can stall a renovation—so you don&apos;t get stuck waiting on one item.
-      </p>
-
       {/* Onboarding — always visible, collapsible when rooms exist */}
       <OnboardingView
         onBatchCreate={onBatchAddRooms}

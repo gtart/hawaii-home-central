@@ -2,8 +2,8 @@
 
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useState, useEffect } from 'react'
-import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { useBYSState } from './useBYSState'
 import { ALL_TABS } from './beforeYouSignConfig'
 import { ContractorBar } from './components/ContractorBar'
@@ -178,18 +178,11 @@ export function BeforeYouSignContent() {
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-6xl mx-auto">
-        <Link
-          href="/app"
-          className="text-sandstone hover:text-sandstone-light text-sm mb-4 inline-block"
-        >
-          &larr; My Tools
-        </Link>
-        <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-4">
-          Contract Comparison Tool
-        </h1>
-        <p className="text-cream/70 text-lg mb-8 leading-relaxed">
-          Add each contractor, then mark what&apos;s covered, what&apos;s missing, and jot notes. This helps you compare apples-to-apples.
-        </p>
+        <ToolPageHeader
+          toolKey="before_you_sign"
+          title="Contract Comparison Tool"
+          description="Add each contractor, then mark what's covered, what's missing, and jot notes. This helps you compare apples-to-apples."
+        />
 
         <Suspense fallback={null}>
           <BYSContent />

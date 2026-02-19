@@ -6,12 +6,18 @@ import { useRouter } from 'next/navigation'
 export type ProjectRole = 'OWNER' | 'MEMBER'
 export type ProjectStatus = 'ACTIVE' | 'ARCHIVED' | 'TRASHED'
 
+export interface ToolAccessInfo {
+  toolKey: string
+  level: 'VIEW' | 'EDIT'
+}
+
 export interface ProjectInfo {
   id: string
   name: string
   status: ProjectStatus
   role: ProjectRole
   createdAt: string
+  toolAccess?: ToolAccessInfo[]
 }
 
 interface ProjectContextValue {

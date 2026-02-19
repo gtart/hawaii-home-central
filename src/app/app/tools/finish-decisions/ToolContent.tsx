@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useToolState } from '@/hooks/useToolState'
 import { LocalModeBanner } from '@/components/guides/LocalModeBanner'
+import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { DecisionTrackerPage } from './components/DecisionTrackerPage'
 import {
   DEFAULT_DECISIONS_BY_ROOM_TYPE,
@@ -351,6 +352,13 @@ export function ToolContent({ localOnly = false }: ToolContentProps) {
       <div className="max-w-4xl mx-auto">
         {localOnly && (
           <LocalModeBanner signInUrl="/login?callbackUrl=/app/tools/finish-decisions" />
+        )}
+        {!localOnly && (
+          <ToolPageHeader
+            toolKey="finish_decisions"
+            title="Decision Tracker"
+            description="Track the small choices that can stall a renovation—so you don't get stuck waiting on one item."
+          />
         )}
         {isLoaded && state.version === 3 ? (
           <DecisionTrackerPage

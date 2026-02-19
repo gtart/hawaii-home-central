@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { ProjectSwitcher } from '@/components/app/ProjectSwitcher'
+import { ToolGrid } from '@/components/app/ToolGrid'
 
 export const metadata: Metadata = {
   title: 'My Tools',
@@ -33,20 +33,7 @@ export default function AppPage() {
         </FadeInSection>
 
         <FadeInSection delay={100}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card
-              href="/app/tools/before-you-sign"
-              title="Contract Comparison Tool"
-              description="Compare quotes, assign who handles what, and agree on the details that cause fights later."
-              badge="Live"
-            />
-            <Card
-              href="/app/tools/finish-decisions"
-              title="Decision Tracker"
-              description="Track every material and finish decision by room. Compare options, record specs and links, and mark progress from deciding to done."
-              badge="Live"
-            />
-          </div>
+          <ToolGrid />
         </FadeInSection>
       </div>
     </div>
