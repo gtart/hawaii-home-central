@@ -9,6 +9,29 @@ generator client {
 
 // ─── Enums ────────────────────────────────────────────
 
+enum ProjectRole {
+  OWNER
+  MEMBER
+}
+
+enum ToolAccessLevel {
+  VIEW
+  EDIT
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+  TRASHED
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
 enum ContentType {
   GUIDE
   STORY
@@ -70,12 +93,15 @@ model User {
   newsletterUnsubToken     String?   @unique @default(cuid())
   hasSeenNewsletterPrompt  Boolean   @default(false)
 
-  currentPropertyId  String?
-  currentProperty    Property?  @relation("CurrentProperty", fields: [currentPropertyId], references: [id], onDelete: SetNull)
-  properties         Property[]
+  currentProjectId   String?    @map("currentPropertyId")
+  currentProject     Project?   @relation("CurrentProject", fields: [currentProjectId], references: [id], onDelete: SetNull)
+  projects           Project[]
 
-  toolResults      ToolResult[]
-  settingsUpdated  SiteSetting[]
+  toolResults        ToolResult[]
+  memberships        ProjectMember[]
+  toolAccess         ProjectToolAccess[]
+  sentInvites        ProjectInvite[]      @relation("SentInvites")
+  settingsUpdated    SiteSetting[]
   contentFeedback  ContentFeedback[]
   privateFeedback  ContentPrivateFeedback[]
   createdAt        DateTime @default(now())
@@ -117,33 +143,105 @@ model VerificationToken {
 }
 
 model ToolResult {
-  id         String    @id @default(cuid())
-  userId     String
-  toolKey    String
-  propertyId String?
-  payload    Json      @default("{}")
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  id        String    @id @default(cuid())
+  userId    String
+  toolKey   String
+  projectId String?   @map("propertyId")
+  payload   Json      @default("{}")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@unique([userId, toolKey])
   @@index([userId])
-  @@index([propertyId])
+  @@index([projectId])
 }
 
-model Property {
-  id        String   @id @default(cuid())
+model Project {
+  id        String        @id @default(cuid())
   userId    String
-  name      String   @default("My Home")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String        @default("My Home")
+  status    ProjectStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  currentForUsers User[]       @relation("CurrentProperty")
+  currentForUsers User[]              @relation("CurrentProject")
   toolResults     ToolResult[]
+  toolInstances   ToolInstance[]
+  members         ProjectMember[]
+  toolAccess      ProjectToolAccess[]
+  invites         ProjectInvite[]
 
   @@index([userId])
+  @@map("Property")
+}
+
+// ─── Project Collaboration ──────────────────────────────
+
+model ToolInstance {
+  id        String   @id @default(cuid())
+  projectId String
+  toolKey   String
+  payload   Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, toolKey])
+  @@index([projectId])
+}
+
+model ProjectMember {
+  id        String      @id @default(cuid())
+  projectId String
+  userId    String
+  role      ProjectRole @default(MEMBER)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@index([projectId])
+}
+
+model ProjectToolAccess {
+  id        String          @id @default(cuid())
+  projectId String
+  toolKey   String
+  userId    String
+  level     ToolAccessLevel @default(VIEW)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  project   Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, toolKey, userId])
+  @@index([projectId, toolKey])
+  @@index([userId])
+}
+
+model ProjectInvite {
+  id        String          @id @default(cuid())
+  projectId String
+  toolKey   String
+  email     String
+  level     ToolAccessLevel @default(EDIT)
+  token     String          @unique @default(cuid())
+  status    InviteStatus    @default(PENDING)
+  invitedBy String
+  expiresAt DateTime
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  project   Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  inviter   User            @relation("SentInvites", fields: [invitedBy], references: [id], onDelete: Cascade)
+
+  @@index([projectId, toolKey])
+  @@index([email, status])
+  @@index([token])
 }
 
 // ─── Rate Limiting ────────────────────────────────────

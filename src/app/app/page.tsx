@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { FadeInSection } from '@/components/effects/FadeInSection'
+import { ProjectSwitcher } from '@/components/app/ProjectSwitcher'
 
 export const metadata: Metadata = {
   title: 'My Tools',
@@ -25,6 +26,9 @@ export default function AppPage() {
             <p className="text-cream/50 text-sm mt-2">
               Actively being built&mdash;your feedback shapes what comes next.
             </p>
+            <div className="mt-4">
+              <ProjectSwitcher />
+            </div>
           </div>
         </FadeInSection>
 

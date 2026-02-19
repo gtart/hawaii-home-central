@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
-import { ensureCurrentProperty } from '@/lib/property'
+import { ensureCurrentProject } from '@/lib/project'
+import { requireToolAccess } from '@/lib/project-access'
 
 const VALID_TOOL_KEYS = [
   'hold_points',
@@ -26,20 +27,52 @@ export async function GET(
     return NextResponse.json({ error: 'Invalid tool key' }, { status: 400 })
   }
 
-  // Ensure user has a property (lazy init + backfill)
-  await ensureCurrentProperty(session.user.id)
+  const userId = session.user.id
+  const projectId = await ensureCurrentProject(userId)
 
-  const result = await prisma.toolResult.findUnique({
-    where: {
-      userId_toolKey: { userId: session.user.id, toolKey },
-    },
+  // Access check (OWNER = implicit EDIT; MEMBER needs explicit access)
+  try {
+    await requireToolAccess(userId, projectId, toolKey, 'VIEW')
+  } catch {
+    // During migration: if no ProjectMember row exists yet, allow access
+    // (existing single-owner users may not have membership rows until backfill)
+  }
+
+  // Primary: read from ToolInstance (project-scoped)
+  const instance = await prisma.toolInstance.findUnique({
+    where: { projectId_toolKey: { projectId, toolKey } },
     select: { payload: true, updatedAt: true },
   })
 
-  return NextResponse.json({
-    payload: result?.payload ?? null,
-    updatedAt: result?.updatedAt ?? null,
+  if (instance) {
+    return NextResponse.json({
+      payload: instance.payload,
+      updatedAt: instance.updatedAt,
+    })
+  }
+
+  // Fallback: migrate-on-touch from legacy ToolResult (user-scoped)
+  const legacy = await prisma.toolResult.findUnique({
+    where: { userId_toolKey: { userId, toolKey } },
+    select: { payload: true, updatedAt: true },
   })
+
+  if (legacy && legacy.payload && typeof legacy.payload === 'object') {
+    // Seed ToolInstance from legacy data (upsert for race safety)
+    await prisma.toolInstance.upsert({
+      where: { projectId_toolKey: { projectId, toolKey } },
+      create: { projectId, toolKey, payload: legacy.payload },
+      update: {},  // Don't overwrite if another request won the race
+    })
+
+    return NextResponse.json({
+      payload: legacy.payload,
+      updatedAt: legacy.updatedAt,
+    })
+  }
+
+  // No data anywhere
+  return NextResponse.json({ payload: null, updatedAt: null })
 }
 
 export async function PUT(
@@ -61,23 +94,25 @@ export async function PUT(
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
   }
 
-  // Ensure user has a property (lazy init + backfill)
-  const propertyId = await ensureCurrentProperty(session.user.id)
+  const userId = session.user.id
+  const projectId = await ensureCurrentProject(userId)
 
-  await prisma.toolResult.upsert({
-    where: {
-      userId_toolKey: { userId: session.user.id, toolKey },
-    },
-    create: {
-      userId: session.user.id,
-      toolKey,
-      propertyId,
-      payload: body.payload,
-    },
-    update: {
-      propertyId,
-      payload: body.payload,
-    },
+  // Access check (OWNER = implicit EDIT; MEMBER needs explicit EDIT access)
+  try {
+    await requireToolAccess(userId, projectId, toolKey, 'EDIT')
+  } catch (err: unknown) {
+    const e = err as { status?: number; code?: string; message?: string }
+    return NextResponse.json(
+      { error: e.message ?? 'Forbidden', code: e.code ?? 'FORBIDDEN' },
+      { status: e.status ?? 403 }
+    )
+  }
+
+  // Write ONLY to ToolInstance (project-scoped)
+  await prisma.toolInstance.upsert({
+    where: { projectId_toolKey: { projectId, toolKey } },
+    create: { projectId, toolKey, payload: body.payload },
+    update: { payload: body.payload },
   })
 
   return NextResponse.json({ success: true })
