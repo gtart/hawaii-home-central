@@ -95,7 +95,7 @@ export function ToolContent({ embedded }: { embedded?: boolean }) {
             )}
           </div>
           <p className="text-cream/70 text-sm mb-4 leading-relaxed">
-            Assign who owns the easy-to-miss tasks&mdash;so nothing gets assumed.
+            Prevent tasks from falling between trades&mdash;by making &lsquo;who does what&rsquo; clear before work starts.
           </p>
         </>
       ) : (
@@ -112,7 +112,7 @@ export function ToolContent({ embedded }: { embedded?: boolean }) {
             </div>
           </div>
           <p className="text-cream/70 text-lg mb-4 leading-relaxed">
-            Assign who owns the easy-to-miss tasks&mdash;so nothing gets assumed.
+            Prevent tasks from falling between trades&mdash;by making &lsquo;who does what&rsquo; clear before work starts.
           </p>
           <p className="text-cream/60 text-sm mb-8 leading-relaxed">
             Not a contract&mdash;just a clarity baseline to confirm handoffs.

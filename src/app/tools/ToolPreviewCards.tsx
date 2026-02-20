@@ -10,7 +10,7 @@ const TOOLS = [
   {
     title: 'Contract Comparison Tool',
     description:
-      'Compare quotes apples-to-apples, assign who handles what, and agree on the details that cause fights later.',
+      'Choose the right contractor with fewer surprises\u2014by normalizing each bid into the same checklist.',
     ctaText: 'Sign in to get started',
     ctaHref: '/login?callbackUrl=/app/tools/before-you-sign',
     steps: [
@@ -27,7 +27,7 @@ const TOOLS = [
   {
     title: 'Decision Tracker',
     description:
-      'Track every material and finish decision by room. Compare options, record details, and mark progress from deciding to done.',
+      'Always know what\u2019s decided, what\u2019s next, and what\u2019s blocking\u2014by organizing decisions by room instead of texts and screenshots.',
     ctaText: 'Sign in to get started',
     ctaHref: '/login?callbackUrl=/app/tools/finish-decisions',
     steps: [

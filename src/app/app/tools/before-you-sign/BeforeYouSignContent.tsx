@@ -76,7 +76,7 @@ function BYSContent() {
       <ToolPageHeader
         toolKey="before_you_sign"
         title="Contract Comparison Tool"
-        description="Add each contractor, then mark what's covered, what's missing, and jot notes. This helps you compare apples-to-apples."
+        description="Spot missing scope and lock expectations before you sign—by turning messy bids into a clear side-by-side."
         accessLevel={access}
       />
 

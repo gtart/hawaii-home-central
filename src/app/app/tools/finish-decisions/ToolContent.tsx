@@ -363,7 +363,7 @@ export function ToolContent({ localOnly = false }: ToolContentProps) {
           <ToolPageHeader
             toolKey="finish_decisions"
             title="Decision Tracker"
-            description="Track the small choices that can stall a renovation—so you don't get stuck waiting on one item."
+            description="Avoid delays and rework—by keeping decisions, links, and status updates together for each room."
             accessLevel={access}
           />
         )}

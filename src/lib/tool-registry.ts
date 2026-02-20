@@ -16,13 +16,13 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     href: '/app/tools/before-you-sign',
     title: 'Contract Comparison Tool',
     description:
-      'Compare quotes, assign who handles what, and agree on the details that cause fights later.',
+      'Make bids more comparable\u2014so you can choose confidently and avoid surprise scope gaps later.',
   },
   {
     toolKey: 'finish_decisions',
     href: '/app/tools/finish-decisions',
     title: 'Decision Tracker',
     description:
-      'Track every material and finish decision by room. Compare options, record specs and links, and mark progress from deciding to done.',
+      'Keep your renovation moving\u2014by tracking every finish decision, option, and status in one place.',
   },
 ]

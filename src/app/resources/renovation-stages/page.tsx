@@ -114,12 +114,12 @@ export default function RenovationStagesPage() {
                 <Card
                   href="/login?callbackUrl=/app/tools/finish-decisions"
                   title="Decision Tracker"
-                  description="Track every material and finish decision by room. Compare options, record details, and mark progress from deciding to done."
+                  description="Keep your renovation moving—by tracking every selection and status in one place."
                 />
                 <Card
                   href="/login?callbackUrl=/app/tools/before-you-sign"
                   title="Contract Comparison Tool"
-                  description="Compare contractor quotes, assign who handles what, and agree on the details before you start."
+                  description="Choose confidently with fewer surprises—by making bids more comparable side-by-side."
                 />
               </div>
               <p className="text-center">

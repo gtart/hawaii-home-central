@@ -72,9 +72,8 @@ export function PlaybookContent() {
           </div>
         </div>
         <p className="text-cream/70 text-lg mb-6 leading-relaxed">
-          Go through this checklist for each contractor bid. You&apos;ll see exactly
-          what&apos;s covered and what isn&apos;t&mdash;because contractors often include
-          different things around the edges.
+          Compare bids fairly and avoid costly surprises&mdash;by using one simple
+          checklist to spot missing scope and allowances.
         </p>
 
         {/* How to use */}
