@@ -17,6 +17,7 @@ export interface ProjectInfo {
   status: ProjectStatus
   role: ProjectRole
   createdAt: string
+  updatedAt: string
   toolAccess?: ToolAccessInfo[]
 }
 

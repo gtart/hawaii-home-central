@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useProject } from '@/contexts/ProjectContext'
 
 type AccessLevel = 'OWNER' | 'EDIT' | 'VIEW'
 
@@ -37,6 +38,15 @@ export function useToolState<T>({
   defaultValue,
   localOnly = false,
 }: UseToolStateOptions<T>): UseToolStateReturn<T> {
+  const { currentProject } = useProject()
+  const projectId = currentProject?.id
+
+  // Scope localStorage by project to prevent cross-project data leakage
+  const scopedKey = useMemo(
+    () => localOnly ? localStorageKey : `${localStorageKey}:${projectId ?? 'default'}`,
+    [localOnly, localStorageKey, projectId]
+  )
+
   const [state, setStateInternal] = useState<T>(defaultValue)
   const [isLoaded, setIsLoaded] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
@@ -45,8 +55,9 @@ export function useToolState<T>({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const stateRef = useRef<T>(defaultValue)
   const accessRef = useRef<AccessLevel | null>(null)
+  const defaultRef = useRef<T>(defaultValue)
 
-  // Load state on mount
+  // Load state on mount (ProjectKeyWrapper remounts on project switch)
   useEffect(() => {
     let cancelled = false
 
@@ -54,7 +65,7 @@ export function useToolState<T>({
       if (localOnly) {
         // Local-only mode: read from localStorage, skip API
         try {
-          const stored = localStorage.getItem(localStorageKey)
+          const stored = localStorage.getItem(scopedKey)
           if (stored && !cancelled) {
             const parsed = JSON.parse(stored) as T
             setStateInternal(parsed)
@@ -66,6 +77,9 @@ export function useToolState<T>({
         if (!cancelled) setIsLoaded(true)
         return
       }
+
+      // Wait for project to be determined before loading
+      if (!projectId) return
 
       try {
         const res = await fetch(`/api/tools/${toolKey}`)
@@ -92,29 +106,33 @@ export function useToolState<T>({
         if (data.payload) {
           setStateInternal(data.payload as T)
           stateRef.current = data.payload as T
-          // Mirror to localStorage
+          // Mirror to project-scoped localStorage
           try {
-            localStorage.setItem(localStorageKey, JSON.stringify(data.payload))
+            localStorage.setItem(scopedKey, JSON.stringify(data.payload))
           } catch {
             // ignore
           }
         } else {
-          // DB empty — try localStorage as fallback
+          // DB empty — try project-scoped localStorage as fallback
           try {
-            const stored = localStorage.getItem(localStorageKey)
+            const stored = localStorage.getItem(scopedKey)
             if (stored) {
               const parsed = JSON.parse(stored) as T
               setStateInternal(parsed)
               stateRef.current = parsed
+            } else {
+              // No cached data for this project — use default
+              setStateInternal(defaultRef.current)
+              stateRef.current = defaultRef.current
             }
           } catch {
             // ignore
           }
         }
       } catch {
-        // API failed — fall back to localStorage
+        // API failed — fall back to project-scoped localStorage
         try {
-          const stored = localStorage.getItem(localStorageKey)
+          const stored = localStorage.getItem(scopedKey)
           if (stored) {
             const parsed = JSON.parse(stored) as T
             setStateInternal(parsed)
@@ -132,7 +150,8 @@ export function useToolState<T>({
     return () => {
       cancelled = true
     }
-  }, [toolKey, localStorageKey, localOnly])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- projectId captured via scopedKey; defaultValue is stable via ref
+  }, [toolKey, scopedKey, localOnly, projectId])
 
   // Debounced save to API (skipped in localOnly mode and VIEW access)
   const saveToApi = useCallback(
@@ -167,9 +186,9 @@ export function useToolState<T>({
         const next = updater(prev)
         stateRef.current = next
 
-        // Write to localStorage immediately for instant UX
+        // Write to project-scoped localStorage immediately for instant UX
         try {
-          localStorage.setItem(localStorageKey, JSON.stringify(next))
+          localStorage.setItem(scopedKey, JSON.stringify(next))
         } catch {
           // ignore
         }
@@ -180,7 +199,7 @@ export function useToolState<T>({
         return next
       })
     },
-    [localStorageKey, saveToApi]
+    [scopedKey, saveToApi]
   )
 
   const readOnly = access === 'VIEW'

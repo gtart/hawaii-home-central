@@ -10,6 +10,7 @@ const ADMIN_LINKS = [
   { href: '/admin/collections', label: 'Collections' },
   { href: '/admin/tags', label: 'Tags' },
   { href: '/admin/settings', label: 'Settings' },
+  { href: '/admin/emails', label: 'Emails' },
   { href: '/admin/legal', label: 'Legal' },
   { href: '/admin/feedback', label: 'Feedback' },
   { href: '/admin/signups', label: 'Signups' },

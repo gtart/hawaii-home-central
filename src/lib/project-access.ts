@@ -78,8 +78,8 @@ export async function getEditShareCount(
   })
 }
 
-/** Maximum non-owner EDIT users per tool per project */
-export const MAX_EDIT_SHARES = 3
+/** Maximum non-owner collaborators per tool per project */
+export const MAX_EDIT_SHARES = 10
 
 export type ToolAccessLevel = 'OWNER' | 'EDIT' | 'VIEW'
 

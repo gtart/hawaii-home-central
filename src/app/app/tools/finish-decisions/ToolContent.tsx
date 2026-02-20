@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useToolState } from '@/hooks/useToolState'
+import { useProject } from '@/contexts/ProjectContext'
 import { LocalModeBanner } from '@/components/guides/LocalModeBanner'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { DecisionTrackerPage } from './components/DecisionTrackerPage'
@@ -210,6 +211,7 @@ interface ToolContentProps {
 }
 
 export function ToolContent({ localOnly = false }: ToolContentProps) {
+  const { projects } = useProject()
   const { state, setState, isLoaded, isSyncing, access, readOnly, noAccess } = useToolState<
     FinishDecisionsPayloadV3 | any
   >({
@@ -228,27 +230,31 @@ export function ToolContent({ localOnly = false }: ToolContentProps) {
     }
   }, [isLoaded, state, setState])
 
-  // Import local data when user signs in for the first time
+  // One-time import: migrate pre-account localStorage data into the user's FIRST project only.
+  // Never runs when the user has multiple projects — empty projects should stay empty.
   useEffect(() => {
     if (!isLoaded || localOnly) return
+    // Only import for users with a single project (initial signup migration)
+    if (projects.filter((p) => p.status === 'ACTIVE').length > 1) return
 
     const v3 = state.version === 3 ? (state as FinishDecisionsPayloadV3) : null
     if (!v3 || v3.rooms.length > 0) return // Already has account data
 
     try {
-      const stored = localStorage.getItem('hhc_finish_decisions_v2')
+      const LEGACY_KEY = 'hhc_finish_decisions_v2'
+      const stored = localStorage.getItem(LEGACY_KEY)
       if (!stored) return
 
       const local = JSON.parse(stored)
       const localV3 = local.version === 3 ? (local as FinishDecisionsPayloadV3) : migrateToV3(local)
       if (localV3.rooms.length === 0) return
 
-      // Auto-import local rooms into account
       setState(() => localV3)
+      localStorage.removeItem(LEGACY_KEY)
     } catch {
       // ignore
     }
-  }, [isLoaded, localOnly, state, setState])
+  }, [isLoaded, localOnly, state, setState, projects])
 
   // Ensure we're working with V3 data
   const v3State =

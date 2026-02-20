@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { requireProjectMembership, getEditShareCount, MAX_EDIT_SHARES } from '@/lib/project-access'
+import { sendInviteEmail } from '@/lib/email'
+import { TOOL_REGISTRY } from '@/lib/tool-registry'
 
 type RouteParams = { params: Promise<{ projectId: string; toolKey: string }> }
 
@@ -149,6 +151,30 @@ export async function POST(request: Request, { params }: RouteParams) {
     },
   })
 
+  // Send invite email (fire-and-forget — never blocks response)
+  const toolEntry = TOOL_REGISTRY.find((t) => t.toolKey === toolKey)
+  const toolName = toolEntry?.title || toolKey
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { name: true },
+  })
+
+  const inviterName = session.user.name || session.user.email || 'Someone'
+  const baseUrl = process.env.AUTH_URL || process.env.NEXTAUTH_URL || 'https://www.hawaiihomecentral.com'
+  const inviteLink = `${baseUrl}/invite/${invite.token}`
+
+  sendInviteEmail({
+    toEmail: email,
+    inviterName,
+    toolName,
+    accessLevel: level === 'EDIT' ? 'edit' : 'view',
+    projectName: project?.name || 'a project',
+    inviteLink,
+  }).catch((err) => {
+    console.error('[share] Email send failed (non-blocking):', err)
+  })
+
   return NextResponse.json({
     invite: {
       id: invite.id,
@@ -157,6 +183,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       level: invite.level,
       expiresAt: invite.expiresAt,
     },
+    emailQueued: !!process.env.RESEND_API_KEY,
   })
 }
 

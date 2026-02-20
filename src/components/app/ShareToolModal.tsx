@@ -45,6 +45,7 @@ export function ShareToolModal({ projectId, toolKey, onClose }: ShareToolModalPr
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
+  const [emailQueued, setEmailQueued] = useState(false)
 
   const toolLabel = TOOL_LABELS[toolKey] || toolKey
 
@@ -91,12 +92,13 @@ export function ShareToolModal({ projectId, toolKey, onClose }: ShareToolModalPr
       }
 
       const data = await res.json()
+      setEmailQueued(!!data.emailQueued)
       // Copy invite link to clipboard
       const inviteUrl = `${window.location.origin}/invite/${data.invite.token}`
       try {
         await navigator.clipboard.writeText(inviteUrl)
         setCopiedToken(data.invite.token)
-        setTimeout(() => setCopiedToken(null), 3000)
+        setTimeout(() => { setCopiedToken(null); setEmailQueued(false) }, 4000)
       } catch {
         // fallback: select for manual copy
       }
@@ -144,7 +146,7 @@ export function ShareToolModal({ projectId, toolKey, onClose }: ShareToolModalPr
           <div>
             <h2 className="text-lg font-medium text-cream">Share {toolLabel}</h2>
             <p className="text-xs text-cream/40 mt-0.5">
-              {editSeatsUsed} of {maxEditShares} edit seats used
+              You can invite up to {maxEditShares} collaborators · {editSeatsUsed} of {maxEditShares} used
             </p>
           </div>
           <button
@@ -192,7 +194,9 @@ export function ShareToolModal({ projectId, toolKey, onClose }: ShareToolModalPr
               <p className="text-sm text-red-400 mt-1.5">{error}</p>
             )}
             {copiedToken && (
-              <p className="text-sm text-emerald-400 mt-1.5">Invite link copied to clipboard</p>
+              <p className="text-sm text-emerald-400 mt-1.5">
+                Invite link copied to clipboard{emailQueued ? ' · Email sent' : ''}
+              </p>
             )}
           </div>
 

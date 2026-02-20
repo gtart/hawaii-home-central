@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { ProjectsContent } from './ProjectsContent'
 
 export const metadata: Metadata = {
-  title: 'Manage Projects',
+  title: 'My Projects',
 }
 
 export default function ProjectsPage() {

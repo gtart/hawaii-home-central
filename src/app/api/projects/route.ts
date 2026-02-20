@@ -19,7 +19,7 @@ export async function GET() {
     where: { userId },
     include: {
       project: {
-        select: { id: true, name: true, status: true, createdAt: true },
+        select: { id: true, name: true, status: true, createdAt: true, updatedAt: true },
       },
     },
     orderBy: { project: { createdAt: 'asc' } },
@@ -56,6 +56,7 @@ export async function GET() {
       status: m.project.status,
       role: m.role,
       createdAt: m.project.createdAt,
+      updatedAt: m.project.updatedAt,
       toolAccess: m.role === 'MEMBER' ? (toolAccessByProject.get(m.project.id) || []) : undefined,
     })),
     currentProjectId: user.currentProjectId,
@@ -95,6 +96,6 @@ export async function POST(request: Request) {
   })
 
   return NextResponse.json({
-    project: { id: project.id, name: project.name, status: project.status, role: 'OWNER' },
+    project: { id: project.id, name: project.name, status: project.status, role: 'OWNER', createdAt: project.createdAt, updatedAt: project.updatedAt },
   })
 }

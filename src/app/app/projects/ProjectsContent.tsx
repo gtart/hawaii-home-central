@@ -2,13 +2,29 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useProject, type ProjectInfo } from '@/contexts/ProjectContext'
 import { cn } from '@/lib/utils'
 
 type LifecycleSection = 'active' | 'archived' | 'trashed'
 
+function getDisplayRole(p: ProjectInfo): string {
+  if (p.role === 'OWNER') return 'Owner'
+  if (p.toolAccess?.some((t) => t.level === 'EDIT')) return 'Editor'
+  return 'Viewer'
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
 export function ProjectsContent() {
   const { projects, currentProject, switchProject, createProject, refreshProjects } = useProject()
+  const router = useRouter()
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -81,12 +97,18 @@ export function ProjectsContent() {
     const isBusy = busy === project.id
     const isOwner = project.role === 'OWNER'
 
+    const handleViewNow = async (projectId: string) => {
+      setBusy(projectId)
+      await switchProject(projectId)
+      router.push('/app')
+    }
+
     return (
       <div
         key={project.id}
         className={cn(
           'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-          isCurrent ? 'bg-sandstone/5 border border-sandstone/20' : 'bg-basalt-50'
+          isCurrent ? 'bg-sandstone/8 border border-sandstone/25' : 'bg-basalt-50'
         )}
       >
         {/* Name / edit */}
@@ -119,37 +141,61 @@ export function ProjectsContent() {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-cream truncate">{project.name}</span>
-              {isCurrent && (
-                <span className="text-[10px] text-sandstone bg-sandstone/10 px-1.5 py-0.5 rounded-full">
-                  Current
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-cream truncate">{project.name}</span>
+                <span className={cn(
+                  'text-[10px] px-1.5 py-0.5 rounded-full',
+                  isOwner
+                    ? 'text-sandstone bg-sandstone/10'
+                    : getDisplayRole(project) === 'Editor'
+                      ? 'text-sandstone/70 bg-sandstone/8'
+                      : 'text-cream/40 bg-cream/5'
+                )}>
+                  {getDisplayRole(project)}
                 </span>
-              )}
-              {project.role === 'MEMBER' && (
-                <span className="text-[10px] text-cream/30 bg-cream/5 px-1.5 py-0.5 rounded-full">
-                  Shared
-                </span>
+              </div>
+              {isOwner && (
+                <p className="text-xs text-cream/30 mt-0.5">
+                  Created {formatDate(project.createdAt)}
+                  {project.updatedAt && project.updatedAt !== project.createdAt && (
+                    <> &middot; Last edited {formatDate(project.updatedAt)}</>
+                  )}
+                </p>
               )}
             </div>
           )}
         </div>
+
+        {/* Status pill */}
+        {!isEditing && section === 'active' && (
+          <div className="shrink-0">
+            {isCurrent ? (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-sandstone bg-sandstone/12 px-2.5 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-sandstone" />
+                Currently Viewing
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleViewNow(project.id)}
+                disabled={isBusy}
+                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-cream/60 bg-cream/5 hover:bg-sandstone/15 hover:text-sandstone px-2.5 py-1 rounded-full transition-colors"
+              >
+                View Now
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 12h14m-7-7l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Actions */}
         {!isEditing && isOwner && (
           <div className="flex items-center gap-1 shrink-0">
             {section === 'active' && (
               <>
-                {!isCurrent && (
-                  <button
-                    type="button"
-                    onClick={() => switchProject(project.id)}
-                    disabled={isBusy}
-                    className="text-xs text-cream/40 hover:text-cream px-2 py-1 rounded hover:bg-cream/5 transition-colors"
-                  >
-                    Switch to
-                  </button>
-                )}
                 <button
                   type="button"
                   onClick={() => { setEditingId(project.id); setEditName(project.name) }}
@@ -223,7 +269,7 @@ export function ProjectsContent() {
           &larr; Settings
         </Link>
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-8">
-          Projects
+          My Projects
         </h1>
 
         {/* Active */}

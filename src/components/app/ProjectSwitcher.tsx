@@ -34,7 +34,7 @@ export function ProjectSwitcher() {
   }
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative z-20" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
