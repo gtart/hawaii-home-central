@@ -17,8 +17,8 @@ export function Footer() {
   const pathname = usePathname()
   const currentYear = new Date().getFullYear()
 
-  // Hide footer on admin and public share pages
-  if (pathname.startsWith('/admin') || pathname.startsWith('/share')) return null
+  // Hide footer on admin, public share, and report pages
+  if (pathname.startsWith('/admin') || pathname.startsWith('/share') || pathname.includes('/report')) return null
 
   return (
     <>

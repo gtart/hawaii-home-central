@@ -78,6 +78,7 @@ export function PunchlistReport() {
           .no-print { display: none !important; }
           .print-only { display: block !important; }
           .page-break-avoid { page-break-inside: avoid; }
+          .noise-overlay { display: none !important; }
         }
         @media screen {
           .print-only { display: none; }
@@ -106,27 +107,17 @@ export function PunchlistReport() {
         <div className="max-w-3xl mx-auto px-8 py-10">
           {/* Report header */}
           <div className="flex items-start justify-between mb-8 pb-4 border-b-2 border-gray-200">
-            <div>
+            <div className="flex items-center gap-3">
               {settings.logoUrl && (
-                <img src={settings.logoUrl} alt="" className="h-10 mb-3" />
+                <img src={settings.logoUrl} alt="" className="h-10 shrink-0" />
               )}
-              <h1 className="text-2xl font-bold text-gray-900">{settings.reportTitle}</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Generated {new Date().toLocaleDateString()}
-              </p>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">{settings.reportTitle}</h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  Generated {new Date().toLocaleDateString()} &middot; {payload.items.length} items
+                </p>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-500">{payload.items.length} total items</p>
-            </div>
-          </div>
-
-          {/* Additional Information banner */}
-          <div className={`px-4 py-2 rounded-lg text-sm mb-6 ${
-            includeNotes
-              ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-gray-50 text-gray-500 border border-gray-200'
-          }`}>
-            Additional Information: {includeNotes ? 'INCLUDED' : 'NOT INCLUDED'}
           </div>
 
           {/* Items grouped by status */}
