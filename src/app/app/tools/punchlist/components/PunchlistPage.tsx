@@ -6,6 +6,8 @@ import type { PunchlistStatus } from '../types'
 import { PunchlistItemCard } from './PunchlistItemCard'
 import { PunchlistItemDetail } from './PunchlistItemDetail'
 import { PunchlistItemForm } from './PunchlistItemForm'
+import { BulkPhotoUpload } from './BulkPhotoUpload'
+import { BulkTextEntry } from './BulkTextEntry'
 import { ExportPDFModal } from './ExportPDFModal'
 
 type SortMode = 'newest' | 'oldest' | 'priority'
@@ -32,6 +34,9 @@ export function PunchlistPage({ api }: Props) {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortMode>('newest')
   const [showForm, setShowForm] = useState(false)
+  const [showBulkPhotos, setShowBulkPhotos] = useState(false)
+  const [showBulkText, setShowBulkText] = useState(false)
+  const [showFab, setShowFab] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [viewingId, setViewingId] = useState<string | null>(null)
   const [showExport, setShowExport] = useState(false)
@@ -227,18 +232,70 @@ export function PunchlistPage({ api }: Props) {
         </div>
       )}
 
-      {/* Floating Add button */}
+      {/* Floating action button + menu */}
       {!readOnly && (
-        <button
-          type="button"
-          onClick={() => setShowForm(true)}
-          className="fixed bottom-8 right-8 w-14 h-14 bg-sandstone text-basalt rounded-full shadow-lg hover:bg-sandstone-light transition-colors flex items-center justify-center z-40"
-          aria-label="Add punch item"
-        >
-          <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-          </svg>
-        </button>
+        <>
+          {/* Backdrop when FAB menu open */}
+          {showFab && (
+            <div className="fixed inset-0 z-40" onClick={() => setShowFab(false)} />
+          )}
+
+          {/* FAB menu options */}
+          {showFab && (
+            <div className="fixed bottom-24 right-8 z-40 flex flex-col items-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setShowFab(false); setShowBulkPhotos(true) }}
+                className="flex items-center gap-2 bg-basalt-50 border border-cream/15 rounded-full pl-4 pr-3 py-2.5 shadow-lg hover:bg-basalt transition-colors"
+              >
+                <span className="text-sm text-cream whitespace-nowrap">Add Items from Photos</span>
+                <span className="w-8 h-8 bg-sandstone/20 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-sandstone" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowFab(false); setShowBulkText(true) }}
+                className="flex items-center gap-2 bg-basalt-50 border border-cream/15 rounded-full pl-4 pr-3 py-2.5 shadow-lg hover:bg-basalt transition-colors"
+              >
+                <span className="text-sm text-cream whitespace-nowrap">Add Multiple Items</span>
+                <span className="w-8 h-8 bg-sandstone/20 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-sandstone" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowFab(false); setShowForm(true) }}
+                className="flex items-center gap-2 bg-basalt-50 border border-cream/15 rounded-full pl-4 pr-3 py-2.5 shadow-lg hover:bg-basalt transition-colors"
+              >
+                <span className="text-sm text-cream whitespace-nowrap">Add Item</span>
+                <span className="w-8 h-8 bg-sandstone/20 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-sandstone" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                  </svg>
+                </span>
+              </button>
+            </div>
+          )}
+
+          {/* FAB button */}
+          <button
+            type="button"
+            onClick={() => setShowFab(!showFab)}
+            className={`fixed bottom-8 right-8 w-14 h-14 bg-sandstone text-basalt rounded-full shadow-lg hover:bg-sandstone-light transition-all flex items-center justify-center z-40 ${showFab ? 'rotate-45' : ''}`}
+            aria-label="Add punch item"
+          >
+            <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+            </svg>
+          </button>
+        </>
       )}
 
       {/* Add/Edit form modal */}
@@ -267,6 +324,22 @@ export function PunchlistPage({ api }: Props) {
             setViewingId(null)
             setEditingId(id)
           }}
+        />
+      )}
+
+      {/* Bulk photo upload modal */}
+      {showBulkPhotos && (
+        <BulkPhotoUpload
+          api={api}
+          onClose={() => setShowBulkPhotos(false)}
+        />
+      )}
+
+      {/* Bulk text entry modal */}
+      {showBulkText && (
+        <BulkTextEntry
+          api={api}
+          onClose={() => setShowBulkText(false)}
         />
       )}
 

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import type { PunchlistPhoto } from '../types'
+import { uploadFile } from '../utils'
 
 interface Props {
   photos: PunchlistPhoto[]
@@ -20,31 +21,18 @@ export function PhotoCapture({ photos, onAdd, onRemove }: Props) {
     setError('')
     setUploading(true)
 
-    for (const file of Array.from(files)) {
-      try {
-        const formData = new FormData()
-        formData.append('file', file)
+    const fileArray = Array.from(files)
 
-        const res = await fetch('/api/tools/punchlist/upload', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (!res.ok) {
-          let msg = `Upload failed (${res.status})`
-          try {
-            const data = await res.json()
-            if (data.error) msg = data.error
-          } catch { /* non-JSON response */ }
-          setError(msg)
-          continue
+    // Upload in parallel batches of 3 for speed
+    for (let i = 0; i < fileArray.length; i += 3) {
+      const batch = fileArray.slice(i, i + 3)
+      const results = await Promise.allSettled(batch.map(uploadFile))
+      for (const r of results) {
+        if (r.status === 'fulfilled') {
+          onAdd(r.value)
+        } else {
+          setError('Some photos failed to upload')
         }
-
-        const { url, thumbnailUrl, id } = await res.json()
-        onAdd({ id, url, thumbnailUrl, uploadedAt: new Date().toISOString() })
-      } catch (err) {
-        console.error('Photo upload error:', err)
-        setError('Upload failed. Check your connection and try again.')
       }
     }
 
@@ -113,6 +101,7 @@ export function PhotoCapture({ photos, onAdd, onRemove }: Props) {
             ref={galleryRef}
             type="file"
             accept="image/*"
+            multiple
             onChange={(e) => handleFiles(e.target.files)}
             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
           />
