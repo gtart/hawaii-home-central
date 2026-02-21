@@ -32,9 +32,9 @@ export function ExportPDFModal({ onClose }: Props) {
         </div>
 
         <div className="px-6 py-5 space-y-5">
-          {/* Notes option */}
+          {/* Additional Information option */}
           <div>
-            <p className="text-sm text-cream/70 mb-3">Include notes in report?</p>
+            <p className="text-sm text-cream/70 mb-3">Include additional information in report?</p>
             <div className="space-y-2">
               <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
                 <input
@@ -45,7 +45,7 @@ export function ExportPDFModal({ onClose }: Props) {
                   className="accent-sandstone"
                 />
                 <div>
-                  <p className="text-sm text-cream">Without notes</p>
+                  <p className="text-sm text-cream">Without additional info</p>
                   <p className="text-xs text-cream/40">Clean report for contractors</p>
                 </div>
               </label>
@@ -58,8 +58,8 @@ export function ExportPDFModal({ onClose }: Props) {
                   className="accent-sandstone"
                 />
                 <div>
-                  <p className="text-sm text-cream">With notes</p>
-                  <p className="text-xs text-cream/40">Includes your private notes</p>
+                  <p className="text-sm text-cream">With additional info</p>
+                  <p className="text-xs text-cream/40">Includes your additional information</p>
                 </div>
               </label>
             </div>

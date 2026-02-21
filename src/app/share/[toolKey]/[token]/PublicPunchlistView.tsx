@@ -62,21 +62,9 @@ function PublicItemCard({ item, includeNotes }: { item: PunchlistItem; includeNo
               )}
             </div>
             {includeNotes && item.notes && (
-              <p className="text-cream/40 text-xs mt-2 leading-relaxed">{item.notes}</p>
-            )}
-            {item.comments && item.comments.length > 0 && (
               <div className="mt-2 pt-2 border-t border-cream/5">
-                <p className="text-[10px] uppercase tracking-wider text-cream/30 mb-1">Comments ({item.comments.length})</p>
-                {item.comments.map((c) => (
-                  <div key={c.id} className="mb-1">
-                    <span className="text-[11px] text-cream/50">
-                      <span className="font-medium text-cream/60">{c.authorName}</span>
-                      {' '}&middot;{' '}
-                      {new Date(c.createdAt).toLocaleDateString()}
-                    </span>
-                    <p className="text-xs text-cream/40">{c.text}</p>
-                  </div>
-                ))}
+                <p className="text-[10px] uppercase tracking-wider text-cream/30 mb-1">Additional Information</p>
+                <p className="text-cream/40 text-xs leading-relaxed">{item.notes}</p>
               </div>
             )}
           </div>
@@ -214,11 +202,11 @@ export function PublicPunchlistView({ payload, projectName, includeNotes }: Prop
       </header>
 
       <div className="max-w-4xl mx-auto px-6 py-8">
-        {/* Notes banner — only shown when notes are included */}
+        {/* Additional Information banner — only shown when included */}
         {includeNotes && (
           <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs mb-6 bg-emerald-400/10 text-emerald-400">
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            Notes included
+            Additional information included
           </div>
         )}
 

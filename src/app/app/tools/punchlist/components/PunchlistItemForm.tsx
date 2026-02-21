@@ -192,14 +192,14 @@ export function PunchlistItemForm({ api, editItem, onClose }: Props) {
             onRemove={handleRemovePhoto}
           />
 
-          {/* Notes */}
+          {/* Additional Information */}
           <div>
-            <label className="block text-sm text-cream/70 mb-1.5">Notes</label>
+            <label className="block text-sm text-cream/70 mb-1.5">Additional Information</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              placeholder="Optional notes about this item..."
+              placeholder="Optional additional details about this item..."
               className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50 resize-none"
             />
           </div>

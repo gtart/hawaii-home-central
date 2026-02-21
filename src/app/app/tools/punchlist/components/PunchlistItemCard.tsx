@@ -64,6 +64,24 @@ export function PunchlistItemCard({ item, onTap }: Props) {
         </div>
       </div>
 
+      {/* Latest comment */}
+      {item.comments && item.comments.length > 0 && (() => {
+        const latest = item.comments[item.comments.length - 1]
+        return (
+          <div className="mt-3 pt-3 border-t border-cream/5 flex items-start gap-2">
+            <svg className="w-3.5 h-3.5 text-cream/25 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <div className="flex-1 min-w-0">
+              <p className="text-cream/40 text-xs line-clamp-1">{latest.text}</p>
+              <p className="text-cream/25 text-[10px] mt-0.5">
+                {latest.authorName} &middot; {new Date(latest.createdAt).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Bottom row: status badge + date */}
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-cream/5">
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusCfg.bg} ${statusCfg.text}`}>

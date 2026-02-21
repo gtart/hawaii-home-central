@@ -88,14 +88,14 @@ export function PublishShareModal({ toolKey, onClose, onCreated }: Props) {
                   : 'bg-cream/5 text-cream/40'
               }`}>
                 <span className={`w-2 h-2 rounded-full ${includeNotes ? 'bg-amber-400' : 'bg-cream/20'}`} />
-                Notes: {includeNotes ? 'INCLUDED' : 'NOT INCLUDED'}
+                Additional Info: {includeNotes ? 'INCLUDED' : 'NOT INCLUDED'}
               </div>
             </>
           ) : (
             <>
-              {/* Notes option */}
+              {/* Additional Information option */}
               <div>
-                <p className="text-sm text-cream/70 mb-3">Include notes in public view?</p>
+                <p className="text-sm text-cream/70 mb-3">Include additional information in public view?</p>
                 <div className="space-y-2">
                   <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors hover:bg-cream/5"
                     style={{ borderColor: !includeNotes ? 'rgba(var(--sandstone-rgb, 196 164 132) / 0.4)' : 'rgba(var(--cream-rgb, 255 253 250) / 0.1)' }}
@@ -108,7 +108,7 @@ export function PublishShareModal({ toolKey, onClose, onCreated }: Props) {
                       className="accent-sandstone"
                     />
                     <div>
-                      <p className="text-sm text-cream">Do NOT include notes</p>
+                      <p className="text-sm text-cream">Do NOT include additional info</p>
                       <p className="text-xs text-cream/40">Safer for sharing with contractors</p>
                     </div>
                   </label>
@@ -123,8 +123,8 @@ export function PublishShareModal({ toolKey, onClose, onCreated }: Props) {
                       className="accent-sandstone"
                     />
                     <div>
-                      <p className="text-sm text-cream">Include notes</p>
-                      <p className="text-xs text-cream/40">Notes will be visible to anyone with the link</p>
+                      <p className="text-sm text-cream">Include additional info</p>
+                      <p className="text-xs text-cream/40">Additional details will be visible to anyone with the link</p>
                     </div>
                   </label>
                 </div>
@@ -133,7 +133,7 @@ export function PublishShareModal({ toolKey, onClose, onCreated }: Props) {
               {includeNotes && (
                 <div className="bg-amber-400/10 border border-amber-400/20 rounded-lg p-3">
                   <p className="text-amber-400 text-xs">
-                    Notes may contain private comments. Make sure you&apos;re comfortable sharing them publicly.
+                    Additional information may contain private details. Make sure you&apos;re comfortable sharing them publicly.
                   </p>
                 </div>
               )}

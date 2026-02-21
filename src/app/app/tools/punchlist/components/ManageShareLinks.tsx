@@ -77,7 +77,7 @@ export function ManageShareLinks({ toolKey }: Props) {
                       ? 'bg-amber-400/15 text-amber-400'
                       : 'bg-cream/10 text-cream/40'
                   }`}>
-                    {t.includeNotes ? 'Notes included' : 'No notes'}
+                    {t.includeNotes ? 'Additional info included' : 'No additional info'}
                   </span>
                   <span className="text-xs text-cream/30">
                     {new Date(t.createdAt).toLocaleDateString()}

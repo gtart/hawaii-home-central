@@ -128,43 +128,16 @@ export function PunchlistItemDetail({ item, api, onClose, onEdit }: Props) {
             )}
           </div>
 
-          {/* Notes section */}
+          {/* Additional Information section */}
           {item.notes && (
             <div>
-              <h3 className="text-xs uppercase tracking-wider text-cream/30 mb-2">Notes</h3>
+              <h3 className="text-xs uppercase tracking-wider text-cream/30 mb-2">Additional Information</h3>
               <p className="text-sm text-cream/60 whitespace-pre-wrap leading-relaxed">{item.notes}</p>
             </div>
           )}
 
           {/* Comments section */}
-          <div>
-            <h3 className="text-xs uppercase tracking-wider text-cream/30 mb-3">
-              Comments {(item.comments?.length ?? 0) > 0 && `(${item.comments!.length})`}
-            </h3>
-
-            {(item.comments || []).length === 0 && (
-              <p className="text-xs text-cream/20 mb-3">No comments yet.</p>
-            )}
-
-            <div className="space-y-3">
-              {(item.comments || []).map((comment) => (
-                <div key={comment.id} className="pb-3 border-b border-cream/5 last:border-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-cream/70">{comment.authorName}</span>
-                    <span className="text-cream/20">&middot;</span>
-                    <span className="text-[11px] text-cream/30">
-                      {new Date(comment.createdAt).toLocaleDateString()}{' '}
-                      {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  <p className="text-sm text-cream/50 whitespace-pre-wrap">{comment.text}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Comment input — editors/owners only */}
-            {!readOnly && <CommentInput itemId={item.id} api={api} />}
-          </div>
+          <CommentsSection item={item} api={api} readOnly={readOnly} />
 
           {/* Delete button */}
           {!readOnly && (
@@ -206,6 +179,72 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   )
 }
 
+const COMMENTS_PER_PAGE = 10
+const MAX_COMMENT_LENGTH = 400
+
+function CommentsSection({ item, api, readOnly }: { item: PunchlistItem; api: PunchlistStateAPI; readOnly: boolean }) {
+  const [page, setPage] = useState(0)
+  const allComments = [...(item.comments || [])].reverse()
+  const totalPages = Math.max(1, Math.ceil(allComments.length / COMMENTS_PER_PAGE))
+  const pageComments = allComments.slice(page * COMMENTS_PER_PAGE, (page + 1) * COMMENTS_PER_PAGE)
+
+  return (
+    <div>
+      <h3 className="text-xs uppercase tracking-wider text-cream/30 mb-3">
+        Comments {allComments.length > 0 && `(${allComments.length})`}
+      </h3>
+
+      {/* Comment input — editors/owners only, at top */}
+      {!readOnly && <CommentInput itemId={item.id} api={api} />}
+
+      {allComments.length === 0 && (
+        <p className="text-xs text-cream/20 mt-3">No comments yet.</p>
+      )}
+
+      <div className="space-y-3 mt-3">
+        {pageComments.map((comment) => (
+          <div key={comment.id} className="pb-3 border-b border-cream/5 last:border-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-medium text-cream/70">{comment.authorName}</span>
+              <span className="text-cream/20">&middot;</span>
+              <span className="text-[11px] text-cream/30">
+                {new Date(comment.createdAt).toLocaleDateString()}{' '}
+                {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+            <p className="text-sm text-cream/50 whitespace-pre-wrap">{comment.text}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-4 pt-3 border-t border-cream/5">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="text-xs text-cream/40 hover:text-cream disabled:opacity-30 transition-colors"
+          >
+            Newer
+          </button>
+          <span className="text-[11px] text-cream/30">
+            {page + 1} / {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={page === totalPages - 1}
+            className="text-xs text-cream/40 hover:text-cream disabled:opacity-30 transition-colors"
+          >
+            Older
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function CommentInput({ itemId, api }: { itemId: string; api: PunchlistStateAPI }) {
   const { data: session } = useSession()
   const [text, setText] = useState('')
@@ -213,7 +252,7 @@ function CommentInput({ itemId, api }: { itemId: string; api: PunchlistStateAPI 
   function handleSubmit() {
     if (!text.trim() || !session?.user) return
     api.addComment(itemId, {
-      text: text.trim(),
+      text: text.trim().slice(0, MAX_COMMENT_LENGTH),
       authorName: session.user.name || 'Unknown',
       authorEmail: session.user.email || '',
     })
@@ -221,23 +260,31 @@ function CommentInput({ itemId, api }: { itemId: string; api: PunchlistStateAPI 
   }
 
   return (
-    <div className="flex gap-2 mt-3">
-      <input
-        type="text"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
-        placeholder="Add a comment..."
-        className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
-      />
-      <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={!text.trim()}
-        className="px-3 py-2 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors disabled:opacity-30"
-      >
-        Post
-      </button>
+    <div>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value.slice(0, MAX_COMMENT_LENGTH))}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
+          placeholder="Add a comment..."
+          maxLength={MAX_COMMENT_LENGTH}
+          className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+        />
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!text.trim()}
+          className="px-3 py-2 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors disabled:opacity-30"
+        >
+          Post
+        </button>
+      </div>
+      {text.length > 0 && (
+        <p className={`text-[10px] mt-1 text-right ${text.length >= MAX_COMMENT_LENGTH ? 'text-red-400' : 'text-cream/25'}`}>
+          {text.length}/{MAX_COMMENT_LENGTH}
+        </p>
+      )}
     </div>
   )
 }

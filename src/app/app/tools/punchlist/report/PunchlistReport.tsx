@@ -120,13 +120,13 @@ export function PunchlistReport() {
             </div>
           </div>
 
-          {/* Notes banner */}
+          {/* Additional Information banner */}
           <div className={`px-4 py-2 rounded-lg text-sm mb-6 ${
             includeNotes
               ? 'bg-green-50 text-green-700 border border-green-200'
               : 'bg-gray-50 text-gray-500 border border-gray-200'
           }`}>
-            Notes: {includeNotes ? 'INCLUDED' : 'NOT INCLUDED'}
+            Additional Information: {includeNotes ? 'INCLUDED' : 'NOT INCLUDED'}
           </div>
 
           {/* Items grouped by status */}
@@ -190,7 +190,10 @@ function ReportItem({ item, includeNotes, includeComments }: { item: PunchlistIt
             {item.completedAt && <> &middot; Completed: {new Date(item.completedAt).toLocaleDateString()}</>}
           </div>
           {includeNotes && item.notes && (
-            <p className="text-sm text-gray-600 mt-2 italic">{item.notes}</p>
+            <div className="mt-2">
+              <p className="text-xs text-gray-500 font-medium mb-0.5">Additional Information</p>
+              <p className="text-sm text-gray-600 italic">{item.notes}</p>
+            </div>
           )}
           {includeComments && item.comments && item.comments.length > 0 && (
             <div className="mt-2 pt-2 border-t border-gray-100">
