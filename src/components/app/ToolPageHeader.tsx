@@ -83,17 +83,6 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, child
 
   return (
     <>
-      {/* Project banner */}
-      {currentProject && (
-        <div className="flex items-center gap-3 mb-5 px-4 py-2.5 rounded-lg bg-sandstone/10 border border-sandstone/15">
-          <svg className="w-4 h-4 text-sandstone/60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="text-sm font-medium text-sandstone truncate">{currentProject.name}</span>
-          {hasMultipleProjects && <ProjectSwitcher />}
-        </div>
-      )}
-
       <div className="flex items-center gap-3 mb-4">
         <Link
           href="/app"
@@ -102,6 +91,20 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, child
           &larr; My Tools
         </Link>
       </div>
+
+      {/* Project banner */}
+      {currentProject && (
+        <div className="flex items-center gap-3 mb-5 px-4 py-2.5 rounded-lg bg-sandstone/10 border border-sandstone/15">
+          <svg className="w-4 h-4 text-sandstone/60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <div className="flex flex-col min-w-0">
+            <span className="text-[10px] uppercase tracking-wider text-sandstone/50">Currently viewing</span>
+            <span className="text-sm font-medium text-sandstone truncate">{currentProject.name}</span>
+          </div>
+          {hasMultipleProjects && <ProjectSwitcher />}
+        </div>
+      )}
 
       <div className="flex items-start justify-between gap-4 mb-4">
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
