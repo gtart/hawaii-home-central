@@ -169,6 +169,33 @@ export function PunchlistPage({ api }: Props) {
         >
           Export PDF
         </button>
+
+        {/* Desktop Add buttons — hidden on mobile, visible md+ */}
+        {!readOnly && (
+          <div className="hidden md:flex items-center gap-2 ml-auto">
+            <button
+              type="button"
+              onClick={() => setShowBulkPhotos(true)}
+              className="text-xs px-3 py-1.5 border border-cream/20 text-cream/50 rounded-lg hover:border-cream/40 hover:text-cream/70 transition-colors"
+            >
+              From Photos
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowBulkText(true)}
+              className="text-xs px-3 py-1.5 border border-cream/20 text-cream/50 rounded-lg hover:border-cream/40 hover:text-cream/70 transition-colors"
+            >
+              Bulk Items
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowForm(true)}
+              className="text-xs px-3 py-1.5 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+            >
+              + Add Item
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Location + Assignee filter chips */}
@@ -215,6 +242,22 @@ export function PunchlistPage({ api }: Props) {
         </div>
       )}
 
+      {/* Showing X of Y + Clear filters */}
+      {(filtered.length !== payload.items.length || filterStatus !== 'ALL' || filterLocation || filterAssignee || search.trim()) && (
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xs text-cream/40">
+            Showing {filtered.length} of {payload.items.length}
+          </span>
+          <button
+            type="button"
+            onClick={() => { setFilterStatus('ALL'); setFilterLocation(null); setFilterAssignee(null); setSearch('') }}
+            className="text-xs text-sandstone/60 hover:text-sandstone transition-colors"
+          >
+            Clear filters
+          </button>
+        </div>
+      )}
+
       {/* Item list */}
       {filtered.length === 0 ? (
         <p className="text-cream/40 text-sm text-center py-8">
@@ -233,9 +276,9 @@ export function PunchlistPage({ api }: Props) {
         </div>
       )}
 
-      {/* Floating action button + menu */}
+      {/* Floating action button + menu — mobile only */}
       {!readOnly && (
-        <>
+        <div className="md:hidden">
           {/* Backdrop when FAB menu open */}
           {showFab && (
             <div className="fixed inset-0 z-40" onClick={() => setShowFab(false)} />
@@ -296,7 +339,7 @@ export function PunchlistPage({ api }: Props) {
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
             </svg>
           </button>
-        </>
+        </div>
       )}
 
       {/* Add/Edit form modal */}

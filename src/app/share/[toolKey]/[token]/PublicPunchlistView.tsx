@@ -47,7 +47,10 @@ function PublicItemCard({ item, includeNotes }: { item: PunchlistItem; includeNo
           )}
 
           <div className="flex-1 min-w-0">
-            <h3 className="text-cream font-medium text-sm sm:text-base truncate">{item.title}</h3>
+            <h3 className="text-cream font-medium text-sm sm:text-base truncate">
+              <span className="text-cream/30 font-normal">#{item.itemNumber}</span>{' '}
+              {item.title}
+            </h3>
             <div className="flex flex-wrap items-center gap-2 mt-1.5">
               <span className="text-cream/50 text-xs">{item.location}</span>
               <span className="text-cream/20">&middot;</span>
@@ -297,6 +300,22 @@ export function PublicPunchlistView({ payload, projectName, includeNotes }: Prop
                 ))}
               </>
             )}
+          </div>
+        )}
+
+        {/* Showing X of Y + Clear filters */}
+        {(items.length !== allItems.length || filterStatus !== 'ALL' || filterLocation || filterAssignee || search.trim()) && (
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs text-cream/40">
+              Showing {items.length} of {allItems.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => { setFilterStatus('ALL'); setFilterLocation(null); setFilterAssignee(null); setSearch('') }}
+              className="text-xs text-sandstone/60 hover:text-sandstone transition-colors"
+            >
+              Clear filters
+            </button>
           </div>
         )}
 

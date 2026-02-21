@@ -48,6 +48,7 @@ export function PunchlistItemCard({ item, onTap, onStatusChange }: Props) {
         {/* Info */}
         <div className="flex-1 min-w-0">
           <h3 className="text-cream font-medium text-sm sm:text-base truncate">
+            <span className="text-cream/30 font-normal">#{item.itemNumber}</span>{' '}
             {item.title}
           </h3>
 

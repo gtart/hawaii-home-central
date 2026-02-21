@@ -19,6 +19,7 @@ export interface PunchlistComment {
 
 export interface PunchlistItem {
   id: string
+  itemNumber: number
   title: string
   location: string
   status: PunchlistStatus
@@ -33,6 +34,7 @@ export interface PunchlistItem {
 }
 
 export interface PunchlistPayload {
-  version: 1
+  version: 2
+  nextItemNumber: number
   items: PunchlistItem[]
 }

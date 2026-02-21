@@ -59,7 +59,7 @@ export function PunchlistItemDetail({ item, api, onClose, onEdit }: Props) {
           </button>
 
           <h2 className="text-base font-medium text-cream truncate flex-1 mx-3 text-center">
-            {item.title}
+            <span className="text-cream/30">#{item.itemNumber}</span> {item.title}
           </h2>
 
           {!readOnly && (

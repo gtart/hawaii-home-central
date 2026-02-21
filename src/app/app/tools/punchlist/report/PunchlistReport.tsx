@@ -14,6 +14,8 @@ const STATUS_LABEL: Record<PunchlistStatus, string> = {
 
 const STATUS_ORDER: PunchlistStatus[] = ['OPEN', 'IN_PROGRESS', 'DONE']
 
+const VALID_STATUSES = new Set<string>(['OPEN', 'IN_PROGRESS', 'DONE'])
+
 interface ReportSettings {
   logoUrl?: string
   companyName: string
@@ -21,10 +23,79 @@ interface ReportSettings {
   footerText: string
 }
 
+interface GroupedSection {
+  label: string
+  subgroups: { label: string; items: PunchlistItem[] }[]
+}
+
+function buildGroups(items: PunchlistItem[], orgMode: string): GroupedSection[] {
+  if (orgMode === 'status_room') {
+    // Status → Room
+    return STATUS_ORDER
+      .map((status) => {
+        const statusItems = items.filter((i) => i.status === status)
+        if (statusItems.length === 0) return null
+        const byRoom = new Map<string, PunchlistItem[]>()
+        for (const item of statusItems) {
+          const key = item.location || 'Unassigned'
+          if (!byRoom.has(key)) byRoom.set(key, [])
+          byRoom.get(key)!.push(item)
+        }
+        const rooms = Array.from(byRoom.keys()).sort((a, b) => {
+          if (a === 'Unassigned') return 1
+          if (b === 'Unassigned') return -1
+          return a.localeCompare(b)
+        })
+        return {
+          label: `${STATUS_LABEL[status]} (${statusItems.length})`,
+          subgroups: rooms.map((room) => ({
+            label: room,
+            items: byRoom.get(room)!,
+          })),
+        }
+      })
+      .filter(Boolean) as GroupedSection[]
+  }
+
+  // Default: Room → Status
+  const byRoom = new Map<string, PunchlistItem[]>()
+  for (const item of items) {
+    const key = item.location || 'Unassigned'
+    if (!byRoom.has(key)) byRoom.set(key, [])
+    byRoom.get(key)!.push(item)
+  }
+  const rooms = Array.from(byRoom.keys()).sort((a, b) => {
+    if (a === 'Unassigned') return 1
+    if (b === 'Unassigned') return -1
+    return a.localeCompare(b)
+  })
+
+  return rooms.map((room) => {
+    const roomItems = byRoom.get(room)!
+    const subgroups = STATUS_ORDER
+      .map((status) => {
+        const sub = roomItems.filter((i) => i.status === status)
+        if (sub.length === 0) return null
+        return { label: STATUS_LABEL[status], items: sub }
+      })
+      .filter(Boolean) as { label: string; items: PunchlistItem[] }[]
+    return {
+      label: `${room} (${roomItems.length})`,
+      subgroups,
+    }
+  })
+}
+
 export function PunchlistReport() {
   const searchParams = useSearchParams()
   const includeNotes = searchParams.get('includeNotes') === 'true'
   const includeComments = searchParams.get('includeComments') === 'true'
+  const orgMode = searchParams.get('org') || 'room_status'
+  const statusParam = searchParams.get('statuses') || 'OPEN,IN_PROGRESS'
+  const includedStatuses = useMemo(
+    () => new Set(statusParam.split(',').filter((s) => VALID_STATUSES.has(s)) as PunchlistStatus[]),
+    [statusParam]
+  )
   const { payload, isLoaded } = usePunchlistState()
   const { currentProject } = useProject()
   const [settings, setSettings] = useState<ReportSettings>({
@@ -57,13 +128,15 @@ export function PunchlistReport() {
     }
   }, [isLoaded, payload.items.length])
 
-  const groupedByStatus = useMemo(() => {
-    return STATUS_ORDER.map((status) => ({
-      status,
-      label: STATUS_LABEL[status],
-      items: payload.items.filter((i) => i.status === status),
-    })).filter((group) => group.items.length > 0)
-  }, [payload.items])
+  const reportItems = useMemo(
+    () => payload.items.filter((i) => includedStatuses.has(i.status)),
+    [payload.items, includedStatuses]
+  )
+
+  const sections = useMemo(
+    () => buildGroups(reportItems, orgMode),
+    [reportItems, orgMode]
+  )
 
   if (!isLoaded) {
     return (
@@ -83,6 +156,19 @@ export function PunchlistReport() {
           .print-only { display: block !important; }
           .page-break-avoid { page-break-inside: avoid; }
           .noise-overlay { display: none !important; }
+          .print-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 6px 32px;
+            font-size: 9px;
+            color: #999;
+            border-top: 1px solid #e5e7eb;
+            background: white;
+            text-align: center;
+          }
+          .report-content { padding-bottom: 40px; }
         }
         @media screen {
           .print-only { display: none; }
@@ -99,16 +185,21 @@ export function PunchlistReport() {
           >
             &larr; Back to Punchlist
           </button>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="px-4 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
-          >
-            Print / Save PDF
-          </button>
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-cream/40">
+              Tip: Disable &ldquo;Headers and footers&rdquo; in print dialog to remove the URL
+            </span>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="px-4 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+            >
+              Print / Save PDF
+            </button>
+          </div>
         </div>
 
-        <div className="max-w-3xl mx-auto px-8 py-10">
+        <div className="max-w-3xl mx-auto px-8 py-10 report-content">
           {/* Report header */}
           <div className="mb-8 pb-4 border-b-2 border-gray-200">
             {/* Company branding row */}
@@ -128,29 +219,39 @@ export function PunchlistReport() {
             <div className="flex items-center justify-between">
               <p className="text-base font-medium text-gray-600">{settings.reportTitle}</p>
               <p className="text-sm text-gray-400">
-                {new Date().toLocaleDateString()} &middot; {payload.items.length} items
+                {new Date().toLocaleDateString()} &middot; {reportItems.length} items
               </p>
             </div>
           </div>
 
-          {/* Items grouped by status */}
-          {groupedByStatus.map(({ status, label, items }) => (
-            <div key={status} className="mb-8">
+          {/* Grouped items */}
+          {sections.map((section) => (
+            <div key={section.label} className="mb-8">
               <h2 className="text-lg font-semibold text-gray-800 mb-3 pb-1 border-b border-gray-200">
-                {label} ({items.length})
+                {section.label}
               </h2>
-              <div className="space-y-4">
-                {items.map((item) => (
-                  <ReportItem key={item.id} item={item} includeNotes={includeNotes} includeComments={includeComments} />
-                ))}
-              </div>
+              {section.subgroups.map((sub) => (
+                <div key={sub.label} className="mb-4">
+                  <h3 className="text-sm font-medium text-gray-500 mb-2 ml-1">{sub.label}</h3>
+                  <div className="space-y-3">
+                    {sub.items.map((item) => (
+                      <ReportItem key={item.id} item={item} includeNotes={includeNotes} includeComments={includeComments} />
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
 
-          {/* Footer */}
-          <div className="mt-12 pt-4 border-t border-gray-200 text-center">
+          {/* In-flow footer (screen view) */}
+          <div className="mt-12 pt-4 border-t border-gray-200 text-center no-print">
             <p className="text-xs text-gray-400">{settings.footerText}</p>
           </div>
+        </div>
+
+        {/* Print-only repeating footer */}
+        <div className="print-footer print-only">
+          {settings.footerText} &middot; {currentProject?.name || ''} &middot; {new Date().toLocaleDateString()}
         </div>
       </div>
     </>
@@ -182,11 +283,16 @@ function ReportItem({ item, includeNotes, includeComments }: { item: PunchlistIt
         )}
 
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-gray-900">{item.title}</h3>
+          <h3 className="font-medium text-gray-900 flex items-center gap-2">
+            {/* Print-friendly checkbox square */}
+            <span className="inline-block w-3.5 h-3.5 border border-gray-400 rounded-sm shrink-0" />
+            <span className="text-gray-400 font-normal">#{item.itemNumber}</span>
+            <span>{item.title}</span>
+          </h3>
           <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
             <span>Location: {item.location}</span>
             <span>Assignee: {item.assigneeLabel}</span>
-            {item.priority && <span>Priority: {item.priority}</span>}
+            <span>Priority: {item.priority || '—'}</span>
             <span>Status: {STATUS_LABEL[item.status]}</span>
           </div>
           <div className="text-xs text-gray-400 mt-1">

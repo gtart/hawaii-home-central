@@ -12,20 +12,47 @@ import type {
 } from './types'
 
 const DEFAULT_PAYLOAD: PunchlistPayload = {
-  version: 1,
+  version: 2,
+  nextItemNumber: 1,
   items: [],
 }
 
+interface V1Payload {
+  version: 1
+  items: Array<Omit<PunchlistItem, 'itemNumber'> & { itemNumber?: number }>
+}
+
 function ensureShape(raw: unknown): PunchlistPayload {
+  if (!raw || typeof raw !== 'object' || !('version' in raw)) return DEFAULT_PAYLOAD
+
+  const obj = raw as Record<string, unknown>
+
+  // v2 — current format
   if (
-    raw &&
-    typeof raw === 'object' &&
-    'version' in raw &&
-    (raw as PunchlistPayload).version === 1 &&
-    Array.isArray((raw as PunchlistPayload).items)
+    obj.version === 2 &&
+    typeof obj.nextItemNumber === 'number' &&
+    Array.isArray(obj.items)
   ) {
     return raw as PunchlistPayload
   }
+
+  // v1 → v2 migration: assign stable item numbers by creation order
+  if (obj.version === 1 && Array.isArray(obj.items)) {
+    const v1 = raw as V1Payload
+    const sorted = [...v1.items].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    )
+    const migrated: PunchlistItem[] = sorted.map((item, i) => ({
+      ...item,
+      itemNumber: i + 1,
+    }))
+    return {
+      version: 2,
+      nextItemNumber: migrated.length + 1,
+      items: migrated,
+    }
+  }
+
   return DEFAULT_PAYLOAD
 }
 
@@ -62,10 +89,12 @@ export function usePunchlistState() {
       const ts = now()
       setState((prev) => ({
         ...prev,
+        nextItemNumber: prev.nextItemNumber + 1,
         items: [
           ...prev.items,
           {
             id,
+            itemNumber: prev.nextItemNumber,
             title: item.title,
             location: item.location,
             status: 'OPEN' as PunchlistStatus,
