@@ -3,37 +3,8 @@
 import { useState, useMemo } from 'react'
 import type { PunchlistItem, PunchlistPhoto, PunchlistPriority } from '../types'
 import type { PunchlistStateAPI } from '../usePunchlistState'
+import { LOCATION_SEEDS, ASSIGNEE_SEEDS } from '../utils'
 import { PhotoCapture } from './PhotoCapture'
-
-const LOCATION_SEEDS = [
-  'Kitchen',
-  'Master Bathroom',
-  'Guest Bathroom',
-  'Living Room',
-  'Dining Room',
-  'Master Bedroom',
-  'Guest Bedroom',
-  'Hallway',
-  'Garage',
-  'Lanai',
-  'Exterior',
-  'Roof',
-  'Laundry Room',
-  'Office',
-]
-
-const ASSIGNEE_SEEDS = [
-  'GC',
-  'Plumber',
-  'Electrician',
-  'Painter',
-  'Tile',
-  'Cabinet Installer',
-  'HVAC',
-  'Flooring',
-  'Drywall',
-  'Homeowner',
-]
 
 interface Props {
   api: PunchlistStateAPI

@@ -244,6 +244,22 @@ export function Navigation() {
                   </Link>
                 </li>
               ))}
+              {session?.user && (
+                <li>
+                  <Link
+                    href="/app/projects"
+                    className={cn(
+                      'block py-2.5 text-base transition-colors',
+                      pathname.startsWith('/app/projects')
+                        ? 'text-sandstone'
+                        : 'text-cream/70 hover:text-cream'
+                    )}
+                    aria-current={pathname.startsWith('/app/projects') ? 'page' : undefined}
+                  >
+                    My Projects
+                  </Link>
+                </li>
+              )}
               <li className="border-t border-cream/10 pt-2 mt-2" aria-hidden="true">
                 <span className="block text-[11px] text-cream/30 uppercase tracking-wide py-1">
                   More

@@ -90,25 +90,27 @@ export function EarlyAccessSignupForm() {
   }
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="flex gap-3 items-start">
-        <div className="flex-1">
-          <Input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value)
-              if (status === 'error') setStatus('idle')
-            }}
-            placeholder="you@example.com"
-            error={status === 'error' ? errorMessage : undefined}
-            disabled={status === 'submitting'}
-            aria-label="Email address"
-          />
-        </div>
-        <Button type="submit" disabled={status === 'submitting'}>
-          {status === 'submitting' ? 'Joining...' : 'Notify me when we launch'}
+    <div className="space-y-5">
+      <h3 className="font-serif text-xl text-sandstone text-center">
+        Join the waitlist!
+      </h3>
+
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <Input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value)
+            if (status === 'error') setStatus('idle')
+          }}
+          placeholder="you@example.com"
+          error={status === 'error' ? errorMessage : undefined}
+          disabled={status === 'submitting'}
+          aria-label="Email address"
+        />
+        <Button type="submit" disabled={status === 'submitting'} className="w-full">
+          {status === 'submitting' ? 'Joining...' : 'Submit'}
         </Button>
       </form>
 
@@ -142,7 +144,7 @@ export function EarlyAccessSignupForm() {
             fill="#EA4335"
           />
         </svg>
-        Sign in with Google for Early Preview
+        Sign in if you already have access
       </Button>
 
       <p className="text-xs text-cream/50 text-center">
