@@ -177,7 +177,7 @@ export function BulkPhotoUpload({ api, onClose }: Props) {
         {step === 'upload' ? (
           <div className="px-5 py-5 space-y-5">
             <p className="text-sm text-cream/50">
-              Select up to {MAX_PHOTOS} photos. Each photo becomes a new punchlist item.
+              Select up to {MAX_PHOTOS} photos. Each photo becomes a new fix list item.
             </p>
 
             {/* Photo grid preview */}

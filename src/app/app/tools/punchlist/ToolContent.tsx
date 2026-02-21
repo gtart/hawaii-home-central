@@ -35,8 +35,8 @@ function PunchlistContent() {
     <>
       <ToolPageHeader
         toolKey="punchlist"
-        title="Punchlist"
-        description="Document and track punch items with photos—so nothing gets missed before closeout."
+        title="Fix List"
+        description="Track fixes and share with your contractor."
         accessLevel={access}
       />
 

@@ -23,11 +23,10 @@ export function PunchlistEmptyState({ readOnly, api }: Props) {
           </svg>
         </div>
         <h2 className="font-serif text-2xl text-cream mb-2">
-          No punch items yet
+          No fixes yet
         </h2>
         <p className="text-cream/50 text-sm mb-6 max-w-md mx-auto">
-          Walk through your project, snap photos of anything that needs attention,
-          and track it here until it&apos;s resolved.
+          Add your first item to start tracking fixes.
         </p>
         {!readOnly && (
           <button

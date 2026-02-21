@@ -3,7 +3,7 @@ import { PublicPunchlistView } from './PublicPunchlistView'
 import { InvalidTokenPage } from './InvalidTokenPage'
 
 export const metadata: Metadata = {
-  title: 'Shared Punchlist — Hawaii Home Central',
+  title: 'Shared Fix List — Hawaii Home Central',
   robots: 'noindex, nofollow',
 }
 

@@ -37,7 +37,7 @@ export function ManageShareLinks({ toolKey }: Props) {
   }, [loadTokens])
 
   async function handleRevoke(tokenId: string) {
-    if (!confirm('Revoke this public link? Anyone with it will no longer be able to view your punchlist.')) return
+    if (!confirm('Revoke this public link? Anyone with it will no longer be able to view your fix list.')) return
 
     await fetch(`/api/tools/${toolKey}/share-token`, {
       method: 'DELETE',

@@ -8,13 +8,13 @@ import type { PunchlistItem, PunchlistStatus } from '../types'
 
 const STATUS_LABEL: Record<PunchlistStatus, string> = {
   OPEN: 'Open',
-  IN_PROGRESS: 'In Progress',
+  ACCEPTED: 'Accepted',
   DONE: 'Done',
 }
 
-const STATUS_ORDER: PunchlistStatus[] = ['OPEN', 'IN_PROGRESS', 'DONE']
+const STATUS_ORDER: PunchlistStatus[] = ['OPEN', 'ACCEPTED', 'DONE']
 
-const VALID_STATUSES = new Set<string>(['OPEN', 'IN_PROGRESS', 'DONE'])
+const VALID_STATUSES = new Set<string>(['OPEN', 'ACCEPTED', 'DONE'])
 
 interface ReportSettings {
   logoUrl?: string
@@ -91,7 +91,7 @@ export function PunchlistReport() {
   const includeNotes = searchParams.get('includeNotes') === 'true'
   const includeComments = searchParams.get('includeComments') === 'true'
   const orgMode = searchParams.get('org') || 'room_status'
-  const statusParam = searchParams.get('statuses') || 'OPEN,IN_PROGRESS'
+  const statusParam = searchParams.get('statuses') || 'OPEN,ACCEPTED'
   const includedStatuses = useMemo(
     () => new Set(statusParam.split(',').filter((s) => VALID_STATUSES.has(s)) as PunchlistStatus[]),
     [statusParam]
@@ -183,7 +183,7 @@ export function PunchlistReport() {
             onClick={() => window.history.back()}
             className="text-sm text-cream/60 hover:text-cream transition-colors"
           >
-            &larr; Back to Punchlist
+            &larr; Back to Fix List
           </button>
           <div className="flex items-center gap-4">
             <span className="text-xs text-cream/40">

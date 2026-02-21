@@ -28,8 +28,8 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'punchlist',
     href: '/app/tools/punchlist',
-    title: 'Punchlist',
+    title: 'Fix List',
     description:
-      'Document and track punch items with photos\u2014so nothing gets missed before closeout.',
+      'Track fixes and share with your contractor.',
   },
 ]

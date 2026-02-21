@@ -11,7 +11,7 @@ type OrgMode = 'room_status' | 'status_room'
 
 const STATUS_CHECKS: { key: PunchlistStatus; label: string }[] = [
   { key: 'OPEN', label: 'Open' },
-  { key: 'IN_PROGRESS', label: 'In Progress' },
+  { key: 'ACCEPTED', label: 'Accepted' },
   { key: 'DONE', label: 'Done' },
 ]
 
@@ -19,7 +19,7 @@ export function ExportPDFModal({ onClose }: Props) {
   const [includeNotes, setIncludeNotes] = useState(false)
   const [includeComments, setIncludeComments] = useState(false)
   const [org, setOrg] = useState<OrgMode>('room_status')
-  const [includedStatuses, setIncludedStatuses] = useState<Set<PunchlistStatus>>(new Set(['OPEN', 'IN_PROGRESS']))
+  const [includedStatuses, setIncludedStatuses] = useState<Set<PunchlistStatus>>(new Set(['OPEN', 'ACCEPTED']))
   const [confirmed, setConfirmed] = useState(false)
 
   function toggleStatus(s: PunchlistStatus) {

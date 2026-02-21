@@ -12,14 +12,20 @@ import type {
 } from './types'
 
 const DEFAULT_PAYLOAD: PunchlistPayload = {
-  version: 2,
+  version: 3,
   nextItemNumber: 1,
   items: [],
 }
 
 interface V1Payload {
   version: 1
-  items: Array<Omit<PunchlistItem, 'itemNumber'> & { itemNumber?: number }>
+  items: Array<Omit<PunchlistItem, 'itemNumber'> & { itemNumber?: number; status: string }>
+}
+
+/** Remap old IN_PROGRESS status to ACCEPTED */
+function migrateStatus(status: string): PunchlistStatus {
+  if (status === 'IN_PROGRESS') return 'ACCEPTED'
+  return status as PunchlistStatus
 }
 
 function ensureShape(raw: unknown): PunchlistPayload {
@@ -27,16 +33,33 @@ function ensureShape(raw: unknown): PunchlistPayload {
 
   const obj = raw as Record<string, unknown>
 
-  // v2 — current format
+  // v3 — current format
   if (
-    obj.version === 2 &&
+    obj.version === 3 &&
     typeof obj.nextItemNumber === 'number' &&
     Array.isArray(obj.items)
   ) {
     return raw as PunchlistPayload
   }
 
-  // v1 → v2 migration: assign stable item numbers by creation order
+  // v2 → v3 migration: remap IN_PROGRESS → ACCEPTED
+  if (
+    obj.version === 2 &&
+    typeof obj.nextItemNumber === 'number' &&
+    Array.isArray(obj.items)
+  ) {
+    const items = (obj.items as Array<PunchlistItem & { status: string }>).map((item) => ({
+      ...item,
+      status: migrateStatus(item.status),
+    }))
+    return {
+      version: 3,
+      nextItemNumber: obj.nextItemNumber as number,
+      items,
+    }
+  }
+
+  // v1 → v3 migration: assign item numbers + remap statuses
   if (obj.version === 1 && Array.isArray(obj.items)) {
     const v1 = raw as V1Payload
     const sorted = [...v1.items].sort(
@@ -45,9 +68,10 @@ function ensureShape(raw: unknown): PunchlistPayload {
     const migrated: PunchlistItem[] = sorted.map((item, i) => ({
       ...item,
       itemNumber: i + 1,
+      status: migrateStatus(item.status),
     }))
     return {
-      version: 2,
+      version: 3,
       nextItemNumber: migrated.length + 1,
       items: migrated,
     }

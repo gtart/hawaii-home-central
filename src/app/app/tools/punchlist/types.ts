@@ -1,4 +1,4 @@
-export type PunchlistStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE'
+export type PunchlistStatus = 'OPEN' | 'ACCEPTED' | 'DONE'
 export type PunchlistPriority = 'LOW' | 'MED' | 'HIGH'
 
 export interface PunchlistPhoto {
@@ -34,7 +34,7 @@ export interface PunchlistItem {
 }
 
 export interface PunchlistPayload {
-  version: 2
+  version: 3
   nextItemNumber: number
   items: PunchlistItem[]
 }

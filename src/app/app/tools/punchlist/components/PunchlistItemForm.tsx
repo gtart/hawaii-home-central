@@ -96,7 +96,7 @@ export function PunchlistItemForm({ api, editItem, onClose }: Props) {
         {/* Header */}
         <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-lg font-medium text-cream">
-            {editItem ? 'Edit Item' : 'New Punch Item'}
+            {editItem ? 'Edit Item' : 'New Item'}
           </h2>
           <button
             type="button"

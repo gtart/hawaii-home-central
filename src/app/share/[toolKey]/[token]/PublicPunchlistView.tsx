@@ -6,7 +6,7 @@ import type { PunchlistItem, PunchlistStatus, PunchlistPhoto } from '@/app/app/t
 
 const STATUS_CONFIG: Record<PunchlistStatus, { label: string; dot: string; bg: string; text: string }> = {
   OPEN: { label: 'Open', dot: 'bg-red-400', bg: 'bg-red-400/10', text: 'text-red-400' },
-  IN_PROGRESS: { label: 'In Progress', dot: 'bg-amber-400', bg: 'bg-amber-400/10', text: 'text-amber-400' },
+  ACCEPTED: { label: 'Accepted', dot: 'bg-amber-400', bg: 'bg-amber-400/10', text: 'text-amber-400' },
   DONE: { label: 'Done', dot: 'bg-emerald-400', bg: 'bg-emerald-400/10', text: 'text-emerald-400' },
 }
 
@@ -133,7 +133,7 @@ type FilterStatus = 'ALL' | PunchlistStatus
 const STATUS_OPTIONS: { key: FilterStatus; label: string }[] = [
   { key: 'ALL', label: 'All' },
   { key: 'OPEN', label: 'Open' },
-  { key: 'IN_PROGRESS', label: 'In Progress' },
+  { key: 'ACCEPTED', label: 'Accepted' },
   { key: 'DONE', label: 'Done' },
 ]
 
@@ -184,7 +184,7 @@ export function PublicPunchlistView({ payload, projectName, includeNotes }: Prop
   }, [allItems, filterStatus, filterLocation, filterAssignee, search])
 
   const counts = useMemo(() => {
-    const c = { OPEN: 0, IN_PROGRESS: 0, DONE: 0, total: allItems.length }
+    const c = { OPEN: 0, ACCEPTED: 0, DONE: 0, total: allItems.length }
     for (const item of allItems) c[item.status]++
     return c
   }, [allItems])
@@ -196,7 +196,7 @@ export function PublicPunchlistView({ payload, projectName, includeNotes }: Prop
         <div className="max-w-4xl mx-auto flex items-start justify-between">
           <div>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider bg-sandstone/10 text-sandstone/70 border border-sandstone/15 mb-2">
-              Punchlist
+              Fix List
             </span>
             <h1 className="font-serif text-3xl md:text-4xl text-sandstone">{projectName}</h1>
           </div>
@@ -215,6 +215,9 @@ export function PublicPunchlistView({ payload, projectName, includeNotes }: Prop
           </div>
         )}
 
+        {/* Contractor copy */}
+        <p className="text-sm text-cream/50 mb-6">Review items and discuss with the homeowner.</p>
+
         {/* Summary stats */}
         <div className="flex flex-wrap gap-3 mb-6">
           <div className="bg-basalt-50 rounded-lg px-4 py-2 flex items-center gap-2">
@@ -223,13 +226,17 @@ export function PublicPunchlistView({ payload, projectName, includeNotes }: Prop
           </div>
           <div className="bg-basalt-50 rounded-lg px-4 py-2 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-amber-400" />
-            <span className="text-sm text-cream/70">{counts.IN_PROGRESS} in progress</span>
+            <span className="text-sm text-cream/70">{counts.ACCEPTED} accepted</span>
           </div>
           <div className="bg-basalt-50 rounded-lg px-4 py-2 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
             <span className="text-sm text-cream/70">{counts.DONE} done</span>
           </div>
         </div>
+
+        <p className="text-xs text-cream/30 mb-6">
+          Open = waiting for review &middot; Accepted = acknowledged &middot; Done = completed
+        </p>
 
         {/* Filter bar */}
         <div className="flex flex-wrap items-center gap-3 mb-6">

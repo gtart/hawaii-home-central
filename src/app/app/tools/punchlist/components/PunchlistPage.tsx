@@ -16,7 +16,7 @@ type FilterStatus = 'ALL' | PunchlistStatus
 const STATUS_OPTIONS: { key: FilterStatus; label: string }[] = [
   { key: 'ALL', label: 'All' },
   { key: 'OPEN', label: 'Open' },
-  { key: 'IN_PROGRESS', label: 'In Progress' },
+  { key: 'ACCEPTED', label: 'Accepted' },
   { key: 'DONE', label: 'Done' },
 ]
 
@@ -93,7 +93,7 @@ export function PunchlistPage({ api }: Props) {
   }, [payload.items, filterStatus, filterLocation, filterAssignee, search, sort])
 
   const counts = useMemo(() => {
-    const c = { OPEN: 0, IN_PROGRESS: 0, DONE: 0, total: payload.items.length }
+    const c = { OPEN: 0, ACCEPTED: 0, DONE: 0, total: payload.items.length }
     for (const item of payload.items) {
       c[item.status]++
     }
@@ -113,13 +113,17 @@ export function PunchlistPage({ api }: Props) {
         </div>
         <div className="bg-basalt-50 rounded-lg px-4 py-2 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-amber-400" />
-          <span className="text-sm text-cream/70">{counts.IN_PROGRESS} in progress</span>
+          <span className="text-sm text-cream/70">{counts.ACCEPTED} accepted</span>
         </div>
         <div className="bg-basalt-50 rounded-lg px-4 py-2 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400" />
           <span className="text-sm text-cream/70">{counts.DONE} done</span>
         </div>
       </div>
+
+      <p className="text-xs text-cream/30 mb-6">
+        Open = waiting for review &middot; Accepted = acknowledged &middot; Done = completed
+      </p>
 
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
@@ -333,7 +337,7 @@ export function PunchlistPage({ api }: Props) {
             type="button"
             onClick={() => setShowFab(!showFab)}
             className={`fixed bottom-8 right-8 w-14 h-14 bg-sandstone text-basalt rounded-full shadow-lg hover:bg-sandstone-light transition-all flex items-center justify-center z-40 ${showFab ? 'rotate-45' : ''}`}
-            aria-label="Add punch item"
+            aria-label="Add item"
           >
             <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
