@@ -8,9 +8,10 @@ interface Props {
   photos: PunchlistPhoto[]
   onAdd: (photo: PunchlistPhoto) => void
   onRemove: (photoId: string) => void
+  onUploadingChange?: (uploading: boolean) => void
 }
 
-export function PhotoCapture({ photos, onAdd, onRemove }: Props) {
+export function PhotoCapture({ photos, onAdd, onRemove, onUploadingChange }: Props) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const cameraRef = useRef<HTMLInputElement>(null)
@@ -20,6 +21,7 @@ export function PhotoCapture({ photos, onAdd, onRemove }: Props) {
     if (!files || files.length === 0) return
     setError('')
     setUploading(true)
+    onUploadingChange?.(true)
 
     const fileArray = Array.from(files)
 
@@ -31,12 +33,14 @@ export function PhotoCapture({ photos, onAdd, onRemove }: Props) {
         if (r.status === 'fulfilled') {
           onAdd(r.value)
         } else {
-          setError('Some photos failed to upload')
+          const msg = r.reason instanceof Error ? r.reason.message : 'Upload failed'
+          setError(msg)
         }
       }
     }
 
     setUploading(false)
+    onUploadingChange?.(false)
     if (cameraRef.current) cameraRef.current.value = ''
     if (galleryRef.current) galleryRef.current.value = ''
   }

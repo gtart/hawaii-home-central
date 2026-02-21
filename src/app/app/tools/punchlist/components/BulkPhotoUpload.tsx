@@ -62,7 +62,8 @@ export function BulkPhotoUpload({ api, onClose }: Props) {
         if (r.status === 'fulfilled') {
           uploaded.push(r.value)
         } else {
-          setError('Some photos failed to upload')
+          const msg = r.reason instanceof Error ? r.reason.message : 'Upload failed'
+          setError(msg)
         }
       }
       setUploadProgress({ done: uploaded.length, total: fileArray.length })
@@ -136,7 +137,10 @@ export function BulkPhotoUpload({ api, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/60"
+        onClick={uploading || drafts.length > 0 ? undefined : onClose}
+      />
 
       <div className="relative bg-basalt-50 border-t sm:border border-cream/10 rounded-t-xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header */}

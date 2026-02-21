@@ -21,6 +21,7 @@ export function PunchlistItemForm({ api, editItem, onClose }: Props) {
   const [priority, setPriority] = useState<PunchlistPriority | ''>(editItem?.priority ?? '')
   const [notes, setNotes] = useState(editItem?.notes ?? '')
   const [photos, setPhotos] = useState<PunchlistPhoto[]>(editItem?.photos ?? [])
+  const [photoUploading, setPhotoUploading] = useState(false)
   const [error, setError] = useState('')
 
   // Merge seeds with existing unique values from payload
@@ -84,8 +85,11 @@ export function PunchlistItemForm({ api, editItem, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      {/* Backdrop — blocked when there's unsaved work */}
+      <div
+        className="absolute inset-0 bg-black/60"
+        onClick={photoUploading || photos.length > 0 || title.trim() || location.trim() ? undefined : onClose}
+      />
 
       {/* Modal — slides up on mobile */}
       <div className="relative bg-basalt-50 border-t sm:border border-cream/10 rounded-t-xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto">
@@ -190,6 +194,7 @@ export function PunchlistItemForm({ api, editItem, onClose }: Props) {
             photos={photos}
             onAdd={handleAddPhoto}
             onRemove={handleRemovePhoto}
+            onUploadingChange={setPhotoUploading}
           />
 
           {/* Additional Information */}
