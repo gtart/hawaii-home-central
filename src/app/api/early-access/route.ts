@@ -1,8 +1,34 @@
 import { NextResponse } from 'next/server'
+import { headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rateLimit'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function getClientIP(headersList: Headers): string | null {
+  const forwarded = headersList.get('x-forwarded-for')
+  if (forwarded) return forwarded.split(',')[0].trim()
+  return headersList.get('x-real-ip')
+}
+
+async function geolocateIP(ip: string): Promise<{ city?: string; region?: string; country?: string }> {
+  try {
+    const res = await fetch(
+      `http://ip-api.com/json/${ip}?fields=status,city,regionName,country`,
+      { signal: AbortSignal.timeout(3000) }
+    )
+    if (!res.ok) return {}
+    const data = await res.json()
+    if (data.status !== 'success') return {}
+    return {
+      city: data.city || undefined,
+      region: data.regionName || undefined,
+      country: data.country || undefined,
+    }
+  } catch {
+    return {}
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -35,6 +61,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid source.' }, { status: 400 })
     }
 
+    // Capture IP + geolocation
+    const headersList = await headers()
+    const ipAddress = getClientIP(headersList)
+    const geo = ipAddress ? await geolocateIP(ipAddress) : {}
+
     const existing = await prisma.earlyAccessSignup.findUnique({
       where: { email },
     })
@@ -44,7 +75,16 @@ export async function POST(req: Request) {
       if (source === 'GOOGLE') {
         await prisma.earlyAccessSignup.update({
           where: { email },
-          data: { source: 'GOOGLE', name: name ?? existing.name, userId: userId ?? existing.userId },
+          data: {
+            source: 'GOOGLE',
+            name: name ?? existing.name,
+            userId: userId ?? existing.userId,
+            // Update IP/geo if not already set
+            ...(!existing.ipAddress && ipAddress ? { ipAddress } : {}),
+            ...(!existing.city && geo.city ? { city: geo.city } : {}),
+            ...(!existing.region && geo.region ? { region: geo.region } : {}),
+            ...(!existing.country && geo.country ? { country: geo.country } : {}),
+          },
         })
       }
       return NextResponse.json({ ok: true, isNew: false }, { status: 200 })
@@ -56,6 +96,10 @@ export async function POST(req: Request) {
         source,
         name: name ?? null,
         userId: userId ?? null,
+        ipAddress: ipAddress ?? null,
+        city: geo.city ?? null,
+        region: geo.region ?? null,
+        country: geo.country ?? null,
       },
     })
 

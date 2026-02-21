@@ -13,7 +13,7 @@ export function PhotoCapture({ photos, onAdd, onRemove }: Props) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const cameraRef = useRef<HTMLInputElement>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const galleryRef = useRef<HTMLInputElement>(null)
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return
@@ -40,12 +40,8 @@ export function PhotoCapture({ photos, onAdd, onRemove }: Props) {
           continue
         }
 
-        const { url, id } = await res.json()
-        onAdd({
-          id,
-          url,
-          uploadedAt: new Date().toISOString(),
-        })
+        const { url, thumbnailUrl, id } = await res.json()
+        onAdd({ id, url, thumbnailUrl, uploadedAt: new Date().toISOString() })
       } catch (err) {
         console.error('Photo upload error:', err)
         setError('Upload failed. Check your connection and try again.')
@@ -54,14 +50,14 @@ export function PhotoCapture({ photos, onAdd, onRemove }: Props) {
 
     setUploading(false)
     if (cameraRef.current) cameraRef.current.value = ''
-    if (fileRef.current) fileRef.current.value = ''
+    if (galleryRef.current) galleryRef.current.value = ''
   }
 
   return (
     <div>
-      <label className="block text-sm text-cream/70 mb-2">
+      <span className="block text-sm text-cream/70 mb-2">
         Photos
-      </label>
+      </span>
 
       {/* Photo preview grid */}
       {photos.length > 0 && (
@@ -69,14 +65,15 @@ export function PhotoCapture({ photos, onAdd, onRemove }: Props) {
           {photos.map((photo) => (
             <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden group">
               <img
-                src={photo.url}
+                src={photo.thumbnailUrl || photo.url}
                 alt=""
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
               <button
                 type="button"
                 onClick={() => onRemove(photo.id)}
-                className="absolute top-1 right-1 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-1 right-1 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
               >
                 <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                   <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
@@ -87,55 +84,46 @@ export function PhotoCapture({ photos, onAdd, onRemove }: Props) {
         </div>
       )}
 
-      {/* Upload buttons */}
+      {/* Full-size transparent inputs — user taps the actual <input> element */}
       <div className="flex gap-2">
-        {/* Camera — mobile only (hidden on md+ screens via CSS) */}
-        <button
-          type="button"
-          onClick={() => cameraRef.current?.click()}
-          disabled={uploading}
-          className="flex-1 flex md:hidden items-center justify-center gap-2 py-3 border border-dashed border-cream/20 rounded-lg text-cream/50 hover:border-sandstone/40 hover:text-sandstone transition-colors disabled:opacity-50"
+        {/* Camera — capture="environment" opens camera directly */}
+        <div
+          className={`relative flex-1 flex items-center justify-center gap-2 py-3 border border-dashed border-cream/20 rounded-lg text-cream/50 ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
         >
-          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <input
+            ref={cameraRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(e) => handleFiles(e.target.files)}
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
+          />
+          <svg className="w-5 h-5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
             <circle cx="12" cy="13" r="4" />
           </svg>
-          <span className="text-sm">Camera</span>
-        </button>
+          <span className="text-sm pointer-events-none">Camera</span>
+        </div>
 
-        {/* File upload — always shown */}
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          className="flex-1 flex items-center justify-center gap-2 py-3 border border-dashed border-cream/20 rounded-lg text-cream/50 hover:border-sandstone/40 hover:text-sandstone transition-colors disabled:opacity-50"
+        {/* Photo Library — no capture, opens gallery/files */}
+        <div
+          className={`relative flex-1 flex items-center justify-center gap-2 py-3 border border-dashed border-cream/20 rounded-lg text-cream/50 ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
         >
-          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-            <polyline points="17 8 12 3 7 8" />
-            <line x1="12" y1="3" x2="12" y2="15" />
+          <input
+            ref={galleryRef}
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleFiles(e.target.files)}
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
+          />
+          <svg className="w-5 h-5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
           </svg>
-          <span className="text-sm">Upload Files</span>
-        </button>
+          <span className="text-sm pointer-events-none">Photo Library</span>
+        </div>
       </div>
-
-      {/* Hidden file inputs */}
-      <input
-        ref={cameraRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-        capture="environment"
-        onChange={(e) => handleFiles(e.target.files)}
-        className="hidden"
-      />
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-        multiple
-        onChange={(e) => handleFiles(e.target.files)}
-        className="hidden"
-      />
 
       {uploading && (
         <div className="flex items-center gap-2 mt-2 text-xs text-cream/40">

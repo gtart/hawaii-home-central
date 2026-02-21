@@ -22,6 +22,7 @@ interface ReportSettings {
 export function PunchlistReport() {
   const searchParams = useSearchParams()
   const includeNotes = searchParams.get('includeNotes') === 'true'
+  const includeComments = searchParams.get('includeComments') === 'true'
   const { payload, isLoaded } = usePunchlistState()
   const [settings, setSettings] = useState<ReportSettings>({
     reportTitle: 'Punchlist Report',
@@ -136,7 +137,7 @@ export function PunchlistReport() {
               </h2>
               <div className="space-y-4">
                 {items.map((item) => (
-                  <ReportItem key={item.id} item={item} includeNotes={includeNotes} />
+                  <ReportItem key={item.id} item={item} includeNotes={includeNotes} includeComments={includeComments} />
                 ))}
               </div>
             </div>
@@ -152,7 +153,7 @@ export function PunchlistReport() {
   )
 }
 
-function ReportItem({ item, includeNotes }: { item: PunchlistItem; includeNotes: boolean }) {
+function ReportItem({ item, includeNotes, includeComments }: { item: PunchlistItem; includeNotes: boolean; includeComments: boolean }) {
   return (
     <div className="page-break-avoid border border-gray-200 rounded-lg p-4">
       <div className="flex gap-4">
@@ -162,9 +163,10 @@ function ReportItem({ item, includeNotes }: { item: PunchlistItem; includeNotes:
             {item.photos.slice(0, 3).map((photo) => (
               <img
                 key={photo.id}
-                src={photo.url}
+                src={photo.thumbnailUrl || photo.url}
                 alt=""
                 className="w-16 h-16 object-cover rounded"
+                loading="lazy"
               />
             ))}
             {item.photos.length > 3 && (
@@ -189,6 +191,17 @@ function ReportItem({ item, includeNotes }: { item: PunchlistItem; includeNotes:
           </div>
           {includeNotes && item.notes && (
             <p className="text-sm text-gray-600 mt-2 italic">{item.notes}</p>
+          )}
+          {includeComments && item.comments && item.comments.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-gray-100">
+              <p className="text-xs text-gray-500 font-medium mb-1">Comments ({item.comments.length})</p>
+              {item.comments.map((c) => (
+                <p key={c.id} className="text-xs text-gray-500 mb-0.5">
+                  <span className="font-medium">{c.authorName}</span>
+                  {' '}({new Date(c.createdAt).toLocaleDateString()}): {c.text}
+                </p>
+              ))}
+            </div>
           )}
         </div>
       </div>

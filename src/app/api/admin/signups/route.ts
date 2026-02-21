@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { isAdmin } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
+import { isEmailAllowlisted } from '@/lib/earlyAccess'
 
 export async function GET(request: NextRequest) {
   const session = await auth()
@@ -13,17 +14,25 @@ export async function GET(request: NextRequest) {
   const page = Number(request.nextUrl.searchParams.get('page') || '1')
   const limit = 20
 
-  const [signups, total] = await Promise.all([
+  const [signups, total, dbAllowlist] = await Promise.all([
     prisma.earlyAccessSignup.findMany({
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip: (page - 1) * limit,
     }),
     prisma.earlyAccessSignup.count(),
+    prisma.earlyAccessAllowlist.findMany({ select: { email: true } }),
   ])
 
+  const dbAllowedEmails = new Set(dbAllowlist.map((r) => r.email))
+
+  const signupsWithStatus = signups.map((s) => ({
+    ...s,
+    isAllowed: isEmailAllowlisted(s.email) || dbAllowedEmails.has(s.email),
+  }))
+
   return NextResponse.json({
-    signups,
+    signups: signupsWithStatus,
     total,
     page,
     totalPages: Math.ceil(total / limit),

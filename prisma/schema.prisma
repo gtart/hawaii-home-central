@@ -456,7 +456,18 @@ model EarlyAccessSignup {
   name      String?
   source    SignupSource  @default(FORM)
   userId    String?
+  ipAddress String?
+  city      String?
+  region    String?
+  country   String?
   createdAt DateTime     @default(now())
 
   @@index([createdAt])
+}
+
+model EarlyAccessAllowlist {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  addedBy   String?
+  createdAt DateTime @default(now())
 }

@@ -1,0 +1,243 @@
+'use client'
+
+import { useState } from 'react'
+import { useSession } from 'next-auth/react'
+import type { PunchlistItem } from '../types'
+import type { PunchlistStateAPI } from '../usePunchlistState'
+import { STATUS_CONFIG, STATUS_CYCLE, PRIORITY_CONFIG } from '../constants'
+import { PhotoLightbox } from './PhotoLightbox'
+
+interface Props {
+  item: PunchlistItem
+  api: PunchlistStateAPI
+  onClose: () => void
+  onEdit: () => void
+}
+
+export function PunchlistItemDetail({ item, api, onClose, onEdit }: Props) {
+  const { readOnly, setStatus, deleteItem } = api
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  const statusCfg = STATUS_CONFIG[item.status]
+  const priorityCfg = item.priority ? PRIORITY_CONFIG[item.priority] : null
+
+  function cycleStatus() {
+    if (readOnly) return
+    const idx = STATUS_CYCLE.indexOf(item.status)
+    const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length]
+    setStatus(item.id, next)
+  }
+
+  function handleDelete() {
+    if (confirmDelete) {
+      deleteItem(item.id)
+      onClose()
+    } else {
+      setConfirmDelete(true)
+      setTimeout(() => setConfirmDelete(false), 3000)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+
+      {/* Modal */}
+      <div className="relative bg-basalt-50 border-t sm:border border-cream/10 rounded-t-xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        {/* Sticky header */}
+        <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 px-5 py-3 flex items-center justify-between z-10">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-cream/40 hover:text-cream transition-colors p-1"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+
+          <h2 className="text-base font-medium text-cream truncate flex-1 mx-3 text-center">
+            {item.title}
+          </h2>
+
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={onEdit}
+              className="text-sandstone text-sm font-medium shrink-0"
+            >
+              Edit
+            </button>
+          )}
+          {readOnly && <div className="w-8" />}
+        </div>
+
+        <div className="px-5 py-5 space-y-5">
+          {/* Photo gallery — horizontal scroll */}
+          {item.photos.length > 0 && (
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory">
+              {item.photos.map((photo, i) => (
+                <button
+                  key={photo.id}
+                  type="button"
+                  onClick={() => setLightboxIndex(i)}
+                  className="shrink-0 w-48 h-36 rounded-lg overflow-hidden snap-start"
+                >
+                  <img
+                    src={photo.thumbnailUrl || photo.url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Status + Priority row */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={cycleStatus}
+              disabled={readOnly}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${statusCfg.bg} ${statusCfg.text} ${
+                readOnly ? 'cursor-default' : 'cursor-pointer hover:opacity-80'
+              } transition-opacity`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
+              {statusCfg.label}
+            </button>
+
+            {priorityCfg && (
+              <span className={`text-[10px] font-medium uppercase tracking-wider px-2 py-1 rounded ${priorityCfg.className}`}>
+                {priorityCfg.label}
+              </span>
+            )}
+          </div>
+
+          {/* Detail fields */}
+          <div className="space-y-3">
+            <DetailRow label="Location" value={item.location} />
+            <DetailRow label="Assignee" value={item.assigneeLabel} />
+            <DetailRow label="Created" value={new Date(item.createdAt).toLocaleDateString()} />
+            <DetailRow label="Updated" value={new Date(item.updatedAt).toLocaleDateString()} />
+            {item.completedAt && (
+              <DetailRow label="Completed" value={new Date(item.completedAt).toLocaleDateString()} />
+            )}
+          </div>
+
+          {/* Notes section */}
+          {item.notes && (
+            <div>
+              <h3 className="text-xs uppercase tracking-wider text-cream/30 mb-2">Notes</h3>
+              <p className="text-sm text-cream/60 whitespace-pre-wrap leading-relaxed">{item.notes}</p>
+            </div>
+          )}
+
+          {/* Comments section */}
+          <div>
+            <h3 className="text-xs uppercase tracking-wider text-cream/30 mb-3">
+              Comments {(item.comments?.length ?? 0) > 0 && `(${item.comments!.length})`}
+            </h3>
+
+            {(item.comments || []).length === 0 && (
+              <p className="text-xs text-cream/20 mb-3">No comments yet.</p>
+            )}
+
+            <div className="space-y-3">
+              {(item.comments || []).map((comment) => (
+                <div key={comment.id} className="pb-3 border-b border-cream/5 last:border-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium text-cream/70">{comment.authorName}</span>
+                    <span className="text-cream/20">&middot;</span>
+                    <span className="text-[11px] text-cream/30">
+                      {new Date(comment.createdAt).toLocaleDateString()}{' '}
+                      {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <p className="text-sm text-cream/50 whitespace-pre-wrap">{comment.text}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Comment input — editors/owners only */}
+            {!readOnly && <CommentInput itemId={item.id} api={api} />}
+          </div>
+
+          {/* Delete button */}
+          {!readOnly && (
+            <div className="pt-3 border-t border-cream/5">
+              <button
+                type="button"
+                onClick={handleDelete}
+                className={`text-xs transition-colors ${
+                  confirmDelete
+                    ? 'text-red-400 font-medium'
+                    : 'text-cream/30 hover:text-red-400'
+                }`}
+              >
+                {confirmDelete ? 'Tap again to delete this item' : 'Delete item'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Photo lightbox */}
+      {lightboxIndex !== null && (
+        <PhotoLightbox
+          photos={item.photos}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-cream/40">{label}</span>
+      <span className="text-sm text-cream/70">{value}</span>
+    </div>
+  )
+}
+
+function CommentInput({ itemId, api }: { itemId: string; api: PunchlistStateAPI }) {
+  const { data: session } = useSession()
+  const [text, setText] = useState('')
+
+  function handleSubmit() {
+    if (!text.trim() || !session?.user) return
+    api.addComment(itemId, {
+      text: text.trim(),
+      authorName: session.user.name || 'Unknown',
+      authorEmail: session.user.email || '',
+    })
+    setText('')
+  }
+
+  return (
+    <div className="flex gap-2 mt-3">
+      <input
+        type="text"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
+        placeholder="Add a comment..."
+        className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+      />
+      <button
+        type="button"
+        onClick={handleSubmit}
+        disabled={!text.trim()}
+        className="px-3 py-2 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors disabled:opacity-30"
+      >
+        Post
+      </button>
+    </div>
+  )
+}

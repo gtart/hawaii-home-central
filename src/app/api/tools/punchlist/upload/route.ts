@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { ensureCurrentProject } from '@/lib/project'
 import { resolveToolAccess } from '@/lib/project-access'
 import { put } from '@vercel/blob'
+import sharp from 'sharp'
 
 const ALLOWED_TYPES = new Set([
   'image/jpeg',
@@ -102,7 +103,27 @@ export async function POST(request: Request) {
 
     const id = `ph_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
 
-    return NextResponse.json({ url: blob.url, id }, { status: 201 })
+    // Generate a 400px-wide JPEG thumbnail for fast loading in card views
+    let thumbnailUrl = blob.url
+    try {
+      const arrayBuffer = await file.arrayBuffer()
+      const thumbBuffer = await sharp(Buffer.from(arrayBuffer))
+        .resize({ width: 400, withoutEnlargement: true })
+        .jpeg({ quality: 75 })
+        .toBuffer()
+
+      const thumbPathname = `punchlist/${projectId}/thumb_${Date.now()}-${file.name.replace(/\.[^.]+$/, '.jpg')}`
+      const thumbBlob = await put(thumbPathname, thumbBuffer, {
+        access: 'public',
+        contentType: 'image/jpeg',
+        token: blobToken,
+      })
+      thumbnailUrl = thumbBlob.url
+    } catch (thumbErr) {
+      console.error('Thumbnail generation failed (using original):', thumbErr)
+    }
+
+    return NextResponse.json({ url: blob.url, thumbnailUrl, id }, { status: 201 })
   } catch (err: unknown) {
     const errMsg = err instanceof Error ? err.message : String(err)
     console.error('Blob upload failed:', { fileName: file.name, errMsg, err })

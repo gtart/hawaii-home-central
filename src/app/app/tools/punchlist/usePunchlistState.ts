@@ -8,6 +8,7 @@ import type {
   PunchlistPhoto,
   PunchlistStatus,
   PunchlistPriority,
+  PunchlistComment,
 } from './types'
 
 const DEFAULT_PAYLOAD: PunchlistPayload = {
@@ -158,6 +159,32 @@ export function usePunchlistState() {
     [setState]
   )
 
+  // ---- Comment management ----
+
+  const addComment = useCallback(
+    (itemId: string, comment: { text: string; authorName: string; authorEmail: string }) => {
+      const id = genId('cmt')
+      const ts = now()
+      setState((prev) => ({
+        ...prev,
+        items: prev.items.map((item) =>
+          item.id === itemId
+            ? {
+                ...item,
+                comments: [
+                  ...(item.comments || []),
+                  { id, text: comment.text, authorName: comment.authorName, authorEmail: comment.authorEmail, createdAt: ts },
+                ],
+                updatedAt: ts,
+              }
+            : item
+        ),
+      }))
+      return id
+    },
+    [setState]
+  )
+
   return {
     payload,
     isLoaded,
@@ -171,6 +198,7 @@ export function usePunchlistState() {
     setStatus,
     addPhoto,
     removePhoto,
+    addComment,
   }
 }
 

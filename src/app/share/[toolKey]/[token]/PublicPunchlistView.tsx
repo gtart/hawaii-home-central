@@ -37,7 +37,7 @@ function PublicItemCard({ item, includeNotes }: { item: PunchlistItem; includeNo
               onClick={() => setLightboxIndex(0)}
               className="shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden relative cursor-pointer"
             >
-              <img src={item.photos[0].url} alt={item.title} className="w-full h-full object-cover" />
+              <img src={item.photos[0].thumbnailUrl || item.photos[0].url} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
               {item.photos.length > 1 && (
                 <span className="absolute bottom-0.5 right-0.5 bg-black/70 text-white text-[10px] px-1 rounded">
                   +{item.photos.length - 1}
@@ -63,6 +63,21 @@ function PublicItemCard({ item, includeNotes }: { item: PunchlistItem; includeNo
             </div>
             {includeNotes && item.notes && (
               <p className="text-cream/40 text-xs mt-2 leading-relaxed">{item.notes}</p>
+            )}
+            {item.comments && item.comments.length > 0 && (
+              <div className="mt-2 pt-2 border-t border-cream/5">
+                <p className="text-[10px] uppercase tracking-wider text-cream/30 mb-1">Comments ({item.comments.length})</p>
+                {item.comments.map((c) => (
+                  <div key={c.id} className="mb-1">
+                    <span className="text-[11px] text-cream/50">
+                      <span className="font-medium text-cream/60">{c.authorName}</span>
+                      {' '}&middot;{' '}
+                      {new Date(c.createdAt).toLocaleDateString()}
+                    </span>
+                    <p className="text-xs text-cream/40">{c.text}</p>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>

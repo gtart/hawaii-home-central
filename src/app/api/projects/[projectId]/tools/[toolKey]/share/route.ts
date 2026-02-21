@@ -151,6 +151,17 @@ export async function POST(request: Request, { params }: RouteParams) {
     },
   })
 
+  // Auto-whitelist the invited email so they can sign in (REQUIRE_WHITELIST mode)
+  try {
+    await prisma.earlyAccessAllowlist.upsert({
+      where: { email },
+      create: { email, addedBy: `invite:${userId}` },
+      update: {},
+    })
+  } catch (e) {
+    console.error('[share] Auto-whitelist failed (non-blocking):', e)
+  }
+
   // Send invite email (fire-and-forget — never blocks response)
   const toolEntry = TOOL_REGISTRY.find((t) => t.toolKey === toolKey)
   const toolName = toolEntry?.title || toolKey

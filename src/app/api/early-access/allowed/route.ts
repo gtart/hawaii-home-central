@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { isEmailAllowlisted } from '@/lib/earlyAccess'
+import { isEmailAllowlistedWithDB } from '@/lib/earlyAccessDB'
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
@@ -9,5 +9,5 @@ export async function GET(req: Request) {
     return NextResponse.json({ allowed: false }, { status: 400 })
   }
 
-  return NextResponse.json({ allowed: isEmailAllowlisted(email) })
+  return NextResponse.json({ allowed: await isEmailAllowlistedWithDB(email) })
 }

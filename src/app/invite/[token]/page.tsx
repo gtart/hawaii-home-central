@@ -38,6 +38,11 @@ export default function InviteAcceptPage() {
       const res = await fetch(`/api/invites/${token}`)
       if (!res.ok) {
         const data = await res.json()
+        // If invite was already accepted (e.g. user pressed Back), show success state
+        if (res.status === 410 && data.status === 'ACCEPTED') {
+          setAccepted(true)
+          return
+        }
         setError(data.error || 'Invalid invite')
         return
       }
@@ -73,7 +78,7 @@ export default function InviteAcceptPage() {
     })
 
     const toolPath = TOOL_PATHS[data.toolKey] || '/app'
-    setTimeout(() => router.push(toolPath), 1500)
+    setTimeout(() => router.replace(toolPath), 1500)
   }
 
   return (
@@ -103,7 +108,13 @@ export default function InviteAcceptPage() {
               </svg>
             </div>
             <h1 className="text-xl font-medium text-cream mb-2">You&apos;re in!</h1>
-            <p className="text-cream/50 text-sm">Redirecting to {TOOL_LABELS[invite.toolKey] || 'the tool'}...</p>
+            {invite ? (
+              <p className="text-cream/50 text-sm">Redirecting to {TOOL_LABELS[invite.toolKey] || 'the tool'}...</p>
+            ) : (
+              <Link href="/app" className="text-sandstone hover:text-sandstone-light text-sm">
+                Go to My Tools
+              </Link>
+            )}
           </div>
         ) : (
           <div className="bg-basalt-50 border border-cream/10 rounded-xl p-8">

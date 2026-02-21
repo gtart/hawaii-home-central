@@ -29,10 +29,11 @@ export function LoginContent() {
   const { data: session } = useSession()
   const [redirectFailed, setRedirectFailed] = useState(false)
 
-  // Whitelist gate state
-  const [checkEmail, setCheckEmail] = useState('')
-  const [checking, setChecking] = useState(false)
-  const [emailAllowed, setEmailAllowed] = useState<boolean | null>(null)
+  // Whitelist mode state
+  const [email, setEmail] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [signedUp, setSignedUp] = useState(false)
+  const [formError, setFormError] = useState('')
 
   useEffect(() => {
     if (session?.user && !error) {
@@ -42,24 +43,59 @@ export function LoginContent() {
     }
   }, [session, callbackUrl, error])
 
-  async function handleEmailCheck(e: FormEvent) {
-    e.preventDefault()
-    const trimmed = checkEmail.trim().toLowerCase()
-    if (!trimmed || !EMAIL_RE.test(trimmed)) return
+  // Redirect to guides after successful waitlist signup
+  useEffect(() => {
+    if (signedUp) {
+      const timeout = setTimeout(() => {
+        window.location.href = '/resources'
+      }, 2500)
+      return () => clearTimeout(timeout)
+    }
+  }, [signedUp])
 
-    setChecking(true)
+  async function handleWhitelistSubmit(e: FormEvent) {
+    e.preventDefault()
+    setFormError('')
+    const trimmed = email.trim().toLowerCase()
+    if (!trimmed || !EMAIL_RE.test(trimmed)) {
+      setFormError('Please enter a valid email address.')
+      return
+    }
+
+    setSubmitting(true)
     try {
-      const res = await fetch(`/api/early-access/allowed?email=${encodeURIComponent(trimmed)}`)
-      const data = await res.json()
-      setEmailAllowed(data.allowed)
+      // Check allowlist first
+      const checkRes = await fetch(`/api/early-access/allowed?email=${encodeURIComponent(trimmed)}`)
+      const checkData = await checkRes.json()
+
+      if (checkData.allowed) {
+        // Allowlisted — go straight to Google sign-in
+        signIn('google', { callbackUrl })
+        return
+      }
+
+      // Not allowlisted — sign them up for the waitlist
+      const signupRes = await fetch('/api/early-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmed, source: 'FORM' }),
+      })
+
+      if (!signupRes.ok) {
+        const data = await signupRes.json()
+        setFormError(data.error || 'Something went wrong. Please try again.')
+        return
+      }
+
+      setSignedUp(true)
     } catch {
-      setEmailAllowed(false)
+      setFormError('Something went wrong. Please try again.')
     } finally {
-      setChecking(false)
+      setSubmitting(false)
     }
   }
 
-  // AccessDenied = non-allowlisted user tried to sign in via Google
+  // AccessDenied = non-allowlisted user tried to sign in via Google directly
   if (error === 'AccessDenied') {
     return (
       <div className="pt-32 pb-24 px-6">
@@ -140,89 +176,76 @@ export function LoginContent() {
     )
   }
 
-  // Whitelist mode: gate Google button behind email check
+  // Whitelist mode: single form — checks allowlist, or signs up for waitlist
   if (requireWhitelist) {
+    // Success state — signed up, redirecting to guides
+    if (signedUp) {
+      return (
+        <div className="pt-32 pb-24 px-6">
+          <div className="max-w-sm mx-auto text-center">
+            <h1 className="font-serif text-3xl md:text-4xl text-sandstone mb-4">
+              You&apos;re on the list!
+            </h1>
+            <p className="text-cream/70 leading-relaxed mb-6">
+              We&apos;ll email you when Hawaii Home Central launches. In the meantime, check out our free guides.
+            </p>
+            <p className="text-cream/40 text-sm">Redirecting to guides...</p>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="pt-32 pb-24 px-6">
         <div className="max-w-sm mx-auto">
           <div className="text-center mb-10">
             <h1 className="font-serif text-3xl md:text-4xl text-sandstone mb-4">
-              Early Access
+              We Haven&apos;t Launched Yet
             </h1>
             <p className="text-cream/70 leading-relaxed">
-              Hawaii Home Central hasn&apos;t launched yet. If you have early access, enter your email to sign in.
+              Sign up to be notified when we launch.
             </p>
           </div>
 
-          {emailAllowed === null && (
-            <form onSubmit={handleEmailCheck} className="space-y-4">
-              <Input
-                type="email"
-                required
-                value={checkEmail}
-                onChange={(e) => {
-                  setCheckEmail(e.target.value)
-                  setEmailAllowed(null)
-                }}
-                placeholder="you@gmail.com"
-                disabled={checking}
-                aria-label="Google email address"
-              />
-              <Button
-                type="submit"
-                disabled={checking || !checkEmail.trim()}
-                size="lg"
-                className="w-full"
-              >
-                {checking ? 'Checking...' : 'Check Access'}
-              </Button>
-            </form>
-          )}
+          <form onSubmit={handleWhitelistSubmit} className="space-y-4">
+            <Input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                if (formError) setFormError('')
+              }}
+              placeholder="you@example.com"
+              disabled={submitting}
+              error={formError || undefined}
+              aria-label="Email address"
+            />
+            <Button
+              type="submit"
+              disabled={submitting || !email.trim()}
+              size="lg"
+              className="w-full"
+            >
+              {submitting ? 'Signing up...' : 'Join the Waitlist'}
+            </Button>
+          </form>
 
-          {emailAllowed === true && (
-            <div className="space-y-4">
-              <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-input px-4 py-3 text-sm text-emerald-300 text-center">
-                You&apos;re on the list. Sign in below.
-              </div>
-              <Button
-                onClick={() => signIn('google', { callbackUrl })}
-                variant="secondary"
-                size="lg"
-                className="w-full flex items-center justify-center gap-3"
-              >
-                <GoogleIcon />
-                Continue with Google
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-4 mt-8 mb-4">
+            <div className="flex-1 h-px bg-cream/10" />
+            <span className="text-sm text-cream/30">or</span>
+            <div className="flex-1 h-px bg-cream/10" />
+          </div>
 
-          {emailAllowed === false && (
-            <div className="space-y-4">
-              <div className="bg-basalt-50 rounded-card p-6 text-center">
-                <p className="text-cream/60 text-sm mb-1">
-                  That email isn&apos;t on the early access list yet.
-                </p>
-                <p className="text-cream/40 text-xs mb-4">
-                  Join the waitlist and we&apos;ll notify you when we launch.
-                </p>
-                <Link href="/early-access">
-                  <Button variant="primary" className="w-full">
-                    Join the Waitlist
-                  </Button>
-                </Link>
-              </div>
-              <button
-                type="button"
-                onClick={() => { setEmailAllowed(null); setCheckEmail('') }}
-                className="text-xs text-cream/40 hover:text-cream/60 transition-colors w-full text-center"
-              >
-                Try a different email
-              </button>
-            </div>
-          )}
-
-          <p className="text-xs text-cream/40 text-center mt-8 leading-relaxed">
-            Your data is saved securely. We only use your email to identify your account.
+          <p className="text-center text-sm text-cream/50">
+            Already have early access?{' '}
+            <button
+              type="button"
+              onClick={() => signIn('google', { callbackUrl })}
+              className="text-sandstone hover:text-sandstone-light transition-colors font-medium"
+            >
+              Sign in with Google
+            </button>
           </p>
         </div>
       </div>

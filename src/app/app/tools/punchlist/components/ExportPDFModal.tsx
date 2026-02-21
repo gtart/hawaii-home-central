@@ -8,10 +8,11 @@ interface Props {
 
 export function ExportPDFModal({ onClose }: Props) {
   const [includeNotes, setIncludeNotes] = useState(false)
+  const [includeComments, setIncludeComments] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
 
   function handleExport() {
-    const url = `/app/tools/punchlist/report?includeNotes=${includeNotes}`
+    const url = `/app/tools/punchlist/report?includeNotes=${includeNotes}&includeComments=${includeComments}`
     window.open(url, '_blank')
     onClose()
   }
@@ -64,6 +65,20 @@ export function ExportPDFModal({ onClose }: Props) {
             </div>
           </div>
 
+          {/* Comments option */}
+          <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
+            <input
+              type="checkbox"
+              checked={includeComments}
+              onChange={(e) => setIncludeComments(e.target.checked)}
+              className="accent-sandstone"
+            />
+            <div>
+              <p className="text-sm text-cream">Include comments</p>
+              <p className="text-xs text-cream/40">Discussion threads on each item</p>
+            </div>
+          </label>
+
           {/* Confirmation */}
           <label className="flex items-start gap-3 cursor-pointer">
             <input
@@ -73,7 +88,7 @@ export function ExportPDFModal({ onClose }: Props) {
               className="mt-0.5 accent-sandstone"
             />
             <span className="text-sm text-cream/60">
-              I&apos;ve reviewed the notes setting above
+              I&apos;ve reviewed the settings above
             </span>
           </label>
 

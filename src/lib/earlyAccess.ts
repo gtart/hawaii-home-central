@@ -1,6 +1,6 @@
 /**
- * Early-access / whitelist helpers.
- * Single source of truth for auth callback + UI allowlist checks.
+ * Early-access / whitelist helpers (edge-safe — no Prisma import).
+ * Single source of truth for env-based allowlist checks.
  */
 
 function parseList(envValue: string | undefined): Set<string> {
@@ -20,6 +20,7 @@ export function isAdminEmail(email: string): boolean {
   return adminEmails().has(email.toLowerCase().trim())
 }
 
+/** Check env-var allowlist only (fast, no DB). Used by edge-safe auth.config.ts. */
 export function isEmailAllowlisted(email: string): boolean {
   const normalized = email.toLowerCase().trim()
   return adminEmails().has(normalized) || allowlistEmails().has(normalized)

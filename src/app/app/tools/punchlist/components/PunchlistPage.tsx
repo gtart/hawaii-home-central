@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import type { PunchlistStateAPI } from '../usePunchlistState'
 import type { PunchlistStatus } from '../types'
 import { PunchlistItemCard } from './PunchlistItemCard'
+import { PunchlistItemDetail } from './PunchlistItemDetail'
 import { PunchlistItemForm } from './PunchlistItemForm'
 import { ExportPDFModal } from './ExportPDFModal'
 
@@ -32,6 +33,7 @@ export function PunchlistPage({ api }: Props) {
   const [sort, setSort] = useState<SortMode>('newest')
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [viewingId, setViewingId] = useState<string | null>(null)
   const [showExport, setShowExport] = useState(false)
 
   const uniqueLocations = useMemo(() => {
@@ -94,6 +96,7 @@ export function PunchlistPage({ api }: Props) {
   }, [payload.items])
 
   const editingItem = editingId ? payload.items.find((i) => i.id === editingId) : undefined
+  const viewingItem = viewingId ? payload.items.find((i) => i.id === viewingId) : undefined
 
   return (
     <>
@@ -157,9 +160,9 @@ export function PunchlistPage({ api }: Props) {
         <button
           type="button"
           onClick={() => setShowExport(true)}
-          className="text-xs px-3 py-1.5 border border-cream/20 text-cream/50 rounded-lg hover:border-cream/40 transition-colors"
+          className="text-xs px-3 py-1.5 bg-sandstone/15 border border-sandstone/30 text-sandstone rounded-lg hover:bg-sandstone/25 transition-colors"
         >
-          Export
+          Export PDF
         </button>
       </div>
 
@@ -218,8 +221,7 @@ export function PunchlistPage({ api }: Props) {
             <PunchlistItemCard
               key={item.id}
               item={item}
-              api={api}
-              onEdit={() => setEditingId(item.id)}
+              onTap={() => setViewingId(item.id)}
             />
           ))}
         </div>
@@ -251,6 +253,20 @@ export function PunchlistPage({ api }: Props) {
           api={api}
           editItem={editingItem}
           onClose={() => setEditingId(null)}
+        />
+      )}
+
+      {/* Detail view modal */}
+      {viewingItem && (
+        <PunchlistItemDetail
+          item={viewingItem}
+          api={api}
+          onClose={() => setViewingId(null)}
+          onEdit={() => {
+            const id = viewingId
+            setViewingId(null)
+            setEditingId(id)
+          }}
         />
       )}
 
