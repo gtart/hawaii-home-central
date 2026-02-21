@@ -15,11 +15,18 @@ import { NotesTab } from './components/NotesTab'
 import type { ViewTab } from './types'
 
 const TAB_PILLS: { key: ViewTab; label: string }[] = [
-  { key: 'quotes', label: 'Quotes' },
-  { key: 'handoffs', label: 'Who does what' },
-  { key: 'agree', label: 'What we agreed to' },
-  { key: 'notes', label: 'Notes' },
+  { key: 'quotes', label: 'Contract Scope' },
+  { key: 'agree', label: 'Contract Terms' },
+  { key: 'handoffs', label: "Who's Responsible" },
+  { key: 'notes', label: 'Your Private Notes' },
 ]
+
+const TAB_HELPER_COPY: Record<ViewTab, string> = {
+  quotes: "Compare what\u2019s included, excluded, and assumed \u2014 this is where surprises hide.",
+  agree: "Payment, change orders, and warranty \u2014 confirm the rules before you sign.",
+  handoffs: "Prevent \u201CI thought you were doing that.\u201D Assign owner for every task.",
+  notes: "Notes for your team. Not visible to contractors.",
+}
 
 function BYSContent() {
   const searchParams = useSearchParams()
@@ -97,19 +104,15 @@ function BYSContent() {
               <ol className="space-y-2 text-sm text-cream/60">
                 <li className="flex gap-2">
                   <span className="text-sandstone font-medium shrink-0">1.</span>
-                  <span>Add your contractors (even one is fine to start)</span>
+                  <span><span className="text-cream/80 font-medium">Add contractors</span> &mdash; Add one or more contractors to compare side-by-side.</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-sandstone font-medium shrink-0">2.</span>
-                  <span>Fill in Quote Details &mdash; compare what each bid includes</span>
+                  <span><span className="text-cream/80 font-medium">Fill in Scope + Terms</span> &mdash; Capture what&apos;s included and the key contract rules &mdash; payments, change orders, warranty.</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-sandstone font-medium shrink-0">3.</span>
-                  <span>Assign Who Handles What &mdash; so nothing falls through the cracks</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-sandstone font-medium shrink-0">4.</span>
-                  <span>Review Key Agreements &mdash; conversations to have before signing</span>
+                  <span><span className="text-cream/80 font-medium">Spot gaps fast</span> &mdash; Use responsibilities and notes to catch missing items before you commit.</span>
                 </li>
               </ol>
             </div>
@@ -141,7 +144,7 @@ function BYSContent() {
       {contractors.length > 0 && (
         <>
           {/* Tab pills */}
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-2 mb-2">
             {TAB_PILLS.map((tab) => (
               <button
                 key={tab.key}
@@ -158,11 +161,17 @@ function BYSContent() {
             ))}
           </div>
 
+          {/* Tab-level helper microcopy */}
+          <p className="text-sm font-medium text-cream/60 mb-6 max-w-prose">
+            {TAB_HELPER_COPY[activeTab]}
+          </p>
+
           {/* Tab content */}
           {isNotesTab ? (
             <NotesTab
               contractors={selectedContractors}
               onUpdate={updateContractor}
+              toolKey="before_you_sign"
             />
           ) : (
             <>

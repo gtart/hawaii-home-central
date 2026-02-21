@@ -38,8 +38,8 @@ export function Navigation() {
     { href: '/contact', label: 'Contact' },
   ]
 
-  // Hide nav on admin pages
-  if (pathname.startsWith('/admin')) return null
+  // Hide nav on admin and public share pages
+  if (pathname.startsWith('/admin') || pathname.startsWith('/share')) return null
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50)

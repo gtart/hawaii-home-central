@@ -16,6 +16,7 @@ const ADMIN_LINKS = [
   { href: '/admin/signups', label: 'Signups' },
   { href: '/admin/import', label: 'Import / Export' },
   { href: '/admin/access', label: 'Access' },
+  { href: '/admin/punchlist', label: 'Punchlist' },
 ]
 
 export function AdminSidebar() {

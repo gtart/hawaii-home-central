@@ -25,4 +25,11 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     description:
       'Keep your renovation moving\u2014by tracking every finish decision, option, and status in one place.',
   },
+  {
+    toolKey: 'punchlist',
+    href: '/app/tools/punchlist',
+    title: 'Punchlist',
+    description:
+      'Document and track punch items with photos\u2014so nothing gets missed before closeout.',
+  },
 ]

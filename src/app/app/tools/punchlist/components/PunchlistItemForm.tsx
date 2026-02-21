@@ -1,0 +1,253 @@
+'use client'
+
+import { useState, useMemo } from 'react'
+import type { PunchlistItem, PunchlistPhoto, PunchlistPriority } from '../types'
+import type { PunchlistStateAPI } from '../usePunchlistState'
+import { PhotoCapture } from './PhotoCapture'
+
+const LOCATION_SEEDS = [
+  'Kitchen',
+  'Master Bathroom',
+  'Guest Bathroom',
+  'Living Room',
+  'Dining Room',
+  'Master Bedroom',
+  'Guest Bedroom',
+  'Hallway',
+  'Garage',
+  'Lanai',
+  'Exterior',
+  'Roof',
+  'Laundry Room',
+  'Office',
+]
+
+const ASSIGNEE_SEEDS = [
+  'GC',
+  'Plumber',
+  'Electrician',
+  'Painter',
+  'Tile',
+  'Cabinet Installer',
+  'HVAC',
+  'Flooring',
+  'Drywall',
+  'Homeowner',
+]
+
+interface Props {
+  api: PunchlistStateAPI
+  editItem?: PunchlistItem
+  onClose: () => void
+}
+
+export function PunchlistItemForm({ api, editItem, onClose }: Props) {
+  const { addItem, updateItem, payload } = api
+
+  const [title, setTitle] = useState(editItem?.title ?? '')
+  const [location, setLocation] = useState(editItem?.location ?? '')
+  const [assignee, setAssignee] = useState(editItem?.assigneeLabel ?? '')
+  const [priority, setPriority] = useState<PunchlistPriority | ''>(editItem?.priority ?? '')
+  const [notes, setNotes] = useState(editItem?.notes ?? '')
+  const [photos, setPhotos] = useState<PunchlistPhoto[]>(editItem?.photos ?? [])
+  const [error, setError] = useState('')
+
+  // Merge seeds with existing unique values from payload
+  const locationOptions = useMemo(() => {
+    const existing = new Set(payload.items.map((i) => i.location))
+    const all = new Set([...LOCATION_SEEDS, ...existing])
+    return Array.from(all).sort()
+  }, [payload.items])
+
+  const assigneeOptions = useMemo(() => {
+    const existing = new Set(payload.items.map((i) => i.assigneeLabel))
+    const all = new Set([...ASSIGNEE_SEEDS, ...existing])
+    return Array.from(all).sort()
+  }, [payload.items])
+
+  function handleAddPhoto(photo: PunchlistPhoto) {
+    setPhotos((prev) => [...prev, photo])
+  }
+
+  function handleRemovePhoto(photoId: string) {
+    setPhotos((prev) => prev.filter((p) => p.id !== photoId))
+  }
+
+  function handleSubmit() {
+    setError('')
+
+    if (!title.trim()) {
+      setError('Title is required')
+      return
+    }
+    if (!location.trim()) {
+      setError('Location is required')
+      return
+    }
+    if (!assignee.trim()) {
+      setError('Assignee is required')
+      return
+    }
+    if (editItem) {
+      updateItem(editItem.id, {
+        title: title.trim(),
+        location: location.trim(),
+        assigneeLabel: assignee.trim(),
+        priority: priority || undefined,
+        notes: notes.trim() || undefined,
+        photos,
+      })
+    } else {
+      addItem({
+        title: title.trim(),
+        location: location.trim(),
+        assigneeLabel: assignee.trim(),
+        priority: priority || undefined,
+        notes: notes.trim() || undefined,
+        photos,
+      })
+    }
+
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+
+      {/* Modal — slides up on mobile */}
+      <div className="relative bg-basalt-50 border-t sm:border border-cream/10 rounded-t-xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 px-6 py-4 flex items-center justify-between z-10">
+          <h2 className="text-lg font-medium text-cream">
+            {editItem ? 'Edit Item' : 'New Punch Item'}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-cream/40 hover:text-cream transition-colors"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-5">
+          {/* Title */}
+          <div>
+            <label className="block text-sm text-cream/70 mb-1.5">
+              Title <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Chipped tile near shower door"
+              className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+            />
+          </div>
+
+          {/* Location */}
+          <div>
+            <label className="block text-sm text-cream/70 mb-1.5">
+              Location <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              list="punchlist-locations"
+              placeholder="e.g. Master Bathroom"
+              className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+            />
+            <datalist id="punchlist-locations">
+              {locationOptions.map((loc) => (
+                <option key={loc} value={loc} />
+              ))}
+            </datalist>
+          </div>
+
+          {/* Assignee */}
+          <div>
+            <label className="block text-sm text-cream/70 mb-1.5">
+              Assignee <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              list="punchlist-assignees"
+              placeholder="e.g. GC, Plumber"
+              className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+            />
+            <datalist id="punchlist-assignees">
+              {assigneeOptions.map((a) => (
+                <option key={a} value={a} />
+              ))}
+            </datalist>
+          </div>
+
+          {/* Priority */}
+          <div>
+            <label className="block text-sm text-cream/70 mb-1.5">Priority</label>
+            <div className="flex gap-2">
+              {([
+                { key: 'HIGH' as PunchlistPriority, label: 'High' },
+                { key: 'MED' as PunchlistPriority, label: 'Med' },
+                { key: 'LOW' as PunchlistPriority, label: 'Low' },
+              ]).map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setPriority(priority === opt.key ? '' : opt.key)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
+                    priority === opt.key
+                      ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
+                      : 'border-cream/20 text-cream/50 hover:border-cream/40'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Photos */}
+          <PhotoCapture
+            photos={photos}
+            onAdd={handleAddPhoto}
+            onRemove={handleRemovePhoto}
+          />
+
+          {/* Notes */}
+          <div>
+            <label className="block text-sm text-cream/70 mb-1.5">Notes</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              placeholder="Optional notes about this item..."
+              className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50 resize-none"
+            />
+          </div>
+
+          {/* Error */}
+          {error && (
+            <p className="text-sm text-red-400">{error}</p>
+          )}
+
+          {/* Submit */}
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="w-full py-3 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+          >
+            {editItem ? 'Save Changes' : 'Add Item'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

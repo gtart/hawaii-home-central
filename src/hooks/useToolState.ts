@@ -13,6 +13,7 @@ interface UseToolStateOptions<T> {
     | 'finish_decisions'
     | 'before_you_sign'
     | 'before_you_sign_notes'
+    | 'punchlist'
   localStorageKey: string
   defaultValue: T
   /** When true, skip API calls and only use localStorage. */

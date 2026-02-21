@@ -101,6 +101,7 @@ model User {
   memberships        ProjectMember[]
   toolAccess         ProjectToolAccess[]
   sentInvites        ProjectInvite[]      @relation("SentInvites")
+  shareTokens        ToolShareToken[]     @relation("ShareTokenCreator")
   settingsUpdated    SiteSetting[]
   contentFeedback  ContentFeedback[]
   privateFeedback  ContentPrivateFeedback[]
@@ -173,6 +174,7 @@ model Project {
   members         ProjectMember[]
   toolAccess      ProjectToolAccess[]
   invites         ProjectInvite[]
+  shareTokens     ToolShareToken[]
 
   @@index([userId])
   @@map("Property")
@@ -241,6 +243,28 @@ model ProjectInvite {
 
   @@index([projectId, toolKey])
   @@index([email, status])
+  @@index([token])
+}
+
+// ─── Public Share Tokens ─────────────────────────────
+
+model ToolShareToken {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  projectId   String
+  toolKey     String
+  permissions String    @default("READ")
+  settings    Json      @default("{}")
+  createdBy   String
+  revokedAt   DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator     User      @relation("ShareTokenCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([projectId, toolKey])
   @@index([token])
 }
 

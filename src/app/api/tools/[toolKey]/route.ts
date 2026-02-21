@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { ensureCurrentProject } from '@/lib/project'
-import { getToolAccessLevel, type ToolAccessLevel } from '@/lib/project-access'
+import { resolveToolAccess } from '@/lib/project-access'
 
 const VALID_TOOL_KEYS = [
   'hold_points',
@@ -11,37 +11,8 @@ const VALID_TOOL_KEYS = [
   'finish_decisions',
   'before_you_sign',
   'before_you_sign_notes',
+  'punchlist',
 ]
-
-/**
- * Resolve access level, with legacy repair for owners missing ProjectMember rows.
- * Returns the access level or null if no access.
- */
-async function resolveAccess(
-  userId: string,
-  projectId: string,
-  toolKey: string
-): Promise<ToolAccessLevel | null> {
-  const level = await getToolAccessLevel(userId, projectId, toolKey)
-  if (level) return level
-
-  // Legacy repair: if user is the project creator but has no ProjectMember row
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    select: { userId: true },
-  })
-
-  if (project?.userId === userId) {
-    await prisma.projectMember.upsert({
-      where: { projectId_userId: { projectId, userId } },
-      create: { projectId, userId, role: 'OWNER' },
-      update: {},
-    })
-    return 'OWNER'
-  }
-
-  return null
-}
 
 export async function GET(
   _request: Request,
@@ -61,7 +32,7 @@ export async function GET(
   const projectId = await ensureCurrentProject(userId)
 
   // Enforce access — no blanket bypass
-  const access = await resolveAccess(userId, projectId, toolKey)
+  const access = await resolveToolAccess(userId, projectId, toolKey)
   if (!access) {
     return NextResponse.json(
       { error: 'No access to this tool', code: 'NO_ACCESS' },
@@ -131,7 +102,7 @@ export async function PUT(
   const projectId = await ensureCurrentProject(userId)
 
   // Enforce EDIT access
-  const access = await resolveAccess(userId, projectId, toolKey)
+  const access = await resolveToolAccess(userId, projectId, toolKey)
   if (!access) {
     return NextResponse.json(
       { error: 'No access to this tool', code: 'NO_ACCESS' },

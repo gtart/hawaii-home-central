@@ -106,3 +106,33 @@ export async function getToolAccessLevel(
   if (!access) return null
   return access.level as 'EDIT' | 'VIEW'
 }
+
+/**
+ * Resolve access level, with legacy repair for owners missing ProjectMember rows.
+ * Returns the access level or null if no access.
+ */
+export async function resolveToolAccess(
+  userId: string,
+  projectId: string,
+  toolKey: string
+): Promise<ToolAccessLevel | null> {
+  const level = await getToolAccessLevel(userId, projectId, toolKey)
+  if (level) return level
+
+  // Legacy repair: if user is the project creator but has no ProjectMember row
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { userId: true },
+  })
+
+  if (project?.userId === userId) {
+    await prisma.projectMember.upsert({
+      where: { projectId_userId: { projectId, userId } },
+      create: { projectId, userId, role: 'OWNER' },
+      update: {},
+    })
+    return 'OWNER'
+  }
+
+  return null
+}

@@ -6,6 +6,7 @@ import { EarlyAccessSignupForm } from '@/components/forms/EarlyAccessSignupForm'
 export const metadata: Metadata = {
   title: 'Early Access — Beta Preview',
   description: 'Hawaii Home Central is in beta preview. Sign in with Google for an early look, or leave your email to be notified at launch.',
+  robots: { index: false, follow: false },
 }
 
 export default function EarlyAccessPage() {

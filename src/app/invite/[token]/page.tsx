@@ -7,11 +7,13 @@ import Link from 'next/link'
 const TOOL_PATHS: Record<string, string> = {
   before_you_sign: '/app/tools/before-you-sign',
   finish_decisions: '/app/tools/finish-decisions',
+  punchlist: '/app/tools/punchlist',
 }
 
 const TOOL_LABELS: Record<string, string> = {
   before_you_sign: 'Contract Comparison Tool',
   finish_decisions: 'Decision Tracker',
+  punchlist: 'Punchlist',
 }
 
 interface InviteDetails {

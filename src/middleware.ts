@@ -4,14 +4,22 @@ import type { NextRequest } from 'next/server'
 export function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname
 
-  // 1. Maintenance mode — redirect all non-exempt routes
+  // 1. Maintenance mode — highest precedence, blocks almost everything
   if (process.env.MAINTENANCE_MODE === 'true') {
     const exempt =
       path === '/maintenance' ||
-      path.startsWith('/admin') ||
-      path.startsWith('/api') ||
-      path.startsWith('/login') ||
-      path.startsWith('/_next')
+      path.startsWith('/api/auth') ||       // NextAuth (admin sign-in)
+      path.startsWith('/api/early-access') || // waitlist still works
+      path.startsWith('/_next') ||
+      path === '/login'                      // admin needs to reach login page
+
+    // Admins with a session can reach /admin
+    if (path.startsWith('/admin')) {
+      const hasSession =
+        req.cookies.has('__Secure-authjs.session-token') ||
+        req.cookies.has('authjs.session-token')
+      if (hasSession) return NextResponse.next()
+    }
 
     if (!exempt) {
       return NextResponse.redirect(new URL('/maintenance', req.url))
