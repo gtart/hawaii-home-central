@@ -1,16 +1,25 @@
 'use client'
 
-import type { PunchlistItem } from '../types'
-import { STATUS_CONFIG, PRIORITY_CONFIG } from '../constants'
+import type { PunchlistItem, PunchlistStatus } from '../types'
+import { STATUS_CONFIG, STATUS_CYCLE, PRIORITY_CONFIG } from '../constants'
 
 interface Props {
   item: PunchlistItem
   onTap: () => void
+  onStatusChange?: (itemId: string, status: PunchlistStatus) => void
 }
 
-export function PunchlistItemCard({ item, onTap }: Props) {
+export function PunchlistItemCard({ item, onTap, onStatusChange }: Props) {
   const statusCfg = STATUS_CONFIG[item.status]
   const priorityCfg = item.priority ? PRIORITY_CONFIG[item.priority] : null
+
+  function cycleStatus(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (!onStatusChange) return
+    const idx = STATUS_CYCLE.indexOf(item.status)
+    const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length]
+    onStatusChange(item.id, next)
+  }
 
   return (
     <div
@@ -84,10 +93,21 @@ export function PunchlistItemCard({ item, onTap }: Props) {
 
       {/* Bottom row: status badge + date */}
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-cream/5">
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusCfg.bg} ${statusCfg.text}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
-          {statusCfg.label}
-        </span>
+        {onStatusChange ? (
+          <button
+            type="button"
+            onClick={cycleStatus}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusCfg.bg} ${statusCfg.text} hover:opacity-80 active:scale-95 transition-all cursor-pointer`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
+            {statusCfg.label}
+          </button>
+        ) : (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusCfg.bg} ${statusCfg.text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
+            {statusCfg.label}
+          </span>
+        )}
 
         <span className="text-cream/30 text-[11px]">
           {new Date(item.createdAt).toLocaleDateString()}

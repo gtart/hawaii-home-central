@@ -227,6 +227,7 @@ export function PunchlistPage({ api }: Props) {
               key={item.id}
               item={item}
               onTap={() => setViewingId(item.id)}
+              onStatusChange={readOnly ? undefined : api.setStatus}
             />
           ))}
         </div>

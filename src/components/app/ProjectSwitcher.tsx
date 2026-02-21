@@ -38,12 +38,9 @@ export function ProjectSwitcher() {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 text-sm text-cream/70 hover:text-cream transition-colors px-3 py-1.5 rounded-lg hover:bg-cream/5"
+        className="flex items-center gap-1.5 text-xs text-sandstone/70 hover:text-sandstone transition-colors px-2 py-1 rounded-md hover:bg-sandstone/10 ml-auto"
       >
-        <svg className="w-4 h-4 text-sandstone/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span className="font-medium">{currentProject?.name ?? 'Project'}</span>
+        <span>Switch</span>
         <svg className={cn('w-3 h-3 transition-transform', open && 'rotate-180')} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
