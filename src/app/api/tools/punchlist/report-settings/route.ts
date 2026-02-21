@@ -12,6 +12,7 @@ export async function GET() {
 
   return NextResponse.json({
     logoUrl: settings.logoUrl,
+    companyName: settings.companyName,
     reportTitle: settings.reportTitle,
     footerText: settings.footerText,
   })
