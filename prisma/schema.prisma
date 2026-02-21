@@ -103,6 +103,7 @@ model User {
   sentInvites        ProjectInvite[]      @relation("SentInvites")
   shareTokens        ToolShareToken[]     @relation("ShareTokenCreator")
   settingsUpdated    SiteSetting[]
+  toolInstanceUpdates ToolInstance[] @relation("ToolInstanceUpdater")
   contentFeedback  ContentFeedback[]
   privateFeedback  ContentPrivateFeedback[]
   createdAt        DateTime @default(now())
@@ -183,13 +184,15 @@ model Project {
 // ─── Project Collaboration ──────────────────────────────
 
 model ToolInstance {
-  id        String   @id @default(cuid())
-  projectId String
-  toolKey   String
-  payload   Json     @default("{}")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  projectId   String
+  toolKey     String
+  payload     Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+  updatedBy   User?    @relation("ToolInstanceUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, toolKey])
   @@index([projectId])

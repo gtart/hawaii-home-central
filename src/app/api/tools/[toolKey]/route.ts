@@ -119,8 +119,8 @@ export async function PUT(
   // Write ONLY to ToolInstance (project-scoped)
   await prisma.toolInstance.upsert({
     where: { projectId_toolKey: { projectId, toolKey } },
-    create: { projectId, toolKey, payload: body.payload },
-    update: { payload: body.payload },
+    create: { projectId, toolKey, payload: body.payload, updatedById: userId },
+    update: { payload: body.payload, updatedById: userId },
   })
 
   return NextResponse.json({ success: true })

@@ -7,10 +7,11 @@ interface CardProps {
   title: string
   description: string
   badge?: string
+  meta?: React.ReactNode
   className?: string
 }
 
-export function Card({ href, title, description, badge, className }: CardProps) {
+export function Card({ href, title, description, badge, meta, className }: CardProps) {
   return (
     <Link
       href={href}
@@ -25,6 +26,7 @@ export function Card({ href, title, description, badge, className }: CardProps) 
         {badge && <Badge>{badge}</Badge>}
       </div>
       <p className="text-cream/70 text-sm leading-relaxed">{description}</p>
+      {meta && <div className="mt-3 pt-3 border-t border-cream/5">{meta}</div>}
     </Link>
   )
 }
