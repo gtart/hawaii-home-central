@@ -189,13 +189,15 @@ export function PublicPunchlistView({ payload, projectName, includeNotes }: Prop
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="border-b border-cream/10 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+      <header className="border-b border-cream/10 px-6 py-6">
+        <div className="max-w-4xl mx-auto flex items-start justify-between">
           <div>
-            <p className="text-xs text-cream/40">Shared Punchlist</p>
-            <h1 className="font-serif text-xl text-sandstone">{projectName}</h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider bg-sandstone/10 text-sandstone/70 border border-sandstone/15 mb-2">
+              Punchlist
+            </span>
+            <h1 className="font-serif text-3xl md:text-4xl text-sandstone">{projectName}</h1>
           </div>
-          <Link href="/" className="text-xs text-cream/30 hover:text-cream/50 transition-colors">
+          <Link href="/" className="text-xs text-cream/30 hover:text-cream/50 transition-colors mt-1">
             Hawaii Home Central
           </Link>
         </div>
