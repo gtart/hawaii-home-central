@@ -15,8 +15,8 @@ interface NavLink {
 }
 
 const NAV_LINKS: NavLink[] = [
-  { href: '/app', label: 'Tools', exact: true },
-  { href: '/app/projects', label: 'Projects' },
+  { href: '/app', label: 'My Tools', exact: true },
+  { href: '/app/projects', label: 'My Projects' },
   { href: '/resources', label: 'Guides' },
   { href: '/app/settings', label: 'Account', exact: true },
 ]

@@ -120,7 +120,7 @@ export function PlaybookContent() {
 
         {/* Sign-in pill */}
         <div className="mb-8">
-          <SignInPill appToolPath="/app/tools/before-you-sign?tab=handoffs" label="Sign in to save assignments in your workspace" />
+          <SignInPill appToolPath="/app/tools/before-you-sign?tab=handoffs" label="Sign in to save your assignments" />
         </div>
 
         {/* Filter */}
@@ -189,7 +189,7 @@ export function PlaybookContent() {
               </h2>
               <p className="text-cream/60 text-sm mb-6 max-w-lg mx-auto">
                 Sign in to assign owners for each item, add notes documenting
-                your agreements, and access your saved workspace from any device.
+                your agreements, and access your saved tools from any device.
               </p>
               <Button
                 onClick={() => signIn('google', { callbackUrl: '/app/tools/before-you-sign?tab=handoffs' })}

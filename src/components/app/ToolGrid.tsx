@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { Card } from '@/components/ui/Card'
+import Link from 'next/link'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/Badge'
 import { useProject } from '@/contexts/ProjectContext'
 import { ProjectSwitcher } from './ProjectSwitcher'
 import { TOOL_REGISTRY } from '@/lib/tool-registry'
@@ -12,6 +14,21 @@ interface ToolSummary {
   updatedAt: string
   updatedBy: { name: string | null; image: string | null } | null
 }
+
+interface Stage {
+  number: number
+  title: string
+  subtitle: string
+  toolKey: string | null
+}
+
+const STAGES: Stage[] = [
+  { number: 1, title: 'Plan', subtitle: 'Define scope, budget, and funding.', toolKey: null },
+  { number: 2, title: 'Hire & Contract', subtitle: 'Compare bids and lock expectations.', toolKey: 'before_you_sign' },
+  { number: 3, title: 'Permits & Schedule', subtitle: 'Get approvals and set a realistic start plan.', toolKey: null },
+  { number: 4, title: 'Decide & Order', subtitle: 'Finalize selections and confirm lead times.', toolKey: 'finish_decisions' },
+  { number: 5, title: 'Build & Closeout', subtitle: 'Track issues as you go, then finish strong.', toolKey: 'punchlist' },
+]
 
 function relativeTime(dateStr: string): string {
   const now = Date.now()
@@ -38,7 +55,7 @@ function getInitials(name: string | null): string {
 
 function ToolMeta({ summary }: { summary: ToolSummary | undefined }) {
   if (!summary) {
-    return <span className="text-cream/30 text-xs">Not used yet</span>
+    return <span className="text-cream/30 text-xs">Not started yet</span>
   }
 
   const user = summary.updatedBy
@@ -88,19 +105,19 @@ export function ToolGrid() {
   }, [currentProject?.id])
 
   // Owners see all tools. Members only see tools they have access to.
-  const visibleTools = currentProject?.role === 'MEMBER' && currentProject.toolAccess
-    ? TOOL_REGISTRY.filter((t) =>
-        currentProject.toolAccess!.some((a) => a.toolKey === t.toolKey)
-      )
-    : TOOL_REGISTRY
+  const accessibleToolKeys = currentProject?.role === 'MEMBER' && currentProject.toolAccess
+    ? new Set(currentProject.toolAccess.map((a) => a.toolKey))
+    : null
 
   const summaryMap = new Map(summaries.map((s) => [s.toolKey, s]))
+
+  const toolMap = new Map(TOOL_REGISTRY.map((t) => [t.toolKey, t]))
 
   return (
     <>
       {/* Currently viewing bar */}
       {currentProject && (
-        <div className="flex items-center gap-3 mb-6 px-4 py-2.5 rounded-lg bg-sandstone/10 border border-sandstone/15">
+        <div className="flex items-center gap-3 mb-8 px-4 py-2.5 rounded-lg bg-sandstone/10 border border-sandstone/15">
           <svg className="w-4 h-4 text-sandstone/60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -112,26 +129,65 @@ export function ToolGrid() {
         </div>
       )}
 
-      {visibleTools.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-cream/40 text-sm">
-            No tools have been shared with you for this project yet.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {visibleTools.map((tool) => (
-            <Card
-              key={tool.toolKey}
-              href={tool.href}
-              title={tool.title}
-              description={tool.description}
-              badge="Live"
-              meta={<ToolMeta summary={summaryMap.get(tool.toolKey)} />}
-            />
-          ))}
-        </div>
-      )}
+      <div className="space-y-2">
+        {STAGES.map((stage, index) => {
+          const tool = stage.toolKey ? toolMap.get(stage.toolKey) : null
+          const isAccessible = !accessibleToolKeys || (stage.toolKey ? accessibleToolKeys.has(stage.toolKey) : false)
+          const hasTool = !!tool && isAccessible
+
+          return (
+            <div key={stage.number} className="flex gap-4">
+              {/* Stage marker */}
+              <div className="flex flex-col items-center shrink-0 pt-1">
+                <div
+                  className={cn(
+                    'w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium',
+                    hasTool
+                      ? 'bg-sandstone text-basalt'
+                      : 'border border-cream/20 text-cream/40'
+                  )}
+                >
+                  {stage.number}
+                </div>
+                {index < STAGES.length - 1 && (
+                  <div className="w-px flex-1 bg-cream/10 mt-1.5" />
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 pb-4">
+                <div className="mb-1">
+                  <span className="text-sm font-medium text-cream/60">{stage.title}</span>
+                  <span className="text-cream/20 mx-2">&middot;</span>
+                  <span className="text-xs text-cream/30">{stage.subtitle}</span>
+                </div>
+
+                {hasTool ? (
+                  <Link
+                    href={tool!.href}
+                    className="block p-5 bg-basalt-50 rounded-card card-hover"
+                  >
+                    <div className="flex items-start justify-between gap-4 mb-2">
+                      <h3 className="font-serif text-lg text-sandstone">{tool!.title}</h3>
+                      <Badge>Live</Badge>
+                    </div>
+                    <p className="text-cream/70 text-sm leading-relaxed mb-3">{tool!.description}</p>
+                    <div className="pt-2 border-t border-cream/5">
+                      <ToolMeta summary={summaryMap.get(stage.toolKey!)} />
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="py-2">
+                    <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs bg-cream/5 text-cream/30">
+                      Coming soon
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </>
   )
 }

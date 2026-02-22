@@ -37,7 +37,7 @@ const STAGES: StageEntry[] = [
       title: 'Contract Checklist',
       description:
         'Walk through each bid against the same checklist\u2014so nothing gets missed and you sign with confidence.',
-      ctaText: 'Sign in to save your workspace',
+      ctaText: 'Sign in to get started',
       ctaHref: '/login?callbackUrl=/app/tools/before-you-sign',
       steps: [
         'Add your contractors\u2019 names and quotes',
@@ -65,7 +65,7 @@ const STAGES: StageEntry[] = [
       title: 'Finish Selections',
       description:
         'Always know what\u2019s decided, what\u2019s next, and what\u2019s blocking\u2014by organizing selections by room instead of texts and screenshots.',
-      ctaText: 'Sign in to save your workspace',
+      ctaText: 'Sign in to get started',
       ctaHref: '/login?callbackUrl=/app/tools/finish-decisions',
       steps: [
         'Pick your rooms (kitchen, bathroom, etc.)',
@@ -87,7 +87,7 @@ const STAGES: StageEntry[] = [
       title: 'Fix List',
       description:
         'Track fixes and punch list items in real time\u2014and share a clean report with your contractor.',
-      ctaText: 'Sign in to save your workspace',
+      ctaText: 'Sign in to get started',
       ctaHref: '/login?callbackUrl=/app/tools/punchlist',
       steps: [
         'Add items as you notice them during the build',
@@ -202,7 +202,7 @@ export function ToolPreviewCards() {
 
                         <Link href={stage.tool!.ctaHref}>
                           <Button variant="secondary" size="sm" className="w-full">
-                            Sign in to save progress and share
+                            Sign in to get started
                           </Button>
                         </Link>
                       </div>
