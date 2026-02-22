@@ -325,13 +325,54 @@ function resolveHref(link: RelatedLink, isAuthed: boolean): string {
   return isAuthed ? link.href : `/login?callbackUrl=${encodeURIComponent(link.href)}`
 }
 
+function SubstepCallout({ steps, triggerText, description }: { steps: string[]; triggerText: string; description: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="border border-dashed border-sandstone/25 rounded-lg bg-sandstone/[0.03]">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={cn(
+          'flex items-center gap-2 w-full px-4 py-3 text-sm transition-colors rounded-lg',
+          open ? 'text-sandstone' : 'text-cream/50 hover:text-cream/70'
+        )}
+      >
+        <svg
+          className={cn('w-3.5 h-3.5 transition-transform duration-200 shrink-0', open && 'rotate-90')}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="font-medium">{triggerText}</span>
+      </button>
+      {open && (
+        <div className="px-4 pb-4 space-y-3">
+          <p className="text-xs text-cream/50 leading-relaxed">{description}</p>
+          <div className="flex flex-wrap items-center gap-y-2">
+            {steps.map((step, i) => (
+              <Fragment key={i}>
+                <span className="text-sm text-cream/80">{step}</span>
+                {i < steps.length - 1 && (
+                  <svg className="w-4 h-4 text-sandstone/50 mx-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </Fragment>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function StagePreviewCard({ stage, showHeader = true, isAuthed = false }: { stage: RenovationStage; showHeader?: boolean; isAuthed?: boolean }) {
   const [detailsOpen, setDetailsOpen] = useState(false)
-  const [substepsOpen, setSubstepsOpen] = useState(false)
 
-  const isBuild = stage.id === 'build'
-  const isFinish = stage.id === 'install-finish'
-  const hasSubsteps = isBuild || isFinish
+  const isBuildCloseout = stage.id === 'build-closeout'
 
   return (
     <div className="bg-basalt-50 rounded-card p-6 space-y-4 animate-stage-enter">
@@ -378,56 +419,21 @@ function StagePreviewCard({ stage, showHeader = true, isAuthed = false }: { stag
         </div>
       )}
 
-      {/* Substep sequence callout — only for Build and Finish stages */}
-      {hasSubsteps && (() => {
-        const steps = isBuild ? BUILD_SUBSTEPS : FINISH_SUBSTEPS
-        const description = isBuild
-          ? 'This is the most involved part of your renovation. Your contractor manages it, and it typically follows this sequence:'
-          : 'This is where your earlier selections come to life. Work generally follows this order:'
-        const triggerText = isBuild
-          ? 'See the typical build sequence'
-          : 'See how finishes are installed'
-        return (
-          <div className="border border-dashed border-sandstone/25 rounded-lg bg-sandstone/[0.03]">
-            <button
-              type="button"
-              onClick={() => setSubstepsOpen(!substepsOpen)}
-              className={cn(
-                'flex items-center gap-2 w-full px-4 py-3 text-sm transition-colors rounded-lg',
-                substepsOpen ? 'text-sandstone' : 'text-cream/50 hover:text-cream/70'
-              )}
-            >
-              <svg
-                className={cn('w-3.5 h-3.5 transition-transform duration-200 shrink-0', substepsOpen && 'rotate-90')}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span className="font-medium">{triggerText}</span>
-            </button>
-            {substepsOpen && (
-              <div className="px-4 pb-4 space-y-3">
-                <p className="text-xs text-cream/50 leading-relaxed">{description}</p>
-                <div className="flex flex-wrap items-center gap-y-2">
-                  {steps.map((step, i) => (
-                    <Fragment key={i}>
-                      <span className="text-sm text-cream/80">{step}</span>
-                      {i < steps.length - 1 && (
-                        <svg className="w-4 h-4 text-sandstone/50 mx-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </Fragment>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )
-      })()}
+      {/* Substep sequence callouts — only for Build & Closeout stage */}
+      {isBuildCloseout && (
+        <div className="space-y-2">
+          <SubstepCallout
+            steps={BUILD_SUBSTEPS}
+            triggerText="See the typical build sequence"
+            description="Your contractor manages this phase. It typically follows this sequence:"
+          />
+          <SubstepCallout
+            steps={FINISH_SUBSTEPS}
+            triggerText="See how finishes are installed"
+            description="This is where your earlier selections come to life. Work generally follows this order:"
+          />
+        </div>
+      )}
 
       <button
         type="button"

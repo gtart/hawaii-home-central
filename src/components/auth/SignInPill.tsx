@@ -8,7 +8,7 @@ interface SignInPillProps {
   label?: string
 }
 
-export function SignInPill({ appToolPath, label = 'Sign in to use interactively' }: SignInPillProps) {
+export function SignInPill({ appToolPath, label = 'Sign in to save your workspace' }: SignInPillProps) {
   const { data: session, status } = useSession()
 
   if (status === 'loading') {

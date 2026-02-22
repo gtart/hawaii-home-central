@@ -86,9 +86,9 @@ export function PlaybookContent() {
               href="/login?callbackUrl=/app/tools/before-you-sign?tab=quotes"
               className="text-sandstone hover:text-sandstone-light underline"
             >
-              Sign in to use Tools
+              Sign in to save your workspace
             </Link>{' '}
-            and compare bids in your saved workspace.
+            and compare bids in one place.
           </p>
         </div>
 

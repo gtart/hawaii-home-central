@@ -11,7 +11,7 @@ const TOOLS = [
     title: 'Contract Comparison Tool',
     description:
       'Choose the right contractor with fewer surprises\u2014by normalizing each bid into the same checklist.',
-    ctaText: 'Sign in to get started',
+    ctaText: 'Sign in to save your workspace',
     ctaHref: '/login?callbackUrl=/app/tools/before-you-sign',
     steps: [
       'Add your contractors\u2019 names and quotes',
@@ -28,7 +28,7 @@ const TOOLS = [
     title: 'Decision Tracker',
     description:
       'Always know what\u2019s decided, what\u2019s next, and what\u2019s blocking\u2014by organizing decisions by room instead of texts and screenshots.',
-    ctaText: 'Sign in to get started',
+    ctaText: 'Sign in to save your workspace',
     ctaHref: '/login?callbackUrl=/app/tools/finish-decisions',
     steps: [
       'Pick your rooms (kitchen, bathroom, etc.)',
@@ -114,7 +114,7 @@ export function ToolPreviewCards() {
 
                   <Link href={tool.ctaHref}>
                     <Button variant="secondary" size="sm" className="w-full">
-                      Sign in to start using this tool
+                      Sign in to save progress and share
                     </Button>
                   </Link>
                 </div>

@@ -71,7 +71,7 @@ export default function ResourcesPage() {
               <Card
                 href="/resources/renovation-stages"
                 title="Plan Your Renovation"
-                description="A stage-by-stage walkthrough of every renovation phase&mdash;from planning and permits to punch list. See what happens when, what to decide, and what&rsquo;s different in Hawai&#x02BB;i."
+                description="A stage-by-stage walkthrough of every renovation phase&mdash;from planning and contracts to closeout. See what happens when, what to decide, and what&rsquo;s different in Hawai&#x02BB;i."
                 badge="Free"
                 className="md:col-span-2"
               />

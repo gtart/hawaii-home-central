@@ -11,14 +11,14 @@ import { RENOVATION_STAGES } from '@/data/renovation-stages'
 export const metadata: Metadata = {
   title: 'Plan Your Renovation — What Happens When & What to Decide',
   description:
-    'A stage-by-stage guide to every phase of a home renovation in Hawaiʻi. See what happens, what you need to decide, and what to watch out for — from planning to punch list.',
+    'A stage-by-stage guide to every phase of a home renovation in Hawaiʻi. See what happens, what you need to decide, and what to watch out for — from planning to closeout.',
 }
 
 const FAQ_ITEMS = [
   {
     question: 'How many stages are in a typical renovation?',
     answer:
-      'This guide covers 9 stages: Dream, Define the Scope, Set the Plan, Permits & Scheduling, Finalize Your Choices, Order & Reserve, Build, Install & Finish, and Punch List & Closeout. Not every renovation goes through all 9 — smaller projects may skip some stages.',
+      'This guide covers 5 stages: Plan, Hire & Contract, Permits & Schedule, Decide & Order, and Build & Closeout. Real projects often overlap stages — use this as a guide, not a rigid checklist.',
   },
   {
     question: 'Why does ordering matter so much in Hawaiʻi?',
@@ -67,7 +67,7 @@ export default function RenovationStagesPage() {
               {RENOVATION_STAGES.length} stages &middot; Hawai&#x02BB;i-specific notes throughout
             </p>
             <p className="text-cream/40 text-xs mb-12 max-w-2xl mx-auto text-center">
-              Smaller projects often compress stages 3&ndash;6 into one &ldquo;Plan &amp; Prep&rdquo; phase&mdash;use this as a reference, not a rigid checklist.
+              Use this as a guide&mdash;real projects overlap stages.
             </p>
           </FadeInSection>
 
@@ -105,7 +105,7 @@ export default function RenovationStagesPage() {
                 Use Tools to stay on track
               </h2>
               <p className="text-cream/50 text-sm mb-6 text-center">
-                Guides are free to read. Tools save your progress (free sign-in).
+                Guides are free to browse. Sign in to save your progress.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                 <Card

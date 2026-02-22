@@ -120,7 +120,7 @@ export function PlaybookContent() {
 
         {/* Sign-in pill */}
         <div className="mb-8">
-          <SignInPill appToolPath="/app/tools/before-you-sign?tab=handoffs" label="Sign in to use Tools and assign owners in your workspace" />
+          <SignInPill appToolPath="/app/tools/before-you-sign?tab=handoffs" label="Sign in to save assignments in your workspace" />
         </div>
 
         {/* Filter */}

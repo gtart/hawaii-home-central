@@ -21,25 +21,6 @@ export function Navigation() {
   const moreRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
 
-  const toolsLabel = session?.user ? 'Workspace' : 'Tools'
-  const toolsHref = session?.user ? '/app' : '/tools'
-
-  const primaryLinks: NavLink[] = [
-    { href: '/resources', label: 'Guides', matchMode: 'prefix' },
-    { href: toolsHref, label: toolsLabel, matchMode: 'prefix' },
-    { href: '/stories', label: 'Stories' },
-  ]
-
-  const moreLinks: NavLink[] = [
-    { href: '/about', label: 'About' },
-    { href: '/directory', label: 'Directory' },
-    { href: '/early-access', label: 'Early Access' },
-    { href: '/contact', label: 'Contact' },
-  ]
-
-  // Hide nav on admin, app workspace, public share, and report pages
-  if (pathname.startsWith('/admin') || pathname.startsWith('/app') || pathname.startsWith('/share') || pathname.includes('/report')) return null
-
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50)
     window.addEventListener('scroll', handleScroll)
@@ -63,6 +44,25 @@ export function Navigation() {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [moreOpen])
+
+  // Hide nav on admin, app workspace, public share, and report pages
+  if (pathname.startsWith('/admin') || pathname.startsWith('/app') || pathname.startsWith('/share') || pathname.includes('/report')) return null
+
+  const toolsLabel = session?.user ? 'Workspace' : 'Tools'
+  const toolsHref = session?.user ? '/app' : '/tools'
+
+  const primaryLinks: NavLink[] = [
+    { href: '/resources', label: 'Guides', matchMode: 'prefix' },
+    { href: toolsHref, label: toolsLabel, matchMode: 'prefix' },
+    { href: '/stories', label: 'Stories' },
+  ]
+
+  const moreLinks: NavLink[] = [
+    { href: '/about', label: 'About' },
+    { href: '/directory', label: 'Directory' },
+    { href: '/early-access', label: 'Early Access' },
+    { href: '/contact', label: 'Contact' },
+  ]
 
   const isLinkActive = (link: NavLink) => {
     if (link.href === '/app' || link.href === '/tools') {

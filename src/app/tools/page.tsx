@@ -7,9 +7,9 @@ import { auth } from '@/auth'
 import { ToolPreviewCards } from './ToolPreviewCards'
 
 export const metadata: Metadata = {
-  title: 'My Tools — Interactive Renovation Workspace',
+  title: 'Tools — Interactive Renovation Workspace',
   description:
-    'Sign in to access your renovation tools: compare contractor bids, track finish decisions, assign task ownership. Built for Hawaiʻi homeowners.',
+    'Interactive renovation tools for Hawaiʻi homeowners: compare contractor bids, track finish decisions, assign task ownership. Sign in to save your workspace.',
 }
 
 export default async function ToolsMarketingPage() {
@@ -22,7 +22,7 @@ export default async function ToolsMarketingPage() {
 
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', href: '/' },
-    { name: 'My Tools', href: '/tools' },
+    { name: 'Tools', href: '/tools' },
   ])
 
   return (
@@ -35,10 +35,10 @@ export default async function ToolsMarketingPage() {
         <div className="max-w-4xl mx-auto">
           <FadeInSection>
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6 text-center">
-              My Tools
+              Tools
             </h1>
             <p className="text-lg text-cream/70 mb-4 max-w-3xl mx-auto text-center leading-relaxed">
-              Sign in to access your interactive renovation workspace.
+              Browse the tools anytime. Sign in to save your project workspace.
             </p>
             <p className="text-cream/50 text-sm mb-12 max-w-2xl mx-auto text-center">
               Built for Hawai&#x02BB;i homeowners. Free to use.
