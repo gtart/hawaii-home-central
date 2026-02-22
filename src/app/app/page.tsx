@@ -20,10 +20,7 @@ export default function AppPage() {
               <Badge variant="accent">Early Preview</Badge>
             </div>
             <p className="text-cream/70 text-lg leading-relaxed max-w-2xl">
-              Your saved progress. Pick up on any device.
-            </p>
-            <p className="text-cream/50 text-sm mt-2">
-              Actively being built&mdash;your feedback shapes what comes next.
+              Pick what you need right now.
             </p>
           </div>
         </FadeInSection>

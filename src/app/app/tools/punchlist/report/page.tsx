@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { PunchlistReport } from './PunchlistReport'
 
 export const metadata: Metadata = {
-  title: 'Punchlist Report',
+  title: 'Fix List Report',
   robots: 'noindex, nofollow',
 }
 

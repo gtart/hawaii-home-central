@@ -10,6 +10,6 @@ export const STATUS_CYCLE: PunchlistStatus[] = ['OPEN', 'ACCEPTED', 'DONE']
 
 export const PRIORITY_CONFIG = {
   HIGH: { label: 'High', className: 'bg-red-400/15 text-red-400' },
-  MED: { label: 'Med', className: 'bg-amber-400/15 text-amber-400' },
+  MED: { label: 'Medium', className: 'bg-amber-400/15 text-amber-400' },
   LOW: { label: 'Low', className: 'bg-cream/10 text-cream/40' },
 } as const

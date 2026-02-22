@@ -12,7 +12,7 @@ const STATUS_CONFIG: Record<PunchlistStatus, { label: string; dot: string; bg: s
 
 const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
   HIGH: { label: 'High', className: 'bg-red-400/15 text-red-400' },
-  MED: { label: 'Med', className: 'bg-amber-400/15 text-amber-400' },
+  MED: { label: 'Medium', className: 'bg-amber-400/15 text-amber-400' },
   LOW: { label: 'Low', className: 'bg-cream/10 text-cream/40' },
 }
 

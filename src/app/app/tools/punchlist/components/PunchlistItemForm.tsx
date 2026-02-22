@@ -170,7 +170,7 @@ export function PunchlistItemForm({ api, editItem, onClose }: Props) {
             <div className="flex gap-2">
               {([
                 { key: 'HIGH' as PunchlistPriority, label: 'High' },
-                { key: 'MED' as PunchlistPriority, label: 'Med' },
+                { key: 'MED' as PunchlistPriority, label: 'Medium' },
                 { key: 'LOW' as PunchlistPriority, label: 'Low' },
               ]).map((opt) => (
                 <button

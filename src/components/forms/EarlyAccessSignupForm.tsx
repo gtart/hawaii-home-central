@@ -110,7 +110,7 @@ export function EarlyAccessSignupForm() {
           aria-label="Email address"
         />
         <Button type="submit" disabled={status === 'submitting'} className="w-full">
-          {status === 'submitting' ? 'Joining...' : 'Submit'}
+          {status === 'submitting' ? 'Joining...' : 'Join waitlist'}
         </Button>
       </form>
 
