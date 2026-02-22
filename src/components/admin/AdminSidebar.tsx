@@ -14,6 +14,7 @@ const ADMIN_LINKS = [
   { href: '/admin/legal', label: 'Legal' },
   { href: '/admin/feedback', label: 'Feedback' },
   { href: '/admin/signups', label: 'Signups' },
+  { href: '/admin/story-submissions', label: 'Story Submissions' },
   { href: '/admin/import', label: 'Import / Export' },
   { href: '/admin/access', label: 'Access' },
   { href: '/admin/punchlist', label: 'Fix List' },
