@@ -8,6 +8,8 @@ export interface ToolRegistryEntry {
   href: string
   title: string
   description: string
+  /** Which renovation stage this tool belongs to */
+  stage: string
 }
 
 export const TOOL_REGISTRY: ToolRegistryEntry[] = [
@@ -17,6 +19,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     title: 'Contract Checklist',
     description:
       'Walk through each bid with the same checklist\u2014so nothing gets missed before you sign.',
+    stage: 'Find a Pro',
   },
   {
     toolKey: 'finish_decisions',
@@ -24,6 +27,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     title: 'Finish Selections',
     description:
       'Keep your renovation moving\u2014by tracking every finish selection, option, and status in one place.',
+    stage: 'Choose Your Finishes',
   },
   {
     toolKey: 'punchlist',
@@ -31,5 +35,6 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     title: 'Fix List',
     description:
       'Track fixes and share with your contractor.',
+    stage: 'Build',
   },
 ]

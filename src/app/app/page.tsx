@@ -20,7 +20,7 @@ export default function AppPage() {
               <Badge variant="accent">Early Preview</Badge>
             </div>
             <p className="text-cream/70 text-lg leading-relaxed max-w-2xl">
-              Pick what you need right now.
+              Tools for each stage of your renovation.
             </p>
           </div>
         </FadeInSection>

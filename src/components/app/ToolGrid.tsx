@@ -62,7 +62,7 @@ function ToolMeta({ summary }: { summary: ToolSummary | undefined }) {
           <span className="leading-none">{user.name || 'Someone'}</span>
         </span>
       )}
-      <span>{relativeTime(summary.updatedAt)}</span>
+      <span>Updated {relativeTime(summary.updatedAt)}</span>
     </div>
   )
 }
@@ -105,22 +105,30 @@ export function ToolGrid() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {visibleTools.map((tool) => (
-        <Link
-          key={tool.toolKey}
-          href={tool.href}
-          className="block p-5 bg-basalt-50 rounded-card card-hover"
-        >
-          <div className="flex items-start justify-between gap-4 mb-2">
-            <h3 className="font-serif text-lg text-sandstone">{tool.title}</h3>
-            <Badge>Live</Badge>
+        <div key={tool.toolKey} className="flex flex-col sm:flex-row sm:items-stretch gap-0 sm:gap-0">
+          {/* Stage label — above on mobile, left column on desktop */}
+          <div className="sm:w-40 sm:shrink-0 sm:flex sm:flex-col sm:justify-center sm:pr-5 sm:border-r sm:border-cream/10 mb-2 sm:mb-0">
+            <span className="text-[11px] uppercase tracking-wider text-cream/30 sm:hidden">Stage</span>
+            <p className="text-sm font-medium text-cream/50">{tool.stage}</p>
           </div>
-          <p className="text-cream/70 text-sm leading-relaxed mb-3">{tool.description}</p>
-          <div className="pt-2 border-t border-cream/5">
-            <ToolMeta summary={summaryMap.get(tool.toolKey)} />
-          </div>
-        </Link>
+
+          {/* Tool card */}
+          <Link
+            href={tool.href}
+            className="block flex-1 p-5 bg-basalt-50 rounded-card card-hover sm:ml-5"
+          >
+            <div className="flex items-start justify-between gap-4 mb-2">
+              <h3 className="font-serif text-lg text-sandstone">{tool.title}</h3>
+              <Badge>Live</Badge>
+            </div>
+            <p className="text-cream/70 text-sm leading-relaxed mb-3">{tool.description}</p>
+            <div className="pt-2 border-t border-cream/5">
+              <ToolMeta summary={summaryMap.get(tool.toolKey)} />
+            </div>
+          </Link>
+        </div>
       ))}
     </div>
   )
