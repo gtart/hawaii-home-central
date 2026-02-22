@@ -474,3 +474,18 @@ model EarlyAccessAllowlist {
   addedBy   String?
   createdAt DateTime @default(now())
 }
+
+model StorySubmission {
+  id              String   @id @default(cuid())
+  email           String?
+  summary         String
+  challenge       String?
+  proudestMoment  String?
+  ipAddress       String?
+  city            String?
+  region          String?
+  country         String?
+  createdAt       DateTime @default(now())
+
+  @@index([createdAt])
+}

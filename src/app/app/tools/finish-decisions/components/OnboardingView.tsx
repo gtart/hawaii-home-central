@@ -180,8 +180,8 @@ export function OnboardingView({
 
 function buttonLabel(hasRooms: boolean, count: number): string {
   if (count === 0) {
-    return hasRooms ? 'Add Rooms' : 'Create Decision Tracker'
+    return hasRooms ? 'Add Rooms' : 'Create Finish Selections'
   }
   const label = count === 1 ? 'room' : 'rooms'
-  return hasRooms ? `Add ${count} ${label}` : `Create Decision Tracker (${count} ${label})`
+  return hasRooms ? `Add ${count} ${label}` : `Create Finish Selections (${count} ${label})`
 }

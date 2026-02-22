@@ -9,7 +9,7 @@ import { ToolPreviewCards } from './ToolPreviewCards'
 export const metadata: Metadata = {
   title: 'Tools — Interactive Renovation Workspace',
   description:
-    'Interactive renovation tools for Hawaiʻi homeowners: compare contractor bids, track finish decisions, assign task ownership. Sign in to save your workspace.',
+    'Homeowner tools for every stage of a Hawaiʻi renovation: contract checklist, finish selections, and fix list. Sign in to save your workspace.',
 }
 
 export default async function ToolsMarketingPage() {
@@ -38,10 +38,10 @@ export default async function ToolsMarketingPage() {
               Tools
             </h1>
             <p className="text-lg text-cream/70 mb-4 max-w-3xl mx-auto text-center leading-relaxed">
-              Browse the tools anytime. Sign in to save your project workspace.
+              One tool for each stage of your renovation. Sign in to save your workspace.
             </p>
             <p className="text-cream/50 text-sm mb-12 max-w-2xl mx-auto text-center">
-              Built for Hawai&#x02BB;i homeowners. Free to use.
+              Built for Hawai&#x02BB;i homeowners. Free to use. More tools coming soon.
             </p>
           </FadeInSection>
 

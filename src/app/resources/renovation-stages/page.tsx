@@ -110,13 +110,13 @@ export default function RenovationStagesPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                 <Card
                   href="/login?callbackUrl=/app/tools/finish-decisions"
-                  title="Decision Tracker"
+                  title="Finish Selections"
                   description="Track every selection and status in one place."
                 />
                 <Card
                   href="/login?callbackUrl=/app/tools/before-you-sign"
-                  title="Contract Comparison Tool"
-                  description="Compare bids side-by-side with fewer surprises."
+                  title="Contract Checklist"
+                  description="Walk through each bid with the same checklist."
                 />
                 <Card
                   href="/login?callbackUrl=/app/tools/punchlist"

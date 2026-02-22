@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -16,13 +17,19 @@ import {
   type OptionV3,
   type StatusV3,
   type RoomV3,
+  type SelectionComment,
   type FinishDecisionsPayloadV3,
 } from '@/data/finish-decisions'
+
+const COMMENTS_PER_PAGE = 10
+const MAX_COMMENT_LENGTH = 400
 
 export function DecisionDetailContent() {
   const params = useParams()
   const router = useRouter()
+  const { data: session } = useSession()
   const decisionId = params.decisionId as string
+  const [optionsOpen, setOptionsOpen] = useState(false)
 
   const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3 | any>({
     toolKey: 'finish_decisions',
@@ -116,6 +123,35 @@ export function DecisionDetailContent() {
     })
   }
 
+  const addComment = (comment: { text: string; authorName: string; authorEmail: string }) => {
+    if (!foundDecision) return
+    const id = `cmt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    updateDecision({
+      comments: [
+        ...(foundDecision.comments || []),
+        { id, text: comment.text, authorName: comment.authorName, authorEmail: comment.authorEmail, createdAt: new Date().toISOString() },
+      ],
+    })
+  }
+
+  const handleStatusChange = (newStatus: StatusV3) => {
+    if (!foundDecision) return
+    const oldStatus = foundDecision.status
+    if (oldStatus === newStatus) return
+
+    const systemComment: SelectionComment = {
+      id: `cmt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      text: `Status changed: ${STATUS_CONFIG_V3[oldStatus].label} \u2192 ${STATUS_CONFIG_V3[newStatus].label}`,
+      authorName: session?.user?.name || 'System',
+      authorEmail: '',
+      createdAt: new Date().toISOString(),
+    }
+    updateDecision({
+      status: newStatus,
+      comments: [...(foundDecision.comments || []), systemComment],
+    })
+  }
+
   const deleteDecision = () => {
     if (!foundRoom || !foundDecision) return
     if (confirm(`Delete "${foundDecision.title}"? This will also delete all options.`)) {
@@ -153,12 +189,12 @@ export function DecisionDetailContent() {
             onClick={() => router.push('/app/tools/finish-decisions')}
             className="text-sandstone hover:text-sandstone-light text-sm mb-6"
           >
-            ← Back to Decision Tracker
+            ← Back to Finish Selections
           </button>
           <div className="bg-basalt-50 rounded-card p-12 text-center">
-            <p className="text-cream/50 mb-4">Decision not found.</p>
+            <p className="text-cream/50 mb-4">Selection not found.</p>
             <Button onClick={() => router.push('/app/tools/finish-decisions')}>
-              Go to Decision Tracker
+              Go to Finish Selections
             </Button>
           </div>
         </div>
@@ -301,7 +337,7 @@ export function DecisionDetailContent() {
           onClick={() => router.push('/app/tools/finish-decisions')}
           className="text-sandstone hover:text-sandstone-light text-sm mb-4"
         >
-          ← Back to Decision Tracker
+          ← Back to Finish Selections
         </button>
 
         {/* Header */}
@@ -330,7 +366,7 @@ export function DecisionDetailContent() {
           <Select
             label="Status"
             value={foundDecision.status}
-            onChange={(e) => updateDecision({ status: e.target.value as StatusV3 })}
+            onChange={(e) => handleStatusChange(e.target.value as StatusV3)}
             options={Object.entries(STATUS_CONFIG_V3).map(([key, config]) => ({
               value: key,
               label: config.label,
@@ -426,48 +462,189 @@ export function DecisionDetailContent() {
           }}
         />
 
-        {/* Options */}
+        {/* Options (collapsible) */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium text-cream">
-              Options ({foundDecision.options.length})
-            </h2>
-            {!readOnly && (
-              <Button size="sm" variant="secondary" onClick={addOption}>
-                + Add Option
-              </Button>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => setOptionsOpen(!optionsOpen)}
+            className="flex items-center gap-2 text-lg font-medium text-cream hover:text-cream/80 transition-colors mb-4"
+          >
+            <span className="text-cream/30 text-xs">{optionsOpen ? '▼' : '▶'}</span>
+            Compare options ({foundDecision.options.length})
+          </button>
 
-          {foundDecision.options.length === 0 ? (
-            <div className="bg-basalt-50 rounded-card p-8 text-center">
-              <p className="text-cream/50 text-sm">
-                No options yet. Add an option to start comparing choices.
-              </p>
-            </div>
-          ) : (
-            foundDecision.options.map((option) => (
-              <OptionEditor
-                key={option.id}
-                option={option}
-                isSelected={option.isSelected}
-                onUpdate={(updates) => updateOption(option.id, updates)}
-                onDelete={() => deleteOption(option.id)}
-                onSelect={() => selectOption(option.id)}
-              />
-            ))
+          {optionsOpen && (
+            <>
+              {foundDecision.options.length === 0 ? (
+                <div className="bg-basalt-50 rounded-card p-8 text-center">
+                  <p className="text-cream/50 text-sm">
+                    No options yet. Add an option to start comparing choices.
+                  </p>
+                </div>
+              ) : (
+                foundDecision.options.map((option) => (
+                  <OptionEditor
+                    key={option.id}
+                    option={option}
+                    isSelected={option.isSelected}
+                    onUpdate={(updates) => updateOption(option.id, updates)}
+                    onDelete={() => deleteOption(option.id)}
+                    onSelect={() => selectOption(option.id)}
+                    readOnly={readOnly}
+                  />
+                ))
+              )}
+              {!readOnly && (
+                <Button size="sm" variant="secondary" onClick={addOption} className="mt-3">
+                  + Add Option
+                </Button>
+              )}
+            </>
           )}
         </div>
 
-        {/* Delete Decision */}
+        {/* Comments */}
+        <div className="mb-8">
+          <CommentsSection
+            comments={foundDecision.comments || []}
+            onAddComment={addComment}
+            readOnly={readOnly}
+          />
+        </div>
+
+        {/* Delete Selection */}
         {!readOnly && (
           <div className="pt-6 border-t border-cream/10">
             <Button variant="danger" onClick={deleteDecision}>
-              Delete Decision
+              Delete Selection
             </Button>
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Comments Components
+// ---------------------------------------------------------------------------
+
+function CommentsSection({
+  comments,
+  onAddComment,
+  readOnly,
+}: {
+  comments: SelectionComment[]
+  onAddComment: (comment: { text: string; authorName: string; authorEmail: string }) => void
+  readOnly: boolean
+}) {
+  const [page, setPage] = useState(0)
+  const allComments = [...comments].reverse()
+  const totalPages = Math.max(1, Math.ceil(allComments.length / COMMENTS_PER_PAGE))
+  const pageComments = allComments.slice(page * COMMENTS_PER_PAGE, (page + 1) * COMMENTS_PER_PAGE)
+
+  return (
+    <div>
+      <h3 className="text-xs uppercase tracking-wider text-cream/30 mb-1">
+        Comments {allComments.length > 0 && `(${allComments.length})`}
+      </h3>
+      <p className="text-[11px] text-cream/20 mb-3">
+        Comments are shared with collaborators who can access this tool.
+      </p>
+
+      {!readOnly && <CommentInput onAddComment={onAddComment} />}
+
+      {allComments.length === 0 && (
+        <p className="text-xs text-cream/20 mt-3">No comments yet.</p>
+      )}
+
+      <div className="space-y-3 mt-3">
+        {pageComments.map((comment) => (
+          <div key={comment.id} className="pb-3 border-b border-cream/5 last:border-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-medium text-cream/70">{comment.authorName}</span>
+              <span className="text-cream/20">&middot;</span>
+              <span className="text-[11px] text-cream/30">
+                {new Date(comment.createdAt).toLocaleDateString()}{' '}
+                {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+            <p className="text-sm text-cream/50 whitespace-pre-wrap">{comment.text}</p>
+          </div>
+        ))}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-4 pt-3 border-t border-cream/5">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="text-xs text-cream/40 hover:text-cream disabled:opacity-30 transition-colors"
+          >
+            Newer
+          </button>
+          <span className="text-[11px] text-cream/30">
+            {page + 1} / {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={page === totalPages - 1}
+            className="text-xs text-cream/40 hover:text-cream disabled:opacity-30 transition-colors"
+          >
+            Older
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CommentInput({
+  onAddComment,
+}: {
+  onAddComment: (comment: { text: string; authorName: string; authorEmail: string }) => void
+}) {
+  const { data: session } = useSession()
+  const [text, setText] = useState('')
+
+  function handleSubmit() {
+    if (!text.trim() || !session?.user) return
+    onAddComment({
+      text: text.trim().slice(0, MAX_COMMENT_LENGTH),
+      authorName: session.user.name || 'Unknown',
+      authorEmail: session.user.email || '',
+    })
+    setText('')
+  }
+
+  return (
+    <div>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value.slice(0, MAX_COMMENT_LENGTH))}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
+          placeholder="Add a comment..."
+          maxLength={MAX_COMMENT_LENGTH}
+          className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+        />
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!text.trim()}
+          className="px-3 py-2 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors disabled:opacity-30"
+        >
+          Post
+        </button>
+      </div>
+      {text.length > 0 && (
+        <p className={`text-[10px] mt-1 text-right ${text.length >= MAX_COMMENT_LENGTH ? 'text-red-400' : 'text-cream/25'}`}>
+          {text.length}/{MAX_COMMENT_LENGTH}
+        </p>
+      )}
     </div>
   )
 }

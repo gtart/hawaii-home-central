@@ -186,6 +186,15 @@ export interface OptionV3 {
   updatedAt: string
 }
 
+// Selection Comment (stored in decision payload)
+export interface SelectionComment {
+  id: string
+  text: string
+  authorName: string
+  authorEmail: string
+  createdAt: string
+}
+
 // Decision (nested in room)
 export interface DecisionV3 {
   id: string
@@ -195,6 +204,7 @@ export interface DecisionV3 {
   options: OptionV3[] // Nested
   dueDate?: string | null // ISO date string or null for TBD
   dismissedSuggestionKeys?: string[] // Heuristic guidance dismissed by user
+  comments?: SelectionComment[] // Selection-level comment thread
   createdAt: string
   updatedAt: string
 }

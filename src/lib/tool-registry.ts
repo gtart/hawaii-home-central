@@ -14,16 +14,16 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'before_you_sign',
     href: '/app/tools/before-you-sign',
-    title: 'Contract Comparison Tool',
+    title: 'Contract Checklist',
     description:
-      'Make bids more comparable\u2014so you can choose confidently and avoid surprise scope gaps later.',
+      'Walk through each bid with the same checklist\u2014so nothing gets missed before you sign.',
   },
   {
     toolKey: 'finish_decisions',
     href: '/app/tools/finish-decisions',
-    title: 'Decision Tracker',
+    title: 'Finish Selections',
     description:
-      'Keep your renovation moving\u2014by tracking every finish decision, option, and status in one place.',
+      'Keep your renovation moving\u2014by tracking every finish selection, option, and status in one place.',
   },
   {
     toolKey: 'punchlist',

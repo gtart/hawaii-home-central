@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { Badge } from '@/components/ui/Badge'
 import { FadeInSection } from '@/components/effects/FadeInSection'
+import { StorySubmissionForm } from './StorySubmissionForm'
 
 export const metadata: Metadata = {
   title: 'Stories',
@@ -40,17 +41,21 @@ export default async function StoriesPage() {
 
         {stories.length === 0 ? (
           <FadeInSection delay={50}>
-            <div className="bg-basalt-50 rounded-card p-8 text-center">
+            <div className="bg-basalt-50 rounded-card p-8 text-center mb-10">
               <Badge variant="accent" className="mb-4">
                 Coming Soon
               </Badge>
-              <p className="text-cream/60">
-                We&apos;re collecting stories now. Check back soon.
+              <p className="text-cream/60 mb-2">
+                Stories are on the way. We&apos;re collecting real renovation
+                experiences from Hawai&#x02BB;i homeowners.
+              </p>
+              <p className="text-cream/40 text-sm">
+                Want to be first? Submit yours below.
               </p>
             </div>
           </FadeInSection>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 mb-10">
             {stories.map((s, i) => (
               <FadeInSection key={s.id} delay={i * 50}>
                 <Link
@@ -87,22 +92,7 @@ export default async function StoriesPage() {
         )}
 
         <FadeInSection delay={stories.length > 0 ? stories.length * 50 + 50 : 100}>
-          <div className="mt-16 border-t border-cream/10 pt-8 text-center">
-            <h2 className="font-serif text-xl text-cream mb-3">
-              Have a Story to Share?
-            </h2>
-            <p className="text-cream/60 text-sm leading-relaxed max-w-lg mx-auto mb-4">
-              We&apos;re always looking for real renovation experiences from
-              Hawai&#x02BB;i homeowners. You can choose to stay anonymous — we
-              just need to verify your story&apos;s authenticity.
-            </p>
-            <a
-              href="mailto:hello@hawaiihomecentral.com"
-              className="text-sandstone hover:text-sandstone-light transition-colors text-sm font-medium"
-            >
-              hello@hawaiihomecentral.com
-            </a>
-          </div>
+          <StorySubmissionForm />
         </FadeInSection>
       </div>
     </div>

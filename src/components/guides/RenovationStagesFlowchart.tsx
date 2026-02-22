@@ -389,35 +389,38 @@ function StagePreviewCard({ stage, showHeader = true, isAuthed = false }: { stag
         {stage.previewLine}
       </p>
 
-      {/* Related tools & resources */}
-      {stage.related && stage.related.length > 0 && (
-        <div className="space-y-1.5">
-          <span className="text-[10px] uppercase tracking-wider text-cream/30">Related tools &amp; resources</span>
-          <div className="flex flex-wrap gap-2">
-            {stage.related.map((link) => (
-              <Link
-                key={link.href}
-                href={resolveHref(link, isAuthed)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-colors',
-                  link.kind === 'tool'
-                    ? 'bg-sandstone/10 text-sandstone/80 hover:bg-sandstone/20 hover:text-sandstone'
-                    : 'bg-cream/5 text-cream/50 hover:bg-cream/10 hover:text-cream/70'
-                )}
-              >
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  {link.kind === 'tool' ? (
+      {/* Homeowner Tools */}
+      <div className="space-y-1.5">
+        <span className="text-[10px] uppercase tracking-wider text-cream/30">Homeowner Tools</span>
+        {(() => {
+          const toolLinks = stage.related?.filter((l) => l.kind === 'tool') || []
+          if (toolLinks.length === 0) {
+            return (
+              <div>
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-cream/5 text-cream/30">
+                  Coming soon
+                </span>
+              </div>
+            )
+          }
+          return (
+            <div className="flex flex-wrap gap-2">
+              {toolLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={resolveHref(link, isAuthed)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-colors bg-sandstone/10 text-sandstone/80 hover:bg-sandstone/20 hover:text-sandstone"
+                >
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" strokeLinecap="round" strokeLinejoin="round" />
-                  ) : (
-                    <path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5V5a2 2 0 012-2h13a1 1 0 011 1v13.5" strokeLinecap="round" strokeLinejoin="round" />
-                  )}
-                </svg>
-                {link.title}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+                  </svg>
+                  {link.title}
+                </Link>
+              ))}
+            </div>
+          )
+        })()}
+      </div>
 
       {/* Substep sequence callouts — only for Build & Closeout stage */}
       {isBuildCloseout && (

@@ -11,8 +11,8 @@ const TOOL_PATHS: Record<string, string> = {
 }
 
 const TOOL_LABELS: Record<string, string> = {
-  before_you_sign: 'Contract Comparison Tool',
-  finish_decisions: 'Decision Tracker',
+  before_you_sign: 'Contract Checklist',
+  finish_decisions: 'Finish Selections',
   punchlist: 'Fix List',
 }
 

@@ -362,8 +362,8 @@ export function ToolContent({ localOnly = false }: ToolContentProps) {
         {!localOnly && (
           <ToolPageHeader
             toolKey="finish_decisions"
-            title="Decision Tracker"
-            description="Avoid delays and rework—by keeping decisions, links, and status updates together for each room."
+            title="Finish Selections"
+            description="Avoid delays and rework—by keeping selections, links, and status updates together for each room."
             accessLevel={access}
           />
         )}

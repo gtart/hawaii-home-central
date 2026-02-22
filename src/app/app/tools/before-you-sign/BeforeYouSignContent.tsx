@@ -82,8 +82,8 @@ function BYSContent() {
     <>
       <ToolPageHeader
         toolKey="before_you_sign"
-        title="Contract Comparison Tool"
-        description="Spot missing scope and lock expectations before you sign—by turning messy bids into a clear side-by-side."
+        title="Contract Checklist"
+        description="Spot missing scope and lock expectations before you sign—by walking each bid through the same checklist."
         accessLevel={access}
       />
 

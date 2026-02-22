@@ -70,7 +70,7 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Leaving \u201Callowances\u201D vague\u2014spell out what\u2019s included in the price',
     ],
     related: [
-      { kind: 'tool', title: 'Decision Tracker', href: '/app/tools/finish-decisions' },
+      { kind: 'tool', title: 'Finish Selections', href: '/app/tools/finish-decisions' },
       { kind: 'guide', title: 'Responsibility Matrix', href: '/resources/playbooks/responsibility-matrix' },
     ],
   },
@@ -107,7 +107,7 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Not getting lien waiver language in the contract',
     ],
     related: [
-      { kind: 'tool', title: 'Contract Comparison Tool', href: '/app/tools/before-you-sign' },
+      { kind: 'tool', title: 'Contract Checklist', href: '/app/tools/before-you-sign' },
       { kind: 'guide', title: 'Fair Bid Checklist', href: '/resources/playbooks/fair-bid-checklist' },
       { kind: 'guide', title: 'Responsibility Matrix', href: '/resources/playbooks/responsibility-matrix' },
     ],
@@ -143,7 +143,7 @@ export const RENOVATION_STAGES: RenovationStage[] = [
     ],
     related: [
       { kind: 'guide', title: 'Responsibility Matrix', href: '/resources/playbooks/responsibility-matrix' },
-      { kind: 'tool', title: 'Contract Comparison Tool', href: '/app/tools/before-you-sign' },
+      { kind: 'tool', title: 'Contract Checklist', href: '/app/tools/before-you-sign' },
     ],
   },
   {
@@ -182,7 +182,7 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Assuming your contractor will handle all ordering without discussion',
     ],
     related: [
-      { kind: 'tool', title: 'Decision Tracker', href: '/app/tools/finish-decisions' },
+      { kind: 'tool', title: 'Finish Selections', href: '/app/tools/finish-decisions' },
     ],
   },
   {
@@ -231,7 +231,7 @@ export const RENOVATION_STAGES: RenovationStage[] = [
     ],
     related: [
       { kind: 'tool', title: 'Fix List', href: '/app/tools/punchlist' },
-      { kind: 'tool', title: 'Decision Tracker', href: '/app/tools/finish-decisions' },
+      { kind: 'tool', title: 'Finish Selections', href: '/app/tools/finish-decisions' },
     ],
   },
 ]
