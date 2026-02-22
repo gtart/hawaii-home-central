@@ -108,3 +108,8 @@ export function useProject() {
   if (!ctx) throw new Error('useProject must be used within ProjectProvider')
   return ctx
 }
+
+/** Safe version that returns null when outside ProjectProvider (e.g. public pages) */
+export function useProjectOptional(): ProjectContextValue | null {
+  return useContext(ProjectContext)
+}

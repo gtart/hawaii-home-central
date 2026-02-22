@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import { UserMenu } from '@/components/auth/UserMenu'
+import { useProjectOptional } from '@/contexts/ProjectContext'
+import { ProjectSwitcher } from '@/components/app/ProjectSwitcher'
 
 interface NavLink {
   href: string
@@ -15,11 +17,15 @@ interface NavLink {
 
 export function Navigation() {
   const { data: session } = useSession()
+  const projectCtx = useProjectOptional()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
+
+  const currentProject = projectCtx?.currentProject ?? null
+  const hasMultipleProjects = (projectCtx?.projects.filter((p) => p.status === 'ACTIVE').length ?? 0) >= 2
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50)
@@ -45,8 +51,8 @@ export function Navigation() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [moreOpen])
 
-  // Hide nav on admin, app, public share, and report pages
-  if (pathname.startsWith('/admin') || pathname.startsWith('/app') || pathname.startsWith('/share') || pathname.includes('/report')) return null
+  // Hide nav on admin, public share, and report pages
+  if (pathname.startsWith('/admin') || pathname.startsWith('/share') || pathname.includes('/report')) return null
 
   const toolsLabel = session?.user ? 'My Tools' : 'Tools'
   const toolsHref = session?.user ? '/app' : '/tools'
@@ -104,16 +110,26 @@ export function Navigation() {
 
         <nav className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
+            {/* Brand + project context */}
+            <div className="flex items-center gap-2.5 min-w-0">
               <Link
-                href="/"
-                className="font-serif text-xl text-sandstone hover:text-sandstone-light transition-colors"
+                href={session?.user ? '/app' : '/'}
+                className="font-serif text-xl text-sandstone hover:text-sandstone-light transition-colors shrink-0"
               >
                 Hawaii Home Central
               </Link>
-              <span className="inline-block text-[10px] font-medium tracking-wide uppercase text-sandstone/70 bg-sandstone/10 border border-sandstone/20 rounded-full px-2 py-0.5 leading-tight">
+              <span className="inline-block text-[10px] font-medium tracking-wide uppercase text-sandstone/70 bg-sandstone/10 border border-sandstone/20 rounded-full px-2 py-0.5 leading-tight shrink-0">
                 Beta
               </span>
+              {currentProject && (
+                <div className="hidden sm:flex items-center gap-2 min-w-0">
+                  <span className="text-cream/20">/</span>
+                  <span className="text-sm text-cream/60 truncate max-w-[180px]">
+                    {currentProject.name}
+                  </span>
+                  {hasMultipleProjects && <ProjectSwitcher />}
+                </div>
+              )}
             </div>
 
             {/* Desktop Navigation */}
@@ -223,9 +239,20 @@ export function Navigation() {
             </div>
           </div>
 
-          {/* Mobile menu — flat list with section divider */}
+          {/* Mobile menu */}
           {isMobileMenuOpen && (
             <ul className="lg:hidden mt-4 py-4 border-t border-cream/10 space-y-1 bg-basalt rounded-b-card">
+              {/* Project context on mobile */}
+              {currentProject && (
+                <li className="flex items-center gap-2 px-1 py-2 mb-2">
+                  <svg className="w-4 h-4 text-sandstone/60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span className="text-sm text-cream/60 truncate">{currentProject.name}</span>
+                  {hasMultipleProjects && <ProjectSwitcher />}
+                </li>
+              )}
+
               {primaryLinks.map((link) => (
                 <li key={link.href}>
                   <Link
