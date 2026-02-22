@@ -397,8 +397,8 @@ function StagePreviewCard({ stage, showHeader = true, isAuthed = false }: { stag
           if (toolLinks.length === 0) {
             return (
               <div>
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs bg-cream/5 text-cream/30">
-                  Coming soon
+                <span className="text-xs text-cream/30">
+                  No tools for this stage yet
                 </span>
               </div>
             )

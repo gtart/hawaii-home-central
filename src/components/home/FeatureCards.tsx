@@ -54,7 +54,7 @@ export function FeatureCards() {
 
         <FadeInSection delay={300}>
           <p className="text-cream/40 text-sm text-center mt-8">
-            More coming soon: real renovation stories and a trusted pros directory.
+            Plus real renovation stories and a trusted pros directory.
           </p>
         </FadeInSection>
       </div>

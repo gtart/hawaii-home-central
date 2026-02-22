@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
-import { ensureCurrentProject } from '@/lib/project'
+import { resolveCurrentProject } from '@/lib/project'
 
 /** GET /api/projects — list all projects where user is a member */
 export async function GET() {
@@ -12,8 +12,8 @@ export async function GET() {
 
   const userId = session.user.id
 
-  // Bootstrap: ensure user has at least one project + membership
-  await ensureCurrentProject(userId)
+  // Resolve current project (bootstraps on first sign-in, returns null if all deleted)
+  const currentProjectId = await resolveCurrentProject(userId)
 
   const memberships = await prisma.projectMember.findMany({
     where: { userId },
@@ -23,11 +23,6 @@ export async function GET() {
       },
     },
     orderBy: { project: { createdAt: 'asc' } },
-  })
-
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { id: userId },
-    select: { currentProjectId: true },
   })
 
   // For MEMBER roles, include which tools they have access to
@@ -59,7 +54,7 @@ export async function GET() {
       updatedAt: m.project.updatedAt,
       toolAccess: m.role === 'MEMBER' ? (toolAccessByProject.get(m.project.id) || []) : undefined,
     })),
-    currentProjectId: user.currentProjectId,
+    currentProjectId,
   })
 }
 

@@ -41,7 +41,7 @@ export default async function ToolsMarketingPage() {
               One tool for each stage of your renovation. Sign in to get started.
             </p>
             <p className="text-cream/50 text-sm mb-12 max-w-2xl mx-auto text-center">
-              Built for Hawai&#x02BB;i homeowners. Free to use. More tools coming soon.
+              Built for Hawai&#x02BB;i homeowners. Free to use.
             </p>
           </FadeInSection>
 
@@ -54,7 +54,7 @@ export default async function ToolsMarketingPage() {
                 Free to use. Google sign-in. No credit card required.
               </p>
               <p className="text-cream/50 text-xs">
-                Your data stays private and is never shared with contractors or third parties.
+                Nothing is shared unless you add collaborators or publish a share link.
               </p>
             </div>
           </FadeInSection>

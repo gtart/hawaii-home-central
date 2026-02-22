@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useProject } from '@/contexts/ProjectContext'
+import { useProjectOptional } from '@/contexts/ProjectContext'
 import { cn } from '@/lib/utils'
 
 export function ProjectSwitcher() {
-  const { currentProject, projects, isLoading, switchProject, createProject } = useProject()
+  const projectCtx = useProjectOptional()
   const [open, setOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState('')
@@ -24,9 +24,67 @@ export function ProjectSwitcher() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
-  if (isLoading || !currentProject) return null
+  // Outside ProjectProvider or still loading
+  if (!projectCtx || projectCtx.isLoading) return null
 
+  const { currentProject, projects, switchProject, createProject } = projectCtx
   const activeProjects = projects.filter((p) => p.status === 'ACTIVE')
+
+  // No projects at all (unauthenticated or truly empty)
+  if (!currentProject && activeProjects.length === 0) {
+    return (
+      <div className="relative z-20" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="flex items-center gap-1.5 text-sm text-cream/60 hover:text-cream transition-colors px-2 py-1 rounded-md hover:bg-cream/5"
+        >
+          <svg className="w-3.5 h-3.5 text-sandstone/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14m-7-7h14" strokeLinecap="round" />
+          </svg>
+          <span>Create project</span>
+        </button>
+
+        {open && (
+          <div className="absolute left-0 top-full mt-1 z-50 w-64 bg-basalt-50 border border-cream/10 rounded-lg shadow-lg py-1">
+            <div className="px-4 py-3">
+              <p className="text-xs text-cream/40 mb-2">Create a project to get started.</p>
+              <input
+                autoFocus
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newName.trim()) {
+                    createProject(newName.trim())
+                    setNewName('')
+                    setOpen(false)
+                  }
+                  if (e.key === 'Escape') { setOpen(false); setNewName('') }
+                }}
+                placeholder="Project name..."
+                className="w-full bg-basalt border border-cream/20 rounded px-2.5 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (!newName.trim()) return
+                  createProject(newName.trim())
+                  setNewName('')
+                  setOpen(false)
+                }}
+                className="mt-2 w-full text-xs font-medium text-basalt bg-sandstone rounded px-2 py-1.5 hover:bg-sandstone-light transition-colors"
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Determine trigger label
+  const triggerLabel = currentProject?.name ?? 'Select project'
 
   const handleSwitch = async (projectId: string) => {
     if (projectId === currentProject?.id) {
@@ -56,7 +114,7 @@ export function ProjectSwitcher() {
         <svg className="w-3.5 h-3.5 text-sandstone/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span className="truncate">{currentProject.name}</span>
+        <span className="truncate">{triggerLabel}</span>
         <svg className={cn('w-3 h-3 shrink-0 transition-transform text-cream/30', open && 'rotate-180')} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
         </svg>

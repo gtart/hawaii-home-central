@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import { UserMenu } from '@/components/auth/UserMenu'
-import { useProjectOptional } from '@/contexts/ProjectContext'
 import { ProjectSwitcher } from '@/components/app/ProjectSwitcher'
 
 interface NavLink {
@@ -17,14 +16,11 @@ interface NavLink {
 
 export function Navigation() {
   const { data: session } = useSession()
-  const projectCtx = useProjectOptional()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
-
-  const currentProject = projectCtx?.currentProject ?? null
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50)
@@ -120,7 +116,7 @@ export function Navigation() {
               <span className="inline-block text-[10px] font-medium tracking-wide uppercase text-sandstone/70 bg-sandstone/10 border border-sandstone/20 rounded-full px-2 py-0.5 leading-tight shrink-0">
                 Beta
               </span>
-              {currentProject && (
+              {session?.user && (
                 <div className="hidden sm:flex items-center gap-1.5 min-w-0">
                   <span className="text-cream/20">/</span>
                   <ProjectSwitcher />
@@ -232,7 +228,7 @@ export function Navigation() {
           {isMobileMenuOpen && (
             <ul className="lg:hidden mt-4 py-4 border-t border-cream/10 space-y-1 bg-basalt rounded-b-card">
               {/* Project context on mobile */}
-              {currentProject && (
+              {session?.user && (
                 <li className="px-1 py-2 mb-2">
                   <ProjectSwitcher />
                 </li>

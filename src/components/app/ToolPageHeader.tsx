@@ -43,13 +43,12 @@ interface ToolPageHeaderProps {
 }
 
 export function ToolPageHeader({ toolKey, title, description, accessLevel, children }: ToolPageHeaderProps) {
-  const { currentProject, projects } = useProject()
+  const { currentProject } = useProject()
   const [showShare, setShowShare] = useState(false)
   const [collaborators, setCollaborators] = useState<Collaborator[]>([])
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([])
 
   const isOwner = accessLevel === 'OWNER' || currentProject?.role === 'OWNER'
-  const hasMultipleProjects = projects.filter((p) => p.status === 'ACTIVE').length >= 2
 
   const loadCollaborators = useCallback(async () => {
     if (!isOwner || !currentProject?.id) return
@@ -92,9 +91,9 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, child
         </Link>
       </div>
 
-      {/* Project banner */}
+      {/* Project banner — mobile only (desktop uses navbar picker) */}
       {currentProject && (
-        <div className="flex items-center gap-3 mb-5 px-4 py-2.5 rounded-lg bg-sandstone/10 border border-sandstone/15">
+        <div className="flex sm:hidden items-center gap-3 mb-5 px-4 py-2.5 rounded-lg bg-sandstone/10 border border-sandstone/15">
           <svg className="w-4 h-4 text-sandstone/60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -102,7 +101,7 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, child
             <span className="text-[10px] uppercase tracking-wider text-sandstone/50">Currently viewing</span>
             <span className="text-sm font-medium text-sandstone truncate">{currentProject.name}</span>
           </div>
-          {hasMultipleProjects && <ProjectSwitcher />}
+          <ProjectSwitcher />
         </div>
       )}
 

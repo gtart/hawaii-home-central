@@ -24,12 +24,6 @@ interface StageEntry {
 
 const STAGES: StageEntry[] = [
   {
-    number: 1,
-    title: 'Plan',
-    subtitle: 'Define scope, budget, and funding.',
-    tool: null,
-  },
-  {
     number: 2,
     title: 'Hire & Contract',
     subtitle: 'Compare bids and lock expectations.',
@@ -50,12 +44,6 @@ const STAGES: StageEntry[] = [
         'A notes tab for each contractor to track conversations and details',
       ],
     },
-  },
-  {
-    number: 3,
-    title: 'Permits & Schedule',
-    subtitle: 'Get approvals and set a realistic start plan.',
-    tool: null,
   },
   {
     number: 4,
@@ -109,7 +97,6 @@ export function ToolPreviewCards() {
   return (
     <div className="space-y-3 mb-12">
       {STAGES.map((stage, index) => {
-        const hasTool = !!stage.tool
         const isOpen = previewOpen === stage.tool?.title
 
         return (
@@ -117,14 +104,7 @@ export function ToolPreviewCards() {
             <div className="flex gap-4">
               {/* Stage marker */}
               <div className="flex flex-col items-center shrink-0 pt-1">
-                <div
-                  className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium',
-                    hasTool
-                      ? 'bg-sandstone text-basalt'
-                      : 'border border-cream/20 text-cream/40'
-                  )}
-                >
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium bg-sandstone text-basalt">
                   {stage.number}
                 </div>
                 {index < STAGES.length - 1 && (
@@ -140,7 +120,7 @@ export function ToolPreviewCards() {
                   <span className="text-xs text-cream/30">{stage.subtitle}</span>
                 </div>
 
-                {hasTool ? (
+                {stage.tool && (
                   <div className="bg-basalt-50 rounded-card p-5">
                     <h2 className="font-serif text-lg text-sandstone mb-2">
                       {stage.tool!.title}
@@ -207,12 +187,6 @@ export function ToolPreviewCards() {
                         </Link>
                       </div>
                     )}
-                  </div>
-                ) : (
-                  <div className="py-3">
-                    <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs bg-cream/5 text-cream/30">
-                      Coming soon
-                    </span>
                   </div>
                 )}
               </div>

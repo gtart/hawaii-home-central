@@ -92,6 +92,7 @@ model User {
   newsletterUnsubscribedAt DateTime?
   newsletterUnsubToken     String?   @unique @default(cuid())
   hasSeenNewsletterPrompt  Boolean   @default(false)
+  hasBootstrappedProject   Boolean   @default(false)
 
   currentProjectId   String?    @map("currentPropertyId")
   currentProject     Project?   @relation("CurrentProject", fields: [currentProjectId], references: [id], onDelete: SetNull)
