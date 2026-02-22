@@ -263,10 +263,10 @@ export function ProjectsContent() {
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-xl mx-auto">
         <Link
-          href="/app/settings"
+          href="/app"
           className="text-sandstone hover:text-sandstone-light text-sm mb-4 inline-block"
         >
-          &larr; Settings
+          &larr; My Tools
         </Link>
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-8">
           My Projects

@@ -1,3 +1,9 @@
+export interface RelatedLink {
+  kind: 'tool' | 'guide'
+  title: string
+  href: string
+}
+
 export interface RenovationStage {
   id: string
   number: number
@@ -8,6 +14,7 @@ export interface RenovationStage {
   decisions: string[]
   hawaiiNotes: string[]
   pitfalls: string[]
+  related?: RelatedLink[]
 }
 
 export const BUILD_SUBSTEPS = [
@@ -53,6 +60,9 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Letting one person\u2019s vision dominate without household buy-in',
       'Falling in love with Pinterest ideas that don\u2019t fit your climate or budget',
     ],
+    related: [
+      { kind: 'tool', title: 'Decision Tracker', href: '/app/tools/finish-decisions' },
+    ],
   },
   {
     id: 'define-scope',
@@ -77,6 +87,10 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Getting bids without a written scope (every quote will cover different things)',
       'Leaving \u201Callowances\u201D vague \u2014 spell out what\u2019s included in the price',
       'Assuming the contractor will figure out the details for you',
+    ],
+    related: [
+      { kind: 'tool', title: 'Contract Comparison Tool', href: '/app/tools/before-you-sign' },
+      { kind: 'guide', title: 'Fair Bid Checklist', href: '/resources/playbooks/fair-bid-checklist' },
     ],
   },
   {
@@ -106,6 +120,10 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Assuming mainland pricing when researching costs online',
       'Picking the cheapest bid without checking references or scope match',
     ],
+    related: [
+      { kind: 'guide', title: 'Responsibility Matrix', href: '/resources/playbooks/responsibility-matrix' },
+      { kind: 'tool', title: 'Contract Comparison Tool', href: '/app/tools/before-you-sign' },
+    ],
   },
   {
     id: 'permits-scheduling',
@@ -132,6 +150,9 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Signing a contract without clear change-order language',
       'Not confirming the contractor has insurance and a current license',
     ],
+    related: [
+      { kind: 'guide', title: 'Responsibility Matrix', href: '/resources/playbooks/responsibility-matrix' },
+    ],
   },
   {
     id: 'finalize-choices',
@@ -157,6 +178,9 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Picking materials without checking lead times',
       'Skipping a written scope \u2014 verbal agreements lead to disputes',
       'Not confirming appliance dimensions before ordering cabinets',
+    ],
+    related: [
+      { kind: 'tool', title: 'Decision Tracker', href: '/app/tools/finish-decisions' },
     ],
   },
   {
@@ -185,6 +209,9 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Ordering cabinets before appliance dimensions are confirmed',
       'Not checking dye lots on tile \u2014 different batches can look different',
       'Assuming your contractor will handle all ordering without discussion',
+    ],
+    related: [
+      { kind: 'tool', title: 'Decision Tracker', href: '/app/tools/finish-decisions' },
     ],
   },
   {
@@ -218,6 +245,9 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Not walking the job site to verify outlet and fixture locations before walls close',
       'Skipping the inspection \u2014 failed inspections discovered later mean opening walls back up',
     ],
+    related: [
+      { kind: 'tool', title: 'Fix List', href: '/app/tools/punchlist' },
+    ],
   },
   {
     id: 'install-finish',
@@ -243,6 +273,10 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Not confirming countertop sink cutout dimensions match the actual sink',
       'Rushing paint selection \u2014 test samples on the actual walls, not just swatches',
     ],
+    related: [
+      { kind: 'tool', title: 'Fix List', href: '/app/tools/punchlist' },
+      { kind: 'tool', title: 'Decision Tracker', href: '/app/tools/finish-decisions' },
+    ],
   },
   {
     id: 'punch-list-closeout',
@@ -267,6 +301,9 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Making final payment before the punch list is done',
       'Not getting lien releases from subcontractors',
       'Losing warranty documents \u2014 keep them in one place',
+    ],
+    related: [
+      { kind: 'tool', title: 'Fix List', href: '/app/tools/punchlist' },
     ],
   },
 ]

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ShareButton } from '@/components/resources/ShareButton'
 import { Button } from '@/components/ui/Button'
 import { SignInPill } from '@/components/auth/SignInPill'
+import { Breadcrumbs } from '@/components/layout/Breadcrumbs'
 import { CHECKLIST_SECTIONS } from '@/data/fair-bid-checklist'
 import type { ChecklistItemData } from '@/data/fair-bid-checklist'
 
@@ -53,14 +54,7 @@ export function PlaybookContent() {
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-3xl mx-auto">
-        {/* Breadcrumb */}
-        <nav className="text-xs text-cream/40 mb-6" aria-label="Breadcrumb">
-          <Link href="/resources" className="hover:text-cream/60 transition-colors">
-            Guides
-          </Link>
-          <span className="mx-2">/</span>
-          <span className="text-cream/60">Compare Your Quotes</span>
-        </nav>
+        <Breadcrumbs items={[{ label: 'Guides', href: '/resources' }, { label: 'Compare Your Quotes' }]} />
 
         {/* Hero */}
         <div className="flex items-start justify-between gap-4 mb-2">
@@ -92,7 +86,7 @@ export function PlaybookContent() {
               href="/login?callbackUrl=/app/tools/before-you-sign?tab=quotes"
               className="text-sandstone hover:text-sandstone-light underline"
             >
-              Sign in to use My Tools
+              Sign in to use Tools
             </Link>{' '}
             and compare bids in your saved workspace.
           </p>

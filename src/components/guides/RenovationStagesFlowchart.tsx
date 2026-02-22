@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, Fragment } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
-import type { RenovationStage } from '@/data/renovation-stages'
+import type { RenovationStage, RelatedLink } from '@/data/renovation-stages'
 import { BUILD_SUBSTEPS, FINISH_SUBSTEPS } from '@/data/renovation-stages'
 
 interface RenovationStagesFlowchartProps {
@@ -13,6 +15,7 @@ interface RenovationStagesFlowchartProps {
 export function RenovationStagesFlowchart({ stages }: RenovationStagesFlowchartProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { data: session } = useSession()
 
   const initialIndex = (() => {
     const param = searchParams.get('stage')
@@ -237,7 +240,7 @@ export function RenovationStagesFlowchart({ stages }: RenovationStagesFlowchartP
           role="tabpanel"
           aria-labelledby={`stage-tab-${activeStage.id}`}
         >
-          <StagePreviewCard stage={activeStage} key={activeStage.id} />
+          <StagePreviewCard stage={activeStage} key={activeStage.id} isAuthed={!!session?.user} />
         </div>
       </div>
 
@@ -295,7 +298,7 @@ export function RenovationStagesFlowchart({ stages }: RenovationStagesFlowchartP
 
               {isExpanded && (
                 <div className="border-l-2 border-sandstone/20 ml-[22px] pl-4 pb-2">
-                  <StagePreviewCard stage={stage} />
+                  <StagePreviewCard stage={stage} showHeader={false} isAuthed={!!session?.user} />
                   <button
                     type="button"
                     onClick={() => setMobileExpandedId(null)}
@@ -317,7 +320,12 @@ export function RenovationStagesFlowchart({ stages }: RenovationStagesFlowchartP
    Preview Card: 1-sentence + details toggle
    ────────────────────────────────────────────── */
 
-function StagePreviewCard({ stage }: { stage: RenovationStage }) {
+function resolveHref(link: RelatedLink, isAuthed: boolean): string {
+  if (link.kind === 'guide') return link.href
+  return isAuthed ? link.href : `/login?callbackUrl=${encodeURIComponent(link.href)}`
+}
+
+function StagePreviewCard({ stage, showHeader = true, isAuthed = false }: { stage: RenovationStage; showHeader?: boolean; isAuthed?: boolean }) {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [substepsOpen, setSubstepsOpen] = useState(false)
 
@@ -327,16 +335,48 @@ function StagePreviewCard({ stage }: { stage: RenovationStage }) {
 
   return (
     <div className="bg-basalt-50 rounded-card p-6 space-y-4 animate-stage-enter">
-      <div>
-        <h3 className="font-serif text-base font-medium text-sandstone mb-0.5">
-          {stage.number}. {stage.title}
-        </h3>
-        <p className="text-cream/40 text-xs">{stage.subtitle}</p>
-      </div>
+      {showHeader && (
+        <div>
+          <h3 className="font-serif text-base font-medium text-sandstone mb-0.5">
+            {stage.number}. {stage.title}
+          </h3>
+          <p className="text-cream/40 text-xs">{stage.subtitle}</p>
+        </div>
+      )}
 
       <p className="text-sm text-cream/70 leading-relaxed">
         {stage.previewLine}
       </p>
+
+      {/* Related tools & resources */}
+      {stage.related && stage.related.length > 0 && (
+        <div className="space-y-1.5">
+          <span className="text-[10px] uppercase tracking-wider text-cream/30">Related tools &amp; resources</span>
+          <div className="flex flex-wrap gap-2">
+            {stage.related.map((link) => (
+              <Link
+                key={link.href}
+                href={resolveHref(link, isAuthed)}
+                className={cn(
+                  'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-colors',
+                  link.kind === 'tool'
+                    ? 'bg-sandstone/10 text-sandstone/80 hover:bg-sandstone/20 hover:text-sandstone'
+                    : 'bg-cream/5 text-cream/50 hover:bg-cream/10 hover:text-cream/70'
+                )}
+              >
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  {link.kind === 'tool' ? (
+                    <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" strokeLinecap="round" strokeLinejoin="round" />
+                  ) : (
+                    <path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5V5a2 2 0 012-2h13a1 1 0 011 1v13.5" strokeLinecap="round" strokeLinejoin="round" />
+                  )}
+                </svg>
+                {link.title}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Substep sequence callout — only for Build and Finish stages */}
       {hasSubsteps && (() => {

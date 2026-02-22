@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { RenovationStagesFlowchart } from '@/components/guides/RenovationStagesFlowchart'
 import { Card } from '@/components/ui/Card'
+import { Breadcrumbs } from '@/components/layout/Breadcrumbs'
 import { breadcrumbSchema, faqSchema } from '@/lib/structured-data'
 import { RENOVATION_STAGES } from '@/data/renovation-stages'
 
@@ -51,14 +52,7 @@ export default function RenovationStagesPage() {
       />
       <div className="pt-32 pb-24 px-6">
         <div className="max-w-4xl mx-auto">
-          {/* Visible breadcrumb */}
-          <nav className="text-xs text-cream/40 mb-6" aria-label="Breadcrumb">
-            <Link href="/resources" className="hover:text-cream/60 transition-colors">
-              Guides
-            </Link>
-            <span className="mx-2">/</span>
-            <span className="text-cream/60">Plan Your Renovation</span>
-          </nav>
+          <Breadcrumbs items={[{ label: 'Guides', href: '/resources' }, { label: 'Plan Your Renovation' }]} />
 
           <FadeInSection>
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6 text-center">
@@ -69,8 +63,11 @@ export default function RenovationStagesPage() {
               stage&mdash;and what you need to decide before it starts&mdash;helps you
               avoid surprises, change orders, and delays.
             </p>
-            <p className="text-cream/50 text-sm mb-12 max-w-2xl mx-auto text-center">
+            <p className="text-cream/50 text-sm mb-2 max-w-2xl mx-auto text-center">
               {RENOVATION_STAGES.length} stages &middot; Hawai&#x02BB;i-specific notes throughout
+            </p>
+            <p className="text-cream/40 text-xs mb-12 max-w-2xl mx-auto text-center">
+              Smaller projects often compress stages 3&ndash;6 into one &ldquo;Plan &amp; Prep&rdquo; phase&mdash;use this as a reference, not a rigid checklist.
             </p>
           </FadeInSection>
 
@@ -105,26 +102,31 @@ export default function RenovationStagesPage() {
           <FadeInSection delay={300}>
             <div className="mt-12">
               <h2 className="font-serif text-2xl text-cream mb-2 text-center">
-                Use My Tools to stay on track
+                Use Tools to stay on track
               </h2>
               <p className="text-cream/50 text-sm mb-6 text-center">
-                Guides are free to read. My Tools saves your progress (free sign-in).
+                Guides are free to read. Tools save your progress (free sign-in).
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                 <Card
                   href="/login?callbackUrl=/app/tools/finish-decisions"
                   title="Decision Tracker"
-                  description="Keep your renovation moving—by tracking every selection and status in one place."
+                  description="Track every selection and status in one place."
                 />
                 <Card
                   href="/login?callbackUrl=/app/tools/before-you-sign"
                   title="Contract Comparison Tool"
-                  description="Choose confidently with fewer surprises—by making bids more comparable side-by-side."
+                  description="Compare bids side-by-side with fewer surprises."
+                />
+                <Card
+                  href="/login?callbackUrl=/app/tools/punchlist"
+                  title="Fix List"
+                  description="Track fixes and share with your contractor."
                 />
               </div>
               <p className="text-center">
                 <Link href="/tools" className="text-sandstone hover:text-sandstone-light text-sm transition-colors">
-                  Learn what you get in My Tools &rarr;
+                  Learn what you get in Tools &rarr;
                 </Link>
               </p>
             </div>

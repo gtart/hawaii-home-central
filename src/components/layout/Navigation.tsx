@@ -21,13 +21,12 @@ export function Navigation() {
   const moreRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
 
+  const toolsLabel = session?.user ? 'Workspace' : 'Tools'
+  const toolsHref = session?.user ? '/app' : '/tools'
+
   const primaryLinks: NavLink[] = [
     { href: '/resources', label: 'Guides', matchMode: 'prefix' },
-    {
-      href: session?.user ? '/app' : '/tools',
-      label: 'My Tools',
-      matchMode: 'prefix',
-    },
+    { href: toolsHref, label: toolsLabel, matchMode: 'prefix' },
     { href: '/stories', label: 'Stories' },
   ]
 
@@ -38,8 +37,8 @@ export function Navigation() {
     { href: '/contact', label: 'Contact' },
   ]
 
-  // Hide nav on admin, public share, and report pages
-  if (pathname.startsWith('/admin') || pathname.startsWith('/share') || pathname.includes('/report')) return null
+  // Hide nav on admin, app workspace, public share, and report pages
+  if (pathname.startsWith('/admin') || pathname.startsWith('/app') || pathname.startsWith('/share') || pathname.includes('/report')) return null
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50)
@@ -66,7 +65,7 @@ export function Navigation() {
   }, [moreOpen])
 
   const isLinkActive = (link: NavLink) => {
-    if (link.label === 'My Tools') {
+    if (link.href === '/app' || link.href === '/tools') {
       return pathname.startsWith('/app') || pathname.startsWith('/tools')
     }
     if (link.matchMode === 'prefix') {
@@ -126,7 +125,7 @@ export function Navigation() {
                       href={link.href}
                       className={cn(
                         'text-sm transition-colors',
-                        link.label === 'My Tools'
+                        link.href === '/app' || link.href === '/tools'
                           ? cn(
                               'bg-sandstone/10 px-3 py-1 rounded-full',
                               isLinkActive(link)
@@ -233,7 +232,7 @@ export function Navigation() {
                     href={link.href}
                     className={cn(
                       'block py-2.5 text-base transition-colors',
-                      link.label === 'My Tools' && 'font-medium',
+                      (link.href === '/app' || link.href === '/tools') && 'font-medium',
                       isLinkActive(link)
                         ? 'text-sandstone'
                         : 'text-cream/70 hover:text-cream'

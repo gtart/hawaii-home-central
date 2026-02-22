@@ -5,6 +5,7 @@ import { useSession, signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { SignInPill } from '@/components/auth/SignInPill'
+import { Breadcrumbs } from '@/components/layout/Breadcrumbs'
 import {
   RESPONSIBILITY_ITEMS,
   STAGES,
@@ -89,14 +90,7 @@ export function PlaybookContent() {
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-3xl mx-auto">
-        {/* Breadcrumb */}
-        <nav className="text-xs text-cream/40 mb-6" aria-label="Breadcrumb">
-          <Link href="/resources" className="hover:text-cream/60 transition-colors">
-            Guides
-          </Link>
-          <span className="mx-2">/</span>
-          <span className="text-cream/60">Who Handles What</span>
-        </nav>
+        <Breadcrumbs items={[{ label: 'Guides', href: '/resources' }, { label: 'Who Handles What' }]} />
 
         {/* Hero */}
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-2">
@@ -126,7 +120,7 @@ export function PlaybookContent() {
 
         {/* Sign-in pill */}
         <div className="mb-8">
-          <SignInPill appToolPath="/app/tools/before-you-sign?tab=handoffs" label="Sign in to use My Tools and assign owners in your workspace" />
+          <SignInPill appToolPath="/app/tools/before-you-sign?tab=handoffs" label="Sign in to use Tools and assign owners in your workspace" />
         </div>
 
         {/* Filter */}
@@ -191,7 +185,7 @@ export function PlaybookContent() {
           ) : (
             <div className="text-center">
               <h2 className="font-serif text-2xl text-cream mb-3">
-                Use My Tools to assign owners
+                Use Tools to assign owners
               </h2>
               <p className="text-cream/60 text-sm mb-6 max-w-lg mx-auto">
                 Sign in to assign owners for each item, add notes documenting
