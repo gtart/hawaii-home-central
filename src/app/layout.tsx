@@ -3,6 +3,7 @@ import Script from 'next/script'
 import { Playfair_Display, Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/components/auth/AuthProvider'
+import { ProjectProvider } from '@/contexts/ProjectContext'
 import { NewsletterPromptWrapper } from '@/components/auth/NewsletterPromptWrapper'
 import { Navigation } from '@/components/layout/Navigation'
 import { Footer } from '@/components/layout/Footer'
@@ -67,12 +68,14 @@ export default function RootLayout({
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
       <body className="bg-basalt text-cream font-sans antialiased min-h-screen flex flex-col">
         <AuthProvider>
-          <Navigation />
-          <main id="main-content" className="flex-1">
-            {children}
-          </main>
-          <Footer />
-          <NewsletterPromptWrapper />
+          <ProjectProvider>
+            <Navigation />
+            <main id="main-content" className="flex-1">
+              {children}
+            </main>
+            <Footer />
+            <NewsletterPromptWrapper />
+          </ProjectProvider>
         </AuthProvider>
         <NoiseOverlay />
         <Analytics />
