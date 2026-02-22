@@ -141,14 +141,7 @@ export function Navigation() {
                       href={link.href}
                       className={cn(
                         'text-sm transition-colors',
-                        link.href === '/app' || link.href === '/tools'
-                          ? cn(
-                              'bg-sandstone/10 px-3 py-1 rounded-full',
-                              isLinkActive(link)
-                                ? 'text-sandstone bg-sandstone/20'
-                                : 'text-cream/80 hover:text-cream hover:bg-sandstone/15'
-                            )
-                          : isLinkActive(link)
+                        isLinkActive(link)
                           ? 'text-sandstone'
                           : 'text-cream/70 hover:text-cream'
                       )}
