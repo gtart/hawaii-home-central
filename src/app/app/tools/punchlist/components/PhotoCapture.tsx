@@ -20,10 +20,20 @@ export function PhotoCapture({ photos, onAdd, onRemove, onUploadingChange }: Pro
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return
     setError('')
-    setUploading(true)
-    onUploadingChange?.(true)
 
     const fileArray = Array.from(files)
+
+    // Android camera occasionally returns a 0-byte file when the intent fails
+    const emptyFiles = fileArray.filter((f) => f.size === 0)
+    if (emptyFiles.length > 0) {
+      setError('Camera returned an empty photo — please try again.')
+      if (cameraRef.current) cameraRef.current.value = ''
+      if (galleryRef.current) galleryRef.current.value = ''
+      return
+    }
+
+    setUploading(true)
+    onUploadingChange?.(true)
 
     // Upload in parallel batches of 3 for speed
     for (let i = 0; i < fileArray.length; i += 3) {
@@ -132,6 +142,7 @@ export function PhotoCapture({ photos, onAdd, onRemove, onUploadingChange }: Pro
       {photos.length === 0 && (
         <p className="text-xs text-cream/30 mt-2">
           Optional. Add photos to document this item.
+          {' '}If the camera button does nothing, check Chrome &rsaquo; Site Settings &rsaquo; Camera.
         </p>
       )}
     </div>

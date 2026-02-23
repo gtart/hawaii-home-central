@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { useToolState } from '@/hooks/useToolState'
-import { OptionEditor } from '../../components/OptionEditor'
+import { IdeasBoard } from '../../components/IdeasBoard'
 import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
 import {
   STATUS_CONFIG_V3,
@@ -30,6 +30,7 @@ export function DecisionDetailContent() {
   const { data: session } = useSession()
   const decisionId = params.decisionId as string
   const [optionsOpen, setOptionsOpen] = useState(false)
+  const [activeCardId, setActiveCardId] = useState<string | null>(null)
 
   const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3 | any>({
     toolKey: 'finish_decisions',
@@ -123,13 +124,26 @@ export function DecisionDetailContent() {
     })
   }
 
-  const addComment = (comment: { text: string; authorName: string; authorEmail: string }) => {
+  const addComment = (comment: {
+    text: string
+    authorName: string
+    authorEmail: string
+    refOptionId?: string
+    refOptionLabel?: string
+  }) => {
     if (!foundDecision) return
     const id = `cmt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
     updateDecision({
       comments: [
         ...(foundDecision.comments || []),
-        { id, text: comment.text, authorName: comment.authorName, authorEmail: comment.authorEmail, createdAt: new Date().toISOString() },
+        {
+          id,
+          text: comment.text,
+          authorName: comment.authorName,
+          authorEmail: comment.authorEmail,
+          createdAt: new Date().toISOString(),
+          ...(comment.refOptionId ? { refOptionId: comment.refOptionId, refOptionLabel: comment.refOptionLabel } : {}),
+        },
       ],
     })
   }
@@ -462,7 +476,7 @@ export function DecisionDetailContent() {
           }}
         />
 
-        {/* Options (collapsible) */}
+        {/* Ideas board (collapsible) */}
         <div className="mb-8">
           <button
             type="button"
@@ -470,36 +484,26 @@ export function DecisionDetailContent() {
             className="flex items-center gap-2 text-lg font-medium text-cream hover:text-cream/80 transition-colors mb-4"
           >
             <span className="text-cream/30 text-xs">{optionsOpen ? '▼' : '▶'}</span>
-            Compare options ({foundDecision.options.length})
+            Ideas (optional){foundDecision.options.length > 0 ? ` — ${foundDecision.options.length}` : ''}
           </button>
 
           {optionsOpen && (
-            <>
-              {foundDecision.options.length === 0 ? (
-                <div className="bg-basalt-50 rounded-card p-8 text-center">
-                  <p className="text-cream/50 text-sm">
-                    No options yet. Add an option to start comparing choices.
-                  </p>
-                </div>
-              ) : (
-                foundDecision.options.map((option) => (
-                  <OptionEditor
-                    key={option.id}
-                    option={option}
-                    isSelected={option.isSelected}
-                    onUpdate={(updates) => updateOption(option.id, updates)}
-                    onDelete={() => deleteOption(option.id)}
-                    onSelect={() => selectOption(option.id)}
-                    readOnly={readOnly}
-                  />
-                ))
-              )}
-              {!readOnly && (
-                <Button size="sm" variant="secondary" onClick={addOption} className="mt-3">
-                  + Add Option
-                </Button>
-              )}
-            </>
+            <IdeasBoard
+              decision={foundDecision}
+              readOnly={readOnly}
+              userEmail={session?.user?.email || ''}
+              userName={session?.user?.name || 'Unknown'}
+              activeCardId={activeCardId}
+              setActiveCardId={setActiveCardId}
+              onAddOption={(opt) => updateDecision({ options: [...foundDecision.options, opt] })}
+              onUpdateOption={updateOption}
+              onDeleteOption={(id) => {
+                updateDecision({ options: foundDecision.options.filter((o) => o.id !== id) })
+              }}
+              onSelectOption={selectOption}
+              onUpdateDecision={updateDecision}
+              onAddComment={addComment}
+            />
           )}
         </div>
 
@@ -509,6 +513,10 @@ export function DecisionDetailContent() {
             comments={foundDecision.comments || []}
             onAddComment={addComment}
             readOnly={readOnly}
+            onOpenCard={(optId) => {
+              setOptionsOpen(true)
+              setActiveCardId(optId)
+            }}
           />
         </div>
 
@@ -533,10 +541,12 @@ function CommentsSection({
   comments,
   onAddComment,
   readOnly,
+  onOpenCard,
 }: {
   comments: SelectionComment[]
-  onAddComment: (comment: { text: string; authorName: string; authorEmail: string }) => void
+  onAddComment: (comment: { text: string; authorName: string; authorEmail: string; refOptionId?: string; refOptionLabel?: string }) => void
   readOnly: boolean
+  onOpenCard?: (optionId: string) => void
 }) {
   const [page, setPage] = useState(0)
   const allComments = [...comments].reverse()
@@ -569,6 +579,16 @@ function CommentsSection({
                 {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
+            {/* Card reference pill */}
+            {comment.refOptionId && comment.refOptionLabel && (
+              <button
+                type="button"
+                onClick={() => onOpenCard?.(comment.refOptionId!)}
+                className="inline-flex items-center gap-1 mb-1 px-2 py-0.5 bg-sandstone/10 text-sandstone/80 hover:text-sandstone text-[11px] rounded-full transition-colors"
+              >
+                ↗ Re: {comment.refOptionLabel}
+              </button>
+            )}
             <p className="text-sm text-cream/50 whitespace-pre-wrap">{comment.text}</p>
           </div>
         ))}

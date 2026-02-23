@@ -182,6 +182,10 @@ export interface OptionV3 {
   notes: string // Combined specs + notes
   urls: LinkV3[]
   isSelected?: boolean // Marks the chosen option
+  kind?: 'image' | 'text'           // defaults to 'text' if absent
+  imageUrl?: string                  // full-size URL (image cards only)
+  thumbnailUrl?: string              // ~400px thumbnail (image cards only)
+  votes?: Record<string, 'up' | 'down'>  // keyed by user email
   createdAt: string
   updatedAt: string
 }
@@ -193,6 +197,8 @@ export interface SelectionComment {
   authorName: string
   authorEmail: string
   createdAt: string
+  refOptionId?: string    // if this comment references a specific idea card
+  refOptionLabel?: string // display name of the referenced card
 }
 
 // Decision (nested in room)
@@ -205,6 +211,7 @@ export interface DecisionV3 {
   dueDate?: string | null // ISO date string or null for TBD
   dismissedSuggestionKeys?: string[] // Heuristic guidance dismissed by user
   comments?: SelectionComment[] // Selection-level comment thread
+  picksByUser?: Record<string, string | null>  // email → optionId (user's "My pick")
   createdAt: string
   updatedAt: string
 }

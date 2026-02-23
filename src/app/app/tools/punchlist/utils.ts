@@ -85,10 +85,24 @@ export async function uploadFile(file: File): Promise<PunchlistPhoto> {
   const formData = new FormData()
   formData.append('file', resized)
 
-  const res = await fetch('/api/tools/punchlist/upload', {
-    method: 'POST',
-    body: formData,
-  })
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 30_000)
+
+  let res: Response
+  try {
+    res = await fetch('/api/tools/punchlist/upload', {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    })
+  } catch (err) {
+    clearTimeout(timeout)
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error('Upload timed out. Check your connection and try again.')
+    }
+    throw err
+  }
+  clearTimeout(timeout)
 
   if (!res.ok) {
     let msg = `Upload failed (${res.status})`

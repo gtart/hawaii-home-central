@@ -40,7 +40,6 @@ function isAllowedFile(file: File): boolean {
   return false
 }
 
-/** Resolve a MIME type for Vercel Blob — needed when browser reports empty type */
 function resolveContentType(file: File): string {
   if (file.type && ALLOWED_TYPES.has(file.type)) return file.type
   const ext = getFileExt(file.name)
@@ -65,7 +64,7 @@ export async function POST(request: Request) {
   const userId = session.user.id
   const projectId = await ensureCurrentProject(userId)
 
-  const access = await resolveToolAccess(userId, projectId, 'punchlist')
+  const access = await resolveToolAccess(userId, projectId, 'finish_decisions')
   if (!access || access === 'VIEW') {
     return NextResponse.json({ error: 'No edit access' }, { status: 403 })
   }
@@ -96,7 +95,7 @@ export async function POST(request: Request) {
   }
 
   const contentType = resolveContentType(file)
-  const pathname = `punchlist/${projectId}/${Date.now()}-${file.name}`
+  const pathname = `finish-decisions/${projectId}/${Date.now()}-${file.name}`
 
   try {
     const blob = await put(pathname, file, {
@@ -105,9 +104,9 @@ export async function POST(request: Request) {
       token: blobToken,
     })
 
-    const id = `ph_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+    const id = `idea_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
 
-    // Generate a 400px-wide JPEG thumbnail for fast loading in card views
+    // Generate a 400px-wide JPEG thumbnail for fast grid loading
     let thumbnailUrl = blob.url
     try {
       const arrayBuffer = await file.arrayBuffer()
@@ -116,7 +115,7 @@ export async function POST(request: Request) {
         .jpeg({ quality: 75 })
         .toBuffer()
 
-      const thumbPathname = `punchlist/${projectId}/thumb_${Date.now()}-${file.name.replace(/\.[^.]+$/, '.jpg')}`
+      const thumbPathname = `finish-decisions/${projectId}/thumb_${Date.now()}-${file.name.replace(/\.[^.]+$/, '.jpg')}`
       const thumbBlob = await put(thumbPathname, thumbBuffer, {
         access: 'public',
         contentType: 'image/jpeg',
