@@ -20,6 +20,7 @@ interface Props {
   payload: Record<string, unknown>
   projectName: string
   includeNotes: boolean
+  filters: { locations: string[]; assignees: string[] }
 }
 
 function PublicItemCard({ item, includeNotes }: { item: PunchlistItem; includeNotes: boolean }) {
@@ -137,7 +138,7 @@ const STATUS_OPTIONS: { key: FilterStatus; label: string }[] = [
   { key: 'DONE', label: 'Done' },
 ]
 
-export function PublicPunchlistView({ payload, projectName, includeNotes }: Props) {
+export function PublicPunchlistView({ payload, projectName, includeNotes, filters }: Props) {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('ALL')
   const [filterLocation, setFilterLocation] = useState<string | null>(null)
   const [filterAssignee, setFilterAssignee] = useState<string | null>(null)
@@ -209,9 +210,25 @@ export function PublicPunchlistView({ payload, projectName, includeNotes }: Prop
       <div className="max-w-4xl mx-auto px-6 py-8">
         {/* Additional Information banner — only shown when included */}
         {includeNotes && (
-          <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs mb-6 bg-emerald-400/10 text-emerald-400">
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs mb-4 bg-emerald-400/10 text-emerald-400">
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
             Additional information included
+          </div>
+        )}
+
+        {/* Filter scope banner — shown when the link is scoped to specific locations/assignees */}
+        {(filters.locations.length > 0 || filters.assignees.length > 0) && (
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs mb-4 bg-sandstone/10 text-sandstone/80">
+            <span className="w-2 h-2 rounded-full bg-sandstone/60 shrink-0" />
+            <span>
+              Showing scoped view
+              {filters.locations.length > 0 && (
+                <> &middot; Location: {filters.locations.join(', ')}</>
+              )}
+              {filters.assignees.length > 0 && (
+                <> &middot; Assigned to: {filters.assignees.join(', ')}</>
+              )}
+            </span>
           </div>
         )}
 

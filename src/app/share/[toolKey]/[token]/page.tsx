@@ -20,6 +20,7 @@ export default async function SharePage({ params }: Props) {
     projectName: string
     toolKey: string
     includeNotes: boolean
+    filters: { locations: string[]; assignees: string[] }
   } | null = null
 
   try {
@@ -42,6 +43,7 @@ export default async function SharePage({ params }: Props) {
       payload={data.payload}
       projectName={data.projectName}
       includeNotes={data.includeNotes}
+      filters={data.filters ?? { locations: [], assignees: [] }}
     />
   )
 }

@@ -392,7 +392,11 @@ export function PunchlistPage({ api }: Props) {
       )}
 
       {showExport && (
-        <ExportPDFModal onClose={() => setShowExport(false)} />
+        <ExportPDFModal
+          onClose={() => setShowExport(false)}
+          locations={uniqueLocations}
+          assignees={uniqueAssignees}
+        />
       )}
     </>
   )

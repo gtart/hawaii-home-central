@@ -462,20 +462,6 @@ export function DecisionDetailContent() {
           />
         </div>
 
-        {/* Guidance Panel */}
-        <GuidancePanel
-          decision={foundDecision}
-          roomType={foundRoom.type}
-          onDismiss={(key) => {
-            updateDecision({
-              dismissedSuggestionKeys: [
-                ...(foundDecision.dismissedSuggestionKeys || []),
-                key,
-              ],
-            })
-          }}
-        />
-
         {/* Ideas board (collapsible) */}
         <div className="mb-8">
           <button
@@ -503,6 +489,7 @@ export function DecisionDetailContent() {
               onSelectOption={selectOption}
               onUpdateDecision={updateDecision}
               onAddComment={addComment}
+              comments={foundDecision.comments || []}
             />
           )}
         </div>
@@ -519,6 +506,20 @@ export function DecisionDetailContent() {
             }}
           />
         </div>
+
+        {/* Guidance Panel — at the bottom */}
+        <GuidancePanel
+          decision={foundDecision}
+          roomType={foundRoom.type}
+          onDismiss={(key) => {
+            updateDecision({
+              dismissedSuggestionKeys: [
+                ...(foundDecision.dismissedSuggestionKeys || []),
+                key,
+              ],
+            })
+          }}
+        />
 
         {/* Delete Selection */}
         {!readOnly && (
@@ -579,17 +580,18 @@ function CommentsSection({
                 {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
-            {/* Card reference pill */}
-            {comment.refOptionId && comment.refOptionLabel && (
-              <button
-                type="button"
-                onClick={() => onOpenCard?.(comment.refOptionId!)}
-                className="inline-flex items-center gap-1 mb-1 px-2 py-0.5 bg-sandstone/10 text-sandstone/80 hover:text-sandstone text-[11px] rounded-full transition-colors"
-              >
-                ↗ Re: {comment.refOptionLabel}
-              </button>
-            )}
-            <p className="text-sm text-cream/50 whitespace-pre-wrap">{comment.text}</p>
+            <p className="text-sm text-cream/50 whitespace-pre-wrap">
+              {comment.refOptionId && comment.refOptionLabel && (
+                <button
+                  type="button"
+                  onClick={() => onOpenCard?.(comment.refOptionId!)}
+                  className="inline-flex items-center gap-0.5 mr-1.5 px-1.5 py-0.5 bg-sandstone/10 text-sandstone/80 hover:text-sandstone text-[11px] rounded-full transition-colors align-middle"
+                >
+                  ↗ Re: {comment.refOptionLabel}
+                </button>
+              )}
+              {comment.text}
+            </p>
           </div>
         ))}
       </div>

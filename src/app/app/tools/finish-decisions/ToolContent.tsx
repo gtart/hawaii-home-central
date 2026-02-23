@@ -78,7 +78,7 @@ function migrateV1toV3(v1: V1FinishDecisionsPayload): FinishDecisionsPayloadV3 {
       const v1Status = categoryItems[0].status
       let v3Status: StatusV3 = 'deciding'
       if (v1Status === 'deciding') v3Status = 'deciding'
-      else if (v1Status === 'awaiting_approval') v3Status = 'shortlist'
+      else if (v1Status === 'awaiting_approval') v3Status = 'deciding'
       else if (v1Status === 'final') v3Status = 'selected'
       else if (v1Status === 'complete') v3Status = 'done'
 
@@ -154,7 +154,7 @@ function migrateV2toV3(v2: V2FinishDecisionsPayload): FinishDecisionsPayloadV3 {
       // Map V2 status to V3
       let v3Status: StatusV3 = 'deciding'
       if (decision.status === 'exploring') v3Status = 'deciding'
-      else if (decision.status === 'comparing') v3Status = 'shortlist'
+      else if (decision.status === 'comparing') v3Status = 'deciding'
       else if (decision.status === 'decided') v3Status = 'selected'
       else if (decision.status === 'ordered') v3Status = 'ordered'
       else if (decision.status === 'complete') v3Status = 'done'

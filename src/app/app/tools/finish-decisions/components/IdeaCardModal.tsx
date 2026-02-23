@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import type { OptionV3, DecisionV3 } from '@/data/finish-decisions'
+import { useRef, useState } from 'react'
+import type { OptionV3, DecisionV3, SelectionComment } from '@/data/finish-decisions'
 
 interface CommentPayload {
   text: string
@@ -17,11 +17,13 @@ interface Props {
   readOnly: boolean
   userEmail: string
   userName: string
+  ideaComments: SelectionComment[]
   onUpdate: (updates: Partial<OptionV3>) => void
   onDelete: () => void
   onSelect: () => void
   onUpdateDecision: (updates: Partial<DecisionV3>) => void
   onAddComment: (comment: CommentPayload) => void
+  onUploadPhoto: (file: File) => Promise<{ url: string; thumbnailUrl: string; id: string }>
   onClose: () => void
 }
 
@@ -31,15 +33,21 @@ export function IdeaCardModal({
   readOnly,
   userEmail,
   userName,
+  ideaComments,
   onUpdate,
   onDelete,
   onSelect,
   onUpdateDecision,
   onAddComment,
+  onUploadPhoto,
   onClose,
 }: Props) {
   const [newUrl, setNewUrl] = useState('')
   const [commentText, setCommentText] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const galleryInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
 
   // ---- Derived state ----
   const votes = option.votes ?? {}
@@ -107,6 +115,26 @@ export function IdeaCardModal({
     }
   }
 
+  async function handlePhotoFile(file: File | null) {
+    if (!file) return
+    if (file.size === 0) {
+      setUploadError('Empty file — please try again.')
+      return
+    }
+    setUploadError('')
+    setUploading(true)
+    try {
+      const { url, thumbnailUrl } = await onUploadPhoto(file)
+      onUpdate({ kind: 'image', imageUrl: url, thumbnailUrl })
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setUploading(false)
+      if (galleryInputRef.current) galleryInputRef.current.value = ''
+      if (cameraInputRef.current) cameraInputRef.current.value = ''
+    }
+  }
+
   const isValidUrl = (url: string) => /^https?:\/\/.+/i.test(url)
 
   return (
@@ -118,38 +146,101 @@ export function IdeaCardModal({
       <div className="relative bg-basalt-50 border-t sm:border border-cream/10 rounded-t-xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto">
 
         {/* Header */}
-        <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 px-5 py-4 flex items-center gap-3 z-10">
-          <input
-            type="text"
-            value={option.name}
-            onChange={(e) => onUpdate({ name: e.target.value })}
-            readOnly={readOnly}
-            placeholder="Idea name..."
-            className="flex-1 bg-transparent text-cream text-base font-medium placeholder:text-cream/30 focus:outline-none"
-          />
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-cream/40 hover:text-cream transition-colors shrink-0"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
-            </svg>
-          </button>
+        <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 px-5 py-3 z-10">
+          <div className="flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <label className="block text-[10px] uppercase tracking-wider text-cream/30 mb-1">Title</label>
+              <input
+                type="text"
+                value={option.name}
+                onChange={(e) => onUpdate({ name: e.target.value })}
+                readOnly={readOnly}
+                placeholder="Idea name..."
+                className="w-full bg-transparent text-cream text-base font-medium placeholder:text-cream/30 focus:outline-none"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-cream/40 hover:text-cream transition-colors shrink-0 mt-1"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div className="px-5 py-5 space-y-5">
 
-          {/* Image preview */}
-          {option.kind === 'image' && option.imageUrl && (
-            <div className="rounded-lg overflow-hidden bg-basalt">
-              <img
-                src={option.imageUrl}
-                alt={option.name || 'Idea image'}
-                className="w-full max-h-56 object-contain"
-              />
-            </div>
-          )}
+          {/* Image preview + photo upload controls */}
+          <div>
+            {option.kind === 'image' && option.imageUrl && (
+              <div className="rounded-lg overflow-hidden bg-basalt mb-3">
+                <img
+                  src={option.imageUrl}
+                  alt={option.name || 'Idea image'}
+                  className="w-full max-h-56 object-contain"
+                />
+              </div>
+            )}
+
+            {/* Photo upload buttons (always available when not readOnly) */}
+            {!readOnly && (
+              <div className="flex items-center gap-2">
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handlePhotoFile(e.target.files?.[0] ?? null)}
+                />
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => handlePhotoFile(e.target.files?.[0] ?? null)}
+                />
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={uploading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                  Camera
+                </button>
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  disabled={uploading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {uploading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border border-cream/20 border-t-cream/60 rounded-full animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="M21 15l-5-5L5 21" />
+                      </svg>
+                      Gallery
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+            {uploadError && <p className="text-sm text-red-400 mt-2">{uploadError}</p>}
+          </div>
 
           {/* Notes */}
           {(!readOnly || option.notes) && (
@@ -286,17 +377,37 @@ export function IdeaCardModal({
             </button>
           </div>
 
+          {/* Comments on this idea (read-only list) */}
+          {ideaComments.length > 0 && (
+            <div className="pt-1 border-t border-cream/10">
+              <p className="text-xs text-cream/40 mb-2">Comments on this idea ({ideaComments.length})</p>
+              <div className="space-y-2">
+                {ideaComments.map((c) => (
+                  <div key={c.id} className="bg-basalt rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-xs font-medium text-cream/70">{c.authorName}</span>
+                      <span className="text-[10px] text-cream/30">
+                        {new Date(c.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-cream/60">{c.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Comment on this idea */}
           {!readOnly && (
             <div className="pt-1 border-t border-cream/10">
-              <label className="block text-xs text-cream/40 mb-2">Comment on this idea</label>
+              <label className="block text-xs text-cream/40 mb-2">Add a comment</label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value.slice(0, 400))}
                   onKeyDown={(e) => { if (e.key === 'Enter') handlePostComment() }}
-                  placeholder="Add a comment referencing this idea..."
+                  placeholder="Comment on this idea..."
                   className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
                 />
                 <button
@@ -313,13 +424,34 @@ export function IdeaCardModal({
 
           {/* Delete */}
           {!readOnly && (
-            <div className="pt-1 border-t border-cream/10">
+            <div className="pt-1 border-t border-cream/10 flex items-center justify-between">
               <button
                 type="button"
                 onClick={handleDelete}
                 className="text-red-400/60 hover:text-red-400 text-sm transition-colors"
               >
                 Delete idea
+              </button>
+              {/* Save / Done button */}
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+              >
+                Save
+              </button>
+            </div>
+          )}
+
+          {/* Done button for readOnly */}
+          {readOnly && (
+            <div className="pt-1 border-t border-cream/10 flex justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 bg-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/20 transition-colors"
+              >
+                Done
               </button>
             </div>
           )}

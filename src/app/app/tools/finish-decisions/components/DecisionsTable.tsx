@@ -7,8 +7,18 @@ import {
   STATUS_CONFIG_V3,
   type DecisionV3,
 } from '@/data/finish-decisions'
-import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
 import { DecisionCard } from './DecisionCard'
+
+function getDecisionThumbnail(decision: DecisionV3): string | null {
+  const selectedWithPhoto = decision.options.find((o) => o.isSelected && o.thumbnailUrl)
+  if (selectedWithPhoto?.thumbnailUrl) return selectedWithPhoto.thumbnailUrl
+  const anyWithPhoto = [...decision.options].reverse().find((o) => o.thumbnailUrl)
+  return anyWithPhoto?.thumbnailUrl ?? null
+}
+
+function safeStatusConfig(status: string) {
+  return STATUS_CONFIG_V3[status as keyof typeof STATUS_CONFIG_V3] ?? STATUS_CONFIG_V3.deciding
+}
 
 export function DecisionsTable({
   decisions,
@@ -22,7 +32,6 @@ export function DecisionsTable({
   readOnly?: boolean
 }) {
   const router = useRouter()
-  const heuristicsConfig = useMemo(() => getHeuristicsConfig(), [])
   const [sortColumn, setSortColumn] = useState<'title' | 'status' | 'dueDate' | 'updated'>('title')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
@@ -82,27 +91,15 @@ export function DecisionsTable({
     <>
       {/* Mobile: card list */}
       <div className="md:hidden space-y-2">
-        {sortedDecisions.map((decision) => {
-          const selectedOption = decision.options.find((opt) => opt.isSelected)
-          const hResult = matchDecision(
-            heuristicsConfig,
-            decision.title,
-            roomType,
-            selectedOption?.name,
-            decision.dismissedSuggestionKeys
-          )
-          const milestone = hResult.milestones[0] || null
-
-          return (
-            <DecisionCard
-              key={decision.id}
-              decision={decision}
-              milestone={milestone}
-              onDelete={() => onDeleteDecision(decision.id)}
-              readOnly={readOnly}
-            />
-          )
-        })}
+        {sortedDecisions.map((decision) => (
+          <DecisionCard
+            key={decision.id}
+            decision={decision}
+            thumbnail={getDecisionThumbnail(decision)}
+            onDelete={() => onDeleteDecision(decision.id)}
+            readOnly={readOnly}
+          />
+        ))}
       </div>
 
       {/* Desktop: table */}
@@ -110,6 +107,7 @@ export function DecisionsTable({
         <table className="w-full">
           <thead className="border-b border-cream/10">
             <tr>
+              <th className="px-3 py-2 w-14"></th>
               <th
                 onClick={() => toggleSort('title')}
                 className="px-3 py-2 text-left text-xs font-medium text-cream/60 cursor-pointer hover:text-cream uppercase tracking-wide"
@@ -145,15 +143,8 @@ export function DecisionsTable({
           </thead>
           <tbody>
             {sortedDecisions.map((decision) => {
-              const selectedOption = decision.options.find((opt) => opt.isSelected)
-              const hResult = matchDecision(
-                heuristicsConfig,
-                decision.title,
-                roomType,
-                selectedOption?.name,
-                decision.dismissedSuggestionKeys
-              )
-              const milestone = hResult.milestones[0]
+              const thumbnail = getDecisionThumbnail(decision)
+              const statusCfg = safeStatusConfig(decision.status)
 
               return (
                 <tr
@@ -163,17 +154,24 @@ export function DecisionsTable({
                     router.push(`/app/tools/finish-decisions/decision/${decision.id}`)
                   }
                 >
+                  {/* Thumbnail cell */}
                   <td className="px-3 py-2.5">
-                    <div className="text-cream font-medium text-sm">{decision.title}</div>
-                    {milestone && (
-                      <span className="inline-block mt-0.5 text-[11px] text-sandstone/70 bg-sandstone/10 px-2 py-0.5 rounded-full">
-                        {milestone.label}
-                      </span>
+                    {thumbnail ? (
+                      <img
+                        src={thumbnail}
+                        alt=""
+                        className="w-10 h-10 rounded-md object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-md bg-basalt/50" />
                     )}
                   </td>
                   <td className="px-3 py-2.5">
-                    <Badge variant={STATUS_CONFIG_V3[decision.status].variant}>
-                      {STATUS_CONFIG_V3[decision.status].label}
+                    <div className="text-cream font-medium text-sm">{decision.title}</div>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <Badge variant={statusCfg.variant}>
+                      {statusCfg.label}
                     </Badge>
                   </td>
                   <td className="px-3 py-2.5">

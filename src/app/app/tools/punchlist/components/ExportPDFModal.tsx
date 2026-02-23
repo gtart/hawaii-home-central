@@ -5,6 +5,8 @@ import type { PunchlistStatus } from '../types'
 
 interface Props {
   onClose: () => void
+  locations: string[]
+  assignees: string[]
 }
 
 type OrgMode = 'room_status' | 'status_room'
@@ -15,11 +17,13 @@ const STATUS_CHECKS: { key: PunchlistStatus; label: string }[] = [
   { key: 'DONE', label: 'Done' },
 ]
 
-export function ExportPDFModal({ onClose }: Props) {
+export function ExportPDFModal({ onClose, locations, assignees }: Props) {
   const [includeNotes, setIncludeNotes] = useState(false)
   const [includeComments, setIncludeComments] = useState(false)
   const [org, setOrg] = useState<OrgMode>('room_status')
   const [includedStatuses, setIncludedStatuses] = useState<Set<PunchlistStatus>>(new Set(['OPEN', 'ACCEPTED']))
+  const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set())
+  const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set())
   const [confirmed, setConfirmed] = useState(false)
 
   function toggleStatus(s: PunchlistStatus) {
@@ -34,12 +38,39 @@ export function ExportPDFModal({ onClose }: Props) {
     })
   }
 
+  function toggleLocation(loc: string) {
+    setSelectedLocations((prev) => {
+      const next = new Set(prev)
+      if (next.has(loc)) next.delete(loc)
+      else next.add(loc)
+      return next
+    })
+  }
+
+  function toggleAssignee(a: string) {
+    setSelectedAssignees((prev) => {
+      const next = new Set(prev)
+      if (next.has(a)) next.delete(a)
+      else next.add(a)
+      return next
+    })
+  }
+
   function handleExport() {
     const statuses = Array.from(includedStatuses).join(',')
-    const url = `/app/tools/punchlist/report?includeNotes=${includeNotes}&includeComments=${includeComments}&org=${org}&statuses=${statuses}`
+    let url = `/app/tools/punchlist/report?includeNotes=${includeNotes}&includeComments=${includeComments}&org=${org}&statuses=${statuses}`
+    if (selectedLocations.size > 0) url += `&locations=${encodeURIComponent(Array.from(selectedLocations).join(','))}`
+    if (selectedAssignees.size > 0) url += `&assignees=${encodeURIComponent(Array.from(selectedAssignees).join(','))}`
     window.open(url, '_blank')
     onClose()
   }
+
+  const chipClass = (active: boolean) =>
+    `text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
+      active
+        ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
+        : 'border-cream/20 text-cream/40 hover:border-cream/30'
+    }`
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -98,17 +129,57 @@ export function ExportPDFModal({ onClose }: Props) {
                   key={s.key}
                   type="button"
                   onClick={() => toggleStatus(s.key)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                    includedStatuses.has(s.key)
-                      ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
-                      : 'border-cream/20 text-cream/40 hover:border-cream/30'
-                  }`}
+                  className={chipClass(includedStatuses.has(s.key))}
                 >
                   {s.label}
                 </button>
               ))}
             </div>
           </div>
+
+          {/* Location filter */}
+          {locations.length >= 2 && (
+            <div>
+              <p className="text-sm text-cream/70 mb-1">
+                Filter by Location{' '}
+                <span className="text-cream/30 text-xs">(optional — none selected = all)</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {locations.map((loc) => (
+                  <button
+                    key={loc}
+                    type="button"
+                    onClick={() => toggleLocation(loc)}
+                    className={chipClass(selectedLocations.has(loc))}
+                  >
+                    {loc}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Assignee filter */}
+          {assignees.length >= 2 && (
+            <div>
+              <p className="text-sm text-cream/70 mb-1">
+                Filter by Assignee{' '}
+                <span className="text-cream/30 text-xs">(optional — none selected = all)</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {assignees.map((a) => (
+                  <button
+                    key={a}
+                    type="button"
+                    onClick={() => toggleAssignee(a)}
+                    className={chipClass(selectedAssignees.has(a))}
+                  >
+                    {a}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Additional Information option */}
           <div>

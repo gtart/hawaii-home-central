@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useMemo } from 'react'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { usePunchlistState } from './usePunchlistState'
 import { PunchlistPage } from './components/PunchlistPage'
@@ -11,6 +11,16 @@ function PunchlistContent() {
   const api = usePunchlistState()
   const { payload, isLoaded, isSyncing, access, readOnly, noAccess } = api
   const isOwner = access === 'OWNER'
+
+  const uniqueLocations = useMemo(
+    () => [...new Set(payload.items.map((i) => i.location))].filter(Boolean).sort(),
+    [payload.items]
+  )
+
+  const uniqueAssignees = useMemo(
+    () => [...new Set(payload.items.map((i) => i.assigneeLabel))].filter(Boolean).sort(),
+    [payload.items]
+  )
 
   if (!isLoaded) {
     return (
@@ -53,7 +63,7 @@ function PunchlistContent() {
         <PunchlistPage api={api} />
       )}
 
-      {isOwner && <ManageShareLinks toolKey="punchlist" />}
+      {isOwner && <ManageShareLinks toolKey="punchlist" locations={uniqueLocations} assignees={uniqueAssignees} />}
     </>
   )
 }

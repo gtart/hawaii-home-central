@@ -161,7 +161,6 @@ export const ROOM_EMOJI_MAP: Record<RoomTypeV3, string> = {
 // Decision Statuses (simplified from V2)
 export const STATUS_CONFIG_V3 = {
   deciding: { label: 'Deciding', variant: 'deciding' as const },
-  shortlist: { label: 'Shortlist', variant: 'shortlist' as const },
   selected: { label: 'Selected', variant: 'selected' as const },
   ordered: { label: 'Ordered', variant: 'ordered' as const },
   done: { label: 'Done', variant: 'done' as const },

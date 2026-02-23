@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import type { OptionV3, DecisionV3 } from '@/data/finish-decisions'
+import type { OptionV3, DecisionV3, SelectionComment } from '@/data/finish-decisions'
 import { IdeaCardModal } from './IdeaCardModal'
 
 interface CommentPayload {
@@ -25,6 +25,7 @@ interface Props {
   onSelectOption: (id: string) => void
   onUpdateDecision: (updates: Partial<DecisionV3>) => void
   onAddComment: (comment: CommentPayload) => void
+  comments: SelectionComment[]
 }
 
 // ---- Upload helper (mirrors punchlist utils, points to finish-decisions endpoint) ----
@@ -101,9 +102,6 @@ function IdeaCardTile({
         </>
       ) : (
         <div className="w-full h-full p-3 flex flex-col">
-          <span className="text-xs text-cream/30 mb-1">
-            {option.isSelected ? '' : 'Idea'}
-          </span>
           <p className="text-sm text-cream font-medium leading-snug line-clamp-2 flex-1">
             {option.name || <span className="text-cream/30 italic">Untitled</span>}
           </p>
@@ -160,12 +158,16 @@ export function IdeasBoard({
   onSelectOption,
   onUpdateDecision,
   onAddComment,
+  comments,
 }: Props) {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const activeOption = decision.options.find((o) => o.id === activeCardId) ?? null
+  const activeIdeaComments = activeCardId
+    ? comments.filter((c) => c.refOptionId === activeCardId)
+    : []
 
   async function handlePhotoFiles(files: FileList | null) {
     if (!files || files.length === 0) return
@@ -309,11 +311,13 @@ export function IdeasBoard({
           readOnly={readOnly}
           userEmail={userEmail}
           userName={userName}
+          ideaComments={activeIdeaComments}
           onUpdate={(updates) => onUpdateOption(activeOption.id, updates)}
           onDelete={() => onDeleteOption(activeOption.id)}
           onSelect={() => onSelectOption(activeOption.id)}
           onUpdateDecision={onUpdateDecision}
           onAddComment={onAddComment}
+          onUploadPhoto={uploadIdeaFile}
           onClose={() => setActiveCardId(null)}
         />
       )}

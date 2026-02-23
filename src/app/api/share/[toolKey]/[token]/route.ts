@@ -34,9 +34,11 @@ export async function GET(
     )
   }
 
-  // Determine notes inclusion
+  // Determine notes inclusion and filters
   const settings = record.settings as Record<string, unknown>
   let includeNotes = settings?.includeNotes === true
+  const filterLocations: string[] = Array.isArray(settings?.locations) ? (settings.locations as string[]) : []
+  const filterAssignees: string[] = Array.isArray(settings?.assignees) ? (settings.assignees as string[]) : []
 
   // Admin failsafe: override at render time
   const reportSettings = await getReportSettings()
@@ -44,8 +46,19 @@ export async function GET(
     includeNotes = false
   }
 
-  // Strip notes from payload if not included
+  // Apply location/assignee filters to payload
   let payload = instance.payload as Record<string, unknown>
+  if (Array.isArray(payload?.items) && (filterLocations.length > 0 || filterAssignees.length > 0)) {
+    payload = {
+      ...payload,
+      items: (payload.items as Record<string, unknown>[]).filter((item) =>
+        (filterLocations.length === 0 || filterLocations.includes(item.location as string)) &&
+        (filterAssignees.length === 0 || filterAssignees.includes(item.assigneeLabel as string))
+      ),
+    }
+  }
+
+  // Strip notes from payload if not included
   if (!includeNotes && payload && Array.isArray(payload.items)) {
     payload = {
       ...payload,
@@ -61,5 +74,6 @@ export async function GET(
     projectName: record.project.name,
     toolKey,
     includeNotes,
+    filters: { locations: filterLocations, assignees: filterAssignees },
   })
 }

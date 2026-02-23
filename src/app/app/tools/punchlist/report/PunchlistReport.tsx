@@ -96,6 +96,16 @@ export function PunchlistReport() {
     () => new Set(statusParam.split(',').filter((s) => VALID_STATUSES.has(s)) as PunchlistStatus[]),
     [statusParam]
   )
+  const locationsParam = searchParams.get('locations') || ''
+  const assigneesParam = searchParams.get('assignees') || ''
+  const filterLocations = useMemo(
+    () => (locationsParam ? locationsParam.split(',').filter(Boolean) : []),
+    [locationsParam]
+  )
+  const filterAssignees = useMemo(
+    () => (assigneesParam ? assigneesParam.split(',').filter(Boolean) : []),
+    [assigneesParam]
+  )
   const { payload, isLoaded } = usePunchlistState()
   const { currentProject } = useProject()
   const [settings, setSettings] = useState<ReportSettings>({
@@ -129,8 +139,12 @@ export function PunchlistReport() {
   }, [isLoaded, payload.items.length])
 
   const reportItems = useMemo(
-    () => payload.items.filter((i) => includedStatuses.has(i.status)),
-    [payload.items, includedStatuses]
+    () =>
+      payload.items
+        .filter((i) => includedStatuses.has(i.status))
+        .filter((i) => filterLocations.length === 0 || filterLocations.includes(i.location))
+        .filter((i) => filterAssignees.length === 0 || filterAssignees.includes(i.assigneeLabel)),
+    [payload.items, includedStatuses, filterLocations, filterAssignees]
   )
 
   const sections = useMemo(
@@ -222,6 +236,19 @@ export function PunchlistReport() {
                 {new Date().toLocaleDateString()} &middot; {reportItems.length} items
               </p>
             </div>
+
+            {/* Filter summary (only shown when filters are active) */}
+            {(filterLocations.length > 0 || filterAssignees.length > 0) && (
+              <p className="text-xs text-gray-500 mt-2">
+                {filterLocations.length > 0 && (
+                  <span>Location: {filterLocations.join(', ')}</span>
+                )}
+                {filterLocations.length > 0 && filterAssignees.length > 0 && <span> &middot; </span>}
+                {filterAssignees.length > 0 && (
+                  <span>Assignee: {filterAssignees.join(', ')}</span>
+                )}
+              </p>
+            )}
           </div>
 
           {/* Grouped items */}

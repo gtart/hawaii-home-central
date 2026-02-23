@@ -4,17 +4,46 @@ import { useState } from 'react'
 
 interface Props {
   toolKey: string
+  locations: string[]
+  assignees: string[]
   onClose: () => void
   onCreated: () => void
 }
 
-export function PublishShareModal({ toolKey, onClose, onCreated }: Props) {
+export function PublishShareModal({ toolKey, locations, assignees, onClose, onCreated }: Props) {
   const [includeNotes, setIncludeNotes] = useState(false)
+  const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set())
+  const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set())
   const [confirmed, setConfirmed] = useState(false)
   const [creating, setCreating] = useState(false)
   const [shareUrl, setShareUrl] = useState('')
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
+
+  function toggleLocation(loc: string) {
+    setSelectedLocations((prev) => {
+      const next = new Set(prev)
+      if (next.has(loc)) next.delete(loc)
+      else next.add(loc)
+      return next
+    })
+  }
+
+  function toggleAssignee(a: string) {
+    setSelectedAssignees((prev) => {
+      const next = new Set(prev)
+      if (next.has(a)) next.delete(a)
+      else next.add(a)
+      return next
+    })
+  }
+
+  const chipClass = (active: boolean) =>
+    `text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
+      active
+        ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
+        : 'border-cream/20 text-cream/40 hover:border-cream/30'
+    }`
 
   async function handleCreate() {
     setError('')
@@ -24,7 +53,11 @@ export function PublishShareModal({ toolKey, onClose, onCreated }: Props) {
       const res = await fetch(`/api/tools/${toolKey}/share-token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ includeNotes }),
+        body: JSON.stringify({
+          includeNotes,
+          locations: Array.from(selectedLocations),
+          assignees: Array.from(selectedAssignees),
+        }),
       })
 
       if (!res.ok) {
@@ -58,7 +91,7 @@ export function PublishShareModal({ toolKey, onClose, onCreated }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
-      <div className="relative bg-basalt-50 border border-cream/10 rounded-xl w-full max-w-md">
+      <div className="relative bg-basalt-50 border border-cream/10 rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="px-6 py-4 border-b border-cream/10 flex items-center justify-between">
           <h2 className="text-lg font-medium text-cream">Create Public Link</h2>
           <button type="button" onClick={onClose} className="text-cream/40 hover:text-cream transition-colors">
@@ -90,6 +123,22 @@ export function PublishShareModal({ toolKey, onClose, onCreated }: Props) {
                 <span className={`w-2 h-2 rounded-full ${includeNotes ? 'bg-amber-400' : 'bg-cream/20'}`} />
                 Additional Info: {includeNotes ? 'INCLUDED' : 'NOT INCLUDED'}
               </div>
+              {(selectedLocations.size > 0 || selectedAssignees.size > 0) ? (
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {selectedLocations.size > 0 && (
+                    <span className="px-2 py-1 bg-cream/10 text-cream/50 rounded">
+                      📍 {Array.from(selectedLocations).join(', ')}
+                    </span>
+                  )}
+                  {selectedAssignees.size > 0 && (
+                    <span className="px-2 py-1 bg-cream/10 text-cream/50 rounded">
+                      👤 {Array.from(selectedAssignees).join(', ')}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-cream/30 text-center">All items included</p>
+              )}
             </>
           ) : (
             <>
@@ -135,6 +184,50 @@ export function PublishShareModal({ toolKey, onClose, onCreated }: Props) {
                   <p className="text-amber-400 text-xs">
                     Additional information may contain private details. Make sure you&apos;re comfortable sharing them publicly.
                   </p>
+                </div>
+              )}
+
+              {/* Location filter */}
+              {locations.length >= 2 && (
+                <div>
+                  <p className="text-sm text-cream/70 mb-1">
+                    Filter by Location{' '}
+                    <span className="text-cream/30 text-xs">(optional — none = all)</span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {locations.map((loc) => (
+                      <button
+                        key={loc}
+                        type="button"
+                        onClick={() => toggleLocation(loc)}
+                        className={chipClass(selectedLocations.has(loc))}
+                      >
+                        {loc}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Assignee filter */}
+              {assignees.length >= 2 && (
+                <div>
+                  <p className="text-sm text-cream/70 mb-1">
+                    Filter by Assignee{' '}
+                    <span className="text-cream/30 text-xs">(optional — none = all)</span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {assignees.map((a) => (
+                      <button
+                        key={a}
+                        type="button"
+                        onClick={() => toggleAssignee(a)}
+                        className={chipClass(selectedAssignees.has(a))}
+                      >
+                        {a}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 

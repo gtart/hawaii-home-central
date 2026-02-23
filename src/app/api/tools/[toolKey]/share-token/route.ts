@@ -35,6 +35,8 @@ export async function GET(
       id: t.id,
       token: t.token,
       includeNotes: (t.settings as Record<string, unknown>)?.includeNotes ?? false,
+      locations: (t.settings as Record<string, unknown>)?.locations ?? [],
+      assignees: (t.settings as Record<string, unknown>)?.assignees ?? [],
       createdAt: t.createdAt,
       expiresAt: t.expiresAt,
     })),
@@ -61,6 +63,8 @@ export async function POST(
 
   const body = await request.json()
   let includeNotes = body.includeNotes === true
+  const locations: string[] = Array.isArray(body.locations) ? body.locations : []
+  const assignees: string[] = Array.isArray(body.assignees) ? body.assignees : []
 
   // Check admin failsafe
   const reportSettings = await getReportSettings()
@@ -76,7 +80,7 @@ export async function POST(
       projectId,
       toolKey,
       createdBy: userId,
-      settings: { includeNotes },
+      settings: { includeNotes, locations, assignees },
     },
   })
 
