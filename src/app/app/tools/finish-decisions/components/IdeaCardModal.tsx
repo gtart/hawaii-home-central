@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import type { OptionV3, DecisionV3, SelectionComment } from '@/data/finish-decisions'
 
 interface CommentPayload {
@@ -46,8 +46,21 @@ export function IdeaCardModal({
   const [commentText, setCommentText] = useState('')
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false)
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
+  const photoMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showPhotoMenu) return
+    function handleClickOutside(e: MouseEvent) {
+      if (photoMenuRef.current && !photoMenuRef.current.contains(e.target as Node)) {
+        setShowPhotoMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showPhotoMenu])
 
   // ---- Derived state ----
   const votes = option.votes ?? {}
@@ -173,72 +186,135 @@ export function IdeaCardModal({
 
         <div className="px-5 py-5 space-y-5">
 
-          {/* Image preview + photo upload controls */}
+          {/* Photo section */}
           <div>
-            {option.kind === 'image' && option.imageUrl && (
-              <div className="rounded-lg overflow-hidden bg-basalt mb-3">
+            {/* Hidden file inputs */}
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handlePhotoFile(e.target.files?.[0] ?? null)}
+            />
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => handlePhotoFile(e.target.files?.[0] ?? null)}
+            />
+
+            {option.kind === 'image' && option.imageUrl ? (
+              /* ── Has photo: image + "Change" button overlay ── */
+              <div className="relative rounded-xl overflow-hidden bg-basalt">
                 <img
                   src={option.imageUrl}
                   alt={option.name || 'Idea image'}
-                  className="w-full max-h-56 object-contain"
+                  className="w-full max-h-64 object-contain"
                 />
-              </div>
-            )}
-
-            {/* Photo upload buttons (always available when not readOnly) */}
-            {!readOnly && (
-              <div className="flex items-center gap-2">
-                <input
-                  ref={galleryInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handlePhotoFile(e.target.files?.[0] ?? null)}
-                />
-                <input
-                  ref={cameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="hidden"
-                  onChange={(e) => handlePhotoFile(e.target.files?.[0] ?? null)}
-                />
-                <button
-                  type="button"
-                  onClick={() => cameraInputRef.current?.click()}
-                  disabled={uploading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors disabled:opacity-50"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                    <circle cx="12" cy="13" r="4" />
-                  </svg>
-                  Camera
-                </button>
-                <button
-                  type="button"
-                  onClick={() => galleryInputRef.current?.click()}
-                  disabled={uploading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {uploading ? (
-                    <>
-                      <div className="w-3.5 h-3.5 border border-cream/20 border-t-cream/60 rounded-full animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <circle cx="8.5" cy="8.5" r="1.5" />
-                        <path d="M21 15l-5-5L5 21" />
+                {/* Upload spinner overlay */}
+                {uploading && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  </div>
+                )}
+                {/* Change button */}
+                {!readOnly && !uploading && (
+                  <div className="absolute bottom-2 right-2" ref={photoMenuRef}>
+                    <button
+                      type="button"
+                      onClick={() => setShowPhotoMenu(!showPhotoMenu)}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs rounded-lg hover:bg-black/80 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                        <circle cx="12" cy="13" r="4" />
                       </svg>
-                      Gallery
-                    </>
-                  )}
-                </button>
+                      Change photo
+                    </button>
+                    {showPhotoMenu && (
+                      <div className="absolute bottom-full right-0 mb-1.5 bg-basalt-50 border border-cream/15 rounded-xl shadow-xl overflow-hidden min-w-[176px]">
+                        <button
+                          type="button"
+                          onClick={() => { cameraInputRef.current?.click(); setShowPhotoMenu(false) }}
+                          className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+                        >
+                          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                            <circle cx="12" cy="13" r="4" />
+                          </svg>
+                          Take a photo
+                        </button>
+                        <div className="border-t border-cream/10" />
+                        <button
+                          type="button"
+                          onClick={() => { galleryInputRef.current?.click(); setShowPhotoMenu(false) }}
+                          className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+                        >
+                          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <path d="M21 15l-5-5L5 21" />
+                          </svg>
+                          Photo library
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
+            ) : !readOnly ? (
+              /* ── No photo: placeholder card ── */
+              <div className="rounded-xl overflow-hidden border border-cream/10 bg-basalt/40">
+                {/* Top: icon + label */}
+                <div className="flex flex-col items-center justify-center gap-2.5 py-8">
+                  <div className="w-12 h-12 rounded-full bg-cream/5 flex items-center justify-center">
+                    {uploading ? (
+                      <div className="w-6 h-6 border-2 border-cream/20 border-t-cream/60 rounded-full animate-spin" />
+                    ) : (
+                      <svg className="w-6 h-6 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                    )}
+                  </div>
+                  <p className="text-sm text-cream/40">
+                    {uploading ? 'Uploading…' : 'Add a photo'}
+                  </p>
+                </div>
+                {/* Bottom: Camera | Gallery split buttons */}
+                <div className="flex border-t border-cream/10">
+                  <button
+                    type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex-1 flex items-center justify-center gap-2 py-3.5 text-sm text-cream/50 hover:text-cream/80 hover:bg-cream/5 transition-colors disabled:opacity-40"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    Camera
+                  </button>
+                  <div className="w-px bg-cream/10" />
+                  <button
+                    type="button"
+                    onClick={() => galleryInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex-1 flex items-center justify-center gap-2 py-3.5 text-sm text-cream/50 hover:text-cream/80 hover:bg-cream/5 transition-colors disabled:opacity-40"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <path d="M21 15l-5-5L5 21" />
+                    </svg>
+                    Gallery
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
             {uploadError && <p className="text-sm text-red-400 mt-2">{uploadError}</p>}
           </div>
 
