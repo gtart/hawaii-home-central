@@ -32,11 +32,11 @@ export default async function RenovationBasicsPage() {
     `,
   ])
 
-  const primaryTags = allTags
+  const allPrimaryTags = allTags
     .filter((t) => t.isPrimary)
     .map((t) => ({ id: t.id, name: t.name, slug: t.slug }))
 
-  const primaryTagIds = new Set(primaryTags.map((t) => t.id))
+  const allPrimaryTagIds = new Set(allPrimaryTags.map((t) => t.id))
 
   const articles = guides.map((g) => ({
     id: g.id,
@@ -45,9 +45,13 @@ export default async function RenovationBasicsPage() {
     dek: g.dek,
     geoScope: g.geoScope,
     primaryTagIds: g.tags
-      .filter((t) => primaryTagIds.has(t.tagId))
+      .filter((t) => allPrimaryTagIds.has(t.tagId))
       .map((t) => t.tagId),
   }))
+
+  // Only show pills for tags that actually have published articles
+  const usedPrimaryTagIds = new Set(articles.flatMap((a) => a.primaryTagIds))
+  const primaryTags = allPrimaryTags.filter((t) => usedPrimaryTagIds.has(t.id))
 
   return (
     <div className="pt-32 pb-24 px-6">
