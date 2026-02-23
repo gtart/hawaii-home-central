@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 import { MarkdownRenderer } from '@/components/content/MarkdownRenderer'
 import { ContentMeta } from '@/components/content/ContentMeta'
 import { ContentBreadcrumbs } from '@/components/content/ContentBreadcrumbs'
