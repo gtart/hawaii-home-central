@@ -94,7 +94,7 @@ function IdeaCardTile({
         <>
           <img
             src={option.thumbnailUrl}
-            alt={option.name || 'Idea'}
+            alt={option.name || 'Choice'}
             className="w-full h-full object-cover"
           />
           {/* Gradient overlay for text legibility */}
@@ -264,7 +264,7 @@ export function IdeasBoard({
                 onClick={() => setExpanded(true)}
                 className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors"
               >
-                Show {hiddenCount} more idea{hiddenCount !== 1 ? 's' : ''}
+                Show {hiddenCount} more choice{hiddenCount !== 1 ? 's' : ''}
               </button>
             )}
             {expanded && decision.options.length > VISIBLE_COUNT && (
@@ -284,8 +284,8 @@ export function IdeasBoard({
       {decision.options.length === 0 && (
         <div className="bg-basalt-50 rounded-card p-8 text-center mb-4">
           <p className="text-cream/40 text-sm">
-            No ideas yet.{' '}
-            {!readOnly && 'Add a photo or text idea to start comparing options.'}
+            No choices yet.{' '}
+            {!readOnly && 'Add a photo or text choice to start comparing options.'}
           </p>
         </div>
       )}
@@ -319,7 +319,7 @@ export function IdeasBoard({
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                 </svg>
-                Idea
+                Choice
               </>
             )}
           </button>
@@ -336,7 +336,7 @@ export function IdeasBoard({
                   <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
                   <circle cx="12" cy="13" r="4" />
                 </svg>
-                Photo idea
+                Photo choice
               </button>
               <div className="border-t border-cream/10" />
               <button
@@ -347,7 +347,7 @@ export function IdeasBoard({
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
                 </svg>
-                Text idea
+                Text choice
               </button>
             </div>
           )}

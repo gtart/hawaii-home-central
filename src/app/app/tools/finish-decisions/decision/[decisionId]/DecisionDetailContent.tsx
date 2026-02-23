@@ -462,7 +462,7 @@ export function DecisionDetailContent() {
           />
         </div>
 
-        {/* Ideas board (collapsible) */}
+        {/* Choices board (collapsible) */}
         <div className="mb-8">
           <button
             type="button"
@@ -470,7 +470,7 @@ export function DecisionDetailContent() {
             className="flex items-center gap-2 text-lg font-medium text-cream hover:text-cream/80 transition-colors mb-4"
           >
             <span className="text-cream/30 text-xs">{optionsOpen ? '▼' : '▶'}</span>
-            Ideas{foundDecision.options.length > 0 ? ` — ${foundDecision.options.length}` : ''}
+            Choices{foundDecision.options.length > 0 ? ` — ${foundDecision.options.length}` : ''}
           </button>
 
           {optionsOpen && (
