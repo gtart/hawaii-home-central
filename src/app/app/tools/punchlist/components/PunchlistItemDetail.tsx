@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
-import type { PunchlistItem } from '../types'
+import type { PunchlistItem, PunchlistPhoto } from '../types'
 import type { PunchlistStateAPI } from '../usePunchlistState'
 import { STATUS_CONFIG, STATUS_CYCLE, PRIORITY_CONFIG } from '../constants'
 import { PhotoLightbox } from './PhotoLightbox'
+import { uploadFile } from '../utils'
 
 interface Props {
   item: PunchlistItem
@@ -15,9 +16,39 @@ interface Props {
 }
 
 export function PunchlistItemDetail({ item, api, onClose, onEdit }: Props) {
-  const { readOnly, setStatus, deleteItem } = api
+  const { readOnly, setStatus, deleteItem, addPhoto } = api
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const [photoError, setPhotoError] = useState('')
+  const [photoSaved, setPhotoSaved] = useState(false)
+  const detailCameraRef = useRef<HTMLInputElement>(null)
+  const detailGalleryRef = useRef<HTMLInputElement>(null)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  async function handlePhotoFiles(files: FileList | null, ref: React.RefObject<HTMLInputElement | null>) {
+    if (!files || files.length === 0) return
+    const file = files[0]
+    if (file.size === 0) {
+      setPhotoError('Camera returned an empty photo — try again')
+      if (ref.current) ref.current.value = ''
+      return
+    }
+    setPhotoError('')
+    setPhotoUploading(true)
+    try {
+      const uploaded = await uploadFile(file)
+      addPhoto(item.id, uploaded)
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+      setPhotoSaved(true)
+      savedTimerRef.current = setTimeout(() => setPhotoSaved(false), 2000)
+    } catch (e) {
+      setPhotoError(e instanceof Error ? e.message : 'Upload failed')
+    } finally {
+      setPhotoUploading(false)
+      if (ref.current) ref.current.value = ''
+    }
+  }
 
   const statusCfg = STATUS_CONFIG[item.status]
   const priorityCfg = item.priority ? PRIORITY_CONFIG[item.priority] : null
@@ -59,7 +90,8 @@ export function PunchlistItemDetail({ item, api, onClose, onEdit }: Props) {
           </button>
 
           <h2 className="text-base font-medium text-cream truncate flex-1 mx-3 text-center">
-            <span className="text-cream/30">#{item.itemNumber}</span> {item.title}
+            <span className="text-cream/30">#{item.itemNumber}</span>{' '}
+            {item.title || <span className="text-cream/40 italic font-normal">Untitled</span>}
           </h2>
 
           {!readOnly && (
@@ -96,6 +128,65 @@ export function PunchlistItemDetail({ item, api, onClose, onEdit }: Props) {
             </div>
           )}
 
+          {/* Add photo — editors/owners only */}
+          {!readOnly && (
+            <div>
+              {/* Hidden file inputs */}
+              <input
+                ref={detailCameraRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => handlePhotoFiles(e.target.files, detailCameraRef)}
+                className="hidden"
+                tabIndex={-1}
+              />
+              <input
+                ref={detailGalleryRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => handlePhotoFiles(e.target.files, detailGalleryRef)}
+                className="hidden"
+                tabIndex={-1}
+              />
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => detailCameraRef.current?.click()}
+                  disabled={photoUploading}
+                  className="flex items-center gap-1.5 text-xs text-cream/40 hover:text-cream/60 disabled:opacity-50 transition-colors"
+                >
+                  {photoUploading ? (
+                    <div className="w-3.5 h-3.5 border border-cream/20 border-t-sandstone rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                  )}
+                  Camera
+                </button>
+                <span className="text-cream/15">|</span>
+                <button
+                  type="button"
+                  onClick={() => detailGalleryRef.current?.click()}
+                  disabled={photoUploading}
+                  className="flex items-center gap-1.5 text-xs text-cream/40 hover:text-cream/60 disabled:opacity-50 transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                  Photos
+                </button>
+                {photoSaved && <span className="text-xs text-emerald-400 ml-2">Saved ✓</span>}
+                {photoError && <span className="text-xs text-red-400 ml-2">{photoError}</span>}
+              </div>
+            </div>
+          )}
+
           {/* Status + Priority row */}
           <div className="flex items-center gap-3">
             <button
@@ -119,8 +210,8 @@ export function PunchlistItemDetail({ item, api, onClose, onEdit }: Props) {
 
           {/* Detail fields */}
           <div className="space-y-3">
-            <DetailRow label="Location" value={item.location} />
-            <DetailRow label="Assignee" value={item.assigneeLabel} />
+            <DetailRow label="Location" value={item.location || '—'} />
+            <DetailRow label="Assignee" value={item.assigneeLabel || '—'} />
             <DetailRow label="Created" value={new Date(item.createdAt).toLocaleDateString()} />
             <DetailRow label="Updated" value={new Date(item.updatedAt).toLocaleDateString()} />
             {item.completedAt && (
