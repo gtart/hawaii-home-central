@@ -532,9 +532,10 @@ export function IdeaCardModal({
                         {/* Preview image */}
                         {u.linkImage && (
                           <img
-                            src={u.linkImage}
+                            src={`/api/image-proxy?url=${encodeURIComponent(u.linkImage)}`}
                             alt=""
                             className="w-full h-28 object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                           />
                         )}
                         <div className="px-3 py-2.5 flex items-start gap-2">
