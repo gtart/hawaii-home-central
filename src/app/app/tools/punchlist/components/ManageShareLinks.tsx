@@ -106,18 +106,20 @@ export function ManageShareLinks({ toolKey, locations, assignees }: Props) {
                 {/* Badges row */}
                 <div className="flex flex-wrap items-center gap-1.5">
                   {/* Notes badge */}
-                  <span className={`text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
                     t.includeNotes
                       ? 'bg-amber-400/15 text-amber-400'
                       : 'bg-cream/10 text-cream/40'
                   }`}>
-                    {t.includeNotes ? 'Additional info' : 'No additional info'}
+                    {t.includeNotes
+                      ? 'Private notes visible to viewer'
+                      : 'Private notes hidden from viewer'}
                   </span>
 
                   {/* Filter pills */}
                   {t.locations.length === 0 && t.assignees.length === 0 ? (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-cream/5 text-cream/30">
-                      All items
+                      Full list — no filters
                     </span>
                   ) : (
                     <>
