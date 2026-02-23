@@ -49,13 +49,13 @@ export function PunchlistItemCard({ item, onTap, onStatusChange }: Props) {
         <div className="flex-1 min-w-0">
           <h3 className="text-cream font-medium text-sm sm:text-base truncate">
             <span className="text-cream/30 font-normal">#{item.itemNumber}</span>{' '}
-            {item.title}
+            {item.title || <span className="text-cream/40 italic font-normal">Untitled</span>}
           </h3>
 
           <div className="flex flex-wrap items-center gap-2 mt-1.5">
-            <span className="text-cream/50 text-xs">{item.location}</span>
-            <span className="text-cream/20">&middot;</span>
-            <span className="text-cream/50 text-xs">{item.assigneeLabel}</span>
+            {item.location && <span className="text-cream/50 text-xs">{item.location}</span>}
+            {item.location && item.assigneeLabel && <span className="text-cream/20">&middot;</span>}
+            {item.assigneeLabel && <span className="text-cream/50 text-xs">{item.assigneeLabel}</span>}
             {priorityCfg && (
               <>
                 <span className="text-cream/20">&middot;</span>

@@ -8,6 +8,7 @@ import { PunchlistItemDetail } from './PunchlistItemDetail'
 import { PunchlistItemForm } from './PunchlistItemForm'
 import { BulkPhotoUpload } from './BulkPhotoUpload'
 import { BulkTextEntry } from './BulkTextEntry'
+import { QuickAddStrip } from './QuickAddStrip'
 import { ExportPDFModal } from './ExportPDFModal'
 
 type SortMode = 'newest' | 'oldest' | 'priority'
@@ -37,6 +38,7 @@ export function PunchlistPage({ api }: Props) {
   const [showBulkPhotos, setShowBulkPhotos] = useState(false)
   const [showBulkText, setShowBulkText] = useState(false)
   const [showFab, setShowFab] = useState(false)
+  const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [viewingId, setViewingId] = useState<string | null>(null)
   const [showExport, setShowExport] = useState(false)
@@ -268,7 +270,7 @@ export function PunchlistPage({ api }: Props) {
           No items match your filters.
         </p>
       ) : (
-        <div className="space-y-4">
+        <div className={`space-y-4 ${showQuickAdd ? 'pb-28 md:pb-0' : ''}`}>
           {filtered.map((item) => (
             <PunchlistItemCard
               key={item.id}
@@ -280,8 +282,13 @@ export function PunchlistPage({ api }: Props) {
         </div>
       )}
 
-      {/* Floating action button + menu — mobile only */}
-      {!readOnly && (
+      {/* Quick-add strip (mobile sticky bottom + desktop inline) */}
+      {!readOnly && showQuickAdd && (
+        <QuickAddStrip api={api} onDone={() => setShowQuickAdd(false)} />
+      )}
+
+      {/* Floating action button + menu — mobile only, hidden when quick-add active */}
+      {!readOnly && !showQuickAdd && (
         <div className="md:hidden">
           {/* Backdrop when FAB menu open */}
           {showFab && (
@@ -319,10 +326,10 @@ export function PunchlistPage({ api }: Props) {
               </button>
               <button
                 type="button"
-                onClick={() => { setShowFab(false); setShowForm(true) }}
+                onClick={() => { setShowFab(false); setShowQuickAdd(true) }}
                 className="flex items-center gap-2 bg-basalt-50 border border-cream/15 rounded-full pl-4 pr-3 py-2.5 shadow-lg hover:bg-basalt transition-colors"
               >
-                <span className="text-sm text-cream whitespace-nowrap">Add Item</span>
+                <span className="text-sm text-cream whitespace-nowrap">Quick Add</span>
                 <span className="w-8 h-8 bg-sandstone/20 rounded-full flex items-center justify-center">
                   <svg className="w-4 h-4 text-sandstone" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M12 5v14M5 12h14" strokeLinecap="round" />
