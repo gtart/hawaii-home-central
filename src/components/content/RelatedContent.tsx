@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { Badge } from '@/components/ui/Badge'
 
-const MAX_RELATED = 6
+const MAX_RELATED = 3
 
 export async function RelatedContent({ contentId }: { contentId: string }) {
   // 1. Curated related
