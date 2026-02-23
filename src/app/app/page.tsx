@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Badge } from '@/components/ui/Badge'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { ToolGrid } from '@/components/app/ToolGrid'
+import { ProjectBanner } from '@/components/app/ProjectBanner'
 
 export const metadata: Metadata = {
   title: 'My Tools',
@@ -26,6 +27,7 @@ export default function AppPage() {
         </FadeInSection>
 
         <FadeInSection delay={100}>
+          <ProjectBanner />
           <ToolGrid />
         </FadeInSection>
       </div>
