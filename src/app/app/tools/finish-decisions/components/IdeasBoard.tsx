@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import type { OptionV3, DecisionV3, SelectionComment } from '@/data/finish-decisions'
 import { IdeaCardModal } from './IdeaCardModal'
 
@@ -162,7 +162,20 @@ export function IdeasBoard({
 }: Props) {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [showAddPicker, setShowAddPicker] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const addPickerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showAddPicker) return
+    function handleClick(e: MouseEvent) {
+      if (addPickerRef.current && !addPickerRef.current.contains(e.target as Node)) {
+        setShowAddPicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showAddPicker])
 
   const activeOption = decision.options.find((o) => o.id === activeCardId) ?? null
   const activeIdeaComments = activeCardId
@@ -252,50 +265,65 @@ export function IdeasBoard({
 
       {/* Add controls */}
       {!readOnly && (
-        <div className="flex items-center gap-2">
+        <div className="relative" ref={addPickerRef}>
           {/* Hidden file input */}
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
             multiple
-            onChange={(e) => handlePhotoFiles(e.target.files)}
+            onChange={(e) => { handlePhotoFiles(e.target.files); setShowAddPicker(false) }}
             className="hidden"
           />
 
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => setShowAddPicker(!showAddPicker)}
             disabled={uploading}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors disabled:opacity-50"
           >
             {uploading ? (
               <>
                 <div className="w-3.5 h-3.5 border border-cream/20 border-t-cream/60 rounded-full animate-spin" />
-                Uploading...
+                Uploading…
               </>
             ) : (
               <>
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                  <circle cx="12" cy="13" r="4" />
+                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                 </svg>
-                + Photo
+                + Idea
               </>
             )}
           </button>
 
-          <button
-            type="button"
-            onClick={handleAddTextCard}
-            disabled={uploading}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors disabled:opacity-50"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-            </svg>
-            + Text Idea
-          </button>
+          {/* Picker dropdown */}
+          {showAddPicker && !uploading && (
+            <div className="absolute left-0 top-full mt-1.5 z-20 bg-basalt-50 border border-cream/15 rounded-xl shadow-xl overflow-hidden min-w-[180px]">
+              <button
+                type="button"
+                onClick={() => { fileInputRef.current?.click() }}
+                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+              >
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+                Photo idea
+              </button>
+              <div className="border-t border-cream/10" />
+              <button
+                type="button"
+                onClick={() => { handleAddTextCard(); setShowAddPicker(false) }}
+                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+              >
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
+                </svg>
+                Text idea
+              </button>
+            </div>
+          )}
         </div>
       )}
 

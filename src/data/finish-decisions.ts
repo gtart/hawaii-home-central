@@ -172,6 +172,10 @@ export type StatusV3 = keyof typeof STATUS_CONFIG_V3
 export interface LinkV3 {
   id: string
   url: string
+  // Fetched OG/page metadata (optional, populated async after adding)
+  linkTitle?: string
+  linkDescription?: string
+  linkImage?: string
 }
 
 // Option (nested in decision)
