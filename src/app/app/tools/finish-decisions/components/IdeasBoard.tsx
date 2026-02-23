@@ -163,6 +163,9 @@ export function IdeasBoard({
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [showAddPicker, setShowAddPicker] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+
+  const VISIBLE_COUNT = 3
   const fileInputRef = useRef<HTMLInputElement>(null)
   const addPickerRef = useRef<HTMLDivElement>(null)
 
@@ -239,19 +242,43 @@ export function IdeasBoard({
   return (
     <div>
       {/* Card grid */}
-      {decision.options.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-          {decision.options.map((opt) => (
-            <IdeaCardTile
-              key={opt.id}
-              option={opt}
-              decision={decision}
-              userEmail={userEmail}
-              onClick={() => setActiveCardId(opt.id)}
-            />
-          ))}
-        </div>
-      )}
+      {decision.options.length > 0 && (() => {
+        const visible = expanded ? decision.options : decision.options.slice(0, VISIBLE_COUNT)
+        const hiddenCount = decision.options.length - VISIBLE_COUNT
+        return (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+              {visible.map((opt) => (
+                <IdeaCardTile
+                  key={opt.id}
+                  option={opt}
+                  decision={decision}
+                  userEmail={userEmail}
+                  onClick={() => setActiveCardId(opt.id)}
+                />
+              ))}
+            </div>
+            {!expanded && hiddenCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setExpanded(true)}
+                className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors"
+              >
+                Show {hiddenCount} more idea{hiddenCount !== 1 ? 's' : ''}
+              </button>
+            )}
+            {expanded && decision.options.length > VISIBLE_COUNT && (
+              <button
+                type="button"
+                onClick={() => setExpanded(false)}
+                className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors"
+              >
+                Show less
+              </button>
+            )}
+          </>
+        )
+      })()}
 
       {/* Empty state */}
       {decision.options.length === 0 && (

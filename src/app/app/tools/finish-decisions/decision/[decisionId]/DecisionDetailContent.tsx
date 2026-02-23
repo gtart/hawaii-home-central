@@ -29,7 +29,7 @@ export function DecisionDetailContent() {
   const router = useRouter()
   const { data: session } = useSession()
   const decisionId = params.decisionId as string
-  const [optionsOpen, setOptionsOpen] = useState(false)
+  const [optionsOpen, setOptionsOpen] = useState(true)
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
 
   const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3 | any>({
@@ -470,7 +470,7 @@ export function DecisionDetailContent() {
             className="flex items-center gap-2 text-lg font-medium text-cream hover:text-cream/80 transition-colors mb-4"
           >
             <span className="text-cream/30 text-xs">{optionsOpen ? '▼' : '▶'}</span>
-            Ideas (optional){foundDecision.options.length > 0 ? ` — ${foundDecision.options.length}` : ''}
+            Ideas{foundDecision.options.length > 0 ? ` — ${foundDecision.options.length}` : ''}
           </button>
 
           {optionsOpen && (
