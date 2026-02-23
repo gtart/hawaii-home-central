@@ -11,6 +11,7 @@ interface ToolSummary {
   toolKey: string
   updatedAt: string
   updatedBy: { name: string | null; image: string | null } | null
+  stats?: Record<string, unknown>
 }
 
 function relativeTime(dateStr: string): string {
@@ -34,6 +35,48 @@ function getInitials(name: string | null): string {
   const parts = name.trim().split(/\s+/)
   if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
   return parts[0].slice(0, 2).toUpperCase()
+}
+
+function ToolStats({ toolKey, stats }: { toolKey: string; stats?: Record<string, unknown> }) {
+  if (!stats) return null
+
+  let text: string | null = null
+
+  if (toolKey === 'before_you_sign') {
+    const count = (stats.contractorCount as number | undefined) ?? 0
+    const names = (stats.contractorNames as string[] | undefined) ?? []
+    if (count === 0) {
+      text = 'No contractors added'
+    } else {
+      const shown = names.slice(0, 2).join(', ')
+      const extra = names.length > 2 ? ` +${names.length - 2} more` : ''
+      text = count === 1
+        ? `1 contractor being evaluated${shown ? ` — ${shown}` : ''}`
+        : `${count} contractors being evaluated — ${shown}${extra}`
+    }
+  } else if (toolKey === 'finish_decisions') {
+    const total = (stats.total as number | undefined) ?? 0
+    const finalized = (stats.finalized as number | undefined) ?? 0
+    if (total === 0) {
+      text = 'No finish selections added yet'
+    } else {
+      const pct = Math.round((finalized / total) * 100)
+      text = `${total} selection${total !== 1 ? 's' : ''} · ${pct}% finalized`
+    }
+  } else if (toolKey === 'punchlist') {
+    const total = (stats.total as number | undefined) ?? 0
+    const done = (stats.done as number | undefined) ?? 0
+    if (total === 0) {
+      text = 'No issues tracked yet'
+    } else {
+      const open = total - done
+      text = `${total} issue${total !== 1 ? 's' : ''} tracked · ${open} open`
+    }
+  }
+
+  if (!text) return null
+
+  return <p className="text-xs text-sandstone/60 mt-1.5">{text}</p>
 }
 
 function ToolMeta({ summary }: { summary: ToolSummary | undefined }) {
@@ -106,30 +149,34 @@ export function ToolGrid() {
 
   return (
     <div className="space-y-5">
-      {visibleTools.map((tool) => (
-        <div key={tool.toolKey} className="flex flex-col sm:flex-row sm:items-stretch gap-0 sm:gap-0">
-          {/* Stage label — above on mobile, left column on desktop */}
-          <div className="sm:w-40 sm:shrink-0 sm:flex sm:flex-col sm:justify-center sm:pr-5 sm:border-r sm:border-cream/10 mb-2 sm:mb-0">
-            <span className="text-[11px] uppercase tracking-wider text-cream/30 sm:hidden">Stage</span>
-            <p className="text-sm font-medium text-cream/50">{tool.stage}</p>
-          </div>
+      {visibleTools.map((tool) => {
+        const summary = summaryMap.get(tool.toolKey)
+        return (
+          <div key={tool.toolKey} className="flex flex-col sm:flex-row sm:items-stretch gap-0 sm:gap-0">
+            {/* Stage label — above on mobile, left column on desktop */}
+            <div className="sm:w-40 sm:shrink-0 sm:flex sm:flex-col sm:justify-center sm:pr-5 sm:border-r sm:border-cream/10 mb-2 sm:mb-0">
+              <span className="text-[11px] uppercase tracking-wider text-cream/30 sm:hidden">Stage</span>
+              <p className="text-sm font-medium text-cream/50">{tool.stage}</p>
+            </div>
 
-          {/* Tool card */}
-          <Link
-            href={tool.href}
-            className="block flex-1 p-5 bg-basalt-50 rounded-card card-hover sm:ml-5"
-          >
-            <div className="flex items-start justify-between gap-4 mb-2">
-              <h3 className="font-serif text-lg text-sandstone">{tool.title}</h3>
-              <Badge>Live</Badge>
-            </div>
-            <p className="text-cream/70 text-sm leading-relaxed mb-3">{tool.description}</p>
-            <div className="pt-2 border-t border-cream/5">
-              <ToolMeta summary={summaryMap.get(tool.toolKey)} />
-            </div>
-          </Link>
-        </div>
-      ))}
+            {/* Tool card */}
+            <Link
+              href={tool.href}
+              className="block flex-1 p-5 bg-basalt-50 rounded-card card-hover sm:ml-5"
+            >
+              <div className="flex items-start justify-between gap-4 mb-2">
+                <h3 className="font-serif text-lg text-sandstone">{tool.title}</h3>
+                <Badge>Live</Badge>
+              </div>
+              <p className="text-cream/70 text-sm leading-relaxed">{tool.description}</p>
+              <ToolStats toolKey={tool.toolKey} stats={summary?.stats} />
+              <div className="pt-2 border-t border-cream/5 mt-3">
+                <ToolMeta summary={summary} />
+              </div>
+            </Link>
+          </div>
+        )
+      })}
     </div>
   )
 }
