@@ -82,7 +82,7 @@ export function DecisionsTable({
   if (decisions.length === 0) {
     return (
       <div className="text-center py-8 text-cream/50 text-sm">
-        No decisions yet. Click &quot;+ Add Decision&quot; to get started.
+        No selections yet. Tap &quot;+ Add Selection&quot; to get started.
       </div>
     )
   }
@@ -112,7 +112,7 @@ export function DecisionsTable({
                 onClick={() => toggleSort('title')}
                 className="px-3 py-2 text-left text-xs font-medium text-cream/60 cursor-pointer hover:text-cream uppercase tracking-wide"
               >
-                Decision{arrow('title')}
+                Selection{arrow('title')}
               </th>
               <th
                 onClick={() => toggleSort('status')}

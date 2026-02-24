@@ -31,7 +31,11 @@ interface UseToolStateReturn<T> {
   readOnly: boolean
   /** True when user has no access at all (403). */
   noAccess: boolean
+  /** True briefly when a 409 conflict was detected and state was reloaded. */
+  conflictBanner: boolean
 }
+
+const POLL_INTERVAL = 20_000
 
 export function useToolState<T>({
   toolKey,
@@ -53,10 +57,34 @@ export function useToolState<T>({
   const [isSyncing, setIsSyncing] = useState(false)
   const [access, setAccess] = useState<AccessLevel | null>(null)
   const [noAccess, setNoAccess] = useState(false)
+  const [conflictBanner, setConflictBanner] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const stateRef = useRef<T>(defaultValue)
   const accessRef = useRef<AccessLevel | null>(null)
   const defaultRef = useRef<T>(defaultValue)
+  const revisionRef = useRef<string | null>(null)
+  const conflictTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Revalidate: fetch latest from server and update if revision changed
+  const revalidate = useCallback(async () => {
+    if (localOnly || !projectId) return
+    try {
+      const res = await fetch(`/api/tools/${toolKey}`)
+      if (!res.ok) return
+      const data = await res.json()
+      const serverRev = data.updatedAt ? String(data.updatedAt) : null
+      if (serverRev && serverRev !== revisionRef.current) {
+        revisionRef.current = serverRev
+        if (data.payload) {
+          setStateInternal(data.payload as T)
+          stateRef.current = data.payload as T
+          try { localStorage.setItem(scopedKey, JSON.stringify(data.payload)) } catch {}
+        }
+      }
+    } catch {
+      // Silently ignore — polling is best-effort
+    }
+  }, [toolKey, localOnly, projectId, scopedKey])
 
   // Load state on mount (ProjectKeyWrapper remounts on project switch)
   useEffect(() => {
@@ -102,6 +130,11 @@ export function useToolState<T>({
         if (data.access) {
           setAccess(data.access as AccessLevel)
           accessRef.current = data.access as AccessLevel
+        }
+
+        // Store server revision
+        if (data.updatedAt) {
+          revisionRef.current = String(data.updatedAt)
         }
 
         if (data.payload) {
@@ -154,6 +187,49 @@ export function useToolState<T>({
   // eslint-disable-next-line react-hooks/exhaustive-deps -- projectId captured via scopedKey; defaultValue is stable via ref
   }, [toolKey, scopedKey, localOnly, projectId])
 
+  // Polling + visibility revalidation
+  useEffect(() => {
+    if (localOnly || !projectId || !isLoaded) return
+
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
+    function startPolling() {
+      stopPolling()
+      intervalId = setInterval(revalidate, POLL_INTERVAL)
+    }
+
+    function stopPolling() {
+      if (intervalId) { clearInterval(intervalId); intervalId = null }
+    }
+
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') {
+        revalidate()
+        startPolling()
+      } else {
+        stopPolling()
+      }
+    }
+
+    function handleFocus() {
+      revalidate()
+    }
+
+    // Start polling if page is visible
+    if (document.visibilityState === 'visible') {
+      startPolling()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      stopPolling()
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [localOnly, projectId, isLoaded, revalidate])
+
   // Debounced save to API (skipped in localOnly mode and VIEW access)
   const saveToApi = useCallback(
     (payload: T) => {
@@ -166,11 +242,28 @@ export function useToolState<T>({
       debounceRef.current = setTimeout(async () => {
         setIsSyncing(true)
         try {
-          await fetch(`/api/tools/${toolKey}`, {
+          const res = await fetch(`/api/tools/${toolKey}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ payload }),
+            body: JSON.stringify({ payload, revision: revisionRef.current }),
           })
+
+          if (res.status === 409) {
+            // Conflict: another editor saved while we were editing
+            if (conflictTimerRef.current) clearTimeout(conflictTimerRef.current)
+            setConflictBanner(true)
+            conflictTimerRef.current = setTimeout(() => setConflictBanner(false), 5000)
+            // Re-fetch latest state
+            await revalidate()
+            return
+          }
+
+          if (res.ok) {
+            const data = await res.json()
+            if (data.updatedAt) {
+              revisionRef.current = String(data.updatedAt)
+            }
+          }
         } catch {
           // Silently fail — localStorage is the backup
         } finally {
@@ -178,7 +271,7 @@ export function useToolState<T>({
         }
       }, 500)
     },
-    [toolKey, localOnly]
+    [toolKey, localOnly, revalidate]
   )
 
   const setState = useCallback(
@@ -205,5 +298,5 @@ export function useToolState<T>({
 
   const readOnly = access === 'VIEW'
 
-  return { state, setState, isLoaded, isSyncing, access, readOnly, noAccess }
+  return { state, setState, isLoaded, isSyncing, access, readOnly, noAccess, conflictBanner }
 }

@@ -116,12 +116,27 @@ export async function PUT(
     )
   }
 
+  // Optimistic concurrency: reject stale writes when client sends revision
+  if (body.revision) {
+    const current = await prisma.toolInstance.findUnique({
+      where: { projectId_toolKey: { projectId, toolKey } },
+      select: { updatedAt: true },
+    })
+    if (current && current.updatedAt.toISOString() !== body.revision) {
+      return NextResponse.json(
+        { error: 'Conflict', code: 'CONFLICT', serverUpdatedAt: current.updatedAt },
+        { status: 409 }
+      )
+    }
+  }
+
   // Write ONLY to ToolInstance (project-scoped)
-  await prisma.toolInstance.upsert({
+  const updated = await prisma.toolInstance.upsert({
     where: { projectId_toolKey: { projectId, toolKey } },
     create: { projectId, toolKey, payload: body.payload, updatedById: userId },
     update: { payload: body.payload, updatedById: userId },
+    select: { updatedAt: true },
   })
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, updatedAt: updated.updatedAt })
 }

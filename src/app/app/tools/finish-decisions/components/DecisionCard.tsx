@@ -63,17 +63,19 @@ export function DecisionCard({
           />
         ) : null}
         <div className="flex-1 min-w-0 flex items-start justify-between gap-2">
-          <h3 className="text-sm font-medium text-cream leading-tight">
-            {decision.title || 'Untitled Decision'}
-          </h3>
-          {(() => {
-            const sel = decision.options.find(o => o.isSelected)
-            return sel ? (
-              <p className="text-[11px] text-sandstone/70 leading-tight mt-0.5 truncate">
-                Selected: {sel.name}
-              </p>
-            ) : null
-          })()}
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-medium text-cream leading-tight">
+              {decision.title || 'Untitled Selection'}
+            </h3>
+            {(() => {
+              const sel = decision.options.find(o => o.isSelected)
+              return sel ? (
+                <p className="text-[11px] text-sandstone/70 leading-tight mt-0.5 truncate">
+                  Selected: {sel.name}
+                </p>
+              ) : null
+            })()}
+          </div>
           {!readOnly && (
             <div className="relative shrink-0" ref={menuRef}>
               <button
@@ -83,7 +85,7 @@ export function DecisionCard({
                   setMenuOpen(!menuOpen)
                 }}
                 className="p-1 text-cream/30 hover:text-cream/60 transition-colors"
-                aria-label="Decision options"
+                aria-label="Selection options"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <circle cx="12" cy="5" r="2" />

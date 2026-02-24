@@ -110,7 +110,7 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
                   <thead className="border-b border-cream/5">
                     <tr>
                       <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide">
-                        Decision
+                        Selection
                       </th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide">
                         Room
@@ -181,7 +181,7 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
               </span>
               <h3 className="text-cream/60 font-medium flex-1">Other</h3>
               <span className="text-xs text-cream/40">
-                {otherDecisions.length} decision{otherDecisions.length !== 1 ? 's' : ''}
+                {otherDecisions.length} selection{otherDecisions.length !== 1 ? 's' : ''}
               </span>
             </div>
 
@@ -191,7 +191,7 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
                   <thead className="border-b border-cream/5">
                     <tr>
                       <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide">
-                        Decision
+                        Selection
                       </th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide">
                         Room

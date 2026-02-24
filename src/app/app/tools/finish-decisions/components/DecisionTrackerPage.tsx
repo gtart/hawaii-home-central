@@ -37,6 +37,11 @@ export function DecisionTrackerPage({
   const [quickAddRoomId, setQuickAddRoomId] = useState<string | null>(null)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
 
+  // Refs for focus return (FS-UI-008)
+  const fabRef = useRef<HTMLButtonElement>(null)
+  const desktopAddRef = useRef<HTMLButtonElement>(null)
+  const quickAddTriggerRef = useRef<HTMLButtonElement | null>(null)
+
   const hasRooms = rooms.length > 0
 
   // Auto-expand all rooms when transitioning from 0 rooms (onboarding → tracker)
@@ -131,9 +136,10 @@ export function DecisionTrackerPage({
   const isFiltering = searchQuery.trim() !== '' || statusFilters.length > 0 || roomFilter !== null
   const activeFilterCount = (roomFilter ? 1 : 0) + statusFilters.length
 
-  // Summary strip stats (computed from ALL rooms, not filtered)
+  // Summary strip stats — reflects filters when active (FS-UI-007)
   const summaryStats = useMemo(() => {
-    const allDecisions = rooms.flatMap((r) => r.decisions)
+    const source = isFiltering ? filteredRooms : rooms
+    const allDecisions = source.flatMap((r) => r.decisions)
     const deciding = allDecisions.filter((d) => d.status === 'deciding').length
     const selected = allDecisions.filter((d) => d.status === 'selected').length
     const ordered = allDecisions.filter((d) => d.status === 'ordered').length
@@ -151,6 +157,18 @@ export function DecisionTrackerPage({
     const nextDue = futureDueDates[0] || null
 
     return { deciding, selected, ordered, done, overdue, nextDue }
+  }, [rooms, filteredRooms, isFiltering])
+
+  // Status counts for filter chips (computed from all rooms, not filtered)
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const [status] of Object.entries(STATUS_CONFIG_V3)) {
+      counts[status] = rooms.reduce(
+        (sum, r) => sum + r.decisions.filter((d) => d.status === status).length,
+        0
+      )
+    }
+    return counts
   }, [rooms])
 
   const handleQuickAddDecision = (roomId: string, decision: DecisionV3) => {
@@ -162,6 +180,12 @@ export function DecisionTrackerPage({
     })
     // Auto-expand the room so user sees the new decision
     setExpandedRooms((prev) => new Set([...prev, roomId]))
+  }
+
+  function openQuickAdd(roomId: string | null, trigger: React.RefObject<HTMLButtonElement | null>) {
+    quickAddTriggerRef.current = trigger.current
+    setQuickAddRoomId(roomId)
+    setQuickAddOpen(true)
   }
 
   return (
@@ -181,7 +205,7 @@ export function DecisionTrackerPage({
           {/* Search */}
           <div className="mb-3">
             <Input
-              placeholder="Search all rooms and decisions..."
+              placeholder="Search all rooms and selections..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -190,6 +214,7 @@ export function DecisionTrackerPage({
           {/* Summary strip */}
           {totalDecisions > 0 && (
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-cream/50 mb-3">
+              {isFiltering && <span className="text-cream/30 italic">Filtered:</span>}
               <span>Deciding {summaryStats.deciding}</span>
               <span>Selected {summaryStats.selected}</span>
               <span>Ordered {summaryStats.ordered}</span>
@@ -284,10 +309,7 @@ export function DecisionTrackerPage({
             {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, (typeof STATUS_CONFIG_V3)[StatusV3]][]).map(
               ([status, config]) => {
                 const isActive = statusFilters.includes(status)
-                const count = rooms.reduce(
-                  (sum, r) => sum + r.decisions.filter((d) => d.status === status).length,
-                  0
-                )
+                const count = statusCounts[status] ?? 0
                 if (count === 0) return null
 
                 return (
@@ -334,7 +356,8 @@ export function DecisionTrackerPage({
               <>
                 <span className="text-cream/15 select-none">·</span>
                 <button
-                  onClick={() => { setQuickAddRoomId(null); setQuickAddOpen(true) }}
+                  ref={desktopAddRef}
+                  onClick={() => openQuickAdd(null, desktopAddRef)}
                   className="inline-flex items-center gap-1 text-[11px] text-sandstone hover:text-sandstone-light transition-colors font-medium"
                 >
                   + Add Selection
@@ -347,7 +370,7 @@ export function DecisionTrackerPage({
           {filteredRooms.length === 0 ? (
             <div className="bg-basalt-50 rounded-card p-8 text-center">
               <p className="text-cream/50">
-                No decisions match your {searchQuery ? 'search' : 'filters'}.
+                No selections match your {searchQuery ? 'search' : 'filters'}.
               </p>
               <button
                 onClick={() => {
@@ -382,8 +405,9 @@ export function DecisionTrackerPage({
       {/* Mobile FAB */}
       {hasRooms && !readOnly && (
         <button
+          ref={fabRef}
           type="button"
-          onClick={() => { setQuickAddRoomId(null); setQuickAddOpen(true) }}
+          onClick={() => openQuickAdd(null, fabRef)}
           className="md:hidden fixed bottom-8 right-8 w-14 h-14 bg-sandstone rounded-full shadow-lg z-40 flex items-center justify-center active:scale-95 transition-transform"
           aria-label="Add selection"
         >
@@ -442,17 +466,16 @@ export function DecisionTrackerPage({
                 </div>
               </div>
 
-              {/* Status section */}
+              {/* Status section — hide 0-count unless actively filtered (FS-UI-010) */}
               <div>
                 <label className="block text-sm text-cream/70 mb-2">Status</label>
                 <div className="flex flex-wrap gap-2">
                   {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, (typeof STATUS_CONFIG_V3)[StatusV3]][]).map(
                     ([status, config]) => {
                       const isActive = statusFilters.includes(status)
-                      const count = rooms.reduce(
-                        (sum, r) => sum + r.decisions.filter((d) => d.status === status).length,
-                        0
-                      )
+                      const count = statusCounts[status] ?? 0
+                      // Hide 0-count statuses unless actively selected as a filter
+                      if (count === 0 && !isActive) return null
 
                       return (
                         <button
@@ -492,6 +515,7 @@ export function DecisionTrackerPage({
           preselectedRoomId={quickAddRoomId}
           onAdd={handleQuickAddDecision}
           onClose={() => setQuickAddOpen(false)}
+          triggerRef={quickAddTriggerRef}
         />
       )}
     </>

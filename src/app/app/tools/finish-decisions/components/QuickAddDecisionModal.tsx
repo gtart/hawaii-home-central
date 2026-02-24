@@ -15,9 +15,10 @@ interface Props {
   preselectedRoomId?: string | null
   onAdd: (roomId: string, decision: DecisionV3) => void
   onClose: () => void
+  triggerRef?: React.RefObject<HTMLElement | null>
 }
 
-export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose }: Props) {
+export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose, triggerRef }: Props) {
   const [title, setTitle] = useState('')
   const [selectedRoomId, setSelectedRoomId] = useState<string>(() => {
     if (preselectedRoomId) return preselectedRoomId
@@ -29,10 +30,18 @@ export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose
   })
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
 
+  // Auto-focus input on mount
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 50)
   }, [])
+
+  function handleClose() {
+    onClose()
+    // Return focus to trigger element
+    setTimeout(() => triggerRef?.current?.focus(), 0)
+  }
 
   function handleAdd() {
     const t = title.trim()
@@ -60,7 +69,7 @@ export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose
     } catch {}
 
     onAdd(selectedRoomId, decision)
-    onClose()
+    handleClose()
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -69,23 +78,50 @@ export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose
       handleAdd()
     }
     if (e.key === 'Escape') {
-      onClose()
+      handleClose()
+    }
+  }
+
+  // Focus trap (FS-UI-008)
+  function handleModalKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Tab') {
+      const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      if (!focusable || focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      onKeyDown={handleModalKeyDown}
+    >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60" onClick={handleClose} />
 
       {/* Modal */}
-      <div className="relative bg-basalt-50 border-t sm:border border-cream/10 rounded-t-xl sm:rounded-xl w-full sm:max-w-md">
+      <div
+        ref={modalRef}
+        className="relative bg-basalt-50 border-t sm:border border-cream/10 rounded-t-xl sm:rounded-xl w-full sm:max-w-md"
+        role="dialog"
+        aria-modal="true"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <h2 className="text-lg font-medium text-cream">Add Selection</h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="text-cream/40 hover:text-cream transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -107,13 +143,16 @@ export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose
                     key={room.id}
                     type="button"
                     onClick={() => { setSelectedRoomId(room.id); setError('') }}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                       isActive
                         ? 'bg-sandstone/20 text-sandstone ring-1 ring-sandstone/40'
                         : 'bg-cream/10 text-cream/60 hover:text-cream/80'
                     }`}
                   >
-                    {emoji} {room.name}
+                    <span className="w-4 h-4 inline-flex items-center justify-center text-xs leading-none">
+                      {emoji}
+                    </span>
+                    {room.name}
                   </button>
                 )
               })}

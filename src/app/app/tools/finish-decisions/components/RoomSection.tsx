@@ -5,8 +5,10 @@ import {
   ROOM_EMOJI_MAP,
   type RoomV3,
   type RoomTypeV3,
+  type DecisionV3,
 } from '@/data/finish-decisions'
 import { DecisionsTable } from './DecisionsTable'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export function RoomSection({
   room,
@@ -26,6 +28,9 @@ export function RoomSection({
   readOnly?: boolean
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [confirmDeleteRoom, setConfirmDeleteRoom] = useState(false)
+  const [confirmDeleteDecisionId, setConfirmDeleteDecisionId] = useState<string | null>(null)
+  const [undoDecision, setUndoDecision] = useState<{ decision: DecisionV3; timer: ReturnType<typeof setTimeout> } | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -39,6 +44,14 @@ export function RoomSection({
     return () => document.removeEventListener('mousedown', handleClick)
   }, [menuOpen])
 
+  // Clean up undo timer on unmount
+  useEffect(() => {
+    return () => {
+      if (undoDecision) clearTimeout(undoDecision.timer)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const stats = {
     total: room.decisions.length,
     selected: room.decisions.filter((d) => d.status === 'selected').length,
@@ -46,19 +59,47 @@ export function RoomSection({
     done: room.decisions.filter((d) => d.status === 'done').length,
   }
 
+  // Desktop: full format
   const summaryParts: string[] = []
   summaryParts.push(`${stats.total} total`)
   if (stats.selected > 0) summaryParts.push(`${stats.selected} selected`)
   if (stats.ordered > 0) summaryParts.push(`${stats.ordered} ordered`)
   if (stats.done > 0) summaryParts.push(`${stats.done} done`)
 
-  const deleteDecision = (decisionId: string) => {
-    if (confirm(`Delete this decision? This will also delete all its options.`)) {
-      onUpdateRoom({
-        decisions: room.decisions.filter((d) => d.id !== decisionId),
-        updatedAt: new Date().toISOString(),
-      })
+  // Mobile: compact format
+  const mobileParts: string[] = [`${stats.total}`]
+  if (stats.selected > 0) mobileParts.push(`${stats.selected} sel`)
+  if (stats.ordered > 0) mobileParts.push(`${stats.ordered} ord`)
+  if (stats.done > 0) mobileParts.push(`${stats.done} done`)
+
+  function requestDeleteDecision(decisionId: string) {
+    setConfirmDeleteDecisionId(decisionId)
+  }
+
+  function executeDeleteDecision(decisionId: string) {
+    const deleted = room.decisions.find((d) => d.id === decisionId)
+    onUpdateRoom({
+      decisions: room.decisions.filter((d) => d.id !== decisionId),
+      updatedAt: new Date().toISOString(),
+    })
+    setConfirmDeleteDecisionId(null)
+
+    // Set up undo
+    if (deleted) {
+      if (undoDecision) clearTimeout(undoDecision.timer)
+      const timer = setTimeout(() => setUndoDecision(null), 8000)
+      setUndoDecision({ decision: deleted, timer })
     }
+  }
+
+  function handleUndo() {
+    if (!undoDecision) return
+    clearTimeout(undoDecision.timer)
+    onUpdateRoom({
+      decisions: [...room.decisions, undoDecision.decision],
+      updatedAt: new Date().toISOString(),
+    })
+    setUndoDecision(null)
   }
 
   const roomEmoji = ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️'
@@ -74,14 +115,20 @@ export function RoomSection({
           {isExpanded ? '▼' : '▶'}
         </span>
 
-        <h3 className="text-cream font-medium text-lg flex-1">
-          <span className="mr-1.5">{roomEmoji}</span>
-          {room.name}
-        </h3>
-
-        <span className="text-xs text-cream/50">
-          {summaryParts.join(', ')}
-        </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="w-5 h-5 flex items-center justify-center shrink-0 text-sm leading-none">
+              {roomEmoji}
+            </span>
+            <span className="text-cream font-medium text-lg">{room.name}</span>
+            <span className="hidden md:inline text-xs text-cream/50 ml-1">
+              {summaryParts.join(', ')}
+            </span>
+          </div>
+          <div className="md:hidden text-[11px] text-cream/40 mt-0.5 ml-7">
+            {mobileParts.join(' · ')}
+          </div>
+        </div>
 
         {/* Kebab menu */}
         {!readOnly && (
@@ -119,9 +166,7 @@ export function RoomSection({
                   onClick={(e) => {
                     e.stopPropagation()
                     setMenuOpen(false)
-                    if (confirm(`Delete ${room.name}? This will also delete all decisions and options.`)) {
-                      onDeleteRoom()
-                    }
+                    setConfirmDeleteRoom(true)
                   }}
                   className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
                 >
@@ -133,16 +178,50 @@ export function RoomSection({
         )}
       </div>
 
+      {/* Undo banner */}
+      {undoDecision && (
+        <div className="flex items-center justify-between px-4 py-2 bg-cream/5 border-t border-cream/10 text-xs">
+          <span className="text-cream/50">Selection deleted.</span>
+          <button
+            type="button"
+            onClick={handleUndo}
+            className="text-sandstone font-medium hover:text-sandstone-light transition-colors"
+          >
+            Undo
+          </button>
+        </div>
+      )}
+
       {/* Expanded Content */}
       {isExpanded && (
         <div className="border-t border-cream/10 px-4 py-4">
           <DecisionsTable
             decisions={room.decisions}
             roomType={room.type}
-            onDeleteDecision={deleteDecision}
+            onDeleteDecision={requestDeleteDecision}
             readOnly={readOnly}
           />
         </div>
+      )}
+
+      {/* Confirm delete room dialog */}
+      {confirmDeleteRoom && (
+        <ConfirmDialog
+          title="Delete room"
+          message={`Delete "${room.name}"? All selections and options will be removed.`}
+          onConfirm={() => { setConfirmDeleteRoom(false); onDeleteRoom() }}
+          onCancel={() => setConfirmDeleteRoom(false)}
+        />
+      )}
+
+      {/* Confirm delete selection dialog */}
+      {confirmDeleteDecisionId && (
+        <ConfirmDialog
+          title="Delete selection"
+          message="This will also delete all its options."
+          onConfirm={() => executeDeleteDecision(confirmDeleteDecisionId)}
+          onCancel={() => setConfirmDeleteDecisionId(null)}
+        />
       )}
     </div>
   )

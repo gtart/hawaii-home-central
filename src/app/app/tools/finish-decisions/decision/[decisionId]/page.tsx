@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { DecisionDetailContent } from './DecisionDetailContent'
 
 export const metadata: Metadata = {
-  title: 'Decision Detail',
+  title: 'Selection Detail',
 }
 
 export default function DecisionDetailPage() {
