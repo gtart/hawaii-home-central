@@ -17,7 +17,9 @@ export function RoomSection({
   onUpdateRoom,
   onDeleteRoom,
   onQuickAdd,
+  onAddIdeasPack,
   readOnly = false,
+  hasAvailableKits = false,
 }: {
   room: RoomV3
   isExpanded: boolean
@@ -25,7 +27,9 @@ export function RoomSection({
   onUpdateRoom: (updates: Partial<RoomV3>) => void
   onDeleteRoom: () => void
   onQuickAdd: () => void
+  onAddIdeasPack: () => void
   readOnly?: boolean
+  hasAvailableKits?: boolean
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDeleteRoom, setConfirmDeleteRoom] = useState(false)
@@ -51,6 +55,8 @@ export function RoomSection({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const totalOptions = room.decisions.reduce((sum, d) => sum + d.options.length, 0)
 
   const stats = {
     total: room.decisions.length,
@@ -166,6 +172,17 @@ export function RoomSection({
                   onClick={(e) => {
                     e.stopPropagation()
                     setMenuOpen(false)
+                    onAddIdeasPack()
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
+                >
+                  Add ideas pack
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setMenuOpen(false)
                     setConfirmDeleteRoom(true)
                   }}
                   className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
@@ -188,6 +205,22 @@ export function RoomSection({
             className="text-sandstone font-medium hover:text-sandstone-light transition-colors"
           >
             Undo
+          </button>
+        </div>
+      )}
+
+      {/* Ideas Pack nudge — show when room has decisions but few options */}
+      {isExpanded && !readOnly && hasAvailableKits && room.decisions.length > 0 && totalOptions <= 1 && (
+        <div className="mx-4 mt-1 mb-2 px-3 py-2 bg-sandstone/5 border border-sandstone/15 rounded-lg flex items-center justify-between">
+          <span className="text-xs text-cream/50">
+            Add starter ideas from a curated pack
+          </span>
+          <button
+            type="button"
+            onClick={onAddIdeasPack}
+            className="text-xs text-sandstone font-medium hover:text-sandstone-light transition-colors"
+          >
+            Browse packs
           </button>
         </div>
       )}

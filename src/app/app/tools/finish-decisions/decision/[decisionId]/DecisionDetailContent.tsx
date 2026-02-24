@@ -8,8 +8,10 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { useToolState } from '@/hooks/useToolState'
-import { IdeasBoard, uploadIdeaFile } from '../../components/IdeasBoard'
+import { IdeasBoard } from '../../components/IdeasBoard'
+import { IdeasPackModal } from '../../components/IdeasPackModal'
 import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
+import { findKitsForDecisionTitle, applyKitToDecision } from '@/lib/finish-decision-kits'
 import {
   STATUS_CONFIG_V3,
   ROOM_TYPE_OPTIONS_V3,
@@ -17,6 +19,7 @@ import {
   type OptionV3,
   type StatusV3,
   type RoomV3,
+  type RoomTypeV3,
   type SelectionComment,
   type FinishDecisionsPayloadV3,
 } from '@/data/finish-decisions'
@@ -33,9 +36,8 @@ export function DecisionDetailContent() {
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState(false)
   const [notesExpanded, setNotesExpanded] = useState(false)
-  const [stickyUploading, setStickyUploading] = useState(false)
   const [draftRef, setDraftRef] = useState<{ optionId: string; optionLabel: string } | null>(null)
-  const stickyFileRef = useRef<HTMLInputElement>(null)
+  const [ideasPackOpen, setIdeasPackOpen] = useState(false)
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
 
   const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3 | any>({
@@ -112,7 +114,7 @@ export function DecisionDetailContent() {
 
   const deleteOption = (optionId: string) => {
     if (!foundDecision) return
-    if (confirm('Delete this option?')) {
+    if (confirm('Delete this selection?')) {
       updateDecision({
         options: foundDecision.options.filter((opt) => opt.id !== optionId),
       })
@@ -172,59 +174,9 @@ export function DecisionDetailContent() {
     })
   }
 
-  // Sticky bar handlers
-  async function handleStickyPhoto(files: FileList | null) {
-    if (!files || files.length === 0 || !foundDecision) return
-    setStickyUploading(true)
-    const isFirst = foundDecision.options.length === 0
-    for (const file of Array.from(files)) {
-      if (file.size === 0) continue
-      try {
-        const { url, thumbnailUrl, id } = await uploadIdeaFile(file)
-        updateDecision({
-          options: [
-            ...foundDecision.options,
-            {
-              id,
-              kind: 'image',
-              name: '',
-              notes: '',
-              urls: [],
-              imageUrl: url,
-              thumbnailUrl,
-              isSelected: isFirst && foundDecision.options.length === 0 ? true : undefined,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-          ],
-        })
-      } catch { /* silent */ }
-    }
-    setStickyUploading(false)
-    if (stickyFileRef.current) stickyFileRef.current.value = ''
-  }
-
-  function handleStickyAddNote() {
-    if (!foundDecision) return
-    const id = crypto.randomUUID()
-    const autoFinal = foundDecision.options.length === 0
-    updateDecision({
-      options: [
-        ...foundDecision.options,
-        {
-          id,
-          kind: 'text' as const,
-          name: '',
-          notes: '',
-          urls: [],
-          isSelected: autoFinal || undefined,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ],
-    })
-    setOptionsOpen(true)
-    setActiveCardId(id)
+  function openGlobalCommentComposer() {
+    commentInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setTimeout(() => commentInputRef.current?.focus(), 300)
   }
 
   function handleCommentOnOption(optionId: string, optionLabel: string) {
@@ -233,9 +185,19 @@ export function DecisionDetailContent() {
     setTimeout(() => commentInputRef.current?.focus(), 300)
   }
 
+  const availableKits = foundRoom && foundDecision
+    ? findKitsForDecisionTitle(foundDecision.title, foundRoom.type as RoomTypeV3)
+    : []
+
+  function handleApplyKitToDecision(kit: import('@/data/finish-decision-kits').FinishDecisionKit) {
+    if (!foundDecision) return
+    const result = applyKitToDecision(foundDecision, kit)
+    updateDecision({ options: result.decision.options })
+  }
+
   const deleteDecision = () => {
     if (!foundRoom || !foundDecision) return
-    if (confirm(`Delete "${foundDecision.title}"? This will also delete all options.`)) {
+    if (confirm(`Delete "${foundDecision.title}"? This will also delete all selections.`)) {
       setState((prev) => ({
         ...prev,
         rooms: (prev as FinishDecisionsPayloadV3).rooms.map((r) =>
@@ -610,37 +572,48 @@ export function DecisionDetailContent() {
           </div>
         </div>
 
-        {/* Options board (collapsible) */}
+        {/* Selections board (collapsible) */}
         <div className="mb-8">
-          <button
-            type="button"
-            onClick={() => setOptionsOpen(!optionsOpen)}
-            className="flex items-center gap-2 text-lg font-medium text-cream hover:text-cream/80 transition-colors mb-4"
-          >
-            <span className="text-cream/30 text-xs">{optionsOpen ? '▼' : '▶'}</span>
-            Options{foundDecision.options.length > 0 ? ` — ${foundDecision.options.length}` : ''}
-          </button>
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              type="button"
+              onClick={() => setOptionsOpen(!optionsOpen)}
+              className="flex items-center gap-2 text-lg font-medium text-cream hover:text-cream/80 transition-colors"
+            >
+              <span className="text-cream/30 text-xs">{optionsOpen ? '▼' : '▶'}</span>
+              Selections{foundDecision.options.length > 0 ? ` — ${foundDecision.options.length}` : ''}
+            </button>
+            {!readOnly && availableKits.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setIdeasPackOpen(true)}
+                className="text-xs text-sandstone hover:text-sandstone-light transition-colors font-medium"
+              >
+                + Add ideas from pack
+              </button>
+            )}
+          </div>
 
-          {optionsOpen && (
-            <IdeasBoard
-              decision={foundDecision}
-              readOnly={readOnly}
-              userEmail={session?.user?.email || ''}
-              userName={session?.user?.name || 'Unknown'}
-              activeCardId={activeCardId}
-              setActiveCardId={setActiveCardId}
-              onAddOption={(opt) => updateDecision({ options: [...foundDecision.options, opt] })}
-              onUpdateOption={updateOption}
-              onDeleteOption={(id) => {
-                updateDecision({ options: foundDecision.options.filter((o) => o.id !== id) })
-              }}
-              onSelectOption={selectOption}
-              onUpdateDecision={updateDecision}
-              onAddComment={addComment}
-              onCommentOnOption={handleCommentOnOption}
-              comments={foundDecision.comments || []}
-            />
-          )}
+          <IdeasBoard
+            decision={foundDecision}
+            readOnly={readOnly}
+            showContent={optionsOpen}
+            userEmail={session?.user?.email || ''}
+            userName={session?.user?.name || 'Unknown'}
+            activeCardId={activeCardId}
+            setActiveCardId={setActiveCardId}
+            onAddOption={(opt) => updateDecision({ options: [...foundDecision.options, opt] })}
+            onUpdateOption={updateOption}
+            onDeleteOption={(id) => {
+              updateDecision({ options: foundDecision.options.filter((o) => o.id !== id) })
+            }}
+            onSelectOption={selectOption}
+            onUpdateDecision={updateDecision}
+            onAddComment={addComment}
+            onCommentOnOption={handleCommentOnOption}
+            onOpenGlobalComment={openGlobalCommentComposer}
+            comments={foundDecision.comments || []}
+          />
         </div>
 
         {/* Comments */}
@@ -683,60 +656,16 @@ export function DecisionDetailContent() {
         )}
       </div>
 
-      {/* Mobile sticky action bar */}
-      {!readOnly && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-basalt-50 border-t border-cream/10 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-          <input
-            ref={stickyFileRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={(e) => handleStickyPhoto(e.target.files)}
-            className="hidden"
-          />
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => stickyFileRef.current?.click()}
-              disabled={stickyUploading}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors disabled:opacity-50"
-            >
-              {stickyUploading ? (
-                <div className="w-4 h-4 border border-cream/20 border-t-cream/60 rounded-full animate-spin" />
-              ) : (
-                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-              )}
-              Photo
-            </button>
-            <button
-              type="button"
-              onClick={handleStickyAddNote}
-              disabled={stickyUploading}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors disabled:opacity-50"
-            >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
-              </svg>
-              Note
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                commentInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                setTimeout(() => commentInputRef.current?.focus(), 300)
-              }}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors"
-            >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Comment
-            </button>
-          </div>
-        </div>
+      {/* Ideas Pack Modal (decision-level) */}
+      {ideasPackOpen && foundRoom && (
+        <IdeasPackModal
+          roomType={foundRoom.type as RoomTypeV3}
+          roomName={foundRoom.name}
+          decisionTitle={foundDecision.title}
+          appliedKitIds={foundRoom.appliedKitIds || []}
+          onApply={handleApplyKitToDecision}
+          onClose={() => setIdeasPackOpen(false)}
+        />
       )}
     </div>
   )

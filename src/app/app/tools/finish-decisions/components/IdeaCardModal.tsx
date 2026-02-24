@@ -171,13 +171,13 @@ export function IdeaCardModal({
       authorName: userName,
       authorEmail: userEmail,
       refOptionId: option.id,
-      refOptionLabel: option.name || 'Untitled option',
+      refOptionLabel: option.name || 'Untitled selection',
     })
     setCommentText('')
   }
 
   function handleDelete() {
-    if (confirm('Delete this option?')) {
+    if (confirm('Delete this selection?')) {
       onDelete()
       onClose()
     }
@@ -316,7 +316,7 @@ export function IdeaCardModal({
               value={option.name}
               onChange={(e) => onUpdate({ name: e.target.value })}
               readOnly={readOnly}
-              placeholder="Option name..."
+              placeholder="Selection name..."
               className="w-full bg-transparent text-cream text-base font-medium placeholder:text-cream/30 focus:outline-none"
             />
           </div>
@@ -348,7 +348,7 @@ export function IdeaCardModal({
               <div className="relative rounded-xl overflow-hidden bg-basalt">
                 <img
                   src={option.imageUrl}
-                  alt={option.name || 'Option image'}
+                  alt={option.name || 'Selection image'}
                   className="w-full max-h-64 object-contain"
                 />
                 {uploading && (
@@ -632,10 +632,10 @@ export function IdeaCardModal({
             )}
           </div>
 
-          {/* ── Comments on this option ── */}
+          {/* ── Comments on this selection ── */}
           {ideaComments.length > 0 && (
             <div className="pt-1 border-t border-cream/10">
-              <p className="text-xs text-cream/40 mb-2">Comments on this option ({ideaComments.length})</p>
+              <p className="text-xs text-cream/40 mb-2">Comments on this selection ({ideaComments.length})</p>
               <div className="space-y-2">
                 {ideaComments.map((c) => (
                   <div key={c.id} className="bg-basalt rounded-lg px-3 py-2">
@@ -662,7 +662,7 @@ export function IdeaCardModal({
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value.slice(0, 400))}
                   onKeyDown={(e) => { if (e.key === 'Enter') handlePostComment() }}
-                  placeholder="Comment on this option..."
+                  placeholder="Comment on this selection..."
                   className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
                 />
                 <button
@@ -685,7 +685,7 @@ export function IdeaCardModal({
                 onClick={handleDelete}
                 className="text-red-400/60 hover:text-red-400 text-sm transition-colors"
               >
-                Delete option
+                Delete selection
               </button>
               <button
                 type="button"

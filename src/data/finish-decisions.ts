@@ -178,6 +178,16 @@ export interface LinkV3 {
   linkImage?: string
 }
 
+// Kit author type (who curated an ideas pack)
+export type KitAuthorType = 'hhc' | 'designer' | 'vendor'
+
+// Tracks where an option came from (null/absent = user-created)
+export interface OptionOriginV3 {
+  kitId: string
+  kitLabel: string
+  author: KitAuthorType
+}
+
 // Option (nested in decision)
 export interface OptionV3 {
   id: string
@@ -189,6 +199,7 @@ export interface OptionV3 {
   imageUrl?: string                  // full-size URL (image cards only)
   thumbnailUrl?: string              // ~400px thumbnail (image cards only)
   votes?: Record<string, 'up' | 'down'>  // keyed by user email
+  origin?: OptionOriginV3            // set when added by an ideas pack
   createdAt: string
   updatedAt: string
 }
@@ -215,6 +226,7 @@ export interface DecisionV3 {
   dismissedSuggestionKeys?: string[] // Heuristic guidance dismissed by user
   comments?: SelectionComment[] // Selection-level comment thread
   picksByUser?: Record<string, string | null>  // email → optionId (user's "My pick")
+  originKitId?: string // set when entire decision was added by a kit
   createdAt: string
   updatedAt: string
 }
@@ -225,6 +237,7 @@ export interface RoomV3 {
   type: RoomTypeV3
   name: string
   decisions: DecisionV3[] // Nested
+  appliedKitIds?: string[] // tracks which ideas packs have been applied
   createdAt: string
   updatedAt: string
 }

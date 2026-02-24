@@ -153,8 +153,8 @@ export function OnboardingView({
                       }}
                       className="w-full bg-basalt border border-cream/20 text-cream text-xs px-2 py-1 rounded-lg focus:outline-none focus:border-sandstone"
                     >
-                      <option value="standard">Standard template ({decisionCount})</option>
-                      <option value="none">Blank template</option>
+                      <option value="standard">Recommended decisions ({decisionCount})</option>
+                      <option value="none">Blank (start empty)</option>
                     </select>
                   )}
                 </div>
@@ -166,8 +166,8 @@ export function OnboardingView({
 
       {/* Helper text */}
       <p className="text-cream/40 text-xs mb-6">
-        Standard templates pre-fill typical decisions for each room (e.g., Countertop,
-        Cabinetry, Flooring). You can always add, remove, or rename decisions later.
+        Recommended decisions pre-fill typical selections for each room (e.g., Countertop,
+        Cabinetry, Flooring). After creating, you can add Ideas Packs for starter options.
       </p>
 
       {/* Action button */}

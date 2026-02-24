@@ -9,9 +9,14 @@ import {
   type StatusV3,
   type RoomSelection,
 } from '@/data/finish-decisions'
+import type { RoomTypeV3 } from '@/data/finish-decisions'
+import type { FinishDecisionKit } from '@/data/finish-decision-kits'
+import { findKitsForRoomType } from '@/lib/finish-decision-kits'
+import { applyKitToRoom, removeKitFromRoom } from '@/lib/finish-decision-kits'
 import { RoomSection } from './RoomSection'
 import { OnboardingView } from './OnboardingView'
 import { QuickAddDecisionModal } from './QuickAddDecisionModal'
+import { IdeasPackModal } from './IdeasPackModal'
 
 export function DecisionTrackerPage({
   rooms,
@@ -36,6 +41,8 @@ export function DecisionTrackerPage({
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [quickAddRoomId, setQuickAddRoomId] = useState<string | null>(null)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
+  const [ideasModalRoomId, setIdeasModalRoomId] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; kitId: string; roomId: string } | null>(null)
 
   // Refs for focus return (FS-UI-008)
   const fabRef = useRef<HTMLButtonElement>(null)
@@ -187,6 +194,27 @@ export function DecisionTrackerPage({
     setQuickAddRoomId(roomId)
     setQuickAddOpen(true)
   }
+
+  function handleApplyKit(kit: FinishDecisionKit) {
+    const room = rooms.find((r) => r.id === ideasModalRoomId)
+    if (!room) return
+    const result = applyKitToRoom(room, kit)
+    onUpdateRoom(room.id, result.room)
+    setExpandedRooms((prev) => new Set([...prev, room.id]))
+    setToast({ message: `Added "${kit.label}" — ${result.addedOptionCount} ideas`, kitId: kit.id, roomId: room.id })
+    setTimeout(() => setToast(null), 8000)
+  }
+
+  function handleUndoKit() {
+    if (!toast) return
+    const room = rooms.find((r) => r.id === toast.roomId)
+    if (!room) return
+    const updated = removeKitFromRoom(room, toast.kitId)
+    onUpdateRoom(room.id, updated)
+    setToast(null)
+  }
+
+  const ideasModalRoom = ideasModalRoomId ? rooms.find((r) => r.id === ideasModalRoomId) : null
 
   return (
     <>
@@ -394,7 +422,9 @@ export function DecisionTrackerPage({
                   onUpdateRoom={(updates) => onUpdateRoom(room.id, updates)}
                   onDeleteRoom={() => onDeleteRoom(room.id)}
                   onQuickAdd={() => { setQuickAddRoomId(room.id); setQuickAddOpen(true) }}
+                  onAddIdeasPack={() => setIdeasModalRoomId(room.id)}
                   readOnly={readOnly}
+                  hasAvailableKits={findKitsForRoomType(room.type as RoomTypeV3).length > 0}
                 />
               ))}
             </div>
@@ -517,6 +547,38 @@ export function DecisionTrackerPage({
           onClose={() => setQuickAddOpen(false)}
           triggerRef={quickAddTriggerRef}
         />
+      )}
+
+      {/* Ideas Pack Modal */}
+      {ideasModalRoom && (
+        <IdeasPackModal
+          roomType={ideasModalRoom.type as RoomTypeV3}
+          roomName={ideasModalRoom.name}
+          appliedKitIds={ideasModalRoom.appliedKitIds || []}
+          onApply={handleApplyKit}
+          onClose={() => setIdeasModalRoomId(null)}
+        />
+      )}
+
+      {/* Toast with undo */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg px-4 py-3 flex items-center gap-3 max-w-sm">
+          <span className="text-sm text-cream/70">{toast.message}</span>
+          <button
+            type="button"
+            onClick={handleUndoKit}
+            className="text-sm text-sandstone font-medium hover:text-sandstone-light transition-colors shrink-0"
+          >
+            Undo
+          </button>
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            className="text-cream/30 hover:text-cream/60 transition-colors"
+          >
+            ×
+          </button>
+        </div>
       )}
     </>
   )

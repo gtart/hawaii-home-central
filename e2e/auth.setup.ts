@@ -1,0 +1,97 @@
+/**
+ * Auth setup -- creates valid NextAuth v5 JWT session cookies
+ * for all test personas and saves them as Playwright storageState files.
+ *
+ * Produces:
+ *   e2e/.auth/persona-new-user.json
+ *   e2e/.auth/persona-fixlist.json
+ *   e2e/.auth/persona-two-projects.json
+ *   e2e/.auth/persona-full-setup.json
+ *   e2e/.auth/user.json              (copy of full-setup, backward compat)
+ */
+import { test as setup } from '@playwright/test'
+import { encode } from '@auth/core/jwt'
+import path from 'path'
+import fs from 'fs'
+import dotenv from 'dotenv'
+import { PERSONAS, DEFAULT_PERSONA } from './personas'
+
+// Load .env from project root
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
+
+setup('create authenticated sessions for all personas', async ({ browser }) => {
+  const secret = process.env.AUTH_SECRET
+  if (!secret) throw new Error('AUTH_SECRET not found in .env -- cannot create test sessions')
+
+  const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000'
+  const isHTTPS = baseURL.startsWith('https')
+  const cookieName = isHTTPS
+    ? '__Secure-authjs.session-token'
+    : 'authjs.session-token'
+  const domain = new URL(baseURL).hostname
+
+  // Ensure .auth directory exists
+  const authDir = path.join(__dirname, '.auth')
+  fs.mkdirSync(authDir, { recursive: true })
+
+  for (const persona of PERSONAS) {
+    const token = await encode({
+      token: {
+        name: persona.name,
+        email: persona.email,
+        picture: '',
+        sub: persona.userId,
+        id: persona.userId,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+      },
+      secret,
+      salt: 'authjs.session-token',
+    })
+
+    const storageState = {
+      cookies: [
+        {
+          name: cookieName,
+          value: token,
+          domain,
+          path: '/',
+          httpOnly: true,
+          secure: isHTTPS,
+          sameSite: 'Lax' as const,
+          expires: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+        },
+      ],
+      origins: [],
+    }
+
+    fs.writeFileSync(
+      persona.storageStatePath,
+      JSON.stringify(storageState, null, 2)
+    )
+    console.log(`  Auth: ${persona.name} -> ${path.basename(persona.storageStatePath)}`)
+  }
+
+  // Backward compat: copy full-setup as user.json
+  const legacyPath = path.join(authDir, 'user.json')
+  fs.copyFileSync(DEFAULT_PERSONA.storageStatePath, legacyPath)
+  console.log('  Auth: backward compat -> user.json')
+
+  // Verify the default persona session works
+  const context = await browser.newContext({
+    storageState: DEFAULT_PERSONA.storageStatePath,
+  })
+  const page = await context.newPage()
+  await page.goto(`${baseURL}/app`)
+
+  const url = page.url()
+  if (url.includes('/login')) {
+    await context.close()
+    throw new Error(
+      'Auth setup failed -- redirected to login. Check AUTH_SECRET matches your running dev server.'
+    )
+  }
+
+  console.log(`  Auth verification passed for ${DEFAULT_PERSONA.name}`)
+  await context.close()
+})

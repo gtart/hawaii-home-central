@@ -27,6 +27,8 @@ interface Props {
   onUpdateDecision: (updates: Partial<DecisionV3>) => void
   onAddComment: (comment: CommentPayload) => void
   onCommentOnOption?: (optionId: string, optionLabel: string) => void
+  onOpenGlobalComment?: () => void
+  showContent?: boolean
   comments: SelectionComment[]
 }
 
@@ -103,7 +105,7 @@ function IdeaCardTile({
         <>
           <img
             src={option.thumbnailUrl}
-            alt={option.name || 'Option'}
+            alt={option.name || 'Selection'}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
@@ -112,7 +114,7 @@ function IdeaCardTile({
         <>
           <img
             src={`/api/image-proxy?url=${encodeURIComponent(linkPreview)}`}
-            alt={option.name || 'Option'}
+            alt={option.name || 'Selection'}
             className="w-full h-full object-cover"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
@@ -220,7 +222,7 @@ function HeroTile({
         <>
           <img
             src={option.imageUrl}
-            alt={option.name || 'Option'}
+            alt={option.name || 'Selection'}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
@@ -229,7 +231,7 @@ function HeroTile({
         <>
           <img
             src={`/api/image-proxy?url=${encodeURIComponent(linkPreview)}`}
-            alt={option.name || 'Option'}
+            alt={option.name || 'Selection'}
             className="w-full h-full object-cover"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
@@ -306,6 +308,8 @@ export function IdeasBoard({
   onUpdateDecision,
   onAddComment,
   onCommentOnOption,
+  onOpenGlobalComment,
+  showContent,
   comments,
 }: Props) {
   const [uploading, setUploading] = useState(false)
@@ -317,6 +321,8 @@ export function IdeasBoard({
 
   const VISIBLE_COUNT = 3
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const replaceFileRef = useRef<HTMLInputElement>(null)
+  const [replaceTargetId, setReplaceTargetId] = useState<string | null>(null)
 
   function toggleCompareSelect(id: string) {
     setSelectedForCompare((prev) => {
@@ -397,177 +403,267 @@ export function IdeasBoard({
     setActiveCardId(id)
   }
 
+  async function handleReplacePhoto(files: FileList | null) {
+    if (!files || files.length === 0 || !replaceTargetId) return
+    const file = files[0]
+    if (file.size === 0) return
+    setUploading(true)
+    try {
+      const { url, thumbnailUrl } = await uploadIdeaFile(file)
+      onUpdateOption(replaceTargetId, {
+        kind: 'image',
+        imageUrl: url,
+        thumbnailUrl,
+      })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Upload failed'
+      setUploadError(msg)
+    }
+    setUploading(false)
+    setReplaceTargetId(null)
+    if (replaceFileRef.current) replaceFileRef.current.value = ''
+  }
+
   return (
     <div>
-      {/* Hero tile for single option */}
-      {decision.options.length === 1 && (
-        <HeroTile
-          option={decision.options[0]}
-          decision={decision}
-          userEmail={userEmail}
-          readOnly={readOnly}
-          onClick={() => setActiveCardId(decision.options[0].id)}
-          onToggleFinal={() => onSelectOption(decision.options[0].id)}
-          onComment={onCommentOnOption ? () => onCommentOnOption(decision.options[0].id, decision.options[0].name || 'Untitled') : undefined}
-        />
-      )}
+      {/* Hidden file inputs */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={(e) => handlePhotoFiles(e.target.files)}
+        className="hidden"
+      />
+      <input
+        ref={replaceFileRef}
+        type="file"
+        accept="image/*"
+        onChange={(e) => handleReplacePhoto(e.target.files)}
+        className="hidden"
+      />
 
-      {/* Compare toggle (2+ options) */}
-      {decision.options.length >= 2 && (
-        <div className="flex items-center justify-end mb-2">
-          <button
-            type="button"
-            onClick={() => {
-              setCompareMode(!compareMode)
-              setSelectedForCompare(new Set())
-            }}
-            className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
-              compareMode
-                ? 'bg-sandstone/20 text-sandstone'
-                : 'bg-cream/10 text-cream/50 hover:text-cream/70'
-            }`}
-          >
-            {compareMode ? 'Cancel' : 'Compare'}
-          </button>
-        </div>
-      )}
-
-      {/* Card grid (2+ options) */}
-      {decision.options.length > 1 && (() => {
-        const visible = expanded ? decision.options : decision.options.slice(0, VISIBLE_COUNT)
-        const hiddenCount = decision.options.length - VISIBLE_COUNT
-        return (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-3">
-              {visible.map((opt) => (
-                <div key={opt.id} className="relative">
-                  <IdeaCardTile
-                    option={opt}
-                    decision={decision}
-                    userEmail={userEmail}
-                    readOnly={readOnly}
-                    onClick={() => compareMode ? toggleCompareSelect(opt.id) : setActiveCardId(opt.id)}
-                    onToggleFinal={compareMode ? undefined : () => onSelectOption(opt.id)}
-                    onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
-                  />
-                  {/* Compare checkbox overlay */}
-                  {compareMode && (
-                    <div
-                      className="absolute top-2 right-2 pointer-events-none"
+      {showContent !== false && (
+        <>
+          {/* Hero tile for single selection */}
+          {decision.options.length === 1 && (() => {
+            const opt = decision.options[0]
+            const isImage = opt.kind === 'image' && opt.imageUrl
+            return (
+              <>
+                <HeroTile
+                  option={opt}
+                  decision={decision}
+                  userEmail={userEmail}
+                  readOnly={readOnly}
+                  onClick={() => setActiveCardId(opt.id)}
+                  onToggleFinal={() => onSelectOption(opt.id)}
+                  onComment={onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
+                />
+                {/* Hero quick actions */}
+                {!readOnly && (
+                  <div className="flex items-center gap-2 mb-3 -mt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplaceTargetId(opt.id)
+                        replaceFileRef.current?.click()
+                      }}
+                      disabled={uploading}
+                      className="flex items-center gap-1 px-2.5 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-xs rounded-lg transition-colors disabled:opacity-50"
                     >
-                      <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
-                        selectedForCompare.has(opt.id)
-                          ? 'bg-sandstone border-sandstone'
-                          : 'border-white/50 bg-black/30'
-                      }`}>
-                        {selectedForCompare.has(opt.id) && (
-                          <svg className="w-3 h-3 text-basalt" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                            <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                      <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                      {isImage ? 'Replace Photo' : 'Add Photo'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveCardId(opt.id)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-xs rounded-lg transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" />
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" />
+                      </svg>
+                      Edit
+                    </button>
+                    {onCommentOnOption && (
+                      <button
+                        type="button"
+                        onClick={() => onCommentOnOption(opt.id, opt.name || 'Untitled')}
+                        className="flex items-center gap-1 px-2.5 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-xs rounded-lg transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Comment
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="flex items-center gap-1 px-2.5 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-xs rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                      </svg>
+                      Add Another
+                    </button>
+                  </div>
+                )}
+              </>
+            )
+          })()}
+
+          {/* Compare toggle (2+ selections) */}
+          {decision.options.length >= 2 && (
+            <div className="flex items-center justify-end mb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setCompareMode(!compareMode)
+                  setSelectedForCompare(new Set())
+                }}
+                className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
+                  compareMode
+                    ? 'bg-sandstone/20 text-sandstone'
+                    : 'bg-cream/10 text-cream/50 hover:text-cream/70'
+                }`}
+              >
+                {compareMode ? 'Cancel' : 'Compare'}
+              </button>
             </div>
-            {!expanded && hiddenCount > 0 && (
+          )}
+
+          {/* Card grid (2+ selections) */}
+          {decision.options.length > 1 && (() => {
+            const visible = expanded ? decision.options : decision.options.slice(0, VISIBLE_COUNT)
+            const hiddenCount = decision.options.length - VISIBLE_COUNT
+            return (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+                  {visible.map((opt) => (
+                    <div key={opt.id} className="relative">
+                      <IdeaCardTile
+                        option={opt}
+                        decision={decision}
+                        userEmail={userEmail}
+                        readOnly={readOnly}
+                        onClick={() => compareMode ? toggleCompareSelect(opt.id) : setActiveCardId(opt.id)}
+                        onToggleFinal={compareMode ? undefined : () => onSelectOption(opt.id)}
+                        onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
+                      />
+                      {/* Compare checkbox overlay */}
+                      {compareMode && (
+                        <div className="absolute top-2 right-2 pointer-events-none">
+                          <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
+                            selectedForCompare.has(opt.id)
+                              ? 'bg-sandstone border-sandstone'
+                              : 'border-white/50 bg-black/30'
+                          }`}>
+                            {selectedForCompare.has(opt.id) && (
+                              <svg className="w-3 h-3 text-basalt" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {!expanded && hiddenCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(true)}
+                    className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors"
+                  >
+                    Show {hiddenCount} more selection{hiddenCount !== 1 ? 's' : ''}
+                  </button>
+                )}
+                {expanded && decision.options.length > VISIBLE_COUNT && (
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(false)}
+                    className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors"
+                  >
+                    Show less
+                  </button>
+                )}
+              </>
+            )
+          })()}
+
+          {/* Floating compare button */}
+          {compareMode && selectedForCompare.size >= 2 && (
+            <div className="flex justify-center my-3">
               <button
                 type="button"
-                onClick={() => setExpanded(true)}
-                className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors"
+                onClick={() => setShowCompareModal(true)}
+                className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors shadow-lg"
               >
-                Show {hiddenCount} more option{hiddenCount !== 1 ? 's' : ''}
+                Compare ({selectedForCompare.size})
               </button>
-            )}
-            {expanded && decision.options.length > VISIBLE_COUNT && (
-              <button
-                type="button"
-                onClick={() => setExpanded(false)}
-                className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors"
-              >
-                Show less
-              </button>
-            )}
-          </>
-        )
-      })()}
+            </div>
+          )}
 
-      {/* Floating compare button */}
-      {compareMode && selectedForCompare.size >= 2 && (
-        <div className="flex justify-center my-3">
-          <button
-            type="button"
-            onClick={() => setShowCompareModal(true)}
-            className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors shadow-lg"
-          >
-            Compare ({selectedForCompare.size})
-          </button>
-        </div>
-      )}
+          {/* Empty state */}
+          {decision.options.length === 0 && (
+            <div className="bg-basalt-50 rounded-card p-8 text-center mb-4">
+              <p className="text-cream/40 text-sm">
+                No selections yet.{' '}
+                {!readOnly && 'Add a photo or note to start comparing.'}
+              </p>
+            </div>
+          )}
 
-      {/* Empty state */}
-      {decision.options.length === 0 && (
-        <div className="bg-basalt-50 rounded-card p-8 text-center mb-4">
-          <p className="text-cream/40 text-sm">
-            No options yet.{' '}
-            {!readOnly && 'Add a photo or note to start comparing.'}
-          </p>
-        </div>
-      )}
-
-      {/* Add controls */}
-      {!readOnly && (
-        <div>
-          {/* Hidden file input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={(e) => handlePhotoFiles(e.target.files)}
-            className="hidden"
-          />
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors disabled:opacity-50"
-            >
-              {uploading ? (
-                <>
-                  <div className="w-3.5 h-3.5 border border-cream/20 border-t-cream/60 rounded-full animate-spin" />
-                  Uploading…
-                </>
-              ) : (
-                <>
+          {/* Desktop add controls */}
+          {!readOnly && (
+            <div className="hidden md:block">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {uploading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border border-cream/20 border-t-cream/60 rounded-full animate-spin" />
+                      Uploading…
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                      Add Photo
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddTextCard}
+                  disabled={uploading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors disabled:opacity-50"
+                >
                   <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                    <circle cx="12" cy="13" r="4" />
+                    <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
                   </svg>
-                  Add Photo
-                </>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={handleAddTextCard}
-              disabled={uploading}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors disabled:opacity-50"
-            >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
-              </svg>
-              Add Note
-            </button>
-          </div>
-        </div>
-      )}
+                  Add Note
+                </button>
+              </div>
+            </div>
+          )}
 
-      {uploadError && (
-        <p className="text-sm text-red-400 mt-2">{uploadError}</p>
+          {uploadError && (
+            <p className="text-sm text-red-400 mt-2">{uploadError}</p>
+          )}
+        </>
       )}
 
       {/* Card modal */}
@@ -603,6 +699,51 @@ export function IdeasBoard({
           }}
           onClose={() => setShowCompareModal(false)}
         />
+      )}
+
+      {/* Mobile sticky action bar — always rendered (outside showContent gate) */}
+      {!readOnly && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-basalt-50 border-t border-cream/10 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors disabled:opacity-50"
+            >
+              {uploading ? (
+                <div className="w-4 h-4 border border-cream/20 border-t-cream/60 rounded-full animate-spin" />
+              ) : (
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+              )}
+              Photo
+            </button>
+            <button
+              type="button"
+              onClick={handleAddTextCard}
+              disabled={uploading}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors disabled:opacity-50"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
+              </svg>
+              Note
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenGlobalComment?.()}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Comment
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

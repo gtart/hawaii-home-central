@@ -27,7 +27,7 @@ export function CompareModal({
         {/* Header */}
         <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 px-4 py-3 flex items-center justify-between z-10">
           <h2 className="text-sm font-medium text-cream">
-            Compare {options.length} Options
+            Compare {options.length} Selections
           </h2>
           <button
             type="button"
@@ -62,13 +62,13 @@ export function CompareModal({
                     {isImage ? (
                       <img
                         src={opt.imageUrl || opt.thumbnailUrl}
-                        alt={opt.name || 'Option'}
+                        alt={opt.name || 'Selection'}
                         className="w-full h-full object-cover"
                       />
                     ) : linkPreview ? (
                       <img
                         src={`/api/image-proxy?url=${encodeURIComponent(linkPreview)}`}
-                        alt={opt.name || 'Option'}
+                        alt={opt.name || 'Selection'}
                         className="w-full h-full object-cover"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                       />

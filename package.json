@@ -6,7 +6,14 @@
     "dev": "next dev --turbopack",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed:e2e": "npx tsx scripts/seed-e2e-personas.ts",
+    "test:e2e": "npx playwright test",
+    "test:e2e:public": "npx playwright test --project=public --project=public-mobile --project=public-android",
+    "test:e2e:auth": "npx playwright test --project=authenticated --project=authenticated-mobile --project=authenticated-android",
+    "test:e2e:android": "npx playwright test --project=public-android --project=authenticated-android",
+    "test:e2e:personas": "npx playwright test --project=persona-new-user --project=persona-fixlist --project=persona-two-projects --project=persona-full-setup",
+    "test:e2e:ui": "npx playwright test --ui"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -27,6 +34,7 @@
     "tailwind-merge": "^2.6.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.2.0",
     "@types/papaparse": "^5.5.2",
@@ -34,6 +42,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/sharp": "^0.31.1",
     "autoprefixer": "^10.4.24",
+    "dotenv": "^17.3.1",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.6",
     "postcss": "^8.5.6",
