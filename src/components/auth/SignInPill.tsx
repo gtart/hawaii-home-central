@@ -6,9 +6,10 @@ import Link from 'next/link'
 interface SignInPillProps {
   appToolPath: string
   label?: string
+  toolName?: string
 }
 
-export function SignInPill({ appToolPath, label = 'Sign in to get started' }: SignInPillProps) {
+export function SignInPill({ appToolPath, label = 'Sign in to get started', toolName }: SignInPillProps) {
   const { data: session, status } = useSession()
 
   if (status === 'loading') {
@@ -23,13 +24,15 @@ export function SignInPill({ appToolPath, label = 'Sign in to get started' }: Si
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-sandstone" aria-hidden="true">
           <polyline points="20 6 9 17 4 12" />
         </svg>
-        <span className="text-sm text-cream/50">Signed in</span>
-        <span className="text-cream/20">·</span>
+        <span className="text-sm text-cream/50">
+          Also available as an interactive tool
+        </span>
+        <span className="text-cream/20">&middot;</span>
         <Link
           href={appToolPath}
           className="text-sm text-sandstone hover:text-sandstone-light transition-colors font-medium"
         >
-          Open tool &rarr;
+          {toolName ? `Open ${toolName}` : 'Open tool'} &rarr;
         </Link>
       </div>
     )

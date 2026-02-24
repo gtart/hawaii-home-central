@@ -120,7 +120,7 @@ export function PlaybookContent() {
 
         {/* Sign-in pill */}
         <div className="mb-8">
-          <SignInPill appToolPath="/app/tools/before-you-sign?tab=handoffs" label="Sign in to save your assignments" />
+          <SignInPill appToolPath="/app/tools/before-you-sign?tab=handoffs" label="Sign in to save your assignments" toolName="Contract Checklist" />
         </div>
 
         {/* Filter */}
@@ -173,19 +173,23 @@ export function PlaybookContent() {
             </div>
           ) : session?.user ? (
             <div className="text-center">
-              <p className="text-cream/70 text-sm mb-4">
-                You&apos;re signed in. Assign owners interactively.
+              <p className="text-cream/70 text-sm mb-2">
+                This guide is also available as an interactive tool.
+              </p>
+              <p className="text-cream/50 text-xs mb-4 max-w-md mx-auto">
+                Assign owners for each item, add notes documenting your
+                agreements, and access everything from any device.
               </p>
               <Link href="/app/tools/before-you-sign?tab=handoffs">
                 <Button size="lg" className="w-full sm:w-auto">
-                  Open interactive tool &rarr;
+                  Open Contract Checklist &rarr;
                 </Button>
               </Link>
             </div>
           ) : (
             <div className="text-center">
               <h2 className="font-serif text-2xl text-cream mb-3">
-                Use Tools to assign owners
+                This guide is also an interactive tool
               </h2>
               <p className="text-cream/60 text-sm mb-6 max-w-lg mx-auto">
                 Sign in to assign owners for each item, add notes documenting

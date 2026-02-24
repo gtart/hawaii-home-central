@@ -102,10 +102,10 @@ export default function RenovationStagesPage() {
           <FadeInSection delay={300}>
             <div className="mt-12">
               <h2 className="font-serif text-2xl text-cream mb-2 text-center">
-                Use Tools to stay on track
+                These stages also have interactive tools
               </h2>
               <p className="text-cream/50 text-sm mb-6 text-center">
-                Guides are free to browse. Sign in to save your progress.
+                Sign in to track selections, compare bids, and manage your renovation in one place.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                 <Card

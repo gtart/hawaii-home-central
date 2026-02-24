@@ -82,13 +82,14 @@ export function PlaybookContent() {
           </ol>
           <p className="text-cream/50 text-sm">
             <strong className="text-sandstone">Want to compare side-by-side?</strong>{' '}
+            This checklist is also available as an interactive tool called{' '}
             <Link
               href="/login?callbackUrl=/app/tools/before-you-sign?tab=quotes"
               className="text-sandstone hover:text-sandstone-light underline"
             >
-              Sign in to get started
-            </Link>{' '}
-            and compare bids in one place.
+              Contract Checklist
+            </Link>.{' '}
+            Sign in to use it.
           </p>
         </div>
 
@@ -122,7 +123,7 @@ export function PlaybookContent() {
 
         {/* Sign-in pill */}
         <div className="mb-8">
-          <SignInPill appToolPath="/app/tools/before-you-sign?tab=quotes" label="Sign in to compare bids side-by-side using this checklist" />
+          <SignInPill appToolPath="/app/tools/before-you-sign?tab=quotes" label="Sign in to compare bids side-by-side using this checklist" toolName="Contract Checklist" />
         </div>
 
         {/* Filter controls */}
@@ -183,19 +184,23 @@ export function PlaybookContent() {
             </div>
           ) : session?.user ? (
             <div className="text-center">
-              <p className="text-cream/70 text-sm mb-4">
-                You&apos;re signed in. Compare your bids side-by-side.
+              <p className="text-cream/70 text-sm mb-2">
+                This checklist is also available as an interactive tool.
+              </p>
+              <p className="text-cream/50 text-xs mb-4 max-w-md mx-auto">
+                Compare bids side-by-side, check off items for each contractor,
+                and track what&apos;s covered and what&apos;s missing.
               </p>
               <Link href="/app/tools/before-you-sign?tab=quotes">
                 <Button size="lg" className="w-full sm:w-auto">
-                  Open interactive tool &rarr;
+                  Open Contract Checklist &rarr;
                 </Button>
               </Link>
             </div>
           ) : (
             <div className="text-center">
               <h2 className="font-serif text-2xl text-cream mb-3">
-                Compare your bids side-by-side
+                This checklist is also an interactive tool
               </h2>
               <p className="text-cream/60 text-sm mb-6 max-w-lg mx-auto">
                 Sign in to check off items for each contractor, track what&apos;s
