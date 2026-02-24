@@ -4,14 +4,11 @@ import { useState, FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 
 const MAX_SUMMARY = 1000
-const MAX_OPTIONAL = 500
 
 export function StorySubmissionForm() {
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [summary, setSummary] = useState('')
-  const [challenge, setChallenge] = useState('')
-  const [proudestMoment, setProudestMoment] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
@@ -20,8 +17,8 @@ export function StorySubmissionForm() {
     e.preventDefault()
     setError('')
 
-    if (summary.trim().length < 20) {
-      setError('Please write at least a few sentences about your story.')
+    if (!summary.trim()) {
+      setError('Please tell us about your story.')
       return
     }
 
@@ -33,8 +30,8 @@ export function StorySubmissionForm() {
         body: JSON.stringify({
           email: email.trim() || null,
           summary: summary.trim(),
-          challenge: challenge.trim() || null,
-          proudestMoment: proudestMoment.trim() || null,
+          challenge: null,
+          proudestMoment: null,
         }),
       })
 
@@ -92,12 +89,12 @@ export function StorySubmissionForm() {
       </h2>
       <p className="text-cream/50 text-sm leading-relaxed mb-6">
         Keep it brief&mdash;a few sentences to a short paragraph is perfect. We
-        review all submissions and may not accept every story. Your identity can
+        review all submissions and may not publish every story. Your identity can
         remain confidential, but we may follow up to verify details.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Summary */}
+        {/* Story */}
         <div>
           <label className="block text-sm text-cream/70 mb-1.5">
             What&apos;s your story about? <span className="text-sandstone">*</span>
@@ -112,32 +109,6 @@ export function StorySubmissionForm() {
           <p className="text-[10px] text-cream/25 mt-1 text-right">
             {summary.length}/{MAX_SUMMARY}
           </p>
-        </div>
-
-        {/* Optional: Biggest challenge */}
-        <div>
-          <label className="block text-sm text-cream/70 mb-1.5">
-            Biggest challenge or frustration? <span className="text-cream/30 text-xs">(optional)</span>
-          </label>
-          <textarea
-            value={challenge}
-            onChange={(e) => setChallenge(e.target.value.slice(0, MAX_OPTIONAL))}
-            placeholder="e.g., Getting accurate timelines from our contractor..."
-            className="w-full bg-basalt border border-cream/20 text-cream rounded-lg px-3 py-2.5 text-sm placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 min-h-[80px]"
-          />
-        </div>
-
-        {/* Optional: Proudest moment */}
-        <div>
-          <label className="block text-sm text-cream/70 mb-1.5">
-            Proudest or happiest moment? <span className="text-cream/30 text-xs">(optional)</span>
-          </label>
-          <textarea
-            value={proudestMoment}
-            onChange={(e) => setProudestMoment(e.target.value.slice(0, MAX_OPTIONAL))}
-            placeholder="e.g., The first morning cooking in our new kitchen..."
-            className="w-full bg-basalt border border-cream/20 text-cream rounded-lg px-3 py-2.5 text-sm placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 min-h-[80px]"
-          />
         </div>
 
         {/* Optional: Email */}

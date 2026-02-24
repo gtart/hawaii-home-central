@@ -9,9 +9,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { email, summary, challenge, proudestMoment } = body
 
-    if (!summary || typeof summary !== 'string' || summary.trim().length < 20) {
+    if (!summary || typeof summary !== 'string' || !summary.trim()) {
       return NextResponse.json(
-        { error: 'Please provide a summary of at least 20 characters.' },
+        { error: 'Please tell us about your story.' },
         { status: 400 }
       )
     }

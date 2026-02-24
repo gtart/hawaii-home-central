@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, FormEvent } from 'react'
 import { useSession, signIn } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 
@@ -82,8 +83,10 @@ export function EarlyAccessSignupForm() {
         </h3>
         <p className="text-cream/70 leading-relaxed">
           Mahalo! We&apos;ll email you when Hawaii Home Central officially
-          launches. In the meantime, feel free to sign in with Google to
-          preview what we&apos;re building.
+          launches. In the meantime, feel free to browse our{' '}
+          <Link href="/hawaii-home-renovation" className="text-sandstone hover:text-sandstone-light underline underline-offset-2 transition-colors">
+            Hawaii Homeowner resources
+          </Link>!
         </p>
       </div>
     )
