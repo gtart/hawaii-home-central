@@ -294,56 +294,87 @@ export function SaveFromWebContent() {
         <h1 className="font-serif text-2xl md:text-3xl text-sandstone mb-2">
           Save from Web
         </h1>
-        <p className="text-cream/60 text-sm mb-6">
-          {bookmarkletData
-            ? <>Images captured from <span className="text-cream/80">{sourceHost}</span></>
-            : 'Save product ideas from any website.'}
-        </p>
 
-        {/* Destination picker */}
-        {decisionOptions.length === 0 ? (
-          <div className="bg-basalt-50 rounded-lg p-6 text-center mb-6">
-            <p className="text-cream/50 text-sm mb-3">
-              No selections yet. Add rooms and selections first.
+        {/* ── No bookmarklet data: show setup instructions (primary view) ── */}
+        {!bookmarkletData && (
+          <>
+            <p className="text-cream/60 text-sm mb-6">
+              Save product ideas from any website — even sites that block direct imports.
             </p>
-            <button
-              type="button"
-              onClick={() => router.push('/app/tools/finish-decisions')}
-              className="text-sandstone text-sm hover:text-sandstone-light transition-colors"
-            >
-              Go to Finish Selections
-            </button>
-          </div>
-        ) : (
-          <div className="mb-6">
-            <label className="block text-xs text-cream/50 mb-2">Save to selection</label>
-            <select
-              value={selectedDecisionId || ''}
-              onChange={(e) => setSelectedDecisionId(e.target.value || null)}
-              className="w-full bg-basalt-50 border border-cream/20 text-cream text-sm px-3 py-2.5 rounded-lg focus:outline-none focus:border-sandstone"
-            >
-              <option value="">Choose a selection...</option>
-              {rooms.map((room) => (
-                <optgroup
-                  key={room.id}
-                  label={`${ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️'} ${room.name}`}
-                >
-                  {room.decisions.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.title}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </div>
+
+            <div className="bg-basalt-50 rounded-xl p-5 border border-cream/10">
+              <div className="space-y-4">
+                {/* Step 1 */}
+                <div className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">1</span>
+                  <div>
+                    <p className="text-sm text-cream/80 mb-2">Drag this button to your bookmarks bar:</p>
+                    <a
+                      ref={bookmarkletRef}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        alert('Drag this button to your bookmarks bar — don\'t click it!')
+                      }}
+                      className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg cursor-grab active:cursor-grabbing select-none ${
+                        bookmarkletReady
+                          ? 'bg-sandstone text-basalt'
+                          : 'bg-cream/20 text-cream/40'
+                      }`}
+                      title="Drag me to your bookmarks bar"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                      </svg>
+                      Save to HHC
+                    </a>
+                    {bookmarkletReady ? (
+                      <p className="text-[11px] text-cream/30 mt-1.5">
+                        On Safari: right-click the button, select &quot;Add to Bookmarks&quot;
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-cream/40 mt-1.5">Loading bookmarklet...</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Step 2 */}
+                <div className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">2</span>
+                  <div>
+                    <p className="text-sm text-cream/80">Visit any product page</p>
+                    <p className="text-xs text-cream/40 mt-0.5">Home Depot, Lowes, Wayfair, Amazon, etc.</p>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">3</span>
+                  <div>
+                    <p className="text-sm text-cream/80">Click &quot;Save to HHC&quot; in your bookmarks bar</p>
+                    <p className="text-xs text-cream/40 mt-0.5">Product images will be captured and brought back here for you to save.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 pt-4 border-t border-cream/10">
+                <p className="text-[11px] text-cream/30">
+                  Works on desktop browsers (Chrome, Firefox, Safari, Edge). Not available on mobile.
+                </p>
+              </div>
+            </div>
+          </>
         )}
 
-        {/* Bookmarklet mode: image picker + name/notes + save */}
-        {selectedDecisionId && bookmarkletData && (
-          <div className="bg-basalt-50 rounded-xl p-4 border border-cream/10 space-y-4">
+        {/* ── Bookmarklet data present: image picker + destination + save ── */}
+        {bookmarkletData && (
+          <div className="space-y-5">
+            <p className="text-cream/60 text-sm mb-2">
+              Images captured from <span className="text-cream/80">{sourceHost}</span>
+            </p>
+
             {/* Source info */}
-            <div className="bg-basalt rounded-lg p-3 border border-cream/10">
+            <div className="bg-basalt-50 rounded-lg p-3 border border-cream/10">
               <p className="text-[11px] text-cream/40 uppercase tracking-wide mb-1">
                 Captured from bookmarklet
               </p>
@@ -409,7 +440,7 @@ export function SaveFromWebContent() {
                 </div>
               </div>
             ) : (
-              <div className="bg-basalt rounded-lg p-4 text-center">
+              <div className="bg-basalt-50 rounded-lg p-4 text-center">
                 <p className="text-xs text-cream/50 mb-1">
                   No images found on this page.
                 </p>
@@ -443,6 +474,45 @@ export function SaveFromWebContent() {
               </div>
             </div>
 
+            {/* Destination picker */}
+            {decisionOptions.length === 0 ? (
+              <div className="bg-basalt-50 rounded-lg p-6 text-center">
+                <p className="text-cream/50 text-sm mb-3">
+                  No selections yet. Add rooms and selections first.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => router.push('/app/tools/finish-decisions')}
+                  className="text-sandstone text-sm hover:text-sandstone-light transition-colors"
+                >
+                  Go to Finish Selections
+                </button>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-xs text-cream/50 mb-2">Save to selection</label>
+                <select
+                  value={selectedDecisionId || ''}
+                  onChange={(e) => setSelectedDecisionId(e.target.value || null)}
+                  className="w-full bg-basalt-50 border border-cream/20 text-cream text-sm px-3 py-2.5 rounded-lg focus:outline-none focus:border-sandstone"
+                >
+                  <option value="">Choose a selection...</option>
+                  {rooms.map((room) => (
+                    <optgroup
+                      key={room.id}
+                      label={`${ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️'} ${room.name}`}
+                    >
+                      {room.decisions.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.title}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Action buttons */}
             <div className="flex items-center justify-end gap-3 pt-1">
               <button
@@ -452,6 +522,7 @@ export function SaveFromWebContent() {
                   setSelectedUrls(new Set())
                   setName('')
                   setNotes('')
+                  setSelectedDecisionId(null)
                 }}
                 className="px-4 py-2 text-sm text-cream/60 hover:text-cream transition-colors"
               >
@@ -460,78 +531,11 @@ export function SaveFromWebContent() {
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={!name.trim()}
+                disabled={!name.trim() || !selectedDecisionId}
                 className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 Create Idea
               </button>
-            </div>
-          </div>
-        )}
-
-        {/* No bookmarklet data: show setup instructions */}
-        {!bookmarkletData && selectedDecisionId && (
-          <div className="bg-basalt-50 rounded-xl p-5 border border-cream/10">
-            <h2 className="text-sm font-medium text-cream mb-4">How to save from any website</h2>
-
-            <div className="space-y-4">
-              {/* Step 1 */}
-              <div className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">1</span>
-                <div>
-                  <p className="text-sm text-cream/80 mb-2">Drag this button to your bookmarks bar:</p>
-                  <a
-                    ref={bookmarkletRef}
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      alert('Drag this button to your bookmarks bar — don\'t click it!')
-                    }}
-                    className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg cursor-grab active:cursor-grabbing select-none ${
-                      bookmarkletReady
-                        ? 'bg-sandstone text-basalt'
-                        : 'bg-cream/20 text-cream/40'
-                    }`}
-                    title="Drag me to your bookmarks bar"
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
-                    Save to HHC
-                  </a>
-                  {bookmarkletReady ? (
-                    <p className="text-[11px] text-cream/30 mt-1.5">
-                      On Safari: right-click the button, select &quot;Add to Bookmarks&quot;
-                    </p>
-                  ) : (
-                    <p className="text-[11px] text-cream/40 mt-1.5">Loading bookmarklet...</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Step 2 */}
-              <div className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">2</span>
-                <div>
-                  <p className="text-sm text-cream/80">Visit any product page</p>
-                  <p className="text-xs text-cream/40 mt-0.5">Home Depot, Lowes, Wayfair, Amazon, etc.</p>
-                </div>
-              </div>
-
-              {/* Step 3 */}
-              <div className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">3</span>
-                <div>
-                  <p className="text-sm text-cream/80">Click &quot;Save to HHC&quot; in your bookmarks bar</p>
-                  <p className="text-xs text-cream/40 mt-0.5">Product images will be captured and brought here for you to save.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-5 pt-4 border-t border-cream/10">
-              <p className="text-[11px] text-cream/30">
-                Works on desktop browsers (Chrome, Firefox, Safari, Edge). Not available on mobile.
-              </p>
             </div>
           </div>
         )}
