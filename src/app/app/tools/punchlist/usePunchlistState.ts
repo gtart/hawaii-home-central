@@ -108,6 +108,8 @@ export function usePunchlistState() {
       priority?: PunchlistPriority
       notes?: string
       photos: PunchlistPhoto[]
+      createdByName?: string
+      createdByEmail?: string
     }) => {
       const id = genId('pl')
       const ts = now()
@@ -126,6 +128,8 @@ export function usePunchlistState() {
             priority: item.priority,
             notes: item.notes,
             photos: item.photos,
+            createdByName: item.createdByName,
+            createdByEmail: item.createdByEmail,
             createdAt: ts,
             updatedAt: ts,
           },

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useMemo } from 'react'
+import { useSession } from 'next-auth/react'
 import type { PunchlistPriority, PunchlistPhoto } from '../types'
 import type { PunchlistStateAPI } from '../usePunchlistState'
 import { uploadFile, LOCATION_SEEDS, ASSIGNEE_SEEDS } from '../utils'
@@ -13,6 +14,7 @@ interface DraftRow {
   priority: PunchlistPriority | ''
   photos: PunchlistPhoto[]
   expanded: boolean
+  uploading: boolean
 }
 
 interface Props {
@@ -23,37 +25,35 @@ interface Props {
 const MAX_ROWS = 20
 
 let rowCounter = 0
-function makeRow(defaults: { location: string; assignee: string }): DraftRow {
+function makeRow(): DraftRow {
   return {
     id: ++rowCounter,
     title: '',
-    location: defaults.location,
-    assignee: defaults.assignee,
+    location: '',
+    assignee: '',
     priority: '',
     photos: [],
     expanded: false,
+    uploading: false,
   }
 }
 
 export function BulkTextEntry({ api, onClose }: Props) {
+  const { data: session } = useSession()
   const { addItem, payload } = api
 
-  const [defaultLocation, setDefaultLocation] = useState('')
-  const [defaultAssignee, setDefaultAssignee] = useState('')
-  const [rows, setRows] = useState<DraftRow[]>(() => {
-    const defaults = { location: '', assignee: '' }
-    return [makeRow(defaults), makeRow(defaults), makeRow(defaults)]
-  })
+  const [rows, setRows] = useState<DraftRow[]>(() => [makeRow(), makeRow(), makeRow()])
   const [error, setError] = useState('')
   const titleRefs = useRef<Map<number, HTMLInputElement>>(new Map())
+  const fileRefs = useRef<Map<number, HTMLInputElement>>(new Map())
 
   const locationOptions = useMemo(() => {
-    const existing = new Set(payload.items.map((i) => i.location))
+    const existing = new Set(payload.items.map((i) => i.location).filter(Boolean))
     return Array.from(new Set([...LOCATION_SEEDS, ...existing])).sort()
   }, [payload.items])
 
   const assigneeOptions = useMemo(() => {
-    const existing = new Set(payload.items.map((i) => i.assigneeLabel))
+    const existing = new Set(payload.items.map((i) => i.assigneeLabel).filter(Boolean))
     return Array.from(new Set([...ASSIGNEE_SEEDS, ...existing])).sort()
   }, [payload.items])
 
@@ -69,9 +69,8 @@ export function BulkTextEntry({ api, onClose }: Props) {
 
   function addRow() {
     if (rows.length >= MAX_ROWS) return
-    const newRow = makeRow({ location: defaultLocation, assignee: defaultAssignee })
+    const newRow = makeRow()
     setRows((prev) => [...prev, newRow])
-    // Focus the new row after render
     setTimeout(() => {
       titleRefs.current.get(newRow.id)?.focus()
     }, 50)
@@ -80,7 +79,6 @@ export function BulkTextEntry({ api, onClose }: Props) {
   function handleTitleKeyDown(e: React.KeyboardEvent, rowIndex: number) {
     if (e.key === 'Enter') {
       e.preventDefault()
-      // Focus next row's title, or add new row
       if (rowIndex < rows.length - 1) {
         titleRefs.current.get(rows[rowIndex + 1].id)?.focus()
       } else if (rows.length < MAX_ROWS) {
@@ -89,27 +87,20 @@ export function BulkTextEntry({ api, onClose }: Props) {
     }
   }
 
-  function applyDefaults() {
-    setRows((prev) =>
-      prev.map((r) => ({
-        ...r,
-        location: r.location || defaultLocation,
-        assignee: r.assignee || defaultAssignee,
-      }))
-    )
-  }
-
   async function handlePhotoUpload(rowId: number, files: FileList | null) {
     if (!files || files.length === 0) return
     const file = files[0]
+    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, uploading: true } : r)))
     try {
       const photo = await uploadFile(file)
       setRows((prev) =>
-        prev.map((r) => (r.id === rowId ? { ...r, photos: [...r.photos, photo] } : r))
+        prev.map((r) => (r.id === rowId ? { ...r, photos: [...r.photos, photo], uploading: false } : r))
       )
     } catch {
-      // silent — photo is optional
+      setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, uploading: false } : r)))
     }
+    const ref = fileRefs.current.get(rowId)
+    if (ref) ref.value = ''
   }
 
   function removePhoto(rowId: number, photoId: string) {
@@ -122,15 +113,9 @@ export function BulkTextEntry({ api, onClose }: Props) {
 
   function handleSubmit() {
     setError('')
-    const valid = rows.filter((r) => r.title.trim())
+    const valid = rows.filter((r) => r.title.trim() || r.photos.length > 0)
     if (valid.length === 0) {
-      setError('At least one item needs a title')
-      return
-    }
-
-    const missing = valid.find((r) => !r.location.trim() || !r.assignee.trim())
-    if (missing) {
-      setError('All items with a title need a location and assignee')
+      setError('At least one item needs a title or photo')
       return
     }
 
@@ -141,19 +126,21 @@ export function BulkTextEntry({ api, onClose }: Props) {
         assigneeLabel: r.assignee.trim(),
         priority: r.priority || undefined,
         photos: r.photos,
+        createdByName: session?.user?.name || undefined,
+        createdByEmail: session?.user?.email || undefined,
       })
     }
 
     onClose()
   }
 
-  const validCount = rows.filter((r) => r.title.trim()).length
+  const validCount = rows.filter((r) => r.title.trim() || r.photos.length > 0).length
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div
         className="absolute inset-0 bg-black/60"
-        onClick={rows.some((r) => r.title.trim()) ? undefined : onClose}
+        onClick={rows.some((r) => r.title.trim() || r.photos.length > 0) ? undefined : onClose}
       />
 
       <div className="relative bg-basalt-50 border-t sm:border border-cream/10 rounded-t-xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto">
@@ -175,47 +162,19 @@ export function BulkTextEntry({ api, onClose }: Props) {
         </div>
 
         <div className="px-5 py-5 space-y-4">
-          {/* Defaults bar */}
-          <div className="bg-basalt rounded-lg p-3 space-y-3">
-            <p className="text-xs text-cream/40 uppercase tracking-wider">Default for new rows</p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={defaultLocation}
-                onChange={(e) => setDefaultLocation(e.target.value)}
-                list="text-bulk-locations"
-                placeholder="Location"
-                className="flex-1 bg-basalt-50 border border-cream/20 rounded-lg px-2.5 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
-              />
-              <input
-                type="text"
-                value={defaultAssignee}
-                onChange={(e) => setDefaultAssignee(e.target.value)}
-                list="text-bulk-assignees"
-                placeholder="Assignee"
-                className="flex-1 bg-basalt-50 border border-cream/20 rounded-lg px-2.5 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
-              />
-              <button
-                type="button"
-                onClick={applyDefaults}
-                className="px-3 py-2 text-xs bg-sandstone/20 text-sandstone rounded-lg hover:bg-sandstone/30 transition-colors shrink-0"
-              >
-                Apply
-              </button>
-            </div>
-            <datalist id="text-bulk-locations">
-              {locationOptions.map((loc) => <option key={loc} value={loc} />)}
-            </datalist>
-            <datalist id="text-bulk-assignees">
-              {assigneeOptions.map((a) => <option key={a} value={a} />)}
-            </datalist>
-          </div>
+          {/* Datalists */}
+          <datalist id="text-bulk-locations">
+            {locationOptions.map((loc) => <option key={loc} value={loc} />)}
+          </datalist>
+          <datalist id="text-bulk-assignees">
+            {assigneeOptions.map((a) => <option key={a} value={a} />)}
+          </datalist>
 
           {/* Rows */}
           <div className="space-y-2">
             {rows.map((row, idx) => (
               <div key={row.id} className="bg-basalt rounded-lg p-3">
-                {/* Compact row */}
+                {/* Compact row: # | title | photo | expand | delete */}
                 <div className="flex gap-2 items-center">
                   <span className="text-[10px] text-cream/25 shrink-0 w-4 text-right">{idx + 1}</span>
                   <input
@@ -228,16 +187,51 @@ export function BulkTextEntry({ api, onClose }: Props) {
                     onChange={(e) => updateRow(row.id, 'title', e.target.value)}
                     onKeyDown={(e) => handleTitleKeyDown(e, idx)}
                     placeholder="What's the issue?"
-                    className="flex-1 bg-basalt-50 border border-cream/20 rounded-lg px-2.5 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                    className="flex-1 min-w-0 bg-basalt-50 border border-cream/20 rounded-lg px-2.5 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
                   />
+
+                  {/* Inline photo: thumbnail or add button */}
+                  {row.photos.length > 0 ? (
+                    <div className="relative shrink-0 w-8 h-8 rounded overflow-hidden group">
+                      <img src={row.photos[0].thumbnailUrl || row.photos[0].url} alt="" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(row.id, row.photos[0].id)}
+                        className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                      >
+                        <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                          <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => fileRefs.current.get(row.id)?.click()}
+                      disabled={row.uploading}
+                      className="shrink-0 w-8 h-8 bg-basalt-50 border border-cream/20 rounded flex items-center justify-center text-cream/30 hover:text-cream/50 hover:border-cream/30 disabled:opacity-50 transition-colors"
+                    >
+                      {row.uploading ? (
+                        <div className="w-3 h-3 border border-cream/20 border-t-sandstone rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                          <circle cx="12" cy="13" r="4" />
+                        </svg>
+                      )}
+                    </button>
+                  )}
                   <input
-                    type="text"
-                    value={row.location}
-                    onChange={(e) => updateRow(row.id, 'location', e.target.value)}
-                    list="text-bulk-locations"
-                    placeholder="Location"
-                    className="w-24 bg-basalt-50 border border-cream/20 rounded-lg px-2 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                    ref={(el) => {
+                      if (el) fileRefs.current.set(row.id, el)
+                      else fileRefs.current.delete(row.id)
+                    }}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handlePhotoUpload(row.id, e.target.files)}
+                    className="hidden"
                   />
+
                   {/* Expand / collapse */}
                   <button
                     type="button"
@@ -261,10 +255,18 @@ export function BulkTextEntry({ api, onClose }: Props) {
                   </button>
                 </div>
 
-                {/* Expanded details */}
+                {/* Expanded details: location + assignee + priority */}
                 {row.expanded && (
                   <div className="mt-3 pt-3 border-t border-cream/5 space-y-2">
                     <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={row.location}
+                        onChange={(e) => updateRow(row.id, 'location', e.target.value)}
+                        list="text-bulk-locations"
+                        placeholder="Location"
+                        className="flex-1 bg-basalt-50 border border-cream/20 rounded-lg px-2.5 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                      />
                       <input
                         type="text"
                         value={row.assignee}
@@ -273,54 +275,22 @@ export function BulkTextEntry({ api, onClose }: Props) {
                         placeholder="Assignee"
                         className="flex-1 bg-basalt-50 border border-cream/20 rounded-lg px-2.5 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
                       />
-                      <div className="flex gap-1">
-                        {(['HIGH', 'MED', 'LOW'] as PunchlistPriority[]).map((p) => (
-                          <button
-                            key={p}
-                            type="button"
-                            onClick={() => updateRow(row.id, 'priority', row.priority === p ? '' : p)}
-                            className={`text-[10px] px-2 py-1 rounded-full border transition-colors ${
-                              row.priority === p
-                                ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
-                                : 'border-cream/20 text-cream/40 hover:border-cream/30'
-                            }`}
-                          >
-                            {p}
-                          </button>
-                        ))}
-                      </div>
                     </div>
-
-                    {/* Photo for this row */}
-                    <div className="flex items-center gap-2">
-                      {row.photos.map((p) => (
-                        <div key={p.id} className="relative w-10 h-10 rounded overflow-hidden group">
-                          <img src={p.thumbnailUrl || p.url} alt="" className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => removePhoto(row.id, p.id)}
-                            className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                              <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
-                            </svg>
-                          </button>
-                        </div>
+                    <div className="flex gap-1">
+                      {(['HIGH', 'MED', 'LOW'] as PunchlistPriority[]).map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => updateRow(row.id, 'priority', row.priority === p ? '' : p)}
+                          className={`text-[10px] px-2 py-1 rounded-full border transition-colors ${
+                            row.priority === p
+                              ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
+                              : 'border-cream/20 text-cream/40 hover:border-cream/30'
+                          }`}
+                        >
+                          {p}
+                        </button>
                       ))}
-                      <label className="relative flex items-center gap-1 text-xs text-cream/30 hover:text-cream/50 cursor-pointer transition-colors">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handlePhotoUpload(row.id, e.target.files)}
-                          className="absolute inset-0 opacity-0 cursor-pointer"
-                        />
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                          <circle cx="8.5" cy="8.5" r="1.5" />
-                          <polyline points="21 15 16 10 5 21" />
-                        </svg>
-                        Photo
-                      </label>
                     </div>
                   </div>
                 )}

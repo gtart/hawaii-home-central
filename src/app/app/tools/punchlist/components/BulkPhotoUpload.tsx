@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useMemo } from 'react'
+import { useSession } from 'next-auth/react'
 import type { PunchlistPhoto, PunchlistPriority } from '../types'
 import type { PunchlistStateAPI } from '../usePunchlistState'
 import { uploadFile, LOCATION_SEEDS, ASSIGNEE_SEEDS } from '../utils'
@@ -21,6 +22,7 @@ interface Props {
 const MAX_PHOTOS = 10
 
 export function BulkPhotoUpload({ api, onClose }: Props) {
+  const { data: session } = useSession()
   const { addItem, payload } = api
   const [step, setStep] = useState<'upload' | 'label'>('upload')
   const [drafts, setDrafts] = useState<DraftItem[]>([])
@@ -127,6 +129,8 @@ export function BulkPhotoUpload({ api, onClose }: Props) {
         assigneeLabel: d.assignee.trim(),
         priority: d.priority || undefined,
         photos: [d.photo],
+        createdByName: session?.user?.name || undefined,
+        createdByEmail: session?.user?.email || undefined,
       })
     }
 

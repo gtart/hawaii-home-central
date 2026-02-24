@@ -212,7 +212,14 @@ export function PunchlistItemDetail({ item, api, onClose, onEdit }: Props) {
           <div className="space-y-3">
             <DetailRow label="Location" value={item.location || '—'} />
             <DetailRow label="Assignee" value={item.assigneeLabel || '—'} />
-            <DetailRow label="Created" value={new Date(item.createdAt).toLocaleDateString()} />
+            <DetailRow
+              label="Created"
+              value={
+                item.createdByName
+                  ? `${item.createdByName} · ${new Date(item.createdAt).toLocaleDateString()}`
+                  : new Date(item.createdAt).toLocaleDateString()
+              }
+            />
             <DetailRow label="Updated" value={new Date(item.updatedAt).toLocaleDateString()} />
             {item.completedAt && (
               <DetailRow label="Completed" value={new Date(item.completedAt).toLocaleDateString()} />

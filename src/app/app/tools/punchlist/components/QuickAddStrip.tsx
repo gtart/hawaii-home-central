@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { useSession } from 'next-auth/react'
 import type { PunchlistStateAPI } from '../usePunchlistState'
 import type { PunchlistPhoto } from '../types'
-import { uploadFile } from '../utils'
+import { uploadFile, LOCATION_SEEDS, ASSIGNEE_SEEDS } from '../utils'
 
 interface Props {
   api: PunchlistStateAPI
@@ -11,7 +12,11 @@ interface Props {
 }
 
 export function QuickAddStrip({ api, onDone }: Props) {
+  const { data: session } = useSession()
   const [title, setTitle] = useState('')
+  const [location, setLocation] = useState('')
+  const [assignee, setAssignee] = useState('')
+  const [expanded, setExpanded] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [addError, setAddError] = useState('')
@@ -23,6 +28,16 @@ export function QuickAddStrip({ api, onDone }: Props) {
   const galleryRef = useRef<HTMLInputElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const locationOptions = useMemo(() => {
+    const existing = new Set(api.payload.items.map((i) => i.location).filter(Boolean))
+    return Array.from(new Set([...LOCATION_SEEDS, ...existing])).sort()
+  }, [api.payload.items])
+
+  const assigneeOptions = useMemo(() => {
+    const existing = new Set(api.payload.items.map((i) => i.assigneeLabel).filter(Boolean))
+    return Array.from(new Set([...ASSIGNEE_SEEDS, ...existing])).sort()
+  }, [api.payload.items])
 
   // Detect camera permission state
   useEffect(() => {
@@ -57,11 +72,14 @@ export function QuickAddStrip({ api, onDone }: Props) {
 
       api.addItem({
         title: t,
-        location: '',
-        assigneeLabel: '',
+        location: location.trim(),
+        assigneeLabel: assignee.trim(),
         photos: photo ? [photo] : [],
+        createdByName: session?.user?.name || undefined,
+        createdByEmail: session?.user?.email || undefined,
       })
 
+      // Reset title but keep location/assignee for rapid repeat entries
       setTitle('')
       setAddError('')
       setSavedCount((c) => c + 1)
@@ -69,7 +87,7 @@ export function QuickAddStrip({ api, onDone }: Props) {
       setTimeout(() => inputRef.current?.focus(), 50)
       return true
     },
-    [title, api]
+    [title, location, assignee, api, session]
   )
 
   async function handleFiles(files: FileList | null, ref: React.RefObject<HTMLInputElement | null>) {
@@ -143,6 +161,14 @@ export function QuickAddStrip({ api, onDone }: Props) {
         tabIndex={-1}
       />
 
+      {/* Datalists for autocomplete */}
+      <datalist id="quick-add-locations">
+        {locationOptions.map((loc) => <option key={loc} value={loc} />)}
+      </datalist>
+      <datalist id="quick-add-assignees">
+        {assigneeOptions.map((a) => <option key={a} value={a} />)}
+      </datalist>
+
       {/* ── Mobile: sticky bottom bar ── */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-basalt-50 border-t border-cream/15 z-30">
         <div className="px-4 pt-3 pb-4">
@@ -203,9 +229,46 @@ export function QuickAddStrip({ api, onDone }: Props) {
             </button>
           </div>
 
+          {/* Expanded detail fields */}
+          {expanded && (
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                list="quick-add-locations"
+                placeholder="Location"
+                className="flex-1 bg-basalt border border-cream/20 rounded-lg px-2.5 py-2 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+              />
+              <input
+                type="text"
+                value={assignee}
+                onChange={(e) => setAssignee(e.target.value)}
+                list="quick-add-assignees"
+                placeholder="Assignee"
+                className="flex-1 bg-basalt border border-cream/20 rounded-lg px-2.5 py-2 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+              />
+            </div>
+          )}
+
           {/* Status line */}
           <div className="flex items-center justify-between min-h-[18px]">
-            <div className="text-xs">
+            <div className="flex items-center gap-2 text-xs">
+              {/* Expand toggle */}
+              <button
+                type="button"
+                onClick={() => setExpanded(!expanded)}
+                className="text-cream/30 hover:text-cream/50 transition-colors"
+              >
+                <svg className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              {!expanded && (location.trim() || assignee.trim()) && (
+                <span className="text-cream/25 truncate max-w-[120px]">
+                  {[location.trim(), assignee.trim()].filter(Boolean).join(' · ')}
+                </span>
+              )}
               {showSaved && <span className="text-emerald-400">Saved ✓</span>}
               {uploadError && <span className="text-red-400">{uploadError}</span>}
               {addError && !uploadError && <span className="text-red-400">{addError}</span>}
@@ -268,8 +331,45 @@ export function QuickAddStrip({ api, onDone }: Props) {
             Add
           </button>
         </div>
+
+        {/* Expanded detail fields — desktop */}
+        {expanded && (
+          <div className="flex gap-2 mb-2 pl-14">
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              list="quick-add-locations"
+              placeholder="Location"
+              className="flex-1 bg-basalt border border-cream/20 rounded-lg px-2.5 py-2 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+            />
+            <input
+              type="text"
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              list="quick-add-assignees"
+              placeholder="Assignee"
+              className="flex-1 bg-basalt border border-cream/20 rounded-lg px-2.5 py-2 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+            />
+          </div>
+        )}
+
         <div className="flex items-center justify-between min-h-[18px] pl-14">
-          <div className="text-xs">
+          <div className="flex items-center gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => setExpanded(!expanded)}
+              className="text-cream/30 hover:text-cream/50 transition-colors"
+            >
+              <svg className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            {!expanded && (location.trim() || assignee.trim()) && (
+              <span className="text-cream/25 truncate max-w-[180px]">
+                {[location.trim(), assignee.trim()].filter(Boolean).join(' · ')}
+              </span>
+            )}
             {showSaved && <span className="text-emerald-400">Saved ✓</span>}
             {uploadError && <span className="text-red-400">{uploadError}</span>}
             {addError && !uploadError && <span className="text-red-400">{addError}</span>}

@@ -28,6 +28,8 @@ export interface PunchlistItem {
   notes?: string
   comments?: PunchlistComment[]
   photos: PunchlistPhoto[]
+  createdByName?: string
+  createdByEmail?: string
   createdAt: string
   updatedAt: string
   completedAt?: string

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef } from 'react'
+import { useSession } from 'next-auth/react'
 import type { PunchlistItem, PunchlistPhoto, PunchlistPriority } from '../types'
 import type { PunchlistStateAPI } from '../usePunchlistState'
 import { LOCATION_SEEDS, ASSIGNEE_SEEDS } from '../utils'
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function PunchlistItemForm({ api, editItem, onClose }: Props) {
+  const { data: session } = useSession()
   const { addItem, updateItem, payload } = api
 
   const [title, setTitle] = useState(editItem?.title ?? '')
@@ -74,6 +76,8 @@ export function PunchlistItemForm({ api, editItem, onClose }: Props) {
         priority: priority || undefined,
         notes: notes.trim() || undefined,
         photos,
+        createdByName: session?.user?.name || undefined,
+        createdByEmail: session?.user?.email || undefined,
       })
     }
 
@@ -90,6 +94,8 @@ export function PunchlistItemForm({ api, editItem, onClose }: Props) {
       priority: priority || undefined,
       notes: notes.trim() || undefined,
       photos,
+      createdByName: session?.user?.name || undefined,
+      createdByEmail: session?.user?.email || undefined,
     })
 
     // Reset variable fields; keep location/assignee/priority for rapid repeat entries
