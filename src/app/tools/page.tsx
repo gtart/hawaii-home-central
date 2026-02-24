@@ -70,7 +70,7 @@ export default async function ToolsMarketingPage() {
               <p className="text-cream/50 text-sm">
                 Looking for in-depth guides?{' '}
                 <Link href="/hawaii-home-renovation" className="text-sandstone hover:text-sandstone-light transition-colors">
-                  Visit Guides
+                  Visit Renovation Guides
                 </Link>
               </p>
             </div>

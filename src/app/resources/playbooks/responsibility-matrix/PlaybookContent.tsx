@@ -90,7 +90,7 @@ export function PlaybookContent() {
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-3xl mx-auto">
-        <Breadcrumbs items={[{ label: 'Guides', href: '/hawaii-home-renovation' }, { label: 'Who Handles What' }]} />
+        <Breadcrumbs items={[{ label: 'Renovation Guides', href: '/hawaii-home-renovation' }, { label: 'Who Handles What' }]} />
 
         {/* Hero */}
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-2">

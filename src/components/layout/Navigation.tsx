@@ -53,7 +53,7 @@ export function Navigation() {
   const toolsHref = session?.user ? '/app' : '/tools'
 
   const primaryLinks: NavLink[] = [
-    { href: '/hawaii-home-renovation', label: 'Guides', matchMode: 'prefix' },
+    { href: '/hawaii-home-renovation', label: 'Renovation Guides', matchMode: 'prefix' },
     { href: toolsHref, label: toolsLabel, matchMode: 'prefix' },
     { href: '/stories', label: 'Stories' },
   ]
@@ -69,7 +69,7 @@ export function Navigation() {
     if (link.href === '/app' || link.href === '/tools') {
       return pathname.startsWith('/app') || pathname.startsWith('/tools')
     }
-    // Guides link: active for both /hawaii-home-renovation and /resources sub-pages
+    // Renovation Guides link: active for both /hawaii-home-renovation and /resources sub-pages
     if (link.href === '/hawaii-home-renovation') {
       return pathname.startsWith('/hawaii-home-renovation') || pathname.startsWith('/resources')
     }
