@@ -73,17 +73,30 @@ export function ImportFromUrlPanel({
       }
 
       const data: LinkPreviewResult = await res.json()
-      setPreview(data)
       setUrl(finalUrl)
 
-      // Pre-fill name from page title
-      if (data.title && mode === 'create-idea') {
-        setName(data.title)
-      }
-
-      // Auto-select primary image
-      if (data.primaryImage) {
-        setSelectedUrls(new Set([data.primaryImage]))
+      // Check if the response is essentially empty (site blocked us)
+      const isEmpty = !data.title && !data.description && (!data.images || data.images.length === 0)
+      if (isEmpty) {
+        // Still set preview so we show the fallback UI
+        setPreview({ ...data, _blocked: true } as LinkPreviewResult)
+        if (mode === 'create-idea') {
+          // Pre-fill name from URL hostname + path
+          try {
+            const u = new URL(finalUrl)
+            const pathName = u.pathname.split('/').filter(Boolean).pop() || ''
+            const decoded = decodeURIComponent(pathName).replace(/[-_]/g, ' ').replace(/\.[^.]+$/, '')
+            setName(decoded.slice(0, 80) || u.hostname.replace(/^www\./, ''))
+          } catch { /* ignore */ }
+        }
+      } else {
+        setPreview(data)
+        if (data.title && mode === 'create-idea') {
+          setName(data.title)
+        }
+        if (data.primaryImage) {
+          setSelectedUrls(new Set([data.primaryImage]))
+        }
       }
     } catch {
       setError('Failed to fetch preview. The site may be blocking requests.')
@@ -169,23 +182,25 @@ export function ImportFromUrlPanel({
       {preview && !loading && (
         <div className="space-y-4">
           {/* Page info */}
-          <div className="bg-basalt-50 rounded-lg p-3 border border-cream/10">
-            {preview.siteName && (
-              <p className="text-[11px] text-cream/40 uppercase tracking-wide mb-1">
-                {preview.siteName}
-              </p>
-            )}
-            {preview.title && (
-              <p className="text-sm text-cream font-medium leading-snug">
-                {preview.title}
-              </p>
-            )}
-            {preview.description && (
-              <p className="text-xs text-cream/50 mt-1 line-clamp-2">
-                {preview.description}
-              </p>
-            )}
-          </div>
+          {(preview.title || preview.siteName || preview.description) && (
+            <div className="bg-basalt-50 rounded-lg p-3 border border-cream/10">
+              {preview.siteName && (
+                <p className="text-[11px] text-cream/40 uppercase tracking-wide mb-1">
+                  {preview.siteName}
+                </p>
+              )}
+              {preview.title && (
+                <p className="text-sm text-cream font-medium leading-snug">
+                  {preview.title}
+                </p>
+              )}
+              {preview.description && (
+                <p className="text-xs text-cream/50 mt-1 line-clamp-2">
+                  {preview.description}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Image picker grid */}
           {hasImages && (
@@ -237,11 +252,18 @@ export function ImportFromUrlPanel({
             </div>
           )}
 
-          {/* No images found */}
+          {/* No images found / site blocked */}
           {!hasImages && (
-            <p className="text-xs text-cream/40 text-center py-4">
-              No images found on this page.
-            </p>
+            <div className="bg-basalt rounded-lg p-4 text-center">
+              <p className="text-xs text-cream/50 mb-1">
+                {(preview as Record<string, unknown>)?._blocked
+                  ? 'This site blocked our preview request.'
+                  : 'No images found on this page.'}
+              </p>
+              <p className="text-[11px] text-cream/30">
+                You can still save this URL as an idea — just enter a name below.
+              </p>
+            </div>
           )}
 
           {/* Name & Notes (create-idea mode only) */}
