@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { OptionV3, DecisionV3, SelectionComment } from '@/data/finish-decisions'
 import { getHeroImage } from '@/lib/finishDecisionsImages'
 import { IdeaCardModal } from './IdeaCardModal'
@@ -29,7 +30,6 @@ interface Props {
   onAddComment: (comment: CommentPayload) => void
   onCommentOnOption?: (optionId: string, optionLabel: string) => void
   onOpenGlobalComment?: () => void
-  onShowImportUrl?: () => void
   showContent?: boolean
   comments: SelectionComment[]
 }
@@ -313,10 +313,10 @@ export function IdeasBoard({
   onAddComment,
   onCommentOnOption,
   onOpenGlobalComment,
-  onShowImportUrl,
   showContent,
   comments,
 }: Props) {
+  const router = useRouter()
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [expanded, setExpanded] = useState(false)
@@ -661,19 +661,18 @@ export function IdeasBoard({
                   </svg>
                   Add Note
                 </button>
-                {onShowImportUrl && (
-                  <button
-                    type="button"
-                    onClick={onShowImportUrl}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors"
-                  >
-                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" />
-                      <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" />
-                    </svg>
-                    Add from URL
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => router.push('/app/save-from-web')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors"
+                >
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M2 12h20" strokeLinecap="round" />
+                    <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+                  </svg>
+                  Web
+                </button>
               </div>
             </div>
           )}
@@ -750,19 +749,18 @@ export function IdeasBoard({
               </svg>
               Note
             </button>
-            {onShowImportUrl && (
-              <button
-                type="button"
-                onClick={onShowImportUrl}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors"
-              >
-                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" />
-                  <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" />
-                </svg>
-                URL
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => router.push('/app/save-from-web')}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20" strokeLinecap="round" />
+                <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+              </svg>
+              Web
+            </button>
             <button
               type="button"
               onClick={() => onOpenGlobalComment?.()}

@@ -3,7 +3,6 @@
 import { useRef, useState, useEffect } from 'react'
 import type { OptionV3, OptionImageV3, DecisionV3, SelectionComment, LinkV3 } from '@/data/finish-decisions'
 import { getAllImages, getHeroImage } from '@/lib/finishDecisionsImages'
-import { ImportFromUrlPanel } from './ImportFromUrlPanel'
 
 interface CommentPayload {
   text: string
@@ -79,7 +78,6 @@ export function IdeaCardModal({
   const [uploadError, setUploadError] = useState('')
   const [photoUrlInput, setPhotoUrlInput] = useState('')
   const [showPhotoMenu, setShowPhotoMenu] = useState(false)
-  const [showImportImages, setShowImportImages] = useState(false)
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const photoMenuRef = useRef<HTMLDivElement>(null)
@@ -423,18 +421,6 @@ export function IdeaCardModal({
                               </svg>
                               Photo library
                             </button>
-                            <div className="border-t border-cream/10" />
-                            <button
-                              type="button"
-                              onClick={() => { setShowImportImages(true); setShowPhotoMenu(false) }}
-                              className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
-                            >
-                              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" />
-                                <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" />
-                              </svg>
-                              Import from webpage
-                            </button>
                           </div>
                         )}
                       </div>
@@ -516,19 +502,6 @@ export function IdeaCardModal({
                         </svg>
                         Gallery
                       </button>
-                      <div className="w-px bg-cream/10" />
-                      <button
-                        type="button"
-                        onClick={() => setShowImportImages(true)}
-                        disabled={uploading}
-                        className="flex-1 flex items-center justify-center gap-2 py-3.5 text-sm text-cream/50 hover:text-cream/80 hover:bg-cream/5 transition-colors disabled:opacity-40"
-                      >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" />
-                          <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" />
-                        </svg>
-                        URL
-                      </button>
                     </div>
                   </div>
                   {/* Photo URL input */}
@@ -553,30 +526,6 @@ export function IdeaCardModal({
                 </div>
               ) : null
             })()}
-
-            {/* Import images from webpage panel */}
-            {showImportImages && !readOnly && (
-              <div className="mt-3 bg-basalt rounded-xl p-3 border border-cream/10">
-                <p className="text-xs text-cream/50 mb-2 font-medium">Import images from a webpage</p>
-                <ImportFromUrlPanel
-                  mode="pick-images"
-                  onImport={(result) => {
-                    if (result.selectedImages.length === 0) return
-                    const existing = getAllImages(option)
-                    const merged: OptionImageV3[] = [...existing, ...result.selectedImages]
-                    onUpdate({
-                      kind: 'image',
-                      images: merged,
-                      heroImageId: option.heroImageId || merged[0].id,
-                      imageUrl: merged[0].url,
-                      thumbnailUrl: merged[0].thumbnailUrl || merged[0].url,
-                    })
-                    setShowImportImages(false)
-                  }}
-                  onCancel={() => setShowImportImages(false)}
-                />
-              </div>
-            )}
 
             {uploadError && <p className="text-sm text-red-400 mt-2">{uploadError}</p>}
           </div>
