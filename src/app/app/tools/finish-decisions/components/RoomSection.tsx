@@ -1,12 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { useState, useRef, useEffect } from 'react'
 import {
   ROOM_EMOJI_MAP,
   type RoomV3,
-  type DecisionV3,
   type RoomTypeV3,
 } from '@/data/finish-decisions'
 import { DecisionsTable } from './DecisionsTable'
@@ -17,6 +14,7 @@ export function RoomSection({
   onToggleExpand,
   onUpdateRoom,
   onDeleteRoom,
+  onQuickAdd,
   readOnly = false,
 }: {
   room: RoomV3
@@ -24,10 +22,22 @@ export function RoomSection({
   onToggleExpand: () => void
   onUpdateRoom: (updates: Partial<RoomV3>) => void
   onDeleteRoom: () => void
+  onQuickAdd: () => void
   readOnly?: boolean
 }) {
-  const [newDecisionTitle, setNewDecisionTitle] = useState('')
-  const [showAddForm, setShowAddForm] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
 
   const stats = {
     total: room.decisions.length,
@@ -41,28 +51,6 @@ export function RoomSection({
   if (stats.selected > 0) summaryParts.push(`${stats.selected} selected`)
   if (stats.ordered > 0) summaryParts.push(`${stats.ordered} ordered`)
   if (stats.done > 0) summaryParts.push(`${stats.done} done`)
-
-  const handleAddDecision = () => {
-    if (!newDecisionTitle.trim()) return
-
-    const newDecision: DecisionV3 = {
-      id: crypto.randomUUID(),
-      title: newDecisionTitle.trim(),
-      status: 'deciding',
-      notes: '',
-      options: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
-    onUpdateRoom({
-      decisions: [...room.decisions, newDecision],
-      updatedAt: new Date().toISOString(),
-    })
-
-    setNewDecisionTitle('')
-    setShowAddForm(false)
-  }
 
   const deleteDecision = (decisionId: string) => {
     if (confirm(`Delete this decision? This will also delete all its options.`)) {
@@ -95,70 +83,59 @@ export function RoomSection({
           {summaryParts.join(', ')}
         </span>
 
+        {/* Kebab menu */}
         {!readOnly && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setShowAddForm(true)
-            }}
-            className="text-sandstone hover:text-sandstone-light text-xs font-medium"
-          >
-            + Add
-          </button>
-        )}
-
-        {!readOnly && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              if (confirm(`Delete ${room.name}? This will also delete all decisions and options.`)) {
-                onDeleteRoom()
-              }
-            }}
-            className="text-red-400/60 hover:text-red-400 text-xs ml-1"
-          >
-            Delete
-          </button>
+          <div className="relative shrink-0" ref={menuRef}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setMenuOpen(!menuOpen)
+              }}
+              className="p-1.5 text-cream/30 hover:text-cream/60 transition-colors"
+              aria-label="Room options"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="5" r="2" />
+                <circle cx="12" cy="12" r="2" />
+                <circle cx="12" cy="19" r="2" />
+              </svg>
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg py-1 min-w-[150px]">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setMenuOpen(false)
+                    onQuickAdd()
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
+                >
+                  Add selection
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setMenuOpen(false)
+                    if (confirm(`Delete ${room.name}? This will also delete all decisions and options.`)) {
+                      onDeleteRoom()
+                    }
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
+                >
+                  Delete room
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
       {/* Expanded Content */}
       {isExpanded && (
         <div className="border-t border-cream/10 px-4 py-4">
-          {/* Add Decision Form (inline, triggered from header) */}
-          {showAddForm && (
-            <div className="flex gap-2 mb-4">
-              <Input
-                placeholder="Decision title (e.g., Countertop)"
-                value={newDecisionTitle}
-                onChange={(e) => setNewDecisionTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleAddDecision()
-                  if (e.key === 'Escape') {
-                    setShowAddForm(false)
-                    setNewDecisionTitle('')
-                  }
-                }}
-                autoFocus
-                className="flex-1"
-              />
-              <Button size="sm" onClick={handleAddDecision}>
-                Add
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setShowAddForm(false)
-                  setNewDecisionTitle('')
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
-          )}
-
-          {/* Decisions Table */}
           <DecisionsTable
             decisions={room.decisions}
             roomType={room.type}

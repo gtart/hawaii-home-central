@@ -168,6 +168,12 @@ export function DecisionsTable({
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="text-cream font-medium text-sm">{decision.title}</div>
+                    {(() => {
+                      const sel = decision.options.find(o => o.isSelected)
+                      return sel ? (
+                        <div className="text-[11px] text-sandstone/60 mt-0.5 truncate">Selected: {sel.name}</div>
+                      ) : null
+                    })()}
                   </td>
                   <td className="px-3 py-2.5">
                     <Badge variant={statusCfg.variant}>

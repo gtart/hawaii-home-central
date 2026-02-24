@@ -5,11 +5,13 @@ import { Input } from '@/components/ui/Input'
 import {
   STATUS_CONFIG_V3,
   type RoomV3,
+  type DecisionV3,
   type StatusV3,
   type RoomSelection,
 } from '@/data/finish-decisions'
 import { RoomSection } from './RoomSection'
 import { OnboardingView } from './OnboardingView'
+import { QuickAddDecisionModal } from './QuickAddDecisionModal'
 
 export function DecisionTrackerPage({
   rooms,
@@ -31,6 +33,9 @@ export function DecisionTrackerPage({
   const [statusFilters, setStatusFilters] = useState<StatusV3[]>([])
   const [roomFilter, setRoomFilter] = useState<string | null>(null)
   const [onboardingCollapsed, setOnboardingCollapsed] = useState(true)
+  const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const [quickAddRoomId, setQuickAddRoomId] = useState<string | null>(null)
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
 
   const hasRooms = rooms.length > 0
 
@@ -124,6 +129,40 @@ export function DecisionTrackerPage({
   const totalDecisions = rooms.reduce((sum, r) => sum + r.decisions.length, 0)
   const filteredDecisions = filteredRooms.reduce((sum, r) => sum + r.decisions.length, 0)
   const isFiltering = searchQuery.trim() !== '' || statusFilters.length > 0 || roomFilter !== null
+  const activeFilterCount = (roomFilter ? 1 : 0) + statusFilters.length
+
+  // Summary strip stats (computed from ALL rooms, not filtered)
+  const summaryStats = useMemo(() => {
+    const allDecisions = rooms.flatMap((r) => r.decisions)
+    const deciding = allDecisions.filter((d) => d.status === 'deciding').length
+    const selected = allDecisions.filter((d) => d.status === 'selected').length
+    const ordered = allDecisions.filter((d) => d.status === 'ordered').length
+    const done = allDecisions.filter((d) => d.status === 'done').length
+
+    const today = new Date().toISOString().slice(0, 10)
+    const overdue = allDecisions.filter(
+      (d) => d.dueDate && d.dueDate < today && d.status !== 'done'
+    ).length
+
+    const futureDueDates = allDecisions
+      .filter((d) => d.dueDate && d.dueDate >= today && d.status !== 'done')
+      .map((d) => d.dueDate!)
+      .sort()
+    const nextDue = futureDueDates[0] || null
+
+    return { deciding, selected, ordered, done, overdue, nextDue }
+  }, [rooms])
+
+  const handleQuickAddDecision = (roomId: string, decision: DecisionV3) => {
+    const room = rooms.find((r) => r.id === roomId)
+    if (!room) return
+    onUpdateRoom(roomId, {
+      decisions: [...room.decisions, decision],
+      updatedAt: new Date().toISOString(),
+    })
+    // Auto-expand the room so user sees the new decision
+    setExpandedRooms((prev) => new Set([...prev, roomId]))
+  }
 
   return (
     <>
@@ -148,8 +187,70 @@ export function DecisionTrackerPage({
             />
           </div>
 
-          {/* Combined filter row: rooms + status + expand/collapse */}
-          <div className="flex flex-wrap items-center gap-1.5 mb-4">
+          {/* Summary strip */}
+          {totalDecisions > 0 && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-cream/50 mb-3">
+              <span>Deciding {summaryStats.deciding}</span>
+              <span>Selected {summaryStats.selected}</span>
+              <span>Ordered {summaryStats.ordered}</span>
+              <span>Done {summaryStats.done}</span>
+              {summaryStats.overdue > 0 && (
+                <span className="text-red-400">Overdue {summaryStats.overdue}</span>
+              )}
+              {summaryStats.nextDue && (
+                <span>
+                  Next due:{' '}
+                  {new Date(summaryStats.nextDue + 'T00:00:00').toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Mobile filter bar */}
+          <div className="flex md:hidden items-center gap-2 mb-4">
+            <button
+              onClick={() => setFilterSheetOpen(true)}
+              className="relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 rounded-lg text-xs text-cream/70 hover:text-cream transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+              </svg>
+              Filter
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-sandstone text-basalt text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+            <div className="flex-1" />
+            <button
+              onClick={expandAll}
+              className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+            >
+              Expand
+            </button>
+            <span className="text-cream/15 select-none">·</span>
+            <button
+              onClick={collapseAll}
+              className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+            >
+              Collapse
+            </button>
+            {isFiltering && (
+              <>
+                <span className="text-cream/15 select-none">·</span>
+                <span className="text-[11px] text-cream/50">
+                  {filteredDecisions}/{totalDecisions}
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Desktop filter row: rooms + status + expand/collapse */}
+          <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
             {/* Room filters */}
             <button
               onClick={() => setRoomFilter(null)}
@@ -177,7 +278,7 @@ export function DecisionTrackerPage({
             ))}
 
             {/* Separator */}
-            <span className="text-cream/15 mx-0.5 select-none hidden sm:inline">|</span>
+            <span className="text-cream/15 mx-0.5 select-none">|</span>
 
             {/* Status filters */}
             {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, (typeof STATUS_CONFIG_V3)[StatusV3]][]).map(
@@ -229,6 +330,17 @@ export function DecisionTrackerPage({
                 </span>
               </>
             )}
+            {!readOnly && (
+              <>
+                <span className="text-cream/15 select-none">·</span>
+                <button
+                  onClick={() => { setQuickAddRoomId(null); setQuickAddOpen(true) }}
+                  className="inline-flex items-center gap-1 text-[11px] text-sandstone hover:text-sandstone-light transition-colors font-medium"
+                >
+                  + Add Selection
+                </button>
+              </>
+            )}
           </div>
 
           {/* Content */}
@@ -258,12 +370,129 @@ export function DecisionTrackerPage({
                   onToggleExpand={() => toggleRoom(room.id)}
                   onUpdateRoom={(updates) => onUpdateRoom(room.id, updates)}
                   onDeleteRoom={() => onDeleteRoom(room.id)}
+                  onQuickAdd={() => { setQuickAddRoomId(room.id); setQuickAddOpen(true) }}
                   readOnly={readOnly}
                 />
               ))}
             </div>
           )}
         </>
+      )}
+
+      {/* Mobile FAB */}
+      {hasRooms && !readOnly && (
+        <button
+          type="button"
+          onClick={() => { setQuickAddRoomId(null); setQuickAddOpen(true) }}
+          className="md:hidden fixed bottom-8 right-8 w-14 h-14 bg-sandstone rounded-full shadow-lg z-40 flex items-center justify-center active:scale-95 transition-transform"
+          aria-label="Add selection"
+        >
+          <svg className="w-7 h-7 text-basalt" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
+
+      {/* Mobile Filter Sheet */}
+      {filterSheetOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex items-end">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setFilterSheetOpen(false)} />
+          <div className="relative bg-basalt-50 border-t border-cream/10 rounded-t-xl w-full max-h-[70vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 pt-4 pb-2">
+              <h2 className="text-lg font-medium text-cream">Filters</h2>
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={() => { setRoomFilter(null); setStatusFilters([]) }}
+                  className="text-xs text-sandstone hover:text-sandstone-light transition-colors"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+
+            <div className="px-5 pb-5 space-y-5">
+              {/* Room section */}
+              <div>
+                <label className="block text-sm text-cream/70 mb-2">Room</label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setRoomFilter(null)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      roomFilter === null
+                        ? 'bg-sandstone/20 text-sandstone ring-1 ring-sandstone/40'
+                        : 'bg-cream/10 text-cream/60'
+                    }`}
+                  >
+                    All Rooms
+                  </button>
+                  {rooms.map((room) => (
+                    <button
+                      key={room.id}
+                      onClick={() => setRoomFilter(roomFilter === room.id ? null : room.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        roomFilter === room.id
+                          ? 'bg-sandstone/20 text-sandstone ring-1 ring-sandstone/40'
+                          : 'bg-cream/10 text-cream/60'
+                      }`}
+                    >
+                      {room.name}
+                      <span className="text-[10px] opacity-70 ml-1">{room.decisions.length}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status section */}
+              <div>
+                <label className="block text-sm text-cream/70 mb-2">Status</label>
+                <div className="flex flex-wrap gap-2">
+                  {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, (typeof STATUS_CONFIG_V3)[StatusV3]][]).map(
+                    ([status, config]) => {
+                      const isActive = statusFilters.includes(status)
+                      const count = rooms.reduce(
+                        (sum, r) => sum + r.decisions.filter((d) => d.status === status).length,
+                        0
+                      )
+
+                      return (
+                        <button
+                          key={status}
+                          onClick={() => toggleStatusFilter(status)}
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                            isActive
+                              ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                              : 'bg-cream/10 text-cream/60'
+                          }`}
+                        >
+                          {config.label}
+                          <span className="text-[10px] opacity-70">{count}</span>
+                        </button>
+                      )
+                    }
+                  )}
+                </div>
+              </div>
+
+              {/* Done button */}
+              <button
+                onClick={() => setFilterSheetOpen(false)}
+                className="w-full py-3 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Add Modal */}
+      {quickAddOpen && rooms.length > 0 && (
+        <QuickAddDecisionModal
+          rooms={rooms}
+          preselectedRoomId={quickAddRoomId}
+          onAdd={handleQuickAddDecision}
+          onClose={() => setQuickAddOpen(false)}
+        />
       )}
     </>
   )

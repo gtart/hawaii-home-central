@@ -66,6 +66,14 @@ export function DecisionCard({
           <h3 className="text-sm font-medium text-cream leading-tight">
             {decision.title || 'Untitled Decision'}
           </h3>
+          {(() => {
+            const sel = decision.options.find(o => o.isSelected)
+            return sel ? (
+              <p className="text-[11px] text-sandstone/70 leading-tight mt-0.5 truncate">
+                Selected: {sel.name}
+              </p>
+            ) : null
+          })()}
           {!readOnly && (
             <div className="relative shrink-0" ref={menuRef}>
               <button
