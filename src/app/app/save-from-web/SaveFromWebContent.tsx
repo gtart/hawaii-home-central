@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useProject } from '@/contexts/ProjectContext'
 import { useToolState } from '@/hooks/useToolState'
@@ -143,13 +143,44 @@ export function SaveFromWebContent() {
     setSaved(true)
   }
 
-  // Generate bookmarklet javascript: URL dynamically from current origin
-  const bookmarkletHref = useMemo(() => {
-    if (typeof window === 'undefined') return '#'
+  // Set bookmarklet href directly on the DOM element (bypasses React's href sanitization and SSR issues)
+  const bookmarkletRef = useRef<HTMLAnchorElement>(null)
+  const [bookmarkletReady, setBookmarkletReady] = useState(false)
+
+  useEffect(() => {
+    const el = bookmarkletRef.current
+    if (!el) return
     const origin = window.location.origin
     // Bookmarklet script: scrapes images + title, stores in sessionStorage, opens save-from-web
-    // Uses try/catch with alert so errors are visible. Falls back to same-tab navigation if popup blocked.
-    return `javascript:void(function(){try{var d=document,t=d.title||'',o='',m=d.querySelector('meta[property="og:image"]');if(m)o=m.getAttribute('content')||'';var i=[],s={};function a(u){try{return new URL(u,location.href).href}catch(e){return''}}if(o){var r=a(o);if(r){s[r]=1;i.push({url:r,label:'Primary'})}}var g=d.getElementsByTagName('img');for(var j=0;j<g.length&&i.length<20;j++){var el=g[j];if(el.naturalWidth>0&&el.naturalWidth<=150)continue;if(el.naturalHeight>0&&el.naturalHeight<=150)continue;var c=el.getAttribute('data-src')||el.getAttribute('data-lazy-src')||el.src||'';if(!c||c.indexOf('data:')===0)continue;if(c.indexOf('.svg')>-1)continue;var r2=a(c);if(!r2||s[r2])continue;s[r2]=1;var l=el.alt||el.title||'';i.push({url:r2,label:l.substring(0,80)})}var p=JSON.stringify({title:t.substring(0,120),images:i,url:location.href});try{sessionStorage.setItem('hhc_bookmarklet_pending',p)}catch(x){}var b=btoa(unescape(encodeURIComponent(p)));var u='${origin}/app/save-from-web#bookmarklet='+b;var w=window.open(u,'_blank');if(!w){window.location.href=u}}catch(err){alert('Save to HHC error: '+err.message)}}())`
+    const code = [
+      'javascript:void(function(){',
+      'try{',
+      'var d=document,t=d.title||"",o="",m=d.querySelector("meta[property=\\"og:image\\"]");',
+      'if(m)o=m.getAttribute("content")||"";',
+      'var i=[],s={};',
+      'function abs(u){try{return new URL(u,location.href).href}catch(e){return""}}',
+      'if(o){var r=abs(o);if(r){s[r]=1;i.push({url:r,label:"Primary"})}}',
+      'var g=d.getElementsByTagName("img");',
+      'for(var j=0;j<g.length&&i.length<20;j++){',
+      'var el=g[j];',
+      'if(el.naturalWidth>0&&el.naturalWidth<=150)continue;',
+      'if(el.naturalHeight>0&&el.naturalHeight<=150)continue;',
+      'var c=el.getAttribute("data-src")||el.getAttribute("data-lazy-src")||el.src||"";',
+      'if(!c||c.indexOf("data:")===0)continue;',
+      'if(c.indexOf(".svg")>-1)continue;',
+      'var r2=abs(c);if(!r2||s[r2])continue;s[r2]=1;',
+      'var l=el.alt||el.title||"";',
+      'i.push({url:r2,label:l.substring(0,80)})}',
+      'var p=JSON.stringify({title:t.substring(0,120),images:i,url:location.href});',
+      'try{sessionStorage.setItem("hhc_bookmarklet_pending",p)}catch(x){}',
+      'var b=btoa(unescape(encodeURIComponent(p)));',
+      'var u="' + origin + '/app/save-from-web#bookmarklet="+b;',
+      'var w=window.open(u,"_blank");if(!w){window.location.href=u}',
+      '}catch(err){alert("Save to HHC error: "+err.message)}',
+      '}())',
+    ].join('')
+    el.setAttribute('href', code)
+    setBookmarkletReady(true)
   }, [])
 
   // Extract hostname for display
@@ -450,14 +481,18 @@ export function SaveFromWebContent() {
                 <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">1</span>
                 <div>
                   <p className="text-sm text-cream/80 mb-2">Drag this button to your bookmarks bar:</p>
-                  {/* eslint-disable-next-line no-script-url */}
                   <a
-                    href={bookmarkletHref}
+                    ref={bookmarkletRef}
+                    href="#"
                     onClick={(e) => {
                       e.preventDefault()
                       alert('Drag this button to your bookmarks bar — don\'t click it!')
                     }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg cursor-grab active:cursor-grabbing select-none"
+                    className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg cursor-grab active:cursor-grabbing select-none ${
+                      bookmarkletReady
+                        ? 'bg-sandstone text-basalt'
+                        : 'bg-cream/20 text-cream/40'
+                    }`}
                     title="Drag me to your bookmarks bar"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -465,9 +500,13 @@ export function SaveFromWebContent() {
                     </svg>
                     Save to HHC
                   </a>
-                  <p className="text-[11px] text-cream/30 mt-1.5">
-                    On Safari: right-click the button, select &quot;Add to Bookmarks&quot;
-                  </p>
+                  {bookmarkletReady ? (
+                    <p className="text-[11px] text-cream/30 mt-1.5">
+                      On Safari: right-click the button, select &quot;Add to Bookmarks&quot;
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-cream/40 mt-1.5">Loading bookmarklet...</p>
+                  )}
                 </div>
               </div>
 
