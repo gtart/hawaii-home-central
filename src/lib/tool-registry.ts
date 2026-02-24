@@ -24,7 +24,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'finish_decisions',
     href: '/app/tools/finish-decisions',
-    title: 'Finish Selections',
+    title: 'Selections List',
     description:
       'Keep your renovation moving\u2014by tracking every finish selection, option, and status in one place.',
     stage: 'Choose Your Finishes',

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { useToolState } from '@/hooks/useToolState'
-import { IdeasBoard } from '../../components/IdeasBoard'
+import { IdeasBoard, uploadIdeaFile } from '../../components/IdeasBoard'
 import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
 import {
   STATUS_CONFIG_V3,
@@ -31,6 +31,12 @@ export function DecisionDetailContent() {
   const decisionId = params.decisionId as string
   const [optionsOpen, setOptionsOpen] = useState(true)
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [notesExpanded, setNotesExpanded] = useState(false)
+  const [stickyUploading, setStickyUploading] = useState(false)
+  const [draftRef, setDraftRef] = useState<{ optionId: string; optionLabel: string } | null>(null)
+  const stickyFileRef = useRef<HTMLInputElement>(null)
+  const commentInputRef = useRef<HTMLTextAreaElement>(null)
 
   const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3 | any>({
     toolKey: 'finish_decisions',
@@ -166,6 +172,67 @@ export function DecisionDetailContent() {
     })
   }
 
+  // Sticky bar handlers
+  async function handleStickyPhoto(files: FileList | null) {
+    if (!files || files.length === 0 || !foundDecision) return
+    setStickyUploading(true)
+    const isFirst = foundDecision.options.length === 0
+    for (const file of Array.from(files)) {
+      if (file.size === 0) continue
+      try {
+        const { url, thumbnailUrl, id } = await uploadIdeaFile(file)
+        updateDecision({
+          options: [
+            ...foundDecision.options,
+            {
+              id,
+              kind: 'image',
+              name: '',
+              notes: '',
+              urls: [],
+              imageUrl: url,
+              thumbnailUrl,
+              isSelected: isFirst && foundDecision.options.length === 0 ? true : undefined,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          ],
+        })
+      } catch { /* silent */ }
+    }
+    setStickyUploading(false)
+    if (stickyFileRef.current) stickyFileRef.current.value = ''
+  }
+
+  function handleStickyAddNote() {
+    if (!foundDecision) return
+    const id = crypto.randomUUID()
+    const autoFinal = foundDecision.options.length === 0
+    updateDecision({
+      options: [
+        ...foundDecision.options,
+        {
+          id,
+          kind: 'text' as const,
+          name: '',
+          notes: '',
+          urls: [],
+          isSelected: autoFinal || undefined,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+    })
+    setOptionsOpen(true)
+    setActiveCardId(id)
+  }
+
+  function handleCommentOnOption(optionId: string, optionLabel: string) {
+    setDraftRef({ optionId, optionLabel })
+    commentInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setTimeout(() => commentInputRef.current?.focus(), 300)
+  }
+
   const deleteDecision = () => {
     if (!foundRoom || !foundDecision) return
     if (confirm(`Delete "${foundDecision.title}"? This will also delete all options.`)) {
@@ -203,12 +270,12 @@ export function DecisionDetailContent() {
             onClick={() => router.push('/app/tools/finish-decisions')}
             className="text-sandstone hover:text-sandstone-light text-sm mb-6"
           >
-            ← Back to Finish Selections
+            ← Back to Selections
           </button>
           <div className="bg-basalt-50 rounded-card p-12 text-center">
             <p className="text-cream/50 mb-4">Selection not found.</p>
             <Button onClick={() => router.push('/app/tools/finish-decisions')}>
-              Go to Finish Selections
+              Go to Selections List
             </Button>
           </div>
         </div>
@@ -344,19 +411,19 @@ export function DecisionDetailContent() {
   }
 
   return (
-    <div className="pt-20 md:pt-24 pb-24 px-6">
+    <div className="pt-20 md:pt-24 pb-36 md:pb-24 px-6">
       <div className="max-w-3xl mx-auto">
         {/* Back link */}
         <button
           onClick={() => router.push('/app/tools/finish-decisions')}
           className="text-sandstone hover:text-sandstone-light text-sm mb-4"
         >
-          ← Back to Finish Selections
+          ← Back to Selections
         </button>
 
         {/* Header */}
         <div className="mb-5">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-3">
             <Badge variant="default" className="text-xs">
               {foundRoom.name}
             </Badge>
@@ -367,16 +434,59 @@ export function DecisionDetailContent() {
             )}
           </div>
 
-          <Input
-            value={foundDecision.title}
-            onChange={(e) => updateDecision({ title: e.target.value })}
-            className="text-2xl font-serif"
-            readOnly={readOnly}
+          {/* Title: click-to-edit on mobile, always-editable on desktop */}
+          <div className="hidden md:block">
+            <Input
+              value={foundDecision.title}
+              onChange={(e) => updateDecision({ title: e.target.value })}
+              className="text-2xl font-serif"
+              readOnly={readOnly}
+            />
+          </div>
+          <div className="md:hidden">
+            {editingTitle ? (
+              <Input
+                autoFocus
+                value={foundDecision.title}
+                onChange={(e) => updateDecision({ title: e.target.value })}
+                onBlur={() => setEditingTitle(false)}
+                className="text-2xl font-serif"
+                readOnly={readOnly}
+              />
+            ) : (
+              <h1
+                className="text-2xl font-serif text-cream cursor-text"
+                onClick={() => !readOnly && setEditingTitle(true)}
+              >
+                {foundDecision.title || <span className="text-cream/30">Untitled</span>}
+              </h1>
+            )}
+          </div>
+        </div>
+
+        {/* Status + Due Date: compact row on mobile, full sections on desktop */}
+        <div className="flex items-center gap-3 mb-4 md:hidden">
+          <select
+            value={foundDecision.status}
+            onChange={(e) => handleStatusChange(e.target.value as StatusV3)}
+            disabled={readOnly}
+            className="flex-1 bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone disabled:opacity-50"
+          >
+            {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
+              <option key={key} value={key}>{config.label}</option>
+            ))}
+          </select>
+          <input
+            type="date"
+            value={foundDecision.dueDate || ''}
+            onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
+            disabled={readOnly}
+            className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50"
           />
         </div>
 
-        {/* Status */}
-        <div className="mb-4">
+        {/* Desktop: full status section */}
+        <div className="hidden md:block mb-4">
           <Select
             label="Status"
             value={foundDecision.status}
@@ -389,8 +499,8 @@ export function DecisionDetailContent() {
           />
         </div>
 
-        {/* Due Date */}
-        <div className="mb-4">
+        {/* Desktop: full due date section */}
+        <div className="hidden md:block mb-4">
           <label className="block text-sm text-cream/70 mb-1.5">Due Date</label>
           <div className="flex items-center gap-3 mb-2">
             <input
@@ -450,19 +560,57 @@ export function DecisionDetailContent() {
           )}
         </div>
 
-        {/* Notes */}
+        {/* Notes: collapsed on mobile, full on desktop */}
         <div className="mb-8">
-          <label className="block text-sm text-cream/70 mb-1.5">Notes</label>
-          <textarea
-            value={foundDecision.notes}
-            onChange={(e) => updateDecision({ notes: e.target.value })}
-            readOnly={readOnly}
-            className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[120px]"
-            placeholder="General notes about this decision..."
-          />
+          {/* Desktop: full textarea */}
+          <div className="hidden md:block">
+            <label className="block text-sm text-cream/70 mb-1.5">Notes</label>
+            <textarea
+              value={foundDecision.notes}
+              onChange={(e) => updateDecision({ notes: e.target.value })}
+              readOnly={readOnly}
+              className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[120px]"
+              placeholder="General notes about this decision..."
+            />
+          </div>
+          {/* Mobile: collapsed preview */}
+          <div className="md:hidden">
+            {notesExpanded ? (
+              <>
+                <label className="block text-sm text-cream/70 mb-1.5">Notes</label>
+                <textarea
+                  autoFocus
+                  value={foundDecision.notes}
+                  onChange={(e) => updateDecision({ notes: e.target.value })}
+                  readOnly={readOnly}
+                  className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[100px]"
+                  placeholder="General notes about this decision..."
+                />
+                <button
+                  type="button"
+                  onClick={() => setNotesExpanded(false)}
+                  className="text-xs text-cream/40 mt-1"
+                >
+                  Collapse
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setNotesExpanded(true)}
+                className="w-full text-left"
+              >
+                {foundDecision.notes ? (
+                  <p className="text-sm text-cream/50 line-clamp-2">{foundDecision.notes}</p>
+                ) : (
+                  <p className="text-sm text-cream/30 italic">Add notes...</p>
+                )}
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Choices board (collapsible) */}
+        {/* Options board (collapsible) */}
         <div className="mb-8">
           <button
             type="button"
@@ -470,7 +618,7 @@ export function DecisionDetailContent() {
             className="flex items-center gap-2 text-lg font-medium text-cream hover:text-cream/80 transition-colors mb-4"
           >
             <span className="text-cream/30 text-xs">{optionsOpen ? '▼' : '▶'}</span>
-            Choices{foundDecision.options.length > 0 ? ` — ${foundDecision.options.length}` : ''}
+            Options{foundDecision.options.length > 0 ? ` — ${foundDecision.options.length}` : ''}
           </button>
 
           {optionsOpen && (
@@ -489,6 +637,7 @@ export function DecisionDetailContent() {
               onSelectOption={selectOption}
               onUpdateDecision={updateDecision}
               onAddComment={addComment}
+              onCommentOnOption={handleCommentOnOption}
               comments={foundDecision.comments || []}
             />
           )}
@@ -500,6 +649,9 @@ export function DecisionDetailContent() {
             comments={foundDecision.comments || []}
             onAddComment={addComment}
             readOnly={readOnly}
+            commentInputRef={commentInputRef}
+            draftRef={draftRef}
+            onClearDraftRef={() => setDraftRef(null)}
             onOpenCard={(optId) => {
               setOptionsOpen(true)
               setActiveCardId(optId)
@@ -530,6 +682,62 @@ export function DecisionDetailContent() {
           </div>
         )}
       </div>
+
+      {/* Mobile sticky action bar */}
+      {!readOnly && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-basalt-50 border-t border-cream/10 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <input
+            ref={stickyFileRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => handleStickyPhoto(e.target.files)}
+            className="hidden"
+          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => stickyFileRef.current?.click()}
+              disabled={stickyUploading}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors disabled:opacity-50"
+            >
+              {stickyUploading ? (
+                <div className="w-4 h-4 border border-cream/20 border-t-cream/60 rounded-full animate-spin" />
+              ) : (
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+              )}
+              Photo
+            </button>
+            <button
+              type="button"
+              onClick={handleStickyAddNote}
+              disabled={stickyUploading}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors disabled:opacity-50"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
+              </svg>
+              Note
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                commentInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                setTimeout(() => commentInputRef.current?.focus(), 300)
+              }}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Comment
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -542,11 +750,17 @@ function CommentsSection({
   comments,
   onAddComment,
   readOnly,
+  commentInputRef,
+  draftRef,
+  onClearDraftRef,
   onOpenCard,
 }: {
   comments: SelectionComment[]
   onAddComment: (comment: { text: string; authorName: string; authorEmail: string; refOptionId?: string; refOptionLabel?: string }) => void
   readOnly: boolean
+  commentInputRef?: React.RefObject<HTMLTextAreaElement | null>
+  draftRef?: { optionId: string; optionLabel: string } | null
+  onClearDraftRef?: () => void
   onOpenCard?: (optionId: string) => void
 }) {
   const [page, setPage] = useState(0)
@@ -563,7 +777,7 @@ function CommentsSection({
         Comments are shared with collaborators who can access this tool.
       </p>
 
-      {!readOnly && <CommentInput onAddComment={onAddComment} />}
+      {!readOnly && <CommentInput onAddComment={onAddComment} inputRef={commentInputRef} draftRef={draftRef} onClearDraftRef={onClearDraftRef} />}
 
       {allComments.length === 0 && (
         <p className="text-xs text-cream/20 mt-3">No comments yet.</p>
@@ -625,8 +839,14 @@ function CommentsSection({
 
 function CommentInput({
   onAddComment,
+  inputRef,
+  draftRef,
+  onClearDraftRef,
 }: {
-  onAddComment: (comment: { text: string; authorName: string; authorEmail: string }) => void
+  onAddComment: (comment: { text: string; authorName: string; authorEmail: string; refOptionId?: string; refOptionLabel?: string }) => void
+  inputRef?: React.RefObject<HTMLTextAreaElement | null>
+  draftRef?: { optionId: string; optionLabel: string } | null
+  onClearDraftRef?: () => void
 }) {
   const { data: session } = useSession()
   const [text, setText] = useState('')
@@ -637,21 +857,44 @@ function CommentInput({
       text: text.trim().slice(0, MAX_COMMENT_LENGTH),
       authorName: session.user.name || 'Unknown',
       authorEmail: session.user.email || '',
+      ...(draftRef ? { refOptionId: draftRef.optionId, refOptionLabel: draftRef.optionLabel } : {}),
     })
     setText('')
+    onClearDraftRef?.()
   }
 
   return (
     <div>
+      {/* Draft ref pill */}
+      {draftRef && (
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-sandstone/15 text-sandstone text-xs rounded-full">
+            Re: {draftRef.optionLabel}
+            <button
+              type="button"
+              onClick={() => onClearDraftRef?.()}
+              className="text-sandstone/50 hover:text-sandstone ml-0.5"
+            >
+              ×
+            </button>
+          </span>
+        </div>
+      )}
       <div className="flex gap-2">
-        <input
-          type="text"
+        <textarea
+          ref={inputRef}
+          rows={2}
           value={text}
           onChange={(e) => setText(e.target.value.slice(0, MAX_COMMENT_LENGTH))}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
-          placeholder="Add a comment..."
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              handleSubmit()
+            }
+          }}
+          placeholder={draftRef ? `Comment on ${draftRef.optionLabel}...` : 'Add a comment...'}
           maxLength={MAX_COMMENT_LENGTH}
-          className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+          className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50 resize-none"
         />
         <button
           type="button"

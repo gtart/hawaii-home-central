@@ -362,7 +362,7 @@ export function ToolContent({ localOnly = false }: ToolContentProps) {
         {!localOnly && (
           <ToolPageHeader
             toolKey="finish_decisions"
-            title="Finish Selections"
+            title="Selections List"
             description="Avoid delays and rework—by keeping selections, links, and status updates together for each room."
             accessLevel={access}
           />

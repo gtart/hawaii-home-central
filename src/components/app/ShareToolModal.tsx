@@ -30,7 +30,7 @@ interface ShareToolModalProps {
 
 const TOOL_LABELS: Record<string, string> = {
   before_you_sign: 'Contract Checklist',
-  finish_decisions: 'Finish Selections',
+  finish_decisions: 'Selections List',
   punchlist: 'Fix List',
 }
 
