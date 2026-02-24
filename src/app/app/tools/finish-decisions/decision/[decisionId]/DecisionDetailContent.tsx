@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/Badge'
 import { useToolState } from '@/hooks/useToolState'
 import { IdeasBoard } from '../../components/IdeasBoard'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
+import { ImportFromUrlPanel } from '../../components/ImportFromUrlPanel'
 import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
 import { findKitsForDecisionTitle, applyKitToDecision } from '@/lib/finish-decision-kits'
 import {
@@ -38,6 +39,7 @@ export function DecisionDetailContent() {
   const [notesExpanded, setNotesExpanded] = useState(false)
   const [draftRef, setDraftRef] = useState<{ optionId: string; optionLabel: string } | null>(null)
   const [ideasPackOpen, setIdeasPackOpen] = useState(false)
+  const [showImportUrl, setShowImportUrl] = useState(false)
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
 
   const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3 | any>({
@@ -583,6 +585,15 @@ export function DecisionDetailContent() {
               <span className="text-cream/30 text-xs">{optionsOpen ? '▼' : '▶'}</span>
               Ideas{foundDecision.options.length > 0 ? ` — ${foundDecision.options.length}` : ''}
             </button>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => setShowImportUrl(!showImportUrl)}
+                className="text-xs text-sandstone hover:text-sandstone-light transition-colors font-medium"
+              >
+                + Add from URL
+              </button>
+            )}
             {!readOnly && availableKits.length > 0 && (
               <button
                 type="button"
@@ -593,6 +604,33 @@ export function DecisionDetailContent() {
               </button>
             )}
           </div>
+
+          {/* Import from URL panel */}
+          {showImportUrl && !readOnly && (
+            <div className="mb-4 bg-basalt-50 rounded-xl p-4 border border-cream/10">
+              <ImportFromUrlPanel
+                mode="create-idea"
+                onImport={(result) => {
+                  const newOpt: OptionV3 = {
+                    id: crypto.randomUUID(),
+                    name: result.name,
+                    notes: result.notes,
+                    urls: [{ id: crypto.randomUUID(), url: result.sourceUrl }],
+                    kind: result.selectedImages.length > 0 ? 'image' : 'text',
+                    images: result.selectedImages.length > 0 ? result.selectedImages : undefined,
+                    heroImageId: result.selectedImages[0]?.id || null,
+                    imageUrl: result.selectedImages[0]?.url,
+                    thumbnailUrl: result.selectedImages[0]?.url,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  }
+                  updateDecision({ options: [...(foundDecision?.options || []), newOpt] })
+                  setShowImportUrl(false)
+                }}
+                onCancel={() => setShowImportUrl(false)}
+              />
+            </div>
+          )}
 
           <IdeasBoard
             decision={foundDecision}
@@ -612,6 +650,7 @@ export function DecisionDetailContent() {
             onAddComment={addComment}
             onCommentOnOption={handleCommentOnOption}
             onOpenGlobalComment={openGlobalCommentComposer}
+            onShowImportUrl={() => setShowImportUrl(true)}
             comments={foundDecision.comments || []}
           />
         </div>

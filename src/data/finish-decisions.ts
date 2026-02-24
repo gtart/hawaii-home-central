@@ -188,6 +188,15 @@ export interface OptionOriginV3 {
   author: KitAuthorType
 }
 
+// Single image attached to an option
+export interface OptionImageV3 {
+  id: string
+  url: string
+  thumbnailUrl?: string
+  label?: string       // alt text, filename, or user label
+  sourceUrl?: string   // webpage the image was imported from
+}
+
 // Option (nested in decision)
 export interface OptionV3 {
   id: string
@@ -196,8 +205,10 @@ export interface OptionV3 {
   urls: LinkV3[]
   isSelected?: boolean // Marks the chosen option
   kind?: 'image' | 'text'           // defaults to 'text' if absent
-  imageUrl?: string                  // full-size URL (image cards only)
-  thumbnailUrl?: string              // ~400px thumbnail (image cards only)
+  imageUrl?: string                  // legacy full-size URL (use images[] for new code)
+  thumbnailUrl?: string              // legacy ~400px thumbnail (use images[] for new code)
+  images?: OptionImageV3[]           // multi-image gallery
+  heroImageId?: string | null        // id of the primary image (null = first in images[])
   votes?: Record<string, 'up' | 'down'>  // keyed by user email
   origin?: OptionOriginV3            // set when added by an ideas pack
   createdAt: string

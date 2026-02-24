@@ -1,6 +1,7 @@
 'use client'
 
 import type { OptionV3, DecisionV3 } from '@/data/finish-decisions'
+import { getAllImages, getHeroImage } from '@/lib/finishDecisionsImages'
 
 interface CompareModalProps {
   options: OptionV3[]
@@ -49,8 +50,10 @@ export function CompareModal({
         <div className="p-4">
           <div className={`grid gap-3 ${options.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
             {options.map((opt) => {
-              const isImage = opt.kind === 'image' && (opt.imageUrl || opt.thumbnailUrl)
-              const linkPreview = !isImage && opt.urls?.[0]?.linkImage
+              const hero = getHeroImage(opt)
+              const heroSrc = hero?.url || hero?.thumbnailUrl
+              const linkPreview = !heroSrc && opt.urls?.[0]?.linkImage
+              const imageCount = getAllImages(opt).length
               const votes = opt.votes ?? {}
               const upCount = Object.values(votes).filter((v) => v === 'up').length
               const downCount = Object.values(votes).filter((v) => v === 'down').length
@@ -59,12 +62,19 @@ export function CompareModal({
                 <div key={opt.id} className="flex flex-col bg-basalt rounded-lg border border-cream/10 overflow-hidden">
                   {/* Image / Preview */}
                   <div className="aspect-[4/3] relative bg-basalt-50">
-                    {isImage ? (
-                      <img
-                        src={opt.imageUrl || opt.thumbnailUrl}
-                        alt={opt.name || 'Selection'}
-                        className="w-full h-full object-cover"
-                      />
+                    {heroSrc ? (
+                      <>
+                        <img
+                          src={heroSrc}
+                          alt={opt.name || 'Selection'}
+                          className="w-full h-full object-cover"
+                        />
+                        {imageCount > 1 && (
+                          <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-black/60 text-white text-[10px] rounded-full">
+                            +{imageCount - 1}
+                          </span>
+                        )}
+                      </>
                     ) : linkPreview ? (
                       <img
                         src={`/api/image-proxy?url=${encodeURIComponent(linkPreview)}`}

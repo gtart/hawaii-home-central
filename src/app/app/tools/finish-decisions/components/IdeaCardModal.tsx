@@ -1,7 +1,9 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import type { OptionV3, DecisionV3, SelectionComment, LinkV3 } from '@/data/finish-decisions'
+import type { OptionV3, OptionImageV3, DecisionV3, SelectionComment, LinkV3 } from '@/data/finish-decisions'
+import { getAllImages, getHeroImage } from '@/lib/finishDecisionsImages'
+import { ImportFromUrlPanel } from './ImportFromUrlPanel'
 
 interface CommentPayload {
   text: string
@@ -77,6 +79,7 @@ export function IdeaCardModal({
   const [uploadError, setUploadError] = useState('')
   const [photoUrlInput, setPhotoUrlInput] = useState('')
   const [showPhotoMenu, setShowPhotoMenu] = useState(false)
+  const [showImportImages, setShowImportImages] = useState(false)
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const photoMenuRef = useRef<HTMLDivElement>(null)
@@ -193,7 +196,16 @@ export function IdeaCardModal({
     setUploading(true)
     try {
       const { url, thumbnailUrl } = await onUploadPhoto(file)
-      onUpdate({ kind: 'image', imageUrl: url, thumbnailUrl })
+      const newImg: OptionImageV3 = { id: crypto.randomUUID(), url, thumbnailUrl }
+      const current = getAllImages(option).filter((i) => i.id !== 'legacy')
+      const merged = [...current, newImg]
+      onUpdate({
+        kind: 'image',
+        imageUrl: url,
+        thumbnailUrl,
+        images: merged,
+        heroImageId: option.heroImageId || newImg.id,
+      })
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
@@ -206,7 +218,16 @@ export function IdeaCardModal({
   function handlePhotoUrl() {
     const url = photoUrlInput.trim()
     if (!url) return
-    onUpdate({ kind: 'image', imageUrl: url, thumbnailUrl: url })
+    const newImg: OptionImageV3 = { id: crypto.randomUUID(), url, thumbnailUrl: url }
+    const current = getAllImages(option).filter((i) => i.id !== 'legacy')
+    const merged = [...current, newImg]
+    onUpdate({
+      kind: 'image',
+      imageUrl: url,
+      thumbnailUrl: url,
+      images: merged,
+      heroImageId: option.heroImageId || newImg.id,
+    })
     setPhotoUrlInput('')
   }
 
@@ -343,132 +364,219 @@ export function IdeaCardModal({
               onChange={(e) => handlePhotoFile(e.target.files?.[0] ?? null)}
             />
 
-            {option.kind === 'image' && option.imageUrl ? (
-              /* Has photo */
-              <div className="relative rounded-xl overflow-hidden bg-basalt">
-                <img
-                  src={option.imageUrl}
-                  alt={option.name || 'Selection image'}
-                  className="w-full max-h-64 object-contain"
-                />
-                {uploading && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                  </div>
-                )}
-                {!readOnly && !uploading && (
-                  <div className="absolute bottom-2 right-2" ref={photoMenuRef}>
-                    <button
-                      type="button"
-                      onClick={() => setShowPhotoMenu(!showPhotoMenu)}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs rounded-lg hover:bg-black/80 transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                        <circle cx="12" cy="13" r="4" />
-                      </svg>
-                      Change photo
-                    </button>
-                    {showPhotoMenu && (
-                      <div className="absolute bottom-full right-0 mb-1.5 bg-basalt-50 border border-cream/15 rounded-xl shadow-xl overflow-hidden min-w-[176px]">
+            {(() => {
+              const images = getAllImages(option)
+              const hero = getHeroImage(option)
+              const hasImages = images.length > 0
+
+              return hasImages ? (
+                /* Has image(s) */
+                <div>
+                  {/* Hero image */}
+                  <div className="relative rounded-xl overflow-hidden bg-basalt">
+                    <img
+                      src={hero?.url || images[0].url}
+                      alt={option.name || 'Selection image'}
+                      className="w-full max-h-64 object-contain"
+                    />
+                    {uploading && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      </div>
+                    )}
+                    {!readOnly && !uploading && (
+                      <div className="absolute bottom-2 right-2" ref={photoMenuRef}>
                         <button
                           type="button"
-                          onClick={() => { cameraInputRef.current?.click(); setShowPhotoMenu(false) }}
-                          className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+                          onClick={() => setShowPhotoMenu(!showPhotoMenu)}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs rounded-lg hover:bg-black/80 transition-colors"
                         >
-                          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
                             <circle cx="12" cy="13" r="4" />
                           </svg>
-                          Take a photo
+                          Change photo
                         </button>
-                        <div className="border-t border-cream/10" />
-                        <button
-                          type="button"
-                          onClick={() => { galleryInputRef.current?.click(); setShowPhotoMenu(false) }}
-                          className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
-                        >
-                          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2" />
-                            <circle cx="8.5" cy="8.5" r="1.5" />
-                            <path d="M21 15l-5-5L5 21" />
-                          </svg>
-                          Photo library
-                        </button>
+                        {showPhotoMenu && (
+                          <div className="absolute bottom-full right-0 mb-1.5 bg-basalt-50 border border-cream/15 rounded-xl shadow-xl overflow-hidden min-w-[200px]">
+                            <button
+                              type="button"
+                              onClick={() => { cameraInputRef.current?.click(); setShowPhotoMenu(false) }}
+                              className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+                            >
+                              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                                <circle cx="12" cy="13" r="4" />
+                              </svg>
+                              Take a photo
+                            </button>
+                            <div className="border-t border-cream/10" />
+                            <button
+                              type="button"
+                              onClick={() => { galleryInputRef.current?.click(); setShowPhotoMenu(false) }}
+                              className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+                            >
+                              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <path d="M21 15l-5-5L5 21" />
+                              </svg>
+                              Photo library
+                            </button>
+                            <div className="border-t border-cream/10" />
+                            <button
+                              type="button"
+                              onClick={() => { setShowImportImages(true); setShowPhotoMenu(false) }}
+                              className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+                            >
+                              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" />
+                                <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" />
+                              </svg>
+                              Import from webpage
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-            ) : !readOnly ? (
-              /* No photo — placeholder card */
-              <div>
-                <div className="rounded-xl overflow-hidden border border-cream/10 bg-basalt/40">
-                  <div className="flex flex-col items-center justify-center gap-2.5 py-8">
-                    <div className="w-12 h-12 rounded-full bg-cream/5 flex items-center justify-center">
-                      {uploading ? (
-                        <div className="w-6 h-6 border-2 border-cream/20 border-t-cream/60 rounded-full animate-spin" />
-                      ) : (
-                        <svg className="w-6 h-6 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+
+                  {/* Image gallery strip (2+ images) */}
+                  {images.length > 1 && (
+                    <div className="flex gap-1.5 mt-2 overflow-x-auto pb-1">
+                      {images.map((img) => {
+                        const isHero = img.id === (option.heroImageId || images[0].id)
+                        return (
+                          <button
+                            key={img.id}
+                            type="button"
+                            onClick={() => !readOnly && onUpdate({ heroImageId: img.id })}
+                            className={`relative w-14 h-14 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${
+                              isHero ? 'border-sandstone' : 'border-transparent hover:border-cream/20'
+                            }`}
+                            title={isHero ? 'Primary image' : 'Set as primary'}
+                          >
+                            <img src={img.thumbnailUrl || img.url} alt={img.label || ''} className="w-full h-full object-cover" />
+                            {isHero && (
+                              <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-sandstone rounded-full flex items-center justify-center">
+                                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="text-basalt">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              </div>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : !readOnly ? (
+                /* No photo — placeholder card */
+                <div>
+                  <div className="rounded-xl overflow-hidden border border-cream/10 bg-basalt/40">
+                    <div className="flex flex-col items-center justify-center gap-2.5 py-8">
+                      <div className="w-12 h-12 rounded-full bg-cream/5 flex items-center justify-center">
+                        {uploading ? (
+                          <div className="w-6 h-6 border-2 border-cream/20 border-t-cream/60 rounded-full animate-spin" />
+                        ) : (
+                          <svg className="w-6 h-6 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                            <circle cx="12" cy="13" r="4" />
+                          </svg>
+                        )}
+                      </div>
+                      <p className="text-sm text-cream/40">
+                        {uploading ? 'Uploading...' : 'Add a photo'}
+                      </p>
+                    </div>
+                    <div className="flex border-t border-cream/10">
+                      <button
+                        type="button"
+                        onClick={() => cameraInputRef.current?.click()}
+                        disabled={uploading}
+                        className="flex-1 flex items-center justify-center gap-2 py-3.5 text-sm text-cream/50 hover:text-cream/80 hover:bg-cream/5 transition-colors disabled:opacity-40"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
                           <circle cx="12" cy="13" r="4" />
                         </svg>
-                      )}
+                        Camera
+                      </button>
+                      <div className="w-px bg-cream/10" />
+                      <button
+                        type="button"
+                        onClick={() => galleryInputRef.current?.click()}
+                        disabled={uploading}
+                        className="flex-1 flex items-center justify-center gap-2 py-3.5 text-sm text-cream/50 hover:text-cream/80 hover:bg-cream/5 transition-colors disabled:opacity-40"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <path d="M21 15l-5-5L5 21" />
+                        </svg>
+                        Gallery
+                      </button>
+                      <div className="w-px bg-cream/10" />
+                      <button
+                        type="button"
+                        onClick={() => setShowImportImages(true)}
+                        disabled={uploading}
+                        className="flex-1 flex items-center justify-center gap-2 py-3.5 text-sm text-cream/50 hover:text-cream/80 hover:bg-cream/5 transition-colors disabled:opacity-40"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" />
+                          <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" />
+                        </svg>
+                        URL
+                      </button>
                     </div>
-                    <p className="text-sm text-cream/40">
-                      {uploading ? 'Uploading…' : 'Add a photo'}
-                    </p>
                   </div>
-                  <div className="flex border-t border-cream/10">
+                  {/* Photo URL input */}
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="text"
+                      value={photoUrlInput}
+                      onChange={(e) => setPhotoUrlInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handlePhotoUrl() }}
+                      placeholder="Or paste a photo URL..."
+                      className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
+                    />
                     <button
                       type="button"
-                      onClick={() => cameraInputRef.current?.click()}
-                      disabled={uploading}
-                      className="flex-1 flex items-center justify-center gap-2 py-3.5 text-sm text-cream/50 hover:text-cream/80 hover:bg-cream/5 transition-colors disabled:opacity-40"
+                      onClick={handlePhotoUrl}
+                      disabled={!photoUrlInput.trim() || !isValidUrl(photoUrlInput)}
+                      className="px-3 py-2 bg-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/20 transition-colors disabled:opacity-30"
                     >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                        <circle cx="12" cy="13" r="4" />
-                      </svg>
-                      Camera
-                    </button>
-                    <div className="w-px bg-cream/10" />
-                    <button
-                      type="button"
-                      onClick={() => galleryInputRef.current?.click()}
-                      disabled={uploading}
-                      className="flex-1 flex items-center justify-center gap-2 py-3.5 text-sm text-cream/50 hover:text-cream/80 hover:bg-cream/5 transition-colors disabled:opacity-40"
-                    >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <circle cx="8.5" cy="8.5" r="1.5" />
-                        <path d="M21 15l-5-5L5 21" />
-                      </svg>
-                      Gallery
+                      Use
                     </button>
                   </div>
                 </div>
-                {/* Photo URL input */}
-                <div className="mt-2 flex gap-2">
-                  <input
-                    type="text"
-                    value={photoUrlInput}
-                    onChange={(e) => setPhotoUrlInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handlePhotoUrl() }}
-                    placeholder="Or paste a photo URL…"
-                    className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
-                  />
-                  <button
-                    type="button"
-                    onClick={handlePhotoUrl}
-                    disabled={!photoUrlInput.trim() || !isValidUrl(photoUrlInput)}
-                    className="px-3 py-2 bg-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/20 transition-colors disabled:opacity-30"
-                  >
-                    Use
-                  </button>
-                </div>
+              ) : null
+            })()}
+
+            {/* Import images from webpage panel */}
+            {showImportImages && !readOnly && (
+              <div className="mt-3 bg-basalt rounded-xl p-3 border border-cream/10">
+                <p className="text-xs text-cream/50 mb-2 font-medium">Import images from a webpage</p>
+                <ImportFromUrlPanel
+                  mode="pick-images"
+                  onImport={(result) => {
+                    if (result.selectedImages.length === 0) return
+                    const existing = getAllImages(option)
+                    const merged: OptionImageV3[] = [...existing, ...result.selectedImages]
+                    onUpdate({
+                      kind: 'image',
+                      images: merged,
+                      heroImageId: option.heroImageId || merged[0].id,
+                      imageUrl: merged[0].url,
+                      thumbnailUrl: merged[0].thumbnailUrl || merged[0].url,
+                    })
+                    setShowImportImages(false)
+                  }}
+                  onCancel={() => setShowImportImages(false)}
+                />
               </div>
-            ) : null}
+            )}
 
             {uploadError && <p className="text-sm text-red-400 mt-2">{uploadError}</p>}
           </div>

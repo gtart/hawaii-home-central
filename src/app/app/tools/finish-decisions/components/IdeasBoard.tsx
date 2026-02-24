@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import type { OptionV3, DecisionV3, SelectionComment } from '@/data/finish-decisions'
+import { getHeroImage } from '@/lib/finishDecisionsImages'
 import { IdeaCardModal } from './IdeaCardModal'
 import { CompareModal } from './CompareModal'
 
@@ -28,6 +29,7 @@ interface Props {
   onAddComment: (comment: CommentPayload) => void
   onCommentOnOption?: (optionId: string, optionLabel: string) => void
   onOpenGlobalComment?: () => void
+  onShowImportUrl?: () => void
   showContent?: boolean
   comments: SelectionComment[]
 }
@@ -92,8 +94,9 @@ function IdeaCardTile({
   const upCount = Object.values(votes).filter((v) => v === 'up').length
   const downCount = Object.values(votes).filter((v) => v === 'down').length
   const isMyPick = decision.picksByUser?.[userEmail] === option.id
-  const isImage = option.kind === 'image' && option.thumbnailUrl
-  const linkPreview = !isImage && option.urls?.[0]?.linkImage
+  const hero = getHeroImage(option)
+  const heroSrc = hero?.thumbnailUrl || hero?.url
+  const linkPreview = !heroSrc && option.urls?.[0]?.linkImage
 
   return (
     <button
@@ -101,10 +104,10 @@ function IdeaCardTile({
       onClick={onClick}
       className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-basalt border border-cream/10 hover:border-cream/30 transition-colors text-left group"
     >
-      {isImage ? (
+      {heroSrc ? (
         <>
           <img
-            src={option.thumbnailUrl}
+            src={heroSrc}
             alt={option.name || 'Selection'}
             className="w-full h-full object-cover"
           />
@@ -132,7 +135,7 @@ function IdeaCardTile({
       )}
 
       {/* Name overlay for image/preview cards */}
-      {(isImage || linkPreview) && (
+      {(heroSrc || linkPreview) && (
         <div className="absolute bottom-0 left-0 right-0 px-2.5 py-2">
           <p className="text-xs text-white font-medium line-clamp-1">
             {option.name || <span className="text-white/50 italic">Untitled</span>}
@@ -208,9 +211,10 @@ function HeroTile({
   onToggleFinal?: () => void
   onComment?: () => void
 }) {
-  const isImage = option.kind === 'image' && option.imageUrl
-  const linkPreview = !isImage && option.urls?.[0]?.linkImage
-  const hasBg = isImage || linkPreview
+  const hero = getHeroImage(option)
+  const heroSrc = hero?.url
+  const linkPreview = !heroSrc && option.urls?.[0]?.linkImage
+  const hasBg = heroSrc || linkPreview
 
   return (
     <button
@@ -218,10 +222,10 @@ function HeroTile({
       onClick={onClick}
       className="relative w-full aspect-[16/9] rounded-xl overflow-hidden bg-basalt border border-cream/10 hover:border-cream/30 transition-colors text-left group mb-3"
     >
-      {isImage ? (
+      {heroSrc ? (
         <>
           <img
-            src={option.imageUrl}
+            src={heroSrc}
             alt={option.name || 'Selection'}
             className="w-full h-full object-cover"
           />
@@ -309,6 +313,7 @@ export function IdeasBoard({
   onAddComment,
   onCommentOnOption,
   onOpenGlobalComment,
+  onShowImportUrl,
   showContent,
   comments,
 }: Props) {
@@ -448,7 +453,7 @@ export function IdeasBoard({
           {/* Hero tile for single selection */}
           {decision.options.length === 1 && (() => {
             const opt = decision.options[0]
-            const isImage = opt.kind === 'image' && opt.imageUrl
+            const heroImg = getHeroImage(opt)
             return (
               <>
                 <HeroTile
@@ -476,7 +481,7 @@ export function IdeasBoard({
                         <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
                         <circle cx="12" cy="13" r="4" />
                       </svg>
-                      {isImage ? 'Replace Photo' : 'Add Photo'}
+                      {heroImg ? 'Replace Photo' : 'Add Photo'}
                     </button>
                     <button
                       type="button"
@@ -656,6 +661,19 @@ export function IdeasBoard({
                   </svg>
                   Add Note
                 </button>
+                {onShowImportUrl && (
+                  <button
+                    type="button"
+                    onClick={onShowImportUrl}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors"
+                  >
+                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" />
+                      <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" />
+                    </svg>
+                    Add from URL
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -732,6 +750,19 @@ export function IdeasBoard({
               </svg>
               Note
             </button>
+            {onShowImportUrl && (
+              <button
+                type="button"
+                onClick={onShowImportUrl}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors"
+              >
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" />
+                  <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" />
+                </svg>
+                URL
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onOpenGlobalComment?.()}
