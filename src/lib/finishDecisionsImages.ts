@@ -1,6 +1,16 @@
 import type { OptionV3, OptionImageV3 } from '@/data/finish-decisions'
 
 /**
+ * Proxy external image URLs through /api/image-proxy to bypass hotlink protection.
+ * Our own hosted images (Vercel Blob, relative paths) pass through unchanged.
+ */
+export function displayUrl(src: string): string {
+  if (!src) return src
+  if (src.startsWith('/') || src.includes('.vercel-storage.com') || src.includes('.public.blob.')) return src
+  return `/api/image-proxy?url=${encodeURIComponent(src)}`
+}
+
+/**
  * Get all images for an option, migrating legacy single-image fields on the fly.
  * Returns a stable array (empty if no images).
  */

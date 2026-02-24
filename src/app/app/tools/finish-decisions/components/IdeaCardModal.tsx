@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import type { OptionV3, OptionImageV3, DecisionV3, SelectionComment, LinkV3 } from '@/data/finish-decisions'
-import { getAllImages, getHeroImage } from '@/lib/finishDecisionsImages'
+import { getAllImages, getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 
 interface CommentPayload {
   text: string
@@ -373,9 +373,10 @@ export function IdeaCardModal({
                   {/* Hero image */}
                   <div className="relative rounded-xl overflow-hidden bg-basalt">
                     <img
-                      src={hero?.url || images[0].url}
+                      src={displayUrl(hero?.url || images[0].url)}
                       alt={option.name || 'Selection image'}
                       className="w-full max-h-64 object-contain"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                     />
                     {uploading && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -442,7 +443,7 @@ export function IdeaCardModal({
                             }`}
                             title={isHero ? 'Primary image' : 'Set as primary'}
                           >
-                            <img src={img.thumbnailUrl || img.url} alt={img.label || ''} className="w-full h-full object-cover" />
+                            <img src={displayUrl(img.thumbnailUrl || img.url)} alt={img.label || ''} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                             {isHero && (
                               <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-sandstone rounded-full flex items-center justify-center">
                                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="text-basalt">

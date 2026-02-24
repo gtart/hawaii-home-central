@@ -1,7 +1,7 @@
 'use client'
 
 import type { OptionV3, DecisionV3 } from '@/data/finish-decisions'
-import { getAllImages, getHeroImage } from '@/lib/finishDecisionsImages'
+import { getAllImages, getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 
 interface CompareModalProps {
   options: OptionV3[]
@@ -65,9 +65,10 @@ export function CompareModal({
                     {heroSrc ? (
                       <>
                         <img
-                          src={heroSrc}
+                          src={displayUrl(heroSrc)}
                           alt={opt.name || 'Selection'}
                           className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                         />
                         {imageCount > 1 && (
                           <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-black/60 text-white text-[10px] rounded-full">
@@ -77,7 +78,7 @@ export function CompareModal({
                       </>
                     ) : linkPreview ? (
                       <img
-                        src={`/api/image-proxy?url=${encodeURIComponent(linkPreview)}`}
+                        src={displayUrl(linkPreview)}
                         alt={opt.name || 'Selection'}
                         className="w-full h-full object-cover"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}

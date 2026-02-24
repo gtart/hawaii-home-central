@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { OptionV3, DecisionV3, SelectionComment } from '@/data/finish-decisions'
-import { getHeroImage } from '@/lib/finishDecisionsImages'
+import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { IdeaCardModal } from './IdeaCardModal'
 import { CompareModal } from './CompareModal'
 
@@ -107,16 +107,17 @@ function IdeaCardTile({
       {heroSrc ? (
         <>
           <img
-            src={heroSrc}
+            src={displayUrl(heroSrc)}
             alt={option.name || 'Selection'}
             className="w-full h-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
         </>
       ) : linkPreview ? (
         <>
           <img
-            src={`/api/image-proxy?url=${encodeURIComponent(linkPreview)}`}
+            src={displayUrl(linkPreview)}
             alt={option.name || 'Selection'}
             className="w-full h-full object-cover"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
@@ -225,16 +226,17 @@ function HeroTile({
       {heroSrc ? (
         <>
           <img
-            src={heroSrc}
+            src={displayUrl(heroSrc)}
             alt={option.name || 'Selection'}
             className="w-full h-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
         </>
       ) : linkPreview ? (
         <>
           <img
-            src={`/api/image-proxy?url=${encodeURIComponent(linkPreview)}`}
+            src={displayUrl(linkPreview)}
             alt={option.name || 'Selection'}
             className="w-full h-full object-cover"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
