@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useProject } from '@/contexts/ProjectContext'
 import { useToolState } from '@/hooks/useToolState'
@@ -143,12 +143,11 @@ export function SaveFromWebContent() {
     setSaved(true)
   }
 
-  // Set bookmarklet href directly on the DOM element (bypasses React's href sanitization and SSR issues)
-  const bookmarkletRef = useRef<HTMLAnchorElement>(null)
+  // Callback ref: fires when the <a> element mounts in the DOM.
+  // Sets the bookmarklet href directly via setAttribute (bypasses React's href sanitization).
   const [bookmarkletReady, setBookmarkletReady] = useState(false)
 
-  useEffect(() => {
-    const el = bookmarkletRef.current
+  const bookmarkletRef = useCallback((el: HTMLAnchorElement | null) => {
     if (!el) return
     const origin = window.location.origin
     // Bookmarklet script: scrapes images + title, stores in sessionStorage, opens save-from-web
@@ -162,14 +161,14 @@ export function SaveFromWebContent() {
       'if(o){var r=abs(o);if(r){s[r]=1;i.push({url:r,label:"Primary"})}}',
       'var g=d.getElementsByTagName("img");',
       'for(var j=0;j<g.length&&i.length<20;j++){',
-      'var el=g[j];',
-      'if(el.naturalWidth>0&&el.naturalWidth<=150)continue;',
-      'if(el.naturalHeight>0&&el.naturalHeight<=150)continue;',
-      'var c=el.getAttribute("data-src")||el.getAttribute("data-lazy-src")||el.src||"";',
+      'var n=g[j];',
+      'if(n.naturalWidth>0&&n.naturalWidth<=150)continue;',
+      'if(n.naturalHeight>0&&n.naturalHeight<=150)continue;',
+      'var c=n.getAttribute("data-src")||n.getAttribute("data-lazy-src")||n.src||"";',
       'if(!c||c.indexOf("data:")===0)continue;',
       'if(c.indexOf(".svg")>-1)continue;',
       'var r2=abs(c);if(!r2||s[r2])continue;s[r2]=1;',
-      'var l=el.alt||el.title||"";',
+      'var l=n.alt||n.title||"";',
       'i.push({url:r2,label:l.substring(0,80)})}',
       'var p=JSON.stringify({title:t.substring(0,120),images:i,url:location.href});',
       'try{sessionStorage.setItem("hhc_bookmarklet_pending",p)}catch(x){}',
