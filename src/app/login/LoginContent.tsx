@@ -47,7 +47,7 @@ export function LoginContent() {
   useEffect(() => {
     if (signedUp) {
       const timeout = setTimeout(() => {
-        window.location.href = '/resources'
+        window.location.href = '/hawaii-home-renovation'
       }, 2500)
       return () => clearTimeout(timeout)
     }

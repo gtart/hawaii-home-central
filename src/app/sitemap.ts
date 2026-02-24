@@ -60,7 +60,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Renovation Basics hub + guides
     { url: `${BASE_URL}/hawaii-home-renovation`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${BASE_URL}/resources`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/resources/renovation-stages`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/resources/playbooks/fair-bid-checklist`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/resources/playbooks/responsibility-matrix`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },

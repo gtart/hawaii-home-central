@@ -6,7 +6,7 @@ const FEATURES = [
     title: 'Guides & Tools',
     description:
       'Interactive tools and step-by-step guides tailored for Hawaiʻi conditions and regulations.',
-    href: '/resources',
+    href: '/hawaii-home-renovation',
     badge: 'Live',
   },
   {

@@ -54,7 +54,7 @@ export function PlaybookContent() {
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-3xl mx-auto">
-        <Breadcrumbs items={[{ label: 'Guides', href: '/resources' }, { label: 'Compare Your Quotes' }]} />
+        <Breadcrumbs items={[{ label: 'Guides', href: '/hawaii-home-renovation' }, { label: 'Compare Your Quotes' }]} />
 
         {/* Hero */}
         <div className="flex items-start justify-between gap-4 mb-2">

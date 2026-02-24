@@ -136,8 +136,12 @@ export function RenovationBasicsList({ articles, primaryTags }: Props) {
         </p>
       ) : (
         <div className="space-y-10">
-          {grouped.map((group, gi) => (
-            <section key={group.tag?.id ?? 'other'}>
+          {grouped.map((group, gi) => {
+            const anchorId = group.tag
+              ? 'cat-' + group.tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+              : 'cat-other'
+            return (
+            <section key={group.tag?.id ?? 'other'} id={!activeTag && grouped.length > 1 ? anchorId : undefined} className="scroll-mt-24">
               {/* Group heading — show when "All" is active and there are multiple groups */}
               {!activeTag && grouped.length > 1 && (
                 <h2 className="font-serif text-xl text-cream mb-4 pb-2 border-b border-cream/10">
@@ -157,7 +161,7 @@ export function RenovationBasicsList({ articles, primaryTags }: Props) {
                             {article.title}
                           </h3>
                           {article.dek && (
-                            <p className="text-cream/50 text-sm line-clamp-1">
+                            <p className="text-cream/50 text-sm line-clamp-1 md:line-clamp-2">
                               {article.dek}
                             </p>
                           )}
@@ -174,7 +178,8 @@ export function RenovationBasicsList({ articles, primaryTags }: Props) {
                 ))}
               </ul>
             </section>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

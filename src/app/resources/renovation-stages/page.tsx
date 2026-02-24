@@ -35,7 +35,7 @@ const FAQ_ITEMS = [
 export default function RenovationStagesPage() {
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', href: '/' },
-    { name: 'Guides', href: '/resources' },
+    { name: 'Guides', href: '/hawaii-home-renovation' },
     { name: 'Plan Your Renovation', href: '/resources/renovation-stages' },
   ])
   const faq = faqSchema(FAQ_ITEMS)
@@ -52,7 +52,7 @@ export default function RenovationStagesPage() {
       />
       <div className="pt-32 pb-24 px-6">
         <div className="max-w-4xl mx-auto">
-          <Breadcrumbs items={[{ label: 'Guides', href: '/resources' }, { label: 'Plan Your Renovation' }]} />
+          <Breadcrumbs items={[{ label: 'Guides', href: '/hawaii-home-renovation' }, { label: 'Plan Your Renovation' }]} />
 
           <FadeInSection>
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6 text-center">
