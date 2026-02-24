@@ -18,8 +18,8 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     href: '/app/tools/before-you-sign',
     title: 'Contract Checklist',
     description:
-      'Walk through each bid with the same checklist\u2014so nothing gets missed before you sign.',
-    stage: 'Find a Pro',
+      'Compare contractors and bids using the same criteria\u2014so nothing gets missed.',
+    stage: 'Select the Right Pro',
   },
   {
     toolKey: 'finish_decisions',
