@@ -114,7 +114,7 @@ export function DecisionDetailContent() {
 
   const deleteOption = (optionId: string) => {
     if (!foundDecision) return
-    if (confirm('Delete this selection?')) {
+    if (confirm('Delete this idea?')) {
       updateDecision({
         options: foundDecision.options.filter((opt) => opt.id !== optionId),
       })
@@ -583,24 +583,6 @@ export function DecisionDetailContent() {
               <span className="text-cream/30 text-xs">{optionsOpen ? '▼' : '▶'}</span>
               Ideas{foundDecision.options.length > 0 ? ` — ${foundDecision.options.length}` : ''}
             </button>
-            {!readOnly && (
-              <button
-                type="button"
-                onClick={() => router.push('/app/save-from-web')}
-                className="text-xs text-sandstone hover:text-sandstone-light transition-colors font-medium"
-              >
-                + Save from web
-              </button>
-            )}
-            {!readOnly && availableKits.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setIdeasPackOpen(true)}
-                className="text-xs text-sandstone hover:text-sandstone-light transition-colors font-medium"
-              >
-                + Add ideas from pack
-              </button>
-            )}
           </div>
 
           <IdeasBoard
@@ -622,6 +604,8 @@ export function DecisionDetailContent() {
             onCommentOnOption={handleCommentOnOption}
             onOpenGlobalComment={openGlobalCommentComposer}
             comments={foundDecision.comments || []}
+            hasKits={availableKits.length > 0}
+            onOpenPack={() => setIdeasPackOpen(true)}
           />
         </div>
 

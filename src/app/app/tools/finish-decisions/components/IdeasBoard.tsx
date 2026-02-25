@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { OptionV3, DecisionV3, SelectionComment } from '@/data/finish-decisions'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
@@ -32,6 +32,8 @@ interface Props {
   onOpenGlobalComment?: () => void
   showContent?: boolean
   comments: SelectionComment[]
+  hasKits?: boolean
+  onOpenPack?: () => void
 }
 
 // ---- Upload helper (mirrors punchlist utils, points to finish-decisions endpoint) ----
@@ -193,108 +195,113 @@ function IdeaCardTile({
   )
 }
 
-// ---- Hero tile for single option ----
+// ---- Add Idea Menu ----
 
-function HeroTile({
-  option,
-  decision,
-  userEmail,
-  readOnly,
-  onClick,
-  onToggleFinal,
-  onComment,
+function AddIdeaMenu({
+  onPhoto,
+  onNote,
+  onWeb,
+  onPack,
+  uploading,
 }: {
-  option: OptionV3
-  decision: DecisionV3
-  userEmail: string
-  readOnly?: boolean
-  onClick: () => void
-  onToggleFinal?: () => void
-  onComment?: () => void
+  onPhoto: () => void
+  onNote: () => void
+  onWeb: () => void
+  onPack?: () => void
+  uploading?: boolean
 }) {
-  const hero = getHeroImage(option)
-  const heroSrc = hero?.url
-  const linkPreview = !heroSrc && option.urls?.[0]?.linkImage
-  const hasBg = heroSrc || linkPreview
+  const [open, setOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [open])
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="relative w-full aspect-[16/9] rounded-xl overflow-hidden bg-basalt border border-cream/10 hover:border-cream/30 transition-colors text-left group mb-3"
-    >
-      {heroSrc ? (
-        <>
-          <img
-            src={displayUrl(heroSrc)}
-            alt={option.name || 'Selection'}
-            className="w-full h-full object-cover"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-        </>
-      ) : linkPreview ? (
-        <>
-          <img
-            src={displayUrl(linkPreview)}
-            alt={option.name || 'Selection'}
-            className="w-full h-full object-cover"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-        </>
-      ) : (
-        <div className="w-full h-full p-4 flex flex-col justify-end">
-          <p className="text-lg text-cream font-medium leading-snug line-clamp-2">
-            {option.name || <span className="text-cream/30 italic">Untitled</span>}
-          </p>
-          {option.notes && (
-            <p className="text-sm text-cream/40 line-clamp-2 mt-1">{option.notes}</p>
+    <div className="relative" ref={menuRef}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        disabled={uploading}
+        className={`flex items-center justify-center w-9 h-9 rounded-full transition-all ${
+          open
+            ? 'bg-sandstone text-basalt rotate-45'
+            : 'bg-cream/10 text-cream/60 hover:bg-cream/20 hover:text-cream/80'
+        } disabled:opacity-50`}
+        title="Add idea"
+      >
+        {uploading ? (
+          <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+        ) : (
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+          </svg>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1.5 bg-basalt-50 border border-cream/15 rounded-xl shadow-xl overflow-hidden min-w-[180px] z-50">
+          <button
+            type="button"
+            onClick={() => { onPhoto(); setOpen(false) }}
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+          >
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+            Photo
+          </button>
+          <div className="border-t border-cream/8" />
+          <button
+            type="button"
+            onClick={() => { onNote(); setOpen(false) }}
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+          >
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
+            </svg>
+            Note
+          </button>
+          <div className="border-t border-cream/8" />
+          <button
+            type="button"
+            onClick={() => { onWeb(); setOpen(false) }}
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+          >
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M2 12h20" strokeLinecap="round" />
+              <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+            </svg>
+            Save from web
+          </button>
+          {onPack && (
+            <>
+              <div className="border-t border-cream/8" />
+              <button
+                type="button"
+                onClick={() => { onPack(); setOpen(false) }}
+                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+              >
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="2" y="7" width="20" height="14" rx="2" />
+                  <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+                </svg>
+                From pack
+              </button>
+            </>
           )}
         </div>
       )}
-
-      {hasBg && (
-        <div className="absolute bottom-0 left-0 right-0 px-4 py-3">
-          <p className="text-sm text-white font-medium line-clamp-1">
-            {option.name || <span className="text-white/50 italic">Untitled</span>}
-          </p>
-        </div>
-      )}
-
-      {/* Final toggle */}
-      {onToggleFinal && !readOnly ? (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onToggleFinal() }}
-          className={`absolute top-3 left-3 px-2 py-1 text-xs font-semibold rounded-full transition-all ${
-            option.isSelected
-              ? 'bg-sandstone text-basalt'
-              : 'bg-black/40 text-white/70 opacity-60 sm:opacity-0 group-hover:opacity-100'
-          }`}
-        >
-          {option.isSelected ? '✓ Final' : 'Mark Final'}
-        </button>
-      ) : option.isSelected ? (
-        <span className="absolute top-3 left-3 px-2 py-1 bg-sandstone text-basalt text-xs font-semibold rounded-full">
-          Final
-        </span>
-      ) : null}
-
-      {/* Comment icon */}
-      {onComment && (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onComment() }}
-          className="absolute top-3 right-3 p-1.5 text-white/50 hover:text-white/90 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-all"
-          title="Comment"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-      )}
-    </button>
+    </div>
   )
 }
 
@@ -317,6 +324,8 @@ export function IdeasBoard({
   onOpenGlobalComment,
   showContent,
   comments,
+  hasKits,
+  onOpenPack,
 }: Props) {
   const router = useRouter()
   const [uploading, setUploading] = useState(false)
@@ -328,8 +337,6 @@ export function IdeasBoard({
 
   const VISIBLE_COUNT = 3
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const replaceFileRef = useRef<HTMLInputElement>(null)
-  const [replaceTargetId, setReplaceTargetId] = useState<string | null>(null)
 
   function toggleCompareSelect(id: string) {
     setSelectedForCompare((prev) => {
@@ -361,7 +368,6 @@ export function IdeasBoard({
     }
 
     setUploading(true)
-    const isFirstOption = decision.options.length === 0
     let firstUploadedId: string | null = null
     for (let i = 0; i < fileArr.length; i += 3) {
       const batch = fileArr.slice(i, i + 3)
@@ -369,8 +375,7 @@ export function IdeasBoard({
       for (const r of results) {
         if (r.status === 'fulfilled') {
           const { url, thumbnailUrl, id } = r.value
-          const autoFinal = isFirstOption && !firstUploadedId
-          if (autoFinal) firstUploadedId = id
+          if (!firstUploadedId) firstUploadedId = id
           onAddOption({
             id,
             kind: 'image',
@@ -379,7 +384,6 @@ export function IdeasBoard({
             urls: [],
             imageUrl: url,
             thumbnailUrl,
-            isSelected: autoFinal || undefined,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           })
@@ -396,44 +400,21 @@ export function IdeasBoard({
 
   function handleAddTextCard() {
     const id = crypto.randomUUID()
-    const autoFinal = decision.options.length === 0
     onAddOption({
       id,
       kind: 'text',
       name: '',
       notes: '',
       urls: [],
-      isSelected: autoFinal || undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })
     setActiveCardId(id)
   }
 
-  async function handleReplacePhoto(files: FileList | null) {
-    if (!files || files.length === 0 || !replaceTargetId) return
-    const file = files[0]
-    if (file.size === 0) return
-    setUploading(true)
-    try {
-      const { url, thumbnailUrl } = await uploadIdeaFile(file)
-      onUpdateOption(replaceTargetId, {
-        kind: 'image',
-        imageUrl: url,
-        thumbnailUrl,
-      })
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Upload failed'
-      setUploadError(msg)
-    }
-    setUploading(false)
-    setReplaceTargetId(null)
-    if (replaceFileRef.current) replaceFileRef.current.value = ''
-  }
-
   return (
     <div>
-      {/* Hidden file inputs */}
+      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -442,111 +423,82 @@ export function IdeasBoard({
         onChange={(e) => handlePhotoFiles(e.target.files)}
         className="hidden"
       />
-      <input
-        ref={replaceFileRef}
-        type="file"
-        accept="image/*"
-        onChange={(e) => handleReplacePhoto(e.target.files)}
-        className="hidden"
-      />
 
       {showContent !== false && (
         <>
-          {/* Hero tile for single selection */}
-          {decision.options.length === 1 && (() => {
-            const opt = decision.options[0]
-            const heroImg = getHeroImage(opt)
-            return (
-              <>
-                <HeroTile
-                  option={opt}
-                  decision={decision}
-                  userEmail={userEmail}
-                  readOnly={readOnly}
-                  onClick={() => setActiveCardId(opt.id)}
-                  onToggleFinal={() => onSelectOption(opt.id)}
-                  onComment={onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
+          {/* Action row: Compare + Add */}
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              {decision.options.length >= 2 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCompareMode(!compareMode)
+                    setSelectedForCompare(new Set())
+                  }}
+                  className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
+                    compareMode
+                      ? 'bg-sandstone/20 text-sandstone'
+                      : 'bg-cream/10 text-cream/50 hover:text-cream/70'
+                  }`}
+                >
+                  {compareMode ? 'Cancel' : 'Compare'}
+                </button>
+              )}
+            </div>
+            {!readOnly && (
+              <div className="hidden md:block">
+                <AddIdeaMenu
+                  onPhoto={() => fileInputRef.current?.click()}
+                  onNote={handleAddTextCard}
+                  onWeb={() => router.push('/app/save-from-web')}
+                  onPack={hasKits ? onOpenPack : undefined}
+                  uploading={uploading}
                 />
-                {/* Hero quick actions */}
-                {!readOnly && (
-                  <div className="flex items-center gap-2 mb-3 -mt-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setReplaceTargetId(opt.id)
-                        replaceFileRef.current?.click()
-                      }}
-                      disabled={uploading}
-                      className="flex items-center gap-1 px-2.5 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-xs rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                        <circle cx="12" cy="13" r="4" />
-                      </svg>
-                      {heroImg ? 'Replace Photo' : 'Add Photo'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveCardId(opt.id)}
-                      className="flex items-center gap-1 px-2.5 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-xs rounded-lg transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" />
-                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" />
-                      </svg>
-                      Edit
-                    </button>
-                    {onCommentOnOption && (
-                      <button
-                        type="button"
-                        onClick={() => onCommentOnOption(opt.id, opt.name || 'Untitled')}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-xs rounded-lg transition-colors"
-                      >
-                        <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        Comment
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
-                      className="flex items-center gap-1 px-2.5 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-xs rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                      </svg>
-                      Add Another
-                    </button>
+              </div>
+            )}
+          </div>
+
+          {/* Final strip */}
+          {decision.options.length > 0 && (() => {
+            const finalOption = decision.options.find((o) => o.isSelected)
+            if (finalOption) {
+              const hero = getHeroImage(finalOption)
+              const thumbSrc = hero?.thumbnailUrl || hero?.url
+              return (
+                <button
+                  type="button"
+                  onClick={() => setActiveCardId(finalOption.id)}
+                  className="flex items-center gap-3 w-full px-3 py-2.5 mb-3 rounded-xl bg-sandstone/10 border border-sandstone/20 hover:bg-sandstone/15 transition-colors text-left"
+                >
+                  {thumbSrc && (
+                    <img
+                      src={displayUrl(thumbSrc)}
+                      alt=""
+                      className="w-10 h-10 rounded-lg object-cover shrink-0"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-cream font-medium truncate">
+                      {finalOption.name || <span className="text-cream/40 italic">Untitled</span>}
+                    </p>
                   </div>
-                )}
-              </>
+                  <span className="px-2 py-0.5 bg-sandstone text-basalt text-[10px] font-semibold rounded-full shrink-0">
+                    ✓ Final
+                  </span>
+                </button>
+              )
+            }
+            return (
+              <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl bg-cream/5 border border-cream/8">
+                <span className="text-xs text-cream/30">No final selection yet</span>
+              </div>
             )
           })()}
 
-          {/* Compare toggle (2+ selections) */}
-          {decision.options.length >= 2 && (
-            <div className="flex items-center justify-end mb-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setCompareMode(!compareMode)
-                  setSelectedForCompare(new Set())
-                }}
-                className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
-                  compareMode
-                    ? 'bg-sandstone/20 text-sandstone'
-                    : 'bg-cream/10 text-cream/50 hover:text-cream/70'
-                }`}
-              >
-                {compareMode ? 'Cancel' : 'Compare'}
-              </button>
-            </div>
-          )}
-
-          {/* Card grid (2+ selections) */}
-          {decision.options.length > 1 && (() => {
+          {/* Card grid (1+ ideas) */}
+          {decision.options.length >= 1 && (() => {
             const visible = expanded ? decision.options : decision.options.slice(0, VISIBLE_COUNT)
             const hiddenCount = decision.options.length - VISIBLE_COUNT
             return (
@@ -588,7 +540,7 @@ export function IdeasBoard({
                     onClick={() => setExpanded(true)}
                     className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors"
                   >
-                    Show {hiddenCount} more selection{hiddenCount !== 1 ? 's' : ''}
+                    Show {hiddenCount} more idea{hiddenCount !== 1 ? 's' : ''}
                   </button>
                 )}
                 {expanded && decision.options.length > VISIBLE_COUNT && (
@@ -621,61 +573,9 @@ export function IdeasBoard({
           {decision.options.length === 0 && (
             <div className="bg-basalt-50 rounded-card p-8 text-center mb-4">
               <p className="text-cream/40 text-sm">
-                No selections yet.{' '}
-                {!readOnly && 'Add a photo or note to start comparing.'}
+                No ideas yet.{' '}
+                {!readOnly && 'Tap + to add a photo or note.'}
               </p>
-            </div>
-          )}
-
-          {/* Desktop add controls */}
-          {!readOnly && (
-            <div className="hidden md:block">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {uploading ? (
-                    <>
-                      <div className="w-3.5 h-3.5 border border-cream/20 border-t-cream/60 rounded-full animate-spin" />
-                      Uploading…
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                        <circle cx="12" cy="13" r="4" />
-                      </svg>
-                      Add Photo
-                    </>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAddTextCard}
-                  disabled={uploading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors disabled:opacity-50"
-                >
-                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
-                  </svg>
-                  Add Note
-                </button>
-                <button
-                  type="button"
-                  onClick={() => router.push('/app/save-from-web')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:text-cream/80 hover:bg-cream/15 text-sm rounded-lg transition-colors"
-                >
-                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M2 12h20" strokeLinecap="round" />
-                    <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
-                  </svg>
-                  Web
-                </button>
-              </div>
             </div>
           )}
 
@@ -701,6 +601,11 @@ export function IdeasBoard({
           onAddComment={onAddComment}
           onUploadPhoto={uploadIdeaFile}
           onClose={() => setActiveCardId(null)}
+          onCommentOnIdea={onCommentOnOption ? () => {
+            const opt = activeOption
+            setActiveCardId(null)
+            onCommentOnOption(opt.id, opt.name || 'Untitled')
+          } : undefined}
         />
       )}
 
@@ -720,60 +625,16 @@ export function IdeasBoard({
         />
       )}
 
-      {/* Mobile sticky action bar — always rendered (outside showContent gate) */}
+      {/* Mobile floating add button */}
       {!readOnly && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-basalt-50 border-t border-cream/10 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors disabled:opacity-50"
-            >
-              {uploading ? (
-                <div className="w-4 h-4 border border-cream/20 border-t-cream/60 rounded-full animate-spin" />
-              ) : (
-                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-              )}
-              Photo
-            </button>
-            <button
-              type="button"
-              onClick={handleAddTextCard}
-              disabled={uploading}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors disabled:opacity-50"
-            >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
-              </svg>
-              Note
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push('/app/save-from-web')}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors"
-            >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M2 12h20" strokeLinecap="round" />
-                <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
-              </svg>
-              Web
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenGlobalComment?.()}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-cream/10 text-cream/70 text-sm rounded-lg transition-colors"
-            >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Comment
-            </button>
-          </div>
+        <div className="fixed bottom-6 right-4 z-40 md:hidden pb-[env(safe-area-inset-bottom)]">
+          <AddIdeaMenu
+            onPhoto={() => fileInputRef.current?.click()}
+            onNote={handleAddTextCard}
+            onWeb={() => router.push('/app/save-from-web')}
+            onPack={hasKits ? onOpenPack : undefined}
+            uploading={uploading}
+          />
         </div>
       )}
     </div>

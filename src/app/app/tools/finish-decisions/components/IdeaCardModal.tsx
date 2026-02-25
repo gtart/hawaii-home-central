@@ -26,6 +26,7 @@ interface Props {
   onAddComment: (comment: CommentPayload) => void
   onUploadPhoto: (file: File) => Promise<{ url: string; thumbnailUrl: string; id: string }>
   onClose: () => void
+  onCommentOnIdea?: () => void
 }
 
 function formatDate(iso: string) {
@@ -69,11 +70,11 @@ export function IdeaCardModal({
   onAddComment,
   onUploadPhoto,
   onClose,
+  onCommentOnIdea,
 }: Props) {
   const [newUrl, setNewUrl] = useState('')
   const [editingUrlId, setEditingUrlId] = useState<string | null>(null)
   const [editingUrlValue, setEditingUrlValue] = useState('')
-  const [commentText, setCommentText] = useState('')
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [photoUrlInput, setPhotoUrlInput] = useState('')
@@ -165,29 +166,24 @@ export function IdeaCardModal({
     onUpdate({ urls: option.urls.filter((u) => u.id !== urlId) })
   }
 
-  function handlePostComment() {
-    if (!commentText.trim()) return
-    onAddComment({
-      text: commentText.trim(),
-      authorName: userName,
-      authorEmail: userEmail,
-      refOptionId: option.id,
-      refOptionLabel: option.name || 'Untitled selection',
-    })
-    setCommentText('')
-  }
-
   function handleDelete() {
-    if (confirm('Delete this selection?')) {
+    if (confirm('Delete this idea?')) {
       onDelete()
       onClose()
     }
   }
 
+  const MAX_IMAGES = 5
+
   async function handlePhotoFile(file: File | null) {
     if (!file) return
     if (file.size === 0) {
       setUploadError('Empty file — please try again.')
+      return
+    }
+    const currentCount = getAllImages(option).filter((i) => i.id !== 'legacy').length
+    if (currentCount >= MAX_IMAGES) {
+      setUploadError(`Maximum ${MAX_IMAGES} images per idea.`)
       return
     }
     setUploadError('')
@@ -216,8 +212,12 @@ export function IdeaCardModal({
   function handlePhotoUrl() {
     const url = photoUrlInput.trim()
     if (!url) return
-    const newImg: OptionImageV3 = { id: crypto.randomUUID(), url, thumbnailUrl: url }
     const current = getAllImages(option).filter((i) => i.id !== 'legacy')
+    if (current.length >= MAX_IMAGES) {
+      setUploadError(`Maximum ${MAX_IMAGES} images per idea.`)
+      return
+    }
+    const newImg: OptionImageV3 = { id: crypto.randomUUID(), url, thumbnailUrl: url }
     const merged = [...current, newImg]
     onUpdate({
       kind: 'image',
@@ -335,7 +335,7 @@ export function IdeaCardModal({
               value={option.name}
               onChange={(e) => onUpdate({ name: e.target.value })}
               readOnly={readOnly}
-              placeholder="Selection name..."
+              placeholder="Idea name..."
               className="w-full bg-transparent text-cream text-base font-medium placeholder:text-cream/30 focus:outline-none"
             />
           </div>
@@ -374,7 +374,7 @@ export function IdeaCardModal({
                   <div className="relative rounded-xl overflow-hidden bg-basalt">
                     <img
                       src={displayUrl(hero?.url || images[0].url)}
-                      alt={option.name || 'Selection image'}
+                      alt={option.name || 'Idea image'}
                       className="w-full max-h-64 object-contain"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                     />
@@ -690,10 +690,10 @@ export function IdeaCardModal({
             )}
           </div>
 
-          {/* ── Comments on this selection ── */}
+          {/* ── Comments on this idea ── */}
           {ideaComments.length > 0 && (
             <div className="pt-1 border-t border-cream/10">
-              <p className="text-xs text-cream/40 mb-2">Comments on this selection ({ideaComments.length})</p>
+              <p className="text-xs text-cream/40 mb-2">Comments on this idea ({ideaComments.length})</p>
               <div className="space-y-2">
                 {ideaComments.map((c) => (
                   <div key={c.id} className="bg-basalt rounded-lg px-3 py-2">
@@ -710,28 +710,19 @@ export function IdeaCardModal({
             </div>
           )}
 
-          {/* ── Comment input ── */}
-          {!readOnly && (
+          {/* ── Comment link ── */}
+          {!readOnly && onCommentOnIdea && (
             <div className="pt-1 border-t border-cream/10">
-              <label className="block text-xs text-cream/40 mb-2">Add a comment</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value.slice(0, 400))}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handlePostComment() }}
-                  placeholder="Comment on this selection..."
-                  className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
-                />
-                <button
-                  type="button"
-                  onClick={handlePostComment}
-                  disabled={!commentText.trim()}
-                  className="px-3 py-2 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors disabled:opacity-30"
-                >
-                  Post
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={onCommentOnIdea}
+                className="flex items-center gap-1.5 text-xs text-cream/40 hover:text-cream/70 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Add a comment on this idea
+              </button>
             </div>
           )}
 
@@ -743,7 +734,7 @@ export function IdeaCardModal({
                 onClick={handleDelete}
                 className="text-red-400/60 hover:text-red-400 text-sm transition-colors"
               >
-                Delete selection
+                Delete idea
               </button>
               <button
                 type="button"
