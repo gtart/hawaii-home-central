@@ -556,7 +556,14 @@ export function IdeasBoard({
           onUpdateDecision={onUpdateDecision}
           onAddComment={onAddComment}
           onUploadPhoto={uploadIdeaFile}
-          onClose={() => setActiveCardId(null)}
+          onClose={() => {
+            // Auto-delete empty ideas (e.g. new text card closed without filling in)
+            const opt = activeOption
+            if (opt && !opt.name && !opt.notes && !opt.imageUrl && (!opt.images || opt.images.length === 0) && (!opt.urls || opt.urls.length === 0)) {
+              onDeleteOption(opt.id)
+            }
+            setActiveCardId(null)
+          }}
           onCommentOnIdea={onCommentOnOption ? () => {
             const opt = activeOption
             setActiveCardId(null)
