@@ -204,16 +204,17 @@ export function RoomSection({
               type="button"
               onClick={(e) => { e.stopPropagation(); handleAutoPopulate() }}
               className="px-2 py-1 text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+              title="Pre-fill with the typical decisions Hawaii homeowners make for this type of room"
             >
-              Auto-Populate Selections
+              Add common selections
             </button>
             <span className="text-cream/15 select-none">·</span>
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onAddIdeasPack() }}
-              className="px-2 py-1 text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-purple-300/60 hover:text-purple-300 bg-purple-400/5 hover:bg-purple-400/10 rounded-full transition-all"
             >
-              Import Idea Pack
+              <span>✨</span> Idea Packs
             </button>
             <span className="text-cream/15 select-none">·</span>
             <button
@@ -264,9 +265,10 @@ export function RoomSection({
                     setMenuOpen(false)
                     handleAutoPopulate()
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
+                  className="w-full text-left px-3 py-2 hover:bg-cream/5 transition-colors"
                 >
-                  Auto-Populate Selections
+                  <span className="text-sm text-cream/80">Add common selections</span>
+                  <span className="block text-[11px] text-cream/35 mt-0.5">Typical decisions for this room type</span>
                 </button>
                 <button
                   type="button"
@@ -275,9 +277,12 @@ export function RoomSection({
                     setMenuOpen(false)
                     onAddIdeasPack()
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
+                  className="w-full text-left px-3 py-2 hover:bg-cream/5 transition-colors"
                 >
-                  Import Idea Pack
+                  <span className="text-sm text-purple-300/80 flex items-center gap-1.5">
+                    <span>✨</span> Idea Packs
+                  </span>
+                  <span className="block text-[11px] text-cream/35 mt-0.5 ml-5">Curated starter ideas for this room</span>
                 </button>
                 <button
                   type="button"
@@ -385,7 +390,10 @@ export function RoomSection({
               decisions={room.decisions}
               roomType={room.type}
               onDeleteDecision={requestDeleteDecision}
+              onAddSelection={readOnly ? undefined : onQuickAdd}
+              onAddIdeasPack={readOnly ? undefined : onAddIdeasPack}
               readOnly={readOnly}
+              hasAvailableKits={hasAvailableKits}
             />
           ) : (
             <DecisionsTable

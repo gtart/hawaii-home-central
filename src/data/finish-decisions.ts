@@ -282,35 +282,11 @@ export interface RoomSelection {
   template: 'standard' | 'none'
 }
 
-export const DEFAULT_DECISIONS_BY_ROOM_TYPE: Record<RoomTypeV3, string[]> = {
-  kitchen: [
-    'Countertop',
-    'Cabinetry',
-    'Appliances - Range',
-    'Appliances - Refrigerator',
-    'Appliances - Dishwasher',
-    'Sink & Faucet',
-    'Flooring',
-    'Backsplash',
-  ],
-  bathroom: [
-    'Vanity',
-    'Countertop',
-    'Toilet',
-    'Shower/Tub',
-    'Fixtures',
-    'Floor Tile',
-    'Wall Tile',
-    'Mirror',
-  ],
-  living_room: ['Flooring', 'Paint', 'Lighting', 'Window Treatments'],
-  laundry_room: ['Flooring', 'Cabinetry', 'Sink', 'Paint'],
-  bedroom: ['Flooring', 'Paint', 'Lighting', 'Closet Doors'],
-  hallway: ['Flooring', 'Paint', 'Lighting'],
-  stairs: ['Treads', 'Risers', 'Handrail', 'Balusters'],
-  doors: ['Entry Door', 'Interior Doors', 'Hardware'],
-  windows: ['Window Units', 'Treatments'],
-  flooring: ['Material Type', 'Color & Pattern', 'Underlayment', 'Transitions & Trim'],
-  landscaping: ['Hardscape', 'Softscape & Plants', 'Irrigation', 'Outdoor Lighting', 'Fencing'],
-  other: ['Flooring', 'Paint'],
-}
+// Loaded from editable JSON — edit src/data/default-selections.json to change
+import defaultSelectionsJson from './default-selections.json'
+
+export const DEFAULT_DECISIONS_BY_ROOM_TYPE: Record<RoomTypeV3, string[]> =
+  defaultSelectionsJson.decisionsByRoomType as Record<RoomTypeV3, string[]>
+
+export const SELECTION_EMOJI_MAP: Record<string, string> =
+  defaultSelectionsJson.selectionEmojis

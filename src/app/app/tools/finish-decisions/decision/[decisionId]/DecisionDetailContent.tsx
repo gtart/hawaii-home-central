@@ -129,13 +129,25 @@ export function DecisionDetailContent() {
     if (!foundDecision) return
     // Uncategorized selections cannot have a "Final" pick
     if (isUncategorized(foundDecision)) return
-    updateDecision({
+
+    const alreadySelected = foundDecision.options.find((o) => o.id === optionId)?.isSelected
+    const isToggleOff = !!alreadySelected
+
+    const updates: Partial<DecisionV3> = {
       options: foundDecision.options.map((opt) => ({
         ...opt,
-        isSelected: opt.id === optionId,
+        isSelected: isToggleOff ? false : opt.id === optionId,
         updatedAt: new Date().toISOString(),
       })),
-    })
+    }
+
+    // Auto-update status unless already Ordered or Done
+    const st = foundDecision.status
+    if (st !== 'ordered' && st !== 'done') {
+      updates.status = isToggleOff ? 'deciding' : 'selected'
+    }
+
+    updateDecision(updates)
   }
 
   const addComment = (comment: {

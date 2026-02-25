@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/Badge'
-import { STATUS_CONFIG_V3, type DecisionV3 } from '@/data/finish-decisions'
+import { STATUS_CONFIG_V3, SELECTION_EMOJI_MAP, type DecisionV3 } from '@/data/finish-decisions'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { relativeTime } from '@/lib/relativeTime'
 
@@ -33,15 +33,41 @@ function safeStatusConfig(status: string) {
   return STATUS_CONFIG_V3[status as keyof typeof STATUS_CONFIG_V3] ?? STATUS_CONFIG_V3.deciding
 }
 
+function getSelectionEmoji(title: string): string {
+  const lower = title.toLowerCase()
+  return SELECTION_EMOJI_MAP[lower] || '📋'
+}
+
+/** Aggregate vote counts across all options in a decision */
+function getVoteCounts(decision: DecisionV3): { up: number; down: number } {
+  let up = 0
+  let down = 0
+  for (const opt of decision.options) {
+    if (opt.votes) {
+      for (const v of Object.values(opt.votes)) {
+        if (v === 'up') up++
+        else if (v === 'down') down++
+      }
+    }
+  }
+  return { up, down }
+}
+
 export function SelectionsBoardView({
   decisions,
   onDeleteDecision,
+  onAddSelection,
+  onAddIdeasPack,
   readOnly = false,
+  hasAvailableKits = false,
 }: {
   decisions: DecisionV3[]
   roomType: string
   onDeleteDecision: (decisionId: string) => void
+  onAddSelection?: () => void
+  onAddIdeasPack?: () => void
   readOnly?: boolean
+  hasAvailableKits?: boolean
 }) {
   const router = useRouter()
 
@@ -58,7 +84,20 @@ export function SelectionsBoardView({
   if (decisions.length === 0) {
     return (
       <div className="text-center py-8 text-cream/50 text-sm">
-        No selections yet. Use <strong className="text-cream/60">+ Selection</strong> in this room to get started.
+        No selections yet.
+        {onAddSelection && !readOnly && (
+          <>
+            {' '}
+            <button
+              type="button"
+              onClick={onAddSelection}
+              className="text-sandstone hover:text-sandstone-light font-medium transition-colors"
+            >
+              + Add a selection
+            </button>{' '}
+            to get started.
+          </>
+        )}
       </div>
     )
   }
@@ -69,6 +108,8 @@ export function SelectionsBoardView({
         const thumbnail = getSelectionThumbnail(decision)
         const statusCfg = safeStatusConfig(decision.status)
         const selectedOption = decision.options.find((o) => o.isSelected)
+        const votes = getVoteCounts(decision)
+        const commentCount = decision.comments?.length ?? 0
 
         return (
           <div
@@ -99,11 +140,7 @@ export function SelectionsBoardView({
                 </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-basalt to-basalt-50">
-                  <svg className="w-8 h-8 text-cream/15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <path d="M21 15l-5-5L5 21" />
-                  </svg>
+                  <span className="text-4xl opacity-30">{getSelectionEmoji(decision.title)}</span>
                 </div>
               )}
 
@@ -117,6 +154,21 @@ export function SelectionsBoardView({
                   <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
                 )}
               </div>
+
+              {/* Add Idea button (top-left, hover-reveal on desktop, always on mobile) */}
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    router.push(`/app/tools/finish-decisions/decision/${decision.id}`)
+                  }}
+                  className="absolute top-1.5 left-1.5 px-2 py-1 bg-black/50 hover:bg-black/70 rounded-full text-white/80 hover:text-white text-[10px] font-medium opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all"
+                  title="Add an idea"
+                >
+                  + Idea
+                </button>
+              )}
 
               {/* Delete button (hover) */}
               {!readOnly && decision.systemKey !== 'uncategorized' && (
@@ -145,25 +197,84 @@ export function SelectionsBoardView({
                 </p>
               )}
 
-              <div className="flex items-center gap-1.5 text-[10px] text-cream/35 mt-1.5">
+              {/* Votes + Comments row — always visible */}
+              <div className="flex items-center gap-2.5 mt-1.5">
+                <span className="inline-flex items-center gap-0.5 text-[11px] text-cream/50" title="Upvotes">
+                  <span>👍</span>
+                  <span>{votes.up}</span>
+                </span>
+                <span className="inline-flex items-center gap-0.5 text-[11px] text-cream/50" title="Downvotes">
+                  <span>👎</span>
+                  <span>{votes.down}</span>
+                </span>
+                {commentCount > 0 && (
+                  <>
+                    <span className="text-cream/20">·</span>
+                    <span className="inline-flex items-center gap-0.5 text-[11px] text-cream/50" title="Comments">
+                      <span>💬</span>
+                      <span>{commentCount}</span>
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* Meta row */}
+              <div className="flex items-center gap-1.5 text-[11px] text-cream/55 mt-1">
                 {decision.dueDate ? (
                   <span>
                     Due {new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </span>
                 ) : (
-                  <span className="text-cream/20">No due</span>
+                  <span className="text-cream/35">No due</span>
                 )}
-                <span className="text-cream/15">·</span>
+                <span className="text-cream/30">·</span>
                 <span>{decision.options.length} idea{decision.options.length !== 1 ? 's' : ''}</span>
               </div>
 
-              <p className="text-[10px] text-cream/25 mt-0.5">
+              <p className="text-[10px] text-cream/40 mt-0.5">
                 {relativeTime(decision.updatedAt)}
               </p>
             </div>
           </div>
         )
       })}
+
+      {/* Add Selection tile */}
+      {!readOnly && onAddSelection && (
+        <button
+          type="button"
+          onClick={onAddSelection}
+          className="rounded-xl border-2 border-dashed border-cream/15 hover:border-sandstone/40 bg-transparent hover:bg-sandstone/5 transition-all flex flex-col items-center justify-center gap-2 min-h-[200px] group/add focus:outline-none focus:ring-2 focus:ring-sandstone/50"
+        >
+          <div className="w-10 h-10 rounded-full bg-cream/5 group-hover/add:bg-sandstone/10 flex items-center justify-center transition-colors">
+            <svg className="w-5 h-5 text-cream/30 group-hover/add:text-sandstone transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+            </svg>
+          </div>
+          <span className="text-xs text-cream/40 group-hover/add:text-cream/60 font-medium transition-colors">
+            Add a selection
+          </span>
+        </button>
+      )}
+
+      {/* Import Idea Pack tile */}
+      {!readOnly && hasAvailableKits && onAddIdeasPack && (
+        <button
+          type="button"
+          onClick={onAddIdeasPack}
+          className="rounded-xl border-2 border-dashed border-purple-400/15 hover:border-purple-400/40 bg-transparent hover:bg-purple-400/5 transition-all flex flex-col items-center justify-center gap-2 min-h-[200px] group/pack focus:outline-none focus:ring-2 focus:ring-purple-400/50"
+        >
+          <div className="w-10 h-10 rounded-full bg-purple-400/5 group-hover/pack:bg-purple-400/10 flex items-center justify-center transition-colors">
+            <span className="text-xl">✨</span>
+          </div>
+          <span className="text-xs text-purple-300/50 group-hover/pack:text-purple-300/80 font-medium transition-colors">
+            Idea Packs
+          </span>
+          <span className="text-[10px] text-cream/25 group-hover/pack:text-cream/40 transition-colors">
+            Curated starter ideas
+          </span>
+        </button>
+      )}
     </div>
   )
 }

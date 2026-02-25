@@ -5,15 +5,31 @@ import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/Badge'
 import {
   STATUS_CONFIG_V3,
+  SELECTION_EMOJI_MAP,
   type DecisionV3,
 } from '@/data/finish-decisions'
+import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { DecisionCard } from './DecisionCard'
 
 function getDecisionThumbnail(decision: DecisionV3): string | null {
-  const selectedWithPhoto = decision.options.find((o) => o.isSelected && o.thumbnailUrl)
-  if (selectedWithPhoto?.thumbnailUrl) return selectedWithPhoto.thumbnailUrl
-  const anyWithPhoto = [...decision.options].reverse().find((o) => o.thumbnailUrl)
-  return anyWithPhoto?.thumbnailUrl ?? null
+  // 1. Selected option with image
+  for (const opt of decision.options) {
+    if (opt.isSelected) {
+      const hero = getHeroImage(opt)
+      if (hero) return displayUrl(hero.thumbnailUrl || hero.url)
+      if (opt.thumbnailUrl) return displayUrl(opt.thumbnailUrl)
+      if (opt.imageUrl) return displayUrl(opt.imageUrl)
+    }
+  }
+  // 2. Any option with image (most recent first)
+  const withImage = [...decision.options].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+  for (const opt of withImage) {
+    const hero = getHeroImage(opt)
+    if (hero) return displayUrl(hero.thumbnailUrl || hero.url)
+    if (opt.thumbnailUrl) return displayUrl(opt.thumbnailUrl)
+    if (opt.imageUrl) return displayUrl(opt.imageUrl)
+  }
+  return null
 }
 
 function safeStatusConfig(status: string) {
@@ -140,6 +156,9 @@ export function DecisionsTable({
               <th className="px-3 py-2 text-center text-xs font-medium text-cream/60 uppercase tracking-wide">
                 Ideas
               </th>
+              <th className="px-3 py-2 text-center text-xs font-medium text-cream/60 uppercase tracking-wide">
+                Feedback
+              </th>
               <th className="px-3 py-2 text-left text-xs font-medium text-cream/60 uppercase tracking-wide">
                 Notes
               </th>
@@ -168,7 +187,9 @@ export function DecisionsTable({
                         className="w-10 h-10 rounded-md object-cover"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-md bg-basalt/50" />
+                      <div className="w-10 h-10 rounded-md bg-basalt/50 flex items-center justify-center text-lg">
+                        {SELECTION_EMOJI_MAP[decision.title.toLowerCase()] || '📋'}
+                      </div>
                     )}
                   </td>
                   <td className="px-3 py-2.5">
@@ -212,6 +233,27 @@ export function DecisionsTable({
                     <span className="text-xs text-cream/40">
                       {decision.options.length}
                     </span>
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    {(() => {
+                      let up = 0, down = 0
+                      for (const opt of decision.options) {
+                        if (opt.votes) {
+                          for (const v of Object.values(opt.votes)) {
+                            if (v === 'up') up++; else if (v === 'down') down++
+                          }
+                        }
+                      }
+                      const cmt = decision.comments?.length ?? 0
+                      return (up || down || cmt) ? (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] text-cream/50">
+                          {(up > 0 || down > 0) && <span>👍{up} 👎{down}</span>}
+                          {cmt > 0 && <span>💬{cmt}</span>}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-cream/20">&mdash;</span>
+                      )
+                    })()}
                   </td>
                   <td className="px-3 py-2.5 max-w-[200px]">
                     {decision.notes ? (
