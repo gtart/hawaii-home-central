@@ -16,6 +16,7 @@ import { applyKitToRoom, removeKitFromRoom } from '@/lib/finish-decision-kits'
 import { RoomSection } from './RoomSection'
 import { OnboardingView } from './OnboardingView'
 import { QuickAddDecisionModal } from './QuickAddDecisionModal'
+import { AddRoomModal } from './AddRoomModal'
 import { IdeasPackModal } from './IdeasPackModal'
 
 export function DecisionTrackerPage({
@@ -37,27 +38,27 @@ export function DecisionTrackerPage({
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilters, setStatusFilters] = useState<StatusV3[]>([])
   const [roomFilter, setRoomFilter] = useState<string | null>(null)
-  const [onboardingCollapsed, setOnboardingCollapsed] = useState(true)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [quickAddRoomId, setQuickAddRoomId] = useState<string | null>(null)
+  const [addRoomOpen, setAddRoomOpen] = useState(false)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [ideasModalRoomId, setIdeasModalRoomId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; kitId: string; roomId: string } | null>(null)
 
   // Refs for focus return (FS-UI-008)
-  const fabRef = useRef<HTMLButtonElement>(null)
-  const desktopAddRef = useRef<HTMLButtonElement>(null)
   const quickAddTriggerRef = useRef<HTMLButtonElement | null>(null)
 
   const hasRooms = rooms.length > 0
 
-  // Auto-expand all rooms when transitioning from 0 rooms (onboarding → tracker)
-  const prevRoomCountRef = useRef(rooms.length)
+  // Auto-expand newly added rooms (handles both 0→N and N→N+1 transitions)
+  const prevRoomIdsRef = useRef(new Set(rooms.map((r) => r.id)))
   useEffect(() => {
-    if (prevRoomCountRef.current === 0 && rooms.length > 0) {
-      setExpandedRooms(new Set(rooms.map((r) => r.id)))
+    const currentIds = new Set(rooms.map((r) => r.id))
+    const newIds = [...currentIds].filter((id) => !prevRoomIdsRef.current.has(id))
+    if (newIds.length > 0) {
+      setExpandedRooms((prev) => new Set([...prev, ...newIds]))
     }
-    prevRoomCountRef.current = rooms.length
+    prevRoomIdsRef.current = currentIds
   }, [rooms])
 
   // Toggle a single room's expansion
@@ -189,8 +190,7 @@ export function DecisionTrackerPage({
     setExpandedRooms((prev) => new Set([...prev, roomId]))
   }
 
-  function openQuickAdd(roomId: string | null, trigger: React.RefObject<HTMLButtonElement | null>) {
-    quickAddTriggerRef.current = trigger.current
+  function openQuickAdd(roomId: string | null) {
     setQuickAddRoomId(roomId)
     setQuickAddOpen(true)
   }
@@ -218,13 +218,9 @@ export function DecisionTrackerPage({
 
   return (
     <>
-      {/* Onboarding — hidden for readOnly users */}
-      {!readOnly && (
-        <OnboardingView
-          onBatchCreate={onBatchAddRooms}
-          collapsed={hasRooms ? onboardingCollapsed : undefined}
-          onToggleCollapse={hasRooms ? () => setOnboardingCollapsed((prev) => !prev) : undefined}
-        />
+      {/* Onboarding — only for new users with zero rooms */}
+      {!readOnly && !hasRooms && (
+        <OnboardingView onBatchCreate={onBatchAddRooms} />
       )}
 
       {/* Tracker UI — only when rooms exist */}
@@ -384,11 +380,10 @@ export function DecisionTrackerPage({
               <>
                 <span className="text-cream/15 select-none">·</span>
                 <button
-                  ref={desktopAddRef}
-                  onClick={() => openQuickAdd(null, desktopAddRef)}
+                  onClick={() => setAddRoomOpen(true)}
                   className="inline-flex items-center gap-1 text-[11px] text-sandstone hover:text-sandstone-light transition-colors font-medium"
                 >
-                  + Add Selection
+                  + Add a Room
                 </button>
               </>
             )}
@@ -421,7 +416,7 @@ export function DecisionTrackerPage({
                   onToggleExpand={() => toggleRoom(room.id)}
                   onUpdateRoom={(updates) => onUpdateRoom(room.id, updates)}
                   onDeleteRoom={() => onDeleteRoom(room.id)}
-                  onQuickAdd={() => { setQuickAddRoomId(room.id); setQuickAddOpen(true) }}
+                  onQuickAdd={() => openQuickAdd(room.id)}
                   onAddIdeasPack={() => setIdeasModalRoomId(room.id)}
                   readOnly={readOnly}
                   hasAvailableKits={findKitsForRoomType(room.type as RoomTypeV3).length > 0}
@@ -432,14 +427,13 @@ export function DecisionTrackerPage({
         </>
       )}
 
-      {/* Mobile FAB */}
+      {/* Mobile FAB — Add a Room */}
       {hasRooms && !readOnly && (
         <button
-          ref={fabRef}
           type="button"
-          onClick={() => openQuickAdd(null, fabRef)}
+          onClick={() => setAddRoomOpen(true)}
           className="md:hidden fixed bottom-8 right-8 w-14 h-14 bg-sandstone rounded-full shadow-lg z-40 flex items-center justify-center active:scale-95 transition-transform"
-          aria-label="Add selection"
+          aria-label="Add a room"
         >
           <svg className="w-7 h-7 text-basalt" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M12 5v14M5 12h14" strokeLinecap="round" />
@@ -546,6 +540,17 @@ export function DecisionTrackerPage({
           onAdd={handleQuickAddDecision}
           onClose={() => setQuickAddOpen(false)}
           triggerRef={quickAddTriggerRef}
+        />
+      )}
+
+      {/* Add Room Modal */}
+      {addRoomOpen && (
+        <AddRoomModal
+          onClose={() => setAddRoomOpen(false)}
+          onAdd={(type, name, useDefaults) => {
+            onBatchAddRooms([{ type, name, template: useDefaults ? 'standard' : 'none' }])
+          }}
+          existingRooms={rooms}
         />
       )}
 

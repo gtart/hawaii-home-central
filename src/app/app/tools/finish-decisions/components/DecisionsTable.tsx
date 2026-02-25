@@ -82,7 +82,7 @@ export function DecisionsTable({
   if (decisions.length === 0) {
     return (
       <div className="text-center py-8 text-cream/50 text-sm">
-        No selections yet. Tap &quot;+ Add Selection&quot; to get started.
+        No selections yet. Use the + Selection button above.
       </div>
     )
   }
@@ -133,7 +133,7 @@ export function DecisionsTable({
                 Updated{arrow('updated')}
               </th>
               <th className="px-3 py-2 text-center text-xs font-medium text-cream/60 uppercase tracking-wide">
-                Opts
+                Ideas
               </th>
               <th className="px-3 py-2 text-left text-xs font-medium text-cream/60 uppercase tracking-wide">
                 Notes

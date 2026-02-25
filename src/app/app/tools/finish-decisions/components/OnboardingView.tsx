@@ -57,17 +57,10 @@ export function OnboardingView({
     setCustomOtherName('')
   }
 
-  // Collapsed state — compact text link
+  // When collapsed (rooms already exist), render nothing — the "+ Add a Room"
+  // button in the filter bar replaces this link.
   if (collapsed) {
-    return (
-      <button
-        type="button"
-        className="text-sm text-sandstone/70 hover:text-sandstone transition-colors mb-4 inline-block"
-        onClick={onToggleCollapse}
-      >
-        + Add rooms to your project
-      </button>
-    )
+    return null
   }
 
   return (

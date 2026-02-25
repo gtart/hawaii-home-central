@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { useToolState } from '@/hooks/useToolState'
 import { IdeasBoard } from '../../components/IdeasBoard'
@@ -14,7 +13,6 @@ import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
 import { findKitsForDecisionTitle, applyKitToDecision } from '@/lib/finish-decision-kits'
 import {
   STATUS_CONFIG_V3,
-  ROOM_TYPE_OPTIONS_V3,
   type DecisionV3,
   type OptionV3,
   type StatusV3,
@@ -38,6 +36,7 @@ export function DecisionDetailContent() {
   const [notesExpanded, setNotesExpanded] = useState(false)
   const [draftRef, setDraftRef] = useState<{ optionId: string; optionLabel: string } | null>(null)
   const [ideasPackOpen, setIdeasPackOpen] = useState(false)
+  const [commentsOpen, setCommentsOpen] = useState(false)
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
 
   const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3 | any>({
@@ -175,13 +174,13 @@ export function DecisionDetailContent() {
   }
 
   function openGlobalCommentComposer() {
-    commentInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setCommentsOpen(true)
     setTimeout(() => commentInputRef.current?.focus(), 300)
   }
 
   function handleCommentOnOption(optionId: string, optionLabel: string) {
     setDraftRef({ optionId, optionLabel })
-    commentInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setCommentsOpen(true)
     setTimeout(() => commentInputRef.current?.focus(), 300)
   }
 
@@ -244,8 +243,6 @@ export function DecisionDetailContent() {
       </div>
     )
   }
-
-  const roomTypeLabel = ROOM_TYPE_OPTIONS_V3.find((t) => t.value === foundRoom.type)?.label
 
   // eslint-disable-next-line react/no-unstable-nested-components -- colocated for clarity
   function GuidancePanel({
@@ -372,6 +369,12 @@ export function DecisionDetailContent() {
     )
   }
 
+  const commentCount = (foundDecision.comments || []).length
+  const statusCfg = STATUS_CONFIG_V3[foundDecision.status]
+  const formattedDue = foundDecision.dueDate
+    ? new Date(foundDecision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : null
+
   return (
     <div className="pt-20 md:pt-24 pb-36 md:pb-24 px-6">
       <div className="max-w-3xl mx-auto">
@@ -383,21 +386,9 @@ export function DecisionDetailContent() {
           ← Back to Selections
         </button>
 
-        {/* Header */}
-        <div className="mb-5">
-          <div className="flex items-center gap-3 mb-3">
-            <Badge variant="default" className="text-xs">
-              {foundRoom.name}
-            </Badge>
-            {roomTypeLabel && roomTypeLabel.toLowerCase() !== foundRoom.name.toLowerCase() && (
-              <Badge variant="default" className="text-xs">
-                {roomTypeLabel}
-              </Badge>
-            )}
-          </div>
-
-          {/* Title: click-to-edit on mobile, always-editable on desktop */}
-          <div className="hidden md:block">
+        {/* Desktop header: title + status + due in one row */}
+        <div className="hidden md:flex items-center gap-3 mb-2">
+          <div className="flex-1">
             <Input
               value={foundDecision.title}
               onChange={(e) => updateDecision({ title: e.target.value })}
@@ -405,34 +396,11 @@ export function DecisionDetailContent() {
               readOnly={readOnly}
             />
           </div>
-          <div className="md:hidden">
-            {editingTitle ? (
-              <Input
-                autoFocus
-                value={foundDecision.title}
-                onChange={(e) => updateDecision({ title: e.target.value })}
-                onBlur={() => setEditingTitle(false)}
-                className="text-2xl font-serif"
-                readOnly={readOnly}
-              />
-            ) : (
-              <h1
-                className="text-2xl font-serif text-cream cursor-text"
-                onClick={() => !readOnly && setEditingTitle(true)}
-              >
-                {foundDecision.title || <span className="text-cream/30">Untitled</span>}
-              </h1>
-            )}
-          </div>
-        </div>
-
-        {/* Status + Due Date: compact row on mobile, full sections on desktop */}
-        <div className="flex items-center gap-3 mb-4 md:hidden">
           <select
             value={foundDecision.status}
             onChange={(e) => handleStatusChange(e.target.value as StatusV3)}
             disabled={readOnly}
-            className="flex-1 bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone disabled:opacity-50"
+            className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone disabled:opacity-50 shrink-0"
           >
             {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
               <option key={key} value={key}>{config.label}</option>
@@ -443,110 +411,94 @@ export function DecisionDetailContent() {
             value={foundDecision.dueDate || ''}
             onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
             disabled={readOnly}
-            className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50"
+            className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50 shrink-0"
           />
         </div>
 
-        {/* Desktop: full status section */}
-        <div className="hidden md:block mb-4">
-          <Select
-            label="Status"
-            value={foundDecision.status}
-            onChange={(e) => handleStatusChange(e.target.value as StatusV3)}
-            options={Object.entries(STATUS_CONFIG_V3).map(([key, config]) => ({
-              value: key,
-              label: config.label,
-            }))}
-            disabled={readOnly}
-          />
-        </div>
-
-        {/* Desktop: full due date section */}
-        <div className="hidden md:block mb-4">
-          <label className="block text-sm text-cream/70 mb-1.5">Due Date</label>
-          <div className="flex items-center gap-3 mb-2">
+        {/* Mobile header: title + controls */}
+        <div className="md:hidden mb-2">
+          {editingTitle ? (
+            <Input
+              autoFocus
+              value={foundDecision.title}
+              onChange={(e) => updateDecision({ title: e.target.value })}
+              onBlur={() => setEditingTitle(false)}
+              className="text-2xl font-serif"
+              readOnly={readOnly}
+            />
+          ) : (
+            <h1
+              className="text-2xl font-serif text-cream cursor-text"
+              onClick={() => !readOnly && setEditingTitle(true)}
+            >
+              {foundDecision.title || <span className="text-cream/30">Untitled</span>}
+            </h1>
+          )}
+          <div className="flex items-center gap-3 mt-2">
+            <select
+              value={foundDecision.status}
+              onChange={(e) => handleStatusChange(e.target.value as StatusV3)}
+              disabled={readOnly}
+              className="flex-1 bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone disabled:opacity-50"
+            >
+              {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
+                <option key={key} value={key}>{config.label}</option>
+              ))}
+            </select>
             <input
               type="date"
               value={foundDecision.dueDate || ''}
               onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
               disabled={readOnly}
-              className="bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50"
+              className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50"
             />
-            {!readOnly && foundDecision.dueDate && (
-              <button
-                onClick={() => updateDecision({ dueDate: null })}
-                className="text-xs text-cream/40 hover:text-cream/70"
-              >
-                Clear
-              </button>
-            )}
           </div>
-          {!readOnly && (
-            <div className="flex flex-wrap gap-2">
-              {[
-                { label: 'Next week', days: 7 },
-                { label: 'In two weeks', days: 14 },
-                { label: 'In a month', days: 30 },
-                { label: 'In several months', days: 90 },
-              ].map((chip) => {
-                const target = new Date()
-                target.setDate(target.getDate() + chip.days)
-                const iso = target.toISOString().split('T')[0]
-                const isActive = foundDecision.dueDate === iso
-
-                return (
-                  <button
-                    key={chip.label}
-                    onClick={() => updateDecision({ dueDate: iso })}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                      isActive
-                        ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
-                        : 'bg-cream/10 text-cream/60 hover:text-cream/80'
-                    }`}
-                  >
-                    {chip.label}
-                  </button>
-                )
-              })}
-              <button
-                onClick={() => updateDecision({ dueDate: null })}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                  foundDecision.dueDate === null || foundDecision.dueDate === undefined
-                    ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
-                    : 'bg-cream/10 text-cream/60 hover:text-cream/80'
-                }`}
-              >
-                TBD
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* Notes: collapsed on mobile, full on desktop */}
-        <div className="mb-8">
-          {/* Desktop: full textarea */}
+        {/* Meta row */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs mb-4">
+          <Badge variant="default" className="text-xs">{foundRoom.name}</Badge>
+          <span className="text-cream/20">·</span>
+          <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
+          {formattedDue && (
+            <>
+              <span className="text-cream/20">·</span>
+              <span className="text-cream/40">Due {formattedDue}</span>
+            </>
+          )}
+          <span className="text-cream/20">·</span>
+          <button
+            type="button"
+            onClick={() => setCommentsOpen(true)}
+            className="text-cream/40 hover:text-cream/70 transition-colors"
+          >
+            {commentCount > 0 ? `${commentCount} comment${commentCount !== 1 ? 's' : ''}` : 'Add comment'}
+          </button>
+        </div>
+
+        {/* Notes — compact */}
+        <div className="mb-6">
+          {/* Desktop */}
           <div className="hidden md:block">
-            <label className="block text-sm text-cream/70 mb-1.5">Notes</label>
             <textarea
               value={foundDecision.notes}
               onChange={(e) => updateDecision({ notes: e.target.value })}
               readOnly={readOnly}
-              className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[120px]"
-              placeholder="General notes about this decision..."
+              className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[60px]"
+              placeholder="Notes..."
             />
           </div>
           {/* Mobile: collapsed preview */}
           <div className="md:hidden">
             {notesExpanded ? (
               <>
-                <label className="block text-sm text-cream/70 mb-1.5">Notes</label>
                 <textarea
                   autoFocus
                   value={foundDecision.notes}
                   onChange={(e) => updateDecision({ notes: e.target.value })}
                   readOnly={readOnly}
-                  className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[100px]"
-                  placeholder="General notes about this decision..."
+                  className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[80px]"
+                  placeholder="Notes..."
                 />
                 <button
                   type="button"
@@ -572,9 +524,9 @@ export function DecisionDetailContent() {
           </div>
         </div>
 
-        {/* Ideas board (collapsible) */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
+        {/* Ideas board */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-3">
             <button
               type="button"
               onClick={() => setOptionsOpen(!optionsOpen)}
@@ -614,23 +566,7 @@ export function DecisionDetailContent() {
           />
         </div>
 
-        {/* Comments */}
-        <div className="mb-8">
-          <CommentsSection
-            comments={foundDecision.comments || []}
-            onAddComment={addComment}
-            readOnly={readOnly}
-            commentInputRef={commentInputRef}
-            draftRef={draftRef}
-            onClearDraftRef={() => setDraftRef(null)}
-            onOpenCard={(optId) => {
-              setOptionsOpen(true)
-              setActiveCardId(optId)
-            }}
-          />
-        </div>
-
-        {/* Guidance Panel — at the bottom */}
+        {/* Guidance Panel */}
         <GuidancePanel
           decision={foundDecision}
           roomType={foundRoom.type}
@@ -653,6 +589,79 @@ export function DecisionDetailContent() {
           </div>
         )}
       </div>
+
+      {/* Comments Panel — desktop: side panel, mobile: bottom sheet */}
+      {commentsOpen && (
+        <>
+          {/* Desktop: right side panel */}
+          <div className="hidden md:block fixed inset-0 z-50">
+            <div className="absolute inset-0 bg-black/30" onClick={() => setCommentsOpen(false)} />
+            <div className="absolute inset-y-0 right-0 w-96 bg-basalt-50 border-l border-cream/10 shadow-xl overflow-y-auto">
+              <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 flex items-center justify-between px-5 py-4 z-10">
+                <h2 className="text-lg font-medium text-cream">Comments</h2>
+                <button
+                  type="button"
+                  onClick={() => setCommentsOpen(false)}
+                  className="text-cream/40 hover:text-cream transition-colors"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-5">
+                <CommentsSection
+                  comments={foundDecision.comments || []}
+                  onAddComment={addComment}
+                  readOnly={readOnly}
+                  commentInputRef={commentInputRef}
+                  draftRef={draftRef}
+                  onClearDraftRef={() => setDraftRef(null)}
+                  onOpenCard={(optId) => {
+                    setOptionsOpen(true)
+                    setActiveCardId(optId)
+                    setCommentsOpen(false)
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile: bottom sheet */}
+          <div className="md:hidden fixed inset-0 z-50 flex items-end">
+            <div className="absolute inset-0 bg-black/60" onClick={() => setCommentsOpen(false)} />
+            <div className="relative bg-basalt-50 border-t border-cream/10 rounded-t-xl w-full max-h-[80vh] overflow-y-auto">
+              <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 flex items-center justify-between px-5 py-3 z-10 rounded-t-xl">
+                <h2 className="text-lg font-medium text-cream">Comments</h2>
+                <button
+                  type="button"
+                  onClick={() => setCommentsOpen(false)}
+                  className="text-cream/40 hover:text-cream transition-colors"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-5">
+                <CommentsSection
+                  comments={foundDecision.comments || []}
+                  onAddComment={addComment}
+                  readOnly={readOnly}
+                  commentInputRef={commentInputRef}
+                  draftRef={draftRef}
+                  onClearDraftRef={() => setDraftRef(null)}
+                  onOpenCard={(optId) => {
+                    setOptionsOpen(true)
+                    setActiveCardId(optId)
+                    setCommentsOpen(false)
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Ideas Pack Modal (decision-level) */}
       {ideasPackOpen && foundRoom && (

@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import type { OptionV3, DecisionV3, SelectionComment } from '@/data/finish-decisions'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { IdeaCardModal } from './IdeaCardModal'
@@ -83,6 +82,9 @@ function IdeaCardTile({
   onClick,
   onToggleFinal,
   onComment,
+  onVote,
+  myVote,
+  commentCount,
 }: {
   option: OptionV3
   decision: DecisionV3
@@ -91,6 +93,9 @@ function IdeaCardTile({
   onClick: () => void
   onToggleFinal?: () => void
   onComment?: () => void
+  onVote?: (vote: 'up' | 'down') => void
+  myVote?: 'up' | 'down' | null
+  commentCount?: number
 }) {
   const votes = option.votes ?? {}
   const upCount = Object.values(votes).filter((v) => v === 'up').length
@@ -164,27 +169,55 @@ function IdeaCardTile({
         </span>
       ) : null}
 
-      {/* Comment icon */}
+      {/* Comment icon + count */}
       {onComment && (
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onComment() }}
-          className="absolute top-2 right-8 p-1 text-white/50 hover:text-white/90 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-all"
+          className={`absolute top-2 right-2 flex items-center gap-0.5 p-1 rounded-full transition-all ${
+            commentCount && commentCount > 0
+              ? 'bg-black/40 text-white/70'
+              : 'text-white/50 hover:text-white/90 opacity-60 sm:opacity-0 group-hover:opacity-100'
+          }`}
           title="Comment"
         >
           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
+          {commentCount && commentCount > 0 && (
+            <span className="text-[10px]">{commentCount}</span>
+          )}
         </button>
       )}
 
-      {/* Vote counts */}
-      {(upCount > 0 || downCount > 0) && (
+      {/* Vote buttons (interactive) or passive counts */}
+      {onVote && !readOnly ? (
+        <div className="absolute bottom-2 right-2 flex items-center gap-1 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-all">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onVote('up') }}
+            className={`text-[11px] px-1.5 py-0.5 rounded-full transition-colors ${
+              myVote === 'up' ? 'bg-green-500/30 text-green-300' : 'bg-black/40 text-white/60 hover:text-white'
+            }`}
+          >
+            👍{upCount > 0 ? ` ${upCount}` : ''}
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onVote('down') }}
+            className={`text-[11px] px-1.5 py-0.5 rounded-full transition-colors ${
+              myVote === 'down' ? 'bg-red-500/30 text-red-300' : 'bg-black/40 text-white/60 hover:text-white'
+            }`}
+          >
+            👎{downCount > 0 ? ` ${downCount}` : ''}
+          </button>
+        </div>
+      ) : (upCount > 0 || downCount > 0) ? (
         <div className="absolute bottom-2 right-2 flex items-center gap-1.5 text-[10px] text-white/70">
           {upCount > 0 && <span>👍 {upCount}</span>}
           {downCount > 0 && <span>👎 {downCount}</span>}
         </div>
-      )}
+      ) : null}
     </button>
   )
 }
@@ -321,16 +354,17 @@ export function IdeasBoard({
   hasKits,
   onOpenPack,
 }: Props) {
-  const router = useRouter()
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [expanded, setExpanded] = useState(false)
   const [compareMode, setCompareMode] = useState(false)
   const [selectedForCompare, setSelectedForCompare] = useState<Set<string>>(new Set())
   const [showCompareModal, setShowCompareModal] = useState(false)
+  const [showNoteInput, setShowNoteInput] = useState(false)
 
   const VISIBLE_COUNT = 3
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const noteInputRef = useRef<HTMLInputElement>(null)
 
   function toggleCompareSelect(id: string) {
     setSelectedForCompare((prev) => {
@@ -393,17 +427,38 @@ export function IdeasBoard({
   }
 
   function handleAddTextCard() {
+    setShowNoteInput(true)
+    setTimeout(() => noteInputRef.current?.focus(), 50)
+  }
+
+  function handleNoteSubmit(title: string) {
+    if (!title.trim()) {
+      setShowNoteInput(false)
+      return
+    }
     const id = crypto.randomUUID()
     onAddOption({
       id,
       kind: 'text',
-      name: '',
+      name: title.trim(),
       notes: '',
       urls: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })
-    setActiveCardId(id)
+    setShowNoteInput(false)
+  }
+
+  function handleVote(optionId: string, vote: 'up' | 'down') {
+    const option = decision.options.find((o) => o.id === optionId)
+    if (!option) return
+    const currentVotes = { ...(option.votes || {}) }
+    if (currentVotes[userEmail] === vote) {
+      delete currentVotes[userEmail]
+    } else {
+      currentVotes[userEmail] = vote
+    }
+    onUpdateOption(optionId, { votes: currentVotes })
   }
 
   return (
@@ -445,13 +500,30 @@ export function IdeasBoard({
                 <AddIdeaMenu
                   onPhoto={() => fileInputRef.current?.click()}
                   onNote={handleAddTextCard}
-                  onWeb={() => router.push('/app/save-from-web')}
+                  onWeb={() => window.open('/app/save-from-web', '_blank')}
                   onPack={hasKits ? onOpenPack : undefined}
                   uploading={uploading}
                 />
               </div>
             )}
           </div>
+
+          {/* Inline note title input */}
+          {showNoteInput && (
+            <div className="mb-3">
+              <input
+                ref={noteInputRef}
+                type="text"
+                placeholder="Idea title..."
+                className="w-full bg-basalt-50 border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleNoteSubmit((e.target as HTMLInputElement).value)
+                  if (e.key === 'Escape') setShowNoteInput(false)
+                }}
+                onBlur={(e) => handleNoteSubmit(e.target.value)}
+              />
+            </div>
+          )}
 
           {/* Card grid (1+ ideas) */}
           {decision.options.length >= 1 && (() => {
@@ -470,6 +542,9 @@ export function IdeasBoard({
                         onClick={() => compareMode ? toggleCompareSelect(opt.id) : setActiveCardId(opt.id)}
                         onToggleFinal={compareMode ? undefined : () => onSelectOption(opt.id)}
                         onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
+                        onVote={compareMode ? undefined : (vote) => handleVote(opt.id, vote)}
+                        myVote={(opt.votes || {})[userEmail] || null}
+                        commentCount={comments.filter((c) => c.refOptionId === opt.id).length}
                       />
                       {/* Compare checkbox overlay */}
                       {compareMode && (
@@ -594,7 +669,7 @@ export function IdeasBoard({
           <AddIdeaMenu
             onPhoto={() => fileInputRef.current?.click()}
             onNote={handleAddTextCard}
-            onWeb={() => router.push('/app/save-from-web')}
+            onWeb={() => window.open('/app/save-from-web', '_blank')}
             onPack={hasKits ? onOpenPack : undefined}
             uploading={uploading}
           />

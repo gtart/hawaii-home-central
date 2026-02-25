@@ -9,6 +9,7 @@ import {
 } from '@/data/finish-decisions'
 import { DecisionsTable } from './DecisionsTable'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { TextConfirmDialog } from '@/components/ui/TextConfirmDialog'
 
 export function RoomSection({
   room,
@@ -136,9 +137,38 @@ export function RoomSection({
           </div>
         </div>
 
-        {/* Kebab menu */}
+        {/* Desktop inline actions */}
         {!readOnly && (
-          <div className="relative shrink-0" ref={menuRef}>
+          <div className="hidden md:flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onQuickAdd() }}
+              className="px-2 py-1 text-[11px] text-sandstone hover:text-sandstone-light transition-colors font-medium"
+            >
+              + Selection
+            </button>
+            <span className="text-cream/15 select-none">·</span>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onAddIdeasPack() }}
+              className="px-2 py-1 text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+            >
+              Import ideas
+            </button>
+            <span className="text-cream/15 select-none">·</span>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setConfirmDeleteRoom(true) }}
+              className="px-2 py-1 text-[11px] text-red-400/40 hover:text-red-400 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        )}
+
+        {/* Mobile kebab menu */}
+        {!readOnly && (
+          <div className="md:hidden relative shrink-0" ref={menuRef}>
             <button
               type="button"
               onClick={(e) => {
@@ -176,7 +206,7 @@ export function RoomSection({
                   }}
                   className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
                 >
-                  Add ideas pack
+                  Import ideas
                 </button>
                 <button
                   type="button"
@@ -237,11 +267,12 @@ export function RoomSection({
         </div>
       )}
 
-      {/* Confirm delete room dialog */}
+      {/* Confirm delete room dialog — type room name to confirm */}
       {confirmDeleteRoom && (
-        <ConfirmDialog
+        <TextConfirmDialog
           title="Delete room"
-          message={`Delete "${room.name}"? All selections and options will be removed.`}
+          message={`This will permanently delete "${room.name}" and all its selections and ideas. Type the room name to confirm.`}
+          confirmText={room.name}
           onConfirm={() => { setConfirmDeleteRoom(false); onDeleteRoom() }}
           onCancel={() => setConfirmDeleteRoom(false)}
         />

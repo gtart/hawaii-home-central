@@ -342,15 +342,12 @@ export function ToolContent({ localOnly = false }: ToolContentProps) {
     }))
   }
 
-  // Delete room
+  // Delete room (confirmation handled by RoomSection's TextConfirmDialog)
   const handleDeleteRoom = (roomId: string) => {
-    const room = v3State.rooms.find((r) => r.id === roomId)
-    if (room && confirm(`Delete ${room.name}? This will also delete all decisions and options.`)) {
-      setState((prev) => ({
-        ...prev,
-        rooms: (prev as FinishDecisionsPayloadV3).rooms.filter((r) => r.id !== roomId),
-      }))
-    }
+    setState((prev) => ({
+      ...prev,
+      rooms: (prev as FinishDecisionsPayloadV3).rooms.filter((r) => r.id !== roomId),
+    }))
   }
 
   return (
