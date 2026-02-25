@@ -581,7 +581,12 @@ export function DecisionDetailContent() {
               className="flex items-center gap-2 text-lg font-medium text-cream hover:text-cream/80 transition-colors"
             >
               <span className="text-cream/30 text-xs">{optionsOpen ? '▼' : '▶'}</span>
-              Ideas{foundDecision.options.length > 0 ? ` — ${foundDecision.options.length}` : ''}
+              Idea Board
+              {foundDecision.options.length > 0 && (
+                <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-cream/10 text-cream/50 text-xs font-medium rounded-full">
+                  {foundDecision.options.length}
+                </span>
+              )}
             </button>
           </div>
 
