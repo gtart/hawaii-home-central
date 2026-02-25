@@ -284,7 +284,7 @@ export function PunchlistPage({ api }: Props) {
 
       {/* Quick-add strip (mobile sticky bottom + desktop inline) */}
       {!readOnly && showQuickAdd && (
-        <QuickAddStrip api={api} onDone={() => setShowQuickAdd(false)} />
+        <QuickAddStrip api={api} onDone={() => setShowQuickAdd(false)} onViewItem={(id) => setViewingId(id)} />
       )}
 
       {/* Floating action button + menu — mobile only, hidden when quick-add active */}

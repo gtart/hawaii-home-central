@@ -41,6 +41,7 @@ export function SaveFromWebContent() {
   const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [savedTargetRoom, setSavedTargetRoom] = useState<string>('')
+  const [savedTargetRoomId, setSavedTargetRoomId] = useState<string>('')
   const [savedTargetDecision, setSavedTargetDecision] = useState<string>('')
   const [savedDecisionId, setSavedDecisionId] = useState<string>('')
   const [bookmarkletData, setBookmarkletData] = useState<BookmarkletData | null>(null)
@@ -209,6 +210,7 @@ export function SaveFromWebContent() {
     // Figure out labels for success message
     const targetRoom = selectedRoomId ? rooms.find((r) => r.id === selectedRoomId) : null
     setSavedTargetRoom(targetRoom?.name || 'Unsorted')
+    setSavedTargetRoomId(targetRoomId || '')
     if (selectedDecisionId) {
       const targetDec = targetRoom?.decisions.find((d) => d.id === selectedDecisionId)
       setSavedTargetDecision(targetDec?.title || '')
@@ -281,7 +283,7 @@ export function SaveFromWebContent() {
           <p className="text-cream/60 text-sm mb-6">
             Added to <span className="text-cream/80">{savedTargetDecision}</span> in <span className="text-cream/80">{savedTargetRoom}</span>
           </p>
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <button
               type="button"
               onClick={() => {
@@ -295,19 +297,33 @@ export function SaveFromWebContent() {
             >
               Save another
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (savedDecisionId) {
-                  router.push(`/app/tools/finish-decisions/decision/${savedDecisionId}`)
-                } else {
-                  router.push('/app/tools/finish-decisions')
-                }
-              }}
-              className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
-            >
-              View in Selections
-            </button>
+            {savedTargetRoomId && (
+              <button
+                type="button"
+                onClick={() => router.push(`/app/tools/finish-decisions/room/${savedTargetRoomId}`)}
+                className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+              >
+                View in {savedTargetRoom}
+              </button>
+            )}
+            {savedDecisionId && (
+              <button
+                type="button"
+                onClick={() => router.push(`/app/tools/finish-decisions/decision/${savedDecisionId}`)}
+                className="px-4 py-2 text-sm text-sandstone hover:text-sandstone-light border border-sandstone/30 rounded-lg transition-colors"
+              >
+                View selection
+              </button>
+            )}
+            {!savedTargetRoomId && !savedDecisionId && (
+              <button
+                type="button"
+                onClick={() => router.push('/app/tools/finish-decisions')}
+                className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+              >
+                Go to Selection Boards
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -326,11 +342,11 @@ export function SaveFromWebContent() {
           onClick={() => router.push('/app/tools/finish-decisions')}
           className="text-sm text-cream/40 hover:text-cream/60 transition-colors mb-4 inline-block"
         >
-          &larr; Back to Selections
+          &larr; Back to Selection Boards
         </button>
 
         <h1 className="font-serif text-2xl md:text-3xl text-sandstone mb-2">
-          Save from Web
+          Save to HHC
         </h1>
 
         {/* ── No bookmarklet data: show setup instructions ── */}

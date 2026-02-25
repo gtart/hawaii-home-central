@@ -70,7 +70,7 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Leaving \u201Callowances\u201D vague\u2014spell out what\u2019s included in the price',
     ],
     related: [
-      { kind: 'tool', title: 'Selections Board', href: '/app/tools/finish-decisions' },
+      { kind: 'tool', title: 'Selection Boards', href: '/app/tools/finish-decisions' },
       { kind: 'guide', title: 'Responsibility Matrix', href: '/resources/playbooks/responsibility-matrix' },
     ],
   },
@@ -182,7 +182,7 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Assuming your contractor will handle all ordering without discussion',
     ],
     related: [
-      { kind: 'tool', title: 'Selections Board', href: '/app/tools/finish-decisions' },
+      { kind: 'tool', title: 'Selection Boards', href: '/app/tools/finish-decisions' },
     ],
   },
   {
@@ -231,7 +231,7 @@ export const RENOVATION_STAGES: RenovationStage[] = [
     ],
     related: [
       { kind: 'tool', title: 'Fix List', href: '/app/tools/punchlist' },
-      { kind: 'tool', title: 'Selections Board', href: '/app/tools/finish-decisions' },
+      { kind: 'tool', title: 'Selection Boards', href: '/app/tools/finish-decisions' },
     ],
   },
 ]

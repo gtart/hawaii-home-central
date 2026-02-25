@@ -369,7 +369,7 @@ export function ToolContent({
         {!localOnly && (
           <ToolPageHeader
             toolKey="finish_decisions"
-            title="Selections Board"
+            title="Selection Boards"
             description="Avoid delays and rework—by keeping selections, links, and status updates together for each room."
             accessLevel={access}
           />

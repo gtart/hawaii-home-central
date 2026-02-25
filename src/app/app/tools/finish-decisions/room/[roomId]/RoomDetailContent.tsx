@@ -20,7 +20,6 @@ import { QuickAddDecisionModal } from '../../components/QuickAddDecisionModal'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { TextConfirmDialog } from '@/components/ui/TextConfirmDialog'
-import { SaveFromWebCTA } from '../../components/SaveFromWebCTA'
 
 const DEFAULT_PAYLOAD: FinishDecisionsPayloadV3 = { version: 3, rooms: [] }
 const SEL_VIEW_KEY = 'hhc_finish_selection_view_mode_v2'
@@ -195,7 +194,7 @@ export function RoomDetailContent({
             onClick={() => router.push('/app/tools/finish-decisions')}
             className="text-sandstone hover:text-sandstone-light text-sm transition-colors"
           >
-            &larr; Back to Selections Board
+            &larr; Back to Selection Boards
           </button>
         </div>
       </div>
@@ -205,7 +204,8 @@ export function RoomDetailContent({
   const isUnsortedRoom = isGlobalUnsorted(room)
   const roomEmoji = isUnsortedRoom ? '📦' : (ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️')
   const totalOptions = room.decisions.reduce((sum, d) => sum + d.options.length, 0)
-  const hasAvailableKits = !isUnsortedRoom && findKitsForRoomType(kits, room.type as RoomTypeV3).length > 0
+  const availableKitsCount = !isUnsortedRoom ? findKitsForRoomType(kits, room.type as RoomTypeV3).length : 0
+  const hasAvailableKits = availableKitsCount > 0
   const regularDecisions = room.decisions.filter((d) => d.systemKey !== 'uncategorized')
   const unsortedDecision = findUncategorizedDecision(room)
   const unsortedCount = unsortedDecision ? unsortedDecision.options.length : 0
@@ -227,7 +227,7 @@ export function RoomDetailContent({
           onClick={() => router.push('/app/tools/finish-decisions')}
           className="text-sm text-cream/40 hover:text-cream/60 transition-colors mb-4 inline-block"
         >
-          &larr; Selections Board
+          &larr; Selection Boards
         </button>
 
         {/* Room header */}
@@ -276,7 +276,7 @@ export function RoomDetailContent({
                 onClick={() => setIdeasModalOpen(true)}
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-purple-300/70 hover:text-purple-300 bg-purple-400/5 hover:bg-purple-400/10 rounded-lg transition-all"
               >
-                <span>✨</span> Idea Packs
+                <span>✨</span> Idea Packs ({availableKitsCount})
               </button>
             )}
 
@@ -409,9 +409,6 @@ export function RoomDetailContent({
           </div>
         )}
 
-        {/* Save from Web CTA */}
-        {!readOnly && !isUnsortedRoom && <SaveFromWebCTA className="mb-4" />}
-
         {/* Selections content */}
         {room.decisions.length === 0 ? (
           <div className="bg-basalt-50 rounded-card p-8 text-center">
@@ -442,9 +439,7 @@ export function RoomDetailContent({
             roomType={room.type}
             onDeleteDecision={(id) => setConfirmDeleteDecisionId(id)}
             onAddSelection={readOnly ? undefined : () => setQuickAddOpen(true)}
-            onAddIdeasPack={readOnly ? undefined : (hasAvailableKits ? () => setIdeasModalOpen(true) : undefined)}
             readOnly={readOnly}
-            hasAvailableKits={hasAvailableKits}
             emojiMap={emojiMap}
           />
         ) : (

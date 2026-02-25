@@ -5,11 +5,9 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
 import { useToolState } from '@/hooks/useToolState'
 import { IdeasBoard } from '../../components/IdeasBoard'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
-import { AssignToSelectionModal } from '../../components/AssignToSelectionModal'
 import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { findKitsForDecisionTitle, applyKitToDecision } from '@/lib/finish-decision-kits'
@@ -49,7 +47,6 @@ export function DecisionDetailContent({
   const [draftRef, setDraftRef] = useState<{ optionId: string; optionLabel: string } | null>(null)
   const [ideasPackOpen, setIdeasPackOpen] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
-  const [assignOptionId, setAssignOptionId] = useState<string | null>(null)
   const [moveOptionId, setMoveOptionId] = useState<string | null>(null)
   const [assignToast, setAssignToast] = useState<string | null>(null)
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
@@ -225,42 +222,6 @@ export function DecisionDetailContent({
     updateDecision({ options: result.decision.options })
   }
 
-  function moveOptionToDecision(optionId: string, targetDecisionId: string) {
-    if (!foundRoom || !foundDecision) return
-    const option = foundDecision.options.find((o) => o.id === optionId)
-    if (!option) return
-
-    const now = new Date().toISOString()
-    setState((prev) => ({
-      ...prev,
-      rooms: (prev as FinishDecisionsPayloadV3).rooms.map((r) =>
-        r.id === foundRoom!.id
-          ? {
-              ...r,
-              decisions: r.decisions.map((d) => {
-                if (d.id === decisionId) {
-                  // Remove from source
-                  return { ...d, options: d.options.filter((o) => o.id !== optionId), updatedAt: now }
-                }
-                if (d.id === targetDecisionId) {
-                  // Add to target
-                  return { ...d, options: [...d.options, { ...option, updatedAt: now }], updatedAt: now }
-                }
-                return d
-              }),
-              updatedAt: now,
-            }
-          : r
-      ),
-    }))
-
-    const targetName = foundRoom.decisions.find((d) => d.id === targetDecisionId)?.title || 'selection'
-    setAssignToast(`Moved to ${targetName}`)
-    setAssignOptionId(null)
-    setActiveCardId(null)
-    setTimeout(() => setAssignToast(null), 3000)
-  }
-
   function moveOptionCrossRoom(
     optionId: string,
     targetRoomId: string,
@@ -409,10 +370,7 @@ export function DecisionDetailContent({
             ← Back to Selections
           </button>
           <div className="bg-basalt-50 rounded-card p-12 text-center">
-            <p className="text-cream/50 mb-4">Selection not found.</p>
-            <Button onClick={() => router.push('/app/tools/finish-decisions')}>
-              Go to Selections Board
-            </Button>
+            <p className="text-cream/50">Selection not found.</p>
           </div>
         </div>
       </div>
@@ -647,14 +605,12 @@ export function DecisionDetailContent({
 
         {/* Meta row */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs mb-4">
-          <Badge variant="default" className="text-xs">{foundRoom.name}</Badge>
           {formattedDue && (
             <>
-              <span className="text-cream/20">·</span>
               <span className="text-cream/40">Due {formattedDue}</span>
+              <span className="text-cream/20">·</span>
             </>
           )}
-          <span className="text-cream/20">·</span>
           <span className="text-cream/40">
             {ideasCount} idea{ideasCount !== 1 ? 's' : ''}
           </span>
@@ -721,7 +677,6 @@ export function DecisionDetailContent({
             }}
             onSelectOption={selectOption}
             hideFinalize={isSystemUncategorized}
-            onAssignOption={isSystemUncategorized ? (optId) => setAssignOptionId(optId) : undefined}
             onUpdateDecision={updateDecision}
             onAddComment={addComment}
             onCommentOnOption={handleCommentOnOption}
@@ -888,17 +843,7 @@ export function DecisionDetailContent({
         />
       )}
 
-      {/* Assign to Selection Modal (Uncategorized — same-room) */}
-      {assignOptionId && foundRoom && (
-        <AssignToSelectionModal
-          optionName={foundDecision.options.find((o) => o.id === assignOptionId)?.name || ''}
-          selections={foundRoom.decisions.filter((d) => d.id !== decisionId && d.systemKey !== 'uncategorized')}
-          onAssign={(targetId) => moveOptionToDecision(assignOptionId, targetId)}
-          onClose={() => setAssignOptionId(null)}
-        />
-      )}
-
-      {/* Move Idea Sheet (cross-room move) */}
+      {/* Move Idea Sheet */}
       {moveOptionId && foundRoom && foundDecision && (() => {
         const opt = foundDecision.options.find((o) => o.id === moveOptionId)
         return opt ? (

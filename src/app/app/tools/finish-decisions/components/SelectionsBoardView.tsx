@@ -42,18 +42,14 @@ export function SelectionsBoardView({
   decisions,
   onDeleteDecision,
   onAddSelection,
-  onAddIdeasPack,
   readOnly = false,
-  hasAvailableKits = false,
   emojiMap = {},
 }: {
   decisions: DecisionV3[]
   roomType: string
   onDeleteDecision: (decisionId: string) => void
   onAddSelection?: () => void
-  onAddIdeasPack?: () => void
   readOnly?: boolean
-  hasAvailableKits?: boolean
   emojiMap?: Record<string, string>
 }) {
   const router = useRouter()
@@ -234,24 +230,6 @@ export function SelectionsBoardView({
         </button>
       )}
 
-      {/* Import Idea Pack tile */}
-      {!readOnly && hasAvailableKits && onAddIdeasPack && (
-        <button
-          type="button"
-          onClick={onAddIdeasPack}
-          className="rounded-xl border-2 border-dashed border-purple-400/15 hover:border-purple-400/40 bg-transparent hover:bg-purple-400/5 transition-all flex flex-col items-center justify-center gap-2 min-h-[200px] group/pack focus:outline-none focus:ring-2 focus:ring-purple-400/50"
-        >
-          <div className="w-10 h-10 rounded-full bg-purple-400/5 group-hover/pack:bg-purple-400/10 flex items-center justify-center transition-colors">
-            <span className="text-xl">✨</span>
-          </div>
-          <span className="text-xs text-purple-300/50 group-hover/pack:text-purple-300/80 font-medium transition-colors">
-            Idea Packs
-          </span>
-          <span className="text-[10px] text-cream/25 group-hover/pack:text-cream/40 transition-colors">
-            Curated starter ideas
-          </span>
-        </button>
-      )}
     </div>
   )
 }

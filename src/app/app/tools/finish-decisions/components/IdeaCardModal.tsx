@@ -22,7 +22,6 @@ interface Props {
   onUpdate: (updates: Partial<OptionV3>) => void
   onDelete: () => void
   onSelect?: () => void
-  onAssign?: () => void
   onMove?: () => void
   onUpdateDecision: (updates: Partial<DecisionV3>) => void
   onAddComment: (comment: CommentPayload) => void
@@ -68,7 +67,6 @@ export function IdeaCardModal({
   onUpdate,
   onDelete,
   onSelect,
-  onAssign,
   onMove,
   onUpdateDecision,
   onAddComment,
@@ -264,22 +262,13 @@ export function IdeaCardModal({
 
           {/* Action row: Assign / Final + Votes */}
           <div className="flex flex-wrap items-center gap-2 pb-2.5 border-b border-cream/8">
-            {onAssign && !readOnly && (
-              <button
-                type="button"
-                onClick={onAssign}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
-              >
-                Assign to selection
-              </button>
-            )}
-            {onMove && !readOnly && !onAssign && (
+            {onMove && !readOnly && (
               <button
                 type="button"
                 onClick={onMove}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-cream/10 text-cream/60 hover:bg-cream/20 transition-colors"
               >
-                Move to room
+                Move
               </button>
             )}
             {onSelect && !readOnly ? (

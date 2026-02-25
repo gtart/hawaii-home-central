@@ -53,7 +53,7 @@ export function IdeasPackModal({
         {/* Header */}
         <div className="px-5 pt-5 pb-3 border-b border-cream/10">
           <h2 className="text-lg font-medium text-cream">
-            {decisionTitle ? `Ideas for "${decisionTitle}"` : `Ideas Packs for ${roomName}`}
+            {decisionTitle ? `Ideas for "${decisionTitle}"` : `Idea Packs for ${roomName}`}
           </h2>
           <p className="text-xs text-cream/40 mt-1">
             {decisionTitle

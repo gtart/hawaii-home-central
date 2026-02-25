@@ -9,9 +9,10 @@ import { uploadFile, LOCATION_SEEDS, ASSIGNEE_SEEDS } from '../utils'
 interface Props {
   api: PunchlistStateAPI
   onDone: () => void
+  onViewItem?: (id: string) => void
 }
 
-export function QuickAddStrip({ api, onDone }: Props) {
+export function QuickAddStrip({ api, onDone, onViewItem }: Props) {
   const { data: session } = useSession()
   const [title, setTitle] = useState('')
   const [location, setLocation] = useState('')
@@ -22,6 +23,7 @@ export function QuickAddStrip({ api, onDone }: Props) {
   const [addError, setAddError] = useState('')
   const [savedCount, setSavedCount] = useState(0)
   const [showSaved, setShowSaved] = useState(false)
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null)
   const [cameraBlocked, setCameraBlocked] = useState(false)
 
   const cameraRef = useRef<HTMLInputElement>(null)
@@ -56,7 +58,7 @@ export function QuickAddStrip({ api, onDone }: Props) {
   function flashSaved() {
     if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
     setShowSaved(true)
-    savedTimerRef.current = setTimeout(() => setShowSaved(false), 2000)
+    savedTimerRef.current = setTimeout(() => setShowSaved(false), 5000)
   }
 
   const commit = useCallback(
@@ -70,7 +72,7 @@ export function QuickAddStrip({ api, onDone }: Props) {
         return false
       }
 
-      api.addItem({
+      const newId = api.addItem({
         title: t,
         location: location.trim(),
         assigneeLabel: assignee.trim(),
@@ -81,6 +83,7 @@ export function QuickAddStrip({ api, onDone }: Props) {
 
       // Reset title but keep location/assignee for rapid repeat entries
       setTitle('')
+      setLastAddedId(newId)
       setAddError('')
       setSavedCount((c) => c + 1)
       flashSaved()
@@ -269,7 +272,14 @@ export function QuickAddStrip({ api, onDone }: Props) {
                   {[location.trim(), assignee.trim()].filter(Boolean).join(' · ')}
                 </span>
               )}
-              {showSaved && <span className="text-emerald-400">Saved ✓</span>}
+              {showSaved && (
+                <span className="text-emerald-400">
+                  Saved
+                  {onViewItem && lastAddedId && (
+                    <> — <button type="button" onClick={() => onViewItem(lastAddedId)} className="underline hover:text-emerald-300 transition-colors">View / Edit</button></>
+                  )}
+                </span>
+              )}
               {uploadError && <span className="text-red-400">{uploadError}</span>}
               {addError && !uploadError && <span className="text-red-400">{addError}</span>}
               {cameraBlocked && !uploadError && !addError && !showSaved && (

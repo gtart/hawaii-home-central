@@ -36,7 +36,6 @@ interface Props {
   hasKits?: boolean
   onOpenPack?: () => void
   hideFinalize?: boolean
-  onAssignOption?: (optionId: string) => void
   onMoveOption?: (optionId: string) => void
   rooms?: RoomV3[]
   currentRoomId?: string
@@ -92,7 +91,6 @@ function IdeaCardTile({
   onToggleFinal,
   onComment,
   onVote,
-  onAssign,
   onMove,
   myVote,
   commentCount,
@@ -106,7 +104,6 @@ function IdeaCardTile({
   onToggleFinal?: () => void
   onComment?: () => void
   onVote?: (vote: 'up' | 'down') => void
-  onAssign?: () => void
   onMove?: () => void
   myVote?: 'up' | 'down' | null
   commentCount?: number
@@ -200,19 +197,8 @@ function IdeaCardTile({
         </span>
       ) : null}
 
-      {/* Assign button (for Uncategorized — same room) */}
-      {onAssign && !readOnly && (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onAssign() }}
-          className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 bg-amber-500/80 text-basalt text-[10px] font-semibold rounded-full opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all hover:bg-amber-500"
-        >
-          Assign
-        </button>
-      )}
-
-      {/* Move button (cross-room move) */}
-      {onMove && !readOnly && !onAssign && (
+      {/* Move button */}
+      {onMove && !readOnly && (
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onMove() }}
@@ -357,11 +343,9 @@ function AddIdeaMenu({
             className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M2 12h20" strokeLinecap="round" />
-              <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+              <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Save from web
+            Save to HHC
           </button>
           {onPack && (
             <>
@@ -407,7 +391,6 @@ export function IdeasBoard({
   hasKits,
   onOpenPack,
   hideFinalize,
-  onAssignOption,
   onMoveOption,
   rooms,
   currentRoomId,
@@ -623,7 +606,6 @@ export function IdeasBoard({
                         readOnly={readOnly}
                         onClick={() => compareMode ? toggleCompareSelect(opt.id) : setActiveCardId(opt.id)}
                         onToggleFinal={compareMode || hideFinalize ? undefined : () => onSelectOption(opt.id)}
-                        onAssign={!compareMode && onAssignOption ? () => onAssignOption(opt.id) : undefined}
                         onMove={!compareMode && onMoveOption ? () => onMoveOption(opt.id) : undefined}
                         onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
                         onVote={compareMode ? undefined : (vote) => handleVote(opt.id, vote)}
@@ -711,8 +693,8 @@ export function IdeasBoard({
                     onClick={() => setShowWebDialog(true)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80 rounded-full text-xs transition-colors"
                   >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M2 12h20" strokeLinecap="round" /><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /></svg>
-                    Save from web
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    Save to HHC
                   </button>
                   <button
                     type="button"
@@ -745,7 +727,6 @@ export function IdeasBoard({
           onUpdate={(updates) => onUpdateOption(activeOption.id, updates)}
           onDelete={() => onDeleteOption(activeOption.id)}
           onSelect={hideFinalize ? undefined : () => onSelectOption(activeOption.id)}
-          onAssign={onAssignOption ? () => onAssignOption(activeOption.id) : undefined}
           onMove={onMoveOption ? () => onMoveOption(activeOption.id) : undefined}
           onUpdateDecision={onUpdateDecision}
           onAddComment={onAddComment}

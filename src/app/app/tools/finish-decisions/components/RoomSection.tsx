@@ -394,9 +394,7 @@ export function RoomSection({
               roomType={room.type}
               onDeleteDecision={requestDeleteDecision}
               onAddSelection={readOnly ? undefined : onQuickAdd}
-              onAddIdeasPack={readOnly ? undefined : onAddIdeasPack}
               readOnly={readOnly}
-              hasAvailableKits={hasAvailableKits}
               emojiMap={emojiMap}
             />
           ) : (

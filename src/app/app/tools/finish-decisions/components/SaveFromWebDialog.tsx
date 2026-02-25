@@ -104,7 +104,7 @@ export function SaveFromWebDialog({
         <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 flex items-center justify-between px-5 py-4 z-10 rounded-t-xl">
           <div>
             <h2 className="text-lg font-medium text-cream">
-              {step === 'placement' ? 'Save to...' : 'Save from Web'}
+              {step === 'placement' ? 'Save to...' : 'Save to HHC'}
             </h2>
             {step === 'placement' && capturedResult && (
               <p className="text-xs text-cream/40 mt-0.5 truncate max-w-[280px]">
