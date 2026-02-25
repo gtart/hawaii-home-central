@@ -15,6 +15,7 @@ import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { findKitsForDecisionTitle, applyKitToDecision } from '@/lib/finish-decision-kits'
 import {
   STATUS_CONFIG_V3,
+  ROOM_EMOJI_MAP,
   type DecisionV3,
   type OptionV3,
   type StatusV3,
@@ -23,7 +24,8 @@ import {
   type SelectionComment,
   type FinishDecisionsPayloadV3,
 } from '@/data/finish-decisions'
-import { isUncategorized, ensureUncategorizedDecision, findUncategorizedDecision } from '@/lib/decisionHelpers'
+import { isUncategorized, ensureUncategorizedDecision, findUncategorizedDecision, moveOption as moveOptionHelper } from '@/lib/decisionHelpers'
+import { MoveIdeaSheet } from '../../components/MoveIdeaSheet'
 import { relativeTime } from '@/lib/relativeTime'
 
 const COMMENTS_PER_PAGE = 10
@@ -48,6 +50,7 @@ export function DecisionDetailContent({
   const [ideasPackOpen, setIdeasPackOpen] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [assignOptionId, setAssignOptionId] = useState<string | null>(null)
+  const [moveOptionId, setMoveOptionId] = useState<string | null>(null)
   const [assignToast, setAssignToast] = useState<string | null>(null)
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -254,6 +257,39 @@ export function DecisionDetailContent({
     const targetName = foundRoom.decisions.find((d) => d.id === targetDecisionId)?.title || 'selection'
     setAssignToast(`Moved to ${targetName}`)
     setAssignOptionId(null)
+    setActiveCardId(null)
+    setTimeout(() => setAssignToast(null), 3000)
+  }
+
+  function moveOptionCrossRoom(
+    optionId: string,
+    targetRoomId: string,
+    targetDecisionId: string | null,
+    newSelectionTitle?: string,
+  ) {
+    if (!foundRoom || !foundDecision) return
+
+    setState((prev) => {
+      const payload = prev as FinishDecisionsPayloadV3
+      const updated = moveOptionHelper(
+        payload.rooms,
+        foundRoom!.id,
+        foundDecision!.id,
+        optionId,
+        targetRoomId,
+        targetDecisionId,
+        newSelectionTitle,
+      )
+      return { ...payload, rooms: updated }
+    })
+
+    const targetRoom = v3State.rooms.find((r) => r.id === targetRoomId)
+    const targetName = newSelectionTitle
+      || targetRoom?.decisions.find((d) => d.id === targetDecisionId)?.title
+      || 'Uncategorized'
+    const roomName = targetRoom?.name || 'Room'
+    setAssignToast(`Moved to ${roomName} → ${targetName}`)
+    setMoveOptionId(null)
     setActiveCardId(null)
     setTimeout(() => setAssignToast(null), 3000)
   }
@@ -524,10 +560,14 @@ export function DecisionDetailContent({
       <div className="max-w-3xl mx-auto">
         {/* Back link */}
         <button
-          onClick={() => router.push(`/app/tools/finish-decisions?room=${foundRoom.id}`)}
-          className="text-sandstone hover:text-sandstone-light text-sm mb-4"
+          onClick={() => router.push(`/app/tools/finish-decisions/room/${foundRoom.id}`)}
+          className="inline-flex items-center gap-1.5 text-sandstone hover:text-sandstone-light text-sm mb-4"
         >
-          ← {foundRoom.name}
+          <span>←</span>
+          <span>Back to Room Selections:</span>
+          <span className="inline-flex items-center gap-1 bg-cream/10 rounded-full px-2 py-0.5 text-cream/60 text-xs">
+            {ROOM_EMOJI_MAP[foundRoom.type as RoomTypeV3] || '📁'} {foundRoom.name}
+          </span>
         </button>
 
         {/* Desktop header: title + status + due in one row */}
@@ -608,14 +648,6 @@ export function DecisionDetailContent({
         {/* Meta row */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs mb-4">
           <Badge variant="default" className="text-xs">{foundRoom.name}</Badge>
-          <span className="text-cream/20">·</span>
-          {isSystemUncategorized ? (
-            <span className="inline-flex items-center px-2 py-0.5 bg-amber-500/15 text-amber-400 text-[11px] rounded-full">
-              Needs sorting
-            </span>
-          ) : (
-            <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
-          )}
           {formattedDue && (
             <>
               <span className="text-cream/20">·</span>
@@ -645,7 +677,7 @@ export function DecisionDetailContent({
                 )}
               </>
             ) : (
-              <span className="text-cream/50">Comment</span>
+              <span className="text-cream/40">No comments yet</span>
             )}
           </button>
           {finalPick && (
@@ -656,42 +688,7 @@ export function DecisionDetailContent({
           )}
         </div>
 
-        {/* Notes — collapsed by default, tap to expand */}
-        <div className="mb-4">
-          {notesExpanded ? (
-            <>
-              <textarea
-                autoFocus
-                value={foundDecision.notes}
-                onChange={(e) => updateDecision({ notes: e.target.value })}
-                readOnly={readOnly}
-                className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[60px] md:min-h-[60px]"
-                placeholder="Notes..."
-              />
-              <button
-                type="button"
-                onClick={() => setNotesExpanded(false)}
-                className="text-xs text-cream/40 mt-1"
-              >
-                Collapse
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setNotesExpanded(true)}
-              className="w-full text-left"
-            >
-              {foundDecision.notes ? (
-                <p className="text-sm text-cream/50 line-clamp-2">{foundDecision.notes}</p>
-              ) : (
-                <p className="text-sm text-cream/30 italic">Add notes...</p>
-              )}
-            </button>
-          )}
-        </div>
-
-        {/* Ideas board */}
+        {/* Ideas board — primary content, shown first */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-3">
             <button
@@ -736,7 +733,43 @@ export function DecisionDetailContent({
             currentRoomId={foundRoom.id}
             currentDecisionId={foundDecision.id}
             onImportToDecision={handleImportToDecision}
+            onMoveOption={(optId) => setMoveOptionId(optId)}
           />
+        </div>
+
+        {/* Notes — collapsed by default, secondary to Ideas */}
+        <div className="mb-4">
+          {notesExpanded ? (
+            <>
+              <textarea
+                autoFocus
+                value={foundDecision.notes}
+                onChange={(e) => updateDecision({ notes: e.target.value })}
+                readOnly={readOnly}
+                className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[60px] md:min-h-[60px]"
+                placeholder="Notes..."
+              />
+              <button
+                type="button"
+                onClick={() => setNotesExpanded(false)}
+                className="text-xs text-cream/40 mt-1"
+              >
+                Collapse
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setNotesExpanded(true)}
+              className="w-full text-left"
+            >
+              {foundDecision.notes ? (
+                <p className="text-sm text-cream/50 line-clamp-2">{foundDecision.notes}</p>
+              ) : (
+                <p className="text-sm text-cream/30 italic">Add notes...</p>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Guidance Panel */}
@@ -753,13 +786,19 @@ export function DecisionDetailContent({
           }}
         />
 
-        {/* Delete Selection — hidden for system selections */}
+        {/* Danger zone — collapsed by default */}
         {!readOnly && !isSystemUncategorized && (
-          <div className="pt-6 border-t border-cream/10">
-            <Button variant="danger" onClick={deleteDecision}>
-              Delete Selection
-            </Button>
-          </div>
+          <details className="mt-8 border border-red-500/20 rounded-lg">
+            <summary className="px-4 py-3 text-sm font-medium text-red-400/70 cursor-pointer hover:text-red-400 transition-colors">
+              Danger zone
+            </summary>
+            <div className="px-4 pb-4">
+              <p className="text-xs text-cream/40 mb-3">This action cannot be undone.</p>
+              <Button variant="danger" onClick={deleteDecision}>
+                Delete Selection
+              </Button>
+            </div>
+          </details>
         )}
       </div>
 
@@ -849,7 +888,7 @@ export function DecisionDetailContent({
         />
       )}
 
-      {/* Assign to Selection Modal (Uncategorized) */}
+      {/* Assign to Selection Modal (Uncategorized — same-room) */}
       {assignOptionId && foundRoom && (
         <AssignToSelectionModal
           optionName={foundDecision.options.find((o) => o.id === assignOptionId)?.name || ''}
@@ -859,7 +898,24 @@ export function DecisionDetailContent({
         />
       )}
 
-      {/* Assign toast */}
+      {/* Move Idea Sheet (cross-room move) */}
+      {moveOptionId && foundRoom && foundDecision && (() => {
+        const opt = foundDecision.options.find((o) => o.id === moveOptionId)
+        return opt ? (
+          <MoveIdeaSheet
+            options={[opt]}
+            sourceRoomId={foundRoom.id}
+            sourceDecisionId={foundDecision.id}
+            rooms={v3State.rooms}
+            onMove={(targetRoomId, targetDecisionId, newTitle) => {
+              moveOptionCrossRoom(moveOptionId, targetRoomId, targetDecisionId, newTitle)
+            }}
+            onClose={() => setMoveOptionId(null)}
+          />
+        ) : null
+      })()}
+
+      {/* Toast */}
       {assignToast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl text-sm text-cream/80">
           {assignToast}

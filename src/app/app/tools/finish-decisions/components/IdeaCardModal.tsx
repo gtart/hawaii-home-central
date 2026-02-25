@@ -23,6 +23,7 @@ interface Props {
   onDelete: () => void
   onSelect?: () => void
   onAssign?: () => void
+  onMove?: () => void
   onUpdateDecision: (updates: Partial<DecisionV3>) => void
   onAddComment: (comment: CommentPayload) => void
   onUploadPhoto: (file: File) => Promise<{ url: string; thumbnailUrl: string; id: string }>
@@ -68,6 +69,7 @@ export function IdeaCardModal({
   onDelete,
   onSelect,
   onAssign,
+  onMove,
   onUpdateDecision,
   onAddComment,
   onUploadPhoto,
@@ -269,6 +271,15 @@ export function IdeaCardModal({
                 className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
               >
                 Assign to selection
+              </button>
+            )}
+            {onMove && !readOnly && !onAssign && (
+              <button
+                type="button"
+                onClick={onMove}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-cream/10 text-cream/60 hover:bg-cream/20 transition-colors"
+              >
+                Move to room
               </button>
             )}
             {onSelect && !readOnly ? (

@@ -37,6 +37,7 @@ interface Props {
   onOpenPack?: () => void
   hideFinalize?: boolean
   onAssignOption?: (optionId: string) => void
+  onMoveOption?: (optionId: string) => void
   rooms?: RoomV3[]
   currentRoomId?: string
   currentDecisionId?: string
@@ -92,6 +93,7 @@ function IdeaCardTile({
   onComment,
   onVote,
   onAssign,
+  onMove,
   myVote,
   commentCount,
   lastCommentAt,
@@ -105,6 +107,7 @@ function IdeaCardTile({
   onComment?: () => void
   onVote?: (vote: 'up' | 'down') => void
   onAssign?: () => void
+  onMove?: () => void
   myVote?: 'up' | 'down' | null
   commentCount?: number
   lastCommentAt?: string | null
@@ -197,7 +200,7 @@ function IdeaCardTile({
         </span>
       ) : null}
 
-      {/* Assign button (for Uncategorized) */}
+      {/* Assign button (for Uncategorized — same room) */}
       {onAssign && !readOnly && (
         <button
           type="button"
@@ -205,6 +208,17 @@ function IdeaCardTile({
           className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 bg-amber-500/80 text-basalt text-[10px] font-semibold rounded-full opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all hover:bg-amber-500"
         >
           Assign
+        </button>
+      )}
+
+      {/* Move button (cross-room move) */}
+      {onMove && !readOnly && !onAssign && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onMove() }}
+          className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 bg-cream/60 text-basalt text-[10px] font-semibold rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-cream/80"
+        >
+          Move
         </button>
       )}
 
@@ -394,6 +408,7 @@ export function IdeasBoard({
   onOpenPack,
   hideFinalize,
   onAssignOption,
+  onMoveOption,
   rooms,
   currentRoomId,
   currentDecisionId,
@@ -609,6 +624,7 @@ export function IdeasBoard({
                         onClick={() => compareMode ? toggleCompareSelect(opt.id) : setActiveCardId(opt.id)}
                         onToggleFinal={compareMode || hideFinalize ? undefined : () => onSelectOption(opt.id)}
                         onAssign={!compareMode && onAssignOption ? () => onAssignOption(opt.id) : undefined}
+                        onMove={!compareMode && onMoveOption ? () => onMoveOption(opt.id) : undefined}
                         onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
                         onVote={compareMode ? undefined : (vote) => handleVote(opt.id, vote)}
                         myVote={(opt.votes || {})[userEmail] || null}
@@ -676,10 +692,38 @@ export function IdeasBoard({
           {/* Empty state */}
           {decision.options.length === 0 && (
             <div className="bg-basalt-50 rounded-card p-8 text-center mb-4">
-              <p className="text-cream/40 text-sm">
-                No ideas yet.{' '}
-                {!readOnly && 'Tap + to add a photo or note.'}
+              <p className="text-cream/60 text-sm font-medium mb-1">Start collecting options</p>
+              <p className="text-cream/35 text-xs mb-4">
+                Save links, photos, and notes here. Vote and discuss with collaborators.
               </p>
+              {!readOnly && (
+                <div className="flex flex-wrap justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80 rounded-full text-xs transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></svg>
+                    Add photo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowWebDialog(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80 rounded-full text-xs transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M2 12h20" strokeLinecap="round" /><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /></svg>
+                    Save from web
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddTextCard}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80 rounded-full text-xs transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" /></svg>
+                    Add note
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -702,6 +746,7 @@ export function IdeasBoard({
           onDelete={() => onDeleteOption(activeOption.id)}
           onSelect={hideFinalize ? undefined : () => onSelectOption(activeOption.id)}
           onAssign={onAssignOption ? () => onAssignOption(activeOption.id) : undefined}
+          onMove={onMoveOption ? () => onMoveOption(activeOption.id) : undefined}
           onUpdateDecision={onUpdateDecision}
           onAddComment={onAddComment}
           onUploadPhoto={uploadIdeaFile}

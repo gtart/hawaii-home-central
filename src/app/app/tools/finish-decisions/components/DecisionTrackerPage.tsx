@@ -13,6 +13,7 @@ import type { RoomTypeV3 } from '@/data/finish-decisions'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { findKitsForRoomType } from '@/lib/finish-decision-kits'
 import { applyKitToRoom, removeKitFromRoom } from '@/lib/finish-decision-kits'
+import { isGlobalUnsorted } from '@/lib/decisionHelpers'
 import { RoomSection } from './RoomSection'
 import { RoomsBoardView } from './RoomsBoardView'
 import { OnboardingView } from './OnboardingView'
@@ -21,6 +22,7 @@ import { AddRoomModal } from './AddRoomModal'
 import { IdeasPackModal } from './IdeasPackModal'
 
 const VIEW_MODE_KEY = 'hhc_finish_view_mode_v2'
+const LIST_VIEW_ENABLED = process.env.NEXT_PUBLIC_ENABLE_LIST_VIEW === 'true'
 
 export function DecisionTrackerPage({
   rooms,
@@ -60,9 +62,14 @@ export function DecisionTrackerPage({
   const [toast, setToast] = useState<{ message: string; kitId: string; roomId: string } | null>(null)
   const [simpleToast, setSimpleToast] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'list' | 'boards'>(() => {
+    if (!LIST_VIEW_ENABLED) return 'boards'
     try {
       const stored = typeof window !== 'undefined' ? localStorage.getItem(VIEW_MODE_KEY) : null
-      return stored === 'list' ? 'list' : 'boards'
+      if (stored === 'list') return 'list'
+      // Check for ?view=list query param
+      const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+      if (params?.get('view') === 'list') return 'list'
+      return 'boards'
     } catch { return 'boards' }
   })
 
@@ -71,14 +78,14 @@ export function DecisionTrackerPage({
     try { localStorage.setItem(VIEW_MODE_KEY, viewMode) } catch { /* ignore */ }
   }, [viewMode])
 
-  // When navigating back with ?room= param, switch to list view and expand that room
+  // When navigating with ?room= param, redirect to the room detail page
   const initialRoomHandled = useRef(false)
   useEffect(() => {
     if (initialRoomHandled.current) return
     if (roomFilter && rooms.some((r) => r.id === roomFilter)) {
       initialRoomHandled.current = true
-      setViewMode('list')
-      setExpandedRooms((prev) => new Set([...prev, roomFilter]))
+      // Navigate to room page instead of expanding inline
+      window.location.href = `/app/tools/finish-decisions/room/${roomFilter}`
     }
   }, [roomFilter, rooms]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -272,6 +279,7 @@ export function DecisionTrackerPage({
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            {LIST_VIEW_ENABLED && (
             <div className="flex bg-cream/5 rounded-lg p-0.5 shrink-0">
               <button
                 type="button"
@@ -305,6 +313,7 @@ export function DecisionTrackerPage({
                 </svg>
               </button>
             </div>
+            )}
           </div>
 
           {/* Summary strip */}
@@ -383,7 +392,7 @@ export function DecisionTrackerPage({
             >
               All Rooms
             </button>
-            {rooms.map((room) => (
+            {rooms.filter((r) => !isGlobalUnsorted(r)).map((room) => (
               <button
                 key={room.id}
                 onClick={() => setRoomFilter(roomFilter === room.id ? null : room.id)}
@@ -482,11 +491,6 @@ export function DecisionTrackerPage({
             <RoomsBoardView
               rooms={filteredRooms}
               onUpdateRoom={onUpdateRoom}
-              onSelectRoom={(roomId) => {
-                setRoomFilter(roomId)
-                setViewMode('list')
-                setExpandedRooms((prev) => new Set([...prev, roomId]))
-              }}
               onQuickAdd={(roomId) => openQuickAdd(roomId)}
               readOnly={readOnly}
             />
@@ -559,7 +563,7 @@ export function DecisionTrackerPage({
                   >
                     All Rooms
                   </button>
-                  {rooms.map((room) => (
+                  {rooms.filter((r) => !isGlobalUnsorted(r)).map((room) => (
                     <button
                       key={room.id}
                       onClick={() => setRoomFilter(roomFilter === room.id ? null : room.id)}

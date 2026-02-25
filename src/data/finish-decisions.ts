@@ -261,6 +261,7 @@ export interface RoomV3 {
   decisions: DecisionV3[] // Nested
   appliedKitIds?: string[] // tracks which ideas packs have been applied
   coverImage?: RoomCoverImage // optional cover for boards view
+  systemKey?: string // 'global_uncategorized' for global unsorted room
   createdAt: string
   updatedAt: string
 }

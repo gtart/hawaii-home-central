@@ -6,7 +6,13 @@ import { useProject } from '@/contexts/ProjectContext'
 import { useToolState } from '@/hooks/useToolState'
 import type { FinishDecisionsPayloadV3, OptionV3, RoomV3 } from '@/data/finish-decisions'
 import { ROOM_EMOJI_MAP, type RoomTypeV3 } from '@/data/finish-decisions'
-import { ensureUncategorizedDecision, findUncategorizedDecision } from '@/lib/decisionHelpers'
+import {
+  ensureUncategorizedDecision,
+  findUncategorizedDecision,
+  ensureGlobalUnsortedRoom,
+  findGlobalUnsortedRoom,
+  isGlobalUnsorted,
+} from '@/lib/decisionHelpers'
 import { BookmarkletButton } from '@/app/app/tools/finish-decisions/components/BookmarkletButton'
 
 const DEFAULT_PAYLOAD: FinishDecisionsPayloadV3 = { version: 3, rooms: [] }
@@ -134,7 +140,7 @@ export function SaveFromWebContent() {
   }
 
   const handleSave = () => {
-    if (!selectedRoomId || !bookmarkletData) return
+    if (!bookmarkletData) return
 
     const images = bookmarkletData.images
       .filter((img) => selectedUrls.has(img.url))
@@ -159,13 +165,25 @@ export function SaveFromWebContent() {
       updatedAt: new Date().toISOString(),
     }
 
-    // Determine target decision ID
+    // Determine target room and decision
+    let targetRoomId = selectedRoomId
     let targetDecisionId = selectedDecisionId
 
     setState((prev) => {
       const payload = prev as FinishDecisionsPayloadV3
-      const newRooms = payload.rooms.map((r) => {
-        if (r.id !== selectedRoomId) return r
+      let currentRooms = payload.rooms
+
+      // No room selected → save to Global Unsorted
+      if (!targetRoomId) {
+        currentRooms = ensureGlobalUnsortedRoom(currentRooms)
+        const globalRoom = findGlobalUnsortedRoom(currentRooms)!
+        targetRoomId = globalRoom.id
+        const uncat = findUncategorizedDecision(globalRoom)!
+        targetDecisionId = uncat.id
+      }
+
+      const newRooms = currentRooms.map((r) => {
+        if (r.id !== targetRoomId) return r
 
         let room = r
         // If no specific selection chosen, save into Uncategorized (lazy create)
@@ -189,8 +207,8 @@ export function SaveFromWebContent() {
     })
 
     // Figure out labels for success message
-    const targetRoom = rooms.find((r) => r.id === selectedRoomId)
-    setSavedTargetRoom(targetRoom?.name || '')
+    const targetRoom = selectedRoomId ? rooms.find((r) => r.id === selectedRoomId) : null
+    setSavedTargetRoom(targetRoom?.name || 'Unsorted')
     if (selectedDecisionId) {
       const targetDec = targetRoom?.decisions.find((d) => d.id === selectedDecisionId)
       setSavedTargetDecision(targetDec?.title || '')
@@ -296,7 +314,8 @@ export function SaveFromWebContent() {
     )
   }
 
-  const canSave = !!selectedRoomId && !!name.trim() && !!bookmarkletData
+  // Room is optional — defaults to Global Unsorted if none selected
+  const canSave = !!name.trim() && !!bookmarkletData
 
   return (
     <div className="pt-32 pb-24 px-6">
@@ -477,28 +496,24 @@ export function SaveFromWebContent() {
             </div>
 
             {/* ── Destination picker: tile-based ── */}
-            {rooms.length === 0 ? (
-              <div className="bg-basalt-50 rounded-lg p-6 text-center">
-                <p className="text-cream/50 text-sm mb-3">
-                  No rooms yet. Add a room first.
+            {rooms.filter((r) => !isGlobalUnsorted(r)).length === 0 ? (
+              <div className="bg-basalt-50 rounded-lg p-4 text-center">
+                <p className="text-cream/50 text-sm mb-1">
+                  No rooms yet? No problem.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => router.push('/app/tools/finish-decisions')}
-                  className="text-sandstone text-sm hover:text-sandstone-light transition-colors"
-                >
-                  Go to Finish Selections
-                </button>
+                <p className="text-[11px] text-cream/30">
+                  This idea will go to your Unsorted bucket. You can move it to a room later.
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
                 {/* Room tiles */}
                 <div>
                   <label className="block text-xs text-cream/50 mb-2">
-                    Room <span className="text-cream/30">(required)</span>
+                    Room <span className="text-cream/30">(optional — skipping saves to Unsorted)</span>
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {rooms.map((room) => {
+                    {rooms.filter((r) => !isGlobalUnsorted(r)).map((room) => {
                       const emoji = ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️'
                       const isActive = selectedRoomId === room.id
                       return (
@@ -575,7 +590,7 @@ export function SaveFromWebContent() {
                     </div>
                     {!selectedDecisionId && (
                       <p className="text-[11px] text-cream/30 mt-1.5">
-                        No selection? Idea will go to Uncategorized in this room.
+                        No selection? Idea will go to Unsorted in this room. You can sort it later.
                       </p>
                     )}
                   </div>

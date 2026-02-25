@@ -1,11 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { RoomV3, RoomTypeV3 } from '@/data/finish-decisions'
 import { ROOM_EMOJI_MAP } from '@/data/finish-decisions'
 import { relativeTime } from '@/lib/relativeTime'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
+import { isGlobalUnsorted, findUncategorizedDecision } from '@/lib/decisionHelpers'
 import { RoomCoverPickerModal } from './RoomCoverPickerModal'
+import { SaveFromWebCTA } from './SaveFromWebCTA'
 
 function getRoomCoverUrl(room: RoomV3): string | null {
   // 1. Explicit cover image
@@ -67,39 +70,96 @@ function getRoomStats(room: RoomV3) {
 export function RoomsBoardView({
   rooms,
   onUpdateRoom,
-  onSelectRoom,
   onQuickAdd,
   readOnly = false,
 }: {
   rooms: RoomV3[]
   onUpdateRoom: (roomId: string, updates: Partial<RoomV3>) => void
-  onSelectRoom: (roomId: string) => void
   onQuickAdd: (roomId: string) => void
   readOnly?: boolean
 }) {
+  const router = useRouter()
   const [coverPickerRoom, setCoverPickerRoom] = useState<RoomV3 | null>(null)
+
+  const navigateToRoom = (roomId: string) => {
+    router.push(`/app/tools/finish-decisions/room/${roomId}`)
+  }
+
+  // Sort rooms: pin Global Unsorted first, then original order
+  const sortedRooms = [...rooms].sort((a, b) => {
+    const aGlobal = isGlobalUnsorted(a) ? 0 : 1
+    const bGlobal = isGlobalUnsorted(b) ? 0 : 1
+    return aGlobal - bGlobal
+  })
 
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {rooms.map((room) => {
+        {sortedRooms.map((room) => {
+          const isUnsortedRoom = isGlobalUnsorted(room)
+          const unsortedCount = isUnsortedRoom
+            ? (findUncategorizedDecision(room)?.options.length ?? 0)
+            : 0
+
+          // Hide Global Unsorted when empty
+          if (isUnsortedRoom && unsortedCount === 0) return null
+
+          // Global Unsorted gets a simplified card
+          if (isUnsortedRoom) {
+            return (
+              <div
+                key={room.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => navigateToRoom(room.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigateToRoom(room.id) } }}
+                className="bg-basalt-50 rounded-xl overflow-hidden border-2 border-dashed border-amber-500/30 hover:border-amber-500/50 transition-all cursor-pointer group focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+              >
+                <div className="px-4 py-5 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-medium text-amber-300">Unsorted</h3>
+                    <p className="text-[11px] text-cream/40">
+                      {unsortedCount} idea{unsortedCount !== 1 ? 's' : ''} to sort into rooms
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 bg-amber-500/20 text-amber-300 text-[11px] font-bold rounded-full">
+                    {unsortedCount}
+                  </span>
+                </div>
+              </div>
+            )
+          }
+
+          // Regular room card
           const coverUrl = getRoomCoverUrl(room)
           const stats = getRoomStats(room)
           const emoji = ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️'
+          const roomUnsorted = findUncategorizedDecision(room)
+          const roomUnsortedCount = roomUnsorted ? roomUnsorted.options.length : 0
 
           return (
             <div
               key={room.id}
               role="button"
               tabIndex={0}
-              onClick={() => onSelectRoom(room.id)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectRoom(room.id) } }}
+              onClick={() => navigateToRoom(room.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigateToRoom(room.id) } }}
               className="bg-basalt-50 rounded-xl overflow-hidden border border-cream/10 hover:border-cream/25 transition-all cursor-pointer group focus:outline-none focus:ring-2 focus:ring-sandstone/50"
             >
               {/* Title row — above image */}
               <div className="px-3 pt-3 pb-1.5 flex items-center gap-1.5">
                 <span className="text-sm">{emoji}</span>
                 <h3 className="text-sm font-medium text-cream truncate">{room.name}</h3>
+                {roomUnsortedCount > 0 && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-500/10 text-amber-400 text-[10px] font-medium rounded-full">
+                    {roomUnsortedCount} unsorted
+                  </span>
+                )}
                 {!readOnly && (
                   <button
                     type="button"
@@ -182,6 +242,9 @@ export function RoomsBoardView({
           )
         })}
       </div>
+
+      {/* Save from Web CTA */}
+      {!readOnly && <SaveFromWebCTA className="mt-4" />}
 
       {/* Cover picker modal */}
       {coverPickerRoom && (
