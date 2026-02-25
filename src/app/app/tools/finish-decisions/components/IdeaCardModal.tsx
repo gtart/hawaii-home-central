@@ -21,7 +21,8 @@ interface Props {
   ideaComments: SelectionComment[]
   onUpdate: (updates: Partial<OptionV3>) => void
   onDelete: () => void
-  onSelect: () => void
+  onSelect?: () => void
+  onAssign?: () => void
   onUpdateDecision: (updates: Partial<DecisionV3>) => void
   onAddComment: (comment: CommentPayload) => void
   onUploadPhoto: (file: File) => Promise<{ url: string; thumbnailUrl: string; id: string }>
@@ -66,6 +67,7 @@ export function IdeaCardModal({
   onUpdate,
   onDelete,
   onSelect,
+  onAssign,
   onUpdateDecision,
   onAddComment,
   onUploadPhoto,
@@ -247,9 +249,18 @@ export function IdeaCardModal({
             </button>
           </div>
 
-          {/* Action row: Final + Votes */}
+          {/* Action row: Assign / Final + Votes */}
           <div className="flex flex-wrap items-center gap-2 pb-2.5 border-b border-cream/8">
-            {!readOnly ? (
+            {onAssign && !readOnly && (
+              <button
+                type="button"
+                onClick={onAssign}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
+              >
+                Assign to selection
+              </button>
+            )}
+            {onSelect && !readOnly ? (
               <button
                 type="button"
                 onClick={onSelect}

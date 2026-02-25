@@ -76,7 +76,7 @@ export function DecisionCard({
               ) : null
             })()}
           </div>
-          {!readOnly && (
+          {!readOnly && !decision.systemKey && (
             <div className="relative shrink-0" ref={menuRef}>
               <button
                 type="button"
@@ -115,7 +115,13 @@ export function DecisionCard({
 
       {/* Status + due date row */}
       <div className="flex items-center gap-2 mb-1.5">
-        <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
+        {decision.systemKey === 'uncategorized' ? (
+          <span className="inline-flex items-center px-2 py-0.5 bg-amber-500/15 text-amber-400 text-[11px] rounded-full">
+            Needs sorting
+          </span>
+        ) : (
+          <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
+        )}
         {decision.dueDate ? (
           <span className="text-[11px] text-cream/50">
             Due{' '}

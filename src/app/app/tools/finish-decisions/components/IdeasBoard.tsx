@@ -34,6 +34,8 @@ interface Props {
   comments: SelectionComment[]
   hasKits?: boolean
   onOpenPack?: () => void
+  hideFinalize?: boolean
+  onAssignOption?: (optionId: string) => void
 }
 
 // ---- Upload helper (mirrors punchlist utils, points to finish-decisions endpoint) ----
@@ -98,6 +100,7 @@ function IdeaCardTile({
   onToggleFinal,
   onComment,
   onVote,
+  onAssign,
   myVote,
   commentCount,
   lastCommentAt,
@@ -110,6 +113,7 @@ function IdeaCardTile({
   onToggleFinal?: () => void
   onComment?: () => void
   onVote?: (vote: 'up' | 'down') => void
+  onAssign?: () => void
   myVote?: 'up' | 'down' | null
   commentCount?: number
   lastCommentAt?: string | null
@@ -199,6 +203,17 @@ function IdeaCardTile({
           ⭐ Final
         </span>
       ) : null}
+
+      {/* Assign button (for Uncategorized) */}
+      {onAssign && !readOnly && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onAssign() }}
+          className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 bg-amber-500/80 text-basalt text-[10px] font-semibold rounded-full opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all hover:bg-amber-500"
+        >
+          Assign
+        </button>
+      )}
 
       {/* Comment icon + count */}
       {onComment && (
@@ -384,6 +399,8 @@ export function IdeasBoard({
   comments,
   hasKits,
   onOpenPack,
+  hideFinalize,
+  onAssignOption,
 }: Props) {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
@@ -593,7 +610,8 @@ export function IdeasBoard({
                         userEmail={userEmail}
                         readOnly={readOnly}
                         onClick={() => compareMode ? toggleCompareSelect(opt.id) : setActiveCardId(opt.id)}
-                        onToggleFinal={compareMode ? undefined : () => onSelectOption(opt.id)}
+                        onToggleFinal={compareMode || hideFinalize ? undefined : () => onSelectOption(opt.id)}
+                        onAssign={!compareMode && onAssignOption ? () => onAssignOption(opt.id) : undefined}
                         onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
                         onVote={compareMode ? undefined : (vote) => handleVote(opt.id, vote)}
                         myVote={(opt.votes || {})[userEmail] || null}
@@ -685,7 +703,8 @@ export function IdeasBoard({
           ideaComments={activeIdeaComments}
           onUpdate={(updates) => onUpdateOption(activeOption.id, updates)}
           onDelete={() => onDeleteOption(activeOption.id)}
-          onSelect={() => onSelectOption(activeOption.id)}
+          onSelect={hideFinalize ? undefined : () => onSelectOption(activeOption.id)}
+          onAssign={onAssignOption ? () => onAssignOption(activeOption.id) : undefined}
           onUpdateDecision={onUpdateDecision}
           onAddComment={onAddComment}
           onUploadPhoto={uploadIdeaFile}

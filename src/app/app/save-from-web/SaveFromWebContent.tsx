@@ -1,14 +1,16 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useProject } from '@/contexts/ProjectContext'
 import { useToolState } from '@/hooks/useToolState'
-import type { FinishDecisionsPayloadV3, OptionV3 } from '@/data/finish-decisions'
+import type { FinishDecisionsPayloadV3, OptionV3, RoomV3 } from '@/data/finish-decisions'
 import { ROOM_EMOJI_MAP, type RoomTypeV3 } from '@/data/finish-decisions'
+import { ensureUncategorizedDecision, findUncategorizedDecision } from '@/lib/decisionHelpers'
 
 const DEFAULT_PAYLOAD: FinishDecisionsPayloadV3 = { version: 3, rooms: [] }
 const BOOKMARKLET_STORAGE_KEY = 'hhc_bookmarklet_pending'
+const LAST_ROOM_KEY = 'hhc_save_last_room'
 
 interface BookmarkletData {
   title: string
@@ -18,6 +20,7 @@ interface BookmarkletData {
 
 export function SaveFromWebContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const { currentProject, projects, isLoading: projectsLoading } = useProject()
 
@@ -27,8 +30,12 @@ export function SaveFromWebContent() {
     defaultValue: DEFAULT_PAYLOAD,
   })
 
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [savedTargetRoom, setSavedTargetRoom] = useState<string>('')
+  const [savedTargetDecision, setSavedTargetDecision] = useState<string>('')
+  const [savedDecisionId, setSavedDecisionId] = useState<string>('')
   const [bookmarkletData, setBookmarkletData] = useState<BookmarkletData | null>(null)
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set())
   const [name, setName] = useState('')
@@ -52,7 +59,6 @@ export function SaveFromWebContent() {
           const b64 = hash.slice('#bookmarklet='.length)
           payload = decodeURIComponent(escape(atob(b64)))
         } catch { /* ignore */ }
-        // Clear hash to prevent re-import on refresh
         history.replaceState(null, '', window.location.pathname + window.location.search)
       }
     }
@@ -64,26 +70,55 @@ export function SaveFromWebContent() {
       if (data.url && Array.isArray(data.images)) {
         setBookmarkletData(data)
         setName(data.title || '')
-        // Pre-select the first image (usually OG image) if available
-        if (data.images.length > 0) {
-          setSelectedUrls(new Set([data.images[0].url]))
-        }
       }
     } catch { /* ignore malformed data */ }
   }, [])
 
   const rooms = (state as FinishDecisionsPayloadV3).rooms || []
+  const selectedRoom = rooms.find((r) => r.id === selectedRoomId)
 
-  // Flatten decisions with room context for the picker
-  const decisionOptions = rooms.flatMap((room) =>
-    room.decisions.map((d) => ({
-      roomId: room.id,
-      roomName: room.name,
-      roomType: room.type as RoomTypeV3,
-      decisionId: d.id,
-      decisionTitle: d.title,
-    })),
-  )
+  // Pre-select from query params or last-used room
+  useEffect(() => {
+    if (!isLoaded || rooms.length === 0) return
+    // Already selected? Don't override
+    if (selectedRoomId && rooms.find((r) => r.id === selectedRoomId)) return
+
+    // 1. Check query params
+    const qRoom = searchParams.get('roomId')
+    const qDecision = searchParams.get('decisionId')
+    if (qRoom && rooms.find((r) => r.id === qRoom)) {
+      setSelectedRoomId(qRoom)
+      if (qDecision) {
+        const room = rooms.find((r) => r.id === qRoom)
+        if (room?.decisions.find((d) => d.id === qDecision)) {
+          setSelectedDecisionId(qDecision)
+        }
+      }
+      return
+    }
+
+    // 2. Check last-used room from localStorage
+    try {
+      const lastRoom = localStorage.getItem(LAST_ROOM_KEY)
+      if (lastRoom && rooms.find((r) => r.id === lastRoom)) {
+        setSelectedRoomId(lastRoom)
+        return
+      }
+    } catch { /* ignore */ }
+
+    // 3. If only one room, auto-select it
+    if (rooms.length === 1) {
+      setSelectedRoomId(rooms[0].id)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, rooms.length])
+
+  // Persist last-used room
+  useEffect(() => {
+    if (selectedRoomId) {
+      try { localStorage.setItem(LAST_ROOM_KEY, selectedRoomId) } catch { /* ignore */ }
+    }
+  }, [selectedRoomId])
 
   const proxyUrl = (imgUrl: string) =>
     `/api/image-proxy?url=${encodeURIComponent(imgUrl)}`
@@ -98,7 +133,7 @@ export function SaveFromWebContent() {
   }
 
   const handleSave = () => {
-    if (!selectedDecisionId || !bookmarkletData) return
+    if (!selectedRoomId || !bookmarkletData) return
 
     const images = bookmarkletData.images
       .filter((img) => selectedUrls.has(img.url))
@@ -123,34 +158,55 @@ export function SaveFromWebContent() {
       updatedAt: new Date().toISOString(),
     }
 
-    setState((prev) => ({
-      ...prev,
-      rooms: (prev as FinishDecisionsPayloadV3).rooms.map((r) => ({
-        ...r,
-        decisions: r.decisions.map((d) =>
-          d.id === selectedDecisionId
-            ? {
-                ...d,
-                options: [...d.options, newOption],
-                updatedAt: new Date().toISOString(),
-              }
-            : d,
-        ),
-        updatedAt: new Date().toISOString(),
-      })),
-    }))
+    // Determine target decision ID
+    let targetDecisionId = selectedDecisionId
 
+    setState((prev) => {
+      const payload = prev as FinishDecisionsPayloadV3
+      const newRooms = payload.rooms.map((r) => {
+        if (r.id !== selectedRoomId) return r
+
+        let room = r
+        // If no specific selection chosen, save into Uncategorized (lazy create)
+        if (!targetDecisionId) {
+          room = ensureUncategorizedDecision(room)
+          const uncat = findUncategorizedDecision(room)!
+          targetDecisionId = uncat.id
+        }
+
+        return {
+          ...room,
+          decisions: room.decisions.map((d) =>
+            d.id === targetDecisionId
+              ? { ...d, options: [...d.options, newOption], updatedAt: new Date().toISOString() }
+              : d
+          ),
+          updatedAt: new Date().toISOString(),
+        }
+      })
+      return { ...payload, rooms: newRooms }
+    })
+
+    // Figure out labels for success message
+    const targetRoom = rooms.find((r) => r.id === selectedRoomId)
+    setSavedTargetRoom(targetRoom?.name || '')
+    if (selectedDecisionId) {
+      const targetDec = targetRoom?.decisions.find((d) => d.id === selectedDecisionId)
+      setSavedTargetDecision(targetDec?.title || '')
+      setSavedDecisionId(selectedDecisionId)
+    } else {
+      setSavedTargetDecision('Uncategorized')
+      setSavedDecisionId(targetDecisionId || '')
+    }
     setSaved(true)
   }
 
-  // Callback ref: fires when the <a> element mounts in the DOM.
-  // Sets the bookmarklet href directly via setAttribute (bypasses React's href sanitization).
+  // Bookmarklet ref
   const [bookmarkletReady, setBookmarkletReady] = useState(false)
 
   const bookmarkletRef = useCallback((el: HTMLAnchorElement | null) => {
     if (!el) return
     const origin = window.location.origin
-    // Bookmarklet script: scrapes images + title, stores in sessionStorage, opens save-from-web
     const code = [
       'javascript:void(function(){',
       'try{',
@@ -235,17 +291,14 @@ export function SaveFromWebContent() {
 
   // Success state
   if (saved) {
-    const target = decisionOptions.find((d) => d.decisionId === selectedDecisionId)
     return (
       <div className="pt-32 pb-24 px-6">
         <div className="max-w-xl mx-auto text-center">
           <div className="text-4xl mb-4">&#10003;</div>
           <h1 className="font-serif text-2xl text-sandstone mb-2">Idea saved!</h1>
-          {target && (
-            <p className="text-cream/60 text-sm mb-6">
-              Added to {target.decisionTitle} in {target.roomName}
-            </p>
-          )}
+          <p className="text-cream/60 text-sm mb-6">
+            Added to <span className="text-cream/80">{savedTargetDecision}</span> in <span className="text-cream/80">{savedTargetRoom}</span>
+          </p>
           <div className="flex items-center justify-center gap-4">
             <button
               type="button"
@@ -263,8 +316,8 @@ export function SaveFromWebContent() {
             <button
               type="button"
               onClick={() => {
-                if (target) {
-                  router.push(`/app/tools/finish-decisions/decision/${target.decisionId}`)
+                if (savedDecisionId) {
+                  router.push(`/app/tools/finish-decisions/decision/${savedDecisionId}`)
                 } else {
                   router.push('/app/tools/finish-decisions')
                 }
@@ -278,6 +331,8 @@ export function SaveFromWebContent() {
       </div>
     )
   }
+
+  const canSave = !!selectedRoomId && !!name.trim() && !!bookmarkletData
 
   return (
     <div className="pt-32 pb-24 px-6">
@@ -295,7 +350,7 @@ export function SaveFromWebContent() {
           Save from Web
         </h1>
 
-        {/* ── No bookmarklet data: show setup instructions (primary view) ── */}
+        {/* ── No bookmarklet data: show setup instructions ── */}
         {!bookmarkletData && (
           <>
             <p className="text-cream/60 text-sm mb-6">
@@ -304,7 +359,6 @@ export function SaveFromWebContent() {
 
             <div className="bg-basalt-50 rounded-xl p-5 border border-cream/10">
               <div className="space-y-4">
-                {/* Step 1 */}
                 <div className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">1</span>
                   <div>
@@ -337,8 +391,6 @@ export function SaveFromWebContent() {
                     )}
                   </div>
                 </div>
-
-                {/* Step 2 */}
                 <div className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">2</span>
                   <div>
@@ -346,8 +398,6 @@ export function SaveFromWebContent() {
                     <p className="text-xs text-cream/40 mt-0.5">Home Depot, Lowes, Wayfair, Amazon, etc.</p>
                   </div>
                 </div>
-
-                {/* Step 3 */}
                 <div className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">3</span>
                   <div>
@@ -356,7 +406,6 @@ export function SaveFromWebContent() {
                   </div>
                 </div>
               </div>
-
               <div className="mt-5 pt-4 border-t border-cream/10">
                 <p className="text-[11px] text-cream/30">
                   Works on desktop browsers (Chrome, Firefox, Safari, Edge). Not available on mobile.
@@ -396,9 +445,27 @@ export function SaveFromWebContent() {
             {/* Image picker grid */}
             {bookmarkletData.images.length > 0 ? (
               <div>
-                <p className="text-xs text-cream/50 mb-2">
-                  Select images to import ({selectedUrls.size} selected)
-                </p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-cream/50">
+                    Select images (optional) · {selectedUrls.size} selected
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedUrls(new Set(bookmarkletData.images.map((i) => i.url)))}
+                      className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedUrls(new Set())}
+                      className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+                    >
+                      None
+                    </button>
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-[300px] overflow-y-auto">
                   {bookmarkletData.images.map((img) => {
                     const isSelected = selectedUrls.has(img.url)
@@ -441,12 +508,8 @@ export function SaveFromWebContent() {
               </div>
             ) : (
               <div className="bg-basalt-50 rounded-lg p-4 text-center">
-                <p className="text-xs text-cream/50 mb-1">
-                  No images found on this page.
-                </p>
-                <p className="text-[11px] text-cream/30">
-                  You can still save this URL as an idea.
-                </p>
+                <p className="text-xs text-cream/50 mb-1">No images found on this page.</p>
+                <p className="text-[11px] text-cream/30">You can still save this URL as an idea.</p>
               </div>
             )}
 
@@ -474,11 +537,11 @@ export function SaveFromWebContent() {
               </div>
             </div>
 
-            {/* Destination picker */}
-            {decisionOptions.length === 0 ? (
+            {/* ── Destination picker: tile-based ── */}
+            {rooms.length === 0 ? (
               <div className="bg-basalt-50 rounded-lg p-6 text-center">
                 <p className="text-cream/50 text-sm mb-3">
-                  No selections yet. Add rooms and selections first.
+                  No rooms yet. Add a room first.
                 </p>
                 <button
                   type="button"
@@ -489,27 +552,102 @@ export function SaveFromWebContent() {
                 </button>
               </div>
             ) : (
-              <div>
-                <label className="block text-xs text-cream/50 mb-2">Save to selection</label>
-                <select
-                  value={selectedDecisionId || ''}
-                  onChange={(e) => setSelectedDecisionId(e.target.value || null)}
-                  className="w-full bg-basalt-50 border border-cream/20 text-cream text-sm px-3 py-2.5 rounded-lg focus:outline-none focus:border-sandstone"
-                >
-                  <option value="">Choose a selection...</option>
-                  {rooms.map((room) => (
-                    <optgroup
-                      key={room.id}
-                      label={`${ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️'} ${room.name}`}
-                    >
-                      {room.decisions.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.title}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
+              <div className="space-y-4">
+                {/* Room tiles */}
+                <div>
+                  <label className="block text-xs text-cream/50 mb-2">
+                    Room <span className="text-cream/30">(required)</span>
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {rooms.map((room) => {
+                      const emoji = ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️'
+                      const isActive = selectedRoomId === room.id
+                      return (
+                        <button
+                          key={room.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedRoomId(room.id)
+                            setSelectedDecisionId(null)
+                          }}
+                          className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
+                            isActive
+                              ? 'border-sandstone bg-sandstone/10'
+                              : 'border-cream/10 hover:border-cream/25 bg-basalt-50'
+                          }`}
+                        >
+                          <span className="text-base">{emoji}</span>
+                          <div className="min-w-0">
+                            <p className={`text-sm font-medium truncate ${isActive ? 'text-sandstone' : 'text-cream'}`}>
+                              {room.name}
+                            </p>
+                            <p className="text-[10px] text-cream/30">
+                              {room.decisions.filter((d) => d.systemKey !== 'uncategorized').length} selections
+                            </p>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Selection tiles (optional, shown when room selected) */}
+                {selectedRoom && selectedRoom.decisions.filter((d) => d.systemKey !== 'uncategorized').length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs text-cream/50">
+                        Selection <span className="text-cream/30">(optional)</span>
+                      </label>
+                      {selectedDecisionId && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDecisionId(null)}
+                          className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {selectedRoom.decisions
+                        .filter((d) => d.systemKey !== 'uncategorized')
+                        .map((decision) => {
+                          const isActive = selectedDecisionId === decision.id
+                          return (
+                            <button
+                              key={decision.id}
+                              type="button"
+                              onClick={() => setSelectedDecisionId(isActive ? null : decision.id)}
+                              className={`px-3 py-2 rounded-lg border-2 text-left transition-all ${
+                                isActive
+                                  ? 'border-sandstone bg-sandstone/10'
+                                  : 'border-cream/10 hover:border-cream/25 bg-basalt-50'
+                              }`}
+                            >
+                              <p className={`text-sm font-medium truncate ${isActive ? 'text-sandstone' : 'text-cream'}`}>
+                                {decision.title}
+                              </p>
+                              <p className="text-[10px] text-cream/30">
+                                {decision.options.length} ideas
+                              </p>
+                            </button>
+                          )
+                        })}
+                    </div>
+                    {!selectedDecisionId && (
+                      <p className="text-[11px] text-cream/30 mt-1.5">
+                        No selection? Idea will go to Uncategorized in this room.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* If room has no selections yet, show hint */}
+                {selectedRoom && selectedRoom.decisions.filter((d) => d.systemKey !== 'uncategorized').length === 0 && (
+                  <p className="text-[11px] text-cream/30">
+                    This room has no selections yet. Idea will go to Uncategorized.
+                  </p>
+                )}
               </div>
             )}
 
@@ -531,7 +669,7 @@ export function SaveFromWebContent() {
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={!name.trim() || !selectedDecisionId}
+                disabled={!canSave}
                 className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 Create Idea

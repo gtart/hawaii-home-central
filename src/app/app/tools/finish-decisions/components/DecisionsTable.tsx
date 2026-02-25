@@ -37,6 +37,11 @@ export function DecisionsTable({
 
   const sortedDecisions = useMemo(() => {
     const sorted = [...decisions].sort((a, b) => {
+      // Pin Uncategorized first always
+      const aUncat = a.systemKey === 'uncategorized' ? 0 : 1
+      const bUncat = b.systemKey === 'uncategorized' ? 0 : 1
+      if (aUncat !== bUncat) return aUncat - bUncat
+
       let comparison = 0
       if (sortColumn === 'title') {
         comparison = a.title.localeCompare(b.title)
@@ -176,9 +181,15 @@ export function DecisionsTable({
                     })()}
                   </td>
                   <td className="px-3 py-2.5">
-                    <Badge variant={statusCfg.variant}>
-                      {statusCfg.label}
-                    </Badge>
+                    {decision.systemKey === 'uncategorized' ? (
+                      <span className="inline-flex items-center px-2 py-0.5 bg-amber-500/15 text-amber-400 text-[11px] rounded-full">
+                        Needs sorting
+                      </span>
+                    ) : (
+                      <Badge variant={statusCfg.variant}>
+                        {statusCfg.label}
+                      </Badge>
+                    )}
                   </td>
                   <td className="px-3 py-2.5">
                     {decision.dueDate ? (
@@ -211,15 +222,17 @@ export function DecisionsTable({
                   </td>
                   {!readOnly && (
                     <td className="px-3 py-2.5 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onDeleteDecision(decision.id)
-                        }}
-                        className="text-red-400/60 hover:text-red-400 text-xs"
-                      >
-                        &times;
-                      </button>
+                      {decision.systemKey !== 'uncategorized' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onDeleteDecision(decision.id)
+                          }}
+                          className="text-red-400/60 hover:text-red-400 text-xs"
+                        >
+                          &times;
+                        </button>
+                      )}
                     </td>
                   )}
                 </tr>

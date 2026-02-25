@@ -94,9 +94,7 @@ export function ImportFromUrlPanel({
         if (data.title && mode === 'create-idea') {
           setName(data.title)
         }
-        if (data.primaryImage) {
-          setSelectedUrls(new Set([data.primaryImage]))
-        }
+        // No images selected by default — user picks what they want
       }
     } catch {
       setError('Failed to fetch preview. The site may be blocking requests.')
@@ -205,9 +203,27 @@ export function ImportFromUrlPanel({
           {/* Image picker grid */}
           {hasImages && (
             <div>
-              <p className="text-xs text-cream/50 mb-2">
-                Select images to import ({selectedUrls.size} selected)
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-cream/50">
+                  Select images (optional) · {selectedUrls.size} selected
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUrls(new Set(preview!.images!.map((i) => i.url)))}
+                    className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+                  >
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUrls(new Set())}
+                    className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+                  >
+                    None
+                  </button>
+                </div>
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-[300px] overflow-y-auto">
                 {preview.images!.map((img) => {
                   const isSelected = selectedUrls.has(img.url)

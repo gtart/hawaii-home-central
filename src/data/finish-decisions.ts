@@ -226,6 +226,9 @@ export interface SelectionComment {
   refOptionLabel?: string // display name of the referenced card
 }
 
+// System selection keys (e.g. "Uncategorized" — cannot be finalized)
+export type SystemSelectionKey = 'uncategorized'
+
 // Decision (nested in room)
 export interface DecisionV3 {
   id: string
@@ -238,6 +241,7 @@ export interface DecisionV3 {
   comments?: SelectionComment[] // Selection-level comment thread
   picksByUser?: Record<string, string | null>  // email → optionId (user's "My pick")
   originKitId?: string // set when entire decision was added by a kit
+  systemKey?: SystemSelectionKey // system-managed selection (e.g. 'uncategorized')
   createdAt: string
   updatedAt: string
 }

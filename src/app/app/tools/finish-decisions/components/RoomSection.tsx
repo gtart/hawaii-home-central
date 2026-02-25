@@ -61,26 +61,31 @@ export function RoomSection({
   }, [])
 
   const totalOptions = room.decisions.reduce((sum, d) => sum + d.options.length, 0)
+  const uncatDecision = room.decisions.find((d) => d.systemKey === 'uncategorized')
+  const uncatCount = uncatDecision ? uncatDecision.options.length : 0
+  const regularDecisions = room.decisions.filter((d) => d.systemKey !== 'uncategorized')
 
   const stats = {
-    total: room.decisions.length,
-    selected: room.decisions.filter((d) => d.status === 'selected').length,
-    ordered: room.decisions.filter((d) => d.status === 'ordered').length,
-    done: room.decisions.filter((d) => d.status === 'done').length,
+    total: regularDecisions.length,
+    selected: regularDecisions.filter((d) => d.status === 'selected').length,
+    ordered: regularDecisions.filter((d) => d.status === 'ordered').length,
+    done: regularDecisions.filter((d) => d.status === 'done').length,
   }
 
   // Desktop: full format
   const summaryParts: string[] = []
-  summaryParts.push(`${stats.total} total`)
+  summaryParts.push(`${stats.total} selection${stats.total !== 1 ? 's' : ''}`)
   if (stats.selected > 0) summaryParts.push(`${stats.selected} selected`)
   if (stats.ordered > 0) summaryParts.push(`${stats.ordered} ordered`)
   if (stats.done > 0) summaryParts.push(`${stats.done} done`)
+  if (uncatCount > 0) summaryParts.push(`${uncatCount} unsorted`)
 
   // Mobile: compact format
   const mobileParts: string[] = [`${stats.total}`]
   if (stats.selected > 0) mobileParts.push(`${stats.selected} sel`)
   if (stats.ordered > 0) mobileParts.push(`${stats.ordered} ord`)
   if (stats.done > 0) mobileParts.push(`${stats.done} done`)
+  if (uncatCount > 0) mobileParts.push(`${uncatCount} unsorted`)
 
   function requestDeleteDecision(decisionId: string) {
     setConfirmDeleteDecisionId(decisionId)

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge'
 import { useToolState } from '@/hooks/useToolState'
 import { IdeasBoard } from '../../components/IdeasBoard'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
+import { AssignToSelectionModal } from '../../components/AssignToSelectionModal'
 import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
 import { findKitsForDecisionTitle, applyKitToDecision } from '@/lib/finish-decision-kits'
 import {
@@ -21,6 +22,7 @@ import {
   type SelectionComment,
   type FinishDecisionsPayloadV3,
 } from '@/data/finish-decisions'
+import { isUncategorized } from '@/lib/decisionHelpers'
 
 const COMMENTS_PER_PAGE = 10
 const MAX_COMMENT_LENGTH = 400
@@ -37,6 +39,8 @@ export function DecisionDetailContent() {
   const [draftRef, setDraftRef] = useState<{ optionId: string; optionLabel: string } | null>(null)
   const [ideasPackOpen, setIdeasPackOpen] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
+  const [assignOptionId, setAssignOptionId] = useState<string | null>(null)
+  const [assignToast, setAssignToast] = useState<string | null>(null)
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
 
   const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3 | any>({
@@ -122,6 +126,8 @@ export function DecisionDetailContent() {
 
   const selectOption = (optionId: string) => {
     if (!foundDecision) return
+    // Uncategorized selections cannot have a "Final" pick
+    if (isUncategorized(foundDecision)) return
     updateDecision({
       options: foundDecision.options.map((opt) => ({
         ...opt,
@@ -157,6 +163,8 @@ export function DecisionDetailContent() {
 
   const handleStatusChange = (newStatus: StatusV3) => {
     if (!foundDecision) return
+    // Uncategorized selections stay in "deciding" status
+    if (isUncategorized(foundDecision)) return
     const oldStatus = foundDecision.status
     if (oldStatus === newStatus) return
 
@@ -192,6 +200,42 @@ export function DecisionDetailContent() {
     if (!foundDecision) return
     const result = applyKitToDecision(foundDecision, kit)
     updateDecision({ options: result.decision.options })
+  }
+
+  function moveOptionToDecision(optionId: string, targetDecisionId: string) {
+    if (!foundRoom || !foundDecision) return
+    const option = foundDecision.options.find((o) => o.id === optionId)
+    if (!option) return
+
+    const now = new Date().toISOString()
+    setState((prev) => ({
+      ...prev,
+      rooms: (prev as FinishDecisionsPayloadV3).rooms.map((r) =>
+        r.id === foundRoom!.id
+          ? {
+              ...r,
+              decisions: r.decisions.map((d) => {
+                if (d.id === decisionId) {
+                  // Remove from source
+                  return { ...d, options: d.options.filter((o) => o.id !== optionId), updatedAt: now }
+                }
+                if (d.id === targetDecisionId) {
+                  // Add to target
+                  return { ...d, options: [...d.options, { ...option, updatedAt: now }], updatedAt: now }
+                }
+                return d
+              }),
+              updatedAt: now,
+            }
+          : r
+      ),
+    }))
+
+    const targetName = foundRoom.decisions.find((d) => d.id === targetDecisionId)?.title || 'selection'
+    setAssignToast(`Moved to ${targetName}`)
+    setAssignOptionId(null)
+    setActiveCardId(null)
+    setTimeout(() => setAssignToast(null), 3000)
   }
 
   const deleteDecision = () => {
@@ -369,6 +413,7 @@ export function DecisionDetailContent() {
     )
   }
 
+  const isSystemUncategorized = isUncategorized(foundDecision)
   const commentCount = (foundDecision.comments || []).length
   const statusCfg = STATUS_CONFIG_V3[foundDecision.status]
   const formattedDue = foundDecision.dueDate
@@ -395,19 +440,21 @@ export function DecisionDetailContent() {
               value={foundDecision.title}
               onChange={(e) => updateDecision({ title: e.target.value })}
               className="text-2xl font-serif"
-              readOnly={readOnly}
+              readOnly={readOnly || isSystemUncategorized}
             />
           </div>
-          <select
-            value={foundDecision.status}
-            onChange={(e) => handleStatusChange(e.target.value as StatusV3)}
-            disabled={readOnly}
-            className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone disabled:opacity-50 shrink-0"
-          >
-            {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
-              <option key={key} value={key}>{config.label}</option>
-            ))}
-          </select>
+          {!isSystemUncategorized && (
+            <select
+              value={foundDecision.status}
+              onChange={(e) => handleStatusChange(e.target.value as StatusV3)}
+              disabled={readOnly}
+              className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone disabled:opacity-50 shrink-0"
+            >
+              {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
+                <option key={key} value={key}>{config.label}</option>
+              ))}
+            </select>
+          )}
           <input
             type="date"
             value={foundDecision.dueDate || ''}
@@ -419,7 +466,9 @@ export function DecisionDetailContent() {
 
         {/* Mobile header: title + controls */}
         <div className="md:hidden mb-2">
-          {editingTitle ? (
+          {isSystemUncategorized ? (
+            <h1 className="text-2xl font-serif text-cream">Uncategorized</h1>
+          ) : editingTitle ? (
             <Input
               autoFocus
               value={foundDecision.title}
@@ -437,16 +486,18 @@ export function DecisionDetailContent() {
             </h1>
           )}
           <div className="flex items-center gap-3 mt-2">
-            <select
-              value={foundDecision.status}
-              onChange={(e) => handleStatusChange(e.target.value as StatusV3)}
-              disabled={readOnly}
-              className="flex-1 bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone disabled:opacity-50"
-            >
-              {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
-                <option key={key} value={key}>{config.label}</option>
-              ))}
-            </select>
+            {!isSystemUncategorized && (
+              <select
+                value={foundDecision.status}
+                onChange={(e) => handleStatusChange(e.target.value as StatusV3)}
+                disabled={readOnly}
+                className="flex-1 bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone disabled:opacity-50"
+              >
+                {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
+                  <option key={key} value={key}>{config.label}</option>
+                ))}
+              </select>
+            )}
             <input
               type="date"
               value={foundDecision.dueDate || ''}
@@ -461,7 +512,13 @@ export function DecisionDetailContent() {
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs mb-4">
           <Badge variant="default" className="text-xs">{foundRoom.name}</Badge>
           <span className="text-cream/20">·</span>
-          <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
+          {isSystemUncategorized ? (
+            <span className="inline-flex items-center px-2 py-0.5 bg-amber-500/15 text-amber-400 text-[11px] rounded-full">
+              Needs sorting
+            </span>
+          ) : (
+            <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
+          )}
           {formattedDue && (
             <>
               <span className="text-cream/20">·</span>
@@ -555,6 +612,8 @@ export function DecisionDetailContent() {
               updateDecision({ options: foundDecision.options.filter((o) => o.id !== id) })
             }}
             onSelectOption={selectOption}
+            hideFinalize={isSystemUncategorized}
+            onAssignOption={isSystemUncategorized ? (optId) => setAssignOptionId(optId) : undefined}
             onUpdateDecision={updateDecision}
             onAddComment={addComment}
             onCommentOnOption={handleCommentOnOption}
@@ -579,8 +638,8 @@ export function DecisionDetailContent() {
           }}
         />
 
-        {/* Delete Selection */}
-        {!readOnly && (
+        {/* Delete Selection — hidden for system selections */}
+        {!readOnly && !isSystemUncategorized && (
           <div className="pt-6 border-t border-cream/10">
             <Button variant="danger" onClick={deleteDecision}>
               Delete Selection
@@ -672,6 +731,23 @@ export function DecisionDetailContent() {
           onApply={handleApplyKitToDecision}
           onClose={() => setIdeasPackOpen(false)}
         />
+      )}
+
+      {/* Assign to Selection Modal (Uncategorized) */}
+      {assignOptionId && foundRoom && (
+        <AssignToSelectionModal
+          optionName={foundDecision.options.find((o) => o.id === assignOptionId)?.name || ''}
+          selections={foundRoom.decisions.filter((d) => d.id !== decisionId && d.systemKey !== 'uncategorized')}
+          onAssign={(targetId) => moveOptionToDecision(assignOptionId, targetId)}
+          onClose={() => setAssignOptionId(null)}
+        />
+      )}
+
+      {/* Assign toast */}
+      {assignToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl text-sm text-cream/80">
+          {assignToast}
+        </div>
       )}
     </div>
   )
