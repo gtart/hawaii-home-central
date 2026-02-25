@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/Badge'
 import { STATUS_CONFIG_V3, type DecisionV3 } from '@/data/finish-decisions'
@@ -27,6 +27,27 @@ function getSelectionThumbnail(decision: DecisionV3): string | null {
     if (opt.imageUrl) return opt.imageUrl
   }
   return null
+}
+
+/** Stateful image with emoji fallback — no blank tiles */
+function SelectionImage({ src, alt, emoji }: { src: string; alt: string; emoji: string }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-basalt to-basalt-50">
+        <span className="text-4xl opacity-30">{emoji}</span>
+      </div>
+    )
+  }
+  return (
+    <img
+      src={displayUrl(src)}
+      alt={alt}
+      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+      loading="lazy"
+      onError={() => setFailed(true)}
+    />
+  )
 }
 
 function safeStatusConfig(status: string) {
@@ -93,9 +114,12 @@ export function SelectionsBoardView({
         const selectedOption = decision.options.find((o) => o.isSelected)
         const commentCount = decision.comments?.length ?? 0
 
+        const selectionEmoji = getSelectionEmoji(decision.title, emojiMap)
+
         return (
           <div
             key={decision.id}
+            data-testid="selection-card"
             role="button"
             tabIndex={0}
             onClick={() => router.push(`/app/tools/finish-decisions/decision/${decision.id}`)}
@@ -107,22 +131,36 @@ export function SelectionsBoardView({
             }}
             className="bg-basalt-50 rounded-xl overflow-hidden border border-cream/10 hover:border-cream/25 transition-all cursor-pointer group focus:outline-none focus:ring-2 focus:ring-sandstone/50"
           >
+            {/* Title row — above image */}
+            <div className="px-3 pt-2.5 pb-1 flex items-center gap-1.5">
+              <h3 className="text-sm font-medium text-cream truncate leading-tight flex-1">
+                {decision.title || 'Untitled Selection'}
+              </h3>
+              {/* Delete button (hover) */}
+              {!readOnly && decision.systemKey !== 'uncategorized' && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onDeleteDecision(decision.id) }}
+                  className="p-1 text-cream/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                  title="Delete"
+                >
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
             {/* Thumbnail */}
             <div className="relative aspect-[4/3] bg-basalt overflow-hidden">
               {thumbnail ? (
                 <>
-                  <img
-                    src={displayUrl(thumbnail)}
-                    alt={decision.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                  />
+                  <SelectionImage src={thumbnail} alt={decision.title} emoji={selectionEmoji} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                 </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-basalt to-basalt-50">
-                  <span className="text-4xl opacity-30">{getSelectionEmoji(decision.title, emojiMap)}</span>
+                  <span className="text-4xl opacity-30">{selectionEmoji}</span>
                 </div>
               )}
 
@@ -136,77 +174,57 @@ export function SelectionsBoardView({
                   <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
                 )}
               </div>
-
-              {/* Add Idea button (top-left, hover-reveal on desktop, always on mobile) */}
-              {!readOnly && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    router.push(`/app/tools/finish-decisions/decision/${decision.id}`)
-                  }}
-                  className="absolute top-1.5 left-1.5 px-2 py-1 bg-black/50 hover:bg-black/70 rounded-full text-white/80 hover:text-white text-[10px] font-medium opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all"
-                  title="Add an idea"
-                >
-                  + Idea
-                </button>
-              )}
-
-              {/* Delete button (hover) */}
-              {!readOnly && decision.systemKey !== 'uncategorized' && (
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); onDeleteDecision(decision.id) }}
-                  className="absolute top-1.5 right-1.5 p-1 bg-black/40 rounded-full text-white/60 hover:text-white opacity-0 group-hover:opacity-100 transition-all"
-                  title="Delete"
-                >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
-                  </svg>
-                </button>
-              )}
             </div>
 
             {/* Card body */}
-            <div className="px-3 py-2.5">
-              <h3 className="text-sm font-medium text-cream truncate leading-tight">
-                {decision.title || 'Untitled Selection'}
-              </h3>
-
+            <div className="px-3 py-2">
               {selectedOption && (
-                <p className="text-[11px] text-sandstone/70 truncate mt-0.5">
+                <p className="text-[11px] text-sandstone/70 truncate">
                   Selected: {selectedOption.name}
                 </p>
               )}
 
-              {/* Ideas + Comments row */}
-              <div className="flex items-center gap-1.5 text-[11px] text-cream/55 mt-1.5">
+              {/* Meta row: ideas, + Idea, comments */}
+              <div className="flex items-center gap-1.5 text-[11px] text-cream/55 mt-1">
                 <span>{decision.options.length} idea{decision.options.length !== 1 ? 's' : ''}</span>
+                {!readOnly && (
+                  <>
+                    <span className="text-cream/20">·</span>
+                    <button
+                      type="button"
+                      data-testid="selection-open"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        router.push(`/app/tools/finish-decisions/decision/${decision.id}`)
+                      }}
+                      className="text-sandstone hover:text-sandstone-light font-medium transition-colors"
+                    >
+                      + Idea
+                    </button>
+                  </>
+                )}
                 {commentCount > 0 && (
                   <>
-                    <span className="text-cream/30">·</span>
+                    <span className="text-cream/20">·</span>
                     <span className="inline-flex items-center gap-0.5" title="Comments">
-                      <span>💬</span>
-                      <span>{commentCount}</span>
+                      💬 {commentCount}
                     </span>
                   </>
                 )}
               </div>
 
-              {/* Meta row */}
-              <div className="flex items-center gap-1.5 text-[11px] text-cream/55 mt-1">
-                {decision.dueDate ? (
-                  <span>
-                    Due {new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </span>
-                ) : (
-                  <span className="text-cream/35">No due</span>
+              {/* Due date + updated */}
+              <div className="flex items-center gap-1.5 text-[10px] text-cream/40 mt-1">
+                {decision.dueDate && (
+                  <>
+                    <span>
+                      Due {new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                    <span className="text-cream/20">·</span>
+                  </>
                 )}
+                <span>Updated {relativeTime(decision.updatedAt)}</span>
               </div>
-
-              <p className="text-[10px] text-cream/40 mt-0.5">
-                {relativeTime(decision.updatedAt)}
-              </p>
             </div>
           </div>
         )

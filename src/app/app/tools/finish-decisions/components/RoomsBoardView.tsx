@@ -10,6 +10,26 @@ import { isGlobalUnsorted, findUncategorizedDecision } from '@/lib/decisionHelpe
 import { RoomCoverPickerModal } from './RoomCoverPickerModal'
 import { SaveFromWebCTA } from './SaveFromWebCTA'
 
+/** Stateful image with emoji fallback — no blank tiles */
+function RoomCoverImage({ src, alt, emoji }: { src: string; alt: string; emoji: string }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-basalt to-basalt-50">
+        <span className="text-5xl opacity-30">{emoji}</span>
+      </div>
+    )
+  }
+  return (
+    <img
+      src={displayUrl(src)}
+      alt={alt}
+      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
 function getRoomCoverUrl(room: RoomV3): string | null {
   // 1. Explicit cover image
   if (room.coverImage?.url) return room.coverImage.url
@@ -67,9 +87,10 @@ function getRoomStats(room: RoomV3) {
   return { total: decisions.length, deciding, selected, ordered, done, lastUpdated, totalComments, lastComment, nextDue }
 }
 
-type SortKey = 'updated' | 'due' | 'inProgress' | 'comments'
+type SortKey = 'created' | 'updated' | 'due' | 'inProgress' | 'comments'
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'created', label: 'Date added' },
   { key: 'updated', label: 'Recently updated' },
   { key: 'due', label: 'Next due date' },
   { key: 'inProgress', label: 'Most in-progress' },
@@ -89,7 +110,7 @@ export function RoomsBoardView({
 }) {
   const router = useRouter()
   const [coverPickerRoom, setCoverPickerRoom] = useState<RoomV3 | null>(null)
-  const [sortKey, setSortKey] = useState<SortKey>('updated')
+  const [sortKey, setSortKey] = useState<SortKey>('created')
 
   const navigateToRoom = (roomId: string) => {
     router.push(`/app/tools/finish-decisions/room/${roomId}`)
@@ -105,6 +126,8 @@ export function RoomsBoardView({
     const statsB = getRoomStats(b)
 
     switch (sortKey) {
+      case 'created':
+        return a.createdAt.localeCompare(b.createdAt)
       case 'updated':
         return statsB.lastUpdated.localeCompare(statsA.lastUpdated)
       case 'due': {
@@ -148,35 +171,40 @@ export function RoomsBoardView({
             ? (findUncategorizedDecision(room)?.options.length ?? 0)
             : 0
 
-          // Hide Global Unsorted when empty
-          if (isUnsortedRoom && unsortedCount === 0) return null
-
-          // Global Unsorted gets a simplified card
+          // Global Unsorted card — visible even when empty with helper text
           if (isUnsortedRoom) {
             return (
               <div
                 key={room.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => navigateToRoom(room.id)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigateToRoom(room.id) } }}
-                className="bg-basalt-50 rounded-xl overflow-hidden border-2 border-dashed border-amber-500/30 hover:border-amber-500/50 transition-all cursor-pointer group focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                role={unsortedCount > 0 ? 'button' : undefined}
+                tabIndex={unsortedCount > 0 ? 0 : undefined}
+                onClick={() => { if (unsortedCount > 0) navigateToRoom(room.id) }}
+                onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && unsortedCount > 0) { e.preventDefault(); navigateToRoom(room.id) } }}
+                className={`bg-basalt-50 rounded-xl overflow-hidden border-2 border-dashed transition-all ${
+                  unsortedCount > 0
+                    ? 'border-amber-500/30 hover:border-amber-500/50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/50'
+                    : 'border-cream/10'
+                }`}
               >
-                <div className="px-4 py-5 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <div className="px-4 py-4 flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${unsortedCount > 0 ? 'bg-amber-500/10' : 'bg-cream/5'}`}>
+                    <svg className={`w-5 h-5 ${unsortedCount > 0 ? 'text-amber-400' : 'text-cream/20'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium text-amber-300">Unsorted</h3>
-                    <p className="text-[11px] text-cream/40">
-                      {unsortedCount} idea{unsortedCount !== 1 ? 's' : ''} to sort into rooms
+                    <h3 className={`text-sm font-medium ${unsortedCount > 0 ? 'text-amber-300' : 'text-cream/30'}`}>Unsorted</h3>
+                    <p className="text-[11px] text-cream/30">
+                      {unsortedCount > 0
+                        ? `${unsortedCount} idea${unsortedCount !== 1 ? 's' : ''} to sort into rooms`
+                        : 'Saved-from-web items land here until you sort them'}
                     </p>
                   </div>
-                  <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 bg-amber-500/20 text-amber-300 text-[11px] font-bold rounded-full">
-                    {unsortedCount}
-                  </span>
+                  {unsortedCount > 0 && (
+                    <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 bg-amber-500/20 text-amber-300 text-[11px] font-bold rounded-full">
+                      {unsortedCount}
+                    </span>
+                  )}
                 </div>
               </div>
             )
@@ -192,6 +220,7 @@ export function RoomsBoardView({
           return (
             <div
               key={room.id}
+              data-testid="room-card"
               role="button"
               tabIndex={0}
               onClick={() => navigateToRoom(room.id)}
@@ -201,7 +230,7 @@ export function RoomsBoardView({
               {/* Title row — above image */}
               <div className="px-3 pt-3 pb-1.5 flex items-center gap-1.5">
                 <span className="text-sm">{emoji}</span>
-                <h3 className="text-sm font-medium text-cream truncate">{room.name}</h3>
+                <h3 className="text-base font-semibold text-cream truncate">{room.name}</h3>
                 {roomUnsortedCount > 0 && (
                   <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-500/10 text-amber-400 text-[10px] font-medium rounded-full">
                     {roomUnsortedCount} unsorted
@@ -222,12 +251,7 @@ export function RoomsBoardView({
               <div className="relative h-36 bg-basalt overflow-hidden">
                 {coverUrl ? (
                   <>
-                    <img
-                      src={displayUrl(coverUrl)}
-                      alt={room.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                    />
+                    <RoomCoverImage src={coverUrl} alt={room.name} emoji={emoji} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                   </>
                 ) : (

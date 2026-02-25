@@ -25,30 +25,50 @@ test('screenshot: settings page', async ({ page }, testInfo) => {
   })
 })
 
-// -- Selections List Tool --
-test('journey: selections list tool', async ({ page }, testInfo) => {
+// -- Selection Boards Tool --
+test('journey: selection boards tool', async ({ page }, testInfo) => {
   await page.goto('/app/tools/finish-decisions', { waitUntil: 'networkidle' })
   await page.screenshot({
-    path: screenshotPath('selections-list', testInfo),
+    path: screenshotPath('selections-boards', testInfo),
     fullPage: true,
   })
 
-  // Click first decision card if one exists
-  const firstDecision = page.locator('a[href*="/decision/"]').first()
-  if (await firstDecision.isVisible()) {
-    await firstDecision.click()
+  // Click first room card if one exists (uses data-testid)
+  const firstRoom = page.getByTestId('room-card').first()
+  if (await firstRoom.isVisible()) {
+    await firstRoom.click()
     await page.waitForLoadState('networkidle')
     await page.screenshot({
-      path: screenshotPath('selections-decision-detail', testInfo),
+      path: screenshotPath('selections-room-detail', testInfo),
       fullPage: true,
     })
 
-    // Scroll to bottom to capture comments section
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-    await page.waitForTimeout(500)
-    await page.screenshot({
-      path: screenshotPath('selections-decision-bottom', testInfo),
-      fullPage: true,
+    // Click first selection card if one exists
+    const firstSelection = page.getByTestId('selection-card').first()
+    if (await firstSelection.isVisible()) {
+      await firstSelection.click()
+      await page.waitForLoadState('networkidle')
+      await page.screenshot({
+        path: screenshotPath('selections-decision-detail', testInfo),
+        fullPage: true,
+      })
+
+      // Scroll to bottom to capture comments section
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+      await page.waitForTimeout(500)
+      await page.screenshot({
+        path: screenshotPath('selections-decision-bottom', testInfo),
+        fullPage: true,
+      })
+    }
+  }
+
+  // Verify Save from Web CTA exists on boards page
+  await page.goto('/app/tools/finish-decisions', { waitUntil: 'networkidle' })
+  const saveCta = page.getByTestId('savefromweb-cta')
+  if (await saveCta.isVisible()) {
+    await saveCta.screenshot({
+      path: screenshotPath('savefromweb-cta', testInfo),
     })
   }
 })
@@ -100,7 +120,7 @@ test('journey: navigate between tools', async ({ page }, testInfo) => {
   await page.goto('/app', { waitUntil: 'networkidle' })
   await page.screenshot({ path: screenshotPath('journey-start', testInfo) })
 
-  // Navigate to Selections List
+  // Navigate to Selection Boards
   const selectionsLink = page.locator('a[href*="/tools/finish-decisions"]').first()
   if (await selectionsLink.isVisible()) {
     await selectionsLink.click()

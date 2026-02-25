@@ -166,38 +166,61 @@ export function SaveFromWebContent() {
       updatedAt: new Date().toISOString(),
     }
 
-    // Determine target room and decision
-    let targetRoomId = selectedRoomId
-    let targetDecisionId = selectedDecisionId
+    // Resolve target room/decision deterministically BEFORE any state update
+    let resolvedRoomId = selectedRoomId
+    let resolvedDecisionId = selectedDecisionId
+    let resolvedRoomName = ''
+    let resolvedDecisionName = ''
 
+    // Pre-compute the resolved IDs by simulating the same logic the updater will use
+    const currentRooms = (state as FinishDecisionsPayloadV3).rooms
+
+    if (!resolvedRoomId) {
+      // Will go to Global Unsorted
+      const ensured = ensureGlobalUnsortedRoom(currentRooms)
+      const globalRoom = findGlobalUnsortedRoom(ensured)!
+      resolvedRoomId = globalRoom.id
+      resolvedRoomName = 'Unsorted'
+      const uncat = findUncategorizedDecision(globalRoom)!
+      resolvedDecisionId = uncat.id
+      resolvedDecisionName = 'Uncategorized'
+    } else {
+      const targetRoom = currentRooms.find((r) => r.id === resolvedRoomId)
+      resolvedRoomName = targetRoom?.name || 'Unknown'
+      if (!resolvedDecisionId && targetRoom) {
+        const withUncat = ensureUncategorizedDecision(targetRoom)
+        const uncat = findUncategorizedDecision(withUncat)!
+        resolvedDecisionId = uncat.id
+        resolvedDecisionName = 'Uncategorized'
+      } else if (resolvedDecisionId && targetRoom) {
+        const dec = targetRoom.decisions.find((d) => d.id === resolvedDecisionId)
+        resolvedDecisionName = dec?.title || ''
+      }
+    }
+
+    // Now update state using the pre-resolved IDs (no mutation of closure vars)
     setState((prev) => {
       const payload = prev as FinishDecisionsPayloadV3
-      let currentRooms = payload.rooms
+      let updatedRooms = payload.rooms
 
-      // No room selected → save to Global Unsorted
-      if (!targetRoomId) {
-        currentRooms = ensureGlobalUnsortedRoom(currentRooms)
-        const globalRoom = findGlobalUnsortedRoom(currentRooms)!
-        targetRoomId = globalRoom.id
-        const uncat = findUncategorizedDecision(globalRoom)!
-        targetDecisionId = uncat.id
+      // Ensure Global Unsorted exists if needed
+      if (!selectedRoomId) {
+        updatedRooms = ensureGlobalUnsortedRoom(updatedRooms)
       }
 
-      const newRooms = currentRooms.map((r) => {
-        if (r.id !== targetRoomId) return r
+      const newRooms = updatedRooms.map((r) => {
+        if (r.id !== resolvedRoomId) return r
 
         let room = r
-        // If no specific selection chosen, save into Uncategorized (lazy create)
-        if (!targetDecisionId) {
+        // Ensure uncategorized decision exists if no specific selection chosen
+        if (!selectedDecisionId) {
           room = ensureUncategorizedDecision(room)
-          const uncat = findUncategorizedDecision(room)!
-          targetDecisionId = uncat.id
         }
 
         return {
           ...room,
           decisions: room.decisions.map((d) =>
-            d.id === targetDecisionId
+            d.id === resolvedDecisionId
               ? { ...d, options: [...d.options, newOption], updatedAt: new Date().toISOString() }
               : d
           ),
@@ -207,18 +230,11 @@ export function SaveFromWebContent() {
       return { ...payload, rooms: newRooms }
     })
 
-    // Figure out labels for success message
-    const targetRoom = selectedRoomId ? rooms.find((r) => r.id === selectedRoomId) : null
-    setSavedTargetRoom(targetRoom?.name || 'Unsorted')
-    setSavedTargetRoomId(targetRoomId || '')
-    if (selectedDecisionId) {
-      const targetDec = targetRoom?.decisions.find((d) => d.id === selectedDecisionId)
-      setSavedTargetDecision(targetDec?.title || '')
-      setSavedDecisionId(selectedDecisionId)
-    } else {
-      setSavedTargetDecision('Uncategorized')
-      setSavedDecisionId(targetDecisionId || '')
-    }
+    // Set success state using the pre-resolved values (not closure-mutated vars)
+    setSavedTargetRoom(resolvedRoomName)
+    setSavedTargetRoomId(resolvedRoomId || '')
+    setSavedTargetDecision(resolvedDecisionName)
+    setSavedDecisionId(resolvedDecisionId || '')
     setSaved(true)
   }
 
@@ -300,6 +316,7 @@ export function SaveFromWebContent() {
             {savedTargetRoomId && (
               <button
                 type="button"
+                data-testid="savefromweb-success-open-room"
                 onClick={() => router.push(`/app/tools/finish-decisions/room/${savedTargetRoomId}`)}
                 className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
               >
@@ -309,6 +326,7 @@ export function SaveFromWebContent() {
             {savedDecisionId && (
               <button
                 type="button"
+                data-testid="savefromweb-success-open-selection"
                 onClick={() => router.push(`/app/tools/finish-decisions/decision/${savedDecisionId}`)}
                 className="px-4 py-2 text-sm text-sandstone hover:text-sandstone-light border border-sandstone/30 rounded-lg transition-colors"
               >
@@ -638,6 +656,7 @@ export function SaveFromWebContent() {
               </button>
               <button
                 type="button"
+                data-testid="savefromweb-save"
                 onClick={handleSave}
                 disabled={!canSave}
                 className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"

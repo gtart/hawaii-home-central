@@ -10,6 +10,7 @@ export function SaveFromWebCTA({ className = '' }: { className?: string }) {
   return (
     <Link
       href="/app/save-from-web"
+      data-testid="savefromweb-cta"
       className={`flex items-center gap-3 bg-basalt-50 border border-cream/10 rounded-xl px-4 py-3 hover:border-sandstone/30 transition-colors group ${className}`}
     >
       <div className="w-9 h-9 rounded-lg bg-sandstone/10 flex items-center justify-center shrink-0 group-hover:bg-sandstone/20 transition-colors">

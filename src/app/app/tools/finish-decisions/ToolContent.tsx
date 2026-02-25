@@ -191,14 +191,10 @@ function migrateToV3(payload: any): FinishDecisionsPayloadV3 {
   if (payload.version === 3) {
     return payload as FinishDecisionsPayloadV3
   } else if (payload.version === 2) {
-    console.log('Migrating V2 → V3...')
     return migrateV2toV3(payload as V2FinishDecisionsPayload)
   } else if (payload.version === 1) {
-    console.log('Migrating V1 → V3...')
     return migrateV1toV3(payload as V1FinishDecisionsPayload)
   } else {
-    // No version field = assume V1
-    console.log('No version detected, assuming V1 and migrating to V3...')
     return migrateV1toV3(payload as V1FinishDecisionsPayload)
   }
 }
@@ -234,7 +230,6 @@ export function ToolContent({
   // Auto-migrate on load
   useEffect(() => {
     if (isLoaded && state.version !== 3) {
-      console.log('Auto-migrating to V3...')
       const migrated = migrateToV3(state)
       setState(() => migrated)
     }
