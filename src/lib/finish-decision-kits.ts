@@ -5,26 +5,30 @@ import type {
   RoomTypeV3,
   OptionOriginV3,
 } from '@/data/finish-decisions'
-import { KITS, type FinishDecisionKit } from '@/data/finish-decision-kits'
+import { type FinishDecisionKit } from '@/data/finish-decision-kits'
 
 // ============================================================================
-// Finders
+// Finders (parameterized — caller passes the kits array)
 // ============================================================================
 
 /** Return kits that match a given room type */
-export function findKitsForRoomType(roomType: RoomTypeV3): FinishDecisionKit[] {
-  return KITS.filter(
+export function findKitsForRoomType(
+  kits: FinishDecisionKit[],
+  roomType: RoomTypeV3
+): FinishDecisionKit[] {
+  return kits.filter(
     (kit) => kit.roomTypes.length === 0 || kit.roomTypes.includes(roomType)
   )
 }
 
 /** Return kits that have options for a specific decision title */
 export function findKitsForDecisionTitle(
+  kits: FinishDecisionKit[],
   decisionTitle: string,
   roomType: RoomTypeV3
 ): FinishDecisionKit[] {
   const titleLower = decisionTitle.toLowerCase()
-  return KITS.filter(
+  return kits.filter(
     (kit) =>
       (kit.roomTypes.length === 0 || kit.roomTypes.includes(roomType)) &&
       kit.decisionTitles.some((t) => t.toLowerCase() === titleLower)
@@ -32,8 +36,11 @@ export function findKitsForDecisionTitle(
 }
 
 /** Get a kit by ID */
-export function getKitById(kitId: string): FinishDecisionKit | undefined {
-  return KITS.find((k) => k.id === kitId)
+export function getKitById(
+  kits: FinishDecisionKit[],
+  kitId: string
+): FinishDecisionKit | undefined {
+  return kits.find((k) => k.id === kitId)
 }
 
 // ============================================================================

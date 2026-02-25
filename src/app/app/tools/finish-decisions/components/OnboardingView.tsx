@@ -16,11 +16,14 @@ export function OnboardingView({
   onBatchCreate,
   collapsed,
   onToggleCollapse,
+  defaultDecisions,
 }: {
   onBatchCreate: (selections: RoomSelection[]) => void
   collapsed?: boolean
   onToggleCollapse?: () => void
+  defaultDecisions?: Record<RoomTypeV3, string[]>
 }) {
+  const resolvedDefaults = defaultDecisions || DEFAULT_DECISIONS_BY_ROOM_TYPE
   const [selectedTypes, setSelectedTypes] = useState<Set<RoomTypeV3>>(new Set())
   const [templates, setTemplates] = useState<Record<string, 'standard' | 'none'>>({})
   const [customOtherName, setCustomOtherName] = useState('')
@@ -93,7 +96,7 @@ export function OnboardingView({
         {ROOM_TYPE_OPTIONS_V3.map((opt) => {
           const isSelected = selectedTypes.has(opt.value)
           const isCustom = opt.value === 'other'
-          const decisionCount = DEFAULT_DECISIONS_BY_ROOM_TYPE[opt.value].length
+          const decisionCount = (resolvedDefaults[opt.value] || []).length
           const currentTemplate = templates[opt.value] || 'standard'
 
           return (
@@ -173,8 +176,8 @@ export function OnboardingView({
 
 function buttonLabel(hasRooms: boolean, count: number): string {
   if (count === 0) {
-    return hasRooms ? 'Add Rooms' : 'Create Selections List'
+    return hasRooms ? 'Add Rooms' : 'Create Selections Board'
   }
   const label = count === 1 ? 'room' : 'rooms'
-  return hasRooms ? `Add ${count} ${label}` : `Create Selections List (${count} ${label})`
+  return hasRooms ? `Add ${count} ${label}` : `Create Selections Board (${count} ${label})`
 }

@@ -18,6 +18,7 @@ export function IdeasPackModal({
   appliedKitIds,
   onApply,
   onClose,
+  kits = [],
 }: {
   roomType: RoomTypeV3
   roomName: string
@@ -26,12 +27,13 @@ export function IdeasPackModal({
   appliedKitIds: string[]
   onApply: (kit: FinishDecisionKit) => void
   onClose: () => void
+  kits?: FinishDecisionKit[]
 }) {
   const [selectedKitId, setSelectedKitId] = useState<string | null>(null)
 
   const availableKits = decisionTitle
-    ? findKitsForDecisionTitle(decisionTitle, roomType)
-    : findKitsForRoomType(roomType)
+    ? findKitsForDecisionTitle(kits, decisionTitle, roomType)
+    : findKitsForRoomType(kits, roomType)
 
   const selectedKit = availableKits.find((k) => k.id === selectedKitId)
 

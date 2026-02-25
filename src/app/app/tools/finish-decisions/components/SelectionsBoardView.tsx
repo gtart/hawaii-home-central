@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/Badge'
-import { STATUS_CONFIG_V3, SELECTION_EMOJI_MAP, type DecisionV3 } from '@/data/finish-decisions'
+import { STATUS_CONFIG_V3, type DecisionV3 } from '@/data/finish-decisions'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { relativeTime } from '@/lib/relativeTime'
 
@@ -33,9 +33,9 @@ function safeStatusConfig(status: string) {
   return STATUS_CONFIG_V3[status as keyof typeof STATUS_CONFIG_V3] ?? STATUS_CONFIG_V3.deciding
 }
 
-function getSelectionEmoji(title: string): string {
+function getSelectionEmoji(title: string, emojiMap: Record<string, string>): string {
   const lower = title.toLowerCase()
-  return SELECTION_EMOJI_MAP[lower] || '📋'
+  return emojiMap[lower] || '📋'
 }
 
 /** Aggregate vote counts across all options in a decision */
@@ -60,6 +60,7 @@ export function SelectionsBoardView({
   onAddIdeasPack,
   readOnly = false,
   hasAvailableKits = false,
+  emojiMap = {},
 }: {
   decisions: DecisionV3[]
   roomType: string
@@ -68,6 +69,7 @@ export function SelectionsBoardView({
   onAddIdeasPack?: () => void
   readOnly?: boolean
   hasAvailableKits?: boolean
+  emojiMap?: Record<string, string>
 }) {
   const router = useRouter()
 
@@ -140,7 +142,7 @@ export function SelectionsBoardView({
                 </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-basalt to-basalt-50">
-                  <span className="text-4xl opacity-30">{getSelectionEmoji(decision.title)}</span>
+                  <span className="text-4xl opacity-30">{getSelectionEmoji(decision.title, emojiMap)}</span>
                 </div>
               )}
 

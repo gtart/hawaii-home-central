@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/Badge'
 import {
   STATUS_CONFIG_V3,
-  SELECTION_EMOJI_MAP,
   type DecisionV3,
 } from '@/data/finish-decisions'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
@@ -41,11 +40,13 @@ export function DecisionsTable({
   roomType,
   onDeleteDecision,
   readOnly = false,
+  emojiMap = {},
 }: {
   decisions: DecisionV3[]
   roomType: string
   onDeleteDecision: (decisionId: string) => void
   readOnly?: boolean
+  emojiMap?: Record<string, string>
 }) {
   const router = useRouter()
   const [sortColumn, setSortColumn] = useState<'title' | 'status' | 'dueDate' | 'updated'>('title')
@@ -188,7 +189,7 @@ export function DecisionsTable({
                       />
                     ) : (
                       <div className="w-10 h-10 rounded-md bg-basalt/50 flex items-center justify-center text-lg">
-                        {SELECTION_EMOJI_MAP[decision.title.toLowerCase()] || '📋'}
+                        {emojiMap[decision.title.toLowerCase()] || '📋'}
                       </div>
                     )}
                   </td>

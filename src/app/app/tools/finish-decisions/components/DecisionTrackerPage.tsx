@@ -4,7 +4,6 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { Input } from '@/components/ui/Input'
 import {
   STATUS_CONFIG_V3,
-  DEFAULT_DECISIONS_BY_ROOM_TYPE,
   type RoomV3,
   type DecisionV3,
   type StatusV3,
@@ -29,12 +28,18 @@ export function DecisionTrackerPage({
   onUpdateRoom,
   onDeleteRoom,
   readOnly = false,
+  kits = [],
+  defaultDecisions = {} as Record<RoomTypeV3, string[]>,
+  emojiMap = {},
 }: {
   rooms: RoomV3[]
   onBatchAddRooms: (selections: RoomSelection[]) => void
   onUpdateRoom: (roomId: string, updates: Partial<RoomV3>) => void
   onDeleteRoom: (roomId: string) => void
   readOnly?: boolean
+  kits?: FinishDecisionKit[]
+  defaultDecisions?: Record<RoomTypeV3, string[]>
+  emojiMap?: Record<string, string>
 }) {
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(
     () => new Set(rooms.length <= 3 ? rooms.map((r) => r.id) : [])
@@ -252,7 +257,7 @@ export function DecisionTrackerPage({
     <>
       {/* Onboarding — only for new users with zero rooms */}
       {!readOnly && !hasRooms && (
-        <OnboardingView onBatchCreate={onBatchAddRooms} />
+        <OnboardingView onBatchCreate={onBatchAddRooms} defaultDecisions={defaultDecisions} />
       )}
 
       {/* Tracker UI — only when rooms exist */}
@@ -498,7 +503,9 @@ export function DecisionTrackerPage({
                   onQuickAdd={() => openQuickAdd(room.id)}
                   onAddIdeasPack={() => setIdeasModalRoomId(room.id)}
                   readOnly={readOnly}
-                  hasAvailableKits={findKitsForRoomType(room.type as RoomTypeV3).length > 0}
+                  hasAvailableKits={findKitsForRoomType(kits, room.type as RoomTypeV3).length > 0}
+                  defaultDecisions={defaultDecisions}
+                  emojiMap={emojiMap}
                 />
               ))}
             </div>
@@ -628,7 +635,7 @@ export function DecisionTrackerPage({
           onClose={() => setAddRoomOpen(false)}
           onAdd={(type, name, useDefaults) => {
             onBatchAddRooms([{ type, name, template: useDefaults ? 'standard' : 'none' }])
-            const defaultCount = (DEFAULT_DECISIONS_BY_ROOM_TYPE[type] || []).length
+            const defaultCount = (defaultDecisions[type] || []).length
             const msg = useDefaults && defaultCount > 0
               ? `"${name}" added with ${defaultCount} suggested selections — edit anytime`
               : `"${name}" added`
@@ -647,6 +654,7 @@ export function DecisionTrackerPage({
           appliedKitIds={ideasModalRoom.appliedKitIds || []}
           onApply={handleApplyKit}
           onClose={() => setIdeasModalRoomId(null)}
+          kits={kits}
         />
       )}
 

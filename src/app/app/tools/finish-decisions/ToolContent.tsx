@@ -6,6 +6,7 @@ import { useProject } from '@/contexts/ProjectContext'
 import { LocalModeBanner } from '@/components/guides/LocalModeBanner'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { DecisionTrackerPage } from './components/DecisionTrackerPage'
+import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import {
   DEFAULT_DECISIONS_BY_ROOM_TYPE,
   type RoomV3,
@@ -208,9 +209,18 @@ function migrateToV3(payload: any): FinishDecisionsPayloadV3 {
 
 interface ToolContentProps {
   localOnly?: boolean
+  kits?: FinishDecisionKit[]
+  defaultDecisions?: Record<RoomTypeV3, string[]>
+  emojiMap?: Record<string, string>
 }
 
-export function ToolContent({ localOnly = false }: ToolContentProps) {
+export function ToolContent({
+  localOnly = false,
+  kits = [],
+  defaultDecisions,
+  emojiMap = {},
+}: ToolContentProps) {
+  const resolvedDefaults = defaultDecisions || DEFAULT_DECISIONS_BY_ROOM_TYPE
   const { projects } = useProject()
   const { state, setState, isLoaded, isSyncing, access, readOnly, noAccess } = useToolState<
     FinishDecisionsPayloadV3 | any
@@ -269,7 +279,7 @@ export function ToolContent({ localOnly = false }: ToolContentProps) {
       type,
       name,
       decisions: useDefaults
-        ? DEFAULT_DECISIONS_BY_ROOM_TYPE[type].map((title) => ({
+        ? (resolvedDefaults[type] || []).map((title) => ({
             id: crypto.randomUUID(),
             title,
             status: 'deciding' as StatusV3,
@@ -311,7 +321,7 @@ export function ToolContent({ localOnly = false }: ToolContentProps) {
         name,
         decisions:
           sel.template === 'standard'
-            ? DEFAULT_DECISIONS_BY_ROOM_TYPE[sel.type].map((title) => ({
+            ? (resolvedDefaults[sel.type] || []).map((title) => ({
                 id: crypto.randomUUID(),
                 title,
                 status: 'deciding' as StatusV3,
@@ -359,7 +369,7 @@ export function ToolContent({ localOnly = false }: ToolContentProps) {
         {!localOnly && (
           <ToolPageHeader
             toolKey="finish_decisions"
-            title="Selections List"
+            title="Selections Board"
             description="Avoid delays and rework—by keeping selections, links, and status updates together for each room."
             accessLevel={access}
           />
@@ -376,6 +386,9 @@ export function ToolContent({ localOnly = false }: ToolContentProps) {
             onUpdateRoom={handleUpdateRoom}
             onDeleteRoom={handleDeleteRoom}
             readOnly={readOnly}
+            kits={kits}
+            defaultDecisions={resolvedDefaults}
+            emojiMap={emojiMap}
           />
         ) : !isLoaded ? (
           <div className="text-center py-12 text-cream/50">

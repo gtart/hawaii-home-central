@@ -76,6 +76,18 @@ enum AdminRole {
   EDITOR
 }
 
+enum IdeaPackStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum IdeaPackAuthor {
+  HHC
+  DESIGNER
+  VENDOR
+}
+
 // ─── Auth (existing) ──────────────────────────────────
 
 model User {
@@ -445,6 +457,24 @@ model AdminAllowlist {
   email     String    @unique
   role      AdminRole
   createdAt DateTime  @default(now())
+}
+
+// ─── Idea Packs ──────────────────────────────────────
+
+model IdeaPack {
+  id          String         @id @default(cuid())
+  packId      String         @unique
+  label       String
+  description String         @default("")
+  author      IdeaPackAuthor @default(HHC)
+  status      IdeaPackStatus @default(DRAFT)
+  roomTypes   String[]
+  decisions   Json
+  sortOrder   Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([status])
 }
 
 // ─── Early Access ────────────────────────────────────

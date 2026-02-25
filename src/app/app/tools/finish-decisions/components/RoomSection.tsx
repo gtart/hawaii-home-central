@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react'
 import {
   ROOM_EMOJI_MAP,
-  DEFAULT_DECISIONS_BY_ROOM_TYPE,
   type RoomV3,
   type RoomTypeV3,
   type DecisionV3,
@@ -26,6 +25,8 @@ export function RoomSection({
   onAddIdeasPack,
   readOnly = false,
   hasAvailableKits = false,
+  defaultDecisions = {} as Record<RoomTypeV3, string[]>,
+  emojiMap = {},
 }: {
   room: RoomV3
   isExpanded: boolean
@@ -36,6 +37,8 @@ export function RoomSection({
   onAddIdeasPack: () => void
   readOnly?: boolean
   hasAvailableKits?: boolean
+  defaultDecisions?: Record<RoomTypeV3, string[]>
+  emojiMap?: Record<string, string>
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [deleteStep, setDeleteStep] = useState<'none' | 'confirm' | 'type'>('none')
@@ -131,7 +134,7 @@ export function RoomSection({
   }
 
   function handleAutoPopulate() {
-    const standardTitles = DEFAULT_DECISIONS_BY_ROOM_TYPE[room.type as RoomTypeV3] || []
+    const standardTitles = defaultDecisions[room.type as RoomTypeV3] || []
     const existingTitles = new Set(room.decisions.map((d) => d.title.toLowerCase().trim()))
     const missing = standardTitles.filter((t) => !existingTitles.has(t.toLowerCase().trim()))
 
@@ -394,6 +397,7 @@ export function RoomSection({
               onAddIdeasPack={readOnly ? undefined : onAddIdeasPack}
               readOnly={readOnly}
               hasAvailableKits={hasAvailableKits}
+              emojiMap={emojiMap}
             />
           ) : (
             <DecisionsTable
@@ -401,6 +405,7 @@ export function RoomSection({
               roomType={room.type}
               onDeleteDecision={requestDeleteDecision}
               readOnly={readOnly}
+              emojiMap={emojiMap}
             />
           )}
         </div>

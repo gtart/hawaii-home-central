@@ -11,6 +11,7 @@ import { IdeasBoard } from '../../components/IdeasBoard'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
 import { AssignToSelectionModal } from '../../components/AssignToSelectionModal'
 import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
+import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { findKitsForDecisionTitle, applyKitToDecision } from '@/lib/finish-decision-kits'
 import {
   STATUS_CONFIG_V3,
@@ -28,7 +29,13 @@ import { relativeTime } from '@/lib/relativeTime'
 const COMMENTS_PER_PAGE = 10
 const MAX_COMMENT_LENGTH = 400
 
-export function DecisionDetailContent() {
+export function DecisionDetailContent({
+  kits = [],
+  emojiMap = {},
+}: {
+  kits?: FinishDecisionKit[]
+  emojiMap?: Record<string, string>
+}) {
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
@@ -206,7 +213,7 @@ export function DecisionDetailContent() {
   }
 
   const availableKits = foundRoom && foundDecision
-    ? findKitsForDecisionTitle(foundDecision.title, foundRoom.type as RoomTypeV3)
+    ? findKitsForDecisionTitle(kits, foundDecision.title, foundRoom.type as RoomTypeV3)
     : []
 
   function handleApplyKitToDecision(kit: import('@/data/finish-decision-kits').FinishDecisionKit) {
@@ -368,7 +375,7 @@ export function DecisionDetailContent() {
           <div className="bg-basalt-50 rounded-card p-12 text-center">
             <p className="text-cream/50 mb-4">Selection not found.</p>
             <Button onClick={() => router.push('/app/tools/finish-decisions')}>
-              Go to Selections List
+              Go to Selections Board
             </Button>
           </div>
         </div>
@@ -838,6 +845,7 @@ export function DecisionDetailContent() {
           appliedKitIds={foundRoom.appliedKitIds || []}
           onApply={handleApplyKitToDecision}
           onClose={() => setIdeasPackOpen(false)}
+          kits={kits}
         />
       )}
 
