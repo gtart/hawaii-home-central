@@ -100,10 +100,6 @@ export function IdeaCardModal({
   const upCount = Object.values(votes).filter((v) => v === 'up').length
   const downCount = Object.values(votes).filter((v) => v === 'down').length
 
-  const myPick = decision.picksByUser?.[userEmail]
-  const isMyPick = myPick === option.id
-  const pickCount = Object.values(decision.picksByUser ?? {}).filter((v) => v === option.id).length
-
   // ---- Handlers ----
   function handleVote(dir: 'up' | 'down') {
     if (readOnly) return
@@ -115,18 +111,6 @@ export function IdeaCardModal({
       next[userEmail] = dir
     }
     onUpdate({ votes: next })
-  }
-
-  function handlePick() {
-    if (readOnly) return
-    const current = decision.picksByUser ?? {}
-    const next = { ...current }
-    if (isMyPick) {
-      next[userEmail] = null
-    } else {
-      next[userEmail] = option.id
-    }
-    onUpdateDecision({ picksByUser: next })
   }
 
   async function handleAddUrl() {
@@ -263,23 +247,23 @@ export function IdeaCardModal({
             </button>
           </div>
 
-          {/* Action row: Final + Votes + Pick */}
+          {/* Action row: Final + Votes */}
           <div className="flex flex-wrap items-center gap-2 pb-2.5 border-b border-cream/8">
             {!readOnly ? (
               <button
                 type="button"
                 onClick={onSelect}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   option.isSelected
                     ? 'bg-sandstone text-basalt'
                     : 'bg-cream/10 text-cream/60 hover:bg-cream/20'
                 }`}
               >
-                {option.isSelected ? '✓ Final' : 'Mark Final'}
+                {option.isSelected ? '⭐ Final' : '☆ Mark as Final'}
               </button>
             ) : option.isSelected ? (
-              <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-sandstone text-basalt">
-                Final
+              <span className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-sandstone text-basalt">
+                ⭐ Final
               </span>
             ) : null}
 
@@ -309,22 +293,6 @@ export function IdeaCardModal({
                 👎 {downCount > 0 && <span>{downCount}</span>}
               </button>
             </div>
-
-            <button
-              type="button"
-              onClick={handlePick}
-              disabled={readOnly}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs transition-colors ${
-                isMyPick
-                  ? 'bg-sandstone/20 text-sandstone ring-1 ring-sandstone/40'
-                  : 'bg-cream/10 text-cream/60 hover:bg-cream/20 disabled:opacity-50'
-              }`}
-            >
-              ⭐ {isMyPick ? 'My pick' : 'Pick this'}
-              {pickCount > 0 && (
-                <span className="ml-0.5 text-cream/40">{pickCount}</span>
-              )}
-            </button>
           </div>
 
           {/* Title input */}

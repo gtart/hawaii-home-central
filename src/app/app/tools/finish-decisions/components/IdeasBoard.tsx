@@ -95,7 +95,6 @@ function IdeaCardTile({
   const votes = option.votes ?? {}
   const upCount = Object.values(votes).filter((v) => v === 'up').length
   const downCount = Object.values(votes).filter((v) => v === 'down').length
-  const isMyPick = decision.picksByUser?.[userEmail] === option.id
   const hero = getHeroImage(option)
   const heroSrc = hero?.thumbnailUrl || hero?.url
   const linkPreview = !heroSrc && option.urls?.[0]?.linkImage
@@ -151,24 +150,19 @@ function IdeaCardTile({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onToggleFinal() }}
-          className={`absolute top-2 left-2 px-1.5 py-0.5 text-[10px] font-semibold rounded-full transition-all ${
+          className={`absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full transition-all ${
             option.isSelected
               ? 'bg-sandstone text-basalt'
               : 'bg-black/40 text-white/70 opacity-60 sm:opacity-0 group-hover:opacity-100'
           }`}
         >
-          {option.isSelected ? '✓ Final' : 'Final'}
+          {option.isSelected ? '⭐ Final' : '☆ Final'}
         </button>
       ) : option.isSelected ? (
-        <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-sandstone text-basalt text-[10px] font-semibold rounded-full">
-          Final
+        <span className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 bg-sandstone text-basalt text-[10px] font-semibold rounded-full">
+          ⭐ Final
         </span>
       ) : null}
-
-      {/* My pick indicator */}
-      {isMyPick && (
-        <span className="absolute top-2 right-2 text-sm" title="My pick">⭐</span>
-      )}
 
       {/* Comment icon */}
       {onComment && (
@@ -458,44 +452,6 @@ export function IdeasBoard({
               </div>
             )}
           </div>
-
-          {/* Final strip */}
-          {decision.options.length > 0 && (() => {
-            const finalOption = decision.options.find((o) => o.isSelected)
-            if (finalOption) {
-              const hero = getHeroImage(finalOption)
-              const thumbSrc = hero?.thumbnailUrl || hero?.url
-              return (
-                <button
-                  type="button"
-                  onClick={() => setActiveCardId(finalOption.id)}
-                  className="flex items-center gap-3 w-full px-3 py-2.5 mb-3 rounded-xl bg-sandstone/10 border border-sandstone/20 hover:bg-sandstone/15 transition-colors text-left"
-                >
-                  {thumbSrc && (
-                    <img
-                      src={displayUrl(thumbSrc)}
-                      alt=""
-                      className="w-10 h-10 rounded-lg object-cover shrink-0"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                    />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-cream font-medium truncate">
-                      {finalOption.name || <span className="text-cream/40 italic">Untitled</span>}
-                    </p>
-                  </div>
-                  <span className="px-2 py-0.5 bg-sandstone text-basalt text-[10px] font-semibold rounded-full shrink-0">
-                    ✓ Final
-                  </span>
-                </button>
-              )
-            }
-            return (
-              <div className="flex items-center gap-2 px-3 py-2 mb-3 rounded-xl bg-cream/5 border border-cream/8">
-                <span className="text-xs text-cream/30">No final selection yet</span>
-              </div>
-            )
-          })()}
 
           {/* Card grid (1+ ideas) */}
           {decision.options.length >= 1 && (() => {
