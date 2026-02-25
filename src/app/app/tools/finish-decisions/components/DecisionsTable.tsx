@@ -158,7 +158,7 @@ export function DecisionsTable({
                 Ideas
               </th>
               <th className="px-3 py-2 text-center text-xs font-medium text-cream/60 uppercase tracking-wide">
-                Feedback
+                Comments
               </th>
               <th className="px-3 py-2 text-left text-xs font-medium text-cream/60 uppercase tracking-wide">
                 Notes
@@ -237,19 +237,11 @@ export function DecisionsTable({
                   </td>
                   <td className="px-3 py-2.5 text-center">
                     {(() => {
-                      let up = 0, down = 0
-                      for (const opt of decision.options) {
-                        if (opt.votes) {
-                          for (const v of Object.values(opt.votes)) {
-                            if (v === 'up') up++; else if (v === 'down') down++
-                          }
-                        }
-                      }
                       const cmt = decision.comments?.length ?? 0
-                      return (up || down || cmt) ? (
-                        <span className="inline-flex items-center gap-1.5 text-[11px] text-cream/50">
-                          {(up > 0 || down > 0) && <span>👍{up} 👎{down}</span>}
-                          {cmt > 0 && <span>💬{cmt}</span>}
+                      return cmt > 0 ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-cream/50">
+                          <span>💬</span>
+                          <span>{cmt}</span>
                         </span>
                       ) : (
                         <span className="text-xs text-cream/20">&mdash;</span>

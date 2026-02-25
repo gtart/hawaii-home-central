@@ -38,21 +38,6 @@ function getSelectionEmoji(title: string, emojiMap: Record<string, string>): str
   return emojiMap[lower] || '📋'
 }
 
-/** Aggregate vote counts across all options in a decision */
-function getVoteCounts(decision: DecisionV3): { up: number; down: number } {
-  let up = 0
-  let down = 0
-  for (const opt of decision.options) {
-    if (opt.votes) {
-      for (const v of Object.values(opt.votes)) {
-        if (v === 'up') up++
-        else if (v === 'down') down++
-      }
-    }
-  }
-  return { up, down }
-}
-
 export function SelectionsBoardView({
   decisions,
   onDeleteDecision,
@@ -110,7 +95,6 @@ export function SelectionsBoardView({
         const thumbnail = getSelectionThumbnail(decision)
         const statusCfg = safeStatusConfig(decision.status)
         const selectedOption = decision.options.find((o) => o.isSelected)
-        const votes = getVoteCounts(decision)
         const commentCount = decision.comments?.length ?? 0
 
         return (
@@ -199,20 +183,13 @@ export function SelectionsBoardView({
                 </p>
               )}
 
-              {/* Votes + Comments row — always visible */}
-              <div className="flex items-center gap-2.5 mt-1.5">
-                <span className="inline-flex items-center gap-0.5 text-[11px] text-cream/50" title="Upvotes">
-                  <span>👍</span>
-                  <span>{votes.up}</span>
-                </span>
-                <span className="inline-flex items-center gap-0.5 text-[11px] text-cream/50" title="Downvotes">
-                  <span>👎</span>
-                  <span>{votes.down}</span>
-                </span>
+              {/* Ideas + Comments row */}
+              <div className="flex items-center gap-1.5 text-[11px] text-cream/55 mt-1.5">
+                <span>{decision.options.length} idea{decision.options.length !== 1 ? 's' : ''}</span>
                 {commentCount > 0 && (
                   <>
-                    <span className="text-cream/20">·</span>
-                    <span className="inline-flex items-center gap-0.5 text-[11px] text-cream/50" title="Comments">
+                    <span className="text-cream/30">·</span>
+                    <span className="inline-flex items-center gap-0.5" title="Comments">
                       <span>💬</span>
                       <span>{commentCount}</span>
                     </span>
@@ -229,8 +206,6 @@ export function SelectionsBoardView({
                 ) : (
                   <span className="text-cream/35">No due</span>
                 )}
-                <span className="text-cream/30">·</span>
-                <span>{decision.options.length} idea{decision.options.length !== 1 ? 's' : ''}</span>
               </div>
 
               <p className="text-[10px] text-cream/40 mt-0.5">
