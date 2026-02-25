@@ -96,8 +96,23 @@ export function RoomsBoardView({
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectRoom(room.id) } }}
               className="bg-basalt-50 rounded-xl overflow-hidden border border-cream/10 hover:border-cream/25 transition-all cursor-pointer group focus:outline-none focus:ring-2 focus:ring-sandstone/50"
             >
+              {/* Title row — above image */}
+              <div className="px-3 pt-3 pb-1.5 flex items-center gap-1.5">
+                <span className="text-sm">{emoji}</span>
+                <h3 className="text-sm font-medium text-cream truncate">{room.name}</h3>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onQuickAdd(room.id) }}
+                    className="ml-auto text-[11px] text-sandstone hover:text-sandstone-light transition-colors font-medium shrink-0"
+                  >
+                    + Selection
+                  </button>
+                )}
+              </div>
+
               {/* Cover image */}
-              <div className="relative h-40 bg-basalt overflow-hidden">
+              <div className="relative h-36 bg-basalt overflow-hidden">
                 {coverUrl ? (
                   <>
                     <img
@@ -131,13 +146,7 @@ export function RoomsBoardView({
               </div>
 
               {/* Card body */}
-              <div className="px-4 py-3">
-                {/* Room name */}
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <span className="text-sm">{emoji}</span>
-                  <h3 className="text-sm font-medium text-cream truncate">{room.name}</h3>
-                </div>
-
+              <div className="px-3 pb-3 pt-2">
                 {/* Status counts */}
                 <div className="flex flex-wrap gap-x-2 text-[11px] text-cream/40 mb-2">
                   <span>{stats.total} selection{stats.total !== 1 ? 's' : ''}</span>
@@ -168,25 +177,6 @@ export function RoomsBoardView({
                   </p>
                 )}
 
-                {/* Quick actions */}
-                {!readOnly && (
-                  <div className="flex items-center gap-2 mt-2.5 pt-2 border-t border-cream/5">
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); onQuickAdd(room.id) }}
-                      className="text-[11px] text-sandstone hover:text-sandstone-light transition-colors font-medium"
-                    >
-                      + Selection
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setCoverPickerRoom(room) }}
-                      className="text-[11px] text-cream/30 hover:text-cream/60 transition-colors ml-auto"
-                    >
-                      Set cover
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           )

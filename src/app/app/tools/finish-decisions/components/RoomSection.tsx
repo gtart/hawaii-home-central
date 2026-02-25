@@ -10,8 +10,11 @@ import {
   type StatusV3,
 } from '@/data/finish-decisions'
 import { DecisionsTable } from './DecisionsTable'
+import { SelectionsBoardView } from './SelectionsBoardView'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { TextConfirmDialog } from '@/components/ui/TextConfirmDialog'
+
+const SEL_VIEW_KEY = 'hhc_finish_selection_view_mode'
 
 export function RoomSection({
   room,
@@ -39,7 +42,17 @@ export function RoomSection({
   const [confirmDeleteDecisionId, setConfirmDeleteDecisionId] = useState<string | null>(null)
   const [undoDecision, setUndoDecision] = useState<{ decision: DecisionV3; timer: ReturnType<typeof setTimeout> } | null>(null)
   const [populateBanner, setPopulateBanner] = useState<string | null>(null)
+  const [selViewMode, setSelViewMode] = useState<'table' | 'tile'>(() => {
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem(SEL_VIEW_KEY) : null
+      return stored === 'tile' ? 'tile' : 'table'
+    } catch { return 'table' }
+  })
   const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    try { localStorage.setItem(SEL_VIEW_KEY, selViewMode) } catch { /* ignore */ }
+  }, [selViewMode])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -330,12 +343,58 @@ export function RoomSection({
       {/* Expanded Content */}
       {isExpanded && (
         <div className="border-t border-cream/10 px-4 py-4">
-          <DecisionsTable
-            decisions={room.decisions}
-            roomType={room.type}
-            onDeleteDecision={requestDeleteDecision}
-            readOnly={readOnly}
-          />
+          {/* Table / Tile toggle */}
+          <div className="flex justify-end mb-3">
+            <div className="flex bg-cream/5 rounded-lg p-0.5">
+              <button
+                type="button"
+                onClick={() => setSelViewMode('table')}
+                className={`px-2 py-1 rounded-md transition-colors ${
+                  selViewMode === 'table'
+                    ? 'bg-sandstone/20 text-sandstone'
+                    : 'text-cream/40 hover:text-cream/60'
+                }`}
+                title="Table view"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" strokeLinecap="round" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelViewMode('tile')}
+                className={`px-2 py-1 rounded-md transition-colors ${
+                  selViewMode === 'tile'
+                    ? 'bg-sandstone/20 text-sandstone'
+                    : 'text-cream/40 hover:text-cream/60'
+                }`}
+                title="Tile view"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="7" height="7" rx="1" />
+                  <rect x="14" y="3" width="7" height="7" rx="1" />
+                  <rect x="3" y="14" width="7" height="7" rx="1" />
+                  <rect x="14" y="14" width="7" height="7" rx="1" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {selViewMode === 'tile' ? (
+            <SelectionsBoardView
+              decisions={room.decisions}
+              roomType={room.type}
+              onDeleteDecision={requestDeleteDecision}
+              readOnly={readOnly}
+            />
+          ) : (
+            <DecisionsTable
+              decisions={room.decisions}
+              roomType={room.type}
+              onDeleteDecision={requestDeleteDecision}
+              readOnly={readOnly}
+            />
+          )}
         </div>
       )}
 

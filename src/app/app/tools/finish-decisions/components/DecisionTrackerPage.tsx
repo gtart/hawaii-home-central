@@ -50,8 +50,8 @@ export function DecisionTrackerPage({
   const [viewMode, setViewMode] = useState<'list' | 'boards'>(() => {
     try {
       const stored = typeof window !== 'undefined' ? localStorage.getItem(VIEW_MODE_KEY) : null
-      return stored === 'boards' ? 'boards' : 'list'
-    } catch { return 'list' }
+      return stored === 'list' ? 'list' : 'boards'
+    } catch { return 'boards' }
   })
 
   // Persist view mode
