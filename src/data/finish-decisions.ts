@@ -246,6 +246,13 @@ export interface DecisionV3 {
   updatedAt: string
 }
 
+// Cover image for room cards (boards view)
+export interface RoomCoverImage {
+  type: 'upload' | 'idea'
+  url: string
+  ideaId?: string // set when type === 'idea'
+}
+
 // Room (top-level, contains decisions)
 export interface RoomV3 {
   id: string
@@ -253,6 +260,7 @@ export interface RoomV3 {
   name: string
   decisions: DecisionV3[] // Nested
   appliedKitIds?: string[] // tracks which ideas packs have been applied
+  coverImage?: RoomCoverImage // optional cover for boards view
   createdAt: string
   updatedAt: string
 }

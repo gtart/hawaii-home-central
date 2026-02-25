@@ -1,8 +1,9 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import type { OptionV3, DecisionV3, SelectionComment } from '@/data/finish-decisions'
+import type { OptionV3, DecisionV3, SelectionComment, RoomV3 } from '@/data/finish-decisions'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
+import { relativeTime } from '@/lib/relativeTime'
 import { IdeaCardModal } from './IdeaCardModal'
 import { CompareModal } from './CompareModal'
 import { SaveFromWebDialog } from './SaveFromWebDialog'
@@ -36,6 +37,10 @@ interface Props {
   onOpenPack?: () => void
   hideFinalize?: boolean
   onAssignOption?: (optionId: string) => void
+  rooms?: RoomV3[]
+  currentRoomId?: string
+  currentDecisionId?: string
+  onImportToDecision?: (targetRoomId: string, targetDecisionId: string | null, newTitle: string | undefined, result: { name: string; notes: string; sourceUrl: string; selectedImages: import('@/data/finish-decisions').OptionImageV3[] }) => void
 }
 
 // ---- Upload helper (mirrors punchlist utils, points to finish-decisions endpoint) ----
@@ -76,20 +81,6 @@ export async function uploadIdeaFile(file: File): Promise<{ url: string; thumbna
 }
 
 // ---- Card tile ----
-
-function relativeTime(dateStr: string): string {
-  const now = Date.now()
-  const diff = now - new Date(dateStr).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  const days = Math.floor(hrs / 24)
-  if (days < 7) return `${days}d ago`
-  if (days < 30) return `${Math.floor(days / 7)}w ago`
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
 
 function IdeaCardTile({
   option,
@@ -401,6 +392,10 @@ export function IdeasBoard({
   onOpenPack,
   hideFinalize,
   onAssignOption,
+  rooms,
+  currentRoomId,
+  currentDecisionId,
+  onImportToDecision,
 }: Props) {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
@@ -729,6 +724,10 @@ export function IdeasBoard({
         <SaveFromWebDialog
           onImport={handleWebImport}
           onClose={() => setShowWebDialog(false)}
+          rooms={rooms}
+          currentRoomId={currentRoomId}
+          currentDecisionId={currentDecisionId}
+          onImportToDecision={onImportToDecision}
         />
       )}
 

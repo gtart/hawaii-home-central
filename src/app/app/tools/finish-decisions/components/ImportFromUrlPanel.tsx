@@ -24,11 +24,14 @@ export function ImportFromUrlPanel({
   onImport,
   onCancel,
   mode = 'create-idea',
+  onBlocked,
 }: {
   onImport: (result: ImportResult) => void
   onCancel: () => void
   /** 'create-idea' shows name/notes fields; 'pick-images' only shows image picker */
   mode?: 'create-idea' | 'pick-images'
+  /** Called when the fetch results in a blocked/empty response */
+  onBlocked?: () => void
 }) {
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
@@ -80,6 +83,7 @@ export function ImportFromUrlPanel({
       if (isEmpty) {
         // Still set preview so we show the fallback UI
         setPreview({ ...data, _blocked: true } as LinkPreviewResult)
+        onBlocked?.()
         if (mode === 'create-idea') {
           // Pre-fill name from URL hostname + path
           try {
@@ -98,6 +102,7 @@ export function ImportFromUrlPanel({
       }
     } catch {
       setError('Failed to fetch preview. The site may be blocking requests.')
+      onBlocked?.()
     } finally {
       setLoading(false)
     }

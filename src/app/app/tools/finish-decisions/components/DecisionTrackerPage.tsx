@@ -14,10 +14,13 @@ import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { findKitsForRoomType } from '@/lib/finish-decision-kits'
 import { applyKitToRoom, removeKitFromRoom } from '@/lib/finish-decision-kits'
 import { RoomSection } from './RoomSection'
+import { RoomsBoardView } from './RoomsBoardView'
 import { OnboardingView } from './OnboardingView'
 import { QuickAddDecisionModal } from './QuickAddDecisionModal'
 import { AddRoomModal } from './AddRoomModal'
 import { IdeasPackModal } from './IdeasPackModal'
+
+const VIEW_MODE_KEY = 'hhc_finish_view_mode'
 
 export function DecisionTrackerPage({
   rooms,
@@ -44,6 +47,17 @@ export function DecisionTrackerPage({
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [ideasModalRoomId, setIdeasModalRoomId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; kitId: string; roomId: string } | null>(null)
+  const [viewMode, setViewMode] = useState<'list' | 'boards'>(() => {
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem(VIEW_MODE_KEY) : null
+      return stored === 'boards' ? 'boards' : 'list'
+    } catch { return 'list' }
+  })
+
+  // Persist view mode
+  useEffect(() => {
+    try { localStorage.setItem(VIEW_MODE_KEY, viewMode) } catch { /* ignore */ }
+  }, [viewMode])
 
   // Refs for focus return (FS-UI-008)
   const quickAddTriggerRef = useRef<HTMLButtonElement | null>(null)
@@ -226,13 +240,48 @@ export function DecisionTrackerPage({
       {/* Tracker UI — only when rooms exist */}
       {hasRooms && (
         <>
-          {/* Search */}
-          <div className="mb-3">
-            <Input
-              placeholder="Search all rooms and selections..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          {/* Search + View toggle */}
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex-1">
+              <Input
+                placeholder="Search all rooms and selections..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="flex bg-cream/5 rounded-lg p-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-sandstone/20 text-sandstone'
+                    : 'text-cream/40 hover:text-cream/60'
+                }`}
+                title="List view"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" strokeLinecap="round" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('boards')}
+                className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  viewMode === 'boards'
+                    ? 'bg-sandstone/20 text-sandstone'
+                    : 'text-cream/40 hover:text-cream/60'
+                }`}
+                title="Boards view"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="7" height="7" rx="1" />
+                  <rect x="14" y="3" width="7" height="7" rx="1" />
+                  <rect x="3" y="14" width="7" height="7" rx="1" />
+                  <rect x="14" y="14" width="7" height="7" rx="1" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Summary strip */}
@@ -406,6 +455,18 @@ export function DecisionTrackerPage({
                 Clear filters
               </button>
             </div>
+          ) : viewMode === 'boards' ? (
+            <RoomsBoardView
+              rooms={filteredRooms}
+              onUpdateRoom={onUpdateRoom}
+              onSelectRoom={(roomId) => {
+                setRoomFilter(roomId)
+                setViewMode('list')
+                setExpandedRooms((prev) => new Set([...prev, roomId]))
+              }}
+              onQuickAdd={(roomId) => openQuickAdd(roomId)}
+              readOnly={readOnly}
+            />
           ) : (
             <div className="space-y-3">
               {filteredRooms.map((room) => (

@@ -22,7 +22,8 @@ import {
   type SelectionComment,
   type FinishDecisionsPayloadV3,
 } from '@/data/finish-decisions'
-import { isUncategorized } from '@/lib/decisionHelpers'
+import { isUncategorized, ensureUncategorizedDecision, findUncategorizedDecision } from '@/lib/decisionHelpers'
+import { relativeTime } from '@/lib/relativeTime'
 
 const COMMENTS_PER_PAGE = 10
 const MAX_COMMENT_LENGTH = 400
@@ -238,6 +239,81 @@ export function DecisionDetailContent() {
     setTimeout(() => setAssignToast(null), 3000)
   }
 
+  function handleImportToDecision(
+    targetRoomId: string,
+    targetDecisionId: string | null,
+    newTitle: string | undefined,
+    result: { name: string; notes: string; sourceUrl: string; selectedImages: import('@/data/finish-decisions').OptionImageV3[] }
+  ) {
+    const now = new Date().toISOString()
+    const firstImage = result.selectedImages[0]
+    const newOption: OptionV3 = {
+      id: crypto.randomUUID(),
+      kind: firstImage ? 'image' : 'text',
+      name: result.name,
+      notes: result.notes,
+      urls: result.sourceUrl ? [{ id: crypto.randomUUID(), url: result.sourceUrl, linkImage: firstImage?.url }] : [],
+      images: result.selectedImages.length > 0 ? result.selectedImages : undefined,
+      heroImageId: firstImage?.id || null,
+      imageUrl: firstImage?.url,
+      thumbnailUrl: firstImage?.url,
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    setState((prev) => {
+      const payload = prev as FinishDecisionsPayloadV3
+      let finalDecisionId = targetDecisionId
+
+      const newRooms = payload.rooms.map((r) => {
+        if (r.id !== targetRoomId) return r
+
+        let decisions = r.decisions
+        // If creating a new selection
+        if (!finalDecisionId && newTitle) {
+          const newDecision: DecisionV3 = {
+            id: crypto.randomUUID(),
+            title: newTitle,
+            status: 'deciding' as StatusV3,
+            notes: '',
+            options: [],
+            createdAt: now,
+            updatedAt: now,
+          }
+          finalDecisionId = newDecision.id
+          decisions = [...decisions, newDecision]
+        }
+
+        // If still no target, fall back to uncategorized
+        if (!finalDecisionId) {
+          const roomWithUncat = ensureUncategorizedDecision({ ...r, decisions })
+          decisions = roomWithUncat.decisions
+          const uncat = findUncategorizedDecision(roomWithUncat)
+          finalDecisionId = uncat?.id || null
+        }
+
+        return {
+          ...r,
+          decisions: decisions.map((d) =>
+            d.id === finalDecisionId
+              ? { ...d, options: [...d.options, newOption], updatedAt: now }
+              : d
+          ),
+          updatedAt: now,
+        }
+      })
+
+      return { ...payload, rooms: newRooms }
+    })
+
+    // Show toast
+    const targetRoom = v3State.rooms.find((r) => r.id === targetRoomId)
+    const roomName = targetRoom?.name || 'Room'
+    const selectionName = newTitle || targetRoom?.decisions.find((d) => d.id === targetDecisionId)?.title || 'Uncategorized'
+    setAssignToast(`Saved to ${roomName} → ${selectionName}`)
+    setTimeout(() => setAssignToast(null), 4000)
+  }
+
   const deleteDecision = () => {
     if (!foundRoom || !foundDecision) return
     if (confirm(`Delete "${foundDecision.title}"? This will also delete all selections.`)) {
@@ -414,7 +490,9 @@ export function DecisionDetailContent() {
   }
 
   const isSystemUncategorized = isUncategorized(foundDecision)
-  const commentCount = (foundDecision.comments || []).length
+  const allComments = foundDecision.comments || []
+  const commentCount = allComments.length
+  const lastUserComment = [...allComments].reverse().find((c) => c.authorEmail !== '')
   const statusCfg = STATUS_CONFIG_V3[foundDecision.status]
   const formattedDue = foundDecision.dueDate
     ? new Date(foundDecision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -532,10 +610,24 @@ export function DecisionDetailContent() {
           <span className="text-cream/20">·</span>
           <button
             type="button"
-            onClick={() => setCommentsOpen(true)}
-            className="text-cream/40 hover:text-cream/70 transition-colors"
+            onClick={openGlobalCommentComposer}
+            className="inline-flex items-center gap-1.5 bg-cream/10 hover:bg-cream/15 rounded-full px-2.5 py-1 transition-colors"
           >
-            {commentCount > 0 ? `${commentCount} comment${commentCount !== 1 ? 's' : ''}` : 'Add comment'}
+            <svg className="w-3.5 h-3.5 text-cream/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {commentCount > 0 ? (
+              <>
+                <span className="text-cream/60 font-medium">{commentCount}</span>
+                {lastUserComment && (
+                  <span className="hidden md:inline text-cream/35">
+                    · {lastUserComment.authorName.split(' ')[0]} {relativeTime(lastUserComment.createdAt)}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="text-cream/50">Comment</span>
+            )}
           </button>
           {finalPick && (
             <>
@@ -621,6 +713,10 @@ export function DecisionDetailContent() {
             comments={foundDecision.comments || []}
             hasKits={availableKits.length > 0}
             onOpenPack={() => setIdeasPackOpen(true)}
+            rooms={v3State.rooms}
+            currentRoomId={foundRoom.id}
+            currentDecisionId={foundDecision.id}
+            onImportToDecision={handleImportToDecision}
           />
         </div>
 
