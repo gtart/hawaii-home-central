@@ -505,10 +505,10 @@ export function DecisionDetailContent() {
       <div className="max-w-3xl mx-auto">
         {/* Back link */}
         <button
-          onClick={() => router.push('/app/tools/finish-decisions')}
+          onClick={() => router.push(`/app/tools/finish-decisions?room=${foundRoom.id}`)}
           className="text-sandstone hover:text-sandstone-light text-sm mb-4"
         >
-          ← Back to Selections
+          ← {foundRoom.name}
         </button>
 
         {/* Desktop header: title + status + due in one row */}

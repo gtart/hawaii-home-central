@@ -14,7 +14,7 @@ import { SelectionsBoardView } from './SelectionsBoardView'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { TextConfirmDialog } from '@/components/ui/TextConfirmDialog'
 
-const SEL_VIEW_KEY = 'hhc_finish_selection_view_mode'
+const SEL_VIEW_KEY = 'hhc_finish_selection_view_mode_v2'
 
 export function RoomSection({
   room,
@@ -45,8 +45,8 @@ export function RoomSection({
   const [selViewMode, setSelViewMode] = useState<'table' | 'tile'>(() => {
     try {
       const stored = typeof window !== 'undefined' ? localStorage.getItem(SEL_VIEW_KEY) : null
-      return stored === 'tile' ? 'tile' : 'table'
-    } catch { return 'table' }
+      return stored === 'table' ? 'table' : 'tile'
+    } catch { return 'tile' }
   })
   const menuRef = useRef<HTMLDivElement>(null)
 

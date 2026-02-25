@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { Input } from '@/components/ui/Input'
 import {
   STATUS_CONFIG_V3,
+  DEFAULT_DECISIONS_BY_ROOM_TYPE,
   type RoomV3,
   type DecisionV3,
   type StatusV3,
@@ -20,7 +21,7 @@ import { QuickAddDecisionModal } from './QuickAddDecisionModal'
 import { AddRoomModal } from './AddRoomModal'
 import { IdeasPackModal } from './IdeasPackModal'
 
-const VIEW_MODE_KEY = 'hhc_finish_view_mode'
+const VIEW_MODE_KEY = 'hhc_finish_view_mode_v2'
 
 export function DecisionTrackerPage({
   rooms,
@@ -40,13 +41,19 @@ export function DecisionTrackerPage({
   )
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilters, setStatusFilters] = useState<StatusV3[]>([])
-  const [roomFilter, setRoomFilter] = useState<string | null>(null)
+  const [roomFilter, setRoomFilter] = useState<string | null>(() => {
+    try {
+      const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+      return params?.get('room') || null
+    } catch { return null }
+  })
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [quickAddRoomId, setQuickAddRoomId] = useState<string | null>(null)
   const [addRoomOpen, setAddRoomOpen] = useState(false)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [ideasModalRoomId, setIdeasModalRoomId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; kitId: string; roomId: string } | null>(null)
+  const [simpleToast, setSimpleToast] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'list' | 'boards'>(() => {
     try {
       const stored = typeof window !== 'undefined' ? localStorage.getItem(VIEW_MODE_KEY) : null
@@ -58,6 +65,17 @@ export function DecisionTrackerPage({
   useEffect(() => {
     try { localStorage.setItem(VIEW_MODE_KEY, viewMode) } catch { /* ignore */ }
   }, [viewMode])
+
+  // When navigating back with ?room= param, switch to list view and expand that room
+  const initialRoomHandled = useRef(false)
+  useEffect(() => {
+    if (initialRoomHandled.current) return
+    if (roomFilter && rooms.some((r) => r.id === roomFilter)) {
+      initialRoomHandled.current = true
+      setViewMode('list')
+      setExpandedRooms((prev) => new Set([...prev, roomFilter]))
+    }
+  }, [roomFilter, rooms]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Refs for focus return (FS-UI-008)
   const quickAddTriggerRef = useRef<HTMLButtonElement | null>(null)
@@ -610,6 +628,12 @@ export function DecisionTrackerPage({
           onClose={() => setAddRoomOpen(false)}
           onAdd={(type, name, useDefaults) => {
             onBatchAddRooms([{ type, name, template: useDefaults ? 'standard' : 'none' }])
+            const defaultCount = (DEFAULT_DECISIONS_BY_ROOM_TYPE[type] || []).length
+            const msg = useDefaults && defaultCount > 0
+              ? `"${name}" added with ${defaultCount} suggested selections — edit anytime`
+              : `"${name}" added`
+            setSimpleToast(msg)
+            setTimeout(() => setSimpleToast(null), 4000)
           }}
           existingRooms={rooms}
         />
@@ -644,6 +668,16 @@ export function DecisionTrackerPage({
           >
             ×
           </button>
+        </div>
+      )}
+
+      {/* Simple toast (no undo) */}
+      {simpleToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg px-4 py-2.5 flex items-center gap-2 max-w-xs">
+          <svg className="w-4 h-4 text-green-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="text-sm text-cream/70">{simpleToast}</span>
         </div>
       )}
     </>

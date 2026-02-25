@@ -155,6 +155,7 @@ function IdeaCardTile({
           )}
           {/* Meta: comment count + time */}
           <p className="text-[10px] text-cream/25 mt-auto pt-1">
+            {option.origin && <span className="text-cream/30">{option.origin.kitLabel} · </span>}
             {commentCount && commentCount > 0
               ? `💬 ${commentCount} · ${relativeTime(lastCommentAt || option.updatedAt)}`
               : `Updated ${relativeTime(option.updatedAt)}`}
@@ -169,6 +170,7 @@ function IdeaCardTile({
             {option.name || <span className="text-white/50 italic">Untitled</span>}
           </p>
           <p className="text-[10px] text-white/40 mt-0.5">
+            {option.origin && <span className="text-white/35">{option.origin.kitLabel} · </span>}
             {commentCount && commentCount > 0
               ? `💬 ${commentCount} · ${relativeTime(lastCommentAt || option.updatedAt)}`
               : relativeTime(option.updatedAt)}

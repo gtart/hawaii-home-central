@@ -88,7 +88,7 @@ export function AddRoomModal({
             className="accent-sandstone"
           />
           <label htmlFor="use-defaults" className="text-sm text-cream/80">
-            Start with default decisions
+            Start with suggested selections
           </label>
         </div>
 

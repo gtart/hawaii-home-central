@@ -249,6 +249,17 @@ export function IdeaCardModal({
             </button>
           </div>
 
+          {/* Origin badge — shows which idea pack this came from */}
+          {option.origin && (
+            <div className="flex items-center gap-1.5 pb-2">
+              <svg className="w-3.5 h-3.5 text-cream/30 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" strokeLinecap="round" strokeLinejoin="round" />
+                <line x1="7" y1="7" x2="7.01" y2="7" strokeLinecap="round" />
+              </svg>
+              <span className="text-[11px] text-cream/40">Part of {option.origin.kitLabel}</span>
+            </div>
+          )}
+
           {/* Action row: Assign / Final + Votes */}
           <div className="flex flex-wrap items-center gap-2 pb-2.5 border-b border-cream/8">
             {onAssign && !readOnly && (
