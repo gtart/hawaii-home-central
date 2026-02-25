@@ -82,7 +82,7 @@ export function DecisionsTable({
   if (decisions.length === 0) {
     return (
       <div className="text-center py-8 text-cream/50 text-sm">
-        No selections yet. Use the + Selection button above.
+        No selections yet. Use <strong className="text-cream/60">+ Selection</strong> in this room to get started.
       </div>
     )
   }

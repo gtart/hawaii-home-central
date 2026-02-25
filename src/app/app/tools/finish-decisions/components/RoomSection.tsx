@@ -3,9 +3,11 @@
 import { useState, useRef, useEffect } from 'react'
 import {
   ROOM_EMOJI_MAP,
+  DEFAULT_DECISIONS_BY_ROOM_TYPE,
   type RoomV3,
   type RoomTypeV3,
   type DecisionV3,
+  type StatusV3,
 } from '@/data/finish-decisions'
 import { DecisionsTable } from './DecisionsTable'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -33,9 +35,10 @@ export function RoomSection({
   hasAvailableKits?: boolean
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [confirmDeleteRoom, setConfirmDeleteRoom] = useState(false)
+  const [deleteStep, setDeleteStep] = useState<'none' | 'confirm' | 'type'>('none')
   const [confirmDeleteDecisionId, setConfirmDeleteDecisionId] = useState<string | null>(null)
   const [undoDecision, setUndoDecision] = useState<{ decision: DecisionV3; timer: ReturnType<typeof setTimeout> } | null>(null)
+  const [populateBanner, setPopulateBanner] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -109,6 +112,37 @@ export function RoomSection({
     setUndoDecision(null)
   }
 
+  function handleAutoPopulate() {
+    const standardTitles = DEFAULT_DECISIONS_BY_ROOM_TYPE[room.type as RoomTypeV3] || []
+    const existingTitles = new Set(room.decisions.map((d) => d.title.toLowerCase().trim()))
+    const missing = standardTitles.filter((t) => !existingTitles.has(t.toLowerCase().trim()))
+
+    if (missing.length === 0) {
+      setPopulateBanner('All standard selections are already included.')
+      setTimeout(() => setPopulateBanner(null), 4000)
+      return
+    }
+
+    const now = new Date().toISOString()
+    const newDecisions: DecisionV3[] = missing.map((title) => ({
+      id: crypto.randomUUID(),
+      title,
+      status: 'deciding' as StatusV3,
+      notes: '',
+      options: [],
+      createdAt: now,
+      updatedAt: now,
+    }))
+
+    onUpdateRoom({
+      decisions: [...room.decisions, ...newDecisions],
+      updatedAt: now,
+    })
+
+    setPopulateBanner(`Added ${missing.length} selection${missing.length !== 1 ? 's' : ''}.`)
+    setTimeout(() => setPopulateBanner(null), 4000)
+  }
+
   const roomEmoji = ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️'
 
   return (
@@ -150,15 +184,23 @@ export function RoomSection({
             <span className="text-cream/15 select-none">·</span>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); onAddIdeasPack() }}
+              onClick={(e) => { e.stopPropagation(); handleAutoPopulate() }}
               className="px-2 py-1 text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
             >
-              Import ideas
+              Auto-Populate Selections
             </button>
             <span className="text-cream/15 select-none">·</span>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); setConfirmDeleteRoom(true) }}
+              onClick={(e) => { e.stopPropagation(); onAddIdeasPack() }}
+              className="px-2 py-1 text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+            >
+              Import Idea Pack
+            </button>
+            <span className="text-cream/15 select-none">·</span>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setDeleteStep('confirm') }}
               className="px-2 py-1 text-[11px] text-red-400/40 hover:text-red-400 transition-colors"
             >
               Delete
@@ -202,18 +244,29 @@ export function RoomSection({
                   onClick={(e) => {
                     e.stopPropagation()
                     setMenuOpen(false)
-                    onAddIdeasPack()
+                    handleAutoPopulate()
                   }}
                   className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
                 >
-                  Import ideas
+                  Auto-Populate Selections
                 </button>
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation()
                     setMenuOpen(false)
-                    setConfirmDeleteRoom(true)
+                    onAddIdeasPack()
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
+                >
+                  Import Idea Pack
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setMenuOpen(false)
+                    setDeleteStep('confirm')
                   }}
                   className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
                 >
@@ -239,6 +292,20 @@ export function RoomSection({
         </div>
       )}
 
+      {/* Auto-populate banner */}
+      {populateBanner && (
+        <div className="flex items-center justify-between px-4 py-2 bg-sandstone/5 border-t border-cream/10 text-xs">
+          <span className="text-cream/60">{populateBanner}</span>
+          <button
+            type="button"
+            onClick={() => setPopulateBanner(null)}
+            className="text-cream/30 hover:text-cream/50 transition-colors"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Ideas Pack nudge — show when room has decisions but few options */}
       {isExpanded && !readOnly && hasAvailableKits && room.decisions.length > 0 && totalOptions <= 1 && (
         <div className="mx-4 mt-1 mb-2 px-3 py-2 bg-sandstone/5 border border-sandstone/15 rounded-lg flex items-center justify-between">
@@ -250,7 +317,7 @@ export function RoomSection({
             onClick={onAddIdeasPack}
             className="text-xs text-sandstone font-medium hover:text-sandstone-light transition-colors"
           >
-            Browse packs
+            Import Idea Pack
           </button>
         </div>
       )}
@@ -267,14 +334,24 @@ export function RoomSection({
         </div>
       )}
 
-      {/* Confirm delete room dialog — type room name to confirm */}
-      {confirmDeleteRoom && (
+      {/* Delete room — step 1: confirm intent */}
+      {deleteStep === 'confirm' && (
+        <ConfirmDialog
+          title="Delete room?"
+          message={`"${room.name}" and all its selections and ideas will be permanently deleted. This cannot be undone.`}
+          onConfirm={() => setDeleteStep('type')}
+          onCancel={() => setDeleteStep('none')}
+        />
+      )}
+
+      {/* Delete room — step 2: type room name to confirm */}
+      {deleteStep === 'type' && (
         <TextConfirmDialog
-          title="Delete room"
-          message={`This will permanently delete "${room.name}" and all its selections and ideas. Type the room name to confirm.`}
+          title="Confirm delete"
+          message={`Type "${room.name}" to permanently delete this room.`}
           confirmText={room.name}
-          onConfirm={() => { setConfirmDeleteRoom(false); onDeleteRoom() }}
-          onCancel={() => setConfirmDeleteRoom(false)}
+          onConfirm={() => { setDeleteStep('none'); onDeleteRoom() }}
+          onCancel={() => setDeleteStep('none')}
         />
       )}
 

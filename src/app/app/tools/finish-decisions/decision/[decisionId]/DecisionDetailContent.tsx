@@ -374,6 +374,8 @@ export function DecisionDetailContent() {
   const formattedDue = foundDecision.dueDate
     ? new Date(foundDecision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : null
+  const finalPick = foundDecision.options.find((o) => o.isSelected)
+  const ideasCount = foundDecision.options.length
 
   return (
     <div className="pt-20 md:pt-24 pb-36 md:pb-24 px-6">
@@ -467,6 +469,10 @@ export function DecisionDetailContent() {
             </>
           )}
           <span className="text-cream/20">·</span>
+          <span className="text-cream/40">
+            {ideasCount} idea{ideasCount !== 1 ? 's' : ''}
+          </span>
+          <span className="text-cream/20">·</span>
           <button
             type="button"
             onClick={() => setCommentsOpen(true)}
@@ -474,54 +480,47 @@ export function DecisionDetailContent() {
           >
             {commentCount > 0 ? `${commentCount} comment${commentCount !== 1 ? 's' : ''}` : 'Add comment'}
           </button>
+          {finalPick && (
+            <>
+              <span className="text-cream/20">·</span>
+              <span className="text-sandstone/60 font-medium">Final: {finalPick.name || 'Untitled'}</span>
+            </>
+          )}
         </div>
 
-        {/* Notes — compact */}
-        <div className="mb-6">
-          {/* Desktop */}
-          <div className="hidden md:block">
-            <textarea
-              value={foundDecision.notes}
-              onChange={(e) => updateDecision({ notes: e.target.value })}
-              readOnly={readOnly}
-              className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[60px]"
-              placeholder="Notes..."
-            />
-          </div>
-          {/* Mobile: collapsed preview */}
-          <div className="md:hidden">
-            {notesExpanded ? (
-              <>
-                <textarea
-                  autoFocus
-                  value={foundDecision.notes}
-                  onChange={(e) => updateDecision({ notes: e.target.value })}
-                  readOnly={readOnly}
-                  className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[80px]"
-                  placeholder="Notes..."
-                />
-                <button
-                  type="button"
-                  onClick={() => setNotesExpanded(false)}
-                  className="text-xs text-cream/40 mt-1"
-                >
-                  Collapse
-                </button>
-              </>
-            ) : (
+        {/* Notes — collapsed by default, tap to expand */}
+        <div className="mb-4">
+          {notesExpanded ? (
+            <>
+              <textarea
+                autoFocus
+                value={foundDecision.notes}
+                onChange={(e) => updateDecision({ notes: e.target.value })}
+                readOnly={readOnly}
+                className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[60px] md:min-h-[60px]"
+                placeholder="Notes..."
+              />
               <button
                 type="button"
-                onClick={() => setNotesExpanded(true)}
-                className="w-full text-left"
+                onClick={() => setNotesExpanded(false)}
+                className="text-xs text-cream/40 mt-1"
               >
-                {foundDecision.notes ? (
-                  <p className="text-sm text-cream/50 line-clamp-2">{foundDecision.notes}</p>
-                ) : (
-                  <p className="text-sm text-cream/30 italic">Add notes...</p>
-                )}
+                Collapse
               </button>
-            )}
-          </div>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setNotesExpanded(true)}
+              className="w-full text-left"
+            >
+              {foundDecision.notes ? (
+                <p className="text-sm text-cream/50 line-clamp-2">{foundDecision.notes}</p>
+              ) : (
+                <p className="text-sm text-cream/30 italic">Add notes...</p>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Ideas board */}
@@ -730,7 +729,7 @@ function CommentsSection({
                 {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
-            <p className="text-sm text-cream/50 whitespace-pre-wrap">
+            <div className="text-sm text-cream/50 whitespace-pre-wrap">
               {comment.refOptionId && comment.refOptionLabel && (
                 <button
                   type="button"
@@ -741,7 +740,7 @@ function CommentsSection({
                 </button>
               )}
               {comment.text}
-            </p>
+            </div>
           </div>
         ))}
       </div>

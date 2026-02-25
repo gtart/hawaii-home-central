@@ -5,6 +5,7 @@ import type { OptionV3, DecisionV3, SelectionComment } from '@/data/finish-decis
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { IdeaCardModal } from './IdeaCardModal'
 import { CompareModal } from './CompareModal'
+import { SaveFromWebDialog } from './SaveFromWebDialog'
 
 interface CommentPayload {
   text: string
@@ -74,6 +75,20 @@ export async function uploadIdeaFile(file: File): Promise<{ url: string; thumbna
 
 // ---- Card tile ----
 
+function relativeTime(dateStr: string): string {
+  const now = Date.now()
+  const diff = now - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days}d ago`
+  if (days < 30) return `${Math.floor(days / 7)}w ago`
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 function IdeaCardTile({
   option,
   decision,
@@ -85,6 +100,7 @@ function IdeaCardTile({
   onVote,
   myVote,
   commentCount,
+  lastCommentAt,
 }: {
   option: OptionV3
   decision: DecisionV3
@@ -96,6 +112,7 @@ function IdeaCardTile({
   onVote?: (vote: 'up' | 'down') => void
   myVote?: 'up' | 'down' | null
   commentCount?: number
+  lastCommentAt?: string | null
 }) {
   const votes = option.votes ?? {}
   const upCount = Object.values(votes).filter((v) => v === 'up').length
@@ -105,10 +122,13 @@ function IdeaCardTile({
   const linkPreview = !heroSrc && option.urls?.[0]?.linkImage
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={`Open idea: ${option.name || 'Untitled'}`}
       onClick={onClick}
-      className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-basalt border border-cream/10 hover:border-cream/30 transition-colors text-left group"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+      className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-basalt border border-cream/10 hover:border-cream/30 transition-colors text-left group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/50"
     >
       {heroSrc ? (
         <>
@@ -138,6 +158,12 @@ function IdeaCardTile({
           {option.notes && (
             <p className="text-xs text-cream/40 line-clamp-2 mt-1">{option.notes}</p>
           )}
+          {/* Meta: comment count + time */}
+          <p className="text-[10px] text-cream/25 mt-auto pt-1">
+            {commentCount && commentCount > 0
+              ? `💬 ${commentCount} · ${relativeTime(lastCommentAt || option.updatedAt)}`
+              : `Updated ${relativeTime(option.updatedAt)}`}
+          </p>
         </div>
       )}
 
@@ -146,6 +172,11 @@ function IdeaCardTile({
         <div className="absolute bottom-0 left-0 right-0 px-2.5 py-2">
           <p className="text-xs text-white font-medium line-clamp-1">
             {option.name || <span className="text-white/50 italic">Untitled</span>}
+          </p>
+          <p className="text-[10px] text-white/40 mt-0.5">
+            {commentCount && commentCount > 0
+              ? `💬 ${commentCount} · ${relativeTime(lastCommentAt || option.updatedAt)}`
+              : relativeTime(option.updatedAt)}
           </p>
         </div>
       )}
@@ -218,7 +249,7 @@ function IdeaCardTile({
           {downCount > 0 && <span>👎 {downCount}</span>}
         </div>
       ) : null}
-    </button>
+    </div>
   )
 }
 
@@ -361,6 +392,7 @@ export function IdeasBoard({
   const [selectedForCompare, setSelectedForCompare] = useState<Set<string>>(new Set())
   const [showCompareModal, setShowCompareModal] = useState(false)
   const [showNoteInput, setShowNoteInput] = useState(false)
+  const [showWebDialog, setShowWebDialog] = useState(false)
 
   const VISIBLE_COUNT = 3
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -461,6 +493,27 @@ export function IdeasBoard({
     onUpdateOption(optionId, { votes: currentVotes })
   }
 
+  function handleWebImport(result: { name: string; notes: string; sourceUrl: string; selectedImages: import('@/data/finish-decisions').OptionImageV3[] }) {
+    const id = crypto.randomUUID()
+    const now = new Date().toISOString()
+    const firstImage = result.selectedImages[0]
+    onAddOption({
+      id,
+      kind: firstImage ? 'image' : 'text',
+      name: result.name,
+      notes: result.notes,
+      urls: result.sourceUrl ? [{ id: crypto.randomUUID(), url: result.sourceUrl, linkImage: firstImage?.url }] : [],
+      images: result.selectedImages,
+      heroImageId: firstImage?.id,
+      imageUrl: firstImage?.url,
+      thumbnailUrl: firstImage?.url,
+      createdAt: now,
+      updatedAt: now,
+    })
+    setShowWebDialog(false)
+    setActiveCardId(id)
+  }
+
   return (
     <div>
       {/* Hidden file input */}
@@ -500,7 +553,7 @@ export function IdeasBoard({
                 <AddIdeaMenu
                   onPhoto={() => fileInputRef.current?.click()}
                   onNote={handleAddTextCard}
-                  onWeb={() => window.open('/app/save-from-web', '_blank')}
+                  onWeb={() => setShowWebDialog(true)}
                   onPack={hasKits ? onOpenPack : undefined}
                   uploading={uploading}
                 />
@@ -545,6 +598,11 @@ export function IdeasBoard({
                         onVote={compareMode ? undefined : (vote) => handleVote(opt.id, vote)}
                         myVote={(opt.votes || {})[userEmail] || null}
                         commentCount={comments.filter((c) => c.refOptionId === opt.id).length}
+                        lastCommentAt={(() => {
+                          const optComments = comments.filter((c) => c.refOptionId === opt.id)
+                          if (optComments.length === 0) return null
+                          return optComments.reduce((latest, c) => c.createdAt > latest ? c.createdAt : latest, '')
+                        })()}
                       />
                       {/* Compare checkbox overlay */}
                       {compareMode && (
@@ -647,6 +705,14 @@ export function IdeasBoard({
         />
       )}
 
+      {/* Save from web dialog */}
+      {showWebDialog && (
+        <SaveFromWebDialog
+          onImport={handleWebImport}
+          onClose={() => setShowWebDialog(false)}
+        />
+      )}
+
       {/* Compare modal */}
       {showCompareModal && (
         <CompareModal
@@ -669,7 +735,7 @@ export function IdeasBoard({
           <AddIdeaMenu
             onPhoto={() => fileInputRef.current?.click()}
             onNote={handleAddTextCard}
-            onWeb={() => window.open('/app/save-from-web', '_blank')}
+            onWeb={() => setShowWebDialog(true)}
             onPack={hasKits ? onOpenPack : undefined}
             uploading={uploading}
           />
