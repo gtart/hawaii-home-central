@@ -18,6 +18,7 @@ import { SelectionsBoardView } from '../../components/SelectionsBoardView'
 import { DecisionsTable } from '../../components/DecisionsTable'
 import { QuickAddDecisionModal } from '../../components/QuickAddDecisionModal'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
+import { RoomCommentsFeed } from '../../components/RoomCommentsFeed'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { TextConfirmDialog } from '@/components/ui/TextConfirmDialog'
 
@@ -50,6 +51,7 @@ export function RoomDetailContent({
   const [undoDecision, setUndoDecision] = useState<{ decision: DecisionV3; timer: ReturnType<typeof setTimeout> } | null>(null)
   const [populateBanner, setPopulateBanner] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; kitId: string } | null>(null)
+  const [commentsFeedOpen, setCommentsFeedOpen] = useState(false)
   const [selViewMode, setSelViewMode] = useState<'table' | 'tile'>(() => {
     try {
       const stored = typeof window !== 'undefined' ? localStorage.getItem(SEL_VIEW_KEY) : null
@@ -220,6 +222,11 @@ export function RoomDetailContent({
     done: regularDecisions.filter((d) => d.status === 'done').length,
   }
 
+  const totalCommentCount = room.decisions.reduce(
+    (sum, d) => sum + (d.comments?.length ?? 0),
+    0
+  )
+
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-4xl mx-auto">
@@ -284,6 +291,22 @@ export function RoomDetailContent({
 
             <div className="flex-1" />
 
+            {/* Comments feed */}
+            <button
+              type="button"
+              onClick={() => setCommentsFeedOpen(true)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                totalCommentCount > 0
+                  ? 'text-sandstone bg-sandstone/10 hover:bg-sandstone/20 font-medium'
+                  : 'text-cream/40 hover:text-cream/60 bg-cream/5 hover:bg-cream/10'
+              }`}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+              </svg>
+              {totalCommentCount > 0 ? totalCommentCount : 'Comments'}
+            </button>
+
             {/* View mode selector */}
             <select
               value={selViewMode}
@@ -304,9 +327,25 @@ export function RoomDetailContent({
           </div>
         )}
 
-        {/* Read-only action bar: just the view selector */}
+        {/* Read-only action bar */}
         {readOnly && (
-          <div className="flex justify-end mb-5">
+          <div className="flex items-center justify-end gap-2 mb-5">
+            {/* Comments feed */}
+            <button
+              type="button"
+              onClick={() => setCommentsFeedOpen(true)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                totalCommentCount > 0
+                  ? 'text-sandstone bg-sandstone/10 hover:bg-sandstone/20 font-medium'
+                  : 'text-cream/40 hover:text-cream/60 bg-cream/5 hover:bg-cream/10'
+              }`}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+              </svg>
+              {totalCommentCount > 0 ? totalCommentCount : 'Comments'}
+            </button>
+
             <select
               value={selViewMode}
               onChange={(e) => setSelViewMode(e.target.value as 'table' | 'tile')}
@@ -477,6 +516,19 @@ export function RoomDetailContent({
             ×
           </button>
         </div>
+      )}
+
+      {/* Room comment feed panel */}
+      {commentsFeedOpen && room && (
+        <RoomCommentsFeed
+          decisions={room.decisions}
+          roomType={room.type}
+          onClose={() => setCommentsFeedOpen(false)}
+          onNavigateToDecision={(decisionId) => {
+            setCommentsFeedOpen(false)
+            router.push(`/app/tools/finish-decisions/decision/${decisionId}`)
+          }}
+        />
       )}
     </div>
   )

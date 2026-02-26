@@ -91,9 +91,9 @@ function IdeaCardTile({
   onClick,
   onToggleFinal,
   onComment,
-  onVote,
+  onReaction,
   onMove,
-  myVote,
+  myReaction,
   commentCount,
   lastCommentAt,
 }: {
@@ -104,15 +104,16 @@ function IdeaCardTile({
   onClick: () => void
   onToggleFinal?: () => void
   onComment?: () => void
-  onVote?: (vote: 'up' | 'down') => void
+  onReaction?: (reaction: 'love' | 'like' | 'dislike') => void
   onMove?: () => void
-  myVote?: 'up' | 'down' | null
+  myReaction?: 'love' | 'like' | 'dislike' | null
   commentCount?: number
   lastCommentAt?: string | null
 }) {
   const votes = option.votes ?? {}
-  const upCount = Object.values(votes).filter((v) => v === 'up').length
-  const downCount = Object.values(votes).filter((v) => v === 'down').length
+  const loveCount = Object.values(votes).filter((v) => v === 'love').length
+  const likeCount = Object.values(votes).filter((v) => v === 'like').length
+  const dislikeCount = Object.values(votes).filter((v) => v === 'dislike').length
   const hero = getHeroImage(option)
   const heroSrc = hero?.thumbnailUrl || hero?.url
   const linkPreview = !heroSrc && option.urls?.[0]?.linkImage
@@ -164,12 +165,17 @@ function IdeaCardTile({
             <p className="text-xs text-cream/40 line-clamp-2 mt-1">{option.notes}</p>
           )}
           {/* Meta: comment count + time */}
-          <p className="text-[10px] text-cream/25 mt-auto pt-1">
-            {option.origin && <span className="text-cream/30">{option.origin.kitLabel} · </span>}
-            {commentCount && commentCount > 0
-              ? `💬 ${commentCount} · ${relativeTime(lastCommentAt || option.updatedAt)}`
-              : `Updated ${relativeTime(option.updatedAt)}`}
-          </p>
+          <div className="mt-auto pt-1 flex items-center gap-1.5">
+            {commentCount && commentCount > 0 ? (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-sandstone/15 text-sandstone text-[11px] font-medium">
+                💬 {commentCount}
+              </span>
+            ) : null}
+            <span className="text-[10px] text-cream/25">
+              {option.origin && <span className="text-cream/30">{option.origin.kitLabel} · </span>}
+              {relativeTime(lastCommentAt || option.updatedAt)}
+            </span>
+          </div>
         </div>
       )}
 
@@ -179,12 +185,17 @@ function IdeaCardTile({
           <p className="text-xs text-white font-medium line-clamp-1">
             {option.name || <span className="text-white/50 italic">Untitled</span>}
           </p>
-          <p className="text-[10px] text-white/40 mt-0.5">
-            {option.origin && <span className="text-white/35">{option.origin.kitLabel} · </span>}
-            {commentCount && commentCount > 0
-              ? `💬 ${commentCount} · ${relativeTime(lastCommentAt || option.updatedAt)}`
-              : relativeTime(option.updatedAt)}
-          </p>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            {commentCount && commentCount > 0 ? (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-sandstone/30 text-white text-[10px] font-medium">
+                💬 {commentCount}
+              </span>
+            ) : null}
+            <span className="text-[10px] text-white/40">
+              {option.origin && <span className="text-white/35">{option.origin.kitLabel} · </span>}
+              {relativeTime(lastCommentAt || option.updatedAt)}
+            </span>
+          </div>
         </div>
       )}
 
@@ -239,32 +250,33 @@ function IdeaCardTile({
         </button>
       )}
 
-      {/* Vote buttons (interactive) or passive counts */}
-      {onVote && !readOnly ? (
+      {/* Reaction buttons (interactive) or passive counts */}
+      {onReaction && !readOnly ? (
         <div className="absolute bottom-2 right-2 flex items-center gap-1 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-all">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onVote('up') }}
-            className={`text-[11px] px-1.5 py-0.5 rounded-full transition-colors ${
-              myVote === 'up' ? 'bg-green-500/30 text-green-300' : 'bg-black/40 text-white/60 hover:text-white'
-            }`}
-          >
-            👍{upCount > 0 ? ` ${upCount}` : ''}
-          </button>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onVote('down') }}
-            className={`text-[11px] px-1.5 py-0.5 rounded-full transition-colors ${
-              myVote === 'down' ? 'bg-red-500/30 text-red-300' : 'bg-black/40 text-white/60 hover:text-white'
-            }`}
-          >
-            👎{downCount > 0 ? ` ${downCount}` : ''}
-          </button>
+          {([['love', '❤️'], ['like', '👍'], ['dislike', '👎']] as const).map(([type, emoji]) => {
+            const count = type === 'love' ? loveCount : type === 'like' ? likeCount : dislikeCount
+            const isActive = myReaction === type
+            return (
+              <button
+                key={type}
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onReaction(type) }}
+                className={`text-[11px] px-1.5 py-0.5 rounded-full transition-colors ${
+                  isActive
+                    ? type === 'love' ? 'bg-pink-500/30 text-pink-300' : type === 'like' ? 'bg-green-500/30 text-green-300' : 'bg-red-500/30 text-red-300'
+                    : 'bg-black/40 text-white/60 hover:text-white'
+                }`}
+              >
+                {emoji}{count > 0 ? ` ${count}` : ''}
+              </button>
+            )
+          })}
         </div>
-      ) : (upCount > 0 || downCount > 0) ? (
+      ) : (loveCount > 0 || likeCount > 0 || dislikeCount > 0) ? (
         <div className="absolute bottom-2 right-2 flex items-center gap-1.5 text-[10px] text-white/70">
-          {upCount > 0 && <span>👍 {upCount}</span>}
-          {downCount > 0 && <span>👎 {downCount}</span>}
+          {loveCount > 0 && <span>❤️ {loveCount}</span>}
+          {likeCount > 0 && <span>👍 {likeCount}</span>}
+          {dislikeCount > 0 && <span>👎 {dislikeCount}</span>}
         </div>
       ) : null}
     </div>
@@ -503,14 +515,14 @@ export function IdeasBoard({
     setShowNoteInput(false)
   }
 
-  function handleVote(optionId: string, vote: 'up' | 'down') {
+  function handleReaction(optionId: string, reaction: 'love' | 'like' | 'dislike') {
     const option = decision.options.find((o) => o.id === optionId)
     if (!option) return
     const currentVotes = { ...(option.votes || {}) }
-    if (currentVotes[userEmail] === vote) {
+    if (currentVotes[userEmail] === reaction) {
       delete currentVotes[userEmail]
     } else {
-      currentVotes[userEmail] = vote
+      currentVotes[userEmail] = reaction
     }
     onUpdateOption(optionId, { votes: currentVotes })
   }
@@ -618,8 +630,8 @@ export function IdeasBoard({
                         onToggleFinal={compareMode || hideFinalize ? undefined : () => onSelectOption(opt.id)}
                         onMove={!compareMode && onMoveOption ? () => onMoveOption(opt.id) : undefined}
                         onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
-                        onVote={compareMode ? undefined : (vote) => handleVote(opt.id, vote)}
-                        myVote={(opt.votes || {})[userEmail] || null}
+                        onReaction={compareMode ? undefined : (reaction) => handleReaction(opt.id, reaction)}
+                        myReaction={(opt.votes || {})[userEmail] as 'love' | 'like' | 'dislike' | undefined || null}
                         commentCount={comments.filter((c) => c.refOptionId === opt.id).length}
                         lastCommentAt={(() => {
                           const optComments = comments.filter((c) => c.refOptionId === opt.id)

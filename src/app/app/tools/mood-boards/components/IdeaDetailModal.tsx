@@ -376,9 +376,9 @@ export function IdeaDetailModal({
             )}
           </div>
 
-          {/* Inline comments for this idea */}
+          {/* Comments section — unified thread */}
           <div className="pt-2 border-t border-cream/10">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs font-medium text-cream/50 uppercase tracking-wide">
                 Comments {ideaComments.length > 0 && (
                   <span className="text-cream/30">({ideaComments.length})</span>
@@ -396,67 +396,75 @@ export function IdeaDetailModal({
               </button>
             </div>
 
-            {/* Comment input */}
-            {!readOnly && (
-              <div className="mb-3">
-                <textarea
-                  ref={commentInputRef}
-                  value={commentText}
-                  onChange={(e) =>
-                    setCommentText(e.target.value.slice(0, MAX_COMMENT_LENGTH))
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      handlePostComment()
-                    }
-                  }}
-                  placeholder="Add a comment about this idea..."
-                  rows={2}
-                  className="w-full px-3 py-2 bg-basalt border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone resize-none"
-                />
-                <div className="flex items-center justify-between mt-1">
-                  <span className="text-[10px] text-cream/30">
-                    {commentText.length > 0 &&
-                      `${commentText.length}/${MAX_COMMENT_LENGTH}`}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handlePostComment}
-                    disabled={!commentText.trim()}
-                    className="px-3 py-1 bg-sandstone text-basalt text-xs font-medium rounded-md hover:bg-sandstone-light transition-colors disabled:opacity-30"
-                  >
-                    Post
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Comment thread */}
-            {ideaComments.length > 0 ? (
-              <div className="space-y-3 max-h-[200px] overflow-y-auto">
-                {ideaComments.map((comment) => (
-                  <div key={comment.id} className="space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-cream/70">
-                        {comment.authorName}
-                      </span>
-                      <span className="text-cream/20">&middot;</span>
-                      <span className="text-[11px] text-cream/30">
-                        {relativeTime(comment.createdAt)}
-                      </span>
+            {/* Unified comment thread container */}
+            <div className="border border-cream/15 rounded-lg overflow-hidden">
+              {/* Existing comments */}
+              {ideaComments.length > 0 ? (
+                <div className="max-h-[220px] overflow-y-auto p-3 space-y-3">
+                  {ideaComments.slice().reverse().map((comment) => (
+                    <div key={comment.id}>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="w-5 h-5 rounded-full bg-sandstone/20 text-sandstone text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                          {comment.authorName.charAt(0).toUpperCase()}
+                        </span>
+                        <span className="text-xs font-medium text-cream/70">
+                          {comment.authorName}
+                        </span>
+                        <span className="text-[10px] text-cream/25">
+                          {relativeTime(comment.createdAt)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-cream/80 whitespace-pre-wrap pl-7">
+                        {comment.text}
+                      </p>
                     </div>
-                    <p className="text-sm text-cream/80 whitespace-pre-wrap">
-                      {comment.text}
-                    </p>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-3 py-4 text-center">
+                  <p className="text-xs text-cream/30">
+                    No comments yet — start the conversation.
+                  </p>
+                </div>
+              )}
+
+              {/* Comment input — directly attached to thread */}
+              {!readOnly && (
+                <div className="border-t border-cream/10 bg-basalt/50 px-3 py-2">
+                  <div className="flex items-end gap-2">
+                    <textarea
+                      ref={commentInputRef}
+                      value={commentText}
+                      onChange={(e) =>
+                        setCommentText(e.target.value.slice(0, MAX_COMMENT_LENGTH))
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault()
+                          handlePostComment()
+                        }
+                      }}
+                      placeholder="Write a comment..."
+                      rows={1}
+                      className="flex-1 px-3 py-1.5 bg-basalt border border-cream/15 text-cream text-sm rounded-md placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 resize-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handlePostComment}
+                      disabled={!commentText.trim()}
+                      className="px-3 py-1.5 bg-sandstone text-basalt text-xs font-medium rounded-md hover:bg-sandstone-light transition-colors disabled:opacity-30 flex-shrink-0"
+                    >
+                      Post
+                    </button>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-cream/30 py-2">
-                No comments yet on this idea.
-              </p>
-            )}
+                  {commentText.length > 0 && (
+                    <p className="text-[10px] text-cream/25 mt-1 text-right">
+                      {commentText.length}/{MAX_COMMENT_LENGTH}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Actions */}

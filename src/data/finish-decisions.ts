@@ -209,7 +209,7 @@ export interface OptionV3 {
   thumbnailUrl?: string              // legacy ~400px thumbnail (use images[] for new code)
   images?: OptionImageV3[]           // multi-image gallery
   heroImageId?: string | null        // id of the primary image (null = first in images[])
-  votes?: Record<string, 'up' | 'down'>  // keyed by user email
+  votes?: Record<string, 'up' | 'down' | 'love' | 'like' | 'dislike'>  // keyed by user email
   origin?: OptionOriginV3            // set when added by an ideas pack
   createdAt: string
   updatedAt: string
