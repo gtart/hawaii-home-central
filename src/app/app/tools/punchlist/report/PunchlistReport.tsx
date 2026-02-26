@@ -88,6 +88,25 @@ function buildGroups(items: PunchlistItem[], orgMode: string): GroupedSection[] 
 export function PunchlistReport() {
   const searchParams = useSearchParams()
   const requiredProjectId = searchParams.get('projectId')
+
+  // P0: Hard block — never fall back to session's currentProject
+  if (!requiredProjectId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-white">
+        <p className="text-red-600 font-medium">Missing project ID</p>
+        <p className="text-gray-500 text-sm">This report requires a valid projectId parameter.</p>
+        <a href="/app/tools/punchlist" className="text-blue-600 underline text-sm">
+          Back to Fix List
+        </a>
+      </div>
+    )
+  }
+
+  return <PunchlistReportInner requiredProjectId={requiredProjectId} />
+}
+
+function PunchlistReportInner({ requiredProjectId }: { requiredProjectId: string }) {
+  const searchParams = useSearchParams()
   const includeNotes = searchParams.get('includeNotes') === 'true'
   const includeComments = searchParams.get('includeComments') === 'true'
   const includePhotos = searchParams.get('includePhotos') === 'true'
@@ -108,9 +127,9 @@ export function PunchlistReport() {
     [assigneesParam]
   )
 
-  // P0.3: Fetch data for the URL's projectId, not the session's currentProject
+  // Fetch data for the URL's projectId, not the session's currentProject
   const { payload, isLoaded } = usePunchlistState(
-    requiredProjectId ? { projectIdOverride: requiredProjectId } : undefined
+    { projectIdOverride: requiredProjectId }
   )
 
   // Fetch project name from API for the report header
@@ -153,14 +172,6 @@ export function PunchlistReport() {
     load()
   }, [])
 
-  // Auto-trigger print when loaded
-  useEffect(() => {
-    if (isLoaded && payload.items.length > 0) {
-      const timeout = setTimeout(() => window.print(), 500)
-      return () => clearTimeout(timeout)
-    }
-  }, [isLoaded, payload.items.length])
-
   const reportItems = useMemo(
     () =>
       payload.items
@@ -174,6 +185,14 @@ export function PunchlistReport() {
     () => buildGroups(reportItems, orgMode),
     [reportItems, orgMode]
   )
+
+  // Auto-trigger print when loaded and filtered items exist
+  useEffect(() => {
+    if (isLoaded && reportItems.length > 0) {
+      const timeout = setTimeout(() => window.print(), 500)
+      return () => clearTimeout(timeout)
+    }
+  }, [isLoaded, reportItems.length])
 
   if (!isLoaded) {
     return (
