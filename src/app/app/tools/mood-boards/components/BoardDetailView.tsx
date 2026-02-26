@@ -197,6 +197,11 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
           <p className="text-xs text-cream/40 mt-0.5">
             {board.ideas.length} idea{board.ideas.length !== 1 ? 's' : ''}
           </p>
+          {isDefaultBoard(board) && (
+            <p className="text-[11px] text-cream/30 mt-0.5">
+              Ideas saved via Save to HHC land here. Sort them into boards when you&apos;re ready.
+            </p>
+          )}
         </div>
 
         {/* Comments button */}
@@ -489,6 +494,9 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
           onMoveIdea={(toBoardId, ideaId) => {
             api.moveIdea(board.id, toBoardId, ideaId)
             setSelectedIdeaId(null)
+          }}
+          onCopyIdea={(toBoardId, ideaId) => {
+            api.copyIdea(board.id, toBoardId, ideaId)
           }}
           onToggleReaction={(ideaId, reaction) =>
             api.toggleReaction(board.id, ideaId, userEmail, userName, reaction)

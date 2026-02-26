@@ -7,10 +7,11 @@ interface Props {
   boards: Board[]
   currentBoardId: string
   onMove: (toBoardId: string) => void
+  onCopy?: (toBoardId: string) => void
   onClose: () => void
 }
 
-export function MoveToBoardSheet({ boards, currentBoardId, onMove, onClose }: Props) {
+export function MoveToBoardSheet({ boards, currentBoardId, onMove, onCopy, onClose }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -32,7 +33,9 @@ export function MoveToBoardSheet({ boards, currentBoardId, onMove, onClose }: Pr
         role="dialog"
         aria-modal="true"
       >
-        <h3 className="text-base font-medium text-cream">Move to Board</h3>
+        <h3 className="text-base font-medium text-cream">
+          {onCopy ? 'Move or Copy to Board' : 'Move to Board'}
+        </h3>
 
         {otherBoards.length === 0 ? (
           <p className="text-sm text-cream/50">
@@ -41,20 +44,39 @@ export function MoveToBoardSheet({ boards, currentBoardId, onMove, onClose }: Pr
         ) : (
           <div className="space-y-1.5 max-h-60 overflow-y-auto">
             {otherBoards.map((b) => (
-              <button
+              <div
                 key={b.id}
-                type="button"
-                onClick={() => {
-                  onMove(b.id)
-                  onClose()
-                }}
-                className="w-full text-left px-3 py-2.5 rounded-lg border border-cream/10 hover:border-sandstone/30 hover:bg-cream/5 transition-colors"
+                className="px-3 py-2.5 rounded-lg border border-cream/10"
               >
                 <p className="text-sm text-cream font-medium">{b.name}</p>
-                <p className="text-[11px] text-cream/40">
+                <p className="text-[11px] text-cream/40 mb-2">
                   {b.ideas.length} idea{b.ideas.length !== 1 ? 's' : ''}
                 </p>
-              </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onMove(b.id)
+                      onClose()
+                    }}
+                    className="flex-1 px-2.5 py-1.5 text-xs font-medium text-cream border border-cream/20 rounded-md hover:bg-cream/5 transition-colors"
+                  >
+                    Move
+                  </button>
+                  {onCopy && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onCopy(b.id)
+                        onClose()
+                      }}
+                      className="flex-1 px-2.5 py-1.5 text-xs font-medium text-sandstone border border-sandstone/30 rounded-md hover:bg-sandstone/10 transition-colors"
+                    >
+                      Copy
+                    </button>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         )}

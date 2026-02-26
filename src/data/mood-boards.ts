@@ -56,7 +56,7 @@ export interface Board {
   name: string
   ideas: Idea[]
   comments?: MoodBoardComment[]
-  isDefault?: boolean // true only for "Saved Ideas"
+  isDefault?: boolean // true only for "Inbox" (default landing board)
   createdAt: string
   updatedAt: string
 }
@@ -80,7 +80,7 @@ export function ensureDefaultBoard(boards: Board[]): Board[] {
   return [
     {
       id: DEFAULT_BOARD_ID,
-      name: 'Saved Ideas',
+      name: 'Inbox',
       ideas: [],
       isDefault: true,
       createdAt: ts,

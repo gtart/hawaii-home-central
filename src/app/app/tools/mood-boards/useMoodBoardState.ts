@@ -192,6 +192,38 @@ export function useMoodBoardState() {
     [setState]
   )
 
+  const copyIdea = useCallback(
+    (fromBoardId: string, toBoardId: string, ideaId: string) => {
+      const newId = genId('idea')
+      setState((prev) => {
+        const p = ensureShape(prev)
+        const fromBoard = p.boards.find((b) => b.id === fromBoardId)
+        const idea = fromBoard?.ideas.find((i) => i.id === ideaId)
+        if (!idea) return p
+
+        const ts = now()
+        return {
+          ...p,
+          boards: p.boards.map((b) => {
+            if (b.id === toBoardId) {
+              return {
+                ...b,
+                ideas: [
+                  ...b.ideas,
+                  { ...idea, id: newId, reactions: [], createdAt: ts, updatedAt: ts },
+                ],
+                updatedAt: ts,
+              }
+            }
+            return b
+          }),
+        }
+      })
+      return newId
+    },
+    [setState]
+  )
+
   // ---- Comments ----
 
   const addComment = useCallback(
@@ -312,6 +344,7 @@ export function useMoodBoardState() {
     updateIdea,
     deleteIdea,
     moveIdea,
+    copyIdea,
     addComment,
     deleteComment,
     toggleReaction,

@@ -32,6 +32,7 @@ interface Props {
   onUpdateIdea: (ideaId: string, updates: Partial<Idea>) => void
   onDeleteIdea: (ideaId: string) => void
   onMoveIdea: (toBoardId: string, ideaId: string) => void
+  onCopyIdea: (toBoardId: string, ideaId: string) => void
   onToggleReaction: (ideaId: string, reaction: ReactionType) => void
   onCommentOnIdea: (ideaId: string, ideaName: string) => void
   onAddComment: (comment: {
@@ -62,6 +63,7 @@ export function IdeaDetailModal({
   onUpdateIdea,
   onDeleteIdea,
   onMoveIdea,
+  onCopyIdea,
   onToggleReaction,
   onCommentOnIdea,
   onAddComment,
@@ -531,6 +533,7 @@ export function IdeaDetailModal({
             boards={boards}
             currentBoardId={board.id}
             onMove={(toBoardId) => onMoveIdea(toBoardId, idea.id)}
+            onCopy={(toBoardId) => onCopyIdea(toBoardId, idea.id)}
             onClose={() => setShowMoveSheet(false)}
           />
         )}

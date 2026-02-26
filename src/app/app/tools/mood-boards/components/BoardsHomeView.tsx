@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import Link from 'next/link'
 import { isDefaultBoard } from '@/data/mood-boards'
-import type { Board } from '@/data/mood-boards'
+import type { Board, MoodBoardComment } from '@/data/mood-boards'
 import type { MoodBoardStateAPI } from '../useMoodBoardState'
+import { CommentsPanel } from './CommentsPanel'
 
 interface Props {
   api: MoodBoardStateAPI
@@ -35,6 +35,13 @@ export function BoardsHomeView({ api, readOnly }: Props) {
   const [editName, setEditName] = useState('')
   const [deletingBoard, setDeletingBoard] = useState<Board | null>(null)
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
+  const [commentsOpen, setCommentsOpen] = useState(false)
+
+  // Aggregate all comments across boards
+  const allComments: MoodBoardComment[] = payload.boards.flatMap(
+    (b) => (b.comments || []).map((c) => ({ ...c }))
+  )
+  const commentCount = allComments.length
 
   const handleCreate = () => {
     const trimmed = newBoardName.trim()
@@ -131,6 +138,12 @@ export function BoardsHomeView({ api, readOnly }: Props) {
                     <p className="text-[11px] text-cream/40 mt-0.5">
                       {board.ideas.length} idea{board.ideas.length !== 1 ? 's' : ''}
                     </p>
+                    {isDefaultBoard(board) && (
+                      <p className="text-[10px] text-cream/25 mt-0.5 truncate">
+                        Unsorted ideas from Save to HHC
+                      </p>
+                    )}
+                    <BoardCardMeta board={board} />
                   </div>
                 </button>
 
@@ -253,10 +266,31 @@ export function BoardsHomeView({ api, readOnly }: Props) {
         )}
       </div>
 
-      {/* Recent Activity feed */}
-      <div data-testid="recent-activity">
-        <RecentActivity boards={payload.boards} />
-      </div>
+      {/* Comments button */}
+      {commentCount > 0 && (
+        <div className="mt-6" data-testid="recent-activity">
+          <button
+            type="button"
+            onClick={() => setCommentsOpen(true)}
+            className="flex items-center gap-2 text-sm text-cream/50 hover:text-cream/70 transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {commentCount} comment{commentCount !== 1 ? 's' : ''} across all boards
+          </button>
+        </div>
+      )}
+
+      {/* Comments panel */}
+      {commentsOpen && (
+        <CommentsPanel
+          comments={allComments}
+          onAddComment={() => {}}
+          readOnly={true}
+          onClose={() => setCommentsOpen(false)}
+        />
+      )}
 
       {deletingBoard && (
         <ConfirmDialog
@@ -273,7 +307,7 @@ export function BoardsHomeView({ api, readOnly }: Props) {
 }
 
 // ---------------------------------------------------------------------------
-// Recent Activity
+// Board Card Meta
 // ---------------------------------------------------------------------------
 
 function relativeTime(iso: string): string {
@@ -292,72 +326,30 @@ function truncateLabel(s: string, max = 40): string {
   return s.length > max ? s.slice(0, max).trimEnd() + '…' : s
 }
 
-interface ActivityComment {
-  id: string
-  text: string
-  authorName: string
-  createdAt: string
-  refIdeaId?: string
-  refIdeaLabel?: string
-  boardId: string
-  boardName: string
+function shortDate(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-function RecentActivity({ boards }: { boards: Board[] }) {
-  const allComments: ActivityComment[] = boards
-    .flatMap((board) =>
-      (board.comments || []).map((c) => ({
-        ...c,
-        boardId: board.id,
-        boardName: board.name,
-      }))
-    )
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .slice(0, 10)
-
-  if (allComments.length === 0) return null
+function BoardCardMeta({ board }: { board: Board }) {
+  const lastComment = (board.comments || [])
+    .slice()
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
 
   return (
-    <div className="mt-8">
-      <h3 className="text-sm font-medium text-cream/60 mb-3">
-        Recent Activity
-      </h3>
-      <div className="space-y-3">
-        {allComments.map((comment) => (
-          <div
-            key={comment.id}
-            className="bg-basalt-50 border border-cream/10 rounded-lg p-3"
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-medium text-cream/70">
-                {comment.authorName}
-              </span>
-              <span className="text-cream/20">&middot;</span>
-              <span className="text-[11px] text-cream/30">
-                {relativeTime(comment.createdAt)}
-              </span>
-              <span className="text-cream/20">&middot;</span>
-              <Link
-                href={`/app/tools/mood-boards?board=${comment.boardId}`}
-                className="text-[11px] text-sandstone/60 hover:text-sandstone transition-colors"
-              >
-                {comment.boardName}
-              </Link>
-            </div>
-            {comment.refIdeaId && comment.refIdeaLabel && (
-              <Link
-                href={`/app/tools/mood-boards?board=${comment.boardId}`}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-sandstone/10 text-sandstone/80 hover:bg-sandstone/20 transition-colors mb-1"
-              >
-                Re: {truncateLabel(comment.refIdeaLabel)}
-              </Link>
-            )}
-            <p className="text-sm text-cream/70 line-clamp-2">
-              {comment.text}
-            </p>
-          </div>
-        ))}
-      </div>
+    <div className="mt-1.5 space-y-0.5">
+      <p className="text-[10px] text-cream/25 truncate">
+        Updated {relativeTime(board.updatedAt)}
+      </p>
+      {lastComment && (
+        <p className="text-[10px] text-cream/25 truncate">
+          {lastComment.authorName}: {truncateLabel(lastComment.text, 30)}
+        </p>
+      )}
+      <p className="text-[10px] text-cream/20 truncate">
+        Created {shortDate(board.createdAt)}
+      </p>
     </div>
   )
 }
+
