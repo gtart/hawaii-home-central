@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import type { PunchlistStatus } from '../types'
 
 interface Props {
   toolKey: string
@@ -10,11 +11,21 @@ interface Props {
   onCreated: () => void
 }
 
+const STATUS_CHECKS: { key: PunchlistStatus; label: string }[] = [
+  { key: 'OPEN', label: 'Open' },
+  { key: 'ACCEPTED', label: 'Accepted' },
+  { key: 'DONE', label: 'Done' },
+]
+
 export function PublishShareModal({ toolKey, locations, assignees, onClose, onCreated }: Props) {
   const [includeNotes, setIncludeNotes] = useState(false)
+  const [includeComments, setIncludeComments] = useState(false)
+  const [includePhotos, setIncludePhotos] = useState(false)
+  const [includedStatuses, setIncludedStatuses] = useState<Set<PunchlistStatus>>(new Set(['OPEN', 'ACCEPTED']))
   const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set())
   const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set())
   const [confirmed, setConfirmed] = useState(false)
+  const [shareConfirmText, setShareConfirmText] = useState('')
   const [creating, setCreating] = useState(false)
   const [shareUrl, setShareUrl] = useState('')
   const [copied, setCopied] = useState(false)
@@ -38,6 +49,18 @@ export function PublishShareModal({ toolKey, locations, assignees, onClose, onCr
     })
   }
 
+  function toggleStatus(s: PunchlistStatus) {
+    setIncludedStatuses((prev) => {
+      const next = new Set(prev)
+      if (next.has(s)) {
+        if (next.size > 1) next.delete(s)
+      } else {
+        next.add(s)
+      }
+      return next
+    })
+  }
+
   const chipClass = (active: boolean) =>
     `text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
       active
@@ -55,6 +78,9 @@ export function PublishShareModal({ toolKey, locations, assignees, onClose, onCr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           includeNotes,
+          includeComments,
+          includePhotos,
+          statuses: Array.from(includedStatuses),
           locations: Array.from(selectedLocations),
           assignees: Array.from(selectedAssignees),
         }),
@@ -115,29 +141,41 @@ export function PublishShareModal({ toolKey, locations, assignees, onClose, onCr
               >
                 {copied ? 'Copied!' : 'Copy Link'}
               </button>
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
-                includeNotes
-                  ? 'bg-amber-400/10 text-amber-400'
-                  : 'bg-cream/5 text-cream/40'
-              }`}>
-                <span className={`w-2 h-2 rounded-full ${includeNotes ? 'bg-amber-400' : 'bg-cream/20'}`} />
-                Additional Info: {includeNotes ? 'INCLUDED' : 'NOT INCLUDED'}
+              <div className="space-y-1.5">
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                  includeNotes ? 'bg-amber-400/10 text-amber-400' : 'bg-cream/5 text-cream/40'
+                }`}>
+                  <span className={`w-2 h-2 rounded-full ${includeNotes ? 'bg-amber-400' : 'bg-cream/20'}`} />
+                  Additional Info: {includeNotes ? 'INCLUDED' : 'NOT INCLUDED'}
+                </div>
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs bg-cream/5 text-cream/40`}>
+                  <span className={`w-2 h-2 rounded-full ${includePhotos ? 'bg-emerald-400' : 'bg-cream/20'}`} />
+                  Photos: {includePhotos ? 'INCLUDED' : 'NOT INCLUDED'}
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs bg-cream/5 text-cream/40">
+                  <span className={`w-2 h-2 rounded-full ${includeComments ? 'bg-emerald-400' : 'bg-cream/20'}`} />
+                  Comments: {includeComments ? 'INCLUDED' : 'NOT INCLUDED'}
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs bg-cream/5 text-cream/40">
+                  <span className="w-2 h-2 rounded-full bg-cream/20" />
+                  Statuses: {Array.from(includedStatuses).join(', ') || 'All'}
+                </div>
               </div>
               {(selectedLocations.size > 0 || selectedAssignees.size > 0) ? (
                 <div className="flex flex-wrap gap-2 text-xs">
                   {selectedLocations.size > 0 && (
                     <span className="px-2 py-1 bg-cream/10 text-cream/50 rounded">
-                      📍 {Array.from(selectedLocations).join(', ')}
+                      Locations: {Array.from(selectedLocations).join(', ')}
                     </span>
                   )}
                   {selectedAssignees.size > 0 && (
                     <span className="px-2 py-1 bg-cream/10 text-cream/50 rounded">
-                      👤 {Array.from(selectedAssignees).join(', ')}
+                      Assignees: {Array.from(selectedAssignees).join(', ')}
                     </span>
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-cream/30 text-center">All items included</p>
+                <p className="text-xs text-cream/30 text-center">All locations and assignees included</p>
               )}
             </>
           ) : (
@@ -187,6 +225,51 @@ export function PublishShareModal({ toolKey, locations, assignees, onClose, onCr
                 </div>
               )}
 
+              {/* Photos toggle */}
+              <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
+                <input
+                  type="checkbox"
+                  checked={includePhotos}
+                  onChange={(e) => setIncludePhotos(e.target.checked)}
+                  className="accent-sandstone"
+                />
+                <div>
+                  <p className="text-sm text-cream">Include photos</p>
+                  <p className="text-xs text-cream/40">Photos attached to items will be visible</p>
+                </div>
+              </label>
+
+              {/* Comments toggle */}
+              <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
+                <input
+                  type="checkbox"
+                  checked={includeComments}
+                  onChange={(e) => setIncludeComments(e.target.checked)}
+                  className="accent-sandstone"
+                />
+                <div>
+                  <p className="text-sm text-cream">Include comments</p>
+                  <p className="text-xs text-cream/40">Discussion threads on each item</p>
+                </div>
+              </label>
+
+              {/* Status scoping */}
+              <div>
+                <p className="text-sm text-cream/70 mb-3">Which statuses to share?</p>
+                <div className="flex gap-2">
+                  {STATUS_CHECKS.map((s) => (
+                    <button
+                      key={s.key}
+                      type="button"
+                      onClick={() => toggleStatus(s.key)}
+                      className={chipClass(includedStatuses.has(s.key))}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Location filter */}
               {locations.length >= 2 && (
                 <div>
@@ -231,25 +314,57 @@ export function PublishShareModal({ toolKey, locations, assignees, onClose, onCr
                 </div>
               )}
 
-              {/* Confirmation */}
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={confirmed}
-                  onChange={(e) => setConfirmed(e.target.checked)}
-                  className="mt-0.5 accent-sandstone"
-                />
-                <span className="text-sm text-cream/60">
-                  I understand this creates a public link that anyone can view
-                </span>
-              </label>
+              {/* Risky share: broad scope with sensitive data */}
+              {(() => {
+                const isRisky = (includeNotes || includePhotos) &&
+                  includedStatuses.size === 3 &&
+                  selectedLocations.size === 0 &&
+                  selectedAssignees.size === 0
+
+                return isRisky ? (
+                  <div className="bg-red-400/10 border border-red-400/20 rounded-lg p-3 space-y-2">
+                    <p className="text-red-400 text-xs font-medium">
+                      This link will expose {includeNotes ? 'notes' : ''}{includeNotes && includePhotos ? ' and ' : ''}{includePhotos ? 'photos' : ''} for ALL items with no filters.
+                    </p>
+                    <p className="text-red-400/70 text-xs">
+                      Type <span className="font-mono font-bold">SHARE</span> below to confirm.
+                    </p>
+                    <input
+                      type="text"
+                      value={shareConfirmText}
+                      onChange={(e) => setShareConfirmText(e.target.value)}
+                      placeholder="Type SHARE to confirm"
+                      className="w-full px-3 py-2 bg-basalt border border-red-400/30 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-red-400/50"
+                    />
+                  </div>
+                ) : (
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={confirmed}
+                      onChange={(e) => setConfirmed(e.target.checked)}
+                      className="mt-0.5 accent-sandstone"
+                    />
+                    <span className="text-sm text-cream/60">
+                      I understand this creates a public link that anyone can view
+                    </span>
+                  </label>
+                )
+              })()}
 
               {error && <p className="text-sm text-red-400">{error}</p>}
 
               <button
                 type="button"
                 onClick={handleCreate}
-                disabled={!confirmed || creating}
+                disabled={(() => {
+                  const isRisky = (includeNotes || includePhotos) &&
+                    includedStatuses.size === 3 &&
+                    selectedLocations.size === 0 &&
+                    selectedAssignees.size === 0
+                  if (isRisky) return shareConfirmText !== 'SHARE' || creating
+                  return !confirmed || creating
+                })()}
                 className="w-full py-3 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-50"
               >
                 {creating ? 'Creating...' : 'Create Public Link'}

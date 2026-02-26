@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateShareToken, getReportSettings } from '@/lib/share-tokens'
+import { toPublicItem } from '@/app/app/tools/punchlist/types'
+import type { PunchlistItem } from '@/app/app/tools/punchlist/types'
 
 export async function GET(
   _request: Request,
@@ -34,11 +36,14 @@ export async function GET(
     )
   }
 
-  // Determine notes inclusion and filters
+  // Determine settings from token
   const settings = record.settings as Record<string, unknown>
   let includeNotes = settings?.includeNotes === true
+  const includeComments = settings?.includeComments === true
+  const includePhotos = settings?.includePhotos === true
   const filterLocations: string[] = Array.isArray(settings?.locations) ? (settings.locations as string[]) : []
   const filterAssignees: string[] = Array.isArray(settings?.assignees) ? (settings.assignees as string[]) : []
+  const filterStatuses: string[] = Array.isArray(settings?.statuses) ? (settings.statuses as string[]) : []
 
   // Admin failsafe: override at render time
   const reportSettings = await getReportSettings()
@@ -56,29 +61,24 @@ export async function GET(
     if (!targetBoard) {
       return NextResponse.json({ error: 'Board not found' }, { status: 404 })
     }
-    // Return just the single board in the payload
     payload = { ...payload, boards: [targetBoard] }
   }
 
-  // Apply location/assignee filters to payload (punchlist-specific)
-  if (Array.isArray(payload?.items) && (filterLocations.length > 0 || filterAssignees.length > 0)) {
-    payload = {
-      ...payload,
-      items: (payload.items as Record<string, unknown>[]).filter((item) =>
-        (filterLocations.length === 0 || filterLocations.includes(item.location as string)) &&
-        (filterAssignees.length === 0 || filterAssignees.includes(item.assigneeLabel as string))
-      ),
-    }
-  }
+  // Punchlist: whitelist sanitization — map raw items to PublicPunchlistItem
+  if (toolKey === 'punchlist' && Array.isArray(payload?.items)) {
+    const rawItems = payload.items as PunchlistItem[]
 
-  // Strip notes from payload if not included (punchlist-specific)
-  if (!includeNotes && payload && Array.isArray(payload.items)) {
+    const filtered = rawItems.filter((item) => {
+      if (filterStatuses.length > 0 && !filterStatuses.includes(item.status)) return false
+      if (filterLocations.length > 0 && !filterLocations.includes(item.location)) return false
+      if (filterAssignees.length > 0 && !filterAssignees.includes(item.assigneeLabel)) return false
+      return true
+    })
+
     payload = {
-      ...payload,
-      items: (payload.items as Record<string, unknown>[]).map((item) => {
-        const { notes, ...rest } = item
-        return rest
-      }),
+      items: filtered.map((item) =>
+        toPublicItem(item, { includeNotes, includeComments, includePhotos })
+      ),
     }
   }
 
@@ -87,6 +87,7 @@ export async function GET(
     projectName: record.project.name,
     toolKey,
     includeNotes,
+    includePhotos,
     boardId,
     filters: { locations: filterLocations, assignees: filterAssignees },
   })

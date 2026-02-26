@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import type { PunchlistItem, PunchlistStatus, PunchlistPhoto } from '@/app/app/tools/punchlist/types'
+import type { PublicPunchlistItem, PublicPunchlistPhoto, PunchlistStatus } from '@/app/app/tools/punchlist/types'
 
 const STATUS_CONFIG: Record<PunchlistStatus, { label: string; dot: string; bg: string; text: string }> = {
   OPEN: { label: 'Open', dot: 'bg-red-400', bg: 'bg-red-400/10', text: 'text-red-400' },
@@ -23,7 +23,7 @@ interface Props {
   filters: { locations: string[]; assignees: string[] }
 }
 
-function PublicItemCard({ item, includeNotes }: { item: PunchlistItem; includeNotes: boolean }) {
+function PublicItemCard({ item, includeNotes }: { item: PublicPunchlistItem; includeNotes: boolean }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const statusCfg = STATUS_CONFIG[item.status]
   const priorityCfg = item.priority ? PRIORITY_CONFIG[item.priority] : null
@@ -71,6 +71,19 @@ function PublicItemCard({ item, includeNotes }: { item: PunchlistItem; includeNo
                 <p className="text-cream/40 text-xs leading-relaxed">{item.notes}</p>
               </div>
             )}
+            {item.comments && item.comments.length > 0 && (
+              <div className="mt-2 pt-2 border-t border-cream/5">
+                <p className="text-[10px] uppercase tracking-wider text-cream/30 mb-1">
+                  Comments ({item.comments.length})
+                </p>
+                {item.comments.map((c, idx) => (
+                  <p key={idx} className="text-cream/40 text-xs mb-0.5">
+                    <span className="text-cream/60 font-medium">{c.authorName}</span>
+                    {' '}({new Date(c.createdAt).toLocaleDateString()}): {c.text}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -97,7 +110,7 @@ function PublicItemCard({ item, includeNotes }: { item: PunchlistItem; includeNo
   )
 }
 
-function Lightbox({ photos, initialIndex, onClose }: { photos: PunchlistPhoto[]; initialIndex: number; onClose: () => void }) {
+function Lightbox({ photos, initialIndex, onClose }: { photos: PublicPunchlistPhoto[]; initialIndex: number; onClose: () => void }) {
   const [index, setIndex] = useState(initialIndex)
   const photo = photos[index]
   if (!photo) return null
@@ -117,7 +130,7 @@ function Lightbox({ photos, initialIndex, onClose }: { photos: PunchlistPhoto[];
           </svg>
         </button>
       )}
-      <img src={photo.url} alt={photo.caption || ''} className="max-w-[90vw] max-h-[85vh] object-contain" onClick={(e) => e.stopPropagation()} />
+      <img src={photo.url} alt="" className="max-w-[90vw] max-h-[85vh] object-contain" onClick={(e) => e.stopPropagation()} />
       {photos.length > 1 && (
         <button type="button" onClick={(e) => { e.stopPropagation(); setIndex((i) => (i < photos.length - 1 ? i + 1 : 0)) }} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white z-10">
           <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -144,7 +157,7 @@ export function PublicPunchlistView({ payload, projectName, includeNotes, filter
   const [filterAssignee, setFilterAssignee] = useState<string | null>(null)
   const [search, setSearch] = useState('')
 
-  const allItems = useMemo(() => (payload.items as PunchlistItem[]) || [], [payload.items])
+  const allItems = useMemo(() => (payload.items as PublicPunchlistItem[]) || [], [payload.items])
 
   const uniqueLocations = useMemo(() => {
     const locs = new Set(allItems.map((i) => i.location))
@@ -349,7 +362,7 @@ export function PublicPunchlistView({ payload, projectName, includeNotes, filter
         ) : (
           <div className="space-y-4">
             {items.map((item) => (
-              <PublicItemCard key={item.id} item={item} includeNotes={includeNotes} />
+              <PublicItemCard key={item.itemNumber} item={item} includeNotes={includeNotes} />
             ))}
           </div>
         )}

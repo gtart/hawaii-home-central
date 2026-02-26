@@ -88,6 +88,7 @@ function buildGroups(items: PunchlistItem[], orgMode: string): GroupedSection[] 
 
 export function PunchlistReport() {
   const searchParams = useSearchParams()
+  const requiredProjectId = searchParams.get('projectId')
   const includeNotes = searchParams.get('includeNotes') === 'true'
   const includeComments = searchParams.get('includeComments') === 'true'
   const orgMode = searchParams.get('org') || 'room_status'
@@ -108,6 +109,11 @@ export function PunchlistReport() {
   )
   const { payload, isLoaded } = usePunchlistState()
   const { currentProject } = useProject()
+
+  // P0.3: Mismatch guard — if the report opened with a projectId that doesn't
+  // match the session's current project, refuse to render instead of showing
+  // items from the wrong project.
+  const projectMismatch = requiredProjectId && currentProject && currentProject.id !== requiredProjectId
   const [settings, setSettings] = useState<ReportSettings>({
     companyName: 'HawaiiHomeCentral.com',
     reportTitle: 'Fix List Report',
@@ -130,13 +136,13 @@ export function PunchlistReport() {
     load()
   }, [])
 
-  // Auto-trigger print when loaded
+  // Auto-trigger print when loaded (skip if project mismatch)
   useEffect(() => {
-    if (isLoaded && payload.items.length > 0) {
+    if (isLoaded && payload.items.length > 0 && !projectMismatch) {
       const timeout = setTimeout(() => window.print(), 500)
       return () => clearTimeout(timeout)
     }
-  }, [isLoaded, payload.items.length])
+  }, [isLoaded, payload.items.length, projectMismatch])
 
   const reportItems = useMemo(
     () =>
@@ -156,6 +162,16 @@ export function PunchlistReport() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (projectMismatch) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <p className="text-red-600 font-medium">Project mismatch — cannot render report.</p>
+        <p className="text-gray-500 text-sm">The report was requested for a different project than your current session.</p>
+        <a href="/app/tools/punchlist" className="text-blue-600 underline text-sm">Back to Fix List</a>
       </div>
     )
   }
@@ -192,13 +208,12 @@ export function PunchlistReport() {
       <div className="min-h-screen bg-white text-gray-900 print:bg-white">
         {/* Screen-only toolbar */}
         <div className="no-print bg-basalt text-cream px-6 py-3 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => window.history.back()}
+          <a
+            href="/app/tools/punchlist"
             className="text-sm text-cream/60 hover:text-cream transition-colors"
           >
             &larr; Back to Fix List
-          </button>
+          </a>
           <div className="flex items-center gap-4">
             <span className="text-xs text-cream/40">
               Tip: Disable &ldquo;Headers and footers&rdquo; in print dialog to remove the URL

@@ -9,7 +9,6 @@ import { PunchlistItemForm } from './PunchlistItemForm'
 import { BulkPhotoUpload } from './BulkPhotoUpload'
 import { BulkTextEntry } from './BulkTextEntry'
 import { QuickAddStrip } from './QuickAddStrip'
-import { ExportPDFModal } from './ExportPDFModal'
 
 type SortMode = 'newest' | 'oldest' | 'priority'
 type FilterStatus = 'ALL' | PunchlistStatus
@@ -41,7 +40,6 @@ export function PunchlistPage({ api }: Props) {
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [viewingId, setViewingId] = useState<string | null>(null)
-  const [showExport, setShowExport] = useState(false)
 
   const uniqueLocations = useMemo(() => {
     const locs = new Set(payload.items.map((i) => i.location))
@@ -167,15 +165,6 @@ export function PunchlistPage({ api }: Props) {
           <option value="priority">Priority</option>
         </select>
 
-        {/* Export */}
-        <button
-          type="button"
-          onClick={() => setShowExport(true)}
-          className="text-xs px-3 py-1.5 bg-sandstone/15 border border-sandstone/30 text-sandstone rounded-lg hover:bg-sandstone/25 transition-colors"
-        >
-          Export PDF
-        </button>
-
         {/* Desktop Add buttons — hidden on mobile, visible md+ */}
         {!readOnly && (
           <div className="hidden md:flex items-center gap-2 ml-auto">
@@ -257,7 +246,7 @@ export function PunchlistPage({ api }: Props) {
           <button
             type="button"
             onClick={() => { setFilterStatus('ALL'); setFilterLocation(null); setFilterAssignee(null); setSearch('') }}
-            className="text-xs text-sandstone/60 hover:text-sandstone transition-colors"
+            className="text-xs px-3 py-1 rounded-full border border-sandstone/30 text-sandstone/70 hover:bg-sandstone/10 hover:text-sandstone transition-colors"
           >
             Clear filters
           </button>
@@ -398,13 +387,6 @@ export function PunchlistPage({ api }: Props) {
         />
       )}
 
-      {showExport && (
-        <ExportPDFModal
-          onClose={() => setShowExport(false)}
-          locations={uniqueLocations}
-          assignees={uniqueAssignees}
-        />
-      )}
     </>
   )
 }

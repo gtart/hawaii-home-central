@@ -17,7 +17,7 @@ const VALID_TOOL_KEYS = [
 ]
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ toolKey: string }> }
 ) {
   const session = await auth()
@@ -31,7 +31,12 @@ export async function GET(
   }
 
   const userId = session.user.id
-  const projectId = await ensureCurrentProject(userId)
+
+  // P0: Accept explicit projectId to guarantee correct project.
+  // When projectId is provided, NEVER fall back to ensureCurrentProject.
+  const url = new URL(request.url)
+  const explicitProjectId = url.searchParams.get('projectId')
+  const projectId = explicitProjectId || await ensureCurrentProject(userId)
 
   // Enforce access — no blanket bypass
   const access = await resolveToolAccess(userId, projectId, toolKey)
@@ -112,7 +117,11 @@ export async function PUT(
   const coercedPayload = validation.payload
 
   const userId = session.user.id
-  const projectId = await ensureCurrentProject(userId)
+
+  // P0: Accept explicit projectId to guarantee correct project on writes.
+  const url = new URL(request.url)
+  const explicitProjectId = url.searchParams.get('projectId')
+  const projectId = explicitProjectId || await ensureCurrentProject(userId)
 
   // Enforce EDIT access
   const access = await resolveToolAccess(userId, projectId, toolKey)

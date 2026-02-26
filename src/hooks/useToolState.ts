@@ -72,7 +72,8 @@ export function useToolState<T>({
   const revalidate = useCallback(async () => {
     if (localOnly || !projectId) return
     try {
-      const res = await fetch(`/api/tools/${toolKey}`)
+      const qs = projectId ? `?projectId=${projectId}` : ''
+      const res = await fetch(`/api/tools/${toolKey}${qs}`)
       if (!res.ok) return
       const data = await res.json()
       const serverRev = data.updatedAt ? String(data.updatedAt) : null
@@ -114,7 +115,8 @@ export function useToolState<T>({
       if (!projectId) return
 
       try {
-        const res = await fetch(`/api/tools/${toolKey}`)
+        const qs = projectId ? `?projectId=${projectId}` : ''
+        const res = await fetch(`/api/tools/${toolKey}${qs}`)
 
         if (cancelled) return
 
@@ -245,7 +247,8 @@ export function useToolState<T>({
       debounceRef.current = setTimeout(async () => {
         setIsSyncing(true)
         try {
-          const res = await fetch(`/api/tools/${toolKey}`, {
+          const qs = projectId ? `?projectId=${projectId}` : ''
+          const res = await fetch(`/api/tools/${toolKey}${qs}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ payload, revision: revisionRef.current }),
@@ -274,7 +277,7 @@ export function useToolState<T>({
         }
       }, 500)
     },
-    [toolKey, localOnly, revalidate]
+    [toolKey, localOnly, projectId, revalidate]
   )
 
   // Track rejected VIEW mutations so UI can show a toast

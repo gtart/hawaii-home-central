@@ -7,9 +7,13 @@ interface ShareTokenEntry {
   id: string
   token: string
   includeNotes: boolean
+  includeComments: boolean
+  includePhotos: boolean
   locations: string[]
   assignees: string[]
+  statuses: string[]
   createdAt: string
+  expiresAt: string | null
 }
 
 interface Props {
@@ -105,43 +109,56 @@ export function ManageShareLinks({ toolKey, locations, assignees }: Props) {
 
                 {/* Badges row */}
                 <div className="flex flex-wrap items-center gap-1.5">
-                  {/* Notes badge */}
                   <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                    t.includeNotes
-                      ? 'bg-amber-400/15 text-amber-400'
-                      : 'bg-cream/10 text-cream/40'
+                    t.includeNotes ? 'bg-amber-400/15 text-amber-400' : 'bg-cream/10 text-cream/40'
                   }`}>
-                    {t.includeNotes
-                      ? 'Private notes visible to viewer'
-                      : 'Private notes hidden from viewer'}
+                    Notes: {t.includeNotes ? 'Yes' : 'No'}
                   </span>
-
-                  {/* Filter pills */}
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded bg-cream/10 text-cream/40`}>
+                    Photos: {t.includePhotos ? 'Yes' : 'No'}
+                  </span>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded bg-cream/10 text-cream/40`}>
+                    Comments: {t.includeComments ? 'Yes' : 'No'}
+                  </span>
+                  {t.statuses.length > 0 && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-cream/10 text-cream/40">
+                      {t.statuses.join(', ')}
+                    </span>
+                  )}
                   {t.locations.length === 0 && t.assignees.length === 0 ? (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-cream/5 text-cream/30">
-                      Full list — no filters
+                      All items
                     </span>
                   ) : (
                     <>
                       {t.locations.length > 0 && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-cream/10 text-cream/50">
-                          📍 {t.locations.join(' · ')}
+                          Loc: {t.locations.join(', ')}
                         </span>
                       )}
                       {t.assignees.length > 0 && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-cream/10 text-cream/50">
-                          👤 {t.assignees.join(' · ')}
+                          Assigned: {t.assignees.join(', ')}
                         </span>
                       )}
                     </>
                   )}
                 </div>
 
-                {/* Bottom row: timestamp + revoke */}
+                {/* Bottom row: timestamp + expiry + revoke */}
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-cream/30">
-                    {new Date(t.createdAt).toLocaleDateString()}{' '}
-                    {new Date(t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    Created {new Date(t.createdAt).toLocaleDateString()}
+                    {t.expiresAt && (
+                      <>
+                        {' · '}
+                        {new Date(t.expiresAt) < new Date() ? (
+                          <span className="text-red-400">Expired</span>
+                        ) : (
+                          <>Expires {new Date(t.expiresAt).toLocaleDateString()}</>
+                        )}
+                      </>
+                    )}
                   </span>
                   <button
                     type="button"

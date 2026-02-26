@@ -1,16 +1,19 @@
 'use client'
 
-import { Suspense, useMemo } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
+import { useProject } from '@/contexts/ProjectContext'
 import { usePunchlistState } from './usePunchlistState'
 import { PunchlistPage } from './components/PunchlistPage'
 import { PunchlistEmptyState } from './components/PunchlistEmptyState'
-import { ManageShareLinks } from './components/ManageShareLinks'
+import { ShareExportModal } from './components/ShareExportModal'
 
 function PunchlistContent() {
   const api = usePunchlistState()
   const { payload, isLoaded, isSyncing, access, readOnly, noAccess } = api
+  const { currentProject } = useProject()
   const isOwner = access === 'OWNER'
+  const [showShareExport, setShowShareExport] = useState(false)
 
   const uniqueLocations = useMemo(
     () => [...new Set(payload.items.map((i) => i.location))].filter(Boolean).sort(),
@@ -48,7 +51,22 @@ function PunchlistContent() {
         title="Fix List"
         description="Track fixes and share with your contractor."
         accessLevel={access}
-      />
+      >
+        {payload.items.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowShareExport(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-sandstone/15 text-sandstone hover:bg-sandstone/25 transition-colors"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
+              <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
+              <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
+            </svg>
+            Share / Export
+          </button>
+        )}
+      </ToolPageHeader>
 
       {isSyncing && (
         <div className="flex items-center gap-2 text-xs text-cream/30 mb-4">
@@ -63,7 +81,15 @@ function PunchlistContent() {
         <PunchlistPage api={api} />
       )}
 
-      {isOwner && <ManageShareLinks toolKey="punchlist" locations={uniqueLocations} assignees={uniqueAssignees} />}
+      {showShareExport && currentProject && (
+        <ShareExportModal
+          onClose={() => setShowShareExport(false)}
+          locations={uniqueLocations}
+          assignees={uniqueAssignees}
+          projectId={currentProject.id}
+          isOwner={isOwner}
+        />
+      )}
     </>
   )
 }

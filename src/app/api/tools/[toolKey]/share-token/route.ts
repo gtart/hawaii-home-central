@@ -37,8 +37,11 @@ export async function GET(
         id: t.id,
         token: t.token,
         includeNotes: s?.includeNotes ?? false,
+        includeComments: s?.includeComments ?? false,
+        includePhotos: s?.includePhotos ?? false,
         locations: s?.locations ?? [],
         assignees: s?.assignees ?? [],
+        statuses: s?.statuses ?? [],
         boardId: s?.boardId ?? null,
         boardName: s?.boardName ?? null,
         createdAt: t.createdAt,
@@ -68,10 +71,16 @@ export async function POST(
 
   const body = await request.json()
   let includeNotes = body.includeNotes === true
+  const includeComments = body.includeComments === true
+  const includePhotos = body.includePhotos === true
   const locations: string[] = Array.isArray(body.locations) ? body.locations : []
   const assignees: string[] = Array.isArray(body.assignees) ? body.assignees : []
+  const statuses: string[] = Array.isArray(body.statuses) ? body.statuses : []
   const boardId: string | undefined = typeof body.boardId === 'string' ? body.boardId : undefined
   const boardName: string | undefined = typeof body.boardName === 'string' ? body.boardName : undefined
+
+  // Default expiration: 14 days from now
+  const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
 
   // Check admin failsafe
   const reportSettings = await getReportSettings()
@@ -81,7 +90,14 @@ export async function POST(
 
   const token = generateShareToken()
 
-  const settingsObj: Record<string, unknown> = { includeNotes, locations, assignees }
+  const settingsObj: Record<string, unknown> = {
+    includeNotes,
+    includeComments,
+    includePhotos,
+    locations,
+    assignees,
+    statuses,
+  }
   if (boardId) settingsObj.boardId = boardId
   if (boardName) settingsObj.boardName = boardName
 
@@ -91,6 +107,7 @@ export async function POST(
       projectId,
       toolKey,
       createdBy: userId,
+      expiresAt,
       settings: settingsObj as object,
     },
   })
@@ -99,9 +116,13 @@ export async function POST(
     id: record.id,
     token: record.token,
     includeNotes,
+    includeComments,
+    includePhotos,
+    statuses,
     boardId,
     boardName,
     createdAt: record.createdAt,
+    expiresAt: record.expiresAt,
   }, { status: 201 })
 }
 
