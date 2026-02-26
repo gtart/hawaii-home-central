@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
-import { ensureCurrentProject } from '@/lib/project'
 import { resolveToolAccess } from '@/lib/project-access'
 import {
   generateShareToken,
@@ -20,8 +19,10 @@ export async function GET(
 
   const { toolKey } = await params
   const userId = session.user.id
-  const explicitProjectId = new URL(request.url).searchParams.get('projectId')
-  const projectId = explicitProjectId || await ensureCurrentProject(userId)
+  const projectId = new URL(request.url).searchParams.get('projectId')
+  if (!projectId) {
+    return NextResponse.json({ error: 'projectId is required' }, { status: 400 })
+  }
 
   // Only owners can manage share tokens
   const access = await resolveToolAccess(userId, projectId, toolKey)
@@ -63,8 +64,10 @@ export async function POST(
 
   const { toolKey } = await params
   const userId = session.user.id
-  const explicitProjectId = new URL(request.url).searchParams.get('projectId')
-  const projectId = explicitProjectId || await ensureCurrentProject(userId)
+  const projectId = new URL(request.url).searchParams.get('projectId')
+  if (!projectId) {
+    return NextResponse.json({ error: 'projectId is required' }, { status: 400 })
+  }
 
   const access = await resolveToolAccess(userId, projectId, toolKey)
   if (access !== 'OWNER') {
@@ -139,8 +142,10 @@ export async function DELETE(
 
   const { toolKey } = await params
   const userId = session.user.id
-  const explicitProjectId = new URL(request.url).searchParams.get('projectId')
-  const projectId = explicitProjectId || await ensureCurrentProject(userId)
+  const projectId = new URL(request.url).searchParams.get('projectId')
+  if (!projectId) {
+    return NextResponse.json({ error: 'projectId is required' }, { status: 400 })
+  }
 
   const access = await resolveToolAccess(userId, projectId, toolKey)
   if (access !== 'OWNER') {
