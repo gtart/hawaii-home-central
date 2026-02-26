@@ -7,6 +7,10 @@ import type { MoodBoardComment } from '@/data/mood-boards'
 const COMMENTS_PER_PAGE = 10
 const MAX_COMMENT_LENGTH = 400
 
+function truncateLabel(s: string, max = 40): string {
+  return s.length > max ? s.slice(0, max).trimEnd() + '…' : s
+}
+
 interface Props {
   comments: MoodBoardComment[]
   onAddComment: (comment: {
@@ -132,7 +136,7 @@ export function CommentsPanel({
           {draftRef && (
             <div className="flex items-center gap-1.5">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-sandstone/10 text-sandstone/80">
-                Re: {draftRef.ideaLabel}
+                Re: {truncateLabel(draftRef.ideaLabel)}
                 <button
                   type="button"
                   onClick={onClearDraftRef}
@@ -153,7 +157,7 @@ export function CommentsPanel({
               onKeyDown={handleKeyDown}
               placeholder={
                 draftRef
-                  ? `Comment on ${draftRef.ideaLabel}...`
+                  ? `Comment on ${truncateLabel(draftRef.ideaLabel)}...`
                   : 'Add a comment...'
               }
               rows={2}
@@ -200,7 +204,7 @@ export function CommentsPanel({
                   onClick={() => onOpenIdea?.(comment.refIdeaId!)}
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-sandstone/10 text-sandstone/80 hover:bg-sandstone/20 transition-colors"
                 >
-                  &uarr; Re: {comment.refIdeaLabel}
+                  &uarr; Re: {truncateLabel(comment.refIdeaLabel)}
                 </button>
               )}
               <p className="text-sm text-cream/80 whitespace-pre-wrap">

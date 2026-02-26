@@ -118,6 +118,9 @@ function IdeaCardTile({
   const heroSrc = hero?.thumbnailUrl || hero?.url
   const linkPreview = !heroSrc && option.urls?.[0]?.linkImage
 
+  const hasImage = !!(heroSrc || linkPreview)
+  const hasReactions = loveCount > 0 || likeCount > 0 || dislikeCount > 0
+
   return (
     <div
       role="button"
@@ -126,159 +129,146 @@ function IdeaCardTile({
       aria-label={`Open idea: ${option.name || 'Untitled'}`}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
-      className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-basalt border border-cream/10 hover:border-cream/30 transition-colors text-left group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/50"
+      className="w-full rounded-xl overflow-hidden bg-basalt border border-cream/10 hover:border-cream/30 transition-colors text-left group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/50"
     >
-      {heroSrc ? (
-        <>
+      {/* Image area — only Final pill overlays here */}
+      {hasImage && (
+        <div className="relative w-full aspect-[4/3]">
           <ImageWithFallback
-            src={displayUrl(heroSrc)}
+            src={displayUrl(heroSrc || linkPreview || '')}
             alt={option.name || 'Selection'}
             className="w-full h-full object-cover"
             fallback={
-              <div className="w-full h-full p-3 flex items-center justify-center bg-basalt">
-                <span className="text-3xl opacity-20">🖼️</span>
+              <div className="w-full h-full flex items-center justify-center bg-basalt">
+                <span className="text-3xl opacity-20">{heroSrc ? '🖼️' : '🔗'}</span>
               </div>
             }
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-        </>
-      ) : linkPreview ? (
-        <>
-          <ImageWithFallback
-            src={displayUrl(linkPreview)}
-            alt={option.name || 'Selection'}
-            className="w-full h-full object-cover"
-            fallback={
-              <div className="w-full h-full p-3 flex items-center justify-center bg-basalt">
-                <span className="text-3xl opacity-20">🔗</span>
-              </div>
-            }
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-        </>
-      ) : (
-        <div className="w-full h-full p-3 flex flex-col">
-          <p className="text-sm text-cream font-medium leading-snug line-clamp-2 flex-1">
-            {option.name || <span className="text-cream/30 italic">Untitled</span>}
-          </p>
-          {option.notes && (
-            <p className="text-xs text-cream/40 line-clamp-2 mt-1">{option.notes}</p>
-          )}
-          {/* Meta: comment count + time */}
-          <div className="mt-auto pt-1 flex items-center gap-1.5">
-            {commentCount && commentCount > 0 ? (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-sandstone/15 text-sandstone text-[11px] font-medium">
-                💬 {commentCount}
-              </span>
-            ) : null}
-            <span className="text-[10px] text-cream/25">
-              {option.origin && <span className="text-cream/30">{option.origin.kitLabel} · </span>}
-              {relativeTime(lastCommentAt || option.updatedAt)}
+
+          {/* Final toggle — only overlay on the image */}
+          {onToggleFinal && !readOnly ? (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onToggleFinal() }}
+              className={`absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full transition-all ${
+                option.isSelected
+                  ? 'bg-sandstone text-basalt'
+                  : 'bg-black/40 text-white/70 opacity-60 sm:opacity-0 group-hover:opacity-100'
+              }`}
+            >
+              {option.isSelected ? '⭐ Final' : '☆ Final'}
+            </button>
+          ) : option.isSelected ? (
+            <span className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 bg-sandstone text-basalt text-[10px] font-semibold rounded-full">
+              ⭐ Final
             </span>
-          </div>
+          ) : null}
         </div>
       )}
 
-      {/* Name overlay for image/preview cards */}
-      {(heroSrc || linkPreview) && (
-        <div className="absolute bottom-0 left-0 right-0 px-2.5 py-2">
-          <p className="text-xs text-white font-medium line-clamp-1">
-            {option.name || <span className="text-white/50 italic">Untitled</span>}
-          </p>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            {commentCount && commentCount > 0 ? (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-sandstone/30 text-white text-[10px] font-medium">
-                💬 {commentCount}
-              </span>
-            ) : null}
-            <span className="text-[10px] text-white/40">
-              {option.origin && <span className="text-white/35">{option.origin.kitLabel} · </span>}
-              {relativeTime(lastCommentAt || option.updatedAt)}
+      {/* Content area — all meta below the image */}
+      <div className="p-2.5 space-y-1.5">
+        {/* Name */}
+        <p className="text-sm text-cream font-medium leading-snug line-clamp-2">
+          {option.name || <span className="text-cream/30 italic">Untitled</span>}
+        </p>
+
+        {/* Notes preview (text-only cards) */}
+        {!hasImage && option.notes && (
+          <p className="text-xs text-cream/40 line-clamp-2">{option.notes}</p>
+        )}
+
+        {/* Meta row: origin, time, comments */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {commentCount && commentCount > 0 ? (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-sandstone/15 text-sandstone text-[10px] font-medium">
+              💬 {commentCount}
             </span>
-          </div>
+          ) : null}
+          <span className="text-[10px] text-cream/25">
+            {option.origin && <span className="text-cream/30">{option.origin.kitLabel} · </span>}
+            {relativeTime(lastCommentAt || option.updatedAt)}
+          </span>
         </div>
-      )}
 
-      {/* Final toggle */}
-      {onToggleFinal && !readOnly ? (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onToggleFinal() }}
-          className={`absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full transition-all ${
-            option.isSelected
-              ? 'bg-sandstone text-basalt'
-              : 'bg-black/40 text-white/70 opacity-60 sm:opacity-0 group-hover:opacity-100'
-          }`}
-        >
-          {option.isSelected ? '⭐ Final' : '☆ Final'}
-        </button>
-      ) : option.isSelected ? (
-        <span className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 bg-sandstone text-basalt text-[10px] font-semibold rounded-full">
-          ⭐ Final
-        </span>
-      ) : null}
+        {/* Reactions */}
+        {onReaction && !readOnly ? (
+          <div className="flex items-center gap-1">
+            {([['love', '❤️'], ['like', '👍'], ['dislike', '👎']] as const).map(([type, emoji]) => {
+              const count = type === 'love' ? loveCount : type === 'like' ? likeCount : dislikeCount
+              const isActive = myReaction === type
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onReaction(type) }}
+                  className={`text-[11px] px-1.5 py-0.5 rounded-full transition-colors ${
+                    isActive
+                      ? type === 'love' ? 'bg-pink-500/30 text-pink-300' : type === 'like' ? 'bg-green-500/30 text-green-300' : 'bg-red-500/30 text-red-300'
+                      : 'bg-cream/8 text-cream/40 hover:text-cream/70'
+                  }`}
+                >
+                  {emoji}{count > 0 ? ` ${count}` : ''}
+                </button>
+              )
+            })}
+          </div>
+        ) : hasReactions ? (
+          <div className="flex items-center gap-1.5 text-[10px] text-cream/50">
+            {loveCount > 0 && <span>❤️ {loveCount}</span>}
+            {likeCount > 0 && <span>👍 {likeCount}</span>}
+            {dislikeCount > 0 && <span>👎 {dislikeCount}</span>}
+          </div>
+        ) : null}
 
-      {/* Move button */}
-      {onMove && !readOnly && (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onMove() }}
-          className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 bg-cream/60 text-basalt text-[10px] font-semibold rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-cream/80"
-        >
-          Move
-        </button>
-      )}
-
-      {/* Comment icon + count */}
-      {onComment && (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onComment() }}
-          className={`absolute top-2 right-2 flex items-center gap-0.5 p-1 rounded-full transition-all ${
-            commentCount && commentCount > 0
-              ? 'bg-black/40 text-white/70'
-              : 'text-white/50 hover:text-white/90 opacity-60 sm:opacity-0 group-hover:opacity-100'
-          }`}
-          title="Comment"
-        >
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          {commentCount && commentCount > 0 && (
-            <span className="text-[10px]">{commentCount}</span>
-          )}
-        </button>
-      )}
-
-      {/* Reaction buttons (interactive) or passive counts */}
-      {onReaction && !readOnly ? (
-        <div className="absolute bottom-2 right-2 flex items-center gap-1 opacity-60 sm:opacity-0 group-hover:opacity-100 transition-all">
-          {([['love', '❤️'], ['like', '👍'], ['dislike', '👎']] as const).map(([type, emoji]) => {
-            const count = type === 'love' ? loveCount : type === 'like' ? likeCount : dislikeCount
-            const isActive = myReaction === type
-            return (
+        {/* Action row: move + comment */}
+        {(!readOnly || (onComment)) && (
+          <div className="flex items-center gap-1.5 pt-0.5">
+            {onMove && !readOnly && (
               <button
-                key={type}
                 type="button"
-                onClick={(e) => { e.stopPropagation(); onReaction(type) }}
-                className={`text-[11px] px-1.5 py-0.5 rounded-full transition-colors ${
-                  isActive
-                    ? type === 'love' ? 'bg-pink-500/30 text-pink-300' : type === 'like' ? 'bg-green-500/30 text-green-300' : 'bg-red-500/30 text-red-300'
-                    : 'bg-black/40 text-white/60 hover:text-white'
+                onClick={(e) => { e.stopPropagation(); onMove() }}
+                className="text-[10px] px-2 py-0.5 rounded-full bg-cream/8 text-cream/40 hover:text-cream/70 hover:bg-cream/15 transition-colors"
+              >
+                Move
+              </button>
+            )}
+            {onComment && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onComment() }}
+                className="text-[10px] px-2 py-0.5 rounded-full bg-cream/8 text-cream/40 hover:text-cream/70 hover:bg-cream/15 transition-colors inline-flex items-center gap-0.5"
+                title="Comment"
+              >
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Comment
+              </button>
+            )}
+
+            {/* Final toggle for text-only cards */}
+            {!hasImage && onToggleFinal && !readOnly && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onToggleFinal() }}
+                className={`text-[10px] px-2 py-0.5 rounded-full transition-colors ml-auto ${
+                  option.isSelected
+                    ? 'bg-sandstone text-basalt font-semibold'
+                    : 'bg-cream/8 text-cream/40 hover:text-cream/70 hover:bg-cream/15'
                 }`}
               >
-                {emoji}{count > 0 ? ` ${count}` : ''}
+                {option.isSelected ? '⭐ Final' : '☆ Final'}
               </button>
-            )
-          })}
-        </div>
-      ) : (loveCount > 0 || likeCount > 0 || dislikeCount > 0) ? (
-        <div className="absolute bottom-2 right-2 flex items-center gap-1.5 text-[10px] text-white/70">
-          {loveCount > 0 && <span>❤️ {loveCount}</span>}
-          {likeCount > 0 && <span>👍 {likeCount}</span>}
-          {dislikeCount > 0 && <span>👎 {dislikeCount}</span>}
-        </div>
-      ) : null}
+            )}
+            {!hasImage && !onToggleFinal && option.isSelected && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-sandstone text-basalt font-semibold ml-auto">
+                ⭐ Final
+              </span>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -428,7 +418,7 @@ export function IdeasBoard({
   const [showNoteInput, setShowNoteInput] = useState(false)
   const [showWebDialog, setShowWebDialog] = useState(false)
 
-  const VISIBLE_COUNT = 3
+  const MOBILE_VISIBLE_COUNT = 3
   const fileInputRef = useRef<HTMLInputElement>(null)
   const noteInputRef = useRef<HTMLInputElement>(null)
 
@@ -612,14 +602,56 @@ export function IdeasBoard({
             </div>
           )}
 
-          {/* Card grid (1+ ideas) */}
+          {/* Card grid (1+ ideas) — desktop always shows all, mobile collapses */}
           {decision.options.length >= 1 && (() => {
-            const visible = expanded ? decision.options : decision.options.slice(0, VISIBLE_COUNT)
-            const hiddenCount = decision.options.length - VISIBLE_COUNT
+            const mobileVisible = expanded ? decision.options : decision.options.slice(0, MOBILE_VISIBLE_COUNT)
+            const hiddenCount = decision.options.length - MOBILE_VISIBLE_COUNT
             return (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-3">
-                  {visible.map((opt) => (
+                {/* Desktop: always show all cards */}
+                <div className="hidden md:grid md:grid-cols-3 gap-3 mb-3">
+                  {decision.options.map((opt) => (
+                    <div key={opt.id} className="relative">
+                      <IdeaCardTile
+                        option={opt}
+                        decision={decision}
+                        userEmail={userEmail}
+                        readOnly={readOnly}
+                        onClick={() => compareMode ? toggleCompareSelect(opt.id) : setActiveCardId(opt.id)}
+                        onToggleFinal={compareMode || hideFinalize ? undefined : () => onSelectOption(opt.id)}
+                        onMove={!compareMode && onMoveOption ? () => onMoveOption(opt.id) : undefined}
+                        onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
+                        onReaction={compareMode ? undefined : (reaction) => handleReaction(opt.id, reaction)}
+                        myReaction={(opt.votes || {})[userEmail] as 'love' | 'like' | 'dislike' | undefined || null}
+                        commentCount={comments.filter((c) => c.refOptionId === opt.id).length}
+                        lastCommentAt={(() => {
+                          const optComments = comments.filter((c) => c.refOptionId === opt.id)
+                          if (optComments.length === 0) return null
+                          return optComments.reduce((latest, c) => c.createdAt > latest ? c.createdAt : latest, '')
+                        })()}
+                      />
+                      {compareMode && (
+                        <div className="absolute top-2 right-2 pointer-events-none">
+                          <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
+                            selectedForCompare.has(opt.id)
+                              ? 'bg-sandstone border-sandstone'
+                              : 'border-white/50 bg-black/30'
+                          }`}>
+                            {selectedForCompare.has(opt.id) && (
+                              <svg className="w-3 h-3 text-basalt" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mobile: collapsible grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 md:hidden">
+                  {mobileVisible.map((opt) => (
                     <div key={opt.id} className="relative">
                       <IdeaCardTile
                         option={opt}
@@ -658,20 +690,21 @@ export function IdeasBoard({
                     </div>
                   ))}
                 </div>
+                {/* Show more/less — mobile only */}
                 {!expanded && hiddenCount > 0 && (
                   <button
                     type="button"
                     onClick={() => setExpanded(true)}
-                    className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors"
+                    className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors md:hidden"
                   >
                     Show {hiddenCount} more idea{hiddenCount !== 1 ? 's' : ''}
                   </button>
                 )}
-                {expanded && decision.options.length > VISIBLE_COUNT && (
+                {expanded && decision.options.length > MOBILE_VISIBLE_COUNT && (
                   <button
                     type="button"
                     onClick={() => setExpanded(false)}
-                    className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors"
+                    className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors md:hidden"
                   >
                     Show less
                   </button>

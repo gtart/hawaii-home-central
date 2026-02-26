@@ -28,6 +28,18 @@ function faviconUrl(url: string): string {
   }
 }
 
+// Muted gradient palettes for text-only tiles
+const TEXT_GRADIENTS = [
+  'bg-gradient-to-br from-stone-700 to-stone-900',
+  'bg-gradient-to-br from-slate-700 to-slate-900',
+  'bg-gradient-to-br from-zinc-700 to-zinc-900',
+  'bg-gradient-to-br from-amber-900 to-stone-900',
+  'bg-gradient-to-br from-emerald-900 to-stone-900',
+  'bg-gradient-to-br from-sky-900 to-slate-900',
+  'bg-gradient-to-br from-violet-900 to-slate-900',
+  'bg-gradient-to-br from-rose-900 to-stone-900',
+]
+
 export function IdeaTile({
   idea,
   onClick,
@@ -41,6 +53,7 @@ export function IdeaTile({
   const domain = idea.sourceUrl ? extractDomain(idea.sourceUrl) : ''
   const visibleTags = idea.tags.slice(0, 3)
   const overflowCount = idea.tags.length - 3
+  const isTextOnly = !heroImage
 
   // Count reactions by type
   const reactionCounts: Partial<Record<ReactionType, number>> = {}
@@ -50,6 +63,10 @@ export function IdeaTile({
 
   const hasEngagement =
     commentCount > 0 || Object.values(reactionCounts).some((c) => c > 0)
+
+  // Stable gradient based on idea id
+  const gradientIndex = idea.id.charCodeAt(idea.id.length - 1) % TEXT_GRADIENTS.length
+  const gradient = TEXT_GRADIENTS[gradientIndex]
 
   return (
     <button
@@ -75,11 +92,29 @@ export function IdeaTile({
         </div>
       )}
 
-      {/* Content */}
+      {/* Text-only hero area */}
+      {isTextOnly && (
+        <div className={`w-full aspect-[4/3] ${gradient} flex flex-col items-center justify-center p-5 relative`}>
+          <div className="absolute inset-0 opacity-[0.04] bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%220%200%2040%2040%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M20%200L40%2020L20%2040L0%2020z%22%20fill%3D%22white%22%20fill-opacity%3D%221%22/%3E%3C/svg%3E')]" />
+          <p className="font-serif text-lg text-white/90 text-center leading-snug line-clamp-3 relative z-10">
+            {idea.name}
+          </p>
+          {idea.notes && (
+            <p className="text-xs text-white/50 text-center mt-2 line-clamp-2 relative z-10 max-w-[90%]">
+              {idea.notes}
+            </p>
+          )}
+          <span className="absolute bottom-2 right-2.5 text-[10px] text-white/25 font-medium tracking-wide uppercase">Note</span>
+        </div>
+      )}
+
+      {/* Content (below image, or metadata for text-only) */}
       <div className="p-3">
-        <p className="text-sm font-medium text-cream line-clamp-2 leading-snug">
-          {idea.name}
-        </p>
+        {!isTextOnly && (
+          <p className="text-sm font-medium text-cream line-clamp-2 leading-snug">
+            {idea.name}
+          </p>
+        )}
 
         {/* Source */}
         {domain && (
@@ -100,7 +135,7 @@ export function IdeaTile({
 
         {/* Tags */}
         {visibleTags.length > 0 && (
-          <div className="flex items-center gap-1 mt-2 flex-wrap">
+          <div className={`flex items-center gap-1 ${isTextOnly ? '' : 'mt-2'} flex-wrap`}>
             {visibleTags.map((tag) => (
               <span
                 key={tag}
@@ -119,7 +154,7 @@ export function IdeaTile({
 
         {/* Reactions + comment count */}
         {hasEngagement && (
-          <div className="flex items-center gap-2.5 mt-2 text-[11px] text-cream/40">
+          <div className={`flex items-center gap-2.5 ${isTextOnly && visibleTags.length === 0 ? '' : 'mt-2'} text-[11px] text-cream/40`}>
             {(['love', 'like', 'dislike'] as ReactionType[]).map((type) => {
               const count = reactionCounts[type]
               if (!count) return null

@@ -29,6 +29,10 @@ import { relativeTime } from '@/lib/relativeTime'
 const COMMENTS_PER_PAGE = 10
 const MAX_COMMENT_LENGTH = 400
 
+function truncateLabel(s: string, max = 40): string {
+  return s.length > max ? s.slice(0, max).trimEnd() + '…' : s
+}
+
 export function DecisionDetailContent({
   kits = [],
   emojiMap = {},
@@ -929,7 +933,7 @@ function CommentsSection({
                   onClick={() => onOpenCard?.(comment.refOptionId!)}
                   className="inline-flex items-center gap-0.5 mr-1.5 px-1.5 py-0.5 bg-sandstone/10 text-sandstone/80 hover:text-sandstone text-[11px] rounded-full transition-colors align-middle"
                 >
-                  ↗ Re: {comment.refOptionLabel}
+                  ↗ Re: {truncateLabel(comment.refOptionLabel)}
                 </button>
               )}
               {comment.text}

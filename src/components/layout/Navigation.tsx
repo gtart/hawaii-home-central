@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import { UserMenu } from '@/components/auth/UserMenu'
 import { ProjectSwitcher } from '@/components/app/ProjectSwitcher'
+import { TOOL_REGISTRY } from '@/lib/tool-registry'
 
 interface NavLink {
   href: string
@@ -19,7 +20,9 @@ export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [toolsOpen, setToolsOpen] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
+  const toolsRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
 
   useEffect(() => {
@@ -32,19 +35,23 @@ export function Navigation() {
   useEffect(() => {
     setIsMobileMenuOpen(false)
     setMoreOpen(false)
+    setToolsOpen(false)
   }, [pathname])
 
-  // Close "More" dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
-    if (!moreOpen) return
+    if (!moreOpen && !toolsOpen) return
     function handleClick(e: MouseEvent) {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+      if (moreOpen && moreRef.current && !moreRef.current.contains(e.target as Node)) {
         setMoreOpen(false)
+      }
+      if (toolsOpen && toolsRef.current && !toolsRef.current.contains(e.target as Node)) {
+        setToolsOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [moreOpen])
+  }, [moreOpen, toolsOpen])
 
   // Hide nav on admin, public share, and report pages
   if (pathname.startsWith('/admin') || pathname.startsWith('/share') || pathname.includes('/report')) return null
@@ -131,22 +138,84 @@ export function Navigation() {
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-6">
               <ul className="flex items-center gap-6">
-                {primaryLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className={cn(
-                        'text-sm transition-colors',
-                        isLinkActive(link)
-                          ? 'text-sandstone'
-                          : 'text-cream/70 hover:text-cream'
-                      )}
-                      aria-current={isLinkActive(link) ? 'page' : undefined}
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
+                {primaryLinks.map((link) => {
+                  const isTools = link.href === '/app' || link.href === '/tools'
+                  const active = isLinkActive(link)
+
+                  if (isTools && session?.user) {
+                    return (
+                      <li key={link.href}>
+                        <div className="relative" ref={toolsRef}>
+                          <div className="flex items-center gap-1">
+                            <Link
+                              href={link.href}
+                              className={cn(
+                                'text-sm transition-colors',
+                                active ? 'text-sandstone' : 'text-cream/70 hover:text-cream'
+                              )}
+                              aria-current={active ? 'page' : undefined}
+                            >
+                              {link.label}
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => setToolsOpen(!toolsOpen)}
+                              className={cn(
+                                'p-0.5 transition-colors rounded',
+                                active || toolsOpen ? 'text-sandstone' : 'text-cream/50 hover:text-cream'
+                              )}
+                              aria-expanded={toolsOpen}
+                              aria-label="Show tools menu"
+                            >
+                              <svg
+                                className={cn('w-3 h-3 transition-transform', toolsOpen && 'rotate-180')}
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
+                          </div>
+                          {toolsOpen && (
+                            <div className="absolute left-0 top-full mt-2 bg-basalt-50 border border-cream/10 rounded-card shadow-lg py-2 min-w-[200px]">
+                              {TOOL_REGISTRY.map((tool) => (
+                                <Link
+                                  key={tool.toolKey}
+                                  href={tool.href}
+                                  className={cn(
+                                    'block px-4 py-2 text-sm transition-colors',
+                                    pathname.startsWith(tool.href)
+                                      ? 'text-sandstone'
+                                      : 'text-cream/70 hover:text-cream hover:bg-cream/5'
+                                  )}
+                                >
+                                  {tool.title}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </li>
+                    )
+                  }
+
+                  return (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className={cn(
+                          'text-sm transition-colors',
+                          active ? 'text-sandstone' : 'text-cream/70 hover:text-cream'
+                        )}
+                        aria-current={active ? 'page' : undefined}
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  )
+                })}
                 {/* More dropdown */}
                 <li>
                   <div className="relative" ref={moreRef}>
@@ -238,23 +307,45 @@ export function Navigation() {
                 </li>
               )}
 
-              {primaryLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className={cn(
-                      'block py-2.5 text-base transition-colors',
-                      (link.href === '/app' || link.href === '/tools') && 'font-medium',
-                      isLinkActive(link)
-                        ? 'text-sandstone'
-                        : 'text-cream/70 hover:text-cream'
+              {primaryLinks.map((link) => {
+                const isTools = (link.href === '/app' || link.href === '/tools') && session?.user
+                return (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className={cn(
+                        'block py-2.5 text-base transition-colors',
+                        isTools && 'font-medium',
+                        isLinkActive(link)
+                          ? 'text-sandstone'
+                          : 'text-cream/70 hover:text-cream'
+                      )}
+                      aria-current={isLinkActive(link) ? 'page' : undefined}
+                    >
+                      {link.label}
+                    </Link>
+                    {isTools && (
+                      <ul className="pl-4 pb-1 space-y-0.5">
+                        {TOOL_REGISTRY.map((tool) => (
+                          <li key={tool.toolKey}>
+                            <Link
+                              href={tool.href}
+                              className={cn(
+                                'block py-1.5 text-sm transition-colors',
+                                pathname.startsWith(tool.href)
+                                  ? 'text-sandstone'
+                                  : 'text-cream/50 hover:text-cream/70'
+                              )}
+                            >
+                              {tool.title}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
                     )}
-                    aria-current={isLinkActive(link) ? 'page' : undefined}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+                  </li>
+                )
+              })}
               <li className="border-t border-cream/10 pt-2 mt-2" aria-hidden="true">
                 <span className="block text-[11px] text-cream/30 uppercase tracking-wide py-1">
                   More

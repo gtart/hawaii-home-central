@@ -8,6 +8,10 @@ interface AggregatedComment extends SelectionComment {
   decisionTitle: string
 }
 
+function truncate(s: string, max = 40): string {
+  return s.length > max ? s.slice(0, max).trimEnd() + '…' : s
+}
+
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60_000)
@@ -201,13 +205,13 @@ function CommentCard({
         onClick={onNavigate}
         className="text-[11px] text-sandstone/70 hover:text-sandstone transition-colors font-medium"
       >
-        📋 {comment.decisionTitle} →
+        📋 {truncate(comment.decisionTitle)} →
       </button>
 
       {/* If it references a specific option */}
       {comment.refOptionLabel && (
         <p className="text-[10px] text-cream/35">
-          Re: <span className="text-cream/50">{comment.refOptionLabel}</span>
+          Re: <span className="text-cream/50">{truncate(comment.refOptionLabel)}</span>
         </p>
       )}
 

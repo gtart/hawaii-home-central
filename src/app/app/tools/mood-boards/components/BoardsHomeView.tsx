@@ -284,6 +284,10 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString()
 }
 
+function truncateLabel(s: string, max = 40): string {
+  return s.length > max ? s.slice(0, max).trimEnd() + '…' : s
+}
+
 interface ActivityComment {
   id: string
   text: string
@@ -341,7 +345,7 @@ function RecentActivity({ boards }: { boards: Board[] }) {
                 href={`/app/tools/mood-boards?board=${comment.boardId}`}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-sandstone/10 text-sandstone/80 hover:bg-sandstone/20 transition-colors mb-1"
               >
-                Re: {comment.refIdeaLabel}
+                Re: {truncateLabel(comment.refIdeaLabel)}
               </Link>
             )}
             <p className="text-sm text-cream/70 line-clamp-2">
