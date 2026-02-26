@@ -1,10 +1,19 @@
 import type { Metadata } from 'next'
 import { PublicPunchlistView } from './PublicPunchlistView'
+import { PublicMoodBoardView } from './PublicMoodBoardView'
 import { InvalidTokenPage } from './InvalidTokenPage'
 
-export const metadata: Metadata = {
-  title: 'Shared Fix List — Hawaii Home Central',
-  robots: 'noindex, nofollow',
+const TITLE_MAP: Record<string, string> = {
+  punchlist: 'Shared Fix List — Hawaii Home Central',
+  mood_boards: 'Shared Mood Board — Hawaii Home Central',
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { toolKey } = await params
+  return {
+    title: TITLE_MAP[toolKey] || 'Shared — Hawaii Home Central',
+    robots: 'noindex, nofollow',
+  }
 }
 
 interface Props {
@@ -20,6 +29,7 @@ export default async function SharePage({ params }: Props) {
     projectName: string
     toolKey: string
     includeNotes: boolean
+    boardId?: string | null
     filters: { locations: string[]; assignees: string[] }
   } | null = null
 
@@ -36,6 +46,15 @@ export default async function SharePage({ params }: Props) {
 
   if (!data) {
     return <InvalidTokenPage />
+  }
+
+  if (toolKey === 'mood_boards') {
+    return (
+      <PublicMoodBoardView
+        payload={data.payload}
+        projectName={data.projectName}
+      />
+    )
   }
 
   return (

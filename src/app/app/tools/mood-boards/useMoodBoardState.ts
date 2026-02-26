@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react'
 import { useToolState } from '@/hooks/useToolState'
-import type { MoodBoardPayload, Board, Idea, IdeaImage, MoodBoardComment, ReactionType } from '@/data/mood-boards'
+import type { MoodBoardPayload, Board, Idea, IdeaImage, MoodBoardComment, ReactionType, BoardAccess } from '@/data/mood-boards'
 import { DEFAULT_PAYLOAD, ensureDefaultBoard, genId, now } from '@/data/mood-boards'
 
 function ensureShape(raw: unknown): MoodBoardPayload {
@@ -31,7 +31,7 @@ export function useMoodBoardState() {
   // ---- Board CRUD ----
 
   const addBoard = useCallback(
-    (name: string) => {
+    (name: string, createdBy?: string) => {
       const id = genId('board')
       const ts = now()
       setState((prev) => {
@@ -40,7 +40,7 @@ export function useMoodBoardState() {
           ...p,
           boards: [
             ...p.boards,
-            { id, name, ideas: [], createdAt: ts, updatedAt: ts },
+            { id, name, ideas: [], createdBy, createdAt: ts, updatedAt: ts },
           ],
         }
       })
@@ -330,6 +330,29 @@ export function useMoodBoardState() {
     [setState]
   )
 
+  // ---- Board Access ----
+
+  const updateBoardAccess = useCallback(
+    (
+      boardId: string,
+      visibility: 'everyone' | 'invite-only',
+      accessList: BoardAccess[]
+    ) => {
+      setState((prev) => {
+        const p = ensureShape(prev)
+        return {
+          ...p,
+          boards: p.boards.map((b) =>
+            b.id === boardId
+              ? { ...b, visibility, access: accessList, updatedAt: now() }
+              : b
+          ),
+        }
+      })
+    },
+    [setState]
+  )
+
   return {
     payload,
     isLoaded,
@@ -348,6 +371,7 @@ export function useMoodBoardState() {
     addComment,
     deleteComment,
     toggleReaction,
+    updateBoardAccess,
   }
 }
 

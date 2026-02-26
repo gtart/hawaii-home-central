@@ -53,9 +53,9 @@ function MoodBoardsContent() {
       )}
 
       {activeBoard ? (
-        <BoardDetailView board={activeBoard} api={api} readOnly={readOnly} />
+        <BoardDetailView board={activeBoard} api={api} readOnly={readOnly} toolAccess={access || 'VIEW'} />
       ) : (
-        <BoardsHomeView api={api} readOnly={readOnly} />
+        <BoardsHomeView api={api} readOnly={readOnly} toolAccess={access || 'VIEW'} />
       )}
     </>
   )

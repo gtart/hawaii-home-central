@@ -46,8 +46,21 @@ export async function GET(
     includeNotes = false
   }
 
-  // Apply location/assignee filters to payload
+  // Mood boards: filter to a single board if boardId is set
+  const boardId = typeof settings?.boardId === 'string' ? (settings.boardId as string) : null
   let payload = instance.payload as Record<string, unknown>
+
+  if (toolKey === 'mood_boards' && boardId && Array.isArray(payload?.boards)) {
+    const boards = payload.boards as Record<string, unknown>[]
+    const targetBoard = boards.find((b) => b.id === boardId)
+    if (!targetBoard) {
+      return NextResponse.json({ error: 'Board not found' }, { status: 404 })
+    }
+    // Return just the single board in the payload
+    payload = { ...payload, boards: [targetBoard] }
+  }
+
+  // Apply location/assignee filters to payload (punchlist-specific)
   if (Array.isArray(payload?.items) && (filterLocations.length > 0 || filterAssignees.length > 0)) {
     payload = {
       ...payload,
@@ -58,7 +71,7 @@ export async function GET(
     }
   }
 
-  // Strip notes from payload if not included
+  // Strip notes from payload if not included (punchlist-specific)
   if (!includeNotes && payload && Array.isArray(payload.items)) {
     payload = {
       ...payload,
@@ -74,6 +87,7 @@ export async function GET(
     projectName: record.project.name,
     toolKey,
     includeNotes,
+    boardId,
     filters: { locations: filterLocations, assignees: filterAssignees },
   })
 }

@@ -31,15 +31,20 @@ export async function GET(
   const tokens = await getActiveShareTokens(projectId, toolKey)
 
   return NextResponse.json({
-    tokens: tokens.map((t) => ({
-      id: t.id,
-      token: t.token,
-      includeNotes: (t.settings as Record<string, unknown>)?.includeNotes ?? false,
-      locations: (t.settings as Record<string, unknown>)?.locations ?? [],
-      assignees: (t.settings as Record<string, unknown>)?.assignees ?? [],
-      createdAt: t.createdAt,
-      expiresAt: t.expiresAt,
-    })),
+    tokens: tokens.map((t) => {
+      const s = t.settings as Record<string, unknown>
+      return {
+        id: t.id,
+        token: t.token,
+        includeNotes: s?.includeNotes ?? false,
+        locations: s?.locations ?? [],
+        assignees: s?.assignees ?? [],
+        boardId: s?.boardId ?? null,
+        boardName: s?.boardName ?? null,
+        createdAt: t.createdAt,
+        expiresAt: t.expiresAt,
+      }
+    }),
   })
 }
 
@@ -65,6 +70,8 @@ export async function POST(
   let includeNotes = body.includeNotes === true
   const locations: string[] = Array.isArray(body.locations) ? body.locations : []
   const assignees: string[] = Array.isArray(body.assignees) ? body.assignees : []
+  const boardId: string | undefined = typeof body.boardId === 'string' ? body.boardId : undefined
+  const boardName: string | undefined = typeof body.boardName === 'string' ? body.boardName : undefined
 
   // Check admin failsafe
   const reportSettings = await getReportSettings()
@@ -74,13 +81,17 @@ export async function POST(
 
   const token = generateShareToken()
 
+  const settingsObj: Record<string, unknown> = { includeNotes, locations, assignees }
+  if (boardId) settingsObj.boardId = boardId
+  if (boardName) settingsObj.boardName = boardName
+
   const record = await prisma.toolShareToken.create({
     data: {
       token,
       projectId,
       toolKey,
       createdBy: userId,
-      settings: { includeNotes, locations, assignees },
+      settings: settingsObj as object,
     },
   })
 
@@ -88,6 +99,8 @@ export async function POST(
     id: record.id,
     token: record.token,
     includeNotes,
+    boardId,
+    boardName,
     createdAt: record.createdAt,
   }, { status: 201 })
 }

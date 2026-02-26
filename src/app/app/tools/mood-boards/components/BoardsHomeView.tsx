@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { isDefaultBoard } from '@/data/mood-boards'
+import { isDefaultBoard, resolveBoardAccess } from '@/data/mood-boards'
 import type { Board, MoodBoardComment } from '@/data/mood-boards'
 import type { MoodBoardStateAPI } from '../useMoodBoardState'
 import { CommentsPanel } from './CommentsPanel'
@@ -13,6 +14,7 @@ import { CommentsPanel } from './CommentsPanel'
 interface Props {
   api: MoodBoardStateAPI
   readOnly: boolean
+  toolAccess: string
 }
 
 function getCoverImage(board: Board): string | null {
@@ -26,8 +28,10 @@ function getCoverImage(board: Board): string | null {
   return null
 }
 
-export function BoardsHomeView({ api, readOnly }: Props) {
+export function BoardsHomeView({ api, readOnly, toolAccess }: Props) {
   const router = useRouter()
+  const { data: session } = useSession()
+  const userEmail = session?.user?.email || ''
   const { payload, addBoard, renameBoard, deleteBoard } = api
   const [newBoardName, setNewBoardName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
@@ -37,8 +41,17 @@ export function BoardsHomeView({ api, readOnly }: Props) {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
   const [commentsOpen, setCommentsOpen] = useState(false)
 
-  // Aggregate all comments across boards
-  const allComments: MoodBoardComment[] = payload.boards.flatMap(
+  // Filter boards based on user's board-level access
+  const visibleBoards = useMemo(
+    () =>
+      payload.boards.filter(
+        (b) => resolveBoardAccess(b, userEmail, toolAccess) !== null
+      ),
+    [payload.boards, userEmail, toolAccess]
+  )
+
+  // Aggregate all comments across visible boards
+  const allComments: MoodBoardComment[] = visibleBoards.flatMap(
     (b) => (b.comments || []).map((c) => ({ ...c }))
   )
   const commentCount = allComments.length
@@ -46,7 +59,7 @@ export function BoardsHomeView({ api, readOnly }: Props) {
   const handleCreate = () => {
     const trimmed = newBoardName.trim()
     if (!trimmed) return
-    const id = addBoard(trimmed)
+    const id = addBoard(trimmed, userEmail)
     setNewBoardName('')
     setIsCreating(false)
     router.push(`/app/tools/mood-boards?board=${id}`)
@@ -70,7 +83,7 @@ export function BoardsHomeView({ api, readOnly }: Props) {
   return (
     <div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {payload.boards.map((board, i) => {
+        {visibleBoards.map((board, i) => {
           const cover = getCoverImage(board)
           const isEditing = editingBoardId === board.id
 
@@ -207,7 +220,7 @@ export function BoardsHomeView({ api, readOnly }: Props) {
 
         {/* New Board card */}
         {!readOnly && (
-          <FadeInSection delay={payload.boards.length * 40}>
+          <FadeInSection delay={visibleBoards.length * 40}>
             {isCreating ? (
               <div className="rounded-xl border border-sandstone/30 bg-basalt-50 p-4 flex flex-col gap-2">
                 <input

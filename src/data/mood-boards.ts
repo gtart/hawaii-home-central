@@ -51,12 +51,22 @@ export interface Idea {
   updatedAt: string
 }
 
+export type BoardAccessLevel = 'edit' | 'view'
+
+export interface BoardAccess {
+  email: string
+  level: BoardAccessLevel
+}
+
 export interface Board {
   id: string
   name: string
   ideas: Idea[]
   comments?: MoodBoardComment[]
   isDefault?: boolean // true only for "Inbox" (default landing board)
+  createdBy?: string // email of board creator
+  visibility?: 'everyone' | 'invite-only' // default: 'everyone'
+  access?: BoardAccess[] // only used when visibility === 'invite-only'
   createdAt: string
   updatedAt: string
 }
@@ -96,6 +106,43 @@ export function findDefaultBoard(boards: Board[]): Board | undefined {
 
 export function isDefaultBoard(board: Board): boolean {
   return board.isDefault === true
+}
+
+/**
+ * Resolve what level of access a user has to a specific board.
+ * Returns 'edit' | 'view' | null (null = invisible/no access).
+ *
+ * @param board        The board to check
+ * @param userEmail    Current user's email
+ * @param toolAccess   The user's tool-level access ('EDIT' | 'VIEW' | 'OWNER')
+ */
+export function resolveBoardAccess(
+  board: Board,
+  userEmail: string,
+  toolAccess: string
+): 'edit' | 'view' | null {
+  // Default boards are always visible to everyone
+  if (board.isDefault) {
+    return toolAccess === 'VIEW' ? 'view' : 'edit'
+  }
+
+  // If board is not invite-only, follow tool-level access
+  if (board.visibility !== 'invite-only') {
+    return toolAccess === 'VIEW' ? 'view' : 'edit'
+  }
+
+  // Board creator always has edit (capped at tool level)
+  if (board.createdBy === userEmail) {
+    return toolAccess === 'VIEW' ? 'view' : 'edit'
+  }
+
+  // Check board-level ACL
+  const match = board.access?.find((a) => a.email === userEmail)
+  if (!match) return null // invisible
+
+  // Cap at tool-level access
+  if (toolAccess === 'VIEW') return 'view'
+  return match.level
 }
 
 export function genId(prefix: string): string {
