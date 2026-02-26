@@ -3,10 +3,11 @@
 import { useMemo, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useToolState } from '@/hooks/useToolState'
 import { IdeasBoard } from '../../components/IdeasBoard'
+import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
+import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
 import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
@@ -24,6 +25,7 @@ import {
 } from '@/data/finish-decisions'
 import { isUncategorized, ensureUncategorizedDecision, findUncategorizedDecision, moveOption as moveOptionHelper } from '@/lib/decisionHelpers'
 import { MoveIdeaSheet } from '../../components/MoveIdeaSheet'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { relativeTime } from '@/lib/relativeTime'
 
 const COMMENTS_PER_PAGE = 10
@@ -53,6 +55,7 @@ export function DecisionDetailContent({
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [moveOptionId, setMoveOptionId] = useState<string | null>(null)
   const [assignToast, setAssignToast] = useState<string | null>(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
 
   const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3 | any>({
@@ -543,16 +546,26 @@ export function DecisionDetailContent({
             />
           </div>
           {!isSystemUncategorized && (
-            <select
-              value={foundDecision.status}
-              onChange={(e) => handleStatusChange(e.target.value as StatusV3)}
-              disabled={readOnly}
-              className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone disabled:opacity-50 shrink-0"
-            >
-              {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
-                <option key={key} value={key}>{config.label}</option>
-              ))}
-            </select>
+            <div className="flex items-center gap-1 shrink-0">
+              {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => {
+                const isActive = foundDecision.status === key
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => !readOnly && handleStatusChange(key as StatusV3)}
+                    disabled={readOnly}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-full border transition-colors ${
+                      isActive
+                        ? config.pillClass
+                        : 'bg-transparent text-cream/30 border-transparent hover:text-cream/50'
+                    } disabled:cursor-default`}
+                  >
+                    {config.label}
+                  </button>
+                )
+              })}
+            </div>
           )}
           <input
             type="date"
@@ -584,25 +597,31 @@ export function DecisionDetailContent({
               {foundDecision.title || <span className="text-cream/30">Untitled</span>}
             </h1>
           )}
-          <div className="flex items-center gap-3 mt-2">
-            {!isSystemUncategorized && (
-              <select
-                value={foundDecision.status}
-                onChange={(e) => handleStatusChange(e.target.value as StatusV3)}
-                disabled={readOnly}
-                className="flex-1 bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone disabled:opacity-50"
-              >
-                {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
-                  <option key={key} value={key}>{config.label}</option>
-                ))}
-              </select>
-            )}
+          <div className="flex items-center gap-1 mt-2 flex-wrap">
+            {!isSystemUncategorized && Object.entries(STATUS_CONFIG_V3).map(([key, config]) => {
+              const isActive = foundDecision.status === key
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => !readOnly && handleStatusChange(key as StatusV3)}
+                  disabled={readOnly}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-full border transition-colors ${
+                    isActive
+                      ? config.pillClass
+                      : 'bg-transparent text-cream/30 border-transparent hover:text-cream/50'
+                  } disabled:cursor-default`}
+                >
+                  {config.label}
+                </button>
+              )
+            })}
             <input
               type="date"
               value={foundDecision.dueDate || ''}
               onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
               disabled={readOnly}
-              className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50"
+              className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50 ml-auto"
             />
           </div>
         </div>
@@ -640,23 +659,123 @@ export function DecisionDetailContent({
               <span className="text-cream/40">No comments yet</span>
             )}
           </button>
-          {finalPick && (
-            <>
-              <span className="text-cream/20">·</span>
-              <span className="text-sandstone/60 font-medium">Final: {finalPick.name || 'Untitled'}</span>
-            </>
+        </div>
+
+        {/* Final Decision Section */}
+        <div className="mb-6">
+          {finalPick ? (() => {
+            const hero = getHeroImage(finalPick)
+            const heroSrc = hero?.thumbnailUrl || hero?.url
+            const finalComments = allComments.filter((c) => c.refOptionId === finalPick.id)
+            return (
+              <div className="border border-sandstone/25 bg-sandstone/5 rounded-xl overflow-hidden">
+                <div className="flex flex-col md:flex-row">
+                  {/* Final selection image */}
+                  {heroSrc && (
+                    <div className="md:w-48 md:h-auto flex-shrink-0">
+                      <ImageWithFallback
+                        src={displayUrl(heroSrc)}
+                        alt={finalPick.name || 'Final selection'}
+                        className="w-full h-48 md:h-full object-cover"
+                        fallback={
+                          <div className="w-full h-48 md:h-full flex items-center justify-center bg-basalt">
+                            <span className="text-3xl opacity-20">🖼️</span>
+                          </div>
+                        }
+                      />
+                    </div>
+                  )}
+
+                  {/* Final selection details */}
+                  <div className="flex-1 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-sandstone text-basalt text-[11px] font-semibold rounded-full">
+                        ⭐ Final Selection
+                      </span>
+                    </div>
+                    <h3 className="font-serif text-lg text-sandstone mb-1">
+                      {finalPick.name || <span className="text-sandstone/50 italic">Untitled</span>}
+                    </h3>
+                    {finalPick.notes && (
+                      <p className="text-sm text-cream/60 whitespace-pre-wrap mb-2">{finalPick.notes}</p>
+                    )}
+                    {finalPick.urls && finalPick.urls.length > 0 && (
+                      <div className="mb-2">
+                        {finalPick.urls.map((u) => (
+                          <a
+                            key={u.id}
+                            href={u.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-sandstone/60 hover:text-sandstone underline"
+                          >
+                            {u.linkTitle || u.url}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                    {finalComments.length > 0 && (
+                      <div className="mt-3 pt-2 border-t border-sandstone/15 space-y-2 max-h-[120px] overflow-y-auto">
+                        <p className="text-[10px] text-cream/30 uppercase tracking-wide font-medium">Comments</p>
+                        {finalComments.slice(-3).map((c) => (
+                          <div key={c.id} className="text-xs">
+                            <span className="text-cream/50 font-medium">{c.authorName}</span>
+                            <span className="text-cream/20 mx-1">·</span>
+                            <span className="text-cream/25">{relativeTime(c.createdAt)}</span>
+                            <p className="text-cream/60 mt-0.5">{c.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setActiveCardId(finalPick.id)}
+                      className="mt-3 text-xs text-sandstone/60 hover:text-sandstone transition-colors"
+                    >
+                      View full details →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })() : (
+            <div className="border border-cream/10 bg-cream/3 rounded-xl p-5 text-center">
+              <p className="text-sm text-cream/40 mb-2">No final selection yet</p>
+              {!readOnly && (
+                <p className="text-xs text-cream/25">
+                  Choose a final pick from the ideas below, or{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const id = crypto.randomUUID()
+                      const now = new Date().toISOString()
+                      updateDecision({
+                        options: [
+                          ...foundDecision.options.map((o) => ({ ...o, isSelected: false })),
+                          { id, kind: 'text' as const, name: '', notes: '', urls: [], isSelected: true, createdAt: now, updatedAt: now },
+                        ],
+                      })
+                      setActiveCardId(id)
+                    }}
+                    className="text-sandstone hover:text-sandstone-light transition-colors underline"
+                  >
+                    add your final decision directly
+                  </button>.
+                </p>
+              )}
+            </div>
           )}
         </div>
 
-        {/* Ideas board — primary content, shown first */}
+        {/* Ideas board */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-3">
             <button
               type="button"
               onClick={() => setOptionsOpen(!optionsOpen)}
-              className="flex items-center gap-2 text-lg font-medium text-cream hover:text-cream/80 transition-colors"
+              className="flex items-center gap-2 text-lg font-medium text-cream hover:text-cream/80 transition-colors md:pointer-events-none"
             >
-              <span className="text-cream/30 text-xs">{optionsOpen ? '▼' : '▶'}</span>
+              <span className="text-cream/30 text-xs md:hidden">{optionsOpen ? '▼' : '▶'}</span>
               Idea Board
               {foundDecision.options.length > 0 && (
                 <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-cream/10 text-cream/50 text-xs font-medium rounded-full">
@@ -745,19 +864,17 @@ export function DecisionDetailContent({
           }}
         />
 
-        {/* Danger zone — collapsed by default */}
+        {/* Delete selection */}
         {!readOnly && !isSystemUncategorized && (
-          <details className="mt-8 border border-red-500/20 rounded-lg">
-            <summary className="px-4 py-3 text-sm font-medium text-red-400/70 cursor-pointer hover:text-red-400 transition-colors">
-              Danger zone
-            </summary>
-            <div className="px-4 pb-4">
-              <p className="text-xs text-cream/40 mb-3">This action cannot be undone.</p>
-              <Button variant="danger" onClick={deleteDecision}>
-                Delete Selection
-              </Button>
-            </div>
-          </details>
+          <div className="mt-8 pt-4 border-t border-cream/10">
+            <button
+              type="button"
+              onClick={() => setDeleteConfirmOpen(true)}
+              className="text-xs text-red-400/50 hover:text-red-400 transition-colors"
+            >
+              Delete Selection
+            </button>
+          </div>
         )}
       </div>
 
@@ -863,6 +980,21 @@ export function DecisionDetailContent({
           />
         ) : null
       })()}
+
+      {/* Delete selection confirm */}
+      {deleteConfirmOpen && (
+        <ConfirmDialog
+          title="Delete this selection?"
+          message="All ideas, comments, and images in this selection will be permanently lost. This cannot be undone."
+          confirmLabel="Delete Selection"
+          confirmVariant="danger"
+          onConfirm={() => {
+            setDeleteConfirmOpen(false)
+            deleteDecision()
+          }}
+          onCancel={() => setDeleteConfirmOpen(false)}
+        />
+      )}
 
       {/* Toast */}
       {assignToast && (

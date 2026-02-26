@@ -171,7 +171,9 @@ export function SelectionsBoardView({
                     Unsorted
                   </span>
                 ) : (
-                  <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
+                  <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border shadow-sm ${statusCfg.pillClass}`}>
+                    {statusCfg.label}
+                  </span>
                 )}
               </div>
             </div>
