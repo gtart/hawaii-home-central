@@ -356,118 +356,75 @@ export function DecisionTrackerPage({
               )}
             </button>
             <div className="flex-1" />
-            <button
-              onClick={expandAll}
-              className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
-            >
-              Expand
-            </button>
-            <span className="text-cream/15 select-none">·</span>
-            <button
-              onClick={collapseAll}
-              className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
-            >
-              Collapse
-            </button>
             {isFiltering && (
-              <>
-                <span className="text-cream/15 select-none">·</span>
-                <span className="text-[11px] text-cream/50">
-                  {filteredDecisions}/{totalDecisions}
-                </span>
-              </>
+              <span className="text-[11px] text-cream/50">
+                {filteredDecisions}/{totalDecisions}
+              </span>
             )}
           </div>
 
-          {/* Desktop filter row: rooms + status + expand/collapse */}
-          <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
-            {/* Room filters */}
-            <button
-              onClick={() => setRoomFilter(null)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                roomFilter === null
-                  ? 'bg-sandstone/20 text-sandstone ring-1 ring-sandstone/40'
-                  : 'bg-cream/10 text-cream/60 hover:text-cream/80'
-              }`}
-            >
-              All Rooms
-            </button>
-            {rooms.filter((r) => !isGlobalUnsorted(r)).map((room) => (
+          {/* Desktop filter rows */}
+          <div className="hidden md:block mb-4 space-y-2">
+            {/* Row 1: Room filters */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-cream/30 mr-1">Room</span>
               <button
-                key={room.id}
-                onClick={() => setRoomFilter(roomFilter === room.id ? null : room.id)}
+                onClick={() => setRoomFilter(null)}
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                  roomFilter === room.id
+                  roomFilter === null
                     ? 'bg-sandstone/20 text-sandstone ring-1 ring-sandstone/40'
                     : 'bg-cream/10 text-cream/60 hover:text-cream/80'
                 }`}
               >
-                {room.name}
-                <span className="text-[10px] opacity-70 ml-1">{room.decisions.length}</span>
+                All
               </button>
-            ))}
-
-            {/* Separator */}
-            <span className="text-cream/15 mx-0.5 select-none">|</span>
-
-            {/* Status filters */}
-            {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, (typeof STATUS_CONFIG_V3)[StatusV3]][]).map(
-              ([status, config]) => {
-                const isActive = statusFilters.includes(status)
-                const count = statusCounts[status] ?? 0
-                if (count === 0) return null
-
-                return (
-                  <button
-                    key={status}
-                    onClick={() => toggleStatusFilter(status)}
-                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                      isActive
-                        ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
-                        : 'bg-cream/10 text-cream/60 hover:text-cream/80'
-                    }`}
-                  >
-                    {config.label}
-                    <span className="text-[10px] opacity-70">{count}</span>
-                  </button>
-                )
-              }
-            )}
-
-            {/* Expand / Collapse + results counter */}
-            <div className="flex-1" />
-            <button
-              onClick={expandAll}
-              className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
-            >
-              Expand
-            </button>
-            <span className="text-cream/15 select-none">·</span>
-            <button
-              onClick={collapseAll}
-              className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
-            >
-              Collapse
-            </button>
-            {isFiltering && (
-              <>
-                <span className="text-cream/15 select-none">·</span>
-                <span className="text-[11px] text-cream/50">
+              {rooms.filter((r) => !isGlobalUnsorted(r)).map((room) => (
+                <button
+                  key={room.id}
+                  onClick={() => setRoomFilter(roomFilter === room.id ? null : room.id)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                    roomFilter === room.id
+                      ? 'bg-sandstone/20 text-sandstone ring-1 ring-sandstone/40'
+                      : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                  }`}
+                >
+                  {room.name}
+                  <span className="text-[10px] opacity-70 ml-1">{room.decisions.length}</span>
+                </button>
+              ))}
+              {isFiltering && (
+                <span className="text-[11px] text-cream/50 ml-auto">
                   {filteredDecisions}/{totalDecisions}
                 </span>
-              </>
-            )}
-            {!readOnly && (
-              <>
-                <span className="text-cream/15 select-none">·</span>
-                <button
-                  onClick={() => setAddRoomOpen(true)}
-                  className="inline-flex items-center gap-1 text-[11px] text-sandstone hover:text-sandstone-light transition-colors font-medium"
-                >
-                  + Add a Room
-                </button>
-              </>
-            )}
+              )}
+            </div>
+
+            {/* Row 2: Status filters */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-cream/30 mr-1">Status</span>
+              {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, (typeof STATUS_CONFIG_V3)[StatusV3]][]).map(
+                ([status, config]) => {
+                  const isActive = statusFilters.includes(status)
+                  const count = statusCounts[status] ?? 0
+                  if (count === 0) return null
+
+                  return (
+                    <button
+                      key={status}
+                      onClick={() => toggleStatusFilter(status)}
+                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        isActive
+                          ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                          : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                      }`}
+                    >
+                      {config.label}
+                      <span className="text-[10px] opacity-70">{count}</span>
+                    </button>
+                  )
+                }
+              )}
+            </div>
           </div>
 
           {/* Content */}
@@ -492,6 +449,7 @@ export function DecisionTrackerPage({
               rooms={filteredRooms}
               onUpdateRoom={onUpdateRoom}
               onQuickAdd={(roomId) => openQuickAdd(roomId)}
+              onAddRoom={() => setAddRoomOpen(true)}
               readOnly={readOnly}
             />
           ) : (

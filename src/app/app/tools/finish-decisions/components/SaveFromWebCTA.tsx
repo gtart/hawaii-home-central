@@ -1,34 +1,107 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { BookmarkletButton } from './BookmarkletButton'
+
+const DISMISSED_KEY = 'hhc_save_tip_dismissed'
 
 /**
- * CTA banner for the "Save to HHC" feature (bookmarklet + URL import).
- * Placed on the Selection Boards page.
+ * Expandable "Tip" banner for the "Save to HHC" bookmarklet.
+ * Placed near the top of the Selection Boards page.
+ * Collapsible — users can dismiss it, and it stays collapsed.
  */
 export function SaveFromWebCTA({ className = '' }: { className?: string }) {
-  return (
-    <Link
-      href="/app/save-from-web"
-      data-testid="savefromweb-cta"
-      className={`flex items-center gap-3 bg-basalt-50 border border-cream/10 rounded-xl px-4 py-3 hover:border-sandstone/30 transition-colors group ${className}`}
-    >
-      <div className="w-9 h-9 rounded-lg bg-sandstone/10 flex items-center justify-center shrink-0 group-hover:bg-sandstone/20 transition-colors">
-        <svg className="w-4.5 h-4.5 text-sandstone" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+  const [expanded, setExpanded] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(DISMISSED_KEY) === '1') setDismissed(true)
+    } catch { /* ignore */ }
+  }, [])
+
+  function handleDismiss() {
+    setDismissed(true)
+    try { localStorage.setItem(DISMISSED_KEY, '1') } catch { /* ignore */ }
+  }
+
+  if (dismissed) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setDismissed(false)
+          setExpanded(true)
+          try { localStorage.removeItem(DISMISSED_KEY) } catch { /* ignore */ }
+        }}
+        className={`inline-flex items-center gap-1.5 text-[11px] text-sandstone/50 hover:text-sandstone transition-colors ${className}`}
+      >
+        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
         </svg>
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-cream/70 group-hover:text-cream/90 transition-colors">
-          Save to HHC
-        </p>
-        <p className="text-[11px] text-cream/35">
-          Use the bookmarklet (best) or paste a link to capture images
-        </p>
-      </div>
-      <svg className="w-4 h-4 text-cream/20 group-hover:text-cream/40 transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </Link>
+        Tip: Save images from any website
+      </button>
+    )
+  }
+
+  return (
+    <div
+      data-testid="savefromweb-cta"
+      className={`border border-sandstone/20 bg-sandstone/5 rounded-xl overflow-hidden ${className}`}
+    >
+      {/* Collapsed header */}
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-sandstone/5 transition-colors"
+      >
+        <svg className="w-4 h-4 text-sandstone/70 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
+        </svg>
+        <span className="flex-1 text-sm text-sandstone/80 font-medium">
+          Tip: Save images from any website to your boards
+        </span>
+        <svg
+          className={`w-3.5 h-3.5 text-sandstone/40 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {/* Expanded content */}
+      {expanded && (
+        <div className="px-4 pb-4 space-y-3 border-t border-sandstone/10">
+          <p className="text-xs text-cream/50 pt-3">
+            Drag the button below to your bookmarks bar. Then click it on any website to capture images
+            and save them directly to your Selection Boards or Mood Boards.
+          </p>
+
+          <BookmarkletButton compact />
+
+          <div className="flex items-center gap-3 pt-1">
+            <Link
+              href="/app/save-from-web"
+              className="text-[11px] text-sandstone/60 hover:text-sandstone transition-colors"
+            >
+              Full setup guide →
+            </Link>
+            <button
+              type="button"
+              onClick={handleDismiss}
+              className="text-[11px] text-cream/25 hover:text-cream/40 transition-colors ml-auto"
+            >
+              Dismiss tip
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

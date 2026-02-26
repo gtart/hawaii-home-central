@@ -65,13 +65,13 @@ function getRoomStats(room: RoomV3) {
 
   // Comments
   let totalComments = 0
-  let lastComment: { authorName: string; createdAt: string } | null = null
+  let lastComment: { authorName: string; createdAt: string; text: string; decisionTitle: string } | null = null
   for (const d of room.decisions) {
     const comments = d.comments || []
     totalComments += comments.length
     for (const c of comments) {
       if (c.authorEmail !== '' && (!lastComment || c.createdAt > lastComment.createdAt)) {
-        lastComment = { authorName: c.authorName, createdAt: c.createdAt }
+        lastComment = { authorName: c.authorName, createdAt: c.createdAt, text: c.text, decisionTitle: d.title }
       }
     }
   }
@@ -97,15 +97,22 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'comments', label: 'Most comments' },
 ]
 
+function truncate(text: string, max = 50): string {
+  if (text.length <= max) return text
+  return text.slice(0, max).trimEnd() + '…'
+}
+
 export function RoomsBoardView({
   rooms,
   onUpdateRoom,
   onQuickAdd,
+  onAddRoom,
   readOnly = false,
 }: {
   rooms: RoomV3[]
   onUpdateRoom: (roomId: string, updates: Partial<RoomV3>) => void
   onQuickAdd: (roomId: string) => void
+  onAddRoom?: () => void
   readOnly?: boolean
 }) {
   const router = useRouter()
@@ -163,6 +170,9 @@ export function RoomsBoardView({
           </select>
         </div>
       )}
+
+      {/* Save to HHC tip */}
+      {!readOnly && <SaveFromWebCTA className="mb-4" />}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedRooms.map((room) => {
@@ -301,22 +311,39 @@ export function RoomsBoardView({
 
                 {/* Comment summary */}
                 {stats.totalComments > 0 && (
-                  <p className="text-[10px] text-cream/25">
-                    💬 {stats.totalComments}
+                  <div className="text-[10px] text-cream/25">
+                    <span>💬 {stats.totalComments}</span>
                     {stats.lastComment && (
-                      <span> · {stats.lastComment.authorName.split(' ')[0]} {relativeTime(stats.lastComment.createdAt)}</span>
+                      <p className="mt-0.5 text-cream/35 line-clamp-1">
+                        &ldquo;{truncate(stats.lastComment.text, 50)}&rdquo;
+                        {' — '}{stats.lastComment.authorName.split(' ')[0]}, {relativeTime(stats.lastComment.createdAt)}
+                      </p>
                     )}
-                  </p>
+                  </div>
                 )}
 
               </div>
             </div>
           )
         })}
+
+        {/* Add a Room tile */}
+        {!readOnly && onAddRoom && (
+          <button
+            type="button"
+            onClick={onAddRoom}
+            className="bg-basalt-50/50 rounded-xl overflow-hidden border-2 border-dashed border-cream/15 hover:border-sandstone/40 transition-all cursor-pointer group flex flex-col items-center justify-center min-h-[200px] focus:outline-none focus:ring-2 focus:ring-sandstone/50"
+          >
+            <div className="w-12 h-12 rounded-full bg-cream/5 group-hover:bg-sandstone/10 flex items-center justify-center transition-colors mb-3">
+              <svg className="w-6 h-6 text-cream/30 group-hover:text-sandstone transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+              </svg>
+            </div>
+            <span className="text-sm font-medium text-cream/40 group-hover:text-sandstone transition-colors">Add a Room</span>
+          </button>
+        )}
       </div>
 
-      {/* Save from Web CTA */}
-      {!readOnly && <SaveFromWebCTA className="mt-4" />}
 
       {/* Cover picker modal */}
       {coverPickerRoom && (
