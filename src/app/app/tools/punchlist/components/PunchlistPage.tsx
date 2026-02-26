@@ -238,7 +238,7 @@ export function PunchlistPage({ api }: Props) {
       )}
 
       {/* Showing X of Y + Clear filters */}
-      {(filtered.length !== payload.items.length || filterStatus !== 'ALL' || filterLocation || filterAssignee || search.trim()) && (
+      {(filterStatus !== 'ALL' || filterLocation || filterAssignee || search.trim()) && (
         <div className="flex items-center justify-between mb-4">
           <span className="text-xs text-cream/40">
             Showing {filtered.length} of {payload.items.length}

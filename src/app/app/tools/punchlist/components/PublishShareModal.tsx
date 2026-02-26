@@ -5,6 +5,7 @@ import type { PunchlistStatus } from '../types'
 
 interface Props {
   toolKey: string
+  projectId: string
   locations: string[]
   assignees: string[]
   onClose: () => void
@@ -17,7 +18,7 @@ const STATUS_CHECKS: { key: PunchlistStatus; label: string }[] = [
   { key: 'DONE', label: 'Done' },
 ]
 
-export function PublishShareModal({ toolKey, locations, assignees, onClose, onCreated }: Props) {
+export function PublishShareModal({ toolKey, projectId, locations, assignees, onClose, onCreated }: Props) {
   const [includeNotes, setIncludeNotes] = useState(false)
   const [includeComments, setIncludeComments] = useState(false)
   const [includePhotos, setIncludePhotos] = useState(false)
@@ -73,7 +74,7 @@ export function PublishShareModal({ toolKey, locations, assignees, onClose, onCr
     setCreating(true)
 
     try {
-      const res = await fetch(`/api/tools/${toolKey}/share-token`, {
+      const res = await fetch(`/api/tools/${toolKey}/share-token?projectId=${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -13,10 +13,11 @@ interface ShareTokenEntry {
 interface Props {
   boardId: string
   boardName: string
+  projectId: string
   isOwner: boolean
 }
 
-export function BoardShareLinks({ boardId, boardName, isOwner }: Props) {
+export function BoardShareLinks({ boardId, boardName, projectId, isOwner }: Props) {
   const [tokens, setTokens] = useState<ShareTokenEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -24,7 +25,7 @@ export function BoardShareLinks({ boardId, boardName, isOwner }: Props) {
 
   const loadTokens = useCallback(async () => {
     try {
-      const res = await fetch('/api/tools/mood_boards/share-token')
+      const res = await fetch(`/api/tools/mood_boards/share-token?projectId=${projectId}`)
       if (!res.ok) return
       const data = await res.json()
       // Filter to tokens for this board only
@@ -38,7 +39,7 @@ export function BoardShareLinks({ boardId, boardName, isOwner }: Props) {
     } finally {
       setLoading(false)
     }
-  }, [boardId])
+  }, [boardId, projectId])
 
   useEffect(() => {
     if (isOwner) loadTokens()
@@ -48,7 +49,7 @@ export function BoardShareLinks({ boardId, boardName, isOwner }: Props) {
   async function handleCreate() {
     setCreating(true)
     try {
-      const res = await fetch('/api/tools/mood_boards/share-token', {
+      const res = await fetch(`/api/tools/mood_boards/share-token?projectId=${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -69,7 +70,7 @@ export function BoardShareLinks({ boardId, boardName, isOwner }: Props) {
 
   async function handleRevoke(tokenId: string) {
     if (!confirm('Revoke this public link? Anyone with it will no longer be able to view this board.')) return
-    await fetch('/api/tools/mood_boards/share-token', {
+    await fetch(`/api/tools/mood_boards/share-token?projectId=${projectId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tokenId }),

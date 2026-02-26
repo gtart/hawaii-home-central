@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { useProject } from '@/contexts/ProjectContext'
 import Link from 'next/link'
 import { isDefaultBoard } from '@/data/mood-boards'
 import type { Board, Idea, ReactionType } from '@/data/mood-boards'
@@ -26,6 +27,7 @@ interface Props {
 export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
   const router = useRouter()
   const { data: session } = useSession()
+  const { currentProject } = useProject()
   const [selectedIdeaId, setSelectedIdeaId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState(false)
   const [boardName, setBoardName] = useState(board.name)
@@ -517,6 +519,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
       <BoardShareLinks
         boardId={board.id}
         boardName={board.name}
+        projectId={currentProject?.id || ''}
         isOwner={toolAccess === 'OWNER'}
       />
 

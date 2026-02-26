@@ -3,6 +3,34 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { requireProjectMembership } from '@/lib/project-access'
 
+/** GET /api/projects/[projectId] — fetch project name (member access required) */
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { projectId } = await params
+  const member = await requireProjectMembership(session.user.id, projectId).catch(() => null)
+  if (!member) {
+    return NextResponse.json({ error: 'Not a member' }, { status: 403 })
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { id: true, name: true, status: true },
+  })
+
+  if (!project) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
+  return NextResponse.json(project)
+}
+
 /** PATCH /api/projects/[projectId] — update name or status */
 export async function PATCH(
   request: Request,

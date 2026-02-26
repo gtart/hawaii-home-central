@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { useProject } from '@/contexts/ProjectContext'
 import { usePunchlistState } from '../usePunchlistState'
 import type { PunchlistItem, PunchlistStatus } from '../types'
 
@@ -91,6 +90,7 @@ export function PunchlistReport() {
   const requiredProjectId = searchParams.get('projectId')
   const includeNotes = searchParams.get('includeNotes') === 'true'
   const includeComments = searchParams.get('includeComments') === 'true'
+  const includePhotos = searchParams.get('includePhotos') === 'true'
   const orgMode = searchParams.get('org') || 'room_status'
   const statusParam = searchParams.get('statuses') || 'OPEN,ACCEPTED'
   const includedStatuses = useMemo(
@@ -107,13 +107,30 @@ export function PunchlistReport() {
     () => (assigneesParam ? assigneesParam.split(',').filter(Boolean) : []),
     [assigneesParam]
   )
-  const { payload, isLoaded } = usePunchlistState()
-  const { currentProject } = useProject()
 
-  // P0.3: Mismatch guard — if the report opened with a projectId that doesn't
-  // match the session's current project, refuse to render instead of showing
-  // items from the wrong project.
-  const projectMismatch = requiredProjectId && currentProject && currentProject.id !== requiredProjectId
+  // P0.3: Fetch data for the URL's projectId, not the session's currentProject
+  const { payload, isLoaded } = usePunchlistState(
+    requiredProjectId ? { projectIdOverride: requiredProjectId } : undefined
+  )
+
+  // Fetch project name from API for the report header
+  const [projectName, setProjectName] = useState<string | null>(null)
+  useEffect(() => {
+    if (!requiredProjectId) return
+    async function loadProjectName() {
+      try {
+        const res = await fetch(`/api/projects/${requiredProjectId}`)
+        if (res.ok) {
+          const data = await res.json()
+          setProjectName(data.name || null)
+        }
+      } catch {
+        // use null — header will just not show project name
+      }
+    }
+    loadProjectName()
+  }, [requiredProjectId])
+
   const [settings, setSettings] = useState<ReportSettings>({
     companyName: 'HawaiiHomeCentral.com',
     reportTitle: 'Fix List Report',
@@ -136,13 +153,13 @@ export function PunchlistReport() {
     load()
   }, [])
 
-  // Auto-trigger print when loaded (skip if project mismatch)
+  // Auto-trigger print when loaded
   useEffect(() => {
-    if (isLoaded && payload.items.length > 0 && !projectMismatch) {
+    if (isLoaded && payload.items.length > 0) {
       const timeout = setTimeout(() => window.print(), 500)
       return () => clearTimeout(timeout)
     }
-  }, [isLoaded, payload.items.length, projectMismatch])
+  }, [isLoaded, payload.items.length])
 
   const reportItems = useMemo(
     () =>
@@ -162,16 +179,6 @@ export function PunchlistReport() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-      </div>
-    )
-  }
-
-  if (projectMismatch) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <p className="text-red-600 font-medium">Project mismatch — cannot render report.</p>
-        <p className="text-gray-500 text-sm">The report was requested for a different project than your current session.</p>
-        <a href="/app/tools/punchlist" className="text-blue-600 underline text-sm">Back to Fix List</a>
       </div>
     )
   }
@@ -240,8 +247,8 @@ export function PunchlistReport() {
             </div>
 
             {/* Project name — prominent */}
-            {currentProject && (
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">{currentProject.name}</h1>
+            {projectName && (
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">{projectName}</h1>
             )}
 
             {/* Report type + metadata */}
@@ -267,6 +274,11 @@ export function PunchlistReport() {
           </div>
 
           {/* Grouped items */}
+          {reportItems.length === 0 && (
+            <p className="text-gray-500 text-center py-12">
+              No items match the selected filters.
+            </p>
+          )}
           {sections.map((section) => (
             <div key={section.label} className="mb-8">
               <h2 className="text-lg font-semibold text-gray-800 mb-3 pb-1 border-b border-gray-200">
@@ -277,7 +289,7 @@ export function PunchlistReport() {
                   <h3 className="text-sm font-medium text-gray-500 mb-2 ml-1">{sub.label}</h3>
                   <div className="space-y-3">
                     {sub.items.map((item) => (
-                      <ReportItem key={item.id} item={item} includeNotes={includeNotes} includeComments={includeComments} />
+                      <ReportItem key={item.id} item={item} includeNotes={includeNotes} includeComments={includeComments} includePhotos={includePhotos} />
                     ))}
                   </div>
                 </div>
@@ -293,19 +305,19 @@ export function PunchlistReport() {
 
         {/* Print-only repeating footer */}
         <div className="print-footer print-only">
-          {settings.footerText} &middot; {currentProject?.name || ''} &middot; {new Date().toLocaleDateString()}
+          {settings.footerText} &middot; {projectName || ''} &middot; {new Date().toLocaleDateString()}
         </div>
       </div>
     </>
   )
 }
 
-function ReportItem({ item, includeNotes, includeComments }: { item: PunchlistItem; includeNotes: boolean; includeComments: boolean }) {
+function ReportItem({ item, includeNotes, includeComments, includePhotos }: { item: PunchlistItem; includeNotes: boolean; includeComments: boolean; includePhotos: boolean }) {
   return (
     <div className="page-break-avoid border border-gray-200 rounded-lg p-4">
       <div className="flex gap-4">
         {/* Photo thumbnails */}
-        {item.photos.length > 0 && (
+        {includePhotos && item.photos.length > 0 && (
           <div className="flex gap-1 shrink-0">
             {item.photos.slice(0, 3).map((photo) => (
               <img

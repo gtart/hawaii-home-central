@@ -10,7 +10,7 @@ import {
 } from '@/lib/share-tokens'
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ toolKey: string }> }
 ) {
   const session = await auth()
@@ -20,7 +20,8 @@ export async function GET(
 
   const { toolKey } = await params
   const userId = session.user.id
-  const projectId = await ensureCurrentProject(userId)
+  const explicitProjectId = new URL(request.url).searchParams.get('projectId')
+  const projectId = explicitProjectId || await ensureCurrentProject(userId)
 
   // Only owners can manage share tokens
   const access = await resolveToolAccess(userId, projectId, toolKey)
@@ -62,7 +63,8 @@ export async function POST(
 
   const { toolKey } = await params
   const userId = session.user.id
-  const projectId = await ensureCurrentProject(userId)
+  const explicitProjectId = new URL(request.url).searchParams.get('projectId')
+  const projectId = explicitProjectId || await ensureCurrentProject(userId)
 
   const access = await resolveToolAccess(userId, projectId, toolKey)
   if (access !== 'OWNER') {
@@ -137,7 +139,8 @@ export async function DELETE(
 
   const { toolKey } = await params
   const userId = session.user.id
-  const projectId = await ensureCurrentProject(userId)
+  const explicitProjectId = new URL(request.url).searchParams.get('projectId')
+  const projectId = explicitProjectId || await ensureCurrentProject(userId)
 
   const access = await resolveToolAccess(userId, projectId, toolKey)
   if (access !== 'OWNER') {

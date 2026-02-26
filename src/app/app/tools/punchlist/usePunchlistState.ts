@@ -88,12 +88,13 @@ function now() {
   return new Date().toISOString()
 }
 
-export function usePunchlistState() {
+export function usePunchlistState(opts?: { projectIdOverride?: string | null }) {
   const { state: rawState, setState, isLoaded, isSyncing, access, readOnly, noAccess } =
     useToolState<PunchlistPayload>({
       toolKey: 'punchlist',
       localStorageKey: 'hhc_punchlist_v1',
       defaultValue: DEFAULT_PAYLOAD,
+      projectIdOverride: opts?.projectIdOverride,
     })
 
   const payload = ensureShape(rawState)

@@ -89,6 +89,7 @@ export async function GET(
     includeNotes,
     includePhotos,
     boardId,
-    filters: { locations: filterLocations, assignees: filterAssignees },
+    includeComments,
+    filters: { locations: filterLocations, assignees: filterAssignees, statuses: filterStatuses },
   })
 }

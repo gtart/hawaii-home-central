@@ -19,6 +19,8 @@ interface UseToolStateOptions<T> {
   defaultValue: T
   /** When true, skip API calls and only use localStorage. */
   localOnly?: boolean
+  /** Override the project ID (e.g. for deterministic report rendering). */
+  projectIdOverride?: string | null
 }
 
 interface UseToolStateReturn<T> {
@@ -45,9 +47,10 @@ export function useToolState<T>({
   localStorageKey,
   defaultValue,
   localOnly = false,
+  projectIdOverride,
 }: UseToolStateOptions<T>): UseToolStateReturn<T> {
   const { currentProject } = useProject()
-  const projectId = currentProject?.id
+  const projectId = projectIdOverride ?? currentProject?.id
 
   // Scope localStorage by project to prevent cross-project data leakage
   const scopedKey = useMemo(
