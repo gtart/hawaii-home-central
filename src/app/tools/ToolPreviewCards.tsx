@@ -30,7 +30,7 @@ const STAGES: StageEntry[] = [
     tool: {
       title: 'Mood Boards',
       description:
-        'Save inspiration from anywhere\u2014Pinterest, Houzz, Home Depot, Instagram\u2014and organize ideas into boards before turning your favorites into real selections.',
+        'Save inspiration from across the web\u2014product pages, design blogs, retailer sites\u2014and organize ideas into boards before turning your favorites into real selections.',
       ctaText: 'Sign in to get started',
       ctaHref: '/login?callbackUrl=/app/tools/mood-boards',
       steps: [
@@ -39,7 +39,7 @@ const STAGES: StageEntry[] = [
         'Turn your favorites into finish selections when you\u2019re ready',
       ],
       features: [
-        'Pinterest-style boards with images and source links',
+        'Visual boards with images and source links',
         'One-click save from any product or inspiration page',
         'Convert ideas to Finish Selections when you\u2019re ready to decide',
       ],

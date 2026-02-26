@@ -574,7 +574,7 @@ export function SaveFromWebContent() {
                   <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">2</span>
                   <div>
                     <p className="text-sm text-cream/80">Visit any product or inspiration page</p>
-                    <p className="text-xs text-cream/40 mt-0.5">Home Depot, Lowes, Wayfair, Amazon, Pinterest, Houzz, etc.</p>
+                    <p className="text-xs text-cream/40 mt-0.5">Home Depot, Lowes, Wayfair, Amazon, design blogs, etc.</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
