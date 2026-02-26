@@ -1,12 +1,27 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useSession } from 'next-auth/react'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import type { Idea, Board, ReactionType } from '@/data/mood-boards'
+import type { Idea, Board, ReactionType, MoodBoardComment } from '@/data/mood-boards'
 import { REACTION_CONFIG } from '@/data/mood-boards'
 import { MoveToBoardSheet } from './MoveToBoardSheet'
 import { ConvertToSelectionSheet } from './ConvertToSelectionSheet'
+
+const MAX_COMMENT_LENGTH = 400
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60_000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days}d ago`
+  return new Date(iso).toLocaleDateString()
+}
 
 interface Props {
   idea: Idea
@@ -19,6 +34,14 @@ interface Props {
   onMoveIdea: (toBoardId: string, ideaId: string) => void
   onToggleReaction: (ideaId: string, reaction: ReactionType) => void
   onCommentOnIdea: (ideaId: string, ideaName: string) => void
+  onAddComment: (comment: {
+    text: string
+    authorName: string
+    authorEmail: string
+    refIdeaId?: string
+    refIdeaLabel?: string
+  }) => void
+  boardComments: MoodBoardComment[]
   currentUserEmail: string
 }
 
@@ -41,9 +64,13 @@ export function IdeaDetailModal({
   onMoveIdea,
   onToggleReaction,
   onCommentOnIdea,
+  onAddComment,
+  boardComments,
   currentUserEmail,
 }: Props) {
+  const { data: session } = useSession()
   const dialogRef = useRef<HTMLDivElement>(null)
+  const commentInputRef = useRef<HTMLTextAreaElement>(null)
   const [name, setName] = useState(idea.name)
   const [notes, setNotes] = useState(idea.notes)
   const [tagsInput, setTagsInput] = useState(idea.tags.join(', '))
@@ -52,6 +79,25 @@ export function IdeaDetailModal({
   const [showConvertSheet, setShowConvertSheet] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [commentText, setCommentText] = useState('')
+
+  // Filter comments for this idea
+  const ideaComments = boardComments
+    .filter((c) => c.refIdeaId === idea.id)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+  const handlePostComment = () => {
+    const trimmed = commentText.trim()
+    if (!trimmed || !session?.user) return
+    onAddComment({
+      text: trimmed,
+      authorName: session.user.name || 'Anonymous',
+      authorEmail: session.user.email || '',
+      refIdeaId: idea.id,
+      refIdeaLabel: idea.name,
+    })
+    setCommentText('')
+  }
 
   // Focus trap
   useEffect(() => {
@@ -330,19 +376,92 @@ export function IdeaDetailModal({
             )}
           </div>
 
-          {/* Actions */}
-          {!readOnly && (
-            <div className="flex items-center gap-3 pt-2 border-t border-cream/10 flex-wrap">
+          {/* Inline comments for this idea */}
+          <div className="pt-2 border-t border-cream/10">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-medium text-cream/50 uppercase tracking-wide">
+                Comments {ideaComments.length > 0 && (
+                  <span className="text-cream/30">({ideaComments.length})</span>
+                )}
+              </h4>
               <button
                 type="button"
                 onClick={() => {
                   onCommentOnIdea(idea.id, idea.name)
                   onClose()
                 }}
-                className="px-3 py-1.5 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors"
+                className="text-[11px] text-sandstone/60 hover:text-sandstone transition-colors"
               >
-                Comment...
+                View all board comments
               </button>
+            </div>
+
+            {/* Comment input */}
+            {!readOnly && (
+              <div className="mb-3">
+                <textarea
+                  ref={commentInputRef}
+                  value={commentText}
+                  onChange={(e) =>
+                    setCommentText(e.target.value.slice(0, MAX_COMMENT_LENGTH))
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handlePostComment()
+                    }
+                  }}
+                  placeholder="Add a comment about this idea..."
+                  rows={2}
+                  className="w-full px-3 py-2 bg-basalt border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone resize-none"
+                />
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-[10px] text-cream/30">
+                    {commentText.length > 0 &&
+                      `${commentText.length}/${MAX_COMMENT_LENGTH}`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handlePostComment}
+                    disabled={!commentText.trim()}
+                    className="px-3 py-1 bg-sandstone text-basalt text-xs font-medium rounded-md hover:bg-sandstone-light transition-colors disabled:opacity-30"
+                  >
+                    Post
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Comment thread */}
+            {ideaComments.length > 0 ? (
+              <div className="space-y-3 max-h-[200px] overflow-y-auto">
+                {ideaComments.map((comment) => (
+                  <div key={comment.id} className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-cream/70">
+                        {comment.authorName}
+                      </span>
+                      <span className="text-cream/20">&middot;</span>
+                      <span className="text-[11px] text-cream/30">
+                        {relativeTime(comment.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-cream/80 whitespace-pre-wrap">
+                      {comment.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-cream/30 py-2">
+                No comments yet on this idea.
+              </p>
+            )}
+          </div>
+
+          {/* Actions */}
+          {!readOnly && (
+            <div className="flex items-center gap-3 pt-2 border-t border-cream/10 flex-wrap">
               <button
                 type="button"
                 onClick={() => setShowMoveSheet(true)}

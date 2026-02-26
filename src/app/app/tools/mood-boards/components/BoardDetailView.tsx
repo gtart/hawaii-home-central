@@ -490,6 +490,8 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
             api.toggleReaction(board.id, ideaId, userEmail, userName, reaction)
           }
           onCommentOnIdea={handleCommentOnIdea}
+          onAddComment={(comment) => api.addComment(board.id, comment)}
+          boardComments={board.comments || []}
           currentUserEmail={userEmail}
         />
       )}
