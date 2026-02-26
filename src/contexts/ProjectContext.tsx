@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 
 export type ProjectRole = 'OWNER' | 'MEMBER'
 export type ProjectStatus = 'ACTIVE' | 'ARCHIVED' | 'TRASHED'
@@ -34,11 +35,16 @@ const ProjectContext = createContext<ProjectContextValue | null>(null)
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
+  const { status } = useSession()
   const [projects, setProjects] = useState<ProjectInfo[]>([])
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   const fetchProjects = useCallback(async () => {
+    if (status !== 'authenticated') {
+      setIsLoading(false)
+      return
+    }
     try {
       const res = await fetch('/api/projects')
       if (!res.ok) return
@@ -50,7 +56,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [status])
 
   useEffect(() => {
     fetchProjects()

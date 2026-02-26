@@ -56,7 +56,7 @@ export function Navigation() {
   // Hide nav on admin, public share, and report pages
   if (pathname.startsWith('/admin') || pathname.startsWith('/share') || pathname.includes('/report')) return null
 
-  const toolsLabel = session?.user ? 'Home Project Tools' : 'Tools'
+  const toolsLabel = session?.user ? 'My Home Tools' : 'Tools'
   const toolsHref = session?.user ? '/app' : '/tools'
 
   const primaryLinks: NavLink[] = [

@@ -1,7 +1,7 @@
 export const ONBOARDING_OPTIONS = [
   {
     label: "I'm planning a renovation",
-    href: '/tools',
+    href: '/app',
     focus: 'planning',
   },
   {

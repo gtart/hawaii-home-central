@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { useProject } from '@/contexts/ProjectContext'
 import type { ReactNode } from 'react'
 
@@ -8,11 +9,23 @@ import type { ReactNode } from 'react'
  * When the project changes, React unmounts and remounts all children,
  * causing useToolState hooks to refetch data for the new project.
  *
- * Shows a loading skeleton during fetch and an empty state when
- * the user has no active projects.
+ * Auto-creates a default "My Home" project when none exist,
+ * with a manual fallback button if auto-create fails.
  */
 export function ProjectKeyWrapper({ children }: { children: ReactNode }) {
   const { currentProject, isLoading, createProject } = useProject()
+  const creatingRef = useRef(false)
+  const failedRef = useRef(false)
+
+  useEffect(() => {
+    if (isLoading || currentProject || creatingRef.current || failedRef.current) return
+    creatingRef.current = true
+    createProject('My Home').catch(() => {
+      failedRef.current = true
+    }).finally(() => {
+      creatingRef.current = false
+    })
+  }, [isLoading, currentProject, createProject])
 
   if (isLoading) {
     return (
@@ -29,33 +42,40 @@ export function ProjectKeyWrapper({ children }: { children: ReactNode }) {
   }
 
   if (!currentProject) {
-    return <NoProjectsState onCreate={createProject} />
+    if (failedRef.current) {
+      return <NoProjectsFallback onCreate={createProject} />
+    }
+    // Auto-create in progress
+    return (
+      <div className="pt-32 pb-24 px-6">
+        <div className="max-w-md mx-auto text-center">
+          <div className="w-6 h-6 border-2 border-sandstone/30 border-t-sandstone rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-cream/50 text-sm">Setting up your home...</p>
+        </div>
+      </div>
+    )
   }
 
   return <div key={currentProject.id}>{children}</div>
 }
 
-function NoProjectsState({ onCreate }: { onCreate: (name: string) => Promise<string> }) {
-  const handleCreate = async () => {
-    await onCreate('My Home')
-  }
-
+function NoProjectsFallback({ onCreate }: { onCreate: (name: string) => Promise<string> }) {
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-md mx-auto text-center">
         <svg className="w-12 h-12 text-cream/20 mx-auto mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <h2 className="font-serif text-2xl text-sandstone mb-2">No projects</h2>
+        <h2 className="font-serif text-2xl text-sandstone mb-2">Something went wrong</h2>
         <p className="text-cream/50 text-sm mb-6 leading-relaxed">
-          Create a project to organize your renovation tools and save progress.
+          We couldn&apos;t set up your home automatically. Click below to try again.
         </p>
         <button
           type="button"
-          onClick={handleCreate}
+          onClick={() => onCreate('My Home')}
           className="px-6 py-2.5 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors"
         >
-          Create project
+          Create my home
         </button>
       </div>
     </div>

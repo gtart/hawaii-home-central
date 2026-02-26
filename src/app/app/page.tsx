@@ -3,10 +3,10 @@ import { Badge } from '@/components/ui/Badge'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { ToolGrid } from '@/components/app/ToolGrid'
 import { ProjectBanner } from '@/components/app/ProjectBanner'
-import { StartHereModule } from '@/components/app/StartHereModule'
+import { NextStepsCard } from '@/components/app/NextStepsCard'
 
 export const metadata: Metadata = {
-  title: 'Home Project Tools',
+  title: 'My Home Tools',
 }
 
 export default function AppPage() {
@@ -17,7 +17,7 @@ export default function AppPage() {
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-4">
               <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
-                Home Project Tools
+                My Home Tools
               </h1>
               <Badge variant="accent">Early Preview</Badge>
             </div>
@@ -29,7 +29,7 @@ export default function AppPage() {
 
         <FadeInSection delay={100}>
           <ProjectBanner />
-          <StartHereModule />
+          <NextStepsCard />
           <ToolGrid />
         </FadeInSection>
       </div>
