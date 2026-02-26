@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import Link from 'next/link'
 import { isDefaultBoard } from '@/data/mood-boards'
 import type { Board } from '@/data/mood-boards'
 import type { MoodBoardStateAPI } from '../useMoodBoardState'
@@ -250,6 +251,9 @@ export function BoardsHomeView({ api, readOnly }: Props) {
         )}
       </div>
 
+      {/* Recent Activity feed */}
+      <RecentActivity boards={payload.boards} />
+
       {deletingBoard && (
         <ConfirmDialog
           title={`Delete "${deletingBoard.name}"?`}
@@ -260,6 +264,92 @@ export function BoardsHomeView({ api, readOnly }: Props) {
           onCancel={() => setDeletingBoard(null)}
         />
       )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Recent Activity
+// ---------------------------------------------------------------------------
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60_000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days}d ago`
+  return new Date(iso).toLocaleDateString()
+}
+
+interface ActivityComment {
+  id: string
+  text: string
+  authorName: string
+  createdAt: string
+  refIdeaId?: string
+  refIdeaLabel?: string
+  boardId: string
+  boardName: string
+}
+
+function RecentActivity({ boards }: { boards: Board[] }) {
+  const allComments: ActivityComment[] = boards
+    .flatMap((board) =>
+      (board.comments || []).map((c) => ({
+        ...c,
+        boardId: board.id,
+        boardName: board.name,
+      }))
+    )
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 10)
+
+  if (allComments.length === 0) return null
+
+  return (
+    <div className="mt-8">
+      <h3 className="text-sm font-medium text-cream/60 mb-3">
+        Recent Activity
+      </h3>
+      <div className="space-y-3">
+        {allComments.map((comment) => (
+          <div
+            key={comment.id}
+            className="bg-basalt-50 border border-cream/10 rounded-lg p-3"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-medium text-cream/70">
+                {comment.authorName}
+              </span>
+              <span className="text-cream/20">&middot;</span>
+              <span className="text-[11px] text-cream/30">
+                {relativeTime(comment.createdAt)}
+              </span>
+              <span className="text-cream/20">&middot;</span>
+              <Link
+                href={`/app/tools/mood-boards?board=${comment.boardId}`}
+                className="text-[11px] text-sandstone/60 hover:text-sandstone transition-colors"
+              >
+                {comment.boardName}
+              </Link>
+            </div>
+            {comment.refIdeaId && comment.refIdeaLabel && (
+              <Link
+                href={`/app/tools/mood-boards?board=${comment.boardId}`}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-sandstone/10 text-sandstone/80 hover:bg-sandstone/20 transition-colors mb-1"
+              >
+                Re: {comment.refIdeaLabel}
+              </Link>
+            )}
+            <p className="text-sm text-cream/70 line-clamp-2">
+              {comment.text}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

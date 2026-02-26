@@ -192,10 +192,10 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
         aria-modal="true"
       >
         <h3 className="text-base font-medium text-cream">
-          Convert to Finish Selection
+          Move to Selection Boards
         </h3>
         <p className="text-sm text-cream/60">
-          This will create an option in Selection Boards from &quot;{idea.name}&quot;.
+          This will copy &quot;{idea.name}&quot; to your Selection Boards.
           The original idea will remain in your mood board.
         </p>
 
@@ -314,7 +314,7 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
             onClick={handleConvert}
             className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
           >
-            Convert
+            Move
           </button>
         </div>
       </div>

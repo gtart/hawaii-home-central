@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import type { Idea, Board } from '@/data/mood-boards'
+import type { Idea, Board, ReactionType } from '@/data/mood-boards'
+import { REACTION_CONFIG } from '@/data/mood-boards'
 import { MoveToBoardSheet } from './MoveToBoardSheet'
 import { ConvertToSelectionSheet } from './ConvertToSelectionSheet'
 
@@ -16,6 +17,9 @@ interface Props {
   onUpdateIdea: (ideaId: string, updates: Partial<Idea>) => void
   onDeleteIdea: (ideaId: string) => void
   onMoveIdea: (toBoardId: string, ideaId: string) => void
+  onToggleReaction: (ideaId: string, reaction: ReactionType) => void
+  onCommentOnIdea: (ideaId: string, ideaName: string) => void
+  currentUserEmail: string
 }
 
 function extractDomain(url: string): string {
@@ -35,6 +39,9 @@ export function IdeaDetailModal({
   onUpdateIdea,
   onDeleteIdea,
   onMoveIdea,
+  onToggleReaction,
+  onCommentOnIdea,
+  currentUserEmail,
 }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const [name, setName] = useState(idea.name)
@@ -237,6 +244,42 @@ export function IdeaDetailModal({
             </a>
           )}
 
+          {/* Reactions */}
+          <div className="flex items-center gap-2">
+            {(['love', 'like', 'dislike'] as ReactionType[]).map((type) => {
+              const config = REACTION_CONFIG[type]
+              const reactions = idea.reactions || []
+              const count = reactions.filter((r) => r.reaction === type).length
+              const isActive = reactions.some(
+                (r) => r.userId === currentUserEmail && r.reaction === type
+              )
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => onToggleReaction(idea.id, type)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                    isActive
+                      ? 'bg-sandstone/15 border-sandstone/40 text-sandstone'
+                      : 'bg-basalt border-cream/15 text-cream/50 hover:border-cream/30'
+                  }`}
+                >
+                  <span>{config.emoji}</span>
+                  <span className="text-xs">{config.label}</span>
+                  {count > 0 && (
+                    <span
+                      className={`text-[10px] ${
+                        isActive ? 'text-sandstone/70' : 'text-cream/30'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
           {/* Notes */}
           <div>
             <label className="block text-xs text-cream/50 mb-1">Notes</label>
@@ -289,7 +332,17 @@ export function IdeaDetailModal({
 
           {/* Actions */}
           {!readOnly && (
-            <div className="flex items-center gap-3 pt-2 border-t border-cream/10">
+            <div className="flex items-center gap-3 pt-2 border-t border-cream/10 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  onCommentOnIdea(idea.id, idea.name)
+                  onClose()
+                }}
+                className="px-3 py-1.5 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors"
+              >
+                Comment...
+              </button>
               <button
                 type="button"
                 onClick={() => setShowMoveSheet(true)}
@@ -302,7 +355,7 @@ export function IdeaDetailModal({
                 onClick={() => setShowConvertSheet(true)}
                 className="px-3 py-1.5 text-sm text-sandstone hover:text-sandstone-light border border-sandstone/30 rounded-lg transition-colors"
               >
-                Convert to Selection...
+                Move to Selection Boards
               </button>
 
               {/* More menu */}

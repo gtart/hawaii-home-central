@@ -2,6 +2,33 @@
 // Mood Boards — Types & Helpers
 // ============================================================================
 
+export interface MoodBoardComment {
+  id: string
+  text: string
+  authorName: string
+  authorEmail: string
+  createdAt: string
+  refIdeaId?: string
+  refIdeaLabel?: string
+}
+
+export type ReactionType = 'love' | 'like' | 'dislike'
+
+export interface IdeaReaction {
+  userId: string // email
+  userName: string
+  reaction: ReactionType
+}
+
+export const REACTION_CONFIG: Record<
+  ReactionType,
+  { emoji: string; label: string }
+> = {
+  love: { emoji: '\u2764\uFE0F', label: 'Love!' },
+  like: { emoji: '\uD83D\uDC4D', label: 'Like' },
+  dislike: { emoji: '\uD83D\uDC4E', label: "Don't Like" },
+}
+
 export interface IdeaImage {
   id: string
   url: string
@@ -19,6 +46,7 @@ export interface Idea {
   sourceUrl: string
   sourceTitle: string
   tags: string[]
+  reactions?: IdeaReaction[]
   createdAt: string
   updatedAt: string
 }
@@ -27,6 +55,7 @@ export interface Board {
   id: string
   name: string
   ideas: Idea[]
+  comments?: MoodBoardComment[]
   isDefault?: boolean // true only for "Saved Ideas"
   createdAt: string
   updatedAt: string

@@ -63,14 +63,18 @@ function MoodBoardsContent() {
 
 export function ToolContent() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center py-24">
-          <div className="w-6 h-6 border-2 border-sandstone/30 border-t-sandstone rounded-full animate-spin" />
-        </div>
-      }
-    >
-      <MoodBoardsContent />
-    </Suspense>
+    <div className="pt-32 pb-24 px-6">
+      <div className="max-w-6xl mx-auto">
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center py-24">
+              <div className="w-6 h-6 border-2 border-sandstone/30 border-t-sandstone rounded-full animate-spin" />
+            </div>
+          }
+        >
+          <MoodBoardsContent />
+        </Suspense>
+      </div>
+    </div>
   )
 }

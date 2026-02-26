@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react'
 import { useToolState } from '@/hooks/useToolState'
-import type { MoodBoardPayload, Board, Idea, IdeaImage } from '@/data/mood-boards'
+import type { MoodBoardPayload, Board, Idea, IdeaImage, MoodBoardComment, ReactionType } from '@/data/mood-boards'
 import { DEFAULT_PAYLOAD, ensureDefaultBoard, genId, now } from '@/data/mood-boards'
 
 function ensureShape(raw: unknown): MoodBoardPayload {
@@ -192,6 +192,112 @@ export function useMoodBoardState() {
     [setState]
   )
 
+  // ---- Comments ----
+
+  const addComment = useCallback(
+    (
+      boardId: string,
+      comment: {
+        text: string
+        authorName: string
+        authorEmail: string
+        refIdeaId?: string
+        refIdeaLabel?: string
+      }
+    ) => {
+      const id = `cmt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+      setState((prev) => {
+        const p = ensureShape(prev)
+        return {
+          ...p,
+          boards: p.boards.map((b) =>
+            b.id === boardId
+              ? {
+                  ...b,
+                  comments: [
+                    ...(b.comments || []),
+                    { id, ...comment, createdAt: now() },
+                  ],
+                  updatedAt: now(),
+                }
+              : b
+          ),
+        }
+      })
+    },
+    [setState]
+  )
+
+  const deleteComment = useCallback(
+    (boardId: string, commentId: string) => {
+      setState((prev) => {
+        const p = ensureShape(prev)
+        return {
+          ...p,
+          boards: p.boards.map((b) =>
+            b.id === boardId
+              ? {
+                  ...b,
+                  comments: (b.comments || []).filter((c) => c.id !== commentId),
+                  updatedAt: now(),
+                }
+              : b
+          ),
+        }
+      })
+    },
+    [setState]
+  )
+
+  // ---- Reactions ----
+
+  const toggleReaction = useCallback(
+    (
+      boardId: string,
+      ideaId: string,
+      userEmail: string,
+      userName: string,
+      reaction: ReactionType
+    ) => {
+      setState((prev) => {
+        const p = ensureShape(prev)
+        return {
+          ...p,
+          boards: p.boards.map((b) => {
+            if (b.id !== boardId) return b
+            return {
+              ...b,
+              ideas: b.ideas.map((idea) => {
+                if (idea.id !== ideaId) return idea
+                const existing = (idea.reactions || []).find(
+                  (r) => r.userId === userEmail
+                )
+                let newReactions: typeof idea.reactions
+                if (existing && existing.reaction === reaction) {
+                  // Toggle off — remove
+                  newReactions = (idea.reactions || []).filter(
+                    (r) => r.userId !== userEmail
+                  )
+                } else {
+                  // Replace or add
+                  newReactions = [
+                    ...(idea.reactions || []).filter(
+                      (r) => r.userId !== userEmail
+                    ),
+                    { userId: userEmail, userName, reaction },
+                  ]
+                }
+                return { ...idea, reactions: newReactions, updatedAt: now() }
+              }),
+              updatedAt: now(),
+            }
+          }),
+        }
+      })
+    },
+    [setState]
+  )
+
   return {
     payload,
     isLoaded,
@@ -206,6 +312,9 @@ export function useMoodBoardState() {
     updateIdea,
     deleteIdea,
     moveIdea,
+    addComment,
+    deleteComment,
+    toggleReaction,
   }
 }
 
