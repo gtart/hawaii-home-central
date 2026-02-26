@@ -10,7 +10,6 @@ import type { MoodBoardStateAPI } from '../useMoodBoardState'
 import { uploadMoodBoardFile } from '../uploadMoodBoardFile'
 import { IdeaTile } from './IdeaTile'
 import { IdeaDetailModal } from './IdeaDetailModal'
-import { AddIdeaFromUrlPanel } from './AddIdeaFromUrlPanel'
 import { CommentsPanel } from './CommentsPanel'
 import { BookmarkletButton } from '@/app/app/tools/finish-decisions/components/BookmarkletButton'
 
@@ -26,7 +25,7 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
   const [selectedIdeaId, setSelectedIdeaId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState(false)
   const [boardName, setBoardName] = useState(board.name)
-  const [showUrlImport, setShowUrlImport] = useState(false)
+  const [showTextForm, setShowTextForm] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [commentsOpen, setCommentsOpen] = useState(false)
@@ -35,6 +34,10 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
     ideaLabel: string
   } | null>(null)
   const [showAddMenu, setShowAddMenu] = useState(false)
+
+  // Text idea form state
+  const [textIdeaName, setTextIdeaName] = useState('')
+  const [textIdeaNotes, setTextIdeaNotes] = useState('')
 
   const galleryRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
@@ -94,9 +97,25 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
     }
 
     setUploading(false)
-    // Reset file inputs
     if (galleryRef.current) galleryRef.current.value = ''
     if (cameraRef.current) cameraRef.current.value = ''
+  }
+
+  const handleAddTextIdea = () => {
+    const trimmedName = textIdeaName.trim()
+    if (!trimmedName) return
+    api.addIdea(board.id, {
+      name: trimmedName,
+      notes: textIdeaNotes.trim(),
+      images: [],
+      heroImageId: null,
+      sourceUrl: '',
+      sourceTitle: '',
+      tags: [],
+    })
+    setTextIdeaName('')
+    setTextIdeaNotes('')
+    setShowTextForm(false)
   }
 
   const handleCommentOnIdea = (ideaId: string, ideaName: string) => {
@@ -211,27 +230,27 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
         {/* Add Idea actions — Desktop */}
         {!readOnly && (
           <div className="hidden sm:flex items-center gap-2 shrink-0">
-            <Link
-              href={`/app/save-from-web?from=mood-boards&boardId=${board.id}`}
-              className="px-3 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
-            >
-              Save to HHC
-            </Link>
             <button
               type="button"
               onClick={() => galleryRef.current?.click()}
               disabled={uploading}
-              className="px-3 py-1.5 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors disabled:opacity-40"
+              className="px-3 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-40"
             >
-              {uploading ? 'Uploading...' : 'Upload Photos'}
+              {uploading ? 'Uploading...' : 'From Photo'}
             </button>
             <button
               type="button"
-              onClick={() => setShowUrlImport(!showUrlImport)}
+              onClick={() => setShowTextForm(!showTextForm)}
               className="px-3 py-1.5 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors"
             >
-              Paste a Link
+              Text Note
             </button>
+            <Link
+              href={`/app/save-from-web?from=mood-boards&boardId=${board.id}`}
+              className="px-3 py-1.5 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors"
+            >
+              Save to HHC
+            </Link>
           </div>
         )}
 
@@ -262,13 +281,6 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
                   onClick={() => setShowAddMenu(false)}
                 />
                 <div className="absolute right-0 top-full mt-1 z-20 w-48 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl py-1">
-                  <Link
-                    href={`/app/save-from-web?from=mood-boards&boardId=${board.id}`}
-                    className="block w-full text-left px-3 py-2.5 text-sm text-cream/70 hover:bg-cream/5 transition-colors"
-                    onClick={() => setShowAddMenu(false)}
-                  >
-                    Save to HHC
-                  </Link>
                   <button
                     type="button"
                     onClick={() => {
@@ -295,12 +307,19 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
                     type="button"
                     onClick={() => {
                       setShowAddMenu(false)
-                      setShowUrlImport(true)
+                      setShowTextForm(true)
                     }}
                     className="w-full text-left px-3 py-2.5 text-sm text-cream/70 hover:bg-cream/5 transition-colors"
                   >
-                    Paste a Link
+                    Text Note
                   </button>
+                  <Link
+                    href={`/app/save-from-web?from=mood-boards&boardId=${board.id}`}
+                    className="block w-full text-left px-3 py-2.5 text-sm text-cream/70 hover:bg-cream/5 transition-colors border-t border-cream/10 mt-1 pt-2.5"
+                    onClick={() => setShowAddMenu(false)}
+                  >
+                    Save to HHC
+                  </Link>
                 </div>
               </>
             )}
@@ -330,14 +349,54 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
         </div>
       )}
 
-      {/* URL import panel */}
-      {showUrlImport && !readOnly && (
-        <div className="mb-6 bg-basalt-50 rounded-xl p-4 border border-cream/10">
-          <AddIdeaFromUrlPanel
-            boardId={board.id}
-            api={api}
-            onDone={() => setShowUrlImport(false)}
+      {/* Text idea form */}
+      {showTextForm && !readOnly && (
+        <div className="mb-6 bg-basalt-50 rounded-xl p-4 border border-cream/10 space-y-3">
+          <h4 className="text-sm font-medium text-cream/70">Add a text note</h4>
+          <input
+            type="text"
+            value={textIdeaName}
+            onChange={(e) => setTextIdeaName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && textIdeaName.trim()) handleAddTextIdea()
+              if (e.key === 'Escape') {
+                setShowTextForm(false)
+                setTextIdeaName('')
+                setTextIdeaNotes('')
+              }
+            }}
+            placeholder="Idea name..."
+            autoFocus
+            className="w-full px-3 py-2 bg-basalt border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone"
           />
+          <textarea
+            value={textIdeaNotes}
+            onChange={(e) => setTextIdeaNotes(e.target.value)}
+            placeholder="Notes (optional) — price, dimensions, color, where you saw it..."
+            rows={2}
+            className="w-full px-3 py-2 bg-basalt border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone resize-none"
+          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleAddTextIdea}
+              disabled={!textIdeaName.trim()}
+              className="px-4 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30"
+            >
+              Add Idea
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowTextForm(false)
+                setTextIdeaName('')
+                setTextIdeaNotes('')
+              }}
+              className="px-4 py-1.5 text-sm text-cream/60 hover:text-cream transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
@@ -368,33 +427,33 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
             No ideas yet
           </h3>
           <p className="text-cream/50 text-sm mb-6 max-w-sm mx-auto">
-            Save ideas from any website, upload photos, or paste a link.
+            Add ideas from photos, jot down a text note, or save from the web with the bookmarklet.
           </p>
           <div className="flex flex-col items-center gap-3">
             {!readOnly && (
               <>
                 <div className="flex flex-wrap items-center justify-center gap-3">
-                  <Link
-                    href={`/app/save-from-web?from=mood-boards&boardId=${board.id}`}
-                    className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
-                  >
-                    Save to HHC
-                  </Link>
                   <button
                     type="button"
                     onClick={() => galleryRef.current?.click()}
                     disabled={uploading}
-                    className="px-4 py-2 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors disabled:opacity-40"
+                    className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-40"
                   >
-                    Upload Photos
+                    From Photo
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowUrlImport(true)}
+                    onClick={() => setShowTextForm(true)}
                     className="px-4 py-2 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors"
                   >
-                    Paste a Link
+                    Text Note
                   </button>
+                  <Link
+                    href={`/app/save-from-web?from=mood-boards&boardId=${board.id}`}
+                    className="px-4 py-2 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors"
+                  >
+                    Save to HHC
+                  </Link>
                 </div>
                 <div className="mt-2">
                   <p className="text-[11px] text-cream/30 mb-1.5">
