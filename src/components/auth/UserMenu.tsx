@@ -79,7 +79,7 @@ export function UserMenu() {
             onClick={() => setIsOpen(false)}
             className="block px-4 py-2 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
           >
-            My Tools
+            Home Project Tools
           </Link>
           <Link
             href="/app/settings"

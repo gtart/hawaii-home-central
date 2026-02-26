@@ -98,6 +98,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: '/early-access',
+        destination: '/waitlist',
+        permanent: true,
+      },
+      {
         source: '/tools/finish-decisions',
         destination: '/tools',
         permanent: false,

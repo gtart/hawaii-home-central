@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import type { OptionImageV3 } from '@/data/finish-decisions'
+import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 
 interface LinkPreviewResult {
   title?: string
@@ -243,14 +244,15 @@ export function ImportFromUrlPanel({
                           : 'border-transparent hover:border-cream/20'
                       }`}
                     >
-                      <img
+                      <ImageWithFallback
                         src={proxyUrl(img.url)}
                         alt={img.label || ''}
                         className="w-full h-full object-cover"
-                        loading="lazy"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none'
-                        }}
+                        fallback={
+                          <div className="w-full h-full flex items-center justify-center bg-basalt-50">
+                            <span className="text-2xl opacity-30">🖼️</span>
+                          </div>
+                        }
                       />
                       {/* Checkmark overlay */}
                       {isSelected && (

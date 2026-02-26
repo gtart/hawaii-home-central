@@ -87,7 +87,7 @@ export function SelectionsBoardView({
 
   if (decisions.length === 0) {
     return (
-      <div className="text-center py-8 text-cream/50 text-sm">
+      <div data-testid="empty-state-selection" className="text-center py-8 text-cream/50 text-sm">
         No selections yet.
         {onAddSelection && !readOnly && (
           <>
@@ -184,25 +184,21 @@ export function SelectionsBoardView({
                 </p>
               )}
 
-              {/* Meta row: ideas, + Idea, comments */}
+              {/* Meta row: ideas, open, comments */}
               <div className="flex items-center gap-1.5 text-[11px] text-cream/55 mt-1">
                 <span>{decision.options.length} idea{decision.options.length !== 1 ? 's' : ''}</span>
-                {!readOnly && (
-                  <>
-                    <span className="text-cream/20">·</span>
-                    <button
-                      type="button"
-                      data-testid="selection-open"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        router.push(`/app/tools/finish-decisions/decision/${decision.id}`)
-                      }}
-                      className="text-sandstone hover:text-sandstone-light font-medium transition-colors"
-                    >
-                      + Idea
-                    </button>
-                  </>
-                )}
+                <span className="text-cream/20">·</span>
+                <button
+                  type="button"
+                  data-testid="selection-open"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    router.push(`/app/tools/finish-decisions/decision/${decision.id}`)
+                  }}
+                  className="text-sandstone hover:text-sandstone-light font-medium transition-colors"
+                >
+                  Open
+                </button>
                 {commentCount > 0 && (
                   <>
                     <span className="text-cream/20">·</span>

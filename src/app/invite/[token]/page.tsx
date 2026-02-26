@@ -95,7 +95,7 @@ export default function InviteAcceptPage() {
             <h1 className="text-xl font-medium text-cream mb-2">Invite Not Available</h1>
             <p className="text-cream/50 text-sm mb-6">{error}</p>
             <Link href="/app" className="text-sandstone hover:text-sandstone-light text-sm">
-              Go to My Tools
+              Go to Home Project Tools
             </Link>
           </div>
         ) : !invite ? (
@@ -112,7 +112,7 @@ export default function InviteAcceptPage() {
               <p className="text-cream/50 text-sm">Redirecting to {TOOL_LABELS[invite.toolKey] || 'the tool'}...</p>
             ) : (
               <Link href="/app" className="text-sandstone hover:text-sandstone-light text-sm">
-                Go to My Tools
+                Go to Home Project Tools
               </Link>
             )}
           </div>

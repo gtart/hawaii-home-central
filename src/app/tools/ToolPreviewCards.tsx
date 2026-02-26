@@ -130,11 +130,19 @@ export function ToolPreviewCards() {
                     </p>
 
                     <div className="flex items-center gap-3 mb-1">
-                      <Link href={stage.tool!.ctaHref} className="flex-1">
-                        <Button variant="secondary" size="md" className="w-full">
-                          {stage.tool!.ctaText}
-                        </Button>
-                      </Link>
+                      <div className="flex-1 space-y-2">
+                        <Link href="/waitlist">
+                          <Button variant="primary" size="md" className="w-full">
+                            Join the Waitlist
+                          </Button>
+                        </Link>
+                        <Link
+                          href={stage.tool!.ctaHref}
+                          className="block text-center text-xs text-cream/40 hover:text-cream/60 transition-colors"
+                        >
+                          Already have access? Sign in
+                        </Link>
+                      </div>
                       <button
                         type="button"
                         onClick={() =>
@@ -180,11 +188,19 @@ export function ToolPreviewCards() {
                           ))}
                         </ul>
 
-                        <Link href={stage.tool!.ctaHref}>
-                          <Button variant="secondary" size="sm" className="w-full">
-                            Sign in to get started
-                          </Button>
-                        </Link>
+                        <div className="space-y-2">
+                          <Link href="/waitlist">
+                            <Button variant="primary" size="sm" className="w-full">
+                              Join the Waitlist
+                            </Button>
+                          </Link>
+                          <Link
+                            href={stage.tool!.ctaHref}
+                            className="block text-center text-xs text-cream/40 hover:text-cream/60 transition-colors"
+                          >
+                            Already have access? Sign in
+                          </Link>
+                        </div>
                       </div>
                     )}
                   </div>

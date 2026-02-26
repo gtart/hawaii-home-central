@@ -32,7 +32,7 @@ export function FeatureCards() {
             id="features-heading"
             className="font-serif text-3xl md:text-4xl text-sandstone mb-4 text-center"
           >
-            What&apos;s Here
+            What we help you do
           </h2>
           <p className="text-cream/60 text-center mb-12 max-w-2xl mx-auto">
             Guides, tools, and community&mdash;built for Hawai&#x02BB;i homeowners.

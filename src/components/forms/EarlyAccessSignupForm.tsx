@@ -125,7 +125,7 @@ export function EarlyAccessSignupForm() {
 
       <Button
         type="button"
-        onClick={() => signIn('google', { callbackUrl: '/early-access?source=google' })}
+        onClick={() => signIn('google', { callbackUrl: '/waitlist?source=google' })}
         variant="secondary"
         className="w-full flex items-center justify-center gap-3"
       >
@@ -147,7 +147,7 @@ export function EarlyAccessSignupForm() {
             fill="#EA4335"
           />
         </svg>
-        Sign in if you already have access
+        Continue with Google
       </Button>
 
       <p className="text-xs text-cream/50 text-center">

@@ -176,6 +176,7 @@ export function RoomsBoardView({
             return (
               <div
                 key={room.id}
+                data-testid="unsorted-room-card"
                 role={unsortedCount > 0 ? 'button' : undefined}
                 tabIndex={unsortedCount > 0 ? 0 : undefined}
                 onClick={() => { if (unsortedCount > 0) navigateToRoom(room.id) }}

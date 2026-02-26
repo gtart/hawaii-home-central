@@ -372,7 +372,7 @@ export function ToolContent({
         {noAccess ? (
           <div className="bg-basalt-50 rounded-card p-8 text-center">
             <p className="text-cream/50 mb-2">You don&apos;t have access to this tool for the current project.</p>
-            <a href="/app" className="text-sandstone hover:text-sandstone-light text-sm">Back to My Tools</a>
+            <a href="/app" className="text-sandstone hover:text-sandstone-light text-sm">Back to Home Project Tools</a>
           </div>
         ) : isLoaded && state.version === 3 ? (
           <DecisionTrackerPage

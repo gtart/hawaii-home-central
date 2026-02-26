@@ -49,8 +49,8 @@ export default function DirectoryPage() {
           <p className="text-cream/50 mb-6">
             Be first to access the directory when it launches.
           </p>
-          <Link href="/early-access">
-            <Button size="lg">Get Early Access</Button>
+          <Link href="/waitlist">
+            <Button size="lg">Join the Waitlist</Button>
           </Link>
         </FadeInSection>
       </div>

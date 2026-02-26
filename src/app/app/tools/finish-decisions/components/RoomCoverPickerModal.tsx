@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { RoomV3, RoomCoverImage } from '@/data/finish-decisions'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
+import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { uploadIdeaFile } from './IdeasBoard'
 
 interface IdeaImage {
@@ -138,12 +139,15 @@ export function RoomCoverPickerModal({
                       onClick={() => onSetCover({ type: 'idea', url: img.url, ideaId: img.optionId })}
                       className="relative aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-sandstone transition-all"
                     >
-                      <img
+                      <ImageWithFallback
                         src={displayUrl(img.url)}
                         alt={img.label}
                         className="w-full h-full object-cover"
-                        loading="lazy"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                        fallback={
+                          <div className="w-full h-full flex items-center justify-center bg-basalt-50">
+                            <span className="text-2xl opacity-30">🖼️</span>
+                          </div>
+                        }
                       />
                       <div className="absolute bottom-0 inset-x-0 bg-black/60 px-1.5 py-0.5">
                         <p className="text-[10px] text-white truncate">{img.label}</p>

@@ -363,7 +363,7 @@ export function RoomDetailContent({
 
         {/* Selections content */}
         {room.decisions.length === 0 ? (
-          <div className="bg-basalt-50 rounded-card p-8 text-center">
+          <div data-testid="empty-state-room" className="bg-basalt-50 rounded-card p-8 text-center">
             <p className="text-cream/50 mb-3">No selections yet.</p>
             {!readOnly && (
               <div className="flex items-center justify-center gap-3">

@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from 'react'
 import type { OptionV3, OptionImageV3, DecisionV3, SelectionComment, LinkV3 } from '@/data/finish-decisions'
 import { getAllImages, getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
+import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 
 interface CommentPayload {
   text: string
@@ -364,11 +365,15 @@ export function IdeaCardModal({
                     className="relative rounded-xl overflow-hidden bg-basalt cursor-pointer"
                     onClick={() => !readOnly && !uploading && galleryInputRef.current?.click()}
                   >
-                    <img
+                    <ImageWithFallback
                       src={displayUrl(hero?.url || images[0].url)}
                       alt={option.name || 'Idea image'}
                       className="w-full max-h-64 object-contain"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                      fallback={
+                        <div className="w-full h-32 flex items-center justify-center bg-basalt">
+                          <span className="text-3xl opacity-20">🖼️</span>
+                        </div>
+                      }
                     />
                     {uploading && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -435,7 +440,7 @@ export function IdeaCardModal({
                             }`}
                             title={isHero ? 'Primary image' : 'Set as primary'}
                           >
-                            <img src={displayUrl(img.thumbnailUrl || img.url)} alt={img.label || ''} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                            <ImageWithFallback src={displayUrl(img.thumbnailUrl || img.url)} alt={img.label || ''} className="w-full h-full object-cover" fallback={<div className="w-full h-full flex items-center justify-center bg-cream/5"><span className="text-xs opacity-30">🖼️</span></div>} />
                             {isHero && (
                               <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-sandstone rounded-full flex items-center justify-center">
                                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="text-basalt">
@@ -553,11 +558,11 @@ export function IdeaCardModal({
                       <div className="bg-basalt rounded-xl overflow-hidden border border-cream/8">
                         {/* Preview image */}
                         {u.linkImage && (
-                          <img
+                          <ImageWithFallback
                             src={`/api/image-proxy?url=${encodeURIComponent(u.linkImage)}`}
                             alt=""
                             className="w-full h-28 object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                            fallback={<div className="w-full h-28 bg-cream/5" />}
                           />
                         )}
                         <div className="px-3 py-2.5 flex items-start gap-2">

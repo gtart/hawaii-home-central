@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import type { OptionV3, RoomV3, RoomTypeV3 } from '@/data/finish-decisions'
 import { ROOM_EMOJI_MAP } from '@/data/finish-decisions'
+import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { isGlobalUnsorted, isUncategorized } from '@/lib/decisionHelpers'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 
@@ -90,11 +91,11 @@ export function MoveIdeaSheet({
           {!isBulk && firstOption && (
             <div className="flex items-center gap-3 bg-cream/5 rounded-lg p-2.5">
               {hero && (
-                <img
+                <ImageWithFallback
                   src={displayUrl(hero.thumbnailUrl || hero.url)}
                   alt=""
                   className="w-10 h-10 rounded object-cover shrink-0"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  fallback={<div className="w-10 h-10 rounded bg-cream/5 shrink-0" />}
                 />
               )}
               <div className="min-w-0">

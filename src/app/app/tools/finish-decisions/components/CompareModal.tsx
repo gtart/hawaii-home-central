@@ -2,6 +2,7 @@
 
 import type { OptionV3, DecisionV3 } from '@/data/finish-decisions'
 import { getAllImages, getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
+import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 
 interface CompareModalProps {
   options: OptionV3[]
@@ -64,11 +65,15 @@ export function CompareModal({
                   <div className="aspect-[4/3] relative bg-basalt-50">
                     {heroSrc ? (
                       <>
-                        <img
+                        <ImageWithFallback
                           src={displayUrl(heroSrc)}
                           alt={opt.name || 'Selection'}
                           className="w-full h-full object-cover"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                          fallback={
+                            <div className="w-full h-full flex items-center justify-center bg-basalt-50">
+                              <span className="text-3xl opacity-20">🖼️</span>
+                            </div>
+                          }
                         />
                         {imageCount > 1 && (
                           <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-black/60 text-white text-[10px] rounded-full">
@@ -77,11 +82,15 @@ export function CompareModal({
                         )}
                       </>
                     ) : linkPreview ? (
-                      <img
+                      <ImageWithFallback
                         src={displayUrl(linkPreview)}
                         alt={opt.name || 'Selection'}
                         className="w-full h-full object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                        fallback={
+                          <div className="w-full h-full flex items-center justify-center bg-basalt-50">
+                            <span className="text-3xl opacity-20">🔗</span>
+                          </div>
+                        }
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center p-3">

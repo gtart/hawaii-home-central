@@ -49,7 +49,7 @@ export function Navigation() {
   // Hide nav on admin, public share, and report pages
   if (pathname.startsWith('/admin') || pathname.startsWith('/share') || pathname.includes('/report')) return null
 
-  const toolsLabel = session?.user ? 'My Tools' : 'Tools'
+  const toolsLabel = session?.user ? 'Home Project Tools' : 'Tools'
   const toolsHref = session?.user ? '/app' : '/tools'
 
   const primaryLinks: NavLink[] = [
@@ -61,7 +61,7 @@ export function Navigation() {
   const moreLinks: NavLink[] = [
     { href: '/about', label: 'About' },
     { href: '/directory', label: 'Directory' },
-    { href: '/early-access', label: 'Early Access' },
+    { href: '/waitlist', label: 'Waitlist' },
     { href: '/contact', label: 'Contact' },
   ]
 

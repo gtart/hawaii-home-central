@@ -112,7 +112,7 @@ export function LoginContent() {
             <p className="text-cream/60 text-sm mb-4">
               Join the waitlist and we&apos;ll let you know when we launch.
             </p>
-            <Link href="/early-access">
+            <Link href="/waitlist">
               <Button variant="primary" size="lg" className="w-full">
                 Join the Waitlist
               </Button>

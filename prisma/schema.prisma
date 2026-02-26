@@ -105,6 +105,8 @@ model User {
   newsletterUnsubToken     String?   @unique @default(cuid())
   hasSeenNewsletterPrompt  Boolean   @default(false)
   hasBootstrappedProject   Boolean   @default(false)
+  hasSeenAppOnboarding    Boolean   @default(false)
+  appOnboardingFocus      String?
 
   currentProjectId   String?    @map("currentPropertyId")
   currentProject     Project?   @relation("CurrentProject", fields: [currentProjectId], references: [id], onDelete: SetNull)

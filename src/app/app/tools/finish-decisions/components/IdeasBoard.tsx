@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from 'react'
 import type { OptionV3, DecisionV3, SelectionComment, RoomV3 } from '@/data/finish-decisions'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { relativeTime } from '@/lib/relativeTime'
+import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { IdeaCardModal } from './IdeaCardModal'
 import { CompareModal } from './CompareModal'
 import { SaveFromWebDialog } from './SaveFromWebDialog'
@@ -120,6 +121,7 @@ function IdeaCardTile({
     <div
       role="button"
       tabIndex={0}
+      data-testid="idea-card"
       aria-label={`Open idea: ${option.name || 'Untitled'}`}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
@@ -127,21 +129,29 @@ function IdeaCardTile({
     >
       {heroSrc ? (
         <>
-          <img
+          <ImageWithFallback
             src={displayUrl(heroSrc)}
             alt={option.name || 'Selection'}
             className="w-full h-full object-cover"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+            fallback={
+              <div className="w-full h-full p-3 flex items-center justify-center bg-basalt">
+                <span className="text-3xl opacity-20">🖼️</span>
+              </div>
+            }
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
         </>
       ) : linkPreview ? (
         <>
-          <img
+          <ImageWithFallback
             src={displayUrl(linkPreview)}
             alt={option.name || 'Selection'}
             className="w-full h-full object-cover"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+            fallback={
+              <div className="w-full h-full p-3 flex items-center justify-center bg-basalt">
+                <span className="text-3xl opacity-20">🔗</span>
+              </div>
+            }
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
         </>

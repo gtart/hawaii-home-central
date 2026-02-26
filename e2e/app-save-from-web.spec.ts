@@ -22,6 +22,7 @@ test('save-from-web: shows setup instructions with no payload', async ({ page },
   await page.goto('/app/save-from-web', { waitUntil: 'networkidle' })
 
   // Should show the setup instructions (bookmarklet steps)
+  await expect(page.getByTestId('empty-state-savefromweb')).toBeVisible()
   await expect(page.getByText('Save to HHC')).toBeVisible()
   await expect(page.getByText('Drag this button to your bookmarks bar')).toBeVisible()
 
@@ -99,6 +100,48 @@ test('save-from-web: save creates idea and shows success', async ({ page }, test
 
   await page.screenshot({
     path: screenshotPath('savefromweb-success', testInfo),
+    fullPage: true,
+  })
+})
+
+// -- Verify saved idea actually exists in destination --
+test('save-from-web: saved idea is visible in destination after save', async ({ page }, testInfo) => {
+  // Inject payload
+  await page.goto('/app/save-from-web', { waitUntil: 'networkidle' })
+  await page.evaluate(
+    ([key, data]) => {
+      sessionStorage.setItem(key, JSON.stringify(data))
+    },
+    [BOOKMARKLET_KEY, MOCK_PAYLOAD] as const
+  )
+  await page.goto('/app/save-from-web', { waitUntil: 'networkidle' })
+
+  // Save (goes to Global Unsorted)
+  const saveBtn = page.getByTestId('savefromweb-save')
+  await saveBtn.click()
+  await expect(page.getByText('Idea saved!')).toBeVisible()
+
+  // Navigate to the destination — try room link first, fall back to boards
+  const roomLink = page.getByTestId('savefromweb-success-open-room')
+  const hasRoomLink = await roomLink.isVisible().catch(() => false)
+
+  if (hasRoomLink) {
+    await roomLink.click()
+  } else {
+    // Fall back to Selection Boards and click on Unsorted
+    await page.goto('/app/tools/finish-decisions', { waitUntil: 'networkidle' })
+    const unsortedCard = page.getByTestId('unsorted-room-card')
+    if (await unsortedCard.isVisible().catch(() => false)) {
+      await unsortedCard.click()
+    }
+  }
+  await page.waitForLoadState('networkidle')
+
+  // The saved idea title should be visible somewhere in the destination view
+  await expect(page.getByText(MOCK_PAYLOAD.title)).toBeVisible({ timeout: 10000 })
+
+  await page.screenshot({
+    path: screenshotPath('savefromweb-idea-in-destination', testInfo),
     fullPage: true,
   })
 })

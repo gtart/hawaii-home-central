@@ -14,6 +14,9 @@ import {
   isGlobalUnsorted,
 } from '@/lib/decisionHelpers'
 import { BookmarkletButton } from '@/app/app/tools/finish-decisions/components/BookmarkletButton'
+import { ImportFromUrlPanel } from '@/app/app/tools/finish-decisions/components/ImportFromUrlPanel'
+import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
+import type { OptionImageV3 } from '@/data/finish-decisions'
 
 const DEFAULT_PAYLOAD: FinishDecisionsPayloadV3 = { version: 3, rooms: [] }
 const BOOKMARKLET_STORAGE_KEY = 'hhc_bookmarklet_pending'
@@ -48,6 +51,22 @@ export function SaveFromWebContent() {
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set())
   const [name, setName] = useState('')
   const [notes, setNotes] = useState('')
+  const [urlImportOpen, setUrlImportOpen] = useState(false)
+
+  // Handle URL import from the paste-a-link panel
+  const handleUrlImport = (result: { name: string; notes: string; sourceUrl: string; selectedImages: OptionImageV3[] }) => {
+    // Convert the ImportFromUrlPanel result into bookmarklet-equivalent data
+    setBookmarkletData({
+      title: result.name,
+      images: result.selectedImages.map((img) => ({ url: img.url, label: img.label })),
+      url: result.sourceUrl,
+    })
+    setName(result.name)
+    setNotes(result.notes)
+    // Pre-select all imported images
+    setSelectedUrls(new Set(result.selectedImages.map((img) => img.url)))
+    setUrlImportOpen(false)
+  }
 
   // Parse bookmarklet data from sessionStorage (primary) or hash fragment (backup)
   useEffect(() => {
@@ -85,10 +104,13 @@ export function SaveFromWebContent() {
   const rooms = (state as FinishDecisionsPayloadV3).rooms || []
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId)
 
+  // Stable representation of room IDs — re-runs effect when rooms are added/removed/reordered
+  const roomIdKey = rooms.map((r) => r.id).join(',')
+
   // Pre-select from query params or last-used room
   useEffect(() => {
     if (!isLoaded || rooms.length === 0) return
-    // Already selected? Don't override
+    // Already selected and still valid? Don't override
     if (selectedRoomId && rooms.find((r) => r.id === selectedRoomId)) return
 
     // 1. Check query params
@@ -118,8 +140,7 @@ export function SaveFromWebContent() {
     if (rooms.length === 1) {
       setSelectedRoomId(rooms[0].id)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, rooms.length])
+  }, [isLoaded, roomIdKey, searchParams, selectedRoomId, rooms])
 
   // Persist last-used room
   useEffect(() => {
@@ -166,14 +187,31 @@ export function SaveFromWebContent() {
       updatedAt: new Date().toISOString(),
     }
 
-    // Resolve target room/decision deterministically BEFORE any state update
+    // Resolve target room/decision deterministically BEFORE any state update.
+    // Validate that selected IDs still exist — if stale (deleted room/decision),
+    // fall back to Global Unsorted so the idea is never silently lost.
     let resolvedRoomId = selectedRoomId
     let resolvedDecisionId = selectedDecisionId
     let resolvedRoomName = ''
     let resolvedDecisionName = ''
 
-    // Pre-compute the resolved IDs by simulating the same logic the updater will use
     const currentRooms = (state as FinishDecisionsPayloadV3).rooms
+
+    // Validate selectedRoomId exists in current state
+    if (resolvedRoomId && !currentRooms.find((r) => r.id === resolvedRoomId)) {
+      // Room was deleted or stale — clear and fall back to Global Unsorted
+      resolvedRoomId = null
+      resolvedDecisionId = null
+    }
+
+    // Validate selectedDecisionId exists in the target room
+    if (resolvedRoomId && resolvedDecisionId) {
+      const targetRoom = currentRooms.find((r) => r.id === resolvedRoomId)
+      if (!targetRoom?.decisions.find((d) => d.id === resolvedDecisionId)) {
+        // Decision was deleted or stale — clear (will fall back to Uncategorized)
+        resolvedDecisionId = null
+      }
+    }
 
     if (!resolvedRoomId) {
       // Will go to Global Unsorted
@@ -374,7 +412,7 @@ export function SaveFromWebContent() {
               Save product ideas from any website — even sites that block direct imports.
             </p>
 
-            <div className="bg-basalt-50 rounded-xl p-5 border border-cream/10">
+            <div data-testid="empty-state-savefromweb" className="bg-basalt-50 rounded-xl p-5 border border-cream/10">
               <div className="space-y-4">
                 <div className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">1</span>
@@ -400,9 +438,32 @@ export function SaveFromWebContent() {
               </div>
               <div className="mt-5 pt-4 border-t border-cream/10">
                 <p className="text-[11px] text-cream/30">
-                  Works on desktop browsers (Chrome, Firefox, Safari, Edge). Not available on mobile.
+                  The bookmarklet works on desktop browsers (Chrome, Firefox, Safari, Edge).
                 </p>
               </div>
+            </div>
+
+            {/* Paste a link — works on mobile and desktop */}
+            <div className="mt-6">
+              <button
+                type="button"
+                onClick={() => setUrlImportOpen(!urlImportOpen)}
+                className="flex items-center gap-2 text-sm text-cream/50 hover:text-cream/70 transition-colors w-full"
+              >
+                <span className="text-xs text-cream/30">{urlImportOpen ? '▼' : '▶'}</span>
+                Paste a link instead
+                <span className="text-[10px] text-cream/25 ml-auto">Works on mobile</span>
+              </button>
+
+              {urlImportOpen && (
+                <div className="mt-3 bg-basalt-50 rounded-xl p-4 border border-cream/10">
+                  <ImportFromUrlPanel
+                    mode="create-idea"
+                    onImport={handleUrlImport}
+                    onCancel={() => setUrlImportOpen(false)}
+                  />
+                </div>
+              )}
             </div>
           </>
         )}
@@ -472,14 +533,15 @@ export function SaveFromWebContent() {
                             : 'border-transparent hover:border-cream/20'
                         }`}
                       >
-                        <img
+                        <ImageWithFallback
                           src={proxyUrl(img.url)}
                           alt={img.label || ''}
                           className="w-full h-full object-cover"
-                          loading="lazy"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none'
-                          }}
+                          fallback={
+                            <div className="w-full h-full flex items-center justify-center bg-basalt-50">
+                              <span className="text-2xl opacity-30">🖼️</span>
+                            </div>
+                          }
                         />
                         {isSelected && (
                           <div className="absolute top-1 right-1 w-5 h-5 bg-sandstone rounded-full flex items-center justify-center">

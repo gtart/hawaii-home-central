@@ -87,7 +87,7 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, child
           href="/app"
           className="text-sandstone hover:text-sandstone-light text-sm"
         >
-          &larr; My Tools
+          &larr; Home Project Tools
         </Link>
       </div>
 

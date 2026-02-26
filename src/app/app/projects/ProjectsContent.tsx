@@ -266,7 +266,7 @@ export function ProjectsContent() {
           href="/app"
           className="text-sandstone hover:text-sandstone-light text-sm mb-4 inline-block"
         >
-          &larr; My Tools
+          &larr; Home Project Tools
         </Link>
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-8">
           My Projects

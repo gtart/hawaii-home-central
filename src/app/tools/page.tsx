@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { breadcrumbSchema } from '@/lib/structured-data'
 import { auth } from '@/auth'
+import { HowItWorksStrip } from '@/components/home/HowItWorksStrip'
 import { ToolPreviewCards } from './ToolPreviewCards'
 
 export const metadata: Metadata = {
@@ -38,12 +39,16 @@ export default async function ToolsMarketingPage() {
               Tools
             </h1>
             <p className="text-lg text-cream/70 mb-4 max-w-3xl mx-auto text-center leading-relaxed">
-              One tool for each stage of your renovation. Sign in to get started.
+              One tool for each stage of your home project.
             </p>
             <p className="text-cream/50 text-sm mb-12 max-w-2xl mx-auto text-center">
               Built for Hawai&#x02BB;i homeowners. Free to use.
             </p>
           </FadeInSection>
+
+          <div className="mb-8 -mx-6">
+            <HowItWorksStrip />
+          </div>
 
           <ToolPreviewCards />
 

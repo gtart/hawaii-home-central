@@ -2,9 +2,8 @@
 
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { cn } from '@/lib/utils'
-import { Suspense } from 'react'
 import Link from 'next/link'
-import { EarlyAccessSignupForm } from '@/components/forms/EarlyAccessSignupForm'
+import { Button } from '@/components/ui/Button'
 
 export function HeroSection() {
   const prefersReducedMotion = useReducedMotion()
@@ -39,20 +38,28 @@ export function HeroSection() {
           Hawai&#x02BB;i&apos;s humidity, permitting, supply delays, and tight scheduling.
         </p>
 
-        <div className="flex items-center justify-center mb-12">
-          <Link
-            href="/resources/renovation-stages"
-            className="text-cream/70 hover:text-cream text-sm transition-colors"
-          >
-            See Renovation Stages &rarr;
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+          <Link href="/tools">
+            <Button variant="primary" size="lg">
+              Browse Free Tools
+            </Button>
+          </Link>
+          <Link href="/stories">
+            <Button variant="secondary" size="lg">
+              Read Renovation Stories
+            </Button>
           </Link>
         </div>
 
-        <div className="max-w-md mx-auto">
-          <Suspense fallback={null}>
-            <EarlyAccessSignupForm />
-          </Suspense>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            document.getElementById('waitlist-form')?.scrollIntoView({ behavior: 'smooth' })
+          }}
+          className="text-cream/60 hover:text-cream text-sm transition-colors"
+        >
+          Join the Waitlist &darr;
+        </button>
       </div>
     </section>
   )
