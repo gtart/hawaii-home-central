@@ -71,6 +71,7 @@ export function IdeaTile({
   return (
     <button
       type="button"
+      data-testid="idea-tile"
       onClick={onClick}
       className="w-full text-left rounded-xl border border-cream/10 overflow-hidden hover:border-cream/25 transition-colors bg-basalt-50 group"
     >

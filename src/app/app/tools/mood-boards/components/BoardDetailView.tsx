@@ -202,6 +202,7 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
         {/* Comments button */}
         <button
           type="button"
+          data-testid="comments-btn"
           onClick={() => setCommentsOpen(!commentsOpen)}
           className="relative shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-cream/40 hover:text-cream/60 hover:bg-cream/5 transition-colors"
           title="Comments"
@@ -232,6 +233,7 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
           <div className="hidden sm:flex items-center gap-2 shrink-0">
             <button
               type="button"
+              data-testid="upload-photo-btn"
               onClick={() => galleryRef.current?.click()}
               disabled={uploading}
               className="px-3 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-40"
@@ -240,6 +242,7 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
             </button>
             <button
               type="button"
+              data-testid="text-note-btn"
               onClick={() => setShowTextForm(!showTextForm)}
               className="px-3 py-1.5 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors"
             >
@@ -247,6 +250,7 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
             </button>
             <Link
               href={`/app/save-from-web?from=mood-boards&boardId=${board.id}`}
+              data-testid="save-to-hhc-link"
               className="px-3 py-1.5 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors"
             >
               Save to HHC
@@ -419,7 +423,7 @@ export function BoardDetailView({ board, api, readOnly }: Props) {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 bg-basalt-50 rounded-xl border border-cream/10">
+        <div data-testid="board-empty-state" className="text-center py-16 bg-basalt-50 rounded-xl border border-cream/10">
           <p className="text-4xl mb-3 opacity-30">
             {isDefaultBoard(board) ? '\u2764' : '\uD83C\uDFA8'}
           </p>

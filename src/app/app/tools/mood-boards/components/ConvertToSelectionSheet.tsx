@@ -160,7 +160,7 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
     return (
       <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-        <div className="relative bg-basalt-50 border border-cream/10 rounded-xl w-full max-w-md p-6 text-center space-y-3">
+        <div data-testid="convert-success" className="relative bg-basalt-50 border border-cream/10 rounded-xl w-full max-w-md p-6 text-center space-y-3">
           <div className="text-3xl">&#10003;</div>
           <h3 className="text-base font-medium text-cream">
             Added to Selection Boards
@@ -311,6 +311,7 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
           </button>
           <button
             type="button"
+            data-testid="convert-move-btn"
             onClick={handleConvert}
             className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
           >

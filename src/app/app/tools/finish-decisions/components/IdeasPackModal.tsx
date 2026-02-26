@@ -57,8 +57,8 @@ export function IdeasPackModal({
           </h2>
           <p className="text-xs text-cream/40 mt-1">
             {decisionTitle
-              ? 'Add starter options from a curated pack.'
-              : 'Add curated decisions and options to this room.'}
+              ? 'Adds ideas to this selection so you have options to compare.'
+              : 'Adds starter selections and ideas to this room.'}
           </p>
         </div>
 
@@ -147,7 +147,7 @@ export function IdeasPackModal({
             disabled={!selectedKit}
             className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Add Ideas
+            {decisionTitle ? 'Add Ideas' : 'Add to Room'}
           </button>
         </div>
       </div>

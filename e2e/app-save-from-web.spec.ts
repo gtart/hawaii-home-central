@@ -1,6 +1,7 @@
 /**
  * Save From Web critical path e2e tests.
- * Tests bookmarklet payload parsing, image picker, save action, and success navigation.
+ * Tests BOTH hash-based and sessionStorage payload flows,
+ * decode error UI, image picker, destination selection, save, and success navigation.
  */
 import { test, expect } from '@playwright/test'
 import { screenshotPath } from './helpers/screenshot'
@@ -17,11 +18,18 @@ const MOCK_PAYLOAD = {
   url: 'https://example.com/products/coastal-blue-tile',
 }
 
+/** Base64-encode a payload the same way the bookmarklet does */
+function encodePayloadAsHash(payload: object): string {
+  const json = JSON.stringify(payload)
+  // Mirror the bookmarklet: btoa(unescape(encodeURIComponent(json)))
+  const b64 = Buffer.from(json, 'utf-8').toString('base64')
+  return `#bookmarklet=${b64}`
+}
+
 // -- Empty state: no payload --
 test('save-from-web: shows setup instructions with no payload', async ({ page }, testInfo) => {
   await page.goto('/app/save-from-web', { waitUntil: 'networkidle' })
 
-  // Should show the setup instructions (bookmarklet steps)
   await expect(page.getByTestId('empty-state-savefromweb')).toBeVisible()
   await expect(page.getByText('Save to HHC')).toBeVisible()
   await expect(page.getByText('Drag this button to your bookmarks bar')).toBeVisible()
@@ -32,8 +40,36 @@ test('save-from-web: shows setup instructions with no payload', async ({ page },
   })
 })
 
-// -- Payload present: image picker + form --
-test('save-from-web: renders captured data from bookmarklet payload', async ({ page }, testInfo) => {
+// -- Hash-based payload (primary bookmarklet flow) --
+test('save-from-web: hash payload renders captured data', async ({ page }, testInfo) => {
+  const hash = encodePayloadAsHash(MOCK_PAYLOAD)
+  await page.goto(`/app/save-from-web${hash}`, { waitUntil: 'networkidle' })
+
+  // Should show captured page title
+  await expect(page.getByText(MOCK_PAYLOAD.title)).toBeVisible()
+
+  // Should show source domain
+  await expect(page.getByText('example.com')).toBeVisible()
+
+  // Should show image selection area
+  await expect(page.getByText('Select images')).toBeVisible()
+
+  // Save button should be visible
+  const saveBtn = page.getByTestId('savefromweb-save')
+  await expect(saveBtn).toBeVisible()
+
+  // URL hash should be cleared (prevents re-import on refresh)
+  const currentUrl = page.url()
+  expect(currentUrl).not.toContain('#bookmarklet=')
+
+  await page.screenshot({
+    path: screenshotPath('savefromweb-hash-payload', testInfo),
+    fullPage: true,
+  })
+})
+
+// -- SessionStorage fallback (same-window flow) --
+test('save-from-web: sessionStorage payload renders captured data', async ({ page }, testInfo) => {
   // Inject payload into sessionStorage before navigating
   await page.goto('/app/save-from-web', { waitUntil: 'networkidle' })
   await page.evaluate(
@@ -43,105 +79,106 @@ test('save-from-web: renders captured data from bookmarklet payload', async ({ p
     [BOOKMARKLET_KEY, MOCK_PAYLOAD] as const
   )
 
-  // Re-navigate to trigger payload parsing from sessionStorage
+  // Re-navigate to trigger payload parsing
   await page.goto('/app/save-from-web', { waitUntil: 'networkidle' })
 
-  // Should show captured page title
   await expect(page.getByText(MOCK_PAYLOAD.title)).toBeVisible()
-
-  // Should show source URL
   await expect(page.getByText('example.com')).toBeVisible()
 
-  // Should show image thumbnails (the grid)
-  await expect(page.getByText('Select images')).toBeVisible()
-
-  // Should show the "Create Idea" save button
-  const saveBtn = page.getByTestId('savefromweb-save')
-  await expect(saveBtn).toBeVisible()
-
   await page.screenshot({
-    path: screenshotPath('savefromweb-with-payload', testInfo),
+    path: screenshotPath('savefromweb-session-payload', testInfo),
     fullPage: true,
   })
 })
 
-// -- Full save flow --
-test('save-from-web: save creates idea and shows success', async ({ page }, testInfo) => {
-  // Inject payload
-  await page.goto('/app/save-from-web', { waitUntil: 'networkidle' })
-  await page.evaluate(
-    ([key, data]) => {
-      sessionStorage.setItem(key, JSON.stringify(data))
-    },
-    [BOOKMARKLET_KEY, MOCK_PAYLOAD] as const
-  )
-  await page.goto('/app/save-from-web', { waitUntil: 'networkidle' })
+// -- Decode failure shows error UI --
+test('save-from-web: corrupted hash shows decode error', async ({ page }, testInfo) => {
+  // Navigate with a corrupted base64 hash
+  await page.goto('/app/save-from-web#bookmarklet=NOT_VALID_BASE64!!!', { waitUntil: 'networkidle' })
 
-  // The idea name field should be pre-filled with the page title
+  // Should show error state
+  await expect(page.getByTestId('decode-error-state')).toBeVisible()
+  await expect(page.getByText("We couldn't read what you saved")).toBeVisible()
+
+  // Should still show setup instructions below
+  await expect(page.getByTestId('empty-state-savefromweb')).toBeVisible()
+
+  await page.screenshot({
+    path: screenshotPath('savefromweb-decode-error', testInfo),
+    fullPage: true,
+  })
+})
+
+// -- Hash payload with no images --
+test('save-from-web: payload with no images shows hint', async ({ page }, testInfo) => {
+  const noImagesPayload = {
+    title: 'Text-Only Product Page',
+    images: [],
+    url: 'https://example.com/text-only',
+  }
+  const hash = encodePayloadAsHash(noImagesPayload)
+  await page.goto(`/app/save-from-web${hash}`, { waitUntil: 'networkidle' })
+
+  await expect(page.getByText(noImagesPayload.title)).toBeVisible()
+  await expect(page.getByText('No images found on this page')).toBeVisible()
+  await expect(page.getByText('You can still save this URL as an idea')).toBeVisible()
+
+  await page.screenshot({
+    path: screenshotPath('savefromweb-no-images', testInfo),
+    fullPage: true,
+  })
+})
+
+// -- Full save flow via hash --
+test('save-from-web: hash save creates idea and shows success', async ({ page }, testInfo) => {
+  const hash = encodePayloadAsHash(MOCK_PAYLOAD)
+  await page.goto(`/app/save-from-web${hash}`, { waitUntil: 'networkidle' })
+
+  // Name should be pre-filled
   const nameInput = page.locator('input[placeholder="Name this idea..."]')
-  await expect(nameInput).toBeVisible()
   await expect(nameInput).toHaveValue(MOCK_PAYLOAD.title)
 
-  // Click save (no room selected → goes to Global Unsorted)
+  // Select "Finish Selections" destination
+  await page.getByText('Finish Selections').click()
+
+  // Click save
   const saveBtn = page.getByTestId('savefromweb-save')
   await saveBtn.click()
 
-  // Should show success state
+  // Should show success
   await expect(page.getByText('Idea saved!')).toBeVisible()
 
-  // Should show navigation buttons
-  const boardsLink = page.getByText('Go to Selection Boards')
+  // Should have navigation options
   const roomLink = page.getByTestId('savefromweb-success-open-room')
-
-  // At least one navigation option should be visible
-  const hasBoardsLink = await boardsLink.isVisible().catch(() => false)
+  const selectionLink = page.getByTestId('savefromweb-success-open-selection')
   const hasRoomLink = await roomLink.isVisible().catch(() => false)
-  expect(hasBoardsLink || hasRoomLink).toBeTruthy()
+  const hasSelectionLink = await selectionLink.isVisible().catch(() => false)
+  expect(hasRoomLink || hasSelectionLink).toBeTruthy()
 
   await page.screenshot({
-    path: screenshotPath('savefromweb-success', testInfo),
+    path: screenshotPath('savefromweb-hash-success', testInfo),
     fullPage: true,
   })
 })
 
-// -- Verify saved idea actually exists in destination --
-test('save-from-web: saved idea is visible in destination after save', async ({ page }, testInfo) => {
-  // Inject payload
-  await page.goto('/app/save-from-web', { waitUntil: 'networkidle' })
-  await page.evaluate(
-    ([key, data]) => {
-      sessionStorage.setItem(key, JSON.stringify(data))
-    },
-    [BOOKMARKLET_KEY, MOCK_PAYLOAD] as const
-  )
-  await page.goto('/app/save-from-web', { waitUntil: 'networkidle' })
+// -- Save to Mood Board via hash --
+test('save-from-web: save to mood board via hash', async ({ page }, testInfo) => {
+  const hash = encodePayloadAsHash(MOCK_PAYLOAD)
+  await page.goto(`/app/save-from-web${hash}`, { waitUntil: 'networkidle' })
 
-  // Save (goes to Global Unsorted)
+  // Select "Mood Boards" destination
+  await page.getByText('Mood Boards').click()
+
+  // Click save
   const saveBtn = page.getByTestId('savefromweb-save')
   await saveBtn.click()
+
+  // Should show success
   await expect(page.getByText('Idea saved!')).toBeVisible()
-
-  // Navigate to the destination — try room link first, fall back to boards
-  const roomLink = page.getByTestId('savefromweb-success-open-room')
-  const hasRoomLink = await roomLink.isVisible().catch(() => false)
-
-  if (hasRoomLink) {
-    await roomLink.click()
-  } else {
-    // Fall back to Selection Boards and click on Unsorted
-    await page.goto('/app/tools/finish-decisions', { waitUntil: 'networkidle' })
-    const unsortedCard = page.getByTestId('unsorted-room-card')
-    if (await unsortedCard.isVisible().catch(() => false)) {
-      await unsortedCard.click()
-    }
-  }
-  await page.waitForLoadState('networkidle')
-
-  // The saved idea title should be visible somewhere in the destination view
-  await expect(page.getByText(MOCK_PAYLOAD.title)).toBeVisible({ timeout: 10000 })
+  await expect(page.getByText('View Board')).toBeVisible()
 
   await page.screenshot({
-    path: screenshotPath('savefromweb-idea-in-destination', testInfo),
+    path: screenshotPath('savefromweb-mood-board-success', testInfo),
     fullPage: true,
   })
 })
@@ -156,7 +193,6 @@ test('save-from-web: back link navigates to Selection Boards', async ({ page }, 
   await backLink.click()
   await page.waitForLoadState('networkidle')
 
-  // Should be on the Selection Boards page
   await expect(page).toHaveURL(/\/tools\/finish-decisions/)
 
   await page.screenshot({

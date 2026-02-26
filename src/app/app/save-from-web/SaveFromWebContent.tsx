@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useProject } from '@/contexts/ProjectContext'
 import { useToolState } from '@/hooks/useToolState'
-import type { FinishDecisionsPayloadV3, OptionV3, RoomV3 } from '@/data/finish-decisions'
+import type { FinishDecisionsPayloadV3, RoomV3 } from '@/data/finish-decisions'
 import { ROOM_EMOJI_MAP, type RoomTypeV3 } from '@/data/finish-decisions'
 import {
   ensureUncategorizedDecision,
@@ -19,18 +19,19 @@ import { BookmarkletButton } from '@/app/app/tools/finish-decisions/components/B
 import { ImportFromUrlPanel } from '@/app/app/tools/finish-decisions/components/ImportFromUrlPanel'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import type { OptionImageV3 } from '@/data/finish-decisions'
+import {
+  type CapturedContent,
+  type DecodeError,
+  decodeBookmarkletHash,
+  readSessionStoragePayload,
+  clearBookmarkletHash,
+} from '@/lib/capture/decodeBookmarklet'
+import { capturedToMoodBoardIdea, capturedToSelectionOption } from '@/lib/capture/normalizeCapturedContent'
 
 const DEFAULT_FD_PAYLOAD: FinishDecisionsPayloadV3 = { version: 3, rooms: [] }
-const BOOKMARKLET_STORAGE_KEY = 'hhc_bookmarklet_pending'
 const LAST_ROOM_KEY = 'hhc_save_last_room'
 
 type Destination = 'mood_boards' | 'finish_decisions'
-
-interface BookmarkletData {
-  title: string
-  images: Array<{ url: string; label?: string }>
-  url: string
-}
 
 export function SaveFromWebContent() {
   const router = useRouter()
@@ -75,7 +76,8 @@ export function SaveFromWebContent() {
   const [savedDecisionId, setSavedDecisionId] = useState<string>('')
   const [savedBoardName, setSavedBoardName] = useState<string>('')
   const [savedBoardId, setSavedBoardId] = useState<string>('')
-  const [bookmarkletData, setBookmarkletData] = useState<BookmarkletData | null>(null)
+  const [capturedContent, setCapturedContent] = useState<CapturedContent | null>(null)
+  const [decodeError, setDecodeError] = useState<DecodeError | null>(null)
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set())
   const [name, setName] = useState('')
   const [notes, setNotes] = useState('')
@@ -85,46 +87,44 @@ export function SaveFromWebContent() {
 
   // Handle URL import from the paste-a-link panel
   const handleUrlImport = (result: { name: string; notes: string; sourceUrl: string; selectedImages: OptionImageV3[] }) => {
-    setBookmarkletData({
+    setCapturedContent({
+      url: result.sourceUrl,
       title: result.name,
       images: result.selectedImages.map((img) => ({ url: img.url, label: img.label })),
-      url: result.sourceUrl,
+      source: 'import-url',
     })
     setName(result.name)
     setNotes(result.notes)
     setSelectedUrls(new Set(result.selectedImages.map((img) => img.url)))
     setUrlImportOpen(false)
+    setDecodeError(null)
   }
 
-  // Parse bookmarklet data from sessionStorage or hash fragment
+  // Parse bookmarklet data from sessionStorage (same-window) or hash fragment (popup)
   useEffect(() => {
-    let payload: string | null = null
-
-    try {
-      payload = sessionStorage.getItem(BOOKMARKLET_STORAGE_KEY)
-      if (payload) sessionStorage.removeItem(BOOKMARKLET_STORAGE_KEY)
-    } catch { /* ignore */ }
-
-    if (!payload) {
-      const hash = window.location.hash
-      if (hash.startsWith('#bookmarklet=')) {
-        try {
-          const b64 = hash.slice('#bookmarklet='.length)
-          payload = decodeURIComponent(escape(atob(b64)))
-        } catch { /* ignore */ }
-        history.replaceState(null, '', window.location.pathname + window.location.search)
-      }
+    // 1. Try sessionStorage first (same-window bookmarklet path)
+    const fromStorage = readSessionStoragePayload()
+    if (fromStorage) {
+      setCapturedContent(fromStorage)
+      setName(fromStorage.title || '')
+      clearBookmarkletHash()
+      return
     }
 
-    if (!payload) return
+    // 2. Try hash fragment (popup path — primary bookmarklet flow)
+    const hash = window.location.hash
+    if (!hash.startsWith('#bookmarklet=')) return
 
-    try {
-      const data = JSON.parse(payload) as BookmarkletData
-      if (data.url && Array.isArray(data.images)) {
-        setBookmarkletData(data)
-        setName(data.title || '')
-      }
-    } catch { /* ignore malformed data */ }
+    const result = decodeBookmarkletHash(hash)
+    clearBookmarkletHash()
+
+    if (result.ok) {
+      setCapturedContent(result.data)
+      setName(result.data.title || '')
+    } else if (result.error.code !== 'NO_HASH') {
+      // Show error UI only for actual decode failures, not "no data"
+      setDecodeError(result.error)
+    }
   }, [])
 
   const fdRooms = (fdState as FinishDecisionsPayloadV3).rooms || []
@@ -189,19 +189,9 @@ export function SaveFromWebContent() {
 
   // ── Save to Mood Boards ──
   const handleSaveMoodBoard = () => {
-    if (!bookmarkletData) return
+    if (!capturedContent) return
 
-    const images = bookmarkletData.images
-      .filter((img) => selectedUrls.has(img.url))
-      .map((img) => ({
-        id: genId('img'),
-        url: img.url,
-        label: img.label,
-        sourceUrl: bookmarkletData.url,
-      }))
-
-    const ts = new Date().toISOString()
-    const ideaId = genId('idea')
+    const newIdea = capturedToMoodBoardIdea(capturedContent, selectedUrls, { name, notes })
 
     // Determine target board
     let targetBoardId = selectedBoardId
@@ -229,22 +219,8 @@ export function SaveFromWebContent() {
         if (b.id !== targetBoardId) return b
         return {
           ...b,
-          ideas: [
-            ...b.ideas,
-            {
-              id: ideaId,
-              name: name.trim() || bookmarkletData.title || 'Imported idea',
-              notes: notes.trim(),
-              images,
-              heroImageId: images[0]?.id || null,
-              sourceUrl: bookmarkletData.url,
-              sourceTitle: bookmarkletData.title || '',
-              tags: [],
-              createdAt: ts,
-              updatedAt: ts,
-            },
-          ],
-          updatedAt: ts,
+          ideas: [...b.ideas, newIdea],
+          updatedAt: new Date().toISOString(),
         }
       })
 
@@ -259,30 +235,9 @@ export function SaveFromWebContent() {
 
   // ── Save to Finish Selections ──
   const handleSaveFinishSelections = () => {
-    if (!bookmarkletData) return
+    if (!capturedContent) return
 
-    const images = bookmarkletData.images
-      .filter((img) => selectedUrls.has(img.url))
-      .map((img) => ({
-        id: crypto.randomUUID(),
-        url: img.url,
-        label: img.label,
-        sourceUrl: bookmarkletData.url,
-      }))
-
-    const newOption: OptionV3 = {
-      id: crypto.randomUUID(),
-      name: name.trim() || bookmarkletData.title || 'Imported idea',
-      notes: notes.trim(),
-      urls: [{ id: crypto.randomUUID(), url: bookmarkletData.url }],
-      kind: images.length > 0 ? 'image' : 'text',
-      images: images.length > 0 ? images : undefined,
-      heroImageId: images[0]?.id || null,
-      imageUrl: images[0]?.url,
-      thumbnailUrl: images[0]?.url,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
+    const newOption = capturedToSelectionOption(capturedContent, selectedUrls, { name, notes })
 
     let resolvedRoomId = selectedRoomId
     let resolvedDecisionId = selectedDecisionId
@@ -384,8 +339,8 @@ export function SaveFromWebContent() {
   }
 
   // Extract hostname for display
-  const sourceHost = bookmarkletData?.url
-    ? (() => { try { return new URL(bookmarkletData.url).hostname.replace(/^www\./, '') } catch { return '' } })()
+  const sourceHost = capturedContent?.url
+    ? (() => { try { return new URL(capturedContent.url).hostname.replace(/^www\./, '') } catch { return '' } })()
     : ''
 
   // Back link destination
@@ -460,7 +415,7 @@ export function SaveFromWebContent() {
                   type="button"
                   onClick={() => {
                     setSaved(false)
-                    setBookmarkletData(null)
+                    setCapturedContent(null); setDecodeError(null)
                     setSelectedUrls(new Set())
                     setName('')
                     setNotes('')
@@ -489,7 +444,7 @@ export function SaveFromWebContent() {
                   type="button"
                   onClick={() => {
                     setSaved(false)
-                    setBookmarkletData(null)
+                    setCapturedContent(null); setDecodeError(null)
                     setSelectedUrls(new Set())
                     setName('')
                     setNotes('')
@@ -536,7 +491,7 @@ export function SaveFromWebContent() {
     )
   }
 
-  const canSave = !!name.trim() && !!bookmarkletData && !!destination
+  const canSave = !!name.trim() && !!capturedContent && !!destination
 
   return (
     <div className="pt-32 pb-24 px-6">
@@ -554,8 +509,34 @@ export function SaveFromWebContent() {
           Save to HHC
         </h1>
 
+        {/* ── Decode error state ── */}
+        {decodeError && !capturedContent && (
+          <div data-testid="decode-error-state" className="bg-red-500/10 border border-red-500/20 rounded-xl p-5 mb-6">
+            <div className="flex items-start gap-3">
+              <span className="text-red-400 text-lg shrink-0">!</span>
+              <div>
+                <p className="text-sm text-red-300 font-medium mb-1">
+                  We couldn&apos;t read what you saved.
+                </p>
+                <p className="text-xs text-cream/50 mb-3">
+                  Try clicking &quot;Save to HHC&quot; on the page again. If this keeps happening, try the
+                  &quot;Paste a link&quot; option below.
+                </p>
+                <details className="group">
+                  <summary className="text-[11px] text-cream/30 cursor-pointer hover:text-cream/50 transition-colors">
+                    Debug info (for support)
+                  </summary>
+                  <pre className="mt-1.5 text-[10px] text-cream/20 bg-black/20 rounded px-2 py-1 overflow-x-auto select-all">
+                    {decodeError.code}{decodeError.debug ? ` | ${decodeError.debug}` : ''}
+                  </pre>
+                </details>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── No bookmarklet data: show setup instructions ── */}
-        {!bookmarkletData && (
+        {!capturedContent && (
           <>
             <p className="text-cream/60 text-sm mb-6">
               Save inspiration from any website — to your Mood Boards or Finish Selections.
@@ -618,7 +599,7 @@ export function SaveFromWebContent() {
         )}
 
         {/* ── Bookmarklet data present: image picker + destination + save ── */}
-        {bookmarkletData && (
+        {capturedContent && (
           <div className="space-y-5">
             <p className="text-cream/60 text-sm mb-2">
               Images captured from <span className="text-cream/80">{sourceHost}</span>
@@ -627,25 +608,25 @@ export function SaveFromWebContent() {
             {/* Source info */}
             <div className="bg-basalt-50 rounded-lg p-3 border border-cream/10">
               <p className="text-[11px] text-cream/40 uppercase tracking-wide mb-1">
-                Captured from bookmarklet
+                {capturedContent.source === 'import-url' ? 'Imported from URL' : 'Captured from bookmarklet'}
               </p>
-              {bookmarkletData.title && (
+              {capturedContent.title && (
                 <p className="text-sm text-cream font-medium leading-snug">
-                  {bookmarkletData.title}
+                  {capturedContent.title}
                 </p>
               )}
               <a
-                href={bookmarkletData.url}
+                href={capturedContent.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-sandstone/70 hover:text-sandstone truncate block mt-1"
               >
-                {bookmarkletData.url}
+                {capturedContent.url}
               </a>
             </div>
 
             {/* Image picker grid */}
-            {bookmarkletData.images.length > 0 ? (
+            {capturedContent.images.length > 0 ? (
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs text-cream/50">
@@ -654,7 +635,7 @@ export function SaveFromWebContent() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setSelectedUrls(new Set(bookmarkletData.images.map((i) => i.url)))}
+                      onClick={() => setSelectedUrls(new Set(capturedContent.images.map((i) => i.url)))}
                       className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
                     >
                       All
@@ -669,7 +650,7 @@ export function SaveFromWebContent() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-[300px] overflow-y-auto">
-                  {bookmarkletData.images.map((img) => {
+                  {capturedContent.images.map((img) => {
                     const isSelected = selectedUrls.has(img.url)
                     return (
                       <button
@@ -983,7 +964,7 @@ export function SaveFromWebContent() {
               <button
                 type="button"
                 onClick={() => {
-                  setBookmarkletData(null)
+                  setCapturedContent(null); setDecodeError(null)
                   setSelectedUrls(new Set())
                   setName('')
                   setNotes('')

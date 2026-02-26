@@ -1,5 +1,5 @@
 /**
- * Persona: Full Setup -- 1 project with all 3 tools populated.
+ * Persona: Full Setup -- 1 project with all 4 tools populated.
  * Tests that each tool renders its seeded data correctly.
  */
 import { test, expect } from '@playwright/test'
@@ -83,6 +83,36 @@ test('full-setup: fix list shows 16 items with mixed statuses', async ({ page },
   await page.waitForTimeout(500)
   await page.screenshot({
     path: screenshotPath('persona-full-fixlist-bottom', testInfo),
+    fullPage: true,
+  })
+})
+
+// -- Mood Boards --
+test('full-setup: mood boards shows 3 seeded boards', async ({ page }, testInfo) => {
+  await page.goto('/app/tools/mood-boards', { waitUntil: 'networkidle' })
+
+  // Should show all 3 seeded boards
+  await expect(page.getByText('Saved Ideas')).toBeVisible()
+  await expect(page.getByText('Kitchen Inspiration')).toBeVisible()
+  await expect(page.getByText('Bathroom Ideas')).toBeVisible()
+
+  await page.screenshot({
+    path: screenshotPath('persona-full-mood-boards', testInfo),
+    fullPage: true,
+  })
+})
+
+test('full-setup: mood board detail shows seeded ideas', async ({ page }, testInfo) => {
+  await page.goto('/app/tools/mood-boards?board=board-kitchen-inspo', { waitUntil: 'networkidle' })
+
+  // Should show idea tiles
+  const ideaTiles = page.getByTestId('idea-tile')
+  await expect(ideaTiles.first()).toBeVisible()
+  const count = await ideaTiles.count()
+  expect(count).toBeGreaterThanOrEqual(3)
+
+  await page.screenshot({
+    path: screenshotPath('persona-full-mood-board-detail', testInfo),
     fullPage: true,
   })
 })

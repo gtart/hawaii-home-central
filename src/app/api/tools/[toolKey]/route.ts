@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { ensureCurrentProject } from '@/lib/project'
 import { resolveToolAccess } from '@/lib/project-access'
+import { validateAndCoerceToolPayload } from '@/lib/tools/validateToolPayload'
 
 const VALID_TOOL_KEYS = [
   'hold_points',
@@ -99,6 +100,17 @@ export async function PUT(
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
   }
 
+  // Validate and coerce the payload for this tool
+  const validation = validateAndCoerceToolPayload(toolKey, body.payload)
+  if (!validation.valid) {
+    console.warn(`[tools/${toolKey}] Payload validation failed: ${validation.reason}`)
+    return NextResponse.json(
+      { error: 'Invalid payload shape', code: 'INVALID_PAYLOAD', reason: validation.reason },
+      { status: 400 }
+    )
+  }
+  const coercedPayload = validation.payload
+
   const userId = session.user.id
   const projectId = await ensureCurrentProject(userId)
 
@@ -132,10 +144,11 @@ export async function PUT(
   }
 
   // Write ONLY to ToolInstance (project-scoped)
+  const jsonPayload = coercedPayload as unknown as Record<string, never>
   const updated = await prisma.toolInstance.upsert({
     where: { projectId_toolKey: { projectId, toolKey } },
-    create: { projectId, toolKey, payload: body.payload, updatedById: userId },
-    update: { payload: body.payload, updatedById: userId },
+    create: { projectId, toolKey, payload: jsonPayload, updatedById: userId },
+    update: { payload: jsonPayload, updatedById: userId },
     select: { updatedAt: true },
   })
 

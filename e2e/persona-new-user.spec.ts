@@ -46,3 +46,15 @@ test('new user: contract checklist shows empty state', async ({ page }, testInfo
     fullPage: true,
   })
 })
+
+test('new user: mood boards shows empty/default state', async ({ page }, testInfo) => {
+  await page.goto('/app/tools/mood-boards', { waitUntil: 'networkidle' })
+  await page.screenshot({
+    path: screenshotPath('persona-new-user-mood-boards', testInfo),
+    fullPage: true,
+  })
+
+  // Should have "New Board" button
+  const newBoardBtn = page.getByTestId('new-board-btn')
+  await expect(newBoardBtn).toBeVisible()
+})

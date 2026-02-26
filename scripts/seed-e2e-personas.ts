@@ -378,6 +378,150 @@ function buildBYSPayload() {
 }
 
 // ============================================================================
+// Mood Boards payload builder
+// ============================================================================
+
+function buildMoodBoardsPayload(personaName: string, personaEmail: string) {
+  const now = new Date().toISOString()
+
+  return {
+    version: 1,
+    boards: [
+      {
+        id: 'board_saved_ideas',
+        name: 'Saved Ideas',
+        isDefault: true,
+        ideas: [
+          {
+            id: 'idea-saved-1',
+            name: 'Coastal Blue Backsplash Tile',
+            notes: 'Love this shade of blue. Would pair well with white countertops.',
+            images: [
+              {
+                id: 'img-saved-1',
+                url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400',
+                label: 'Blue tile close-up',
+              },
+            ],
+            heroImageId: 'img-saved-1',
+            sourceUrl: 'https://example.com/products/coastal-tile',
+            sourceTitle: 'Coastal Blue Backsplash Tile',
+            tags: ['tile', 'kitchen'],
+            reactions: [
+              { userId: personaEmail, userName: personaName, reaction: 'love' as const },
+            ],
+            createdAt: now,
+            updatedAt: now,
+          },
+        ],
+        comments: [
+          {
+            id: 'mbc-saved-1',
+            text: 'This would be perfect for the kitchen!',
+            authorName: personaName,
+            authorEmail: personaEmail,
+            createdAt: now,
+            refIdeaId: 'idea-saved-1',
+            refIdeaLabel: 'Coastal Blue Backsplash Tile',
+          },
+        ],
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: 'board-kitchen-inspo',
+        name: 'Kitchen Inspiration',
+        ideas: [
+          {
+            id: 'idea-kitchen-1',
+            name: 'Modern White Kitchen',
+            notes: 'Clean lines, lots of natural light. Quartz countertops.',
+            images: [
+              {
+                id: 'img-kitchen-1',
+                url: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400',
+                label: 'Modern kitchen overview',
+              },
+              {
+                id: 'img-kitchen-2',
+                url: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=400',
+                label: 'Kitchen detail',
+              },
+            ],
+            heroImageId: 'img-kitchen-1',
+            sourceUrl: 'https://example.com/gallery/modern-kitchen',
+            sourceTitle: 'Modern White Kitchen Design',
+            tags: ['kitchen', 'modern'],
+            createdAt: now,
+            updatedAt: now,
+          },
+          {
+            id: 'idea-kitchen-2',
+            name: 'Brass Hardware Pulls',
+            notes: 'Brushed brass finish, 5 inch center-to-center.',
+            images: [],
+            heroImageId: null,
+            sourceUrl: '',
+            sourceTitle: '',
+            tags: ['hardware'],
+            createdAt: now,
+            updatedAt: now,
+          },
+          {
+            id: 'idea-kitchen-3',
+            name: 'Open Shelving Concept',
+            notes: 'Floating wood shelves instead of upper cabinets on one wall.',
+            images: [
+              {
+                id: 'img-kitchen-3',
+                url: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400',
+                label: 'Open shelving kitchen',
+              },
+            ],
+            heroImageId: 'img-kitchen-3',
+            sourceUrl: 'https://example.com/design/open-shelving',
+            sourceTitle: 'Open Shelving Design Ideas',
+            tags: ['kitchen', 'shelving'],
+            createdAt: now,
+            updatedAt: now,
+          },
+        ],
+        comments: [],
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: 'board-bathroom-inspo',
+        name: 'Bathroom Ideas',
+        ideas: [
+          {
+            id: 'idea-bath-1',
+            name: 'Walk-in Shower with Bench',
+            notes: 'Frameless glass, rainfall showerhead, heated bench.',
+            images: [
+              {
+                id: 'img-bath-1',
+                url: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=400',
+                label: 'Walk-in shower',
+              },
+            ],
+            heroImageId: 'img-bath-1',
+            sourceUrl: 'https://example.com/bath/walk-in-shower',
+            sourceTitle: 'Walk-in Shower Designs',
+            tags: ['bathroom', 'shower'],
+            createdAt: now,
+            updatedAt: now,
+          },
+        ],
+        comments: [],
+        createdAt: now,
+        updatedAt: now,
+      },
+    ],
+  }
+}
+
+// ============================================================================
 // Persona seeders
 // ============================================================================
 
@@ -484,6 +628,17 @@ async function seedPersona4_FullSetup() {
   console.log(
     `  Contracts: ${bysPayload.contractors.length} contractors, ` +
       `${bysPayload.selectedContractorIds.length} selected`
+  )
+
+  // 4. Mood Boards
+  const moodPayload = buildMoodBoardsPayload(
+    'Full Setup User',
+    'e2e-full-setup@test.hhc.local'
+  )
+  await upsertTool(projectId, 'mood_boards', moodPayload)
+  console.log(
+    `  Mood Boards: ${moodPayload.boards.length} boards, ` +
+      `${moodPayload.boards.reduce((s, b) => s + b.ideas.length, 0)} ideas`
   )
 }
 

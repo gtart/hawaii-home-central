@@ -34,6 +34,8 @@ interface UseToolStateReturn<T> {
   noAccess: boolean
   /** True briefly when a 409 conflict was detected and state was reloaded. */
   conflictBanner: boolean
+  /** True briefly when a VIEW-only user attempted to mutate state. */
+  viewOnlyAttempt: boolean
 }
 
 const POLL_INTERVAL = 20_000
@@ -275,8 +277,18 @@ export function useToolState<T>({
     [toolKey, localOnly, revalidate]
   )
 
+  // Track rejected VIEW mutations so UI can show a toast
+  const [viewOnlyAttempt, setViewOnlyAttempt] = useState(false)
+
   const setState = useCallback(
     (updater: (prev: T) => T) => {
+      // Hard guard: no-op when VIEW-only (no localStorage write, no API call)
+      if (accessRef.current === 'VIEW') {
+        setViewOnlyAttempt(true)
+        setTimeout(() => setViewOnlyAttempt(false), 3000)
+        return
+      }
+
       setStateInternal((prev) => {
         const next = updater(prev)
         stateRef.current = next
@@ -288,7 +300,7 @@ export function useToolState<T>({
           // ignore
         }
 
-        // Debounced write to API (no-op in localOnly or VIEW mode)
+        // Debounced write to API (no-op in localOnly mode)
         saveToApi(next)
 
         return next
@@ -299,5 +311,5 @@ export function useToolState<T>({
 
   const readOnly = access === 'VIEW'
 
-  return { state, setState, isLoaded, isSyncing, access, readOnly, noAccess, conflictBanner }
+  return { state, setState, isLoaded, isSyncing, access, readOnly, noAccess, conflictBanner, viewOnlyAttempt }
 }

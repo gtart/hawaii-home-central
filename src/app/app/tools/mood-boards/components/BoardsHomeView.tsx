@@ -72,6 +72,7 @@ export function BoardsHomeView({ api, readOnly }: Props) {
               <div className="group relative">
                 <button
                   type="button"
+                  data-testid="board-card"
                   onClick={() => {
                     if (!isEditing) {
                       router.push(`/app/tools/mood-boards?board=${board.id}`)
@@ -235,6 +236,7 @@ export function BoardsHomeView({ api, readOnly }: Props) {
             ) : (
               <button
                 type="button"
+                data-testid="new-board-btn"
                 onClick={() => setIsCreating(true)}
                 className="w-full aspect-[4/3] rounded-xl border-2 border-dashed border-cream/15 hover:border-sandstone/40 flex flex-col items-center justify-center gap-2 transition-colors bg-basalt-50/50"
               >
@@ -252,7 +254,9 @@ export function BoardsHomeView({ api, readOnly }: Props) {
       </div>
 
       {/* Recent Activity feed */}
-      <RecentActivity boards={payload.boards} />
+      <div data-testid="recent-activity">
+        <RecentActivity boards={payload.boards} />
+      </div>
 
       {deletingBoard && (
         <ConfirmDialog

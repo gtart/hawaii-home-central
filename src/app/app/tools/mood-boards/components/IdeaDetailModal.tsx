@@ -168,6 +168,7 @@ export function IdeaDetailModal({
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
       <div
         ref={dialogRef}
+        data-testid="idea-detail-modal"
         className="relative bg-basalt-50 border border-cream/10 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
         role="dialog"
         aria-modal="true"
@@ -479,6 +480,7 @@ export function IdeaDetailModal({
               </button>
               <button
                 type="button"
+                data-testid="convert-to-selection-btn"
                 onClick={() => setShowConvertSheet(true)}
                 className="px-3 py-1.5 text-sm text-sandstone hover:text-sandstone-light border border-sandstone/30 rounded-lg transition-colors"
               >
