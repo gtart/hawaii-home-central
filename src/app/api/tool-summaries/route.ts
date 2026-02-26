@@ -41,6 +41,18 @@ function computeStats(toolKey: string, raw: unknown): ToolStats {
       return { total, done }
     }
 
+    if (toolKey === 'mood_boards') {
+      const boards = Array.isArray(payload?.boards)
+        ? (payload.boards as Array<{ ideas?: unknown[] }>)
+        : []
+      const boardCount = boards.length
+      const ideaCount = boards.reduce(
+        (sum, b) => sum + (Array.isArray(b.ideas) ? b.ideas.length : 0),
+        0
+      )
+      return { boardCount, ideaCount }
+    }
+
     return {}
   } catch {
     return {}

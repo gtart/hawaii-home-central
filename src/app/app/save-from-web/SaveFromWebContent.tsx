@@ -13,14 +13,18 @@ import {
   findGlobalUnsortedRoom,
   isGlobalUnsorted,
 } from '@/lib/decisionHelpers'
+import type { MoodBoardPayload } from '@/data/mood-boards'
+import { DEFAULT_PAYLOAD as DEFAULT_MB_PAYLOAD, ensureDefaultBoard, findDefaultBoard, genId } from '@/data/mood-boards'
 import { BookmarkletButton } from '@/app/app/tools/finish-decisions/components/BookmarkletButton'
 import { ImportFromUrlPanel } from '@/app/app/tools/finish-decisions/components/ImportFromUrlPanel'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import type { OptionImageV3 } from '@/data/finish-decisions'
 
-const DEFAULT_PAYLOAD: FinishDecisionsPayloadV3 = { version: 3, rooms: [] }
+const DEFAULT_FD_PAYLOAD: FinishDecisionsPayloadV3 = { version: 3, rooms: [] }
 const BOOKMARKLET_STORAGE_KEY = 'hhc_bookmarklet_pending'
 const LAST_ROOM_KEY = 'hhc_save_last_room'
+
+type Destination = 'mood_boards' | 'finish_decisions'
 
 interface BookmarkletData {
   title: string
@@ -34,28 +38,53 @@ export function SaveFromWebContent() {
 
   const { currentProject, projects, isLoading: projectsLoading } = useProject()
 
-  const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3>({
-    toolKey: 'finish_decisions',
-    localStorageKey: 'hhc_finish_decisions_v2',
-    defaultValue: DEFAULT_PAYLOAD,
-  })
+  // Finish Decisions state
+  const { state: fdState, setState: setFdState, isLoaded: fdLoaded, readOnly: fdReadOnly } =
+    useToolState<FinishDecisionsPayloadV3>({
+      toolKey: 'finish_decisions',
+      localStorageKey: 'hhc_finish_decisions_v2',
+      defaultValue: DEFAULT_FD_PAYLOAD,
+    })
 
+  // Mood Boards state
+  const { state: mbState, setState: setMbState, isLoaded: mbLoaded, readOnly: mbReadOnly } =
+    useToolState<MoodBoardPayload>({
+      toolKey: 'mood_boards',
+      localStorageKey: 'hhc_mood_boards_v1',
+      defaultValue: DEFAULT_MB_PAYLOAD,
+    })
+
+  const isLoaded = fdLoaded && mbLoaded
+  const readOnly = fdReadOnly && mbReadOnly
+
+  // Determine initial destination from query params
+  const fromParam = searchParams.get('from')
+  const boardIdParam = searchParams.get('boardId')
+
+  const [destination, setDestination] = useState<Destination | null>(
+    fromParam === 'mood-boards' ? 'mood_boards' : null
+  )
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(null)
+  const [selectedBoardId, setSelectedBoardId] = useState<string | null>(boardIdParam)
   const [saved, setSaved] = useState(false)
+  const [savedDestination, setSavedDestination] = useState<Destination>('mood_boards')
   const [savedTargetRoom, setSavedTargetRoom] = useState<string>('')
   const [savedTargetRoomId, setSavedTargetRoomId] = useState<string>('')
   const [savedTargetDecision, setSavedTargetDecision] = useState<string>('')
   const [savedDecisionId, setSavedDecisionId] = useState<string>('')
+  const [savedBoardName, setSavedBoardName] = useState<string>('')
+  const [savedBoardId, setSavedBoardId] = useState<string>('')
   const [bookmarkletData, setBookmarkletData] = useState<BookmarkletData | null>(null)
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set())
   const [name, setName] = useState('')
   const [notes, setNotes] = useState('')
   const [urlImportOpen, setUrlImportOpen] = useState(false)
+  const [newBoardName, setNewBoardName] = useState('')
+  const [isCreatingBoard, setIsCreatingBoard] = useState(false)
 
   // Handle URL import from the paste-a-link panel
   const handleUrlImport = (result: { name: string; notes: string; sourceUrl: string; selectedImages: OptionImageV3[] }) => {
-    // Convert the ImportFromUrlPanel result into bookmarklet-equivalent data
     setBookmarkletData({
       title: result.name,
       images: result.selectedImages.map((img) => ({ url: img.url, label: img.label })),
@@ -63,22 +92,19 @@ export function SaveFromWebContent() {
     })
     setName(result.name)
     setNotes(result.notes)
-    // Pre-select all imported images
     setSelectedUrls(new Set(result.selectedImages.map((img) => img.url)))
     setUrlImportOpen(false)
   }
 
-  // Parse bookmarklet data from sessionStorage (primary) or hash fragment (backup)
+  // Parse bookmarklet data from sessionStorage or hash fragment
   useEffect(() => {
     let payload: string | null = null
 
-    // 1. Check sessionStorage first (survives auth redirects)
     try {
       payload = sessionStorage.getItem(BOOKMARKLET_STORAGE_KEY)
       if (payload) sessionStorage.removeItem(BOOKMARKLET_STORAGE_KEY)
     } catch { /* ignore */ }
 
-    // 2. Fall back to hash fragment
     if (!payload) {
       const hash = window.location.hash
       if (hash.startsWith('#bookmarklet=')) {
@@ -101,25 +127,27 @@ export function SaveFromWebContent() {
     } catch { /* ignore malformed data */ }
   }, [])
 
-  const rooms = (state as FinishDecisionsPayloadV3).rooms || []
-  const selectedRoom = rooms.find((r) => r.id === selectedRoomId)
+  const fdRooms = (fdState as FinishDecisionsPayloadV3).rooms || []
+  const selectedRoom = fdRooms.find((r) => r.id === selectedRoomId)
 
-  // Stable representation of room IDs — re-runs effect when rooms are added/removed/reordered
-  const roomIdKey = rooms.map((r) => r.id).join(',')
+  const mbBoards = ensureDefaultBoard(
+    (mbState as MoodBoardPayload).boards || []
+  )
 
-  // Pre-select from query params or last-used room
+  // Stable representation of room IDs
+  const roomIdKey = fdRooms.map((r) => r.id).join(',')
+
+  // Pre-select from query params or last-used room (Finish Selections)
   useEffect(() => {
-    if (!isLoaded || rooms.length === 0) return
-    // Already selected and still valid? Don't override
-    if (selectedRoomId && rooms.find((r) => r.id === selectedRoomId)) return
+    if (!isLoaded || fdRooms.length === 0 || destination !== 'finish_decisions') return
+    if (selectedRoomId && fdRooms.find((r) => r.id === selectedRoomId)) return
 
-    // 1. Check query params
     const qRoom = searchParams.get('roomId')
     const qDecision = searchParams.get('decisionId')
-    if (qRoom && rooms.find((r) => r.id === qRoom)) {
+    if (qRoom && fdRooms.find((r) => r.id === qRoom)) {
       setSelectedRoomId(qRoom)
       if (qDecision) {
-        const room = rooms.find((r) => r.id === qRoom)
+        const room = fdRooms.find((r) => r.id === qRoom)
         if (room?.decisions.find((d) => d.id === qDecision)) {
           setSelectedDecisionId(qDecision)
         }
@@ -127,20 +155,18 @@ export function SaveFromWebContent() {
       return
     }
 
-    // 2. Check last-used room from localStorage
     try {
       const lastRoom = localStorage.getItem(LAST_ROOM_KEY)
-      if (lastRoom && rooms.find((r) => r.id === lastRoom)) {
+      if (lastRoom && fdRooms.find((r) => r.id === lastRoom)) {
         setSelectedRoomId(lastRoom)
         return
       }
     } catch { /* ignore */ }
 
-    // 3. If only one room, auto-select it
-    if (rooms.length === 1) {
-      setSelectedRoomId(rooms[0].id)
+    if (fdRooms.length === 1) {
+      setSelectedRoomId(fdRooms[0].id)
     }
-  }, [isLoaded, roomIdKey, searchParams, selectedRoomId, rooms])
+  }, [isLoaded, roomIdKey, searchParams, selectedRoomId, fdRooms, destination])
 
   // Persist last-used room
   useEffect(() => {
@@ -161,7 +187,78 @@ export function SaveFromWebContent() {
     })
   }
 
-  const handleSave = () => {
+  // ── Save to Mood Boards ──
+  const handleSaveMoodBoard = () => {
+    if (!bookmarkletData) return
+
+    const images = bookmarkletData.images
+      .filter((img) => selectedUrls.has(img.url))
+      .map((img) => ({
+        id: genId('img'),
+        url: img.url,
+        label: img.label,
+        sourceUrl: bookmarkletData.url,
+      }))
+
+    const ts = new Date().toISOString()
+    const ideaId = genId('idea')
+
+    // Determine target board
+    let targetBoardId = selectedBoardId
+    const currentBoards = ensureDefaultBoard((mbState as MoodBoardPayload).boards || [])
+
+    // Validate board still exists
+    if (targetBoardId && !currentBoards.find((b) => b.id === targetBoardId)) {
+      targetBoardId = null
+    }
+
+    // Default to "Saved Ideas"
+    if (!targetBoardId) {
+      const defaultBoard = findDefaultBoard(currentBoards)
+      targetBoardId = defaultBoard?.id || 'board_saved_ideas'
+    }
+
+    const targetBoard = currentBoards.find((b) => b.id === targetBoardId)
+    const boardName = targetBoard?.name || 'Saved Ideas'
+
+    setMbState((prev) => {
+      const p = prev as MoodBoardPayload
+      let boards = ensureDefaultBoard(Array.isArray(p.boards) ? p.boards : [])
+
+      boards = boards.map((b) => {
+        if (b.id !== targetBoardId) return b
+        return {
+          ...b,
+          ideas: [
+            ...b.ideas,
+            {
+              id: ideaId,
+              name: name.trim() || bookmarkletData.title || 'Imported idea',
+              notes: notes.trim(),
+              images,
+              heroImageId: images[0]?.id || null,
+              sourceUrl: bookmarkletData.url,
+              sourceTitle: bookmarkletData.title || '',
+              tags: [],
+              createdAt: ts,
+              updatedAt: ts,
+            },
+          ],
+          updatedAt: ts,
+        }
+      })
+
+      return { ...p, boards }
+    })
+
+    setSavedDestination('mood_boards')
+    setSavedBoardName(boardName)
+    setSavedBoardId(targetBoardId || '')
+    setSaved(true)
+  }
+
+  // ── Save to Finish Selections ──
+  const handleSaveFinishSelections = () => {
     if (!bookmarkletData) return
 
     const images = bookmarkletData.images
@@ -187,34 +284,26 @@ export function SaveFromWebContent() {
       updatedAt: new Date().toISOString(),
     }
 
-    // Resolve target room/decision deterministically BEFORE any state update.
-    // Validate that selected IDs still exist — if stale (deleted room/decision),
-    // fall back to Global Unsorted so the idea is never silently lost.
     let resolvedRoomId = selectedRoomId
     let resolvedDecisionId = selectedDecisionId
     let resolvedRoomName = ''
     let resolvedDecisionName = ''
 
-    const currentRooms = (state as FinishDecisionsPayloadV3).rooms
+    const currentRooms = (fdState as FinishDecisionsPayloadV3).rooms
 
-    // Validate selectedRoomId exists in current state
     if (resolvedRoomId && !currentRooms.find((r) => r.id === resolvedRoomId)) {
-      // Room was deleted or stale — clear and fall back to Global Unsorted
       resolvedRoomId = null
       resolvedDecisionId = null
     }
 
-    // Validate selectedDecisionId exists in the target room
     if (resolvedRoomId && resolvedDecisionId) {
       const targetRoom = currentRooms.find((r) => r.id === resolvedRoomId)
       if (!targetRoom?.decisions.find((d) => d.id === resolvedDecisionId)) {
-        // Decision was deleted or stale — clear (will fall back to Uncategorized)
         resolvedDecisionId = null
       }
     }
 
     if (!resolvedRoomId) {
-      // Will go to Global Unsorted
       const ensured = ensureGlobalUnsortedRoom(currentRooms)
       const globalRoom = findGlobalUnsortedRoom(ensured)!
       resolvedRoomId = globalRoom.id
@@ -236,25 +325,20 @@ export function SaveFromWebContent() {
       }
     }
 
-    // Now update state using the pre-resolved IDs (no mutation of closure vars)
-    setState((prev) => {
+    setFdState((prev) => {
       const payload = prev as FinishDecisionsPayloadV3
       let updatedRooms = payload.rooms
 
-      // Ensure Global Unsorted exists if needed
       if (!selectedRoomId) {
         updatedRooms = ensureGlobalUnsortedRoom(updatedRooms)
       }
 
       const newRooms = updatedRooms.map((r) => {
         if (r.id !== resolvedRoomId) return r
-
         let room = r
-        // Ensure uncategorized decision exists if no specific selection chosen
         if (!selectedDecisionId) {
           room = ensureUncategorizedDecision(room)
         }
-
         return {
           ...room,
           decisions: room.decisions.map((d) =>
@@ -268,7 +352,7 @@ export function SaveFromWebContent() {
       return { ...payload, rooms: newRooms }
     })
 
-    // Set success state using the pre-resolved values (not closure-mutated vars)
+    setSavedDestination('finish_decisions')
     setSavedTargetRoom(resolvedRoomName)
     setSavedTargetRoomId(resolvedRoomId || '')
     setSavedTargetDecision(resolvedDecisionName)
@@ -276,10 +360,41 @@ export function SaveFromWebContent() {
     setSaved(true)
   }
 
+  const handleSave = () => {
+    if (destination === 'mood_boards') handleSaveMoodBoard()
+    else handleSaveFinishSelections()
+  }
+
+  const handleCreateBoard = () => {
+    const trimmed = newBoardName.trim()
+    if (!trimmed) return
+    const id = genId('board')
+    const ts = new Date().toISOString()
+    setMbState((prev) => {
+      const p = prev as MoodBoardPayload
+      const boards = ensureDefaultBoard(Array.isArray(p.boards) ? p.boards : [])
+      return {
+        ...p,
+        boards: [...boards, { id, name: trimmed, ideas: [], createdAt: ts, updatedAt: ts }],
+      }
+    })
+    setSelectedBoardId(id)
+    setNewBoardName('')
+    setIsCreatingBoard(false)
+  }
+
   // Extract hostname for display
   const sourceHost = bookmarkletData?.url
     ? (() => { try { return new URL(bookmarkletData.url).hostname.replace(/^www\./, '') } catch { return '' } })()
     : ''
+
+  // Back link destination
+  const backHref = fromParam === 'mood-boards'
+    ? '/app/tools/mood-boards'
+    : '/app/tools/finish-decisions'
+  const backLabel = fromParam === 'mood-boards'
+    ? 'Back to Mood Boards'
+    : 'Back to Selection Boards'
 
   // Loading states
   if (projectsLoading || !isLoaded) {
@@ -327,67 +442,101 @@ export function SaveFromWebContent() {
     )
   }
 
-  // Success state
+  // ── Success state ──
   if (saved) {
     return (
       <div className="pt-32 pb-24 px-6">
         <div className="max-w-xl mx-auto text-center">
           <div className="text-4xl mb-4">&#10003;</div>
           <h1 className="font-serif text-2xl text-sandstone mb-2">Idea saved!</h1>
-          <p className="text-cream/60 text-sm mb-6">
-            Added to <span className="text-cream/80">{savedTargetDecision}</span> in <span className="text-cream/80">{savedTargetRoom}</span>
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setSaved(false)
-                setBookmarkletData(null)
-                setSelectedUrls(new Set())
-                setName('')
-                setNotes('')
-              }}
-              className="px-4 py-2 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors"
-            >
-              Save another
-            </button>
-            {savedTargetRoomId && (
-              <button
-                type="button"
-                data-testid="savefromweb-success-open-room"
-                onClick={() => router.push(`/app/tools/finish-decisions/room/${savedTargetRoomId}`)}
-                className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
-              >
-                View in {savedTargetRoom}
-              </button>
-            )}
-            {savedDecisionId && (
-              <button
-                type="button"
-                data-testid="savefromweb-success-open-selection"
-                onClick={() => router.push(`/app/tools/finish-decisions/decision/${savedDecisionId}`)}
-                className="px-4 py-2 text-sm text-sandstone hover:text-sandstone-light border border-sandstone/30 rounded-lg transition-colors"
-              >
-                View selection
-              </button>
-            )}
-            {!savedTargetRoomId && !savedDecisionId && (
-              <button
-                type="button"
-                onClick={() => router.push('/app/tools/finish-decisions')}
-                className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
-              >
-                Go to Selection Boards
-              </button>
-            )}
-          </div>
+
+          {savedDestination === 'mood_boards' ? (
+            <>
+              <p className="text-cream/60 text-sm mb-6">
+                Added to <span className="text-cream/80">{savedBoardName}</span>
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSaved(false)
+                    setBookmarkletData(null)
+                    setSelectedUrls(new Set())
+                    setName('')
+                    setNotes('')
+                    setDestination(null)
+                  }}
+                  className="px-4 py-2 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors"
+                >
+                  Save another
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/app/tools/mood-boards?board=${savedBoardId}`)}
+                  className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+                >
+                  View Board
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-cream/60 text-sm mb-6">
+                Added to <span className="text-cream/80">{savedTargetDecision}</span> in <span className="text-cream/80">{savedTargetRoom}</span>
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSaved(false)
+                    setBookmarkletData(null)
+                    setSelectedUrls(new Set())
+                    setName('')
+                    setNotes('')
+                    setDestination(null)
+                  }}
+                  className="px-4 py-2 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors"
+                >
+                  Save another
+                </button>
+                {savedTargetRoomId && (
+                  <button
+                    type="button"
+                    data-testid="savefromweb-success-open-room"
+                    onClick={() => router.push(`/app/tools/finish-decisions/room/${savedTargetRoomId}`)}
+                    className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+                  >
+                    View in {savedTargetRoom}
+                  </button>
+                )}
+                {savedDecisionId && (
+                  <button
+                    type="button"
+                    data-testid="savefromweb-success-open-selection"
+                    onClick={() => router.push(`/app/tools/finish-decisions/decision/${savedDecisionId}`)}
+                    className="px-4 py-2 text-sm text-sandstone hover:text-sandstone-light border border-sandstone/30 rounded-lg transition-colors"
+                  >
+                    View selection
+                  </button>
+                )}
+                {!savedTargetRoomId && !savedDecisionId && (
+                  <button
+                    type="button"
+                    onClick={() => router.push('/app/tools/finish-decisions')}
+                    className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+                  >
+                    Go to Selection Boards
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     )
   }
 
-  // Room is optional — defaults to Global Unsorted if none selected
-  const canSave = !!name.trim() && !!bookmarkletData
+  const canSave = !!name.trim() && !!bookmarkletData && !!destination
 
   return (
     <div className="pt-32 pb-24 px-6">
@@ -395,10 +544,10 @@ export function SaveFromWebContent() {
         {/* Header */}
         <button
           type="button"
-          onClick={() => router.push('/app/tools/finish-decisions')}
+          onClick={() => router.push(backHref)}
           className="text-sm text-cream/40 hover:text-cream/60 transition-colors mb-4 inline-block"
         >
-          &larr; Back to Selection Boards
+          &larr; {backLabel}
         </button>
 
         <h1 className="font-serif text-2xl md:text-3xl text-sandstone mb-2">
@@ -409,7 +558,7 @@ export function SaveFromWebContent() {
         {!bookmarkletData && (
           <>
             <p className="text-cream/60 text-sm mb-6">
-              Save product ideas from any website — even sites that block direct imports.
+              Save inspiration from any website — to your Mood Boards or Finish Selections.
             </p>
 
             <div data-testid="empty-state-savefromweb" className="bg-basalt-50 rounded-xl p-5 border border-cream/10">
@@ -424,15 +573,15 @@ export function SaveFromWebContent() {
                 <div className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">2</span>
                   <div>
-                    <p className="text-sm text-cream/80">Visit any product page</p>
-                    <p className="text-xs text-cream/40 mt-0.5">Home Depot, Lowes, Wayfair, Amazon, etc.</p>
+                    <p className="text-sm text-cream/80">Visit any product or inspiration page</p>
+                    <p className="text-xs text-cream/40 mt-0.5">Home Depot, Lowes, Wayfair, Amazon, Pinterest, Houzz, etc.</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">3</span>
                   <div>
                     <p className="text-sm text-cream/80">Click &quot;Save to HHC&quot; in your bookmarks bar</p>
-                    <p className="text-xs text-cream/40 mt-0.5">Product images will be captured and brought back here for you to save.</p>
+                    <p className="text-xs text-cream/40 mt-0.5">Choose Mood Boards (inspiration) or Finish Selections (decisions).</p>
                   </div>
                 </div>
               </div>
@@ -443,14 +592,14 @@ export function SaveFromWebContent() {
               </div>
             </div>
 
-            {/* Paste a link — works on mobile and desktop */}
+            {/* Paste a link */}
             <div className="mt-6">
               <button
                 type="button"
                 onClick={() => setUrlImportOpen(!urlImportOpen)}
                 className="flex items-center gap-2 text-sm text-cream/50 hover:text-cream/70 transition-colors w-full"
               >
-                <span className="text-xs text-cream/30">{urlImportOpen ? '▼' : '▶'}</span>
+                <span className="text-xs text-cream/30">{urlImportOpen ? '\u25BC' : '\u25B6'}</span>
                 Paste a link instead
                 <span className="text-[10px] text-cream/25 ml-auto">Works on mobile</span>
               </button>
@@ -539,7 +688,7 @@ export function SaveFromWebContent() {
                           className="w-full h-full object-cover"
                           fallback={
                             <div className="w-full h-full flex items-center justify-center bg-basalt-50">
-                              <span className="text-2xl opacity-30">🖼️</span>
+                              <span className="text-2xl opacity-30">{'\uD83D\uDDBC\uFE0F'}</span>
                             </div>
                           }
                         />
@@ -591,114 +740,242 @@ export function SaveFromWebContent() {
               </div>
             </div>
 
-            {/* ── Destination picker: tile-based ── */}
-            {rooms.filter((r) => !isGlobalUnsorted(r)).length === 0 ? (
-              <div className="bg-basalt-50 rounded-lg p-4 text-center">
-                <p className="text-cream/50 text-sm mb-1">
-                  No rooms yet? No problem.
-                </p>
-                <p className="text-[11px] text-cream/30">
-                  This idea will go to your Unsorted bucket. You can move it to a room later.
-                </p>
+            {/* ══ Destination Picker ══ */}
+            <div>
+              <label className="block text-xs text-cream/50 mb-2">Save to</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDestination('mood_boards')
+                    setSelectedRoomId(null)
+                    setSelectedDecisionId(null)
+                  }}
+                  className={`p-4 rounded-lg border-2 text-left transition-all ${
+                    destination === 'mood_boards'
+                      ? 'border-sandstone bg-sandstone/10'
+                      : 'border-cream/10 hover:border-cream/25 bg-basalt-50'
+                  }`}
+                >
+                  <p className={`text-sm font-medium ${destination === 'mood_boards' ? 'text-sandstone' : 'text-cream'}`}>
+                    Mood Boards
+                  </p>
+                  <p className="text-[11px] text-cream/40 mt-0.5">
+                    Save for inspiration
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDestination('finish_decisions')
+                    setSelectedBoardId(null)
+                  }}
+                  className={`p-4 rounded-lg border-2 text-left transition-all ${
+                    destination === 'finish_decisions'
+                      ? 'border-sandstone bg-sandstone/10'
+                      : 'border-cream/10 hover:border-cream/25 bg-basalt-50'
+                  }`}
+                >
+                  <p className={`text-sm font-medium ${destination === 'finish_decisions' ? 'text-sandstone' : 'text-cream'}`}>
+                    Finish Selections
+                  </p>
+                  <p className="text-[11px] text-cream/40 mt-0.5">
+                    Add to a room selection
+                  </p>
+                </button>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Room tiles */}
-                <div>
-                  <label className="block text-xs text-cream/50 mb-2">
-                    Room <span className="text-cream/30">(optional — skipping saves to Unsorted)</span>
-                  </label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {rooms.filter((r) => !isGlobalUnsorted(r)).map((room) => {
-                      const emoji = ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️'
-                      const isActive = selectedRoomId === room.id
-                      return (
-                        <button
-                          key={room.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedRoomId(room.id)
-                            setSelectedDecisionId(null)
-                          }}
-                          className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
-                            isActive
-                              ? 'border-sandstone bg-sandstone/10'
-                              : 'border-cream/10 hover:border-cream/25 bg-basalt-50'
-                          }`}
-                        >
-                          <span className="text-base">{emoji}</span>
-                          <div className="min-w-0">
-                            <p className={`text-sm font-medium truncate ${isActive ? 'text-sandstone' : 'text-cream'}`}>
-                              {room.name}
-                            </p>
-                            <p className="text-[10px] text-cream/30">
-                              {room.decisions.filter((d) => d.systemKey !== 'uncategorized').length} selections
-                            </p>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
+            </div>
 
-                {/* Selection tiles (optional, shown when room selected) */}
-                {selectedRoom && selectedRoom.decisions.filter((d) => d.systemKey !== 'uncategorized').length > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-xs text-cream/50">
-                        Selection <span className="text-cream/30">(optional)</span>
-                      </label>
-                      {selectedDecisionId && (
+            {/* ── Mood Boards: Board picker ── */}
+            {destination === 'mood_boards' && (
+              <div>
+                <label className="block text-xs text-cream/50 mb-2">
+                  Board <span className="text-cream/30">(optional — defaults to Saved Ideas)</span>
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {mbBoards.map((board) => {
+                    const isActive = selectedBoardId === board.id
+                    return (
+                      <button
+                        key={board.id}
+                        type="button"
+                        onClick={() => setSelectedBoardId(isActive ? null : board.id)}
+                        className={`px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
+                          isActive
+                            ? 'border-sandstone bg-sandstone/10'
+                            : 'border-cream/10 hover:border-cream/25 bg-basalt-50'
+                        }`}
+                      >
+                        <p className={`text-sm font-medium truncate ${isActive ? 'text-sandstone' : 'text-cream'}`}>
+                          {board.name}
+                        </p>
+                        <p className="text-[10px] text-cream/30">
+                          {board.ideas.length} idea{board.ideas.length !== 1 ? 's' : ''}
+                        </p>
+                      </button>
+                    )
+                  })}
+
+                  {/* New Board */}
+                  {isCreatingBoard ? (
+                    <div className="px-3 py-2.5 rounded-lg border-2 border-sandstone/30 bg-basalt-50">
+                      <input
+                        type="text"
+                        value={newBoardName}
+                        onChange={(e) => setNewBoardName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleCreateBoard()
+                          if (e.key === 'Escape') {
+                            setIsCreatingBoard(false)
+                            setNewBoardName('')
+                          }
+                        }}
+                        placeholder="Board name..."
+                        autoFocus
+                        className="w-full px-2 py-1 bg-basalt border border-cream/20 text-cream text-sm rounded focus:outline-none focus:border-sandstone mb-1"
+                      />
+                      <div className="flex gap-1">
                         <button
                           type="button"
-                          onClick={() => setSelectedDecisionId(null)}
-                          className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+                          onClick={handleCreateBoard}
+                          disabled={!newBoardName.trim()}
+                          className="flex-1 text-[11px] px-2 py-1 bg-sandstone text-basalt rounded font-medium disabled:opacity-30"
                         >
-                          Clear
+                          Create
                         </button>
-                      )}
+                        <button
+                          type="button"
+                          onClick={() => { setIsCreatingBoard(false); setNewBoardName('') }}
+                          className="text-[11px] px-2 py-1 text-cream/50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {selectedRoom.decisions
-                        .filter((d) => d.systemKey !== 'uncategorized')
-                        .map((decision) => {
-                          const isActive = selectedDecisionId === decision.id
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsCreatingBoard(true)}
+                      className="px-3 py-2.5 rounded-lg border-2 border-dashed border-cream/15 hover:border-sandstone/30 text-left transition-colors"
+                    >
+                      <p className="text-sm text-cream/50">+ New Board</p>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── Finish Selections: Room + Selection picker ── */}
+            {destination === 'finish_decisions' && (
+              <>
+                {fdRooms.filter((r) => !isGlobalUnsorted(r)).length === 0 ? (
+                  <div className="bg-basalt-50 rounded-lg p-4 text-center">
+                    <p className="text-cream/50 text-sm mb-1">
+                      No rooms yet? No problem.
+                    </p>
+                    <p className="text-[11px] text-cream/30">
+                      This idea will go to your Unsorted bucket. You can move it to a room later.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Room tiles */}
+                    <div>
+                      <label className="block text-xs text-cream/50 mb-2">
+                        Room <span className="text-cream/30">(optional — skipping saves to Unsorted)</span>
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {fdRooms.filter((r) => !isGlobalUnsorted(r)).map((room) => {
+                          const emoji = ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '\u270F\uFE0F'
+                          const isActive = selectedRoomId === room.id
                           return (
                             <button
-                              key={decision.id}
+                              key={room.id}
                               type="button"
-                              onClick={() => setSelectedDecisionId(isActive ? null : decision.id)}
-                              className={`px-3 py-2 rounded-lg border-2 text-left transition-all ${
+                              onClick={() => {
+                                setSelectedRoomId(room.id)
+                                setSelectedDecisionId(null)
+                              }}
+                              className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
                                 isActive
                                   ? 'border-sandstone bg-sandstone/10'
                                   : 'border-cream/10 hover:border-cream/25 bg-basalt-50'
                               }`}
                             >
-                              <p className={`text-sm font-medium truncate ${isActive ? 'text-sandstone' : 'text-cream'}`}>
-                                {decision.title}
-                              </p>
-                              <p className="text-[10px] text-cream/30">
-                                {decision.options.length} ideas
-                              </p>
+                              <span className="text-base">{emoji}</span>
+                              <div className="min-w-0">
+                                <p className={`text-sm font-medium truncate ${isActive ? 'text-sandstone' : 'text-cream'}`}>
+                                  {room.name}
+                                </p>
+                                <p className="text-[10px] text-cream/30">
+                                  {room.decisions.filter((d) => d.systemKey !== 'uncategorized').length} selections
+                                </p>
+                              </div>
                             </button>
                           )
                         })}
+                      </div>
                     </div>
-                    {!selectedDecisionId && (
-                      <p className="text-[11px] text-cream/30 mt-1.5">
-                        No selection? Idea will go to Unsorted in this room. You can sort it later.
+
+                    {/* Selection tiles */}
+                    {selectedRoom && selectedRoom.decisions.filter((d) => d.systemKey !== 'uncategorized').length > 0 && (
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="block text-xs text-cream/50">
+                            Selection <span className="text-cream/30">(optional)</span>
+                          </label>
+                          {selectedDecisionId && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedDecisionId(null)}
+                              className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {selectedRoom.decisions
+                            .filter((d) => d.systemKey !== 'uncategorized')
+                            .map((decision) => {
+                              const isActive = selectedDecisionId === decision.id
+                              return (
+                                <button
+                                  key={decision.id}
+                                  type="button"
+                                  onClick={() => setSelectedDecisionId(isActive ? null : decision.id)}
+                                  className={`px-3 py-2 rounded-lg border-2 text-left transition-all ${
+                                    isActive
+                                      ? 'border-sandstone bg-sandstone/10'
+                                      : 'border-cream/10 hover:border-cream/25 bg-basalt-50'
+                                  }`}
+                                >
+                                  <p className={`text-sm font-medium truncate ${isActive ? 'text-sandstone' : 'text-cream'}`}>
+                                    {decision.title}
+                                  </p>
+                                  <p className="text-[10px] text-cream/30">
+                                    {decision.options.length} ideas
+                                  </p>
+                                </button>
+                              )
+                            })}
+                        </div>
+                        {!selectedDecisionId && (
+                          <p className="text-[11px] text-cream/30 mt-1.5">
+                            No selection? Idea will go to Unsorted in this room. You can sort it later.
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {selectedRoom && selectedRoom.decisions.filter((d) => d.systemKey !== 'uncategorized').length === 0 && (
+                      <p className="text-[11px] text-cream/30">
+                        This room has no selections yet. Idea will go to Uncategorized.
                       </p>
                     )}
                   </div>
                 )}
-
-                {/* If room has no selections yet, show hint */}
-                {selectedRoom && selectedRoom.decisions.filter((d) => d.systemKey !== 'uncategorized').length === 0 && (
-                  <p className="text-[11px] text-cream/30">
-                    This room has no selections yet. Idea will go to Uncategorized.
-                  </p>
-                )}
-              </div>
+              </>
             )}
 
             {/* Action buttons */}
@@ -711,6 +988,7 @@ export function SaveFromWebContent() {
                   setName('')
                   setNotes('')
                   setSelectedDecisionId(null)
+                  setDestination(fromParam === 'mood-boards' ? 'mood_boards' : null)
                 }}
                 className="px-4 py-2 text-sm text-cream/60 hover:text-cream transition-colors"
               >
@@ -723,7 +1001,7 @@ export function SaveFromWebContent() {
                 disabled={!canSave}
                 className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                Create Idea
+                Save Idea
               </button>
             </div>
           </div>

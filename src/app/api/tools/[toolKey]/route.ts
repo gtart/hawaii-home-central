@@ -12,6 +12,7 @@ const VALID_TOOL_KEYS = [
   'before_you_sign',
   'before_you_sign_notes',
   'punchlist',
+  'mood_boards',
 ]
 
 export async function GET(

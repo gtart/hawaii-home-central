@@ -14,6 +14,14 @@ export interface ToolRegistryEntry {
 
 export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
+    toolKey: 'mood_boards',
+    href: '/app/tools/mood-boards',
+    title: 'Mood Boards',
+    description:
+      'Collect and organize inspiration from anywhere\u2014then turn your favorites into real selections.',
+    stage: 'Get Inspired',
+  },
+  {
     toolKey: 'before_you_sign',
     href: '/app/tools/before-you-sign',
     title: 'Contract Checklist',

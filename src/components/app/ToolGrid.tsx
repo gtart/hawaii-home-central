@@ -72,6 +72,14 @@ function ToolStats({ toolKey, stats }: { toolKey: string; stats?: Record<string,
       const open = total - done
       text = `${total} issue${total !== 1 ? 's' : ''} tracked · ${open} open`
     }
+  } else if (toolKey === 'mood_boards') {
+    const boardCount = (stats.boardCount as number | undefined) ?? 0
+    const ideaCount = (stats.ideaCount as number | undefined) ?? 0
+    if (ideaCount === 0) {
+      text = 'No ideas saved yet'
+    } else {
+      text = `${boardCount} board${boardCount !== 1 ? 's' : ''} · ${ideaCount} idea${ideaCount !== 1 ? 's' : ''}`
+    }
   }
 
   if (!text) return null

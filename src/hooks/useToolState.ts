@@ -14,6 +14,7 @@ interface UseToolStateOptions<T> {
     | 'before_you_sign'
     | 'before_you_sign_notes'
     | 'punchlist'
+    | 'mood_boards'
   localStorageKey: string
   defaultValue: T
   /** When true, skip API calls and only use localStorage. */

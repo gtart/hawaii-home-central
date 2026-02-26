@@ -24,6 +24,28 @@ interface StageEntry {
 
 const STAGES: StageEntry[] = [
   {
+    number: 1,
+    title: 'Get Inspired',
+    subtitle: 'Collect ideas before you commit.',
+    tool: {
+      title: 'Mood Boards',
+      description:
+        'Save inspiration from anywhere\u2014Pinterest, Houzz, Home Depot, Instagram\u2014and organize ideas into boards before turning your favorites into real selections.',
+      ctaText: 'Sign in to get started',
+      ctaHref: '/login?callbackUrl=/app/tools/mood-boards',
+      steps: [
+        'Save ideas from any website with the Save to HHC bookmarklet or paste a link',
+        'Organize into boards\u2014by room, style, or however you like',
+        'Turn your favorites into finish selections when you\u2019re ready',
+      ],
+      features: [
+        'Pinterest-style boards with images and source links',
+        'One-click save from any product or inspiration page',
+        'Convert ideas to Finish Selections when you\u2019re ready to decide',
+      ],
+    },
+  },
+  {
     number: 2,
     title: 'Hire & Contract',
     subtitle: 'Compare bids and lock expectations.',
