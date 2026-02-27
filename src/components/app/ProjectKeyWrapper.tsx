@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useProject } from '@/contexts/ProjectContext'
 import type { ReactNode } from 'react'
@@ -10,33 +9,16 @@ import type { ReactNode } from 'react'
  * When the project changes, React unmounts and remounts all children,
  * causing useToolState hooks to refetch data for the new project.
  *
- * Auto-creates a default "My Home" project when none exist,
- * with a manual fallback button if auto-create fails.
+ * Project creation is handled server-side by resolveCurrentProject()
+ * in GET /api/projects. No client-side auto-create — that caused
+ * duplicate "My Home" projects due to race conditions with concurrent
+ * API calls (projects + tool GETs all calling resolveCurrentProject).
  */
 export function ProjectKeyWrapper({ children }: { children: ReactNode }) {
   const { status } = useSession()
   const { currentProject, isLoading, createProject } = useProject()
-  const creatingRef = useRef(false)
-  const failedRef = useRef(false)
-  // One-shot guard: only allow auto-create once per component mount
-  const didAutoCreateRef = useRef(false)
 
-  useEffect(() => {
-    // Never auto-create unless auth is definitively settled and authenticated
-    if (status !== 'authenticated') return
-    if (isLoading || currentProject || creatingRef.current || failedRef.current) return
-    if (didAutoCreateRef.current) return
-
-    didAutoCreateRef.current = true
-    creatingRef.current = true
-    createProject('My Home').catch(() => {
-      failedRef.current = true
-    }).finally(() => {
-      creatingRef.current = false
-    })
-  }, [status, isLoading, currentProject, createProject])
-
-  if (isLoading) {
+  if (status === 'loading' || isLoading) {
     return (
       <div className="pt-32 pb-24 px-6">
         <div className="max-w-4xl mx-auto">
@@ -51,18 +33,7 @@ export function ProjectKeyWrapper({ children }: { children: ReactNode }) {
   }
 
   if (!currentProject) {
-    if (failedRef.current) {
-      return <NoProjectsFallback onCreate={createProject} />
-    }
-    // Auto-create in progress
-    return (
-      <div className="pt-32 pb-24 px-6">
-        <div className="max-w-md mx-auto text-center">
-          <div className="w-6 h-6 border-2 border-sandstone/30 border-t-sandstone rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-cream/50 text-sm">Setting up your home...</p>
-        </div>
-      </div>
-    )
+    return <NoProjectsFallback onCreate={createProject} />
   }
 
   return <div key={currentProject.id}>{children}</div>
@@ -75,9 +46,9 @@ function NoProjectsFallback({ onCreate }: { onCreate: (name: string) => Promise<
         <svg className="w-12 h-12 text-cream/20 mx-auto mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <h2 className="font-serif text-2xl text-sandstone mb-2">Something went wrong</h2>
+        <h2 className="font-serif text-2xl text-sandstone mb-2">Welcome to Hawaii Home Central</h2>
         <p className="text-cream/50 text-sm mb-6 leading-relaxed">
-          We couldn&apos;t set up your home automatically. Click below to try again.
+          Create your first home project to get started with Mood Boards, Decision Boards, and more.
         </p>
         <button
           type="button"

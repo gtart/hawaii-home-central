@@ -63,7 +63,7 @@ export interface Board {
   name: string
   ideas: Idea[]
   comments?: MoodBoardComment[]
-  isDefault?: boolean // true only for "Inbox" (default landing board)
+  isDefault?: boolean // true only for "Uncategorized" (default landing board)
   createdBy?: string // email of board creator
   visibility?: 'everyone' | 'invite-only' // default: 'everyone'
   access?: BoardAccess[] // only used when visibility === 'invite-only'
@@ -90,7 +90,7 @@ export function ensureDefaultBoard(boards: Board[]): Board[] {
   return [
     {
       id: DEFAULT_BOARD_ID,
-      name: 'Inbox',
+      name: 'Uncategorized',
       ideas: [],
       isDefault: true,
       createdAt: ts,

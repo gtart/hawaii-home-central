@@ -7,7 +7,9 @@ import { prisma } from '@/lib/prisma'
  * 1. If currentProjectId points to an ACTIVE project → return it.
  * 2. If not, pick the first ACTIVE project → set as current, return it.
  * 3. If no ACTIVE projects exist:
- *    a. First time (hasBootstrappedProject=false): create "My Home", mark bootstrapped, return it.
+ *    a. First time (hasBootstrappedProject=false): atomically claim the
+ *       bootstrap slot, then create "My Home". Concurrent calls that lose
+ *       the race retry once to find the newly created project.
  *    b. Already bootstrapped: return null (user intentionally deleted all).
  */
 export async function resolveCurrentProject(userId: string): Promise<string | null> {
@@ -60,40 +62,53 @@ export async function resolveCurrentProject(userId: string): Promise<string | nu
     return null
   }
 
-  // First-time bootstrap: create default project
-  return await prisma.$transaction(async (tx) => {
-    // Re-check inside transaction (race condition guard)
-    const freshUser = await tx.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: { hasBootstrappedProject: true },
-    })
-
-    if (freshUser.hasBootstrappedProject) return null
-
-    const project = await tx.project.create({
-      data: { userId, name: 'My Home' },
-    })
-
-    await tx.projectMember.create({
-      data: { projectId: project.id, userId, role: 'OWNER' },
-    })
-
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        currentProjectId: project.id,
-        hasBootstrappedProject: true,
-      },
-    })
-
-    // Backfill existing ToolResults for this user
-    await tx.toolResult.updateMany({
-      where: { userId, projectId: null },
-      data: { projectId: project.id },
-    })
-
-    return project.id
+  // First-time bootstrap: atomically claim the slot using updateMany with a
+  // WHERE guard. Only ONE concurrent call will succeed (count === 1).
+  const claimed = await prisma.user.updateMany({
+    where: { id: userId, hasBootstrappedProject: false },
+    data: { hasBootstrappedProject: true },
   })
+
+  if (claimed.count === 0) {
+    // Another concurrent call already claimed the bootstrap slot.
+    // Wait briefly and re-check for the newly created project.
+    await new Promise((r) => setTimeout(r, 300))
+    const retry = await prisma.projectMember.findFirst({
+      where: { userId, project: { status: 'ACTIVE' } },
+      select: { projectId: true },
+      orderBy: { project: { createdAt: 'asc' } },
+    })
+    if (retry) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { currentProjectId: retry.projectId },
+      })
+      return retry.projectId
+    }
+    return null
+  }
+
+  // We won the race — create the default project.
+  const project = await prisma.project.create({
+    data: { userId, name: 'My Home' },
+  })
+
+  await prisma.projectMember.create({
+    data: { projectId: project.id, userId, role: 'OWNER' },
+  })
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { currentProjectId: project.id },
+  })
+
+  // Backfill existing ToolResults for this user
+  await prisma.toolResult.updateMany({
+    where: { userId, projectId: null },
+    data: { projectId: project.id },
+  })
+
+  return project.id
 }
 
 /**

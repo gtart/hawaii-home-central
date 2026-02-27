@@ -447,7 +447,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
                   <path d="M12 16v-4M12 8h.01" />
                 </svg>
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2.5 py-1.5 rounded-lg bg-basalt border border-cream/15 text-[10px] text-cream/60 whitespace-nowrap opacity-0 pointer-events-none group-hover/tip:opacity-100 transition-opacity z-20 shadow-lg">
-                  This is your Inbox — a catch-all for unsorted ideas.
+                  This is your default board for unsorted ideas.
                 </span>
               </span>
             </div>

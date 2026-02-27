@@ -31,6 +31,8 @@ import { capturedToMoodBoardIdea, capturedToSelectionOption } from '@/lib/captur
 const DEFAULT_FD_PAYLOAD: FinishDecisionsPayloadV3 = { version: 3, rooms: [] }
 const LAST_ROOM_KEY = 'hhc_save_last_room'
 const LAST_DEST_KEY = 'hhc_save_last_destination'
+const LAST_PROJECT_KEY = 'hhc_save_last_project'
+const LAST_BOARD_KEY = 'hhc_save_last_board'
 
 type Destination = 'mood_boards' | 'finish_decisions'
 
@@ -52,12 +54,36 @@ export function SaveFromWebContent() {
 
   const { currentProject, projects, isLoading: projectsLoading } = useProject()
 
+  // Project selection — defaults to last used or current project
+  const activeProjects = projects.filter((p) => p.status === 'ACTIVE')
+  const [selectedProjectId, setSelectedProjectIdRaw] = useState<string | null>(() => {
+    try {
+      const last = localStorage.getItem(LAST_PROJECT_KEY)
+      if (last && projects.find((p) => p.id === last && p.status === 'ACTIVE')) return last
+    } catch { /* ignore */ }
+    return currentProject?.id ?? null
+  })
+  const setSelectedProjectId = (id: string) => {
+    setSelectedProjectIdRaw(id)
+    try { localStorage.setItem(LAST_PROJECT_KEY, id) } catch { /* ignore */ }
+  }
+
+  // Sync selection when currentProject loads (initial render may have null)
+  useEffect(() => {
+    if (!selectedProjectId && currentProject?.id) {
+      setSelectedProjectIdRaw(currentProject.id)
+    }
+  }, [currentProject?.id, selectedProjectId])
+
+  const projectIdOverride = selectedProjectId || currentProject?.id || null
+
   // Finish Decisions state
   const { state: fdState, setState: setFdState, isLoaded: fdLoaded, readOnly: fdReadOnly } =
     useToolState<FinishDecisionsPayloadV3>({
       toolKey: 'finish_decisions',
       localStorageKey: 'hhc_finish_decisions_v2',
       defaultValue: DEFAULT_FD_PAYLOAD,
+      projectIdOverride,
     })
 
   // Mood Boards state
@@ -66,6 +92,7 @@ export function SaveFromWebContent() {
       toolKey: 'mood_boards',
       localStorageKey: 'hhc_mood_boards_v1',
       defaultValue: DEFAULT_MB_PAYLOAD,
+      projectIdOverride,
     })
 
   const isLoaded = fdLoaded && mbLoaded
@@ -84,7 +111,20 @@ export function SaveFromWebContent() {
   }
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(null)
-  const [selectedBoardId, setSelectedBoardId] = useState<string | null>(boardIdParam)
+  const [selectedBoardId, setSelectedBoardIdRaw] = useState<string | null>(() => {
+    if (boardIdParam) return boardIdParam
+    try {
+      const last = localStorage.getItem(LAST_BOARD_KEY)
+      if (last) return last
+    } catch { /* ignore */ }
+    return null
+  })
+  const setSelectedBoardId = (id: string | null) => {
+    setSelectedBoardIdRaw(id)
+    if (id) {
+      try { localStorage.setItem(LAST_BOARD_KEY, id) } catch { /* ignore */ }
+    }
+  }
   const [saved, setSaved] = useState(false)
   const [savedDestination, setSavedDestination] = useState<Destination>('mood_boards')
   const [savedTargetRoom, setSavedTargetRoom] = useState<string>('')
@@ -219,14 +259,14 @@ export function SaveFromWebContent() {
       targetBoardId = null
     }
 
-    // Default to "Saved Ideas"
+    // Default to "Uncategorized"
     if (!targetBoardId) {
       const defaultBoard = findDefaultBoard(currentBoards)
       targetBoardId = defaultBoard?.id || 'board_saved_ideas'
     }
 
     const targetBoard = currentBoards.find((b) => b.id === targetBoardId)
-    const boardName = targetBoard?.name || 'Saved Ideas'
+    const boardName = targetBoard?.name || 'Uncategorized'
 
     setMbState((prev) => {
       const p = prev as MoodBoardPayload
@@ -738,6 +778,30 @@ export function SaveFromWebContent() {
               </div>
             </div>
 
+            {/* ══ Project Picker (shown when user has 2+ active projects) ══ */}
+            {activeProjects.length > 1 && (
+              <div>
+                <label className="block text-xs text-cream/50 mb-2">Project</label>
+                <select
+                  value={projectIdOverride || ''}
+                  onChange={(e) => {
+                    setSelectedProjectId(e.target.value)
+                    // Reset board/room selection when switching projects
+                    setSelectedBoardId(null)
+                    setSelectedRoomId(null)
+                    setSelectedDecisionId(null)
+                  }}
+                  className="w-full px-3 py-2.5 bg-basalt-50 border border-cream/20 text-cream text-sm rounded-lg focus:outline-none focus:border-sandstone"
+                >
+                  {activeProjects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}{p.role === 'MEMBER' ? ' (shared)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* ══ Destination Picker ══ */}
             <div>
               <label className="block text-xs text-cream/50 mb-2">Save to</label>
@@ -788,7 +852,7 @@ export function SaveFromWebContent() {
             {destination === 'mood_boards' && (
               <div>
                 <label className="block text-xs text-cream/50 mb-2">
-                  Board <span className="text-cream/30">(optional — defaults to Saved Ideas)</span>
+                  Board <span className="text-cream/30">(optional — defaults to Uncategorized)</span>
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {mbBoards.map((board) => {
@@ -1005,10 +1069,10 @@ export function SaveFromWebContent() {
           </div>
         )}
 
-        {/* Multi-project notice */}
-        {projects.length > 1 && (
+        {/* Project notice */}
+        {activeProjects.length === 1 && (
           <p className="text-[11px] text-cream/30 mt-6">
-            Saving to: {currentProject.name}. Switch projects from the dashboard.
+            Saving to: {activeProjects[0].name}
           </p>
         )}
       </div>
