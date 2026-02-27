@@ -24,8 +24,12 @@ setup('create authenticated sessions for all personas', async ({ browser }) => {
   if (!secret) throw new Error('AUTH_SECRET not found in .env -- cannot create test sessions')
 
   const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000'
-  const isHTTPS = baseURL.startsWith('https')
-  const cookieName = isHTTPS
+  // NextAuth determines cookie names from AUTH_URL, not the request URL.
+  // When AUTH_URL is HTTPS (e.g. production domain), NextAuth uses __Secure-
+  // prefixed cookies even if the browser connects over HTTP localhost.
+  const authURL = process.env.AUTH_URL || baseURL
+  const useSecureCookies = authURL.startsWith('https')
+  const cookieName = useSecureCookies
     ? '__Secure-authjs.session-token'
     : 'authjs.session-token'
   const domain = new URL(baseURL).hostname
@@ -46,7 +50,7 @@ setup('create authenticated sessions for all personas', async ({ browser }) => {
         exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
       },
       secret,
-      salt: 'authjs.session-token',
+      salt: cookieName,
     })
 
     const storageState = {
@@ -57,7 +61,7 @@ setup('create authenticated sessions for all personas', async ({ browser }) => {
           domain,
           path: '/',
           httpOnly: true,
-          secure: isHTTPS,
+          secure: useSecureCookies,
           sameSite: 'Lax' as const,
           expires: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
         },
