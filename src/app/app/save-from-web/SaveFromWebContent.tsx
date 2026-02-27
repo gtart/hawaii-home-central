@@ -30,8 +30,21 @@ import { capturedToMoodBoardIdea, capturedToSelectionOption } from '@/lib/captur
 
 const DEFAULT_FD_PAYLOAD: FinishDecisionsPayloadV3 = { version: 3, rooms: [] }
 const LAST_ROOM_KEY = 'hhc_save_last_room'
+const LAST_DEST_KEY = 'hhc_save_last_destination'
 
 type Destination = 'mood_boards' | 'finish_decisions'
+
+function readLastDestination(): Destination | null {
+  try {
+    const v = localStorage.getItem(LAST_DEST_KEY)
+    if (v === 'mood_boards' || v === 'finish_decisions') return v
+  } catch { /* ignore */ }
+  return null
+}
+
+function saveLastDestination(d: Destination) {
+  try { localStorage.setItem(LAST_DEST_KEY, d) } catch { /* ignore */ }
+}
 
 export function SaveFromWebContent() {
   const router = useRouter()
@@ -62,9 +75,13 @@ export function SaveFromWebContent() {
   const fromParam = searchParams.get('from')
   const boardIdParam = searchParams.get('boardId')
 
-  const [destination, setDestination] = useState<Destination | null>(
-    fromParam === 'mood-boards' ? 'mood_boards' : null
+  const [destination, setDestinationRaw] = useState<Destination | null>(
+    fromParam === 'mood-boards' ? 'mood_boards' : readLastDestination()
   )
+  const setDestination = (d: Destination | null) => {
+    setDestinationRaw(d)
+    if (d) saveLastDestination(d)
+  }
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(null)
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(boardIdParam)
@@ -349,7 +366,7 @@ export function SaveFromWebContent() {
     : '/app/tools/finish-decisions'
   const backLabel = fromParam === 'mood-boards'
     ? 'Back to Mood Boards'
-    : 'Back to Selection Boards'
+    : 'Back to Decision Boards'
 
   // Loading states
   if (projectsLoading || !isLoaded) {
@@ -471,7 +488,7 @@ export function SaveFromWebContent() {
                     onClick={() => router.push(`/app/tools/finish-decisions/decision/${savedDecisionId}`)}
                     className="px-4 py-2 text-sm text-sandstone hover:text-sandstone-light border border-sandstone/30 rounded-lg transition-colors"
                   >
-                    View selection
+                    View decision
                   </button>
                 )}
                 {!savedTargetRoomId && !savedDecisionId && (
@@ -480,7 +497,7 @@ export function SaveFromWebContent() {
                     onClick={() => router.push('/app/tools/finish-decisions')}
                     className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
                   >
-                    Go to Selection Boards
+                    Go to Decision Boards
                   </button>
                 )}
               </div>
@@ -539,7 +556,7 @@ export function SaveFromWebContent() {
         {!capturedContent && (
           <>
             <p className="text-cream/60 text-sm mb-6">
-              Save inspiration from any website — to your Mood Boards or Finish Selections.
+              Save inspiration from any website — to your Mood Boards or Decision Boards.
             </p>
 
             <div data-testid="empty-state-savefromweb" className="bg-basalt-50 rounded-xl p-5 border border-cream/10">
@@ -562,7 +579,7 @@ export function SaveFromWebContent() {
                   <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">3</span>
                   <div>
                     <p className="text-sm text-cream/80">Click &quot;Save to HHC&quot; in your bookmarks bar</p>
-                    <p className="text-xs text-cream/40 mt-0.5">Choose Mood Boards (inspiration) or Finish Selections (decisions).</p>
+                    <p className="text-xs text-cream/40 mt-0.5">Choose Mood Boards (inspiration) or Decision Boards.</p>
                   </div>
                 </div>
               </div>
@@ -758,10 +775,10 @@ export function SaveFromWebContent() {
                   }`}
                 >
                   <p className={`text-sm font-medium ${destination === 'finish_decisions' ? 'text-sandstone' : 'text-cream'}`}>
-                    Finish Selections
+                    Decision Boards
                   </p>
                   <p className="text-[11px] text-cream/40 mt-0.5">
-                    Add to a room selection
+                    Compare options per room
                   </p>
                 </button>
               </div>
@@ -889,7 +906,7 @@ export function SaveFromWebContent() {
                                   {room.name}
                                 </p>
                                 <p className="text-[10px] text-cream/30">
-                                  {room.decisions.filter((d) => d.systemKey !== 'uncategorized').length} selections
+                                  {room.decisions.filter((d) => d.systemKey !== 'uncategorized').length} decisions
                                 </p>
                               </div>
                             </button>
@@ -903,7 +920,7 @@ export function SaveFromWebContent() {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <label className="block text-xs text-cream/50">
-                            Selection <span className="text-cream/30">(optional)</span>
+                            Decision <span className="text-cream/30">(optional)</span>
                           </label>
                           {selectedDecisionId && (
                             <button
@@ -943,7 +960,7 @@ export function SaveFromWebContent() {
                         </div>
                         {!selectedDecisionId && (
                           <p className="text-[11px] text-cream/30 mt-1.5">
-                            No selection? Idea will go to Unsorted in this room. You can sort it later.
+                            No decision? Idea will go to Unsorted in this room. You can sort it later.
                           </p>
                         )}
                       </div>
@@ -951,7 +968,7 @@ export function SaveFromWebContent() {
 
                     {selectedRoom && selectedRoom.decisions.filter((d) => d.systemKey !== 'uncategorized').length === 0 && (
                       <p className="text-[11px] text-cream/30">
-                        This room has no selections yet. Idea will go to Uncategorized.
+                        This room has no decisions yet. Idea will go to Uncategorized.
                       </p>
                     )}
                   </div>

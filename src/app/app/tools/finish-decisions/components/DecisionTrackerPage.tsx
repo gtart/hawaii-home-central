@@ -274,7 +274,7 @@ export function DecisionTrackerPage({
           <div className="flex items-center gap-2 mb-3">
             <div className="flex-1">
               <Input
-                placeholder="Search all rooms and selections..."
+                placeholder="Search all rooms and decisions..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -431,7 +431,7 @@ export function DecisionTrackerPage({
           {filteredRooms.length === 0 ? (
             <div className="bg-basalt-50 rounded-card p-8 text-center">
               <p className="text-cream/50">
-                No selections match your {searchQuery ? 'search' : 'filters'}.
+                No decisions match your {searchQuery ? 'search' : 'filters'}.
               </p>
               <button
                 onClick={() => {
@@ -599,7 +599,7 @@ export function DecisionTrackerPage({
             onBatchAddRooms([{ type, name, template: useDefaults ? 'standard' : 'none' }])
             const defaultCount = (defaultDecisions[type] || []).length
             const msg = useDefaults && defaultCount > 0
-              ? `"${name}" added with ${defaultCount} suggested selections — edit anytime`
+              ? `"${name}" added with ${defaultCount} suggested decisions — edit anytime`
               : `"${name}" added`
             setSimpleToast(msg)
             setTimeout(() => setSimpleToast(null), 4000)

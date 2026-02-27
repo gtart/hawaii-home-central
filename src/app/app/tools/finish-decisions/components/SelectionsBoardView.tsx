@@ -88,7 +88,7 @@ export function SelectionsBoardView({
   if (decisions.length === 0) {
     return (
       <div data-testid="empty-state-selection" className="text-center py-8 text-cream/50 text-sm">
-        No selections yet.
+        No decisions yet.
         {onAddSelection && !readOnly && (
           <>
             {' '}
@@ -97,7 +97,7 @@ export function SelectionsBoardView({
               onClick={onAddSelection}
               className="text-sandstone hover:text-sandstone-light font-medium transition-colors"
             >
-              + Add a selection
+              + Add a decision
             </button>{' '}
             to get started.
           </>
@@ -134,7 +134,7 @@ export function SelectionsBoardView({
             {/* Title row — above image */}
             <div className="px-3 pt-2.5 pb-1 flex items-center gap-1.5">
               <h3 className="text-sm font-medium text-cream truncate leading-tight flex-1">
-                {decision.title || 'Untitled Selection'}
+                {decision.title || 'Untitled Decision'}
               </h3>
               {/* Delete button (hover) */}
               {!readOnly && decision.systemKey !== 'uncategorized' && (
@@ -241,7 +241,7 @@ export function SelectionsBoardView({
             </svg>
           </div>
           <span className="text-xs text-cream/40 group-hover/add:text-cream/60 font-medium transition-colors">
-            Add a selection
+            Add a decision
           </span>
         </button>
       )}

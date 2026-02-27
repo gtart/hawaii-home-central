@@ -57,8 +57,8 @@ export function IdeasPackModal({
           </h2>
           <p className="text-xs text-cream/40 mt-1">
             {decisionTitle
-              ? 'Adds ideas to this selection so you have options to compare.'
-              : 'Adds starter selections and ideas to this room.'}
+              ? 'Adds ideas to this decision so you have options to compare.'
+              : 'Adds starter decisions and ideas to this room.'}
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export function IdeasPackModal({
           {availableKits.length === 0 ? (
             <div className="py-8 text-center">
               <p className="text-cream/40 text-sm">
-                No ideas packs available for this {decisionTitle ? 'selection' : 'room type'}.
+                No ideas packs available for this {decisionTitle ? 'decision' : 'room type'}.
               </p>
             </div>
           ) : (
@@ -102,7 +102,7 @@ export function IdeasPackModal({
                   </div>
                   <p className="text-xs text-cream/50 leading-relaxed">{kit.description}</p>
                   <p className="text-[11px] text-cream/30 mt-1.5">
-                    {kit.decisions.length} selection{kit.decisions.length !== 1 ? 's' : ''},{' '}
+                    {kit.decisions.length} decision{kit.decisions.length !== 1 ? 's' : ''},{' '}
                     {kit.decisions.reduce((s, d) => s + d.options.length, 0)} idea{kit.decisions.reduce((s, d) => s + d.options.length, 0) !== 1 ? 's' : ''}
                   </p>
 

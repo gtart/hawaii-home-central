@@ -163,7 +163,7 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
         <div data-testid="convert-success" className="relative bg-basalt-50 border border-cream/10 rounded-xl w-full max-w-md p-6 text-center space-y-3">
           <div className="text-3xl">&#10003;</div>
           <h3 className="text-base font-medium text-cream">
-            Added to Selection Boards
+            Added to Decision Boards
           </h3>
           <p className="text-sm text-cream/60">
             Saved to{' '}
@@ -192,10 +192,10 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
         aria-modal="true"
       >
         <h3 className="text-base font-medium text-cream">
-          Move to Selection Boards
+          Move to Decision Boards
         </h3>
         <p className="text-sm text-cream/60">
-          This will copy &quot;{idea.name}&quot; to your Selection Boards.
+          This will copy &quot;{idea.name}&quot; to your Decision Boards.
           The original idea will remain in your mood board.
         </p>
 
@@ -249,7 +249,7 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
         ) : (
           <div className="bg-basalt rounded-lg p-3 text-center">
             <p className="text-cream/50 text-sm">
-              No rooms yet in Selection Boards.
+              No rooms yet in Decision Boards.
             </p>
             <p className="text-[11px] text-cream/30 mt-1">
               The idea will be saved to Unsorted.
@@ -263,7 +263,7 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
             .length > 0 && (
             <div>
               <label className="block text-xs text-cream/50 mb-2">
-                Selection{' '}
+                Decision{' '}
                 <span className="text-cream/30">(optional)</span>
               </label>
               <div className="grid grid-cols-2 gap-2">

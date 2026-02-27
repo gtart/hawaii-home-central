@@ -65,7 +65,7 @@ export function DecisionCard({
         <div className="flex-1 min-w-0 flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-medium text-cream leading-tight">
-              {decision.title || 'Untitled Selection'}
+              {decision.title || 'Untitled Decision'}
             </h3>
             {(() => {
               const sel = decision.options.find(o => o.isSelected)
@@ -85,7 +85,7 @@ export function DecisionCard({
                   setMenuOpen(!menuOpen)
                 }}
                 className="p-1 text-cream/30 hover:text-cream/60 transition-colors"
-                aria-label="Selection options"
+                aria-label="Decision options"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <circle cx="12" cy="5" r="2" />

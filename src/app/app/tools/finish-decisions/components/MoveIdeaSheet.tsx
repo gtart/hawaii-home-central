@@ -155,7 +155,7 @@ export function MoveIdeaSheet({
           {selectedRoom && (
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <label className="block text-xs text-cream/50">Selection</label>
+                <label className="block text-xs text-cream/50">Decision</label>
                 <div className="flex bg-cream/5 rounded p-0.5 text-[10px]">
                   <button
                     type="button"
@@ -204,11 +204,11 @@ export function MoveIdeaSheet({
                       })}
                     </div>
                   ) : (
-                    <p className="text-[11px] text-cream/30">No selections in this room yet.</p>
+                    <p className="text-[11px] text-cream/30">No decisions in this room yet.</p>
                   )}
                   {!selectedDecisionId && (
                     <p className="text-[11px] text-cream/30 mt-1.5">
-                      No selection? Idea will go to Unsorted in this room.
+                      No decision? Idea will go to Unsorted in this room.
                     </p>
                   )}
                 </>
@@ -217,7 +217,7 @@ export function MoveIdeaSheet({
                   type="text"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="New selection name..."
+                  placeholder="New decision name..."
                   className="w-full px-3 py-2 bg-basalt border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone"
                   autoFocus
                 />

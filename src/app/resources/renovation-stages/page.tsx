@@ -105,12 +105,12 @@ export default function RenovationStagesPage() {
                 These stages also have interactive tools
               </h2>
               <p className="text-cream/50 text-sm mb-6 text-center">
-                Sign in to track selections, compare bids, and manage your renovation in one place.
+                Sign in to track decisions, compare bids, and manage your renovation in one place.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                 <Card
                   href="/login?callbackUrl=/app/tools/finish-decisions"
-                  title="Selection Boards"
+                  title="Decision Boards"
                   description="Track every selection and status in one place."
                 />
                 <Card

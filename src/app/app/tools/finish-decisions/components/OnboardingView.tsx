@@ -162,7 +162,7 @@ export function OnboardingView({
 
       {/* Helper text */}
       <p className="text-cream/40 text-xs mb-6">
-        Recommended decisions pre-fill typical selections for each room (e.g., Countertop,
+        Recommended decisions pre-fill typical decisions for each room (e.g., Countertop,
         Cabinetry, Flooring). After creating, you can add Ideas Packs for starter options.
       </p>
 
@@ -176,8 +176,8 @@ export function OnboardingView({
 
 function buttonLabel(hasRooms: boolean, count: number): string {
   if (count === 0) {
-    return hasRooms ? 'Add Rooms' : 'Create Selection Boards'
+    return hasRooms ? 'Add Rooms' : 'Create Decision Boards'
   }
   const label = count === 1 ? 'room' : 'rooms'
-  return hasRooms ? `Add ${count} ${label}` : `Create Selection Boards (${count} ${label})`
+  return hasRooms ? `Add ${count} ${label}` : `Create Decision Boards (${count} ${label})`
 }

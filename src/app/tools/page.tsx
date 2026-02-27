@@ -10,7 +10,7 @@ import { ToolPreviewCards } from './ToolPreviewCards'
 export const metadata: Metadata = {
   title: 'Tools',
   description:
-    'Homeowner tools for every stage of a Hawaiʻi renovation: contract checklist, finish selections, and fix list. Sign in to get started.',
+    'Homeowner tools for every stage of a Hawaiʻi renovation: contract checklist, finish decisions, and fix list. Sign in to get started.',
 }
 
 export default async function ToolsMarketingPage() {

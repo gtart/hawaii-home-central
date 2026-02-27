@@ -61,7 +61,7 @@ export const RESPONSIBILITY_ITEMS: ResponsibilityItemData[] = [
   },
   {
     id: 'allowances-selections',
-    category: 'Allowances & Finish Selections',
+    category: 'Allowances & Finish Decisions',
     variance: 'high',
     oftenOwner: 'Shared',
     stage: 'Ordering',

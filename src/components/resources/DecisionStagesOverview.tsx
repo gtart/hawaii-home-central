@@ -86,12 +86,12 @@ export function DecisionStagesOverview({
           Personalize this for your home
         </h2>
         <p className="text-cream/60 text-sm mb-6 max-w-lg mx-auto">
-          Selection Boards lets you add your rooms, compare material options,
+          Decision Boards lets you add your rooms, compare material options,
           track specs, and see everything organized by construction milestone.
         </p>
         <Link href="/tools/finish-decisions">
           <Button size="lg">
-            Use Selection Boards &mdash; Free
+            Use Decision Boards &mdash; Free
           </Button>
         </Link>
         <p className="text-cream/30 text-xs mt-3">

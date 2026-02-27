@@ -40,9 +40,9 @@ export function AssignToSelectionModal({
         {/* Header */}
         <div className="border-b border-cream/10 px-5 py-4 flex items-center justify-between shrink-0">
           <div>
-            <h2 className="text-lg font-medium text-cream">Assign to selection</h2>
+            <h2 className="text-lg font-medium text-cream">Assign to decision</h2>
             <p className="text-xs text-cream/40 mt-0.5">
-              Move &ldquo;{optionName || 'Untitled'}&rdquo; to a selection
+              Move &ldquo;{optionName || 'Untitled'}&rdquo; to a decision
             </p>
           </div>
           <button
@@ -63,7 +63,7 @@ export function AssignToSelectionModal({
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search selections..."
+              placeholder="Search decisions..."
               autoFocus
               className="w-full px-3 py-2 bg-basalt border border-cream/15 text-cream text-sm rounded-lg placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50"
             />
@@ -74,7 +74,7 @@ export function AssignToSelectionModal({
         <div className="flex-1 overflow-y-auto p-5 pt-3">
           {filtered.length === 0 ? (
             <p className="text-sm text-cream/40 text-center py-4">
-              {search ? 'No matching selections.' : 'No selections available.'}
+              {search ? 'No matching decisions.' : 'No decisions available.'}
             </p>
           ) : (
             <div className="space-y-2">

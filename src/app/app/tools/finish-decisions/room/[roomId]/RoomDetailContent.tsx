@@ -136,7 +136,7 @@ export function RoomDetailContent({
     const missing = standardTitles.filter((t) => !existingTitles.has(t.toLowerCase().trim()))
 
     if (missing.length === 0) {
-      setPopulateBanner('All standard selections are already included.')
+      setPopulateBanner('All standard decisions are already included.')
       setTimeout(() => setPopulateBanner(null), 4000)
       return
     }
@@ -157,7 +157,7 @@ export function RoomDetailContent({
       updatedAt: now,
     })
 
-    setPopulateBanner(`Added ${missing.length} selection${missing.length !== 1 ? 's' : ''}.`)
+    setPopulateBanner(`Added ${missing.length} decision${missing.length !== 1 ? 's' : ''}.`)
     setTimeout(() => setPopulateBanner(null), 4000)
   }
 
@@ -198,7 +198,7 @@ export function RoomDetailContent({
             onClick={() => router.push('/app/tools/finish-decisions')}
             className="text-sandstone hover:text-sandstone-light text-sm transition-colors"
           >
-            &larr; Back to Selection Boards
+            &larr; Back to Decision Boards
           </button>
         </div>
       </div>
@@ -236,7 +236,7 @@ export function RoomDetailContent({
           onClick={() => router.push('/app/tools/finish-decisions')}
           className="text-sm text-cream/40 hover:text-cream/60 transition-colors mb-4 inline-block"
         >
-          &larr; Selection Boards
+          &larr; Decision Boards
         </button>
 
         {/* Room header */}
@@ -252,7 +252,7 @@ export function RoomDetailContent({
               </p>
             ) : (
               <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-cream/50 mt-1">
-                <span>{stats.total} selection{stats.total !== 1 ? 's' : ''}</span>
+                <span>{stats.total} decision{stats.total !== 1 ? 's' : ''}</span>
                 {stats.deciding > 0 && <span>{stats.deciding} deciding</span>}
                 {stats.selected > 0 && <span>{stats.selected} selected</span>}
                 {stats.ordered > 0 && <span>{stats.ordered} ordered</span>}
@@ -270,14 +270,14 @@ export function RoomDetailContent({
               onClick={() => setQuickAddOpen(true)}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-sandstone font-medium bg-sandstone/10 hover:bg-sandstone/20 rounded-lg transition-colors"
             >
-              + Selection
+              + Decision
             </button>
             <button
               type="button"
               onClick={handleAutoPopulate}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-cream/60 hover:text-cream/80 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
             >
-              Add common selections
+              Add common decisions
             </button>
             {hasAvailableKits && (
               <button
@@ -373,7 +373,7 @@ export function RoomDetailContent({
 
         {undoDecision && (
           <div className="flex items-center justify-between px-4 py-2 mb-4 bg-cream/5 border border-cream/10 rounded-lg text-xs">
-            <span className="text-cream/50">Selection deleted.</span>
+            <span className="text-cream/50">Decision deleted.</span>
             <button
               type="button"
               onClick={handleUndo}
@@ -403,7 +403,7 @@ export function RoomDetailContent({
         {/* Selections content */}
         {room.decisions.length === 0 ? (
           <div data-testid="empty-state-room" className="bg-basalt-50 rounded-card p-8 text-center">
-            <p className="text-cream/50 mb-3">No selections yet.</p>
+            <p className="text-cream/50 mb-3">No decisions yet.</p>
             {!readOnly && (
               <div className="flex items-center justify-center gap-3">
                 <button
@@ -411,7 +411,7 @@ export function RoomDetailContent({
                   onClick={() => setQuickAddOpen(true)}
                   className="text-sandstone text-sm hover:text-sandstone-light transition-colors"
                 >
-                  + Add a selection
+                  + Add a decision
                 </button>
                 <span className="text-cream/15">or</span>
                 <button
@@ -419,7 +419,7 @@ export function RoomDetailContent({
                   onClick={handleAutoPopulate}
                   className="text-cream/50 text-sm hover:text-cream/70 transition-colors"
                 >
-                  Add common selections
+                  Add common decisions
                 </button>
               </div>
             )}
@@ -470,7 +470,7 @@ export function RoomDetailContent({
       {deleteStep === 'confirm' && (
         <ConfirmDialog
           title="Delete room?"
-          message={`"${room.name}" and all its selections and ideas will be permanently deleted. This cannot be undone.`}
+          message={`"${room.name}" and all its decisions and ideas will be permanently deleted. This cannot be undone.`}
           onConfirm={() => setDeleteStep('type')}
           onCancel={() => setDeleteStep('none')}
         />
@@ -487,10 +487,10 @@ export function RoomDetailContent({
         />
       )}
 
-      {/* Confirm delete selection dialog */}
+      {/* Confirm delete decision dialog */}
       {confirmDeleteDecisionId && (
         <ConfirmDialog
-          title="Delete selection"
+          title="Delete decision"
           message="This will also delete all its options."
           onConfirm={() => handleDeleteDecision(confirmDeleteDecisionId)}
           onCancel={() => setConfirmDeleteDecisionId(null)}

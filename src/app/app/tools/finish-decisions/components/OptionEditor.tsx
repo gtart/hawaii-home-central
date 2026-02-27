@@ -85,7 +85,7 @@ export function OptionEditor({
 
       <div className="space-y-3">
         <Input
-          label="Selection Name"
+          label="Option Name"
           placeholder="e.g., Quartz Calacatta Gold"
           value={option.name}
           onChange={(e) => onUpdate({ name: e.target.value })}

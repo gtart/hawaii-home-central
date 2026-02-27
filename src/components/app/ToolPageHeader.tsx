@@ -105,11 +105,11 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, child
         </div>
       )}
 
-      <div className="flex items-start justify-between gap-4 mb-4">
-        <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 mb-4">
+        <h1 className="font-serif text-4xl md:text-5xl text-sandstone min-w-0">
           {title}
         </h1>
-        <div className="flex items-center gap-2 shrink-0 pt-2">
+        <div className="flex items-center gap-2 shrink-0 pt-1 sm:pt-2">
           {accessLevel === 'VIEW' && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-cream/10 text-cream/50">
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

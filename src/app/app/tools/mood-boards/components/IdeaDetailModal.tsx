@@ -486,7 +486,7 @@ export function IdeaDetailModal({
                 onClick={() => setShowConvertSheet(true)}
                 className="px-3 py-1.5 text-sm text-sandstone hover:text-sandstone-light border border-sandstone/30 rounded-lg transition-colors"
               >
-                Move to Selection Boards
+                Move to Decision Boards
               </button>
 
               {/* More menu */}

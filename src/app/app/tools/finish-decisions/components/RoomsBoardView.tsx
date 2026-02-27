@@ -253,7 +253,7 @@ export function RoomsBoardView({
                     onClick={(e) => { e.stopPropagation(); onQuickAdd(room.id) }}
                     className="ml-auto text-[11px] text-sandstone hover:text-sandstone-light transition-colors font-medium shrink-0"
                   >
-                    + Selection
+                    + Decision
                   </button>
                 )}
               </div>
@@ -291,7 +291,7 @@ export function RoomsBoardView({
               <div className="px-3 pb-3 pt-2">
                 {/* Status counts */}
                 <div className="flex flex-wrap gap-x-2 text-[11px] text-cream/40 mb-2">
-                  <span>{stats.total} selection{stats.total !== 1 ? 's' : ''}</span>
+                  <span>{stats.total} decision{stats.total !== 1 ? 's' : ''}</span>
                   {stats.deciding > 0 && <span>{stats.deciding} deciding</span>}
                   {stats.ordered > 0 && <span>{stats.ordered} ordered</span>}
                   {stats.done > 0 && <span>{stats.done} done</span>}

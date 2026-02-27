@@ -18,6 +18,7 @@ interface InviteEntry {
   email: string
   level: 'VIEW' | 'EDIT'
   status: string
+  token: string
   expiresAt: string
   createdAt: string
 }
@@ -30,8 +31,9 @@ interface ShareToolModalProps {
 
 const TOOL_LABELS: Record<string, string> = {
   before_you_sign: 'Contract Checklist',
-  finish_decisions: 'Selection Boards',
+  finish_decisions: 'Decision Boards',
   punchlist: 'Fix List',
+  mood_boards: 'Mood Boards',
 }
 
 export function ShareToolModal({ projectId, toolKey, onClose }: ShareToolModalProps) {
@@ -250,39 +252,64 @@ export function ShareToolModal({ projectId, toolKey, onClose }: ShareToolModalPr
                   <h3 className="text-xs font-medium text-cream/40 uppercase tracking-wider mb-2">
                     Pending invites
                   </h3>
-                  <div className="space-y-1">
-                    {invites.map((inv) => (
-                      <div key={inv.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-cream/5">
-                        <div className="w-8 h-8 rounded-full bg-cream/5 flex items-center justify-center text-xs text-cream/30 shrink-0">
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                            <polyline points="22,6 12,13 2,6" />
-                          </svg>
+                  <div className="space-y-2">
+                    {invites.map((inv) => {
+                      const inviteUrl = typeof window !== 'undefined'
+                        ? `${window.location.origin}/invite/${inv.token}`
+                        : `/invite/${inv.token}`
+
+                      return (
+                        <div key={inv.id} className="rounded-lg bg-cream/[0.03] border border-cream/8 overflow-hidden">
+                          <div className="flex items-center gap-3 px-3 py-2.5">
+                            <div className="w-8 h-8 rounded-full bg-cream/5 flex items-center justify-center text-xs text-cream/30 shrink-0">
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                <polyline points="22,6 12,13 2,6" />
+                              </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-cream/60 truncate">{inv.email}</p>
+                              <p className="text-xs text-cream/30">
+                                Expires {new Date(inv.expiresAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <span className={cn(
+                              'text-xs px-2 py-0.5 rounded-full',
+                              inv.level === 'EDIT' ? 'bg-sandstone/15 text-sandstone' : 'bg-cream/10 text-cream/50'
+                            )}>
+                              {inv.level === 'EDIT' ? 'Can edit' : 'View only'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCancelInvite(inv.id)}
+                              className="text-cream/30 hover:text-red-400 transition-colors"
+                              title="Cancel invite"
+                            >
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+                              </svg>
+                            </button>
+                          </div>
+                          {/* Persistent invite link */}
+                          <div className="px-3 pb-2.5 flex items-center gap-2">
+                            <p className="text-[11px] text-cream/30 truncate flex-1 font-mono select-all">{inviteUrl}</p>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(inviteUrl)
+                                  setCopiedToken(inv.token)
+                                  setTimeout(() => setCopiedToken(null), 2500)
+                                } catch { /* ignore */ }
+                              }}
+                              className="text-[11px] px-2 py-0.5 bg-sandstone/10 text-sandstone rounded hover:bg-sandstone/20 transition-colors shrink-0"
+                            >
+                              {copiedToken === inv.token ? 'Copied!' : 'Copy link'}
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-cream/60 truncate">{inv.email}</p>
-                          <p className="text-xs text-cream/30">
-                            Expires {new Date(inv.expiresAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <span className={cn(
-                          'text-xs px-2 py-0.5 rounded-full',
-                          inv.level === 'EDIT' ? 'bg-sandstone/15 text-sandstone' : 'bg-cream/10 text-cream/50'
-                        )}>
-                          {inv.level === 'EDIT' ? 'Can edit' : 'View only'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleCancelInvite(inv.id)}
-                          className="text-cream/30 hover:text-red-400 transition-colors"
-                          title="Cancel invite"
-                        >
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               )}

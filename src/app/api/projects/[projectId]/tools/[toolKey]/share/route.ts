@@ -38,7 +38,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
     orderBy: { createdAt: 'asc' },
   })
 
-  // Get pending invites
+  // Get pending invites (include token so owner can re-copy the invite link)
   const invites = await prisma.projectInvite.findMany({
     where: { projectId, toolKey, status: 'PENDING' },
     select: {
@@ -46,6 +46,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
       email: true,
       level: true,
       status: true,
+      token: true,
       expiresAt: true,
       createdAt: true,
     },

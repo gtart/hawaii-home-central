@@ -136,7 +136,7 @@ export function DefaultSelectionsEditor() {
           {/* Decision titles for selected room */}
           <div className="border border-cream/10 rounded-lg p-4">
             <h3 className="text-sm font-medium text-cream mb-3">
-              Default selections for {activeRoom.replace(/_/g, ' ')}
+              Default decisions for {activeRoom.replace(/_/g, ' ')}
             </h3>
             <div className="space-y-1.5 mb-4">
               {(decisionsByRoom[activeRoom] || []).map((title, idx) => (
@@ -160,7 +160,7 @@ export function DefaultSelectionsEditor() {
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addDecisionTitle()}
-                placeholder="Add a selection title..."
+                placeholder="Add a decision title..."
                 className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-1.5 text-xs text-cream focus:outline-none focus:border-sandstone/50 placeholder:text-cream/25"
               />
               <button
@@ -182,7 +182,7 @@ export function DefaultSelectionsEditor() {
             <table className="w-full">
               <thead className="bg-cream/5">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-cream/50">Selection Title</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-cream/50">Decision Title</th>
                   <th className="px-3 py-2 text-center text-xs font-medium text-cream/50 w-20">Emoji</th>
                   <th className="px-3 py-2 w-10"></th>
                 </tr>

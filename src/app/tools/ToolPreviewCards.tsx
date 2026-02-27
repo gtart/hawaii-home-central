@@ -36,12 +36,12 @@ const STAGES: StageEntry[] = [
       steps: [
         'Save ideas from any website with the Save to HHC bookmarklet or paste a link',
         'Organize into boards\u2014by room, style, or however you like',
-        'Turn your favorites into finish selections when you\u2019re ready',
+        'Turn your favorites into finish decisions when you\u2019re ready',
       ],
       features: [
         'Visual boards with images and source links',
         'One-click save from any product or inspiration page',
-        'Convert ideas to Finish Selections when you\u2019re ready to decide',
+        'Convert ideas to Finish Decisions when you\u2019re ready to decide',
       ],
     },
   },
@@ -72,18 +72,18 @@ const STAGES: StageEntry[] = [
     title: 'Decide & Order',
     subtitle: 'Finalize selections and confirm lead times.',
     tool: {
-      title: 'Selection Boards',
+      title: 'Decision Boards',
       description:
-        'Always know what\u2019s decided, what\u2019s next, and what\u2019s blocking\u2014by organizing selections by room instead of texts and screenshots.',
+        'Always know what\u2019s decided, what\u2019s next, and what\u2019s blocking\u2014by organizing decisions by room instead of texts and screenshots.',
       ctaText: 'Sign in to get started',
       ctaHref: '/login?callbackUrl=/app/tools/finish-decisions',
       steps: [
         'Pick your rooms (kitchen, bathroom, etc.)',
-        'Track selections by room \u2014 countertops, cabinets, flooring, and more',
+        'Track decisions by room \u2014 countertops, cabinets, flooring, and more',
         'Compare options, add notes and links, mark progress',
       ],
       features: [
-        'Collapsible room sections with selection counts',
+        'Collapsible room sections with decision counts',
         'Status badges (Deciding \u2192 Shortlist \u2192 Selected \u2192 Done)',
         'An option editor where you save links, notes, and your final pick',
       ],

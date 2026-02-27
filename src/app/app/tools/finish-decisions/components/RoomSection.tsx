@@ -90,7 +90,7 @@ export function RoomSection({
 
   // Desktop: full format
   const summaryParts: string[] = []
-  summaryParts.push(`${stats.total} selection${stats.total !== 1 ? 's' : ''}`)
+  summaryParts.push(`${stats.total} decision${stats.total !== 1 ? 's' : ''}`)
   if (stats.selected > 0) summaryParts.push(`${stats.selected} selected`)
   if (stats.ordered > 0) summaryParts.push(`${stats.ordered} ordered`)
   if (stats.done > 0) summaryParts.push(`${stats.done} done`)
@@ -141,7 +141,7 @@ export function RoomSection({
     const missing = standardTitles.filter((t) => !existingTitles.has(t.toLowerCase().trim()))
 
     if (missing.length === 0) {
-      setPopulateBanner('All standard selections are already included.')
+      setPopulateBanner('All standard decisions are already included.')
       setTimeout(() => setPopulateBanner(null), 4000)
       return
     }
@@ -162,7 +162,7 @@ export function RoomSection({
       updatedAt: now,
     })
 
-    setPopulateBanner(`Added ${missing.length} selection${missing.length !== 1 ? 's' : ''}.`)
+    setPopulateBanner(`Added ${missing.length} decision${missing.length !== 1 ? 's' : ''}.`)
     setTimeout(() => setPopulateBanner(null), 4000)
   }
 
@@ -202,7 +202,7 @@ export function RoomSection({
               onClick={(e) => { e.stopPropagation(); onQuickAdd() }}
               className="px-2 py-1 text-[11px] text-sandstone hover:text-sandstone-light transition-colors font-medium"
             >
-              + Selection
+              + Decision
             </button>
             <span className="text-cream/15 select-none">·</span>
             <button
@@ -211,7 +211,7 @@ export function RoomSection({
               className="px-2 py-1 text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
               title="Pre-fill with the typical decisions Hawaii homeowners make for this type of room"
             >
-              Add common selections
+              Add common decisions
             </button>
             <span className="text-cream/15 select-none">·</span>
             <button
@@ -261,7 +261,7 @@ export function RoomSection({
                   }}
                   className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
                 >
-                  Add selection
+                  Add decision
                 </button>
                 <button
                   type="button"
@@ -272,7 +272,7 @@ export function RoomSection({
                   }}
                   className="w-full text-left px-3 py-2 hover:bg-cream/5 transition-colors"
                 >
-                  <span className="text-sm text-cream/80">Add common selections</span>
+                  <span className="text-sm text-cream/80">Add common decisions</span>
                   <span className="block text-[11px] text-cream/35 mt-0.5">Typical decisions for this room type</span>
                 </button>
                 <button
@@ -309,7 +309,7 @@ export function RoomSection({
       {/* Undo banner */}
       {undoDecision && (
         <div className="flex items-center justify-between px-4 py-2 bg-cream/5 border-t border-cream/10 text-xs">
-          <span className="text-cream/50">Selection deleted.</span>
+          <span className="text-cream/50">Decision deleted.</span>
           <button
             type="button"
             onClick={handleUndo}
@@ -390,7 +390,7 @@ export function RoomSection({
       {deleteStep === 'confirm' && (
         <ConfirmDialog
           title="Delete room?"
-          message={`"${room.name}" and all its selections and ideas will be permanently deleted. This cannot be undone.`}
+          message={`"${room.name}" and all its decisions and ideas will be permanently deleted. This cannot be undone.`}
           onConfirm={() => setDeleteStep('type')}
           onCancel={() => setDeleteStep('none')}
         />
@@ -410,7 +410,7 @@ export function RoomSection({
       {/* Confirm delete selection dialog */}
       {confirmDeleteDecisionId && (
         <ConfirmDialog
-          title="Delete selection"
+          title="Delete decision"
           message="This will also delete all its options."
           onConfirm={() => executeDeleteDecision(confirmDeleteDecisionId)}
           onCancel={() => setConfirmDeleteDecisionId(null)}

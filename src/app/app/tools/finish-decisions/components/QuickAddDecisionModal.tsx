@@ -47,7 +47,7 @@ export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose
   function handleAdd() {
     const t = title.trim()
     if (!t) {
-      setError('Enter a title for the selection')
+      setError('Enter a title for the decision')
       return
     }
     if (!selectedRoomId) {

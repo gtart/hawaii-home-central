@@ -58,10 +58,10 @@ function ToolStats({ toolKey, stats }: { toolKey: string; stats?: Record<string,
     const total = (stats.total as number | undefined) ?? 0
     const finalized = (stats.finalized as number | undefined) ?? 0
     if (total === 0) {
-      text = 'No finish selections added yet'
+      text = 'No finish decisions added yet'
     } else {
       const pct = Math.round((finalized / total) * 100)
-      text = `${total} selection${total !== 1 ? 's' : ''} · ${pct}% finalized`
+      text = `${total} decision${total !== 1 ? 's' : ''} · ${pct}% finalized`
     }
   } else if (toolKey === 'punchlist') {
     const total = (stats.total as number | undefined) ?? 0

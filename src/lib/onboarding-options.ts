@@ -5,7 +5,7 @@ export const ONBOARDING_OPTIONS = [
     focus: 'planning',
   },
   {
-    label: 'I need to track finish selections',
+    label: 'I need to track finish decisions',
     href: '/app/tools/finish-decisions',
     focus: 'selections',
   },

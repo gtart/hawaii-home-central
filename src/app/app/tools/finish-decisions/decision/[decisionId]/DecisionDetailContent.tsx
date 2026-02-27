@@ -339,7 +339,7 @@ export function DecisionDetailContent({
 
   const deleteDecision = () => {
     if (!foundRoom || !foundDecision) return
-    if (confirm(`Delete "${foundDecision.title}"? This will also delete all selections.`)) {
+    if (confirm(`Delete "${foundDecision.title}"? This will also delete all decisions.`)) {
       setState((prev) => ({
         ...prev,
         rooms: (prev as FinishDecisionsPayloadV3).rooms.map((r) =>
@@ -374,10 +374,10 @@ export function DecisionDetailContent({
             onClick={() => router.push('/app/tools/finish-decisions')}
             className="text-sandstone hover:text-sandstone-light text-sm mb-6"
           >
-            ← Back to Selections
+            ← Back to Decisions
           </button>
           <div className="bg-basalt-50 rounded-card p-12 text-center">
-            <p className="text-cream/50">Selection not found.</p>
+            <p className="text-cream/50">Decision not found.</p>
           </div>
         </div>
       </div>
@@ -529,7 +529,7 @@ export function DecisionDetailContent({
           className="inline-flex items-center gap-1.5 text-sandstone hover:text-sandstone-light text-sm mb-4"
         >
           <span>←</span>
-          <span>Back to Room Selections:</span>
+          <span>Back to Room Decisions:</span>
           <span className="inline-flex items-center gap-1 bg-cream/10 rounded-full px-2 py-0.5 text-cream/60 text-xs">
             {ROOM_EMOJI_MAP[foundRoom.type as RoomTypeV3] || '📁'} {foundRoom.name}
           </span>
@@ -675,7 +675,7 @@ export function DecisionDetailContent({
                     <div className="md:w-48 md:h-auto flex-shrink-0">
                       <ImageWithFallback
                         src={displayUrl(heroSrc)}
-                        alt={finalPick.name || 'Final selection'}
+                        alt={finalPick.name || 'Final decision'}
                         className="w-full h-48 md:h-full object-cover"
                         fallback={
                           <div className="w-full h-48 md:h-full flex items-center justify-center bg-basalt">
@@ -690,7 +690,7 @@ export function DecisionDetailContent({
                   <div className="flex-1 p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-sandstone text-basalt text-[11px] font-semibold rounded-full">
-                        ⭐ Final Selection
+                        ⭐ Final Decision
                       </span>
                     </div>
                     <h3 className="font-serif text-lg text-sandstone mb-1">
@@ -740,7 +740,7 @@ export function DecisionDetailContent({
             )
           })() : (
             <div className="border border-cream/10 bg-cream/3 rounded-xl p-5 text-center">
-              <p className="text-sm text-cream/40 mb-2">No final selection yet</p>
+              <p className="text-sm text-cream/40 mb-2">No final decision yet</p>
               {!readOnly && (
                 <p className="text-xs text-cream/25">
                   Choose a final pick from the ideas below, or{' '}
@@ -872,7 +872,7 @@ export function DecisionDetailContent({
               onClick={() => setDeleteConfirmOpen(true)}
               className="text-xs text-red-400/50 hover:text-red-400 transition-colors"
             >
-              Delete Selection
+              Delete Decision
             </button>
           </div>
         )}
@@ -984,9 +984,9 @@ export function DecisionDetailContent({
       {/* Delete selection confirm */}
       {deleteConfirmOpen && (
         <ConfirmDialog
-          title="Delete this selection?"
-          message="All ideas, comments, and images in this selection will be permanently lost. This cannot be undone."
-          confirmLabel="Delete Selection"
+          title="Delete this decision?"
+          message="All ideas, comments, and images in this decision will be permanently lost. This cannot be undone."
+          confirmLabel="Delete Decision"
           confirmVariant="danger"
           onConfirm={() => {
             setDeleteConfirmOpen(false)

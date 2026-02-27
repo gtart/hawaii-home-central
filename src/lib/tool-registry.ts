@@ -18,7 +18,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     href: '/app/tools/mood-boards',
     title: 'Mood Boards',
     description:
-      'Collect and organize inspiration from anywhere\u2014then turn your favorites into real selections.',
+      'Collect and organize inspiration from anywhere\u2014then turn your favorites into real decisions.',
     stage: 'Get Inspired',
   },
   {
@@ -32,9 +32,9 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'finish_decisions',
     href: '/app/tools/finish-decisions',
-    title: 'Selection Boards',
+    title: 'Decision Boards',
     description:
-      'Keep your renovation moving\u2014by tracking every finish selection, option, and status in one place.',
+      'Keep your renovation moving\u2014by tracking every finish decision, option, and status in one place.',
     stage: 'Choose Your Finishes',
   },
   {

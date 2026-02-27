@@ -258,7 +258,7 @@ export function SaveFromWebDialog({
                   {selectedRoom && (
                     <div>
                       <label className="block text-xs text-cream/50 mb-2">
-                        Selection
+                        Decision
                       </label>
 
                       {/* Mode toggle */}
@@ -314,7 +314,7 @@ export function SaveFromWebDialog({
                           </div>
                           {!selectedDecisionId && (
                             <p className="text-[11px] text-cream/30 mt-1.5">
-                              No selection? Idea will go to Uncategorized.
+                              No decision? Idea will go to Uncategorized.
                             </p>
                           )}
                         </>
