@@ -29,6 +29,9 @@ export default async function SharePage({ params }: Props) {
     projectName: string
     toolKey: string
     includeNotes: boolean
+    includePhotos: boolean
+    includeComments: boolean
+    includeSourceUrl: boolean
     boardId?: string | null
     filters: { locations: string[]; assignees: string[] }
   } | null = null
@@ -53,6 +56,8 @@ export default async function SharePage({ params }: Props) {
       <PublicMoodBoardView
         payload={data.payload}
         projectName={data.projectName}
+        includePhotos={data.includePhotos}
+        includeComments={data.includeComments}
       />
     )
   }

@@ -153,7 +153,7 @@ export function BoardsHomeView({ api, readOnly, toolAccess }: Props) {
                     </p>
                     {isDefaultBoard(board) && (
                       <p className="text-[10px] text-cream/25 mt-0.5 truncate">
-                        Unsorted ideas from Save to HHC
+                        Unsorted ideas saved from the web
                       </p>
                     )}
                     <BoardCardMeta board={board} />

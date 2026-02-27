@@ -330,6 +330,25 @@ export function useMoodBoardState() {
     [setState]
   )
 
+  // ---- Restore (for undo delete) ----
+
+  const restoreIdea = useCallback(
+    (boardId: string, idea: Idea) => {
+      setState((prev) => {
+        const p = ensureShape(prev)
+        return {
+          ...p,
+          boards: p.boards.map((b) =>
+            b.id === boardId
+              ? { ...b, ideas: [...b.ideas, idea], updatedAt: now() }
+              : b
+          ),
+        }
+      })
+    },
+    [setState]
+  )
+
   // ---- Board Access ----
 
   const updateBoardAccess = useCallback(
@@ -366,6 +385,7 @@ export function useMoodBoardState() {
     addIdea,
     updateIdea,
     deleteIdea,
+    restoreIdea,
     moveIdea,
     copyIdea,
     addComment,

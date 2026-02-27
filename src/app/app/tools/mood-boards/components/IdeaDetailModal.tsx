@@ -383,7 +383,7 @@ export function IdeaDetailModal({
           <div className="pt-2 border-t border-cream/10">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs font-medium text-cream/50 uppercase tracking-wide">
-                Comments {ideaComments.length > 0 && (
+                Comments on this idea {ideaComments.length > 0 && (
                   <span className="text-cream/30">({ideaComments.length})</span>
                 )}
               </h4>

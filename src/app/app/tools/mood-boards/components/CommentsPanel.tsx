@@ -106,7 +106,7 @@ export function CommentsPanel({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-cream/10">
         <h3 className="text-sm font-medium text-cream">
-          Comments{' '}
+          Board Chat{' '}
           {comments.length > 0 && (
             <span className="text-cream/40">({comments.length})</span>
           )}

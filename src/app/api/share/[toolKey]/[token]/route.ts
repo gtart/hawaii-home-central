@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { validateShareToken, getReportSettings } from '@/lib/share-tokens'
 import { toPublicItem } from '@/app/app/tools/punchlist/types'
 import type { PunchlistItem } from '@/app/app/tools/punchlist/types'
+import { toPublicBoard } from '@/data/mood-boards'
+import type { Board } from '@/data/mood-boards'
 
 export async function GET(
   _request: Request,
@@ -41,6 +43,7 @@ export async function GET(
   let includeNotes = settings?.includeNotes === true
   const includeComments = settings?.includeComments === true
   const includePhotos = settings?.includePhotos === true
+  const includeSourceUrl = settings?.includeSourceUrl === true
   const filterLocations: string[] = Array.isArray(settings?.locations) ? (settings.locations as string[]) : []
   const filterAssignees: string[] = Array.isArray(settings?.assignees) ? (settings.assignees as string[]) : []
   const filterStatuses: string[] = Array.isArray(settings?.statuses) ? (settings.statuses as string[]) : []
@@ -51,17 +54,29 @@ export async function GET(
     includeNotes = false
   }
 
-  // Mood boards: filter to a single board if boardId is set
   const boardId = typeof settings?.boardId === 'string' ? (settings.boardId as string) : null
-  let payload = instance.payload as Record<string, unknown>
+  let payload: Record<string, unknown> = instance.payload as Record<string, unknown>
 
-  if (toolKey === 'mood_boards' && boardId && Array.isArray(payload?.boards)) {
-    const boards = payload.boards as Record<string, unknown>[]
-    const targetBoard = boards.find((b) => b.id === boardId)
-    if (!targetBoard) {
-      return NextResponse.json({ error: 'Board not found' }, { status: 404 })
+  // Mood boards: allowlist sanitization — strip sensitive fields, respect token flags
+  if (toolKey === 'mood_boards' && Array.isArray(payload?.boards)) {
+    let boards = payload.boards as Board[]
+
+    // Filter to a single board if boardId is set
+    if (boardId) {
+      const targetBoard = boards.find((b) => b.id === boardId)
+      if (!targetBoard) {
+        return NextResponse.json({ error: 'Board not found' }, { status: 404 })
+      }
+      boards = [targetBoard]
     }
-    payload = { ...payload, boards: [targetBoard] }
+
+    // Sanitize: map through allowlist — strips ACLs, emails, visibility, internal fields
+    payload = {
+      version: 1,
+      boards: boards.map((b) =>
+        toPublicBoard(b, { includeNotes, includeComments, includePhotos, includeSourceUrl })
+      ),
+    }
   }
 
   // Punchlist: whitelist sanitization — map raw items to PublicPunchlistItem
@@ -88,8 +103,9 @@ export async function GET(
     toolKey,
     includeNotes,
     includePhotos,
-    boardId,
     includeComments,
+    includeSourceUrl,
+    boardId,
     filters: { locations: filterLocations, assignees: filterAssignees, statuses: filterStatuses },
   })
 }

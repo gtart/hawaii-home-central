@@ -41,10 +41,15 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   const fetchProjects = useCallback(async () => {
+    // Auth still loading — keep isLoading=true so downstream never sees "0 projects"
+    if (status === 'loading') return
+
     if (status !== 'authenticated') {
       setIsLoading(false)
       return
     }
+
+    // status === 'authenticated'
     try {
       const res = await fetch('/api/projects')
       if (!res.ok) return

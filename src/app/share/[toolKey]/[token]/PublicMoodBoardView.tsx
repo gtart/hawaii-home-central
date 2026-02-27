@@ -2,16 +2,18 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import type { Board, Idea, IdeaReaction, ReactionType, MoodBoardComment } from '@/data/mood-boards'
+import type { PublicBoard, PublicIdea, PublicIdeaReaction, PublicMoodBoardComment, ReactionType } from '@/data/mood-boards'
 import { REACTION_CONFIG } from '@/data/mood-boards'
 
 interface Props {
   payload: Record<string, unknown>
   projectName: string
+  includePhotos: boolean
+  includeComments: boolean
 }
 
-export function PublicMoodBoardView({ payload, projectName }: Props) {
-  const boards = (payload?.boards as Board[]) || []
+export function PublicMoodBoardView({ payload, projectName, includePhotos, includeComments }: Props) {
+  const boards = (payload?.boards as PublicBoard[]) || []
   const board = boards[0] // share links are scoped to a single board
 
   if (!board) {
@@ -49,11 +51,12 @@ export function PublicMoodBoardView({ payload, projectName }: Props) {
           </div>
         ) : (
           <div className="columns-2 sm:columns-3 lg:columns-4 gap-3 [column-fill:_balance]">
-            {board.ideas.map((idea) => (
+            {board.ideas.map((idea, i) => (
               <PublicIdeaCard
                 key={idea.id}
                 idea={idea}
-                comments={(board.comments || []).filter((c) => c.refIdeaId === idea.id)}
+                comments={includeComments ? (board.comments || []).filter((c) => c.refIdeaId === idea.id) : []}
+                includePhotos={includePhotos}
               />
             ))}
           </div>
@@ -76,20 +79,22 @@ export function PublicMoodBoardView({ payload, projectName }: Props) {
 }
 
 // ---------------------------------------------------------------------------
-// Public Idea Card
+// Public Idea Card — works with sanitized PublicIdea (missing fields are safe)
 // ---------------------------------------------------------------------------
 
 function PublicIdeaCard({
   idea,
   comments,
+  includePhotos,
 }: {
-  idea: Idea
-  comments: MoodBoardComment[]
+  idea: PublicIdea
+  comments: PublicMoodBoardComment[]
+  includePhotos: boolean
 }) {
   const [expanded, setExpanded] = useState(false)
 
-  const heroUrl = getHeroUrl(idea)
-  const hasDetail = !!(idea.notes || idea.sourceUrl || idea.tags.length > 0 ||
+  const heroUrl = includePhotos ? getHeroUrl(idea) : null
+  const hasDetail = !!(idea.notes || idea.sourceUrl || (idea.tags && idea.tags.length > 0) ||
     (idea.reactions && idea.reactions.length > 0) || comments.length > 0)
 
   return (
@@ -139,7 +144,7 @@ function PublicIdeaCard({
                 </p>
               )}
 
-              {idea.tags.length > 0 && (
+              {idea.tags && idea.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {idea.tags.map((tag) => (
                     <span
@@ -157,8 +162,8 @@ function PublicIdeaCard({
                   <p className="text-[10px] text-cream/30 font-medium">
                     {comments.length} comment{comments.length !== 1 ? 's' : ''}
                   </p>
-                  {comments.slice(0, 3).map((c) => (
-                    <p key={c.id} className="text-[11px] text-cream/40">
+                  {comments.slice(0, 3).map((c, i) => (
+                    <p key={i} className="text-[11px] text-cream/40">
                       <span className="text-cream/60">{c.authorName}:</span> {c.text}
                     </p>
                   ))}
@@ -186,14 +191,14 @@ function PublicIdeaCard({
 // Helpers
 // ---------------------------------------------------------------------------
 
-function getHeroUrl(idea: Idea): string | null {
-  if (idea.images.length === 0) return null
+function getHeroUrl(idea: PublicIdea): string | null {
+  if (!idea.images || idea.images.length === 0) return null
   const heroId = idea.heroImageId
   const hero = heroId ? idea.images.find((img) => img.id === heroId) : null
   return hero?.url ?? idea.images[0].url
 }
 
-function reactionSummary(reactions: IdeaReaction[]): { type: ReactionType; count: number }[] {
+function reactionSummary(reactions: PublicIdeaReaction[]): { type: ReactionType; count: number }[] {
   const counts: Partial<Record<ReactionType, number>> = {}
   for (const r of reactions) {
     counts[r.reaction] = (counts[r.reaction] || 0) + 1

@@ -145,6 +145,122 @@ export function resolveBoardAccess(
   return match.level
 }
 
+// ============================================================================
+// Public (share link) shapes — allowlist of fields safe for external viewers.
+// No internal IDs, no emails, no ACL data. Photos/notes/comments opt-in.
+// ============================================================================
+
+export interface PublicIdeaImage {
+  id: string
+  url: string
+  thumbnailUrl?: string
+}
+
+export interface PublicIdeaReaction {
+  userName: string
+  reaction: ReactionType
+}
+
+export interface PublicMoodBoardComment {
+  authorName: string
+  text: string
+  createdAt: string
+  refIdeaId?: string
+  refIdeaLabel?: string
+}
+
+export interface PublicIdea {
+  id: string
+  name: string
+  notes?: string
+  images: PublicIdeaImage[]
+  heroImageId: string | null
+  sourceUrl?: string
+  sourceTitle?: string
+  tags: string[]
+  reactions?: PublicIdeaReaction[]
+  createdAt: string
+}
+
+export interface PublicBoard {
+  id: string
+  name: string
+  ideas: PublicIdea[]
+  comments?: PublicMoodBoardComment[]
+  createdAt: string
+}
+
+export interface PublicMoodBoardPayload {
+  version: 1
+  boards: PublicBoard[]
+}
+
+export interface MoodBoardSanitizeOpts {
+  includeNotes: boolean
+  includeComments: boolean
+  includePhotos: boolean
+  includeSourceUrl: boolean
+}
+
+/** Allowlist-map a full Board to a safe public shape. */
+export function toPublicBoard(
+  board: Board,
+  opts: MoodBoardSanitizeOpts
+): PublicBoard {
+  const pub: PublicBoard = {
+    id: board.id,
+    name: board.name,
+    ideas: board.ideas.map((idea) => toPublicIdea(idea, opts)),
+    createdAt: board.createdAt,
+  }
+
+  if (opts.includeComments && board.comments && board.comments.length > 0) {
+    pub.comments = board.comments.map((c) => ({
+      authorName: c.authorName,
+      text: c.text,
+      createdAt: c.createdAt,
+      refIdeaId: c.refIdeaId,
+      refIdeaLabel: c.refIdeaLabel,
+    }))
+  }
+
+  return pub
+}
+
+/** Allowlist-map a full Idea to a safe public shape. */
+function toPublicIdea(idea: Idea, opts: MoodBoardSanitizeOpts): PublicIdea {
+  const pub: PublicIdea = {
+    id: idea.id,
+    name: idea.name,
+    images: opts.includePhotos
+      ? idea.images.map((img) => ({ id: img.id, url: img.url, thumbnailUrl: img.thumbnailUrl }))
+      : [],
+    heroImageId: opts.includePhotos ? idea.heroImageId : null,
+    tags: idea.tags,
+    createdAt: idea.createdAt,
+  }
+
+  if (opts.includeNotes && idea.notes) {
+    pub.notes = idea.notes
+  }
+
+  if (opts.includeSourceUrl && idea.sourceUrl) {
+    pub.sourceUrl = idea.sourceUrl
+    pub.sourceTitle = idea.sourceTitle || undefined
+  }
+
+  if (idea.reactions && idea.reactions.length > 0) {
+    pub.reactions = idea.reactions.map((r) => ({
+      userName: r.userName,
+      reaction: r.reaction,
+    }))
+  }
+
+  return pub
+}
+
+// ============================================================================
+
 export function genId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
 }

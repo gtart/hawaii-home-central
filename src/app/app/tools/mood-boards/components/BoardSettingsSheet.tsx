@@ -2,12 +2,15 @@
 
 import { useState } from 'react'
 import type { Board, BoardAccess, BoardAccessLevel } from '@/data/mood-boards'
+import { BoardShareLinks } from './BoardShareLinks'
 
 interface Props {
   board: Board
   /** Emails of people who already have tool-level access (candidates for board access) */
   toolMembers: string[]
   currentUserEmail: string
+  projectId: string
+  isOwner: boolean
   onUpdate: (visibility: 'everyone' | 'invite-only', access: BoardAccess[]) => void
   onClose: () => void
 }
@@ -16,6 +19,8 @@ export function BoardSettingsSheet({
   board,
   toolMembers,
   currentUserEmail,
+  projectId,
+  isOwner,
   onUpdate,
   onClose,
 }: Props) {
@@ -193,6 +198,16 @@ export function BoardSettingsSheet({
                 </p>
               )}
             </div>
+          )}
+
+          {/* Public sharing section (owners only) */}
+          {isOwner && projectId && (
+            <BoardShareLinks
+              boardId={board.id}
+              boardName={board.name}
+              projectId={projectId}
+              isOwner={isOwner}
+            />
           )}
         </div>
 

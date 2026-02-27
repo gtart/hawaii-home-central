@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useSession } from 'next-auth/react'
 import { useProject } from '@/contexts/ProjectContext'
 import type { ReactNode } from 'react'
 
@@ -13,19 +14,27 @@ import type { ReactNode } from 'react'
  * with a manual fallback button if auto-create fails.
  */
 export function ProjectKeyWrapper({ children }: { children: ReactNode }) {
+  const { status } = useSession()
   const { currentProject, isLoading, createProject } = useProject()
   const creatingRef = useRef(false)
   const failedRef = useRef(false)
+  // One-shot guard: only allow auto-create once per component mount
+  const didAutoCreateRef = useRef(false)
 
   useEffect(() => {
+    // Never auto-create unless auth is definitively settled and authenticated
+    if (status !== 'authenticated') return
     if (isLoading || currentProject || creatingRef.current || failedRef.current) return
+    if (didAutoCreateRef.current) return
+
+    didAutoCreateRef.current = true
     creatingRef.current = true
     createProject('My Home').catch(() => {
       failedRef.current = true
     }).finally(() => {
       creatingRef.current = false
     })
-  }, [isLoading, currentProject, createProject])
+  }, [status, isLoading, currentProject, createProject])
 
   if (isLoading) {
     return (

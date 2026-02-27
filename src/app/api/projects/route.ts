@@ -74,6 +74,27 @@ export async function POST(request: Request) {
   const userId = session.user.id
 
   const project = await prisma.$transaction(async (tx) => {
+    // Idempotency: if creating "My Home" and one already exists (created in the
+    // last 30 seconds), return it instead of creating a duplicate.
+    if (name === 'My Home') {
+      const recent = await tx.project.findFirst({
+        where: {
+          userId,
+          name: 'My Home',
+          status: 'ACTIVE',
+          createdAt: { gte: new Date(Date.now() - 30_000) },
+        },
+        select: { id: true, name: true, status: true, createdAt: true, updatedAt: true },
+      })
+      if (recent) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { currentProjectId: recent.id, hasBootstrappedProject: true },
+        })
+        return recent
+      }
+    }
+
     const p = await tx.project.create({
       data: { userId, name },
     })
@@ -84,7 +105,7 @@ export async function POST(request: Request) {
 
     await tx.user.update({
       where: { id: userId },
-      data: { currentProjectId: p.id },
+      data: { currentProjectId: p.id, hasBootstrappedProject: true },
     })
 
     return p

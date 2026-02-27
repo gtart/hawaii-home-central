@@ -1,8 +1,10 @@
 'use client'
 
 import { Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
+import { resolveBoardAccess } from '@/data/mood-boards'
 import { useMoodBoardState } from './useMoodBoardState'
 import { BoardsHomeView } from './components/BoardsHomeView'
 import { BoardDetailView } from './components/BoardDetailView'
@@ -10,8 +12,11 @@ import { BoardDetailView } from './components/BoardDetailView'
 function MoodBoardsContent() {
   const api = useMoodBoardState()
   const { payload, isLoaded, isSyncing, access, readOnly, noAccess } = api
+  const { data: session } = useSession()
+  const router = useRouter()
   const searchParams = useSearchParams()
   const boardId = searchParams.get('board')
+  const userEmail = session?.user?.email || ''
 
   if (!isLoaded) {
     return (
@@ -36,6 +41,17 @@ function MoodBoardsContent() {
     ? payload.boards.find((b) => b.id === boardId)
     : null
 
+  // Enforce board-level ACL
+  const boardAccess = activeBoard
+    ? resolveBoardAccess(activeBoard, userEmail, access || 'VIEW')
+    : null
+
+  // If user navigated to a board they can't see, show no-access state
+  const boardNoAccess = activeBoard && boardAccess === null
+
+  // Board-level readOnly: true if tool is readOnly OR board access is 'view'
+  const boardReadOnly = readOnly || boardAccess === 'view'
+
   return (
     <>
       <ToolPageHeader
@@ -52,8 +68,22 @@ function MoodBoardsContent() {
         </div>
       )}
 
-      {activeBoard ? (
-        <BoardDetailView board={activeBoard} api={api} readOnly={readOnly} toolAccess={access || 'VIEW'} />
+      {boardNoAccess ? (
+        <div className="text-center py-24">
+          <h2 className="font-serif text-2xl text-cream mb-2">No Access</h2>
+          <p className="text-cream/50 text-sm mb-6">
+            You don&apos;t have access to this board.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push('/app/tools/mood-boards')}
+            className="text-sandstone hover:text-sandstone-light text-sm"
+          >
+            Back to boards
+          </button>
+        </div>
+      ) : activeBoard ? (
+        <BoardDetailView board={activeBoard} api={api} readOnly={boardReadOnly} toolAccess={access || 'VIEW'} />
       ) : (
         <BoardsHomeView api={api} readOnly={readOnly} toolAccess={access || 'VIEW'} />
       )}
