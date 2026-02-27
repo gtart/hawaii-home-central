@@ -43,7 +43,7 @@ export function PublicFinishDecisionsView({
         <div className="max-w-4xl mx-auto flex items-start justify-between">
           <div>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider bg-sandstone/10 text-sandstone/70 border border-sandstone/15 mb-2">
-              Finish Selections
+              Decision Tracker
             </span>
             <h1 className="font-serif text-3xl md:text-4xl text-sandstone">{projectName}</h1>
             <p className="text-sm text-cream/50 mt-1">

@@ -3,7 +3,7 @@ import { Suspense } from 'react'
 import { FinishDecisionsReport } from './FinishDecisionsReport'
 
 export const metadata: Metadata = {
-  title: 'Finish Selections Report',
+  title: 'Decision Tracker Report',
   robots: 'noindex, nofollow',
 }
 

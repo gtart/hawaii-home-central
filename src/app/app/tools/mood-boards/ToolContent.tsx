@@ -76,7 +76,7 @@ function MoodBoardsContent() {
               <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
               <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
             </svg>
-            Share / Export
+            Share &amp; Export
           </button>
         )}
       </ToolPageHeader>
@@ -122,9 +122,12 @@ function MoodBoardsContent() {
               name: b.name,
             }))}
           scopeLabel="Boards"
-          buildExportUrl={() => {
-            // Mood Boards doesn't have a report page yet — placeholder
-            return '#'
+          buildExportUrl={({ includeNotes, includeComments, includePhotos, scopeMode, selectedScopeIds }) => {
+            let url = `/app/tools/mood-boards/report?includeNotes=${includeNotes}&includeComments=${includeComments}&includePhotos=${includePhotos}`
+            if (scopeMode === 'selected' && selectedScopeIds.length > 0) {
+              url += `&boardIds=${encodeURIComponent(selectedScopeIds.join(','))}`
+            }
+            return url
           }}
         />
       )}

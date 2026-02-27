@@ -367,7 +367,7 @@ export function ToolContent({
         {!localOnly && (
           <ToolPageHeader
             toolKey="finish_decisions"
-            title="Finish Selections"
+            title="Decision Tracker"
             description="Avoid delays and rework—by keeping decisions, links, and status updates together for each room."
             accessLevel={access}
             hasContent={v3State.rooms.length > 0}
@@ -383,7 +383,7 @@ export function ToolContent({
                   <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
                   <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
                 </svg>
-                Share / Export
+                Share &amp; Export
               </button>
             )}
           </ToolPageHeader>
@@ -424,7 +424,7 @@ export function ToolContent({
       {showShareExport && currentProject && (
         <ShareExportModal
           toolKey="finish_decisions"
-          toolLabel="Finish Selections"
+          toolLabel="Decision Tracker"
           projectId={currentProject.id}
           isOwner={access === 'OWNER'}
           onClose={() => setShowShareExport(false)}

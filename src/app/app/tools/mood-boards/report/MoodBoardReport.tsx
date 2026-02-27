@@ -9,26 +9,45 @@ import type { Idea, Board, MoodBoardComment, IdeaReaction, ReactionType } from '
 
 export function MoodBoardReport() {
   const searchParams = useSearchParams()
-  const boardId = searchParams.get('board') || ''
-  const includeComments = searchParams.get('comments') === 'true'
+  // Legacy single-board param (back-compat with old links)
+  const singleBoardId = searchParams.get('board') || ''
+  // Multi-board param from unified ShareExportModal
+  const boardIdsParam = searchParams.get('boardIds') || ''
+  const includeComments = searchParams.get('comments') === 'true' || searchParams.get('includeComments') === 'true'
   const includeReactions = searchParams.get('reactions') === 'true'
+  const includeNotes = searchParams.get('includeNotes') !== 'false' // default true for legacy compat
+  const includePhotos = searchParams.get('includePhotos') !== 'false' // default true for legacy compat
   const layout = searchParams.get('layout') || 'grid'
 
   const { payload, isLoaded } = useMoodBoardState()
   const { currentProject } = useProject()
   const [imagesReady, setImagesReady] = useState(false)
 
-  const board = useMemo(
-    () => payload.boards.find((b) => b.id === boardId) ?? null,
-    [payload.boards, boardId]
-  )
+  // Resolve which boards to render
+  const boards = useMemo(() => {
+    if (singleBoardId) {
+      // Legacy single-board mode
+      const b = payload.boards.find((b) => b.id === singleBoardId)
+      return b ? [b] : []
+    }
+    if (boardIdsParam) {
+      // Multi-board: specific boards selected
+      const ids = boardIdsParam.split(',').map((s) => s.trim()).filter(Boolean)
+      return payload.boards.filter((b) => ids.includes(b.id))
+    }
+    // All boards (excluding default/Uncategorized)
+    return payload.boards.filter((b) => !(b as Board & { isDefault?: boolean }).isDefault)
+  }, [payload.boards, singleBoardId, boardIdsParam])
+
+  const isMultiBoard = boards.length > 1
+  const totalIdeas = boards.reduce((sum, b) => sum + b.ideas.length, 0)
 
   // Wait for images to load before triggering print
   useEffect(() => {
-    if (!isLoaded || !board) return
+    if (!isLoaded || boards.length === 0) return
 
     const images = document.querySelectorAll<HTMLImageElement>('.report-idea-img')
-    if (images.length === 0) {
+    if (images.length === 0 || !includePhotos) {
       setImagesReady(true)
       return
     }
@@ -53,7 +72,7 @@ export function MoodBoardReport() {
     // Safety fallback: trigger after 8 seconds regardless
     const timeout = setTimeout(() => setImagesReady(true), 8000)
     return () => clearTimeout(timeout)
-  }, [isLoaded, board])
+  }, [isLoaded, boards, includePhotos])
 
   // Auto-trigger print when images are ready
   useEffect(() => {
@@ -71,15 +90,13 @@ export function MoodBoardReport() {
     )
   }
 
-  if (!board) {
+  if (boards.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-500">Board not found</p>
+        <p className="text-gray-500">No boards found</p>
       </div>
     )
   }
-
-  const boardComments = board.comments || []
 
   return (
     <>
@@ -90,6 +107,7 @@ export function MoodBoardReport() {
           .no-print { display: none !important; }
           .print-only { display: block !important; }
           .page-break-avoid { page-break-inside: avoid; }
+          .page-break-before { page-break-before: always; }
           .noise-overlay { display: none !important; }
           .print-footer {
             position: fixed;
@@ -118,10 +136,10 @@ export function MoodBoardReport() {
             onClick={() => window.history.back()}
             className="text-sm text-cream/60 hover:text-cream transition-colors"
           >
-            &larr; Back to Board
+            &larr; Back to Mood Boards
           </button>
           <div className="flex items-center gap-4">
-            {!imagesReady && (
+            {!imagesReady && includePhotos && (
               <span className="text-xs text-cream/40 flex items-center gap-2">
                 <span className="w-3 h-3 border border-cream/20 border-t-cream/50 rounded-full animate-spin" />
                 Loading images...
@@ -150,29 +168,55 @@ export function MoodBoardReport() {
             )}
 
             <div className="flex items-center justify-between">
-              <p className="text-base font-medium text-gray-600">Mood Board: {board.name}</p>
+              <p className="text-base font-medium text-gray-600">
+                {isMultiBoard
+                  ? `Mood Boards (${boards.length})`
+                  : `Mood Board: ${boards[0].name}`}
+              </p>
               <p className="text-sm text-gray-400">
-                {new Date().toLocaleDateString()} &middot; {board.ideas.length} idea{board.ideas.length !== 1 ? 's' : ''}
+                {new Date().toLocaleDateString()} &middot; {totalIdeas} idea{totalIdeas !== 1 ? 's' : ''}
               </p>
             </div>
           </div>
 
-          {/* Ideas */}
-          {layout === 'grid' ? (
-            <GridLayout
-              ideas={board.ideas}
-              comments={boardComments}
-              includeComments={includeComments}
-              includeReactions={includeReactions}
-            />
-          ) : (
-            <ListLayout
-              ideas={board.ideas}
-              comments={boardComments}
-              includeComments={includeComments}
-              includeReactions={includeReactions}
-            />
-          )}
+          {/* Render each board */}
+          {boards.map((board, idx) => {
+            const boardComments = board.comments || []
+            return (
+              <div key={board.id} className={idx > 0 ? 'page-break-before mt-10' : ''}>
+                {/* Board section header (only for multi-board) */}
+                {isMultiBoard && (
+                  <div className="mb-6 pb-2 border-b border-gray-200">
+                    <h2 className="text-lg font-semibold text-gray-800">{board.name}</h2>
+                    <p className="text-sm text-gray-400">
+                      {board.ideas.length} idea{board.ideas.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                )}
+
+                {/* Ideas */}
+                {layout === 'grid' ? (
+                  <GridLayout
+                    ideas={board.ideas}
+                    comments={boardComments}
+                    includeComments={includeComments}
+                    includeReactions={includeReactions}
+                    includeNotes={includeNotes}
+                    includePhotos={includePhotos}
+                  />
+                ) : (
+                  <ListLayout
+                    ideas={board.ideas}
+                    comments={boardComments}
+                    includeComments={includeComments}
+                    includeReactions={includeReactions}
+                    includeNotes={includeNotes}
+                    includePhotos={includePhotos}
+                  />
+                )}
+              </div>
+            )
+          })}
 
           {/* In-flow footer (screen view) */}
           <div className="mt-12 pt-4 border-t border-gray-200 text-center no-print">
@@ -198,11 +242,15 @@ function GridLayout({
   comments,
   includeComments,
   includeReactions,
+  includeNotes,
+  includePhotos,
 }: {
   ideas: Idea[]
   comments: MoodBoardComment[]
   includeComments: boolean
   includeReactions: boolean
+  includeNotes: boolean
+  includePhotos: boolean
 }) {
   return (
     <div className="grid grid-cols-2 gap-4">
@@ -213,6 +261,8 @@ function GridLayout({
           comments={comments.filter((c) => c.refIdeaId === idea.id)}
           includeComments={includeComments}
           includeReactions={includeReactions}
+          includeNotes={includeNotes}
+          includePhotos={includePhotos}
           compact
         />
       ))}
@@ -229,11 +279,15 @@ function ListLayout({
   comments,
   includeComments,
   includeReactions,
+  includeNotes,
+  includePhotos,
 }: {
   ideas: Idea[]
   comments: MoodBoardComment[]
   includeComments: boolean
   includeReactions: boolean
+  includeNotes: boolean
+  includePhotos: boolean
 }) {
   return (
     <div className="space-y-4">
@@ -244,6 +298,8 @@ function ListLayout({
           comments={comments.filter((c) => c.refIdeaId === idea.id)}
           includeComments={includeComments}
           includeReactions={includeReactions}
+          includeNotes={includeNotes}
+          includePhotos={includePhotos}
           compact={false}
         />
       ))}
@@ -267,15 +323,19 @@ function IdeaCard({
   comments,
   includeComments,
   includeReactions,
+  includeNotes,
+  includePhotos,
   compact,
 }: {
   idea: Idea
   comments: MoodBoardComment[]
   includeComments: boolean
   includeReactions: boolean
+  includeNotes: boolean
+  includePhotos: boolean
   compact: boolean
 }) {
-  const heroUrl = getHeroUrl(idea)
+  const heroUrl = includePhotos ? getHeroUrl(idea) : null
 
   return (
     <div className="page-break-avoid border border-gray-200 rounded-lg overflow-hidden">
@@ -295,7 +355,7 @@ function IdeaCard({
       <div className="p-3">
         <h3 className="font-medium text-gray-900 text-sm">{idea.name}</h3>
 
-        {idea.notes && (
+        {includeNotes && idea.notes && (
           <p className="text-xs text-gray-600 mt-1">{idea.notes}</p>
         )}
 
@@ -317,7 +377,7 @@ function IdeaCard({
         )}
 
         {/* Additional images */}
-        {idea.images.length > 1 && (
+        {includePhotos && idea.images.length > 1 && (
           <div className="flex gap-1 mt-2">
             {idea.images.slice(1, compact ? 3 : 5).map((img) => (
               <img

@@ -4,7 +4,7 @@ import { getPublishedIdeaPacks } from '@/lib/idea-packs-db'
 import { getDefaultDecisionsByRoomType, getSelectionEmojiMap } from '@/lib/default-selections-db'
 
 export const metadata: Metadata = {
-  title: 'Finish Selections',
+  title: 'Decision Tracker',
 }
 
 export default async function FinishDecisionsToolPage() {

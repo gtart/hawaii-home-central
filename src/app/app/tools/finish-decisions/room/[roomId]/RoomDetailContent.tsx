@@ -198,7 +198,7 @@ export function RoomDetailContent({
             onClick={() => router.push('/app/tools/finish-decisions')}
             className="text-sandstone hover:text-sandstone-light text-sm transition-colors"
           >
-            &larr; Back to Finish Selections
+            &larr; Back to Decision Tracker
           </button>
         </div>
       </div>
@@ -236,7 +236,7 @@ export function RoomDetailContent({
           onClick={() => router.push('/app/tools/finish-decisions')}
           className="text-sm text-cream/40 hover:text-cream/60 transition-colors mb-4 inline-block"
         >
-          &larr; Finish Selections
+          &larr; Decision Tracker
         </button>
 
         {/* Room header */}

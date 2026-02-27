@@ -8,7 +8,7 @@ const DISMISSED_KEY = 'hhc_save_tip_dismissed'
 
 /**
  * Expandable "Tip" banner for the "Save to HHC" bookmarklet.
- * Placed near the top of the Finish Selections page.
+ * Placed near the top of the Decision Tracker page.
  * Collapsible — users can dismiss it, and it stays collapsed.
  */
 export function SaveFromWebCTA({ className = '' }: { className?: string }) {
@@ -80,7 +80,7 @@ export function SaveFromWebCTA({ className = '' }: { className?: string }) {
         <div className="px-4 pb-4 space-y-3 border-t border-sandstone/10">
           <p className="text-xs text-cream/50 pt-3">
             Drag the button below to your bookmarks bar. Then click it on any website to capture images
-            and save them directly to your Finish Selections or Mood Boards.
+            and save them directly to your Decision Tracker or Mood Boards.
           </p>
 
           <BookmarkletButton compact />

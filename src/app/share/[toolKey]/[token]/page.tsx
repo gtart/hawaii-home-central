@@ -8,7 +8,7 @@ import { InvalidTokenPage } from './InvalidTokenPage'
 const TOOL_LABELS: Record<string, string> = {
   punchlist: 'Fix List',
   mood_boards: 'Mood Board',
-  finish_decisions: 'Finish Selections',
+  finish_decisions: 'Decision Tracker',
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
