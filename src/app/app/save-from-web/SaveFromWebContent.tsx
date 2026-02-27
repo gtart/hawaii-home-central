@@ -30,6 +30,7 @@ import { capturedToMoodBoardIdea, capturedToSelectionOption } from '@/lib/captur
 
 const DEFAULT_FD_PAYLOAD: FinishDecisionsPayloadV3 = { version: 3, rooms: [] }
 const LAST_ROOM_KEY = 'hhc_save_last_room'
+const LAST_DECISION_KEY = 'hhc_save_last_decision'
 const LAST_DEST_KEY = 'hhc_save_last_destination'
 const LAST_PROJECT_KEY = 'hhc_save_last_project'
 const LAST_BOARD_KEY = 'hhc_save_last_board'
@@ -110,7 +111,13 @@ export function SaveFromWebContent() {
     if (d) saveLastDestination(d)
   }
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
-  const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(null)
+  const [selectedDecisionId, setSelectedDecisionIdRaw] = useState<string | null>(null)
+  const setSelectedDecisionId = (id: string | null) => {
+    setSelectedDecisionIdRaw(id)
+    if (id) {
+      try { localStorage.setItem(LAST_DECISION_KEY, id) } catch { /* ignore */ }
+    }
+  }
   const [selectedBoardId, setSelectedBoardIdRaw] = useState<string | null>(() => {
     if (boardIdParam) return boardIdParam
     try {
@@ -216,6 +223,14 @@ export function SaveFromWebContent() {
       const lastRoom = localStorage.getItem(LAST_ROOM_KEY)
       if (lastRoom && fdRooms.find((r) => r.id === lastRoom)) {
         setSelectedRoomId(lastRoom)
+        // Also restore last decision if it still exists in this room
+        const lastDec = localStorage.getItem(LAST_DECISION_KEY)
+        if (lastDec) {
+          const room = fdRooms.find((r) => r.id === lastRoom)
+          if (room?.decisions.find((d) => d.id === lastDec)) {
+            setSelectedDecisionId(lastDec)
+          }
+        }
         return
       }
     } catch { /* ignore */ }
@@ -283,6 +298,11 @@ export function SaveFromWebContent() {
 
       return { ...p, boards }
     })
+
+    // Persist the board for next visit
+    if (targetBoardId) {
+      try { localStorage.setItem(LAST_BOARD_KEY, targetBoardId) } catch { /* ignore */ }
+    }
 
     setSavedDestination('mood_boards')
     setSavedBoardName(boardName)
@@ -363,6 +383,14 @@ export function SaveFromWebContent() {
       })
       return { ...payload, rooms: newRooms }
     })
+
+    // Persist the resolved room + decision for next visit
+    if (resolvedRoomId) {
+      try { localStorage.setItem(LAST_ROOM_KEY, resolvedRoomId) } catch { /* ignore */ }
+    }
+    if (resolvedDecisionId) {
+      try { localStorage.setItem(LAST_DECISION_KEY, resolvedDecisionId) } catch { /* ignore */ }
+    }
 
     setSavedDestination('finish_decisions')
     setSavedTargetRoom(resolvedRoomName)
