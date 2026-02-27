@@ -14,9 +14,10 @@ interface Props {
 
 export function PublicMoodBoardView({ payload, projectName, includePhotos, includeComments }: Props) {
   const boards = (payload?.boards as PublicBoard[]) || []
-  const board = boards[0] // share links are scoped to a single board
+  const isMultiBoard = boards.length > 1
+  const totalIdeas = boards.reduce((sum, b) => sum + b.ideas.length, 0)
 
-  if (!board) {
+  if (boards.length === 0) {
     return (
       <div className="min-h-screen bg-basalt flex items-center justify-center">
         <p className="text-cream/50">No board data found.</p>
@@ -36,31 +37,54 @@ export function PublicMoodBoardView({ payload, projectName, includePhotos, inclu
             <span className="text-cream/20">/</span>
             <span className="text-xs text-cream/40">{projectName}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-serif text-sandstone">{board.name}</h1>
-          <p className="text-sm text-cream/50 mt-1">
-            {board.ideas.length} idea{board.ideas.length !== 1 ? 's' : ''}
-          </p>
+          {isMultiBoard ? (
+            <>
+              <h1 className="text-2xl sm:text-3xl font-serif text-sandstone">Mood Boards</h1>
+              <p className="text-sm text-cream/50 mt-1">
+                {boards.length} board{boards.length !== 1 ? 's' : ''} &middot; {totalIdeas} idea{totalIdeas !== 1 ? 's' : ''}
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl sm:text-3xl font-serif text-sandstone">{boards[0].name}</h1>
+              <p className="text-sm text-cream/50 mt-1">
+                {boards[0].ideas.length} idea{boards[0].ideas.length !== 1 ? 's' : ''}
+              </p>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Ideas grid */}
+      {/* Board sections */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        {board.ideas.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-cream/30 text-sm">This board has no ideas yet.</p>
+        {boards.map((board) => (
+          <div key={board.id} className={isMultiBoard ? 'mb-12' : ''}>
+            {isMultiBoard && (
+              <h2 className="text-lg font-medium text-cream mb-4">
+                {board.name}
+                <span className="text-xs text-cream/30 ml-2">
+                  {board.ideas.length} idea{board.ideas.length !== 1 ? 's' : ''}
+                </span>
+              </h2>
+            )}
+            {board.ideas.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-cream/30 text-sm">This board has no ideas yet.</p>
+              </div>
+            ) : (
+              <div className="columns-2 sm:columns-3 lg:columns-4 gap-3 [column-fill:_balance]">
+                {board.ideas.map((idea) => (
+                  <PublicIdeaCard
+                    key={idea.id}
+                    idea={idea}
+                    comments={includeComments ? (board.comments || []).filter((c) => c.refIdeaId === idea.id) : []}
+                    includePhotos={includePhotos}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="columns-2 sm:columns-3 lg:columns-4 gap-3 [column-fill:_balance]">
-            {board.ideas.map((idea, i) => (
-              <PublicIdeaCard
-                key={idea.id}
-                idea={idea}
-                comments={includeComments ? (board.comments || []).filter((c) => c.refIdeaId === idea.id) : []}
-                includePhotos={includePhotos}
-              />
-            ))}
-          </div>
-        )}
+        ))}
       </div>
 
       {/* Footer */}

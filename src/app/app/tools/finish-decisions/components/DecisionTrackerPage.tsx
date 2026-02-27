@@ -94,6 +94,16 @@ export function DecisionTrackerPage({
 
   const hasRooms = rooms.length > 0
 
+  // First success state — detect 0→N room transition from onboarding
+  const [showFirstSuccess, setShowFirstSuccess] = useState(false)
+  const prevRoomCountRef = useRef(rooms.length)
+  useEffect(() => {
+    if (prevRoomCountRef.current === 0 && rooms.length > 0) {
+      setShowFirstSuccess(true)
+    }
+    prevRoomCountRef.current = rooms.length
+  }, [rooms.length])
+
   // Auto-expand newly added rooms (handles both 0→N and N→N+1 transitions)
   const prevRoomIdsRef = useRef(new Set(rooms.map((r) => r.id)))
   useEffect(() => {
@@ -270,6 +280,50 @@ export function DecisionTrackerPage({
       {/* Tracker UI — only when rooms exist */}
       {hasRooms && (
         <>
+          {/* First success card — shown once after onboarding creates rooms */}
+          {showFirstSuccess && !readOnly && (
+            <div className="bg-basalt-50 rounded-card p-6 mb-6 border border-cream/10">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-green-500/15 flex items-center justify-center shrink-0 mt-0.5">
+                  <svg className="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-serif text-lg text-sandstone mb-1">Your boards are ready!</h3>
+                  <p className="text-sm text-cream/50 mb-4">
+                    {rooms.length} {rooms.length === 1 ? 'room' : 'rooms'} created
+                    {rooms.reduce((sum, r) => sum + r.decisions.length, 0) > 0 &&
+                      ` with ${rooms.reduce((sum, r) => sum + r.decisions.length, 0)} decisions`
+                    }
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowFirstSuccess(false)
+                        openQuickAdd(rooms[0]?.id ?? null)
+                      }}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-sandstone text-basalt font-medium text-sm rounded-lg hover:bg-sandstone-light transition-colors"
+                    >
+                      Add your first decision
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M5 12h14m-7-7 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowFirstSuccess(false)}
+                      className="text-xs text-cream/40 hover:text-cream/70 transition-colors"
+                    >
+                      Explore on your own
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Search + View toggle */}
           <div className="flex items-center gap-2 mb-3">
             <div className="flex-1">

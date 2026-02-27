@@ -1,9 +1,11 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
+import { ShareExportModal } from '@/components/app/ShareExportModal'
+import { useProject } from '@/contexts/ProjectContext'
 import { resolveBoardAccess } from '@/data/mood-boards'
 import { useMoodBoardState } from './useMoodBoardState'
 import { BoardsHomeView } from './components/BoardsHomeView'
@@ -13,10 +15,12 @@ function MoodBoardsContent() {
   const api = useMoodBoardState()
   const { payload, isLoaded, isSyncing, access, readOnly, noAccess } = api
   const { data: session } = useSession()
+  const { currentProject } = useProject()
   const router = useRouter()
   const searchParams = useSearchParams()
   const boardId = searchParams.get('board')
   const userEmail = session?.user?.email || ''
+  const [showShareExport, setShowShareExport] = useState(false)
 
   if (!isLoaded) {
     return (
@@ -59,7 +63,23 @@ function MoodBoardsContent() {
         title="Mood Boards"
         description="Collect and organize inspiration from anywhere — then turn your favorites into real selections."
         accessLevel={access}
-      />
+        hasContent={payload.boards.length > 0}
+      >
+        {payload.boards.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowShareExport(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-sandstone/15 text-sandstone hover:bg-sandstone/25 transition-colors"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
+              <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
+              <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
+            </svg>
+            Share / Export
+          </button>
+        )}
+      </ToolPageHeader>
 
       {isSyncing && (
         <div className="flex items-center gap-2 text-xs text-cream/30 mb-4">
@@ -86,6 +106,27 @@ function MoodBoardsContent() {
         <BoardDetailView board={activeBoard} api={api} readOnly={boardReadOnly} toolAccess={access || 'VIEW'} />
       ) : (
         <BoardsHomeView api={api} readOnly={readOnly} toolAccess={access || 'VIEW'} />
+      )}
+
+      {showShareExport && currentProject && (
+        <ShareExportModal
+          toolKey="mood_boards"
+          toolLabel="Mood Boards"
+          projectId={currentProject.id}
+          isOwner={access === 'OWNER'}
+          onClose={() => setShowShareExport(false)}
+          scopes={payload.boards
+            .filter((b) => !b.isDefault)
+            .map((b) => ({
+              id: b.id,
+              name: b.name,
+            }))}
+          scopeLabel="Boards"
+          buildExportUrl={() => {
+            // Mood Boards doesn't have a report page yet — placeholder
+            return '#'
+          }}
+        />
       )}
     </>
   )

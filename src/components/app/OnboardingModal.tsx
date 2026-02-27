@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import { ONBOARDING_OPTIONS } from '@/lib/onboarding-options'
+import { useProject } from '@/contexts/ProjectContext'
+import { STAGE_PICKER_OPTIONS } from '@/lib/stage-tool-priority'
 
 export function OnboardingModal({ onClose }: { onClose: () => void }) {
-  const router = useRouter()
+  const { setProjectStage } = useProject()
   const dialogRef = useRef<HTMLDivElement>(null)
   const firstBtnRef = useRef<HTMLButtonElement>(null)
 
@@ -15,7 +15,7 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Escape') {
-      handleSelect('exploring', null)
+      onClose()
       return
     }
     if (e.key === 'Tab') {
@@ -35,15 +35,9 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
     }
   }
 
-  const handleSelect = (focus: string, href: string | null) => {
-    fetch('/api/user/onboarding-complete', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ focus }),
-    }).catch(() => {})
-
+  const handleSelect = (stageId: string) => {
+    setProjectStage(stageId).catch(() => {})
     onClose()
-    if (href) router.push(href)
   }
 
   return (
@@ -53,7 +47,7 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
     >
       <div
         className="absolute inset-0 bg-black/60"
-        onClick={() => handleSelect('exploring', null)}
+        onClick={onClose}
       />
       <div
         ref={dialogRef}
@@ -66,22 +60,26 @@ export function OnboardingModal({ onClose }: { onClose: () => void }) {
           id="onboarding-title"
           className="font-serif text-2xl text-sandstone mb-3"
         >
-          Welcome to Hawaii Home Central
+          Where are you in your renovation?
         </h2>
         <p className="text-cream/70 text-sm mb-6 leading-relaxed">
-          What brings you here today? We&apos;ll point you in the right
-          direction.
+          We&apos;ll recommend the right tools for your stage.
         </p>
         <div className="space-y-3">
-          {ONBOARDING_OPTIONS.map((option, i) => (
+          {STAGE_PICKER_OPTIONS.map((option, i) => (
             <button
-              key={option.focus}
+              key={option.id}
               ref={i === 0 ? firstBtnRef : undefined}
               type="button"
-              onClick={() => handleSelect(option.focus, option.href)}
+              onClick={() => handleSelect(option.id)}
               className="w-full text-left p-4 rounded-lg border border-cream/10 hover:border-sandstone/30 hover:bg-cream/5 transition-colors"
             >
-              <span className="text-sm text-cream">{option.label}</span>
+              <span className="text-sm font-medium text-cream block">
+                {option.label}
+              </span>
+              <span className="text-xs text-cream/50 mt-0.5 block">
+                {option.description}
+              </span>
             </button>
           ))}
         </div>

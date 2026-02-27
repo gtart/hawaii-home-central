@@ -39,10 +39,12 @@ interface ToolPageHeaderProps {
   description: string
   /** Actual access level from the tool's API response. */
   accessLevel?: 'OWNER' | 'EDIT' | 'VIEW' | null
+  /** Whether the tool has any user-created content. When false, the invite button is de-emphasized. */
+  hasContent?: boolean
   children?: React.ReactNode
 }
 
-export function ToolPageHeader({ toolKey, title, description, accessLevel, children }: ToolPageHeaderProps) {
+export function ToolPageHeader({ toolKey, title, description, accessLevel, hasContent = true, children }: ToolPageHeaderProps) {
   const { currentProject } = useProject()
   const [showShare, setShowShare] = useState(false)
   const [collaborators, setCollaborators] = useState<Collaborator[]>([])
@@ -128,7 +130,7 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, child
               Can edit
             </span>
           )}
-          {isOwner && (
+          {isOwner && hasContent && (
             <button
               type="button"
               onClick={() => setShowShare(true)}
@@ -140,6 +142,15 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, child
                 <line x1="20" y1="8" x2="20" y2="14" strokeLinecap="round" />
                 <line x1="23" y1="11" x2="17" y2="11" strokeLinecap="round" />
               </svg>
+              {totalPeople > 0 ? 'Manage collaborators' : 'Add a collaborator'}
+            </button>
+          )}
+          {isOwner && !hasContent && (
+            <button
+              type="button"
+              onClick={() => setShowShare(true)}
+              className="text-xs text-cream/40 hover:text-cream/70 transition-colors"
+            >
               {totalPeople > 0 ? 'Manage collaborators' : 'Add a collaborator'}
             </button>
           )}

@@ -26,6 +26,7 @@ export function OnboardingView({
   const resolvedDefaults = defaultDecisions || DEFAULT_DECISIONS_BY_ROOM_TYPE
   const [selectedTypes, setSelectedTypes] = useState<Set<RoomTypeV3>>(new Set())
   const [templates, setTemplates] = useState<Record<string, 'standard' | 'none'>>({})
+  const [globalTemplate, setGlobalTemplate] = useState<'standard' | 'none'>('standard')
   const [customOtherName, setCustomOtherName] = useState('')
 
   const isCollapsible = onToggleCollapse !== undefined
@@ -51,7 +52,7 @@ export function OnboardingView({
       return {
         type,
         name: label === 'Custom Area' ? (customOtherName.trim() || 'Custom Area') : label,
-        template: type === 'other' ? 'none' : (templates[type] || 'standard'),
+        template: type === 'other' ? 'none' : (templates[type] || globalTemplate),
       }
     })
     onBatchCreate(selections)
@@ -91,13 +92,67 @@ export function OnboardingView({
         Pick the rooms and areas for your project.
       </p>
 
+      {/* Global template toggle */}
+      {!isCollapsible && (
+        <div className="flex rounded-lg bg-cream/5 p-1 mb-6 max-w-md">
+          <button
+            type="button"
+            onClick={() => {
+              setGlobalTemplate('standard')
+              setTemplates((prev) => {
+                const next = { ...prev }
+                for (const type of selectedTypes) {
+                  if (type !== 'other') next[type] = 'standard'
+                }
+                return next
+              })
+            }}
+            className={cn(
+              'flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors text-left',
+              globalTemplate === 'standard'
+                ? 'bg-sandstone/20 text-sandstone'
+                : 'text-cream/50 hover:text-cream/70'
+            )}
+          >
+            <span className="block">Recommended decisions</span>
+            <span className="block text-[10px] font-normal mt-0.5 opacity-70">
+              Pre-fill typical decisions for each room
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setGlobalTemplate('none')
+              setTemplates((prev) => {
+                const next = { ...prev }
+                for (const type of selectedTypes) {
+                  if (type !== 'other') next[type] = 'none'
+                }
+                return next
+              })
+            }}
+            className={cn(
+              'flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors text-left',
+              globalTemplate === 'none'
+                ? 'bg-sandstone/20 text-sandstone'
+                : 'text-cream/50 hover:text-cream/70'
+            )}
+          >
+            <span className="block">Start minimal</span>
+            <span className="block text-[10px] font-normal mt-0.5 opacity-70">
+              Add your own decisions from scratch
+            </span>
+          </button>
+        </div>
+      )}
+
       {/* Room cards grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
         {ROOM_TYPE_OPTIONS_V3.map((opt) => {
           const isSelected = selectedTypes.has(opt.value)
           const isCustom = opt.value === 'other'
           const decisionCount = (resolvedDefaults[opt.value] || []).length
-          const currentTemplate = templates[opt.value] || 'standard'
+          const currentTemplate = templates[opt.value] || globalTemplate
 
           return (
             <button
@@ -176,8 +231,8 @@ export function OnboardingView({
 
 function buttonLabel(hasRooms: boolean, count: number): string {
   if (count === 0) {
-    return hasRooms ? 'Add Rooms' : 'Create Decision Boards'
+    return hasRooms ? 'Add Rooms' : 'Create Finish Selections'
   }
   const label = count === 1 ? 'room' : 'rooms'
-  return hasRooms ? `Add ${count} ${label}` : `Create Decision Boards (${count} ${label})`
+  return hasRooms ? `Add ${count} ${label}` : `Create Finish Selections (${count} ${label})`
 }

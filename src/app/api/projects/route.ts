@@ -19,7 +19,7 @@ export async function GET() {
     where: { userId },
     include: {
       project: {
-        select: { id: true, name: true, status: true, createdAt: true, updatedAt: true },
+        select: { id: true, name: true, status: true, currentStage: true, createdAt: true, updatedAt: true },
       },
     },
     orderBy: { project: { createdAt: 'asc' } },
@@ -50,6 +50,7 @@ export async function GET() {
       name: m.project.name,
       status: m.project.status,
       role: m.role,
+      currentStage: m.project.currentStage,
       createdAt: m.project.createdAt,
       updatedAt: m.project.updatedAt,
       toolAccess: m.role === 'MEMBER' ? (toolAccessByProject.get(m.project.id) || []) : undefined,
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
           name: 'My Home',
           status: 'ACTIVE',
         },
-        select: { id: true, name: true, status: true, createdAt: true, updatedAt: true },
+        select: { id: true, name: true, status: true, currentStage: true, createdAt: true, updatedAt: true },
         orderBy: { createdAt: 'asc' },
       })
       if (existing) {
@@ -112,6 +113,6 @@ export async function POST(request: Request) {
   })
 
   return NextResponse.json({
-    project: { id: project.id, name: project.name, status: project.status, role: 'OWNER', createdAt: project.createdAt, updatedAt: project.updatedAt },
+    project: { id: project.id, name: project.name, status: project.status, role: 'OWNER', currentStage: project.currentStage ?? null, createdAt: project.createdAt, updatedAt: project.updatedAt },
   })
 }

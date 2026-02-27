@@ -51,6 +51,7 @@ function PunchlistContent() {
         title="Fix List"
         description="Track fixes and share with your contractor."
         accessLevel={access}
+        hasContent={payload.items.length > 0}
       >
         {payload.items.length > 0 && (
           <button

@@ -5,12 +5,20 @@ import { toPublicItem } from '@/app/app/tools/punchlist/types'
 import type { PunchlistItem } from '@/app/app/tools/punchlist/types'
 import { toPublicBoard } from '@/data/mood-boards'
 import type { Board } from '@/data/mood-boards'
+import { toPublicRoom } from '@/data/finish-decisions'
+import type { RoomV3 } from '@/data/finish-decisions'
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ toolKey: string; token: string }> }
 ) {
   const { toolKey, token } = await params
+
+  // Reject unknown tool keys
+  const SUPPORTED_TOOLS = new Set(['punchlist', 'mood_boards', 'finish_decisions'])
+  if (!SUPPORTED_TOOLS.has(toolKey)) {
+    return NextResponse.json({ error: 'Invalid tool' }, { status: 400 })
+  }
 
   const record = await validateShareToken(token)
   if (!record || record.toolKey !== toolKey) {
@@ -61,8 +69,15 @@ export async function GET(
   if (toolKey === 'mood_boards' && Array.isArray(payload?.boards)) {
     let boards = payload.boards as Board[]
 
-    // Filter to a single board if boardId is set
-    if (boardId) {
+    // Apply scope: multi-board, single-board (legacy), or all
+    const mbScope = settings?.scope as { mode?: string; boardIds?: string[] } | undefined
+    if (mbScope?.mode === 'selected' && Array.isArray(mbScope.boardIds) && mbScope.boardIds.length > 0) {
+      boards = boards.filter((b) => mbScope.boardIds!.includes(b.id))
+    } else if (mbScope?.mode === 'all') {
+      // Exclude default/Uncategorized board for "All Boards" scope
+      boards = boards.filter((b) => !(b as Board & { isDefault?: boolean }).isDefault)
+    } else if (boardId) {
+      // Legacy single-board back-compat
       const targetBoard = boards.find((b) => b.id === boardId)
       if (!targetBoard) {
         return NextResponse.json({ error: 'Board not found' }, { status: 404 })
@@ -75,6 +90,26 @@ export async function GET(
       version: 1,
       boards: boards.map((b) =>
         toPublicBoard(b, { includeNotes, includeComments, includePhotos, includeSourceUrl })
+      ),
+    }
+  }
+
+  // Decision Tracker: allowlist sanitization — strip PII, respect token flags + scope
+  if (toolKey === 'finish_decisions' && Array.isArray(payload?.rooms)) {
+    let rooms = (payload.rooms as RoomV3[]).filter(
+      (r) => r.systemKey !== 'global_uncategorized'
+    )
+
+    // Apply scope from token settings
+    const scope = settings?.scope as { mode?: string; roomIds?: string[] } | undefined
+    if (scope?.mode === 'selected' && Array.isArray(scope.roomIds)) {
+      rooms = rooms.filter((r) => scope.roomIds!.includes(r.id))
+    }
+
+    payload = {
+      version: 3,
+      rooms: rooms.map((r) =>
+        toPublicRoom(r, { includeNotes, includeComments, includePhotos })
       ),
     }
   }
@@ -97,6 +132,8 @@ export async function GET(
     }
   }
 
+  const scope = settings?.scope as Record<string, unknown> | undefined
+
   return NextResponse.json({
     payload,
     projectName: record.project.name,
@@ -106,6 +143,7 @@ export async function GET(
     includeComments,
     includeSourceUrl,
     boardId,
+    scope: scope ?? null,
     filters: { locations: filterLocations, assignees: filterAssignees, statuses: filterStatuses },
   })
 }

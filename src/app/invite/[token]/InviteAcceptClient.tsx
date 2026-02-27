@@ -13,7 +13,7 @@ const TOOL_PATHS: Record<string, string> = {
 
 const TOOL_LABELS: Record<string, string> = {
   before_you_sign: 'Contract Checklist',
-  finish_decisions: 'Decision Boards',
+  finish_decisions: 'Finish Selections',
   punchlist: 'Fix List',
   mood_boards: 'Mood Boards',
 }

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button'
 
 const TEMPLATE_VARS = [
   { name: 'inviterName', description: 'Name of the person sending the invite', example: 'Jane Doe' },
-  { name: 'toolName', description: 'Tool being shared', example: 'Decision Boards' },
+  { name: 'toolName', description: 'Tool being shared', example: 'Finish Selections' },
   { name: 'accessLevel', description: '"edit" or "view"', example: 'edit' },
   { name: 'projectName', description: 'Name of the project', example: 'My Home' },
   { name: 'inviteLink', description: 'Full invite acceptance URL', example: 'https://www.hawaiihomecentral.com/invite/abc123' },

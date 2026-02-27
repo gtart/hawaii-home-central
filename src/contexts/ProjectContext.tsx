@@ -17,6 +17,7 @@ export interface ProjectInfo {
   name: string
   status: ProjectStatus
   role: ProjectRole
+  currentStage: string | null
   createdAt: string
   updatedAt: string
   toolAccess?: ToolAccessInfo[]
@@ -28,6 +29,7 @@ interface ProjectContextValue {
   isLoading: boolean
   switchProject: (projectId: string) => Promise<void>
   createProject: (name: string) => Promise<string>
+  setProjectStage: (stage: string) => Promise<void>
   refreshProjects: () => Promise<void>
 }
 
@@ -96,6 +98,22 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     return newProject.id
   }, [router])
 
+  const setProjectStage = useCallback(async (stage: string) => {
+    const res = await fetch('/api/projects/stage', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage }),
+    })
+    if (!res.ok) throw new Error('Failed to set project stage')
+
+    // Update local state so UI reacts immediately
+    setProjects((prev) =>
+      prev.map((p) =>
+        p.id === currentProjectId ? { ...p, currentStage: stage } : p
+      )
+    )
+  }, [currentProjectId])
+
   const currentProject = projects.find((p) => p.id === currentProjectId) ?? null
 
   return (
@@ -106,6 +124,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         isLoading,
         switchProject,
         createProject,
+        setProjectStage,
         refreshProjects: fetchProjects,
       }}
     >

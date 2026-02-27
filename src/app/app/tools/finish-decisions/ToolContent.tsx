@@ -1,14 +1,16 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useToolState } from '@/hooks/useToolState'
 import { useProject } from '@/contexts/ProjectContext'
 import { LocalModeBanner } from '@/components/guides/LocalModeBanner'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { DecisionTrackerPage } from './components/DecisionTrackerPage'
+import { ShareExportModal } from '@/components/app/ShareExportModal'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import {
   DEFAULT_DECISIONS_BY_ROOM_TYPE,
+  ROOM_EMOJI_MAP,
   type RoomV3,
   type DecisionV3,
   type StatusV3,
@@ -217,7 +219,8 @@ export function ToolContent({
   emojiMap = {},
 }: ToolContentProps) {
   const resolvedDefaults = defaultDecisions || DEFAULT_DECISIONS_BY_ROOM_TYPE
-  const { projects } = useProject()
+  const { projects, currentProject } = useProject()
+  const [showShareExport, setShowShareExport] = useState(false)
   const { state, setState, isLoaded, isSyncing, access, readOnly, noAccess } = useToolState<
     FinishDecisionsPayloadV3 | any
   >({
@@ -364,10 +367,26 @@ export function ToolContent({
         {!localOnly && (
           <ToolPageHeader
             toolKey="finish_decisions"
-            title="Decision Boards"
+            title="Finish Selections"
             description="Avoid delays and rework—by keeping decisions, links, and status updates together for each room."
             accessLevel={access}
-          />
+            hasContent={v3State.rooms.length > 0}
+          >
+            {v3State.rooms.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowShareExport(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-sandstone/15 text-sandstone hover:bg-sandstone/25 transition-colors"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
+                  <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
+                  <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
+                </svg>
+                Share / Export
+              </button>
+            )}
+          </ToolPageHeader>
         )}
         {noAccess ? (
           <div className="bg-basalt-50 rounded-card p-8 text-center">
@@ -401,6 +420,31 @@ export function ToolContent({
           </div>
         )}
       </div>
+
+      {showShareExport && currentProject && (
+        <ShareExportModal
+          toolKey="finish_decisions"
+          toolLabel="Finish Selections"
+          projectId={currentProject.id}
+          isOwner={access === 'OWNER'}
+          onClose={() => setShowShareExport(false)}
+          scopes={v3State.rooms
+            .filter((r) => r.systemKey !== 'global_uncategorized')
+            .map((r) => ({
+              id: r.id,
+              name: r.name,
+              emoji: ROOM_EMOJI_MAP[r.type] || '🏠',
+            }))}
+          scopeLabel="Rooms"
+          buildExportUrl={({ projectId: pid, includeNotes: notes, includeComments: comments, includePhotos: photos, scopeMode, selectedScopeIds }) => {
+            let url = `/app/tools/finish-decisions/report?projectId=${pid}&includeNotes=${notes}&includeComments=${comments}&includePhotos=${photos}`
+            if (scopeMode === 'selected' && selectedScopeIds.length > 0) {
+              url += `&roomIds=${encodeURIComponent(selectedScopeIds.join(','))}`
+            }
+            return url
+          }}
+        />
+      )}
     </div>
   )
 }

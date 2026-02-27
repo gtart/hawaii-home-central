@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useProject } from '@/contexts/ProjectContext'
 import { TOOL_REGISTRY } from '@/lib/tool-registry'
+import { getToolPriority, getStageLabel } from '@/lib/stage-tool-priority'
+import { OnboardingModal } from './OnboardingModal'
 
 interface ToolSummary {
   toolKey: string
@@ -31,6 +33,23 @@ export function NextStepsCard() {
   const { currentProject } = useProject()
   const [emptyTools, setEmptyTools] = useState<typeof TOOL_REGISTRY>([])
   const [loaded, setLoaded] = useState(false)
+  const [showStagePicker, setShowStagePicker] = useState(false)
+
+  const stageId = currentProject?.currentStage ?? null
+  const stageLabel = getStageLabel(stageId)
+
+  const sortByStage = useCallback(
+    (tools: typeof TOOL_REGISTRY) => {
+      const priority = getToolPriority(stageId)
+      if (!priority) return tools
+      return [...tools].sort((a, b) => {
+        const ai = priority.indexOf(a.toolKey)
+        const bi = priority.indexOf(b.toolKey)
+        return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
+      })
+    },
+    [stageId]
+  )
 
   useEffect(() => {
     if (!currentProject?.id) return
@@ -48,7 +67,7 @@ export function NextStepsCard() {
           return isToolEmpty(tool.toolKey, summary?.stats)
         })
 
-        setEmptyTools(empty)
+        setEmptyTools(sortByStage(empty))
         setLoaded(true)
       })
       .catch(() => {
@@ -56,7 +75,7 @@ export function NextStepsCard() {
       })
 
     return () => { cancelled = true }
-  }, [currentProject?.id])
+  }, [currentProject?.id, sortByStage])
 
   // Don't show anything until loaded, and hide entirely if all tools have data
   if (!loaded || emptyTools.length === 0) return null
@@ -64,35 +83,54 @@ export function NextStepsCard() {
   const [primary, ...secondary] = emptyTools
 
   return (
-    <div className="bg-basalt-50 rounded-card p-6 mb-8">
-      <h2 className="font-serif text-xl text-sandstone mb-1">Next Steps</h2>
-      <p className="text-cream/50 text-sm mb-5">
-        Here&apos;s what to try next based on where you are.
-      </p>
-
-      <Link
-        href={primary.href}
-        className="inline-flex items-center gap-2 px-5 py-2.5 bg-sandstone text-basalt font-medium text-sm rounded-lg hover:bg-sandstone-light transition-colors"
-      >
-        {CTA_LABELS[primary.toolKey] ?? `Open ${primary.title}`}
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M5 12h14m-7-7 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </Link>
-
-      {secondary.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1">
-          {secondary.map((tool) => (
-            <Link
-              key={tool.toolKey}
-              href={tool.href}
-              className="text-xs text-cream/40 hover:text-cream/70 transition-colors"
+    <>
+      <div className="bg-basalt-50 rounded-card p-6 mb-8">
+        <div className="flex items-start justify-between gap-4 mb-1">
+          <h2 className="font-serif text-xl text-sandstone">Next Steps</h2>
+          {stageLabel && (
+            <button
+              type="button"
+              onClick={() => setShowStagePicker(true)}
+              className="text-xs text-cream/40 hover:text-cream/70 transition-colors shrink-0"
             >
-              {CTA_LABELS[tool.toolKey] ?? tool.title}
-            </Link>
-          ))}
+              {stageLabel} &middot; Change
+            </button>
+          )}
         </div>
+        <p className="text-cream/50 text-sm mb-5">
+          {stageLabel
+            ? `Recommended for the ${stageLabel.toLowerCase()} stage.`
+            : "Here's what to try next based on where you are."}
+        </p>
+
+        <Link
+          href={primary.href}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-sandstone text-basalt font-medium text-sm rounded-lg hover:bg-sandstone-light transition-colors"
+        >
+          {CTA_LABELS[primary.toolKey] ?? `Open ${primary.title}`}
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M5 12h14m-7-7 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+
+        {secondary.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1">
+            {secondary.map((tool) => (
+              <Link
+                key={tool.toolKey}
+                href={tool.href}
+                className="text-xs text-cream/40 hover:text-cream/70 transition-colors"
+              >
+                {CTA_LABELS[tool.toolKey] ?? tool.title}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {showStagePicker && (
+        <OnboardingModal onClose={() => setShowStagePicker(false)} />
       )}
-    </div>
+    </>
   )
 }

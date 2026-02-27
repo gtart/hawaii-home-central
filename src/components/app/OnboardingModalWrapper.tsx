@@ -1,23 +1,22 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useProject } from '@/contexts/ProjectContext'
 import { OnboardingModal } from './OnboardingModal'
 
 export function OnboardingModalWrapper() {
-  const { data: session, status } = useSession()
+  const { currentProject, isLoading } = useProject()
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
-    if (status !== 'authenticated' || !session?.user) return
-
-    fetch('/api/user/onboarding-status')
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data.hasSeenAppOnboarding) setShowModal(true)
-      })
-      .catch(() => {})
-  }, [status, session])
+    if (isLoading) return
+    // Show the stage picker when the project exists but has no stage set
+    if (currentProject && !currentProject.currentStage) {
+      setShowModal(true)
+    } else {
+      setShowModal(false)
+    }
+  }, [isLoading, currentProject])
 
   if (!showModal) return null
 

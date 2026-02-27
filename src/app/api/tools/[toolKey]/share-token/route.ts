@@ -47,6 +47,7 @@ export async function GET(
         statuses: s?.statuses ?? [],
         boardId: s?.boardId ?? null,
         boardName: s?.boardName ?? null,
+        scope: s?.scope ?? null,
         createdAt: t.createdAt,
         expiresAt: t.expiresAt,
       }
@@ -108,6 +109,9 @@ export async function POST(
   }
   if (boardId) settingsObj.boardId = boardId
   if (boardName) settingsObj.boardName = boardName
+  if (typeof body.scope === 'object' && body.scope !== null) {
+    settingsObj.scope = body.scope
+  }
 
   const record = await prisma.toolShareToken.create({
     data: {

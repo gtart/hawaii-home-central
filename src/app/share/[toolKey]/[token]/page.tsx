@@ -2,11 +2,13 @@ import type { Metadata } from 'next'
 import { validateShareToken } from '@/lib/share-tokens'
 import { PublicPunchlistView } from './PublicPunchlistView'
 import { PublicMoodBoardView } from './PublicMoodBoardView'
+import { PublicFinishDecisionsView } from './PublicFinishDecisionsView'
 import { InvalidTokenPage } from './InvalidTokenPage'
 
 const TOOL_LABELS: Record<string, string> = {
   punchlist: 'Fix List',
   mood_boards: 'Mood Board',
+  finish_decisions: 'Finish Selections',
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -57,6 +59,7 @@ export default async function SharePage({ params }: Props) {
     includeComments: boolean
     includeSourceUrl: boolean
     boardId?: string | null
+    scope?: Record<string, unknown> | null
     filters: { locations: string[]; assignees: string[] }
   } | null = null
 
@@ -73,6 +76,19 @@ export default async function SharePage({ params }: Props) {
 
   if (!data) {
     return <InvalidTokenPage />
+  }
+
+  if (toolKey === 'finish_decisions') {
+    return (
+      <PublicFinishDecisionsView
+        payload={data.payload}
+        projectName={data.projectName}
+        includeNotes={data.includeNotes}
+        includeComments={data.includeComments}
+        includePhotos={data.includePhotos}
+        scope={data.scope}
+      />
+    )
   }
 
   if (toolKey === 'mood_boards') {

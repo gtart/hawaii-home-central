@@ -228,7 +228,7 @@ export function SelectionsBoardView({
         )
       })}
 
-      {/* Add Selection tile */}
+      {/* Add Decision tile */}
       {!readOnly && onAddSelection && (
         <button
           type="button"

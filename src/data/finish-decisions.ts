@@ -291,3 +291,133 @@ export const DEFAULT_DECISIONS_BY_ROOM_TYPE: Record<RoomTypeV3, string[]> =
 
 export const SELECTION_EMOJI_MAP: Record<string, string> =
   defaultSelectionsJson.selectionEmojis
+
+// ============================================================================
+// PUBLIC TYPES (for share links & public views)
+// ============================================================================
+
+export interface PublicOptionImage {
+  id: string
+  url: string
+  thumbnailUrl?: string
+  label?: string
+}
+
+export interface PublicOptionV3 {
+  id: string
+  name: string
+  notes?: string
+  isSelected?: boolean
+  images?: PublicOptionImage[]
+  heroImageId?: string | null
+  // EXCLUDED: votes (has emails), urls (could be private), origin
+}
+
+export interface PublicDecisionComment {
+  text: string
+  createdAt: string
+  refOptionId?: string
+  refOptionLabel?: string
+  // EXCLUDED: authorName, authorEmail, id
+}
+
+export interface PublicDecisionV3 {
+  id: string
+  title: string
+  status: StatusV3
+  notes?: string
+  options: PublicOptionV3[]
+  dueDate?: string | null
+  comments?: PublicDecisionComment[]
+  // EXCLUDED: picksByUser, dismissedSuggestionKeys, systemKey, originKitId
+}
+
+export interface PublicRoomV3 {
+  id: string
+  type: RoomTypeV3
+  name: string
+  decisions: PublicDecisionV3[]
+  coverImage?: RoomCoverImage
+}
+
+export interface FinishDecisionsSanitizeOpts {
+  includeNotes: boolean
+  includeComments: boolean
+  includePhotos: boolean
+}
+
+/** Allowlist-map a full RoomV3 to a safe public shape. */
+export function toPublicRoom(
+  room: RoomV3,
+  opts: FinishDecisionsSanitizeOpts
+): PublicRoomV3 {
+  return {
+    id: room.id,
+    type: room.type,
+    name: room.name,
+    decisions: room.decisions
+      .filter((d) => d.systemKey !== 'uncategorized')
+      .map((d) => toPublicDecision(d, opts)),
+    coverImage: room.coverImage,
+  }
+}
+
+/** Allowlist-map a full DecisionV3 to a safe public shape. */
+export function toPublicDecision(
+  d: DecisionV3,
+  opts: FinishDecisionsSanitizeOpts
+): PublicDecisionV3 {
+  const pub: PublicDecisionV3 = {
+    id: d.id,
+    title: d.title,
+    status: d.status,
+    options: d.options.map((o) => toPublicOption(o, opts)),
+    dueDate: d.dueDate ?? null,
+  }
+
+  if (opts.includeNotes && d.notes) {
+    pub.notes = d.notes
+  }
+
+  if (opts.includeComments && d.comments && d.comments.length > 0) {
+    pub.comments = d.comments.map((c) => ({
+      text: c.text,
+      createdAt: c.createdAt,
+      refOptionId: c.refOptionId,
+      refOptionLabel: c.refOptionLabel,
+    }))
+  }
+
+  return pub
+}
+
+/** Allowlist-map a full OptionV3 to a safe public shape. */
+function toPublicOption(
+  o: OptionV3,
+  opts: FinishDecisionsSanitizeOpts
+): PublicOptionV3 {
+  const pub: PublicOptionV3 = {
+    id: o.id,
+    name: o.name,
+    isSelected: o.isSelected,
+  }
+
+  if (opts.includeNotes && o.notes) {
+    pub.notes = o.notes
+  }
+
+  if (opts.includePhotos) {
+    const images = o.images ?? (o.imageUrl ? [{ id: 'legacy', url: o.imageUrl, thumbnailUrl: o.thumbnailUrl }] : [])
+    if (images.length > 0) {
+      pub.images = images.map((img) => ({
+        id: img.id,
+        url: img.url,
+        thumbnailUrl: img.thumbnailUrl,
+        label: img.label,
+      }))
+    }
+    pub.heroImageId = o.heroImageId ?? null
+  }
+
+  return pub
+}

@@ -434,7 +434,7 @@ export function SaveFromWebContent() {
     : '/app/tools/finish-decisions'
   const backLabel = fromParam === 'mood-boards'
     ? 'Back to Mood Boards'
-    : 'Back to Decision Boards'
+    : 'Back to Finish Selections'
 
   // Loading states
   if (projectsLoading || !isLoaded) {
@@ -565,7 +565,7 @@ export function SaveFromWebContent() {
                     onClick={() => router.push('/app/tools/finish-decisions')}
                     className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
                   >
-                    Go to Decision Boards
+                    Go to Finish Selections
                   </button>
                 )}
               </div>
@@ -624,7 +624,7 @@ export function SaveFromWebContent() {
         {!capturedContent && (
           <>
             <p className="text-cream/60 text-sm mb-6">
-              Save inspiration from any website — to your Mood Boards or Decision Boards.
+              Save inspiration from any website — to your Mood Boards or Finish Selections.
             </p>
 
             <div data-testid="empty-state-savefromweb" className="bg-basalt-50 rounded-xl p-5 border border-cream/10">
@@ -647,7 +647,7 @@ export function SaveFromWebContent() {
                   <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">3</span>
                   <div>
                     <p className="text-sm text-cream/80">Click &quot;Save to HHC&quot; in your bookmarks bar</p>
-                    <p className="text-xs text-cream/40 mt-0.5">Choose Mood Boards (inspiration) or Decision Boards.</p>
+                    <p className="text-xs text-cream/40 mt-0.5">Choose Mood Boards (inspiration) or Finish Selections.</p>
                   </div>
                 </div>
               </div>
@@ -867,7 +867,7 @@ export function SaveFromWebContent() {
                   }`}
                 >
                   <p className={`text-sm font-medium ${destination === 'finish_decisions' ? 'text-sandstone' : 'text-cream'}`}>
-                    Decision Boards
+                    Finish Selections
                   </p>
                   <p className="text-[11px] text-cream/40 mt-0.5">
                     Compare options per room
