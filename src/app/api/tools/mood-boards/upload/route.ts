@@ -46,6 +46,14 @@ function resolveContentType(file: File): string {
   return 'application/octet-stream'
 }
 
+// TODO [backlog]: Orphan image cleanup
+// When an idea or board is deleted, the Vercel Blob images (full + thumbnail)
+// remain in storage. Implement a periodic cleanup job or on-delete hook that:
+//   1. Collects all image URLs referenced across every project's mood board payload
+//   2. Lists blobs under the mood-boards/ prefix via @vercel/blob list()
+//   3. Deletes blobs not referenced by any idea
+// Consider a grace period (e.g., 7 days) to avoid racing with in-flight uploads.
+
 export async function POST(request: Request) {
   const session = await auth()
   if (!session?.user?.id) {

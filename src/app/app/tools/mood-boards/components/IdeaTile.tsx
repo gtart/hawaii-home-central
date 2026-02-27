@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import type { Idea, IdeaReaction, ReactionType } from '@/data/mood-boards'
 import { REACTION_CONFIG } from '@/data/mood-boards'
@@ -56,6 +56,16 @@ export function IdeaTile({
   const [showMenu, setShowMenu] = useState(false)
   const [renaming, setRenaming] = useState(false)
   const [renameValue, setRenameValue] = useState(idea.name)
+
+  // ESC to close kebab menu
+  useEffect(() => {
+    if (!showMenu) return
+    const h = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowMenu(false)
+    }
+    document.addEventListener('keydown', h)
+    return () => document.removeEventListener('keydown', h)
+  }, [showMenu])
 
   const heroId = idea.heroImageId
   const heroImage = heroId
@@ -171,7 +181,7 @@ export function IdeaTile({
             <div className="flex items-center gap-1.5 mt-1.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={faviconUrl(idea.sourceUrl)}
+                src={faviconUrl(idea.sourceUrl!)}
                 alt=""
                 width={12}
                 height={12}

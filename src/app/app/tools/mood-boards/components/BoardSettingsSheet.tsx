@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Board, BoardAccess, BoardAccessLevel } from '@/data/mood-boards'
 import { BoardShareLinks } from './BoardShareLinks'
 
@@ -34,6 +34,19 @@ export function BoardSettingsSheet({
 
   const isCreator = board.createdBy === currentUserEmail
 
+  // Lock body scroll + ESC to close
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = ''
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onClose])
+
   // Filter tool members to those not already in the access list and not the creator
   const availableMembers = toolMembers.filter(
     (email) =>
@@ -66,7 +79,7 @@ export function BoardSettingsSheet({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} />
+      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Sheet — right panel on desktop, bottom sheet on mobile */}
       <div className="fixed z-50 inset-x-0 bottom-0 sm:inset-y-0 sm:inset-x-auto sm:right-0 sm:w-96 bg-basalt-50 border-t sm:border-t-0 sm:border-l border-cream/10 flex flex-col max-h-[80vh] sm:max-h-none">

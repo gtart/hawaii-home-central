@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { ensureCurrentProject } from '@/lib/project'
 import { resolveToolAccess } from '@/lib/project-access'
 import { validateAndCoerceToolPayload } from '@/lib/tools/validateToolPayload'
+import { resolveBoardAccess } from '@/data/mood-boards'
+import type { Board, MoodBoardPayload } from '@/data/mood-boards'
 
 const VALID_TOOL_KEYS = [
   'hold_points',
@@ -136,6 +138,55 @@ export async function PUT(
       { error: 'View-only access', code: 'VIEW_ONLY' },
       { status: 403 }
     )
+  }
+
+  // ---- Board-level ACL enforcement for mood_boards ----
+  if (toolKey === 'mood_boards') {
+    const userEmail = session.user.email?.toLowerCase() || ''
+    const incoming = coercedPayload as unknown as MoodBoardPayload
+
+    // Load existing payload to compare
+    const existing = await prisma.toolInstance.findUnique({
+      where: { projectId_toolKey: { projectId, toolKey } },
+      select: { payload: true },
+    })
+
+    if (existing?.payload && typeof existing.payload === 'object') {
+      const stored = existing.payload as unknown as MoodBoardPayload
+      const storedMap = new Map<string, Board>()
+      for (const b of (stored.boards || [])) storedMap.set(b.id, b)
+
+      for (const incomingBoard of (incoming.boards || [])) {
+        const storedBoard = storedMap.get(incomingBoard.id)
+        if (!storedBoard) continue // new board — tool-level EDIT is sufficient
+
+        // Quick check: has this board changed?
+        if (JSON.stringify(storedBoard) === JSON.stringify(incomingBoard)) continue
+
+        // Board was modified — check board-level access
+        const boardAccess = resolveBoardAccess(storedBoard, userEmail, access)
+        if (boardAccess !== 'edit') {
+          return NextResponse.json(
+            { error: 'No edit access to board', code: 'BOARD_VIEW_ONLY', boardId: incomingBoard.id },
+            { status: 403 }
+          )
+        }
+      }
+
+      // Check for deleted boards — deletion is also a write
+      const incomingIds = new Set((incoming.boards || []).map((b) => b.id))
+      for (const storedBoard of (stored.boards || [])) {
+        if (!incomingIds.has(storedBoard.id)) {
+          const boardAccess = resolveBoardAccess(storedBoard, userEmail, access)
+          if (boardAccess !== 'edit') {
+            return NextResponse.json(
+              { error: 'No edit access to board', code: 'BOARD_VIEW_ONLY', boardId: storedBoard.id },
+              { status: 403 }
+            )
+          }
+        }
+      }
+    }
   }
 
   // Optimistic concurrency: reject stale writes when client sends revision

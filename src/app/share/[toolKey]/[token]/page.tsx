@@ -1,17 +1,41 @@
 import type { Metadata } from 'next'
+import { validateShareToken } from '@/lib/share-tokens'
 import { PublicPunchlistView } from './PublicPunchlistView'
 import { PublicMoodBoardView } from './PublicMoodBoardView'
 import { InvalidTokenPage } from './InvalidTokenPage'
 
-const TITLE_MAP: Record<string, string> = {
-  punchlist: 'Shared Fix List — Hawaii Home Central',
-  mood_boards: 'Shared Mood Board — Hawaii Home Central',
+const TOOL_LABELS: Record<string, string> = {
+  punchlist: 'Fix List',
+  mood_boards: 'Mood Board',
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { toolKey } = await params
+  const { toolKey, token } = await params
+  const toolLabel = TOOL_LABELS[toolKey] || 'Shared'
+
+  // Look up token to get board name for descriptive metadata
+  const record = await validateShareToken(token)
+  const settings = record?.settings as Record<string, unknown> | undefined
+  const boardName = typeof settings?.boardName === 'string' ? settings.boardName : null
+  const projectName = record?.project?.name || null
+
+  const title = boardName
+    ? `${boardName} — ${toolLabel} (Read-only) — Hawaii Home Central`
+    : `Shared ${toolLabel} — Hawaii Home Central`
+
+  const description = boardName
+    ? `Read-only ${toolLabel}: "${boardName}"${projectName ? ` from ${projectName}` : ''} on Hawaii Home Central.`
+    : `A shared ${toolLabel} on Hawaii Home Central.`
+
   return {
-    title: TITLE_MAP[toolKey] || 'Shared — Hawaii Home Central',
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      siteName: 'Hawaii Home Central',
+    },
     robots: 'noindex, nofollow',
   }
 }

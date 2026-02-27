@@ -170,6 +170,16 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
     }
   }, [])
 
+  // ESC to close + Add dropdown
+  useEffect(() => {
+    if (!showAddMenu) return
+    const h = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowAddMenu(false)
+    }
+    document.addEventListener('keydown', h)
+    return () => document.removeEventListener('keydown', h)
+  }, [showAddMenu])
+
   // Board collaborators for membership display
   const boardCollaborators = useMemo(() => {
     if (board.visibility === 'invite-only') {
@@ -252,8 +262,8 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
             notes: '',
             images: [{ id, url, thumbnailUrl }],
             heroImageId: null,
-            sourceUrl: '',
-            sourceTitle: '',
+            sourceUrl: null,
+            sourceTitle: null,
             tags: [],
           })
           successCount++
@@ -407,17 +417,23 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
             <p className="text-xs text-cream/40">
               {board.ideas.length} idea{board.ideas.length !== 1 ? 's' : ''}
             </p>
-            {/* Share status chip (owners only, non-default boards) */}
-            {isOwner && !isDefaultBoard(board) && (
-              <button
-                type="button"
-                onClick={() => setShowSettings(true)}
-                className="text-[11px] px-2 py-0.5 rounded-full bg-cream/5 text-cream/35 hover:text-cream/50 hover:bg-cream/8 transition-colors"
-              >
-                {shareLinkCount > 0
-                  ? `${shareLinkCount} public link${shareLinkCount !== 1 ? 's' : ''}`
-                  : 'Not shared'}
-              </button>
+            {/* Share status chip — actionable for owners, informational for others */}
+            {!isDefaultBoard(board) && (
+              isOwner ? (
+                <button
+                  type="button"
+                  onClick={() => setShowSettings(true)}
+                  className="text-[11px] px-2 py-0.5 rounded-full bg-cream/5 text-cream/35 hover:text-cream/50 hover:bg-cream/8 transition-colors"
+                >
+                  {shareLinkCount > 0
+                    ? `${shareLinkCount} public link${shareLinkCount !== 1 ? 's' : ''}`
+                    : 'Not shared'}
+                </button>
+              ) : board.visibility === 'invite-only' ? (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-cream/5 text-cream/25">
+                  Invite-only
+                </span>
+              ) : null
             )}
           </div>
           {isDefaultBoard(board) && (
@@ -482,44 +498,52 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
 
         {/* Settings button — visible to board creator on non-default boards */}
         {canManageBoard && (
-          <button
-            type="button"
-            onClick={() => setShowSettings(true)}
-            className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-cream/40 hover:text-cream/60 hover:bg-cream/5 transition-colors"
-            title="Board Settings"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+          <span className="relative group/tip shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowSettings(true)}
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-cream/40 hover:text-cream/60 hover:bg-cream/5 transition-colors"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <span className="hidden sm:block absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 rounded bg-basalt border border-cream/15 text-[10px] text-cream/60 whitespace-nowrap opacity-0 pointer-events-none group-hover/tip:opacity-100 transition-opacity z-20 shadow-lg">
+              Settings
+            </span>
+          </span>
         )}
 
         {/* Export button */}
         {board.ideas.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowExport(true)}
-            className="shrink-0 h-9 rounded-lg flex items-center gap-1.5 px-2 text-cream/40 hover:text-cream/60 hover:bg-cream/5 transition-colors"
-            title="Export PDF"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
-              <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
-              <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="hidden sm:inline text-xs">Export</span>
-          </button>
+          <span className="relative group/tip shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowExport(true)}
+              className="h-9 rounded-lg flex items-center gap-1.5 px-2 text-cream/40 hover:text-cream/60 hover:bg-cream/5 transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+                <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
+                <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="hidden sm:inline text-xs">Export</span>
+            </button>
+            <span className="sm:hidden absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 rounded bg-basalt border border-cream/15 text-[10px] text-cream/60 whitespace-nowrap opacity-0 pointer-events-none group-hover/tip:opacity-100 transition-opacity z-20 shadow-lg">
+              Export PDF
+            </span>
+          </span>
         )}
 
         {/* Comments button */}
-        <button
-          type="button"
-          data-testid="comments-btn"
-          onClick={() => setCommentsOpen(!commentsOpen)}
-          className="relative shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-cream/40 hover:text-cream/60 hover:bg-cream/5 transition-colors"
-          title="Board Chat"
-        >
+        <span className="relative group/tip shrink-0">
+          <button
+            type="button"
+            data-testid="comments-btn"
+            onClick={() => setCommentsOpen(!commentsOpen)}
+            className="relative w-9 h-9 rounded-lg flex items-center justify-center text-cream/40 hover:text-cream/60 hover:bg-cream/5 transition-colors"
+          >
           <svg
             width="18"
             height="18"
@@ -541,7 +565,11 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
               {commentCount}
             </span>
           ) : null}
-        </button>
+          </button>
+          <span className="hidden sm:block absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 rounded bg-basalt border border-cream/15 text-[10px] text-cream/60 whitespace-nowrap opacity-0 pointer-events-none group-hover/tip:opacity-100 transition-opacity z-20 shadow-lg">
+            Board Chat
+          </span>
+        </span>
 
         {/* Unified "+ Add" dropdown — same on desktop and mobile */}
         {!readOnly && (

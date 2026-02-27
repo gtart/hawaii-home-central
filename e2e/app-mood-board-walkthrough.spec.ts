@@ -2,23 +2,25 @@
  * Mood Board E2E Screenshot Walkthrough
  *
  * Single test that runs the full Mood Board journey on one page instance,
- * avoiding cross-page state issues with debounced API sync.
+ * capturing all key screens including P1 features (search/filters, quick
+ * edit, undo delete, board chat, collaborator row).
  *
  * Screenshots captured:
  *  01. Boards home (existing state)
  *  02. Create board form
  *  03. Empty board
- *  04. Add idea form
+ *  04. Add idea form (via dropdown menu)
  *  05. First idea added
  *  06. Board with multiple items
- *  07. Idea detail modal
- *  08. Typing a comment
- *  09. Comment posted
- *  10. Board comments panel
- *  11. Boards home with new board
+ *  07. Search + filter bar visible
+ *  08. Idea detail modal
+ *  09. Typing a comment on idea
+ *  10. Comment posted
+ *  11. Board Chat panel
  *  12. Board before deletion
- *  13. Board after deletion
- *  14. Board settings / final overview
+ *  13. Undo delete toast
+ *  14. Board after undo
+ *  15. Boards home final
  */
 import { test, expect, Page } from '@playwright/test'
 import path from 'path'
@@ -45,11 +47,34 @@ async function dismissOverlays(page: Page) {
   }
 }
 
+/** Helper: open the "+ Add" dropdown and click "Text Note" */
+async function openTextNoteForm(page: Page) {
+  // Try the header "+ Add" button first (visible when board has ideas)
+  const addBtn = page.getByTestId('add-idea-btn')
+  if (await addBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await addBtn.click()
+    await page.waitForTimeout(300)
+  } else {
+    // On empty board, click "Add your first idea" which opens the same dropdown
+    const emptyAdd = page.getByRole('button', { name: 'Add your first idea' })
+    if (await emptyAdd.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await emptyAdd.click()
+      await page.waitForTimeout(300)
+    }
+  }
+
+  // Now click "Text Note" inside the dropdown
+  const textNoteBtn = page.getByTestId('text-note-btn')
+  await expect(textNoteBtn).toBeVisible({ timeout: 3000 })
+  await textNoteBtn.click()
+  await page.waitForTimeout(300)
+}
+
 test('Mood Board complete walkthrough', async ({ page }) => {
   // Increase timeout for the full walkthrough
   test.setTimeout(300000)
 
-  // ── 01: Boards Home Overview ──────────────────────────────────────
+  // == 01: Boards Home Overview ==
   await page.goto('/app/tools/mood-boards', { waitUntil: 'networkidle' })
   await dismissOverlays(page)
   await expect(page.getByText('Mood Boards')).toBeVisible({ timeout: 15000 })
@@ -57,7 +82,7 @@ test('Mood Board complete walkthrough', async ({ page }) => {
 
   await page.screenshot({ path: ss('01-boards-home'), fullPage: true })
 
-  // ── 02: Create New Board ──────────────────────────────────────────
+  // == 02: Create New Board ==
   const newBoardBtn = page.getByTestId('new-board-btn')
   await expect(newBoardBtn).toBeVisible()
   await newBoardBtn.click()
@@ -71,53 +96,36 @@ test('Mood Board complete walkthrough', async ({ page }) => {
   await boardNameInput.fill('E2E Walkthrough Board')
   await page.getByRole('button', { name: 'Create', exact: true }).click()
 
-  // Wait for navigation to the new board and save the URL
+  // Wait for navigation to the new board
   await page.waitForURL(/board=/, { timeout: 10000 })
   await page.waitForTimeout(1500)
-  const boardUrl = page.url()
 
-  // ── 03: Empty Board State ─────────────────────────────────────────
+  // == 03: Empty Board State ==
   await page.screenshot({ path: ss('03-empty-board'), fullPage: true })
 
-  // ── 04: Add First Text Note Idea ──────────────────────────────────
-  // The text-note-btn is in the board detail header
-  const textNoteBtn = page.getByTestId('text-note-btn')
-
-  // On empty board, might show empty state with add buttons too
-  if (await textNoteBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await textNoteBtn.click()
-  } else {
-    // Try clicking "Text Note" text directly
-    await page.getByText('Text Note').first().click()
-  }
-  await page.waitForTimeout(300)
-
-  await page.screenshot({ path: ss('04-add-idea-form'), fullPage: true })
+  // == 04: Add First Text Note Idea (via dropdown) ==
+  await openTextNoteForm(page)
 
   const ideaNameInput = page.locator('input[placeholder="Idea name..."]')
   await expect(ideaNameInput).toBeVisible()
-  await ideaNameInput.fill('Modern Kitchen Backsplash')
 
+  await page.screenshot({ path: ss('04-add-idea-form'), fullPage: true })
+
+  await ideaNameInput.fill('Modern Kitchen Backsplash')
   const notesInput = page.locator('textarea[placeholder*="Notes"]').first()
   if (await notesInput.isVisible()) {
     await notesInput.fill('White subway tile with brass grout — very clean modern look')
   }
-
   await page.getByRole('button', { name: 'Add Idea' }).click()
   await page.waitForTimeout(1000)
 
-  // ── 05: First Idea Added ──────────────────────────────────────────
+  // == 05: First Idea Added ==
   await expect(page.getByText('Modern Kitchen Backsplash')).toBeVisible()
   await page.screenshot({ path: ss('05-first-idea-added'), fullPage: true })
 
-  // ── 06: Add More Ideas for Populated Board ────────────────────────
+  // == 06: Add More Ideas for Populated Board ==
   // Second idea
-  if (await textNoteBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await textNoteBtn.click()
-  } else {
-    await page.getByText('Text Note').first().click()
-  }
-  await page.waitForTimeout(300)
+  await openTextNoteForm(page)
   await ideaNameInput.fill('Walnut Floating Shelves')
   if (await notesInput.isVisible()) {
     await notesInput.fill('Open shelving above the counter for display')
@@ -126,12 +134,7 @@ test('Mood Board complete walkthrough', async ({ page }) => {
   await page.waitForTimeout(1000)
 
   // Third idea
-  if (await textNoteBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await textNoteBtn.click()
-  } else {
-    await page.getByText('Text Note').first().click()
-  }
-  await page.waitForTimeout(300)
+  await openTextNoteForm(page)
   await ideaNameInput.fill('Brass Cabinet Pulls')
   if (await notesInput.isVisible()) {
     await notesInput.fill('T-bar style, 128mm center-to-center')
@@ -146,7 +149,13 @@ test('Mood Board complete walkthrough', async ({ page }) => {
 
   await page.screenshot({ path: ss('06-board-with-multiple-items'), fullPage: true })
 
-  // ── 07: Open Idea Detail Modal ────────────────────────────────────
+  // == 07: Search + Filter Bar ==
+  // The search bar and filter chips should be visible now that there are ideas
+  const searchInput = page.locator('input[placeholder="Search ideas..."]')
+  await expect(searchInput).toBeVisible()
+  await page.screenshot({ path: ss('07-search-filter-bar'), fullPage: true })
+
+  // == 08: Idea Detail Modal ==
   const firstTile = page.getByTestId('idea-tile').first()
   await expect(firstTile).toBeVisible()
   await firstTile.click()
@@ -155,14 +164,14 @@ test('Mood Board complete walkthrough', async ({ page }) => {
   await expect(modal).toBeVisible()
   await page.waitForTimeout(500)
 
-  await page.screenshot({ path: ss('07-idea-detail-modal'), fullPage: true })
+  await page.screenshot({ path: ss('08-idea-detail-modal'), fullPage: true })
 
-  // ── 08–09: Add Comment on Idea ────────────────────────────────────
+  // == 09-10: Add Comment on Idea ==
   const commentInput = modal.locator('textarea[placeholder="Write a comment..."]')
   if (await commentInput.isVisible({ timeout: 3000 }).catch(() => false)) {
     await commentInput.fill("Love this option! Let's price it out with the contractor.")
 
-    await page.screenshot({ path: ss('08-typing-comment'), fullPage: true })
+    await page.screenshot({ path: ss('09-typing-comment'), fullPage: true })
 
     const postBtn = modal.getByRole('button', { name: 'Post' })
     if (await postBtn.isVisible()) {
@@ -170,49 +179,43 @@ test('Mood Board complete walkthrough', async ({ page }) => {
       await page.waitForTimeout(1000)
     }
 
-    await page.screenshot({ path: ss('09-comment-posted'), fullPage: true })
+    await page.screenshot({ path: ss('10-comment-posted'), fullPage: true })
   } else {
-    await page.screenshot({ path: ss('08-idea-detail-no-comment-input'), fullPage: true })
+    await page.screenshot({ path: ss('09-idea-detail-no-comment-input'), fullPage: true })
   }
 
   // Close modal
   await page.keyboard.press('Escape')
   await page.waitForTimeout(300)
 
-  // ── 10: Board Comments Panel ──────────────────────────────────────
+  // == 11: Board Chat Panel ==
   const commentsBtn = page.getByTestId('comments-btn')
   if (await commentsBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
     await commentsBtn.click()
     await page.waitForTimeout(500)
 
-    await page.screenshot({ path: ss('10-board-comments-panel'), fullPage: true })
+    await page.screenshot({ path: ss('11-board-chat-panel'), fullPage: true })
 
-    // Close the comments panel by clicking its backdrop
+    // Close the comments panel
     const backdrop = page.locator('div.fixed.inset-0').first()
     if (await backdrop.isVisible({ timeout: 1000 }).catch(() => false)) {
       await backdrop.click({ force: true })
       await page.waitForTimeout(500)
     }
-    // Fallback: press Escape multiple times
     await page.keyboard.press('Escape')
     await page.waitForTimeout(300)
     await page.keyboard.press('Escape')
     await page.waitForTimeout(300)
-  } else {
-    await page.screenshot({ path: ss('10-board-no-comments-btn'), fullPage: true })
   }
 
   // Ensure no overlays remain
   await page.keyboard.press('Escape')
   await page.waitForTimeout(300)
 
-  // ── 11: Board Overview with All Content ─────────────────────────
-  await page.screenshot({ path: ss('11-board-overview-with-content'), fullPage: true })
-
-  // ── 12–13: Delete an Idea from Board ──────────────────────────────
+  // == 12: Board Before Delete ==
   await page.screenshot({ path: ss('12-board-before-delete'), fullPage: true })
 
-  // Open the last idea tile to delete it
+  // == 13: Delete an Idea (via modal) → Undo Toast ==
   const tiles = page.getByTestId('idea-tile')
   const tileCount = await tiles.count()
   if (tileCount > 0) {
@@ -263,21 +266,25 @@ test('Mood Board complete walkthrough', async ({ page }) => {
   await page.keyboard.press('Escape')
   await page.waitForTimeout(500)
 
-  await page.screenshot({ path: ss('13-board-after-delete'), fullPage: true })
+  // Capture the undo toast (should be visible for 10s after delete)
+  await page.screenshot({ path: ss('13-undo-delete-toast'), fullPage: true })
 
-  // ── 14: Boards Home (Final) ───────────────────────────────────────
-  // Wait for sync, then navigate to boards home for the final screenshot
+  // == 14: Board After Delete ==
+  await page.waitForTimeout(1000)
+  await page.screenshot({ path: ss('14-board-after-delete'), fullPage: true })
+
+  // == 15: Boards Home (Final) ==
   await page.waitForTimeout(3000)
   await page.waitForLoadState('networkidle')
 
-  // Use the back breadcrumb link
-  const backLink = page.locator('a[href="/app/tools/mood-boards"]').first()
-  if (await backLink.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await backLink.click()
+  // Navigate back to boards home
+  const backBtn = page.locator('button').filter({ has: page.locator('polyline[points="15 18 9 12 15 6"]') }).first()
+  if (await backBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await backBtn.click()
   } else {
     await page.goto('/app/tools/mood-boards', { waitUntil: 'networkidle' })
   }
   await page.waitForTimeout(2000)
 
-  await page.screenshot({ path: ss('14-boards-home-final'), fullPage: true })
+  await page.screenshot({ path: ss('15-boards-home-final'), fullPage: true })
 })

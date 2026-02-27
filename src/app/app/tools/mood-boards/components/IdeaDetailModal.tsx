@@ -81,6 +81,7 @@ export function IdeaDetailModal({
   const [showConvertSheet, setShowConvertSheet] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [showMoveMenu, setShowMoveMenu] = useState(false)
   const [commentText, setCommentText] = useState('')
 
   // Filter comments for this idea
@@ -105,6 +106,9 @@ export function IdeaDetailModal({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // Close sub-menus first before closing the modal
+        if (showMoveMenu) { setShowMoveMenu(false); return }
+        if (showMenu) { setShowMenu(false); return }
         onClose()
         return
       }
@@ -126,7 +130,7 @@ export function IdeaDetailModal({
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
+  }, [onClose, showMoveMenu, showMenu])
 
   // Lock body scroll
   useEffect(() => {
@@ -167,7 +171,7 @@ export function IdeaDetailModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div
         ref={dialogRef}
         data-testid="idea-detail-modal"
@@ -473,21 +477,50 @@ export function IdeaDetailModal({
           {/* Actions */}
           {!readOnly && (
             <div className="flex items-center gap-3 pt-2 border-t border-cream/10 flex-wrap">
-              <button
-                type="button"
-                onClick={() => setShowMoveSheet(true)}
-                className="px-3 py-1.5 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors"
-              >
-                Move to Board...
-              </button>
-              <button
-                type="button"
-                data-testid="convert-to-selection-btn"
-                onClick={() => setShowConvertSheet(true)}
-                className="px-3 py-1.5 text-sm text-sandstone hover:text-sandstone-light border border-sandstone/30 rounded-lg transition-colors"
-              >
-                Move to Decision Boards
-              </button>
+              {/* Unified Move... dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowMoveMenu(!showMoveMenu)}
+                  className="px-3 py-1.5 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors inline-flex items-center gap-1.5"
+                >
+                  Move&hellip;
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="opacity-40">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                {showMoveMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowMoveMenu(false)}
+                    />
+                    <div className="absolute left-0 top-full mt-1 z-20 w-56 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl py-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowMoveMenu(false)
+                          setShowMoveSheet(true)
+                        }}
+                        className="w-full text-left px-3 py-2.5 text-sm text-cream/70 hover:bg-cream/5 transition-colors"
+                      >
+                        Move to another Mood Board&hellip;
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="convert-to-selection-btn"
+                        onClick={() => {
+                          setShowMoveMenu(false)
+                          setShowConvertSheet(true)
+                        }}
+                        className="w-full text-left px-3 py-2.5 text-sm text-cream/70 hover:bg-cream/5 transition-colors"
+                      >
+                        Convert to Finish Selection&hellip;
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
 
               {/* More menu */}
               <div className="relative ml-auto">

@@ -41,6 +41,7 @@ export async function GET(
         includeNotes: s?.includeNotes ?? false,
         includeComments: s?.includeComments ?? false,
         includePhotos: s?.includePhotos ?? false,
+        includeSourceUrl: s?.includeSourceUrl ?? false,
         locations: s?.locations ?? [],
         assignees: s?.assignees ?? [],
         statuses: s?.statuses ?? [],
@@ -78,6 +79,7 @@ export async function POST(
   let includeNotes = body.includeNotes === true
   const includeComments = body.includeComments === true
   const includePhotos = body.includePhotos === true
+  const includeSourceUrl = body.includeSourceUrl === true
   const locations: string[] = Array.isArray(body.locations) ? body.locations : []
   const assignees: string[] = Array.isArray(body.assignees) ? body.assignees : []
   const statuses: string[] = Array.isArray(body.statuses) ? body.statuses : []
@@ -99,6 +101,7 @@ export async function POST(
     includeNotes,
     includeComments,
     includePhotos,
+    includeSourceUrl,
     locations,
     assignees,
     statuses,
@@ -123,6 +126,7 @@ export async function POST(
     includeNotes,
     includeComments,
     includePhotos,
+    includeSourceUrl,
     statuses,
     boardId,
     boardName,

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import type { PublicBoard, PublicIdea, PublicIdeaReaction, PublicMoodBoardComment, ReactionType } from '@/data/mood-boards'
+import type { PublicBoard, PublicIdea, PublicMoodBoardComment } from '@/data/mood-boards'
 import { REACTION_CONFIG } from '@/data/mood-boards'
 
 interface Props {
@@ -117,15 +117,15 @@ function PublicIdeaCard({
         <div className="p-3">
           <h3 className="text-sm font-medium text-cream">{idea.name}</h3>
 
-          {/* Reaction badges */}
+          {/* Reaction badges (aggregate counts only, no PII) */}
           {idea.reactions && idea.reactions.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {reactionSummary(idea.reactions).map(({ type, count }) => (
+              {idea.reactions.map((r) => (
                 <span
-                  key={type}
+                  key={r.reaction}
                   className="text-[11px] px-1.5 py-0.5 rounded-full bg-cream/5 text-cream/50"
                 >
-                  {REACTION_CONFIG[type]?.emoji} {count}
+                  {REACTION_CONFIG[r.reaction]?.emoji} {r.count}
                 </span>
               ))}
             </div>
@@ -163,8 +163,8 @@ function PublicIdeaCard({
                     {comments.length} comment{comments.length !== 1 ? 's' : ''}
                   </p>
                   {comments.slice(0, 3).map((c, i) => (
-                    <p key={i} className="text-[11px] text-cream/40">
-                      <span className="text-cream/60">{c.authorName}:</span> {c.text}
+                    <p key={i} className="text-[11px] text-cream/50">
+                      {c.text}
                     </p>
                   ))}
                   {comments.length > 3 && (
@@ -198,13 +198,3 @@ function getHeroUrl(idea: PublicIdea): string | null {
   return hero?.url ?? idea.images[0].url
 }
 
-function reactionSummary(reactions: PublicIdeaReaction[]): { type: ReactionType; count: number }[] {
-  const counts: Partial<Record<ReactionType, number>> = {}
-  for (const r of reactions) {
-    counts[r.reaction] = (counts[r.reaction] || 0) + 1
-  }
-  return (Object.entries(counts) as [ReactionType, number][]).map(([type, count]) => ({
-    type,
-    count,
-  }))
-}

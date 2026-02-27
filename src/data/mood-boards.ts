@@ -43,8 +43,8 @@ export interface Idea {
   notes: string
   images: IdeaImage[]
   heroImageId: string | null
-  sourceUrl: string
-  sourceTitle: string
+  sourceUrl: string | null
+  sourceTitle: string | null
   tags: string[]
   reactions?: IdeaReaction[]
   createdAt: string
@@ -156,13 +156,14 @@ export interface PublicIdeaImage {
   thumbnailUrl?: string
 }
 
+/** Aggregate counts only — no per-user PII. */
 export interface PublicIdeaReaction {
-  userName: string
   reaction: ReactionType
+  count: number
 }
 
+/** Anonymized — no authorName/email. */
 export interface PublicMoodBoardComment {
-  authorName: string
   text: string
   createdAt: string
   refIdeaId?: string
@@ -216,7 +217,6 @@ export function toPublicBoard(
 
   if (opts.includeComments && board.comments && board.comments.length > 0) {
     pub.comments = board.comments.map((c) => ({
-      authorName: c.authorName,
       text: c.text,
       createdAt: c.createdAt,
       refIdeaId: c.refIdeaId,
@@ -250,10 +250,13 @@ function toPublicIdea(idea: Idea, opts: MoodBoardSanitizeOpts): PublicIdea {
   }
 
   if (idea.reactions && idea.reactions.length > 0) {
-    pub.reactions = idea.reactions.map((r) => ({
-      userName: r.userName,
-      reaction: r.reaction,
-    }))
+    const counts: Partial<Record<ReactionType, number>> = {}
+    for (const r of idea.reactions) {
+      counts[r.reaction] = (counts[r.reaction] || 0) + 1
+    }
+    pub.reactions = (Object.entries(counts) as [ReactionType, number][]).map(
+      ([reaction, count]) => ({ reaction, count })
+    )
   }
 
   return pub
