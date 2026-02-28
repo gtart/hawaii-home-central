@@ -39,7 +39,6 @@ export function PunchlistPage({ api, onShareExport }: Props) {
   const [showBulkText, setShowBulkText] = useState(false)
   const [showFab, setShowFab] = useState(false)
   const [showQuickAdd, setShowQuickAdd] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
   const [viewingId, setViewingId] = useState<string | null>(null)
   const [expandedLocations, setExpandedLocations] = useState(false)
   const [expandedAssignees, setExpandedAssignees] = useState(false)
@@ -102,7 +101,6 @@ export function PunchlistPage({ api, onShareExport }: Props) {
     return c
   }, [payload.items])
 
-  const editingItem = editingId ? payload.items.find((i) => i.id === editingId) : undefined
   const viewingItem = viewingId ? payload.items.find((i) => i.id === viewingId) : undefined
 
   return (
@@ -452,25 +450,12 @@ export function PunchlistPage({ api, onShareExport }: Props) {
           onClose={() => setShowForm(false)}
         />
       )}
-      {editingItem && (
-        <PunchlistItemForm
-          api={api}
-          editItem={editingItem}
-          onClose={() => setEditingId(null)}
-        />
-      )}
-
-      {/* Detail view modal */}
+      {/* Detail view modal (inline editing built in) */}
       {viewingItem && (
         <PunchlistItemDetail
           item={viewingItem}
           api={api}
           onClose={() => setViewingId(null)}
-          onEdit={() => {
-            const id = viewingId
-            setViewingId(null)
-            setEditingId(id)
-          }}
         />
       )}
 

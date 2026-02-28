@@ -1,22 +1,41 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
-import type { PunchlistItem, PunchlistPhoto } from '../types'
+import type { PunchlistItem, PunchlistPhoto, PunchlistPriority } from '../types'
 import type { PunchlistStateAPI } from '../usePunchlistState'
 import { STATUS_CONFIG, STATUS_CYCLE, PRIORITY_CONFIG } from '../constants'
+import { LOCATION_SEEDS, ASSIGNEE_SEEDS } from '../utils'
 import { PhotoLightbox } from './PhotoLightbox'
 import { uploadFile } from '../utils'
+
+type EditingField = 'title' | 'location' | 'assignee' | 'priority' | 'notes' | null
 
 interface Props {
   item: PunchlistItem
   api: PunchlistStateAPI
   onClose: () => void
-  onEdit: () => void
 }
 
-export function PunchlistItemDetail({ item, api, onClose, onEdit }: Props) {
-  const { readOnly, setStatus, deleteItem, addPhoto } = api
+/** Small pencil icon button shown next to editable fields */
+function PencilButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="p-1 text-cream/20 hover:text-sandstone transition-colors shrink-0"
+      aria-label="Edit"
+    >
+      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  )
+}
+
+export function PunchlistItemDetail({ item, api, onClose }: Props) {
+  const { readOnly, updateItem, setStatus, deleteItem, addPhoto, payload } = api
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [photoUploading, setPhotoUploading] = useState(false)
@@ -25,6 +44,72 @@ export function PunchlistItemDetail({ item, api, onClose, onEdit }: Props) {
   const detailCameraRef = useRef<HTMLInputElement>(null)
   const detailGalleryRef = useRef<HTMLInputElement>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Inline editing state
+  const [editingField, setEditingField] = useState<EditingField>(null)
+  const [editValue, setEditValue] = useState('')
+
+  // Datalist options for location/assignee
+  const locationOptions = useMemo(() => {
+    const existing = new Set(payload.items.map((i) => i.location).filter(Boolean))
+    const all = new Set([...LOCATION_SEEDS, ...existing])
+    return Array.from(all).sort()
+  }, [payload.items])
+
+  const assigneeOptions = useMemo(() => {
+    const existing = new Set(payload.items.map((i) => i.assigneeLabel).filter(Boolean))
+    const all = new Set([...ASSIGNEE_SEEDS, ...existing])
+    return Array.from(all).sort()
+  }, [payload.items])
+
+  function startEditing(field: Exclude<EditingField, null | 'priority'>) {
+    const current =
+      field === 'title' ? item.title
+        : field === 'location' ? item.location
+          : field === 'assignee' ? item.assigneeLabel
+            : item.notes ?? ''
+    setEditValue(current)
+    setEditingField(field)
+  }
+
+  function saveField() {
+    if (!editingField || editingField === 'priority') return
+    const trimmed = editValue.trim()
+    const updates: Record<string, string | undefined> = {}
+    if (editingField === 'title') updates.title = trimmed
+    else if (editingField === 'location') updates.location = trimmed
+    else if (editingField === 'assignee') updates.assigneeLabel = trimmed
+    else if (editingField === 'notes') updates.notes = trimmed || undefined
+    updateItem(item.id, updates)
+    setEditingField(null)
+  }
+
+  function cancelEditing() {
+    setEditingField(null)
+  }
+
+  function handleFieldKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' && editingField !== 'notes') {
+      e.preventDefault()
+      saveField()
+    } else if (e.key === 'Escape') {
+      cancelEditing()
+    }
+  }
+
+  function handleNotesKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Escape') {
+      cancelEditing()
+    }
+  }
+
+  function cyclePriority() {
+    if (readOnly) return
+    const cycle: (PunchlistPriority | undefined)[] = [undefined, 'LOW', 'MED', 'HIGH']
+    const idx = cycle.indexOf(item.priority)
+    const next = cycle[(idx + 1) % cycle.length]
+    updateItem(item.id, { priority: next })
+  }
 
   async function handlePhotoFiles(files: FileList | null, ref: React.RefObject<HTMLInputElement | null>) {
     if (!files || files.length === 0) return
@@ -89,21 +174,40 @@ export function PunchlistItemDetail({ item, api, onClose, onEdit }: Props) {
             </svg>
           </button>
 
-          <h2 className="text-base font-medium text-cream truncate flex-1 mx-3 text-center">
-            <span className="text-cream/30">#{item.itemNumber}</span>{' '}
-            {item.title || <span className="text-cream/40 italic font-normal">Untitled</span>}
-          </h2>
-
-          {!readOnly && (
-            <button
-              type="button"
-              onClick={onEdit}
-              className="text-sandstone text-sm font-medium shrink-0"
-            >
-              Edit
-            </button>
+          {editingField === 'title' ? (
+            <div className="flex-1 mx-3">
+              <input
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onKeyDown={handleFieldKeyDown}
+                onBlur={saveField}
+                autoFocus
+                className="w-full bg-basalt border border-sandstone/40 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/60"
+                placeholder="Item title..."
+              />
+            </div>
+          ) : (
+            <h2 className="text-base font-medium text-cream truncate flex-1 mx-3 text-center group/title">
+              <span className="text-cream/30">#{item.itemNumber}</span>{' '}
+              {item.title || <span className="text-cream/40 italic font-normal">Untitled</span>}
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => startEditing('title')}
+                  className="inline-block ml-1.5 align-middle p-0.5 text-cream/15 hover:text-sandstone transition-colors"
+                  aria-label="Edit title"
+                >
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              )}
+            </h2>
           )}
-          {readOnly && <div className="w-8" />}
+
+          <div className="w-8 shrink-0" />
         </div>
 
         <div className="px-5 py-5 space-y-5">
@@ -201,17 +305,54 @@ export function PunchlistItemDetail({ item, api, onClose, onEdit }: Props) {
               {statusCfg.label}
             </button>
 
-            {priorityCfg && (
-              <span className={`text-[10px] font-medium uppercase tracking-wider px-2 py-1 rounded ${priorityCfg.className}`}>
-                {priorityCfg.label}
-              </span>
-            )}
+            <button
+              type="button"
+              onClick={cyclePriority}
+              disabled={readOnly}
+              className={`text-[10px] font-medium uppercase tracking-wider px-2 py-1 rounded transition-colors ${
+                readOnly ? 'cursor-default' : 'cursor-pointer hover:opacity-80'
+              } ${priorityCfg ? priorityCfg.className : 'bg-cream/5 text-cream/25'}`}
+            >
+              {priorityCfg ? priorityCfg.label : 'No priority'}
+            </button>
           </div>
 
           {/* Detail fields */}
           <div className="space-y-3">
-            <DetailRow label="Location" value={item.location || '—'} />
-            <DetailRow label="Assignee" value={item.assigneeLabel || '—'} />
+            {/* Location — inline editable */}
+            <EditableDetailRow
+              label="Location"
+              value={item.location || '—'}
+              isEditing={editingField === 'location'}
+              editValue={editValue}
+              onEditValueChange={setEditValue}
+              onStartEdit={() => startEditing('location')}
+              onSave={saveField}
+              onCancel={cancelEditing}
+              onKeyDown={handleFieldKeyDown}
+              canEdit={!readOnly}
+              placeholder="e.g. Master Bathroom"
+              datalistId="detail-locations"
+              datalistOptions={locationOptions}
+            />
+
+            {/* Assignee — inline editable */}
+            <EditableDetailRow
+              label="Assignee"
+              value={item.assigneeLabel || '—'}
+              isEditing={editingField === 'assignee'}
+              editValue={editValue}
+              onEditValueChange={setEditValue}
+              onStartEdit={() => startEditing('assignee')}
+              onSave={saveField}
+              onCancel={cancelEditing}
+              onKeyDown={handleFieldKeyDown}
+              canEdit={!readOnly}
+              placeholder="e.g. GC, Plumber"
+              datalistId="detail-assignees"
+              datalistOptions={assigneeOptions}
+            />
+
             <DetailRow
               label="Created"
               value={
@@ -226,13 +367,48 @@ export function PunchlistItemDetail({ item, api, onClose, onEdit }: Props) {
             )}
           </div>
 
-          {/* Additional Information section */}
-          {item.notes && (
-            <div>
-              <h3 className="text-xs uppercase tracking-wider text-cream/30 mb-2">Additional Information</h3>
-              <p className="text-sm text-cream/60 whitespace-pre-wrap leading-relaxed">{item.notes}</p>
+          {/* Additional Information section — inline editable */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs uppercase tracking-wider text-cream/30">Additional Information</h3>
+              {!readOnly && editingField !== 'notes' && (
+                <PencilButton onClick={() => startEditing('notes')} />
+              )}
             </div>
-          )}
+            {editingField === 'notes' ? (
+              <div>
+                <textarea
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onKeyDown={handleNotesKeyDown}
+                  rows={3}
+                  autoFocus
+                  placeholder="Optional additional details…"
+                  className="w-full bg-basalt border border-sandstone/40 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/60 resize-none"
+                />
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={saveField}
+                    className="text-xs px-3 py-1 bg-sandstone/20 text-sandstone rounded-lg hover:bg-sandstone/30 transition-colors"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelEditing}
+                    className="text-xs px-3 py-1 text-cream/40 hover:text-cream/60 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-cream/60 whitespace-pre-wrap leading-relaxed">
+                {item.notes || <span className="text-cream/20 italic">None</span>}
+              </p>
+            )}
+          </div>
 
           {/* Comments section */}
           <CommentsSection item={item} api={api} readOnly={readOnly} />
@@ -268,11 +444,81 @@ export function PunchlistItemDetail({ item, api, onClose, onEdit }: Props) {
   )
 }
 
+/** Read-only detail row (Created, Updated, Completed) */
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-xs text-cream/40">{label}</span>
       <span className="text-sm text-cream/70">{value}</span>
+    </div>
+  )
+}
+
+/** Detail row with inline edit support */
+function EditableDetailRow({
+  label,
+  value,
+  isEditing,
+  editValue,
+  onEditValueChange,
+  onStartEdit,
+  onSave,
+  onCancel,
+  onKeyDown,
+  canEdit,
+  placeholder,
+  datalistId,
+  datalistOptions,
+}: {
+  label: string
+  value: string
+  isEditing: boolean
+  editValue: string
+  onEditValueChange: (v: string) => void
+  onStartEdit: () => void
+  onSave: () => void
+  onCancel: () => void
+  onKeyDown: (e: React.KeyboardEvent) => void
+  canEdit: boolean
+  placeholder?: string
+  datalistId?: string
+  datalistOptions?: string[]
+}) {
+  if (isEditing) {
+    return (
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs text-cream/40 shrink-0">{label}</span>
+        <div className="flex items-center gap-1.5">
+          <input
+            type="text"
+            value={editValue}
+            onChange={(e) => onEditValueChange(e.target.value)}
+            onKeyDown={onKeyDown}
+            onBlur={onSave}
+            autoFocus
+            placeholder={placeholder}
+            list={datalistId}
+            className="w-40 sm:w-48 bg-basalt border border-sandstone/40 rounded-lg px-2.5 py-1 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/60 text-right"
+          />
+          {datalistId && datalistOptions && (
+            <datalist id={datalistId}>
+              {datalistOptions.map((opt) => (
+                <option key={opt} value={opt} />
+              ))}
+            </datalist>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center justify-between group/row">
+      <span className="text-xs text-cream/40">{label}</span>
+      <span className="flex items-center gap-1 text-sm text-cream/70">
+        {value}
+        {canEdit && <PencilButton onClick={onStartEdit} />}
+      </span>
     </div>
   )
 }
