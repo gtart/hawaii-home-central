@@ -21,7 +21,7 @@ const STATUS_CHECKS: { key: PunchlistStatus; label: string }[] = [
 export function PublishShareModal({ toolKey, projectId, locations, assignees, onClose, onCreated }: Props) {
   const [includeNotes, setIncludeNotes] = useState(false)
   const [includeComments, setIncludeComments] = useState(false)
-  const [includePhotos, setIncludePhotos] = useState(false)
+  const [includePhotos, setIncludePhotos] = useState(true)
   const [includedStatuses, setIncludedStatuses] = useState<Set<PunchlistStatus>>(new Set(['OPEN', 'ACCEPTED']))
   const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set())
   const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set())
