@@ -114,7 +114,9 @@ export async function GET(req: Request) {
   }
 
   // SSRF protection: block private/reserved IPs
-  const allowLocalhost = process.env.ALLOW_IMAGE_PROXY_LOCALHOST === 'true'
+  const allowLocalhost =
+    process.env.NODE_ENV !== 'production' &&
+    process.env.ALLOW_IMAGE_PROXY_LOCALHOST === 'true'
   const ssrfError = await checkSsrf(parsed.hostname, allowLocalhost)
   if (ssrfError) {
     return NextResponse.json({ error: ssrfError }, { status: 403 })
@@ -136,6 +138,13 @@ export async function GET(req: Request) {
       },
     })
     clearTimeout(timeout)
+
+    // SSRF check on the final URL after redirects
+    const finalUrl = new URL(res.url)
+    const redirectSsrf = await checkSsrf(finalUrl.hostname, allowLocalhost)
+    if (redirectSsrf) {
+      return NextResponse.json({ error: redirectSsrf }, { status: 403 })
+    }
 
     if (!res.ok) {
       return new NextResponse('Upstream fetch failed', { status: 502 })

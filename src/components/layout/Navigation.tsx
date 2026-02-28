@@ -24,6 +24,7 @@ export function Navigation() {
   const [moreOpen, setMoreOpen] = useState(false)
   const [toolsOpen, setToolsOpen] = useState(false)
   const [mobileProjectsOpen, setMobileProjectsOpen] = useState(false)
+  const [mobileToolsOpen, setMobileToolsOpen] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
   const toolsRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
@@ -40,6 +41,7 @@ export function Navigation() {
     setMoreOpen(false)
     setToolsOpen(false)
     setMobileProjectsOpen(false)
+    setMobileToolsOpen(false)
   }, [pathname])
 
   // Close dropdowns on outside click
@@ -71,7 +73,7 @@ export function Navigation() {
   // Marketing nav for visitors, app nav for logged-in users
   const primaryLinks: NavLink[] = isLoggedIn
     ? [
-        { href: '/app', label: 'My Project', matchMode: 'prefix' },
+        { href: '/app', label: 'Home', matchMode: 'prefix' },
       ]
     : [
         { href: '/hawaii-home-renovation', label: 'Renovation Guides', matchMode: 'prefix' },
@@ -422,23 +424,43 @@ export function Navigation() {
                       {link.label}
                     </Link>
                     {isAppHome && (
-                      <ul className="pl-4 pb-1 space-y-0.5">
-                        {navTools.map((tool) => (
-                          <li key={tool.toolKey}>
-                            <Link
-                              href={tool.href}
-                              className={cn(
-                                'block py-1.5 text-sm transition-colors',
-                                pathname.startsWith(tool.href)
-                                  ? 'text-sandstone'
-                                  : 'text-cream/50 hover:text-cream/70'
-                              )}
-                            >
-                              {tool.title}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setMobileToolsOpen(!mobileToolsOpen)}
+                          className="mt-1 flex items-center gap-1.5 pl-4 py-1.5 text-sm text-cream/50 hover:text-cream transition-colors"
+                        >
+                          <span>Tools</span>
+                          <svg
+                            className={cn('w-3 h-3 transition-transform', mobileToolsOpen && 'rotate-180')}
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                        {mobileToolsOpen && (
+                          <ul className="pl-8 pb-1 space-y-0.5">
+                            {navTools.map((tool) => (
+                              <li key={tool.toolKey}>
+                                <Link
+                                  href={tool.href}
+                                  className={cn(
+                                    'block py-1.5 text-sm transition-colors',
+                                    pathname.startsWith(tool.href)
+                                      ? 'text-sandstone'
+                                      : 'text-cream/50 hover:text-cream/70'
+                                  )}
+                                >
+                                  {tool.title}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </>
                     )}
                   </li>
                 )

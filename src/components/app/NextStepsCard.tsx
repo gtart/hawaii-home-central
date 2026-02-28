@@ -86,7 +86,7 @@ export function NextStepsCard() {
     <>
       <div className="bg-basalt-50 rounded-card p-6 mb-8">
         <div className="flex items-start justify-between gap-4 mb-1">
-          <h2 className="font-serif text-xl text-sandstone">Next Steps</h2>
+          <h2 className="font-serif text-xl text-sandstone">Start here</h2>
           {stageLabel && (
             <button
               type="button"
@@ -100,7 +100,7 @@ export function NextStepsCard() {
         <p className="text-cream/50 text-sm mb-5">
           {stageLabel
             ? `Recommended for the ${stageLabel.toLowerCase()} stage.`
-            : "Here's what to try next based on where you are."}
+            : 'Pick a tool and jump in — you can always come back.'}
         </p>
 
         <Link
