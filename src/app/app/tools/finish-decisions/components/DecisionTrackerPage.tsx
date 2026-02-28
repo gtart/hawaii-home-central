@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef, useEffect } from 'react'
+import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import {
   STATUS_CONFIG_V3,
@@ -29,6 +30,7 @@ export function DecisionTrackerPage({
   onBatchAddRooms,
   onUpdateRoom,
   onDeleteRoom,
+  onAcquireKit,
   readOnly = false,
   kits = [],
   defaultDecisions = {} as Record<RoomTypeV3, string[]>,
@@ -39,6 +41,7 @@ export function DecisionTrackerPage({
   onBatchAddRooms: (selections: RoomSelection[]) => void
   onUpdateRoom: (roomId: string, updates: Partial<RoomV3>) => void
   onDeleteRoom: (roomId: string) => void
+  onAcquireKit?: (kitId: string) => void
   readOnly?: boolean
   kits?: FinishDecisionKit[]
   defaultDecisions?: Record<RoomTypeV3, string[]>
@@ -61,6 +64,8 @@ export function DecisionTrackerPage({
   const [addRoomOpen, setAddRoomOpen] = useState(false)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [ideasModalRoomId, setIdeasModalRoomId] = useState<string | null>(null)
+  const [ideasModalDestPicker, setIdeasModalDestPicker] = useState(false)
+  const [destPickerRoomId, setDestPickerRoomId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; kitId: string; roomId: string } | null>(null)
   const [simpleToast, setSimpleToast] = useState<string | null>(null)
   // Flag: open pack chooser once rooms appear (set by onboarding "pack" level)
@@ -261,14 +266,35 @@ export function DecisionTrackerPage({
     setQuickAddOpen(true)
   }
 
-  function handleApplyKit(kit: FinishDecisionKit) {
-    const room = rooms.find((r) => r.id === ideasModalRoomId)
+  function handleApplyKit(kit: FinishDecisionKit, targetRoomId?: string) {
+    const roomId = targetRoomId || ideasModalRoomId
+    const room = rooms.find((r) => r.id === roomId)
     if (!room) return
+    const isResync = (room.appliedKitIds || []).includes(kit.id)
     const result = applyKitToRoom(room, kit)
     onUpdateRoom(room.id, result.room)
     setExpandedRooms((prev) => new Set([...prev, room.id]))
-    setToast({ message: `Added "${kit.label}" — ${result.addedOptionCount} ideas`, kitId: kit.id, roomId: room.id })
+    // Auto-acquire kit on apply
+    if (onAcquireKit && !ownedKitIds.includes(kit.id)) {
+      onAcquireKit(kit.id)
+    }
+    const toastMsg = isResync
+      ? `Re-synced "${kit.label}" in ${room.name} (+${result.addedOptionCount} ideas)`
+      : `Applied "${kit.label}" to ${room.name} (+${result.addedDecisionCount} decisions, +${result.addedOptionCount} ideas)`
+    setToast({ message: toastMsg, kitId: kit.id, roomId: room.id })
     setTimeout(() => setToast(null), 8000)
+  }
+
+  function handleRemoveKit(kitId: string) {
+    // Remove kit from the active room (uses destination picker room or modal's room)
+    const roomId = destPickerRoomId || ideasModalRoomId
+    const room = roomId ? rooms.find((r) => r.id === roomId) : null
+    if (!room) return
+    const updated = removeKitFromRoom(room, kitId)
+    onUpdateRoom(room.id, updated)
+    const kit = kits.find((k) => k.id === kitId)
+    setSimpleToast(`Removed "${kit?.label || 'pack'}" from ${room.name}`)
+    setTimeout(() => setSimpleToast(null), 4000)
   }
 
   function handleUndoKit() {
@@ -278,6 +304,8 @@ export function DecisionTrackerPage({
     const updated = removeKitFromRoom(room, toast.kitId)
     onUpdateRoom(room.id, updated)
     setToast(null)
+    setSimpleToast(`Removed pack from ${room.name}`)
+    setTimeout(() => setSimpleToast(null), 3000)
   }
 
   const ideasModalRoom = ideasModalRoomId ? rooms.find((r) => r.id === ideasModalRoomId) : null
@@ -340,29 +368,49 @@ export function DecisionTrackerPage({
             </div>
           )}
 
-          {/* My Idea Packs shelf */}
+          {/* My Decision Packs shelf */}
           {!readOnly && kits.length > 0 && (
             <div className="bg-basalt-50 rounded-card p-4 mb-4 border border-cream/10">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-medium text-cream/70">
-                  <span className="mr-1.5">✨</span>My Idea Packs
+                  <span className="mr-1.5">✨</span>My Decision Packs
                 </h3>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Open pack modal for first non-unsorted room
-                    const firstRoom = rooms.find((r) => !isGlobalUnsorted(r))
-                    if (firstRoom) setIdeasModalRoomId(firstRoom.id)
-                  }}
-                  className="text-xs text-sandstone hover:text-sandstone-light transition-colors"
-                >
-                  Browse Idea Packs
-                </button>
+                <div className="flex items-center gap-3">
+                  <Link
+                    href="/app/packs"
+                    className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
+                  >
+                    Browse marketplace
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Open pack modal with destination picker
+                      const firstRoom = rooms.find((r) => !isGlobalUnsorted(r))
+                      if (firstRoom) {
+                        setDestPickerRoomId(firstRoom.id)
+                        setIdeasModalDestPicker(true)
+                        setIdeasModalRoomId(firstRoom.id)
+                      }
+                    }}
+                    className="text-xs text-sandstone hover:text-sandstone-light transition-colors"
+                  >
+                    Apply to a board
+                  </button>
+                </div>
               </div>
               {ownedKitIds.length === 0 ? (
-                <p className="text-xs text-cream/40">
-                  You don&apos;t own any Idea Packs yet. Browse packs to get starter options for your boards.
-                </p>
+                <div className="flex items-center gap-3">
+                  <p className="text-xs text-cream/40 flex-1">
+                    Get a pack to instantly populate decisions with curated ideas.
+                  </p>
+                  <Link
+                    href="/app/packs"
+                    className="shrink-0 px-3 py-1.5 bg-sandstone text-basalt text-xs font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+                  >
+                    Browse Packs
+                  </Link>
+                </div>
               ) : (
                 <div className="flex gap-2 overflow-x-auto pb-1">
                   {kits
@@ -577,7 +625,11 @@ export function DecisionTrackerPage({
                   onUpdateRoom={(updates) => onUpdateRoom(room.id, updates)}
                   onDeleteRoom={() => onDeleteRoom(room.id)}
                   onQuickAdd={() => openQuickAdd(room.id)}
-                  onAddIdeasPack={() => setIdeasModalRoomId(room.id)}
+                  onAddIdeasPack={() => {
+                    setIdeasModalDestPicker(false)
+                    setDestPickerRoomId(null)
+                    setIdeasModalRoomId(room.id)
+                  }}
                   readOnly={readOnly}
                   hasAvailableKits={findKitsForRoomType(kits, room.type as RoomTypeV3).length > 0}
                   defaultDecisions={defaultDecisions}
@@ -730,8 +782,18 @@ export function DecisionTrackerPage({
           appliedKitIds={ideasModalRoom.appliedKitIds || []}
           ownedKitIds={ownedKitIds}
           onApply={handleApplyKit}
-          onClose={() => setIdeasModalRoomId(null)}
+          onAcquireKit={onAcquireKit}
+          onRemoveKit={handleRemoveKit}
+          onClose={() => {
+            setIdeasModalRoomId(null)
+            setIdeasModalDestPicker(false)
+            setDestPickerRoomId(null)
+          }}
           kits={kits}
+          rooms={rooms}
+          showDestinationPicker={ideasModalDestPicker}
+          selectedRoomId={destPickerRoomId || ideasModalRoomId || undefined}
+          onSelectRoomId={(id) => setDestPickerRoomId(id)}
         />
       )}
 

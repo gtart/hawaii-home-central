@@ -219,7 +219,7 @@ export function RoomSection({
               onClick={(e) => { e.stopPropagation(); onAddIdeasPack() }}
               className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-purple-300/60 hover:text-purple-300 bg-purple-400/5 hover:bg-purple-400/10 rounded-full transition-all"
             >
-              <span>✨</span> Idea Packs
+              <span>✨</span> Decision Packs
             </button>
             <span className="text-cream/15 select-none">·</span>
             <button
@@ -285,7 +285,7 @@ export function RoomSection({
                   className="w-full text-left px-3 py-2 hover:bg-cream/5 transition-colors"
                 >
                   <span className="text-sm text-purple-300/80 flex items-center gap-1.5">
-                    <span>✨</span> Idea Packs
+                    <span>✨</span> Decision Packs
                   </span>
                   <span className="block text-[11px] text-cream/35 mt-0.5 ml-5">Curated starter ideas for this room</span>
                 </button>
@@ -345,7 +345,7 @@ export function RoomSection({
             onClick={onAddIdeasPack}
             className="text-xs text-sandstone font-medium hover:text-sandstone-light transition-colors"
           >
-            Import Idea Pack
+            Apply a Decision Pack
           </button>
         </div>
       )}

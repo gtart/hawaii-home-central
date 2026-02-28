@@ -358,6 +358,16 @@ export function ToolContent({
     }))
   }
 
+  // Acquire (own) a pack — adds to ownedKitIds immediately
+  const handleAcquireKit = (kitId: string) => {
+    setState((prev) => {
+      const p = prev as FinishDecisionsPayloadV3
+      const existing = p.ownedKitIds || []
+      if (existing.includes(kitId)) return prev
+      return { ...p, ownedKitIds: [...existing, kitId] }
+    })
+  }
+
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-4xl mx-auto">
@@ -399,6 +409,7 @@ export function ToolContent({
             onBatchAddRooms={handleBatchAddRooms}
             onUpdateRoom={handleUpdateRoom}
             onDeleteRoom={handleDeleteRoom}
+            onAcquireKit={handleAcquireKit}
             readOnly={readOnly}
             kits={kits}
             defaultDecisions={resolvedDefaults}

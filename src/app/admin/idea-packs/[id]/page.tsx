@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { IdeaPackEditor } from './IdeaPackEditor'
 
-export const metadata: Metadata = { title: 'Edit Idea Pack' }
+export const metadata: Metadata = { title: 'Edit Decision Pack' }
 
 export default async function AdminIdeaPackDetailPage({
   params,

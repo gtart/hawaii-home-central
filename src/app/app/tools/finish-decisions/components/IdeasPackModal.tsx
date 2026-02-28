@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import type { RoomTypeV3 } from '@/data/finish-decisions'
+import { useState, useMemo } from 'react'
+import type { RoomTypeV3, RoomV3 } from '@/data/finish-decisions'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { findKitsForRoomType, findKitsForDecisionTitle } from '@/lib/finish-decision-kits'
 import { cn } from '@/lib/utils'
@@ -51,19 +51,36 @@ export function IdeasPackModal({
   roomName,
   decisionTitle,
   appliedKitIds,
+  decisionAppliedKitIds,
   ownedKitIds = [],
   onApply,
+  onAcquireKit,
+  onRemoveKit,
   onClose,
   kits = [],
+  // Destination picker props
+  rooms,
+  selectedRoomId,
+  onSelectRoomId,
+  showDestinationPicker = false,
 }: {
   roomType: RoomTypeV3
   roomName: string
   decisionTitle?: string
   appliedKitIds: string[]
+  /** In decision mode, kit IDs that already have options in this decision (from option.origin.kitId) */
+  decisionAppliedKitIds?: string[]
   ownedKitIds?: string[]
-  onApply: (kit: FinishDecisionKit) => void
+  onApply: (kit: FinishDecisionKit, targetRoomId?: string) => void
+  onAcquireKit?: (kitId: string) => void
+  onRemoveKit?: (kitId: string) => void
   onClose: () => void
   kits?: FinishDecisionKit[]
+  // Destination picker
+  rooms?: RoomV3[]
+  selectedRoomId?: string
+  onSelectRoomId?: (id: string) => void
+  showDestinationPicker?: boolean
 }) {
   const [selectedKitId, setSelectedKitId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ModalTab>('recommended')
@@ -72,10 +89,35 @@ export function IdeasPackModal({
   // Decision-level mode: only show kits matching this title
   const isDecisionMode = !!decisionTitle
 
+  // Active room type for filtering (may change with destination picker)
+  const activeRoomType = useMemo(() => {
+    if (showDestinationPicker && rooms && selectedRoomId) {
+      const r = rooms.find((r) => r.id === selectedRoomId)
+      return (r?.type as RoomTypeV3) || roomType
+    }
+    return roomType
+  }, [showDestinationPicker, rooms, selectedRoomId, roomType])
+
+  const activeRoomName = useMemo(() => {
+    if (showDestinationPicker && rooms && selectedRoomId) {
+      const r = rooms.find((r) => r.id === selectedRoomId)
+      return r?.name || roomName
+    }
+    return roomName
+  }, [showDestinationPicker, rooms, selectedRoomId, roomName])
+
+  const activeAppliedKitIds = useMemo(() => {
+    if (showDestinationPicker && rooms && selectedRoomId) {
+      const r = rooms.find((r) => r.id === selectedRoomId)
+      return r?.appliedKitIds || []
+    }
+    return appliedKitIds
+  }, [showDestinationPicker, rooms, selectedRoomId, appliedKitIds])
+
   // Compute kit lists per tab
   const fittingKits = isDecisionMode
-    ? findKitsForDecisionTitle(kits, decisionTitle!, roomType)
-    : findKitsForRoomType(kits, roomType)
+    ? findKitsForDecisionTitle(kits, decisionTitle!, activeRoomType)
+    : findKitsForRoomType(kits, activeRoomType)
 
   const ownedKits = kits.filter((k) => ownedKitIds.includes(k.id))
   const allKits = kits
@@ -98,17 +140,34 @@ export function IdeasPackModal({
 
   function handleApply() {
     if (!selectedKit) return
-    onApply(selectedKit)
+    const targetId = showDestinationPicker ? selectedRoomId : undefined
+    onApply(selectedKit, targetId)
     onClose()
   }
 
+  function handleRemove() {
+    if (!selectedKit || !onRemoveKit) return
+    onRemoveKit(selectedKit.id)
+    onClose()
+  }
+
+  function handleGetPack() {
+    if (!selectedKit || !onAcquireKit) return
+    onAcquireKit(selectedKit.id)
+  }
+
+  // In decision mode, use decision-level applied state (from option.origin.kitId)
+  const effectiveAppliedKitIds = isDecisionMode && decisionAppliedKitIds
+    ? decisionAppliedKitIds
+    : activeAppliedKitIds
+
   // CTA text depends on state
   function getApplyLabel(kit: FinishDecisionKit): string {
-    const isApplied = appliedKitIds.includes(kit.id)
+    const isApplied = effectiveAppliedKitIds.includes(kit.id)
     if (isDecisionMode) {
       return isApplied ? 'Re-sync ideas' : 'Add Ideas'
     }
-    return isApplied ? 'Re-sync pack' : 'Add to Room'
+    return isApplied ? 'Re-sync pack' : 'Apply to this board'
   }
 
   const TABS: { key: ModalTab; label: string; count: number }[] = isDecisionMode
@@ -119,23 +178,71 @@ export function IdeasPackModal({
         { key: 'browse', label: 'Browse all', count: allKits.length },
       ]
 
+  // Smart-sorted rooms for destination picker
+  const sortedRooms = useMemo(() => {
+    if (!rooms || !selectedKit) return rooms || []
+    const kitRoomTypes = selectedKit.roomTypes
+    return [...rooms].sort((a, b) => {
+      const aFits = kitRoomTypes.length === 0 || kitRoomTypes.includes(a.type as RoomTypeV3)
+      const bFits = kitRoomTypes.length === 0 || kitRoomTypes.includes(b.type as RoomTypeV3)
+      if (aFits && !bFits) return -1
+      if (!aFits && bFits) return 1
+      return a.name.localeCompare(b.name)
+    })
+  }, [rooms, selectedKit])
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-basalt border border-cream/15 rounded-xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl">
+      <div className="relative bg-basalt border-t sm:border border-cream/15 rounded-t-xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl">
         {/* Header */}
         <div className="px-5 pt-5 pb-3 border-b border-cream/10">
-          <h2 className="text-lg font-medium text-cream">
-            {decisionTitle ? `Ideas for \u201c${decisionTitle}\u201d` : `Idea Packs for ${roomName}`}
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-medium text-cream">
+              {decisionTitle ? `Ideas for \u201c${decisionTitle}\u201d` : 'Decision Packs'}
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-cream/40 hover:text-cream transition-colors p-1 -mr-1"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
           <p className="text-xs text-cream/40 mt-1">
             {decisionTitle
-              ? 'Adds ideas to this decision so you have options to compare.'
-              : 'Adds starter decisions and ideas to this room.'}
+              ? 'Adds curated ideas to this decision so you have options to compare.'
+              : 'Decision Packs add curated ideas to your decisions\u2014so you can compare and choose faster.'}
           </p>
+
+          {/* Destination line */}
+          {!isDecisionMode && (
+            <div className="mt-2">
+              {showDestinationPicker && rooms && onSelectRoomId ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-cream/40">Apply to:</span>
+                  <select
+                    value={selectedRoomId || ''}
+                    onChange={(e) => onSelectRoomId(e.target.value)}
+                    className="bg-basalt-50 border border-cream/20 rounded-lg px-2.5 py-1 text-xs text-cream focus:outline-none focus:border-sandstone/50 max-w-[200px]"
+                  >
+                    {(selectedKit ? sortedRooms : rooms).map((r) => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <p className="text-[11px] text-cream/30">
+                  Applying to: <span className="text-cream/50 font-medium">{activeRoomName}</span>
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Tabs (only in room mode with multiple tabs) */}
@@ -170,8 +277,8 @@ export function IdeasPackModal({
             <div className="py-8 text-center">
               <p className="text-cream/40 text-sm">
                 {activeTab === 'my-packs'
-                  ? "You don\u2019t own any Idea Packs yet."
-                  : `No idea packs available for this ${decisionTitle ? 'decision' : 'room type'}.`}
+                  ? "You don\u2019t own any Decision Packs yet."
+                  : `No Decision Packs available for this ${decisionTitle ? 'decision' : 'room type'}.`}
               </p>
               {activeTab === 'my-packs' && (
                 <button
@@ -179,13 +286,13 @@ export function IdeasPackModal({
                   onClick={() => setActiveTab('browse')}
                   className="mt-2 text-xs text-sandstone hover:text-sandstone-light transition-colors"
                 >
-                  Browse Idea Packs
+                  Browse Decision Packs
                 </button>
               )}
             </div>
           ) : (
             tabKits.map((kit) => {
-              const isApplied = appliedKitIds.includes(kit.id)
+              const isApplied = effectiveAppliedKitIds.includes(kit.id)
               const isOwned = ownedKitIds.includes(kit.id)
               const isSelected = selectedKitId === kit.id
               const fits = fittingKits.some((k) => k.id === kit.id)
@@ -224,7 +331,7 @@ export function IdeasPackModal({
                   <p className="text-xs text-cream/50 leading-relaxed">{kit.description}</p>
                   <p className="text-[11px] text-cream/30 mt-1.5">
                     {kit.decisions.length} decision{kit.decisions.length !== 1 ? 's' : ''},{' '}
-                    {kit.decisions.reduce((s, d) => s + d.options.length, 0)} idea
+                    {kit.decisions.reduce((s, d) => s + d.options.length, 0)} curated idea
                     {kit.decisions.reduce((s, d) => s + d.options.length, 0) !== 1 ? 's' : ''}
                   </p>
 
@@ -266,22 +373,48 @@ export function IdeasPackModal({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-cream/10 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-cream/60 hover:text-cream transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleApply}
-            disabled={!selectedKit}
-            className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            {selectedKit ? getApplyLabel(selectedKit) : (decisionTitle ? 'Add Ideas' : 'Add to Room')}
-          </button>
+        <div className="px-5 py-4 border-t border-cream/10">
+          {/* Get pack + Remove row (when kit selected) */}
+          {selectedKit && !isDecisionMode && (
+            <div className="flex items-center gap-2 mb-3">
+              {onAcquireKit && !ownedKitIds.includes(selectedKit.id) && (
+                <button
+                  type="button"
+                  onClick={handleGetPack}
+                  className="text-xs text-sandstone hover:text-sandstone-light transition-colors font-medium"
+                >
+                  Get pack
+                </button>
+              )}
+              {onRemoveKit && activeAppliedKitIds.includes(selectedKit.id) && (
+                <button
+                  type="button"
+                  onClick={handleRemove}
+                  className="text-xs text-red-400/60 hover:text-red-400 transition-colors ml-auto"
+                >
+                  Remove from this board
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm text-cream/60 hover:text-cream transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleApply}
+              disabled={!selectedKit}
+              className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              {selectedKit ? getApplyLabel(selectedKit) : (decisionTitle ? 'Add Ideas' : 'Apply to this board')}
+            </button>
+          </div>
         </div>
       </div>
     </div>

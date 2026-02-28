@@ -57,7 +57,7 @@ export function IdeaPackList() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         packId,
-        label: 'New Idea Pack',
+        label: 'New Decision Pack',
         description: '',
         decisions: [],
         roomTypes: [],
@@ -236,7 +236,7 @@ export function IdeaPackList() {
       {showImport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowImport(false)}>
           <div className="bg-basalt-50 rounded-xl border border-cream/15 p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-medium text-cream mb-4">Import Idea Pack JSON</h2>
+            <h2 className="text-lg font-medium text-cream mb-4">Import Decision Pack JSON</h2>
             <textarea
               value={importJson}
               onChange={(e) => { setImportJson(e.target.value); setImportResult(null); setImportError('') }}

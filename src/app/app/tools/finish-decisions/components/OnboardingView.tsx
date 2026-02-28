@@ -30,14 +30,14 @@ const LEVEL_CARDS: {
     value: 'standard',
     label: 'Start with a decision checklist (recommended)',
     description:
-      "We\u2019ll add the common decisions you\u2019ll need for this room (faucet, sink, lighting, paint, etc.). You\u2019ll add options and product ideas next.",
+      "We\u2019ll add the common decisions you\u2019ll need for this room (faucet, sink, lighting, paint, etc.). You\u2019ll add options and curated ideas next.",
     micro: "Best for homeowners who don\u2019t want to miss anything.",
   },
   {
     value: 'pack',
-    label: 'Start with an Idea Pack (fastest)',
+    label: 'Start with a Decision Pack (fastest)',
     description:
-      'Adds a decision checklist plus curated starter options for each decision\u2014so you can compare and choose faster.',
+      'Adds a decision checklist plus curated ideas (options) for each decision\u2014so you can compare and choose faster.',
     micro: 'Includes expert advice and partner shortlists (always labeled).',
   },
 ]
@@ -50,7 +50,7 @@ export function OnboardingView({
   defaultDecisions,
 }: {
   onBatchCreate: (selections: RoomSelection[]) => void
-  /** Called when user picks "Idea Pack" level — parent should open pack modal after creating rooms */
+  /** Called when user picks "Decision Pack" level — parent should open pack modal after creating rooms */
   onRequestPackChooser?: (selections: RoomSelection[]) => void
   collapsed?: boolean
   onToggleCollapse?: () => void
@@ -111,7 +111,7 @@ export function OnboardingView({
 
   const ctaLabel =
     level === 'pack'
-      ? 'Choose an Idea Pack'
+      ? 'Choose a Decision Pack'
       : level === 'standard'
         ? isCollapsible
           ? `Create board + checklist`
@@ -287,7 +287,7 @@ export function OnboardingView({
 
       {/* Footer tip */}
       <p className="text-cream/40 text-xs mb-6">
-        Tip: A checklist helps you remember what to decide. An Idea Pack helps you see what to choose.
+        Tip: A checklist helps you remember what to decide. A Decision Pack helps you see what to choose.
       </p>
 
       {/* Action button */}

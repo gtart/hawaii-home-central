@@ -223,7 +223,7 @@ export function DecisionDetailContent({
     ? findKitsForDecisionTitle(kits, foundDecision.title, foundRoom.type as RoomTypeV3)
     : []
 
-  function handleApplyKitToDecision(kit: import('@/data/finish-decision-kits').FinishDecisionKit) {
+  function handleApplyKitToDecision(kit: import('@/data/finish-decision-kits').FinishDecisionKit, _targetRoomId?: string) {
     if (!foundDecision) return
     const result = applyKitToDecision(foundDecision, kit)
     updateDecision({ options: result.decision.options })
@@ -958,6 +958,11 @@ export function DecisionDetailContent({
           roomName={foundRoom.name}
           decisionTitle={foundDecision.title}
           appliedKitIds={foundRoom.appliedKitIds || []}
+          decisionAppliedKitIds={[...new Set(
+            foundDecision.options
+              .filter((o) => o.origin?.kitId)
+              .map((o) => o.origin!.kitId)
+          )]}
           ownedKitIds={(state as FinishDecisionsPayloadV3).ownedKitIds || []}
           onApply={handleApplyKitToDecision}
           onClose={() => setIdeasPackOpen(false)}

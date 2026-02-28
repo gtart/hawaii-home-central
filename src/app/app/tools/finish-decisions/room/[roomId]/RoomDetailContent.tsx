@@ -161,12 +161,36 @@ export function RoomDetailContent({
     setTimeout(() => setPopulateBanner(null), 4000)
   }
 
-  function handleApplyKit(kit: FinishDecisionKit) {
+  function handleApplyKit(kit: FinishDecisionKit, _targetRoomId?: string) {
     if (!room) return
+    const isResync = (room.appliedKitIds || []).includes(kit.id)
     const result = applyKitToRoom(room, kit)
     updateRoom(result.room)
-    setToast({ message: `Added "${kit.label}" — ${result.addedOptionCount} ideas`, kitId: kit.id })
+    // Auto-acquire
+    acquireKit(kit.id)
+    const msg = isResync
+      ? `Re-synced "${kit.label}" (+${result.addedOptionCount} ideas)`
+      : `Applied "${kit.label}" — +${result.addedDecisionCount} decisions, +${result.addedOptionCount} ideas`
+    setToast({ message: msg, kitId: kit.id })
     setTimeout(() => setToast(null), 8000)
+  }
+
+  function handleRemoveKit(kitId: string) {
+    if (!room) return
+    const updated = removeKitFromRoom(room, kitId)
+    updateRoom(updated)
+    const kit = kits.find((k) => k.id === kitId)
+    setToast({ message: `Removed "${kit?.label || 'pack'}" from this board`, kitId })
+    setTimeout(() => setToast(null), 4000)
+  }
+
+  function acquireKit(kitId: string) {
+    setState((prev) => {
+      const p = prev as FinishDecisionsPayloadV3
+      const existing = p.ownedKitIds || []
+      if (existing.includes(kitId)) return prev
+      return { ...p, ownedKitIds: [...existing, kitId] }
+    })
   }
 
   function handleUndoKit() {
@@ -285,7 +309,7 @@ export function RoomDetailContent({
                 onClick={() => setIdeasModalOpen(true)}
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-purple-300/70 hover:text-purple-300 bg-purple-400/5 hover:bg-purple-400/10 rounded-lg transition-all"
               >
-                <span>✨</span> Idea Packs ({availableKitsCount})
+                <span>✨</span> Decision Packs ({availableKitsCount})
               </button>
             )}
 
@@ -398,7 +422,7 @@ export function RoomDetailContent({
                   onClick={() => setIdeasModalOpen(true)}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-sandstone text-basalt font-medium text-sm rounded-lg hover:bg-sandstone-light transition-colors"
                 >
-                  <span>✨</span> Apply an Idea Pack
+                  <span>✨</span> Apply a Decision Pack
                 </button>
               )}
               <button
@@ -413,7 +437,7 @@ export function RoomDetailContent({
               </button>
             </div>
             <p className="text-[11px] text-cream/30 mt-3 italic">
-              Idea Packs can also fill in any missing decisions.
+              Decision Packs can also fill in any missing decisions.
             </p>
           </div>
         )}
@@ -429,7 +453,7 @@ export function RoomDetailContent({
               onClick={() => setIdeasModalOpen(true)}
               className="text-xs text-sandstone font-medium hover:text-sandstone-light transition-colors"
             >
-              Import Idea Pack
+              Apply a Decision Pack
             </button>
           </div>
         )}
@@ -465,7 +489,7 @@ export function RoomDetailContent({
                 onClick={() => setIdeasModalOpen(true)}
                 className="mt-3 text-xs text-purple-300/70 hover:text-purple-300 transition-colors"
               >
-                Use an Idea Pack instead
+                Use a Decision Pack instead
               </button>
             )}
           </div>
@@ -507,6 +531,8 @@ export function RoomDetailContent({
           appliedKitIds={room.appliedKitIds || []}
           ownedKitIds={(state as FinishDecisionsPayloadV3).ownedKitIds || []}
           onApply={handleApplyKit}
+          onAcquireKit={acquireKit}
+          onRemoveKit={handleRemoveKit}
           onClose={() => setIdeasModalOpen(false)}
           kits={kits}
         />
