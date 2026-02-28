@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { breadcrumbSchema } from '@/lib/structured-data'
 import { auth } from '@/auth'
-import { HowItWorksStrip } from '@/components/home/HowItWorksStrip'
 import { ToolPreviewCards } from './ToolPreviewCards'
 
 export const metadata: Metadata = {
@@ -42,16 +41,12 @@ export default async function ToolsMarketingPage() {
               Tools for every part of a Hawai&#x02BB;i renovation&mdash;use them anytime.
             </p>
             <p className="text-cream/70 text-sm mb-2 max-w-2xl mx-auto text-center leading-relaxed">
-              Save ideas, compare bids, lock decisions, and track punch items&mdash;without spreadsheets and endless texts.
+              Pick any tool below. Each one solves a specific headache&mdash;without spreadsheets and endless texts.
             </p>
             <p className="text-cream/50 text-sm mb-12 max-w-2xl mx-auto text-center">
-              Currently in limited beta (waitlist + whitelist). Request access below.
+              Limited beta (waitlist + whitelist). Request access to get approved.
             </p>
           </FadeInSection>
-
-          <div className="mb-8 -mx-6">
-            <HowItWorksStrip />
-          </div>
 
           <ToolPreviewCards />
 

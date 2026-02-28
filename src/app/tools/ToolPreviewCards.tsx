@@ -151,34 +151,34 @@ export function ToolPreviewCards() {
                       {stage.tool!.description}
                     </p>
 
-                    <div className="flex items-center gap-3 mb-1">
-                      <div className="flex-1 space-y-2">
-                        <Link href="/waitlist">
+                    <div className="mt-4 space-y-2">
+                      <div className="flex gap-3">
+                        <Link href="/waitlist" className="flex-1">
                           <Button variant="primary" size="md" className="w-full">
                             Request Early Access
                           </Button>
                         </Link>
-                        <Link
-                          href={stage.tool!.ctaHref}
-                          className="block text-center text-xs text-cream/40 hover:text-cream/60 transition-colors"
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPreviewOpen(isOpen ? null : stage.tool!.title)
+                          }
+                          className={cn(
+                            'flex-1 py-2.5 rounded-button text-sm font-medium transition-colors border',
+                            isOpen
+                              ? 'border-sandstone/30 bg-sandstone/10 text-sandstone'
+                              : 'border-cream/15 text-cream/60 hover:text-cream/80 hover:border-cream/25'
+                          )}
                         >
-                          Have access? Sign in
-                        </Link>
+                          {isOpen ? 'Close' : 'Preview'}
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setPreviewOpen(isOpen ? null : stage.tool!.title)
-                        }
-                        className={cn(
-                          'px-3 py-2 rounded-button text-xs font-medium transition-colors shrink-0',
-                          isOpen
-                            ? 'bg-sandstone/20 text-sandstone'
-                            : 'bg-cream/10 text-cream/60 hover:text-cream/80'
-                        )}
+                      <Link
+                        href={stage.tool!.ctaHref}
+                        className="block text-center text-xs text-cream/40 hover:text-cream/60 transition-colors pt-1"
                       >
-                        {isOpen ? 'Close' : 'Preview'}
-                      </button>
+                        Have access? Sign in &rarr;
+                      </Link>
                     </div>
 
                     {/* Preview panel */}
@@ -218,9 +218,9 @@ export function ToolPreviewCards() {
                           </Link>
                           <Link
                             href={stage.tool!.ctaHref}
-                            className="block text-center text-xs text-cream/40 hover:text-cream/60 transition-colors"
+                            className="block text-center text-xs text-cream/40 hover:text-cream/60 transition-colors pt-1"
                           >
-                            Have access? Sign in
+                            Have access? Sign in &rarr;
                           </Link>
                         </div>
                       </div>
