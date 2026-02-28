@@ -41,6 +41,8 @@ export function PunchlistPage({ api, onShareExport }: Props) {
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [viewingId, setViewingId] = useState<string | null>(null)
+  const [expandedLocations, setExpandedLocations] = useState(false)
+  const [expandedAssignees, setExpandedAssignees] = useState(false)
   const uniqueLocations = useMemo(() => {
     const locs = new Set(payload.items.map((i) => i.location).filter(Boolean))
     return Array.from(locs).sort()
@@ -162,67 +164,126 @@ export function PunchlistPage({ api, onShareExport }: Props) {
           ))}
         </div>
 
-        {/* Divider + Location multi-select pills */}
-        {uniqueLocations.length > 0 && (
-          <>
-            <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Location</span>
-              {uniqueLocations.map((loc) => {
-                const active = filterLocations.has(loc)
-                return (
+        {/* Divider + Location multi-select pills (collapsible) */}
+        {uniqueLocations.length > 0 && (() => {
+          const MAX_VISIBLE = 5
+          // Always show active (selected) pills + fill remaining slots from the list
+          const activeLocs = uniqueLocations.filter((l) => filterLocations.has(l))
+          const inactiveLocs = uniqueLocations.filter((l) => !filterLocations.has(l))
+          const remainingSlots = Math.max(0, MAX_VISIBLE - activeLocs.length)
+          const visibleLocs = expandedLocations
+            ? uniqueLocations
+            : [...activeLocs, ...inactiveLocs.slice(0, remainingSlots)]
+          const hiddenCount = uniqueLocations.length - visibleLocs.length
+
+          return (
+            <>
+              <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Location</span>
+                {visibleLocs.map((loc) => {
+                  const active = filterLocations.has(loc)
+                  return (
+                    <button
+                      key={loc}
+                      type="button"
+                      onClick={() => {
+                        setFilterLocations((prev) => {
+                          const next = new Set(prev)
+                          if (next.has(loc)) next.delete(loc)
+                          else next.add(loc)
+                          return next
+                        })
+                      }}
+                      aria-label={`Filter by location: ${loc}`}
+                      aria-pressed={active}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
+                        active
+                          ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
+                          : 'border-cream/15 text-cream/40 hover:border-cream/30'
+                      }`}
+                    >
+                      {loc}
+                    </button>
+                  )
+                })}
+                {hiddenCount > 0 && (
                   <button
-                    key={loc}
                     type="button"
-                    onClick={() => {
-                      setFilterLocations((prev) => {
-                        const next = new Set(prev)
-                        if (next.has(loc)) next.delete(loc)
-                        else next.add(loc)
-                        return next
-                      })
-                    }}
-                    aria-label={`Filter by location: ${loc}`}
-                    aria-pressed={active}
+                    onClick={() => setExpandedLocations(true)}
+                    className="text-xs px-2.5 py-1 rounded-full border border-cream/15 text-cream/40 hover:border-cream/30 hover:text-cream/60 transition-colors cursor-pointer"
+                  >
+                    +{hiddenCount} more
+                  </button>
+                )}
+                {expandedLocations && uniqueLocations.length > MAX_VISIBLE && (
+                  <button
+                    type="button"
+                    onClick={() => setExpandedLocations(false)}
+                    className="text-xs px-2.5 py-1 text-cream/30 hover:text-cream/50 transition-colors cursor-pointer"
+                  >
+                    Show less
+                  </button>
+                )}
+              </div>
+            </>
+          )
+        })()}
+
+        {/* Divider + Assignee chips (collapsible, if more than 1 assignee) */}
+        {uniqueAssignees.length > 1 && (() => {
+          const MAX_VISIBLE = 5
+          const activeAssignees = filterAssignee ? uniqueAssignees.filter((a) => a === filterAssignee) : []
+          const inactiveAssignees = uniqueAssignees.filter((a) => a !== filterAssignee)
+          const remainingSlots = Math.max(0, MAX_VISIBLE - activeAssignees.length)
+          const visibleAssignees = expandedAssignees
+            ? uniqueAssignees
+            : [...activeAssignees, ...inactiveAssignees.slice(0, remainingSlots)]
+          const hiddenCount = uniqueAssignees.length - visibleAssignees.length
+
+          return (
+            <>
+              <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Assignee</span>
+                {visibleAssignees.map((a) => (
+                  <button
+                    key={a}
+                    type="button"
+                    onClick={() => setFilterAssignee(filterAssignee === a ? null : a)}
+                    aria-label={`Filter by assignee: ${a}`}
+                    aria-pressed={filterAssignee === a}
                     className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
-                      active
+                      filterAssignee === a
                         ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
                         : 'border-cream/15 text-cream/40 hover:border-cream/30'
                     }`}
                   >
-                    {loc}
+                    {a}
                   </button>
-                )
-              })}
-            </div>
-          </>
-        )}
-
-        {/* Divider + Assignee chips (if more than 1 assignee) */}
-        {uniqueAssignees.length > 1 && (
-          <>
-            <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Assignee</span>
-              {uniqueAssignees.map((a) => (
-                <button
-                  key={a}
-                  type="button"
-                  onClick={() => setFilterAssignee(filterAssignee === a ? null : a)}
-                  aria-label={`Filter by assignee: ${a}`}
-                  aria-pressed={filterAssignee === a}
-                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
-                    filterAssignee === a
-                      ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
-                      : 'border-cream/15 text-cream/40 hover:border-cream/30'
-                  }`}
-                >
-                  {a}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
+                ))}
+                {hiddenCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setExpandedAssignees(true)}
+                    className="text-xs px-2.5 py-1 rounded-full border border-cream/15 text-cream/40 hover:border-cream/30 hover:text-cream/60 transition-colors cursor-pointer"
+                  >
+                    +{hiddenCount} more
+                  </button>
+                )}
+                {expandedAssignees && uniqueAssignees.length > MAX_VISIBLE && (
+                  <button
+                    type="button"
+                    onClick={() => setExpandedAssignees(false)}
+                    className="text-xs px-2.5 py-1 text-cream/30 hover:text-cream/50 transition-colors cursor-pointer"
+                  >
+                    Show less
+                  </button>
+                )}
+              </div>
+            </>
+          )
+        })()}
       </div>
 
       {/* Row 3: Search + Sort + Desktop Add buttons */}
