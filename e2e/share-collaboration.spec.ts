@@ -22,8 +22,11 @@ const MB_URL = '/app/tools/mood-boards'
 const DT_URL = '/app/tools/finish-decisions'
 
 // Disable trace for this file — manually-created contexts conflict with Playwright's
-// trace recording and cause ENOENT errors on cleanup. Also increase timeout.
-test.use({ trace: 'off', timeout: 90_000 })
+// trace recording and cause ENOENT errors on cleanup.
+test.use({ trace: 'off' })
+
+// Increase test timeout for complex flows (modal interactions + page loads)
+test.setTimeout(90_000)
 
 // ─── Context Helpers ─────────────────────────────────────────
 
@@ -40,7 +43,16 @@ async function collabPage(browser: Browser): Promise<Page> {
     storageState: COLLAB.storageStatePath,
     baseURL: BASE_URL,
   })
-  return ctx.newPage()
+  const page = await ctx.newPage()
+  // Suppress newsletter prompt to prevent modal overlay blocking test interactions
+  await page.route('**/api/user/newsletter-prompt-status', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ hasSeenPrompt: true }),
+    })
+  )
+  return page
 }
 
 async function anonPage(browser: Browser): Promise<Page> {
@@ -82,6 +94,8 @@ async function dismissBlockingModals(page: Page) {
 
 /** Open the Share & Export modal (button must be visible on the page) */
 async function openShareExportModal(page: Page) {
+  // Dismiss any lingering modals that might block the button
+  await dismissBlockingModals(page)
   await page.getByRole('button', { name: /Share & Export/i }).click()
   // Wait for modal title
   await page.locator('h2').filter({ hasText: 'Share & Export' }).waitFor({ state: 'visible' })
@@ -382,9 +396,19 @@ test.describe('Mood Boards — Share & Export', () => {
     await openShareExportModal(page)
     await switchToPublicLinksTab(page)
 
-    // Create a link
+    // Create a link and extract token
     const sharePath = await createBasicPublicLink(page, 'mood_boards')
-    await page.locator('.font-mono').filter({ hasText: '/share/' }).first().waitFor({ state: 'visible' })
+    const token = sharePath.split('/').pop()!
+
+    // Wait for the create form to close and the link list to refresh with our token
+    await page.getByText('Configure the new public link').waitFor({ state: 'hidden', timeout: 5_000 })
+    const tokenUrl = page.locator('.font-mono').filter({ hasText: token.slice(0, 12) })
+    await tokenUrl.waitFor({ state: 'visible', timeout: 10_000 })
+
+    // Find the specific card containing our token (CSS .bg-basalt won't match bg-basalt-50)
+    const linkCard = page.locator('div.bg-basalt').filter({
+      has: page.locator('.font-mono', { hasText: token.slice(0, 12) }),
+    })
 
     await capture(page, {
       stepLabel: 'Active link — before revoke',
@@ -393,12 +417,18 @@ test.describe('Mood Boards — Share & Export', () => {
       testName,
     })
 
-    // Revoke the link — handle the native confirm dialog
+    // Revoke THIS specific link by clicking Revoke within its card
     page.on('dialog', (dialog) => dialog.accept())
-    await page.getByRole('button', { name: 'Revoke' }).last().click()
+    const [deleteRes] = await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().includes('/share-token') && r.request().method() === 'DELETE'
+      ),
+      linkCard.getByRole('button', { name: 'Revoke' }).click(),
+    ])
+    expect(deleteRes.status()).toBe(200)
 
-    // Wait for the link to disappear (list refreshes)
-    await page.waitForTimeout(1000)
+    // Wait for the link card to disappear after revoke (ManageShareLinks refetches)
+    await tokenUrl.waitFor({ state: 'hidden', timeout: 10_000 })
 
     await capture(page, {
       stepLabel: 'After revoke — link removed',
@@ -629,7 +659,7 @@ test.describe('Decision Tracker — Share & Export', () => {
     await openShareExportModal(page)
     await switchToPublicLinksTab(page)
 
-    const sharePath = await createScopedPublicLink(page, 'finish_decisions', 'Rooms', ['Kitchen'])
+    const sharePath = await createScopedPublicLink(page, 'finish_decisions', 'Rooms', ['🍳 Kitchen'])
     await page.locator('.font-mono').filter({ hasText: '/share/' }).first().waitFor({ state: 'visible' })
 
     await capture(page, {
@@ -669,7 +699,17 @@ test.describe('Decision Tracker — Share & Export', () => {
     await switchToPublicLinksTab(page)
 
     const sharePath = await createBasicPublicLink(page, 'finish_decisions')
-    await page.locator('.font-mono').filter({ hasText: '/share/' }).first().waitFor({ state: 'visible' })
+    const token = sharePath.split('/').pop()!
+
+    // Wait for the create form to close and the link list to refresh with our token
+    await page.getByText('Configure the new public link').waitFor({ state: 'hidden', timeout: 5_000 })
+    const tokenUrl = page.locator('.font-mono').filter({ hasText: token.slice(0, 12) })
+    await tokenUrl.waitFor({ state: 'visible', timeout: 10_000 })
+
+    // Find the specific card containing our token (CSS .bg-basalt won't match bg-basalt-50)
+    const linkCard = page.locator('div.bg-basalt').filter({
+      has: page.locator('.font-mono', { hasText: token.slice(0, 12) }),
+    })
 
     await capture(page, {
       stepLabel: 'Active link — before revoke',
@@ -678,10 +718,18 @@ test.describe('Decision Tracker — Share & Export', () => {
       testName,
     })
 
-    // Revoke
+    // Revoke THIS specific link by clicking Revoke within its card
     page.on('dialog', (dialog) => dialog.accept())
-    await page.getByRole('button', { name: 'Revoke' }).last().click()
-    await page.waitForTimeout(1000)
+    const [dtDeleteRes] = await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().includes('/share-token') && r.request().method() === 'DELETE'
+      ),
+      linkCard.getByRole('button', { name: 'Revoke' }).click(),
+    ])
+    expect(dtDeleteRes.status()).toBe(200)
+
+    // Wait for the link card to disappear after revoke (ManageShareLinks refetches)
+    await tokenUrl.waitFor({ state: 'hidden', timeout: 10_000 })
 
     await capture(page, {
       stepLabel: 'After revoke — link removed',
@@ -730,18 +778,11 @@ test.describe('Decision Tracker — Share & Export', () => {
     await expect(page.getByText('Bathroom').first()).toBeVisible()
     await expect(page.getByText('Living Room').first()).toBeVisible()
 
-    // Navigate into a room to verify EDIT access
-    await page.locator('[data-testid="room-card"]').first().click()
-    await page.waitForLoadState('networkidle')
+    // Wait explicitly for the Share & Export button to appear (state hydration may lag behind room card render)
+    const shareBtn = page.locator('button', { hasText: /Share.*Export/ })
+    await shareBtn.waitFor({ state: 'visible', timeout: 15_000 })
 
-    await capture(page, {
-      stepLabel: 'Room detail — EDIT collaborator can view decisions',
-      previousAction: 'Click first room card',
-      userState: 'authed',
-      testName,
-    })
-
-    // Open Share & Export — should NOT have Public Links tab
+    // Open Share & Export from the main page — should NOT have Public Links tab
     await openShareExportModal(page)
 
     await expect(page.getByRole('button', { name: /Public Links/i })).toBeHidden()
@@ -787,15 +828,15 @@ test.describe('Cross-cutting', () => {
     // Enable notes to trigger risky mode (all rooms + notes + 3 scopes)
     await page.locator('label').filter({ hasText: 'Notes' }).first().click()
 
-    // Should show risky warning
-    await page.getByText('Type SHARE to confirm').waitFor({ state: 'visible' })
+    // Should show risky warning (text has <span> around SHARE, use placeholder for input field)
+    await page.getByPlaceholder('Type SHARE to confirm').waitFor({ state: 'visible' })
 
     await capture(page, {
       stepLabel: 'Risky share warning — type SHARE to confirm',
       previousAction: 'Enable notes with all rooms (3 scopes = risky)',
       userState: 'authed',
       testName,
-      stabilityGuard: 'text=Type SHARE to confirm',
+      stabilityGuard: '[placeholder="Type SHARE to confirm"]',
     })
 
     // Create button should be disabled

@@ -50,6 +50,13 @@ export function ManageShareLinks({ toolKey, projectId, renderBadges }: Props) {
     loadTokens()
   }, [loadTokens])
 
+  // Re-fetch when a new token is created (ShareExportModal dispatches this event)
+  useEffect(() => {
+    const handler = () => loadTokens()
+    window.addEventListener('share-token-created', handler)
+    return () => window.removeEventListener('share-token-created', handler)
+  }, [loadTokens])
+
   async function handleRevoke(tokenId: string) {
     if (!confirm('Revoke this public link? Anyone with it will no longer be able to view.')) return
     await fetch(`/api/tools/${toolKey}/share-token?projectId=${projectId}`, {
