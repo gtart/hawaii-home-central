@@ -256,9 +256,17 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
                       View details
                     </Link>
                     {isOwned ? (
-                      <span className="text-xs text-green-400/60 font-medium">
-                        Added
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] text-green-400/60 font-medium">
+                          In My Packs
+                        </span>
+                        <Link
+                          href="/app/tools/finish-decisions"
+                          className="px-3 py-1.5 bg-sandstone/15 text-sandstone text-xs font-medium rounded-lg hover:bg-sandstone/25 transition-colors"
+                        >
+                          Apply to a board
+                        </Link>
+                      </div>
                     ) : (
                       <button
                         type="button"

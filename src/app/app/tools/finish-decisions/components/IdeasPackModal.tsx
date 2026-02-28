@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Link from 'next/link'
 import type { RoomTypeV3, RoomV3 } from '@/data/finish-decisions'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { findKitsForRoomType, findKitsForDecisionTitle } from '@/lib/finish-decision-kits'
@@ -281,13 +282,22 @@ export function IdeasPackModal({
                   : `No Decision Packs available for this ${decisionTitle ? 'decision' : 'room type'}.`}
               </p>
               {activeTab === 'my-packs' && (
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('browse')}
-                  className="mt-2 text-xs text-sandstone hover:text-sandstone-light transition-colors"
-                >
-                  Browse Decision Packs
-                </button>
+                <div className="flex flex-col items-center gap-2 mt-3">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('browse')}
+                    className="text-xs text-sandstone hover:text-sandstone-light transition-colors"
+                  >
+                    Browse available packs
+                  </button>
+                  <Link
+                    href="/app/packs"
+                    onClick={onClose}
+                    className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
+                  >
+                    Visit the Packs marketplace
+                  </Link>
+                </div>
               )}
             </div>
           ) : (

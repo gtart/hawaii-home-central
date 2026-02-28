@@ -166,15 +166,18 @@ export function PackDetail({
             <div className="shrink-0 flex flex-col items-center gap-2">
               {isOwned ? (
                 <>
-                  <div className="px-5 py-2.5 bg-green-500/15 text-green-400 text-sm font-medium rounded-lg">
-                    In My Packs
-                  </div>
                   <Link
                     href="/app/tools/finish-decisions"
-                    className="text-xs text-sandstone hover:text-sandstone-light transition-colors"
+                    className="px-6 py-2.5 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors text-sm text-center"
                   >
-                    Apply to a board &rarr;
+                    Apply to a board
                   </Link>
+                  <span className="inline-flex items-center gap-1 text-[11px] text-green-400/70">
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    In My Packs
+                  </span>
                 </>
               ) : (
                 <>
