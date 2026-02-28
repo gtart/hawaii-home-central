@@ -17,10 +17,10 @@ export function WaitlistSection() {
             id="waitlist-heading"
             className="font-serif text-3xl text-sandstone mb-4"
           >
-            Get on the waitlist
+            Request early access
           </h2>
           <p className="text-cream/60 text-sm mb-8">
-            We&apos;ll let you know when Hawaii Home Central launches.
+            We&apos;re opening access in waves. Leave your email to get invited.
           </p>
           <Suspense fallback={null}>
             <EarlyAccessSignupForm />

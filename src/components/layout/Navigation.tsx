@@ -90,7 +90,7 @@ export function Navigation() {
     : [
         { href: '/about', label: 'About' },
         { href: '/directory', label: 'Directory' },
-        { href: '/waitlist', label: 'Waitlist' },
+        { href: '/waitlist', label: 'Early Access' },
         { href: '/contact', label: 'Contact' },
       ]
 

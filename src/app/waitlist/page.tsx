@@ -4,9 +4,9 @@ import { FadeInSection } from '@/components/effects/FadeInSection'
 import { EarlyAccessSignupForm } from '@/components/forms/EarlyAccessSignupForm'
 
 export const metadata: Metadata = {
-  title: 'Join the Waitlist',
+  title: 'Request Early Access',
   description:
-    'Join the Hawaii Home Central waitlist. Free tools for every stage of your renovation — built for Hawaiʻi homeowners.',
+    'Request early access to Hawaii Home Central. Free tools for every stage of your renovation — built for Hawaiʻi homeowners.',
   robots: { index: true, follow: true },
 }
 
@@ -17,11 +17,11 @@ export default function WaitlistPage() {
         <FadeInSection>
           <div className="text-center mb-10">
             <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-6">
-              Join the Waitlist
+              Request Early Access
             </h1>
             <p className="text-lg text-cream/70 leading-relaxed">
-              Hawaii Home Central is under construction. Leave your email and
-              we&apos;ll let you know when we launch. No spam.
+              We&apos;re in early beta, opening access in waves. Leave your email
+              and we&apos;ll invite you when the next wave opens. No spam.
             </p>
           </div>
         </FadeInSection>
@@ -44,15 +44,13 @@ export default function WaitlistPage() {
                 <div className="bg-basalt-50/50 rounded-lg p-5">
                   <p className="text-cream font-medium mb-1">Sign in with Google</p>
                   <p className="text-cream/60 text-sm leading-relaxed">
-                    Get early access right now. Browse renovation guides, stories,
-                    and tools as we build them.
+                    If you&apos;ve already been invited, sign in to access your tools.
                   </p>
                 </div>
                 <div className="bg-basalt-50/50 rounded-lg p-5">
                   <p className="text-cream font-medium mb-1">Leave your email</p>
                   <p className="text-cream/60 text-sm leading-relaxed">
-                    We&apos;ll send you one email when the site officially launches.
-                    No spam.
+                    We&apos;ll email you when the next wave opens. No spam.
                   </p>
                 </div>
               </div>

@@ -31,7 +31,7 @@ const STAGES: StageEntry[] = [
       title: 'Mood Boards',
       description:
         'Save inspiration from across the web\u2014product pages, design blogs, retailer sites\u2014and organize ideas into boards before turning your favorites into real selections.',
-      ctaText: 'Sign in to get started',
+      ctaText: 'Request early access',
       ctaHref: '/login?callbackUrl=/app/tools/mood-boards',
       steps: [
         'Save ideas from any website with the Save to HHC bookmarklet or paste a link',
@@ -53,7 +53,7 @@ const STAGES: StageEntry[] = [
       title: 'Contract Checklist',
       description:
         'Walk through each bid against the same checklist\u2014so nothing gets missed and you sign with confidence.',
-      ctaText: 'Sign in to get started',
+      ctaText: 'Request early access',
       ctaHref: '/login?callbackUrl=/app/tools/before-you-sign',
       steps: [
         'Add your contractors\u2019 names and quotes',
@@ -75,7 +75,7 @@ const STAGES: StageEntry[] = [
       title: 'Decision Tracker',
       description:
         'Always know what\u2019s decided, what\u2019s next, and what\u2019s blocking\u2014by organizing decisions by room instead of texts and screenshots.',
-      ctaText: 'Sign in to get started',
+      ctaText: 'Request early access',
       ctaHref: '/login?callbackUrl=/app/tools/finish-decisions',
       steps: [
         'Pick your rooms (kitchen, bathroom, etc.)',
@@ -97,7 +97,7 @@ const STAGES: StageEntry[] = [
       title: 'Fix List',
       description:
         'Track fixes and punch list items in real time\u2014and share a clean report with your contractor.',
-      ctaText: 'Sign in to get started',
+      ctaText: 'Request early access',
       ctaHref: '/login?callbackUrl=/app/tools/punchlist',
       steps: [
         'Add items as you notice them during the build',
@@ -155,14 +155,14 @@ export function ToolPreviewCards() {
                       <div className="flex-1 space-y-2">
                         <Link href="/waitlist">
                           <Button variant="primary" size="md" className="w-full">
-                            Join the Waitlist
+                            Request Early Access
                           </Button>
                         </Link>
                         <Link
                           href={stage.tool!.ctaHref}
                           className="block text-center text-xs text-cream/40 hover:text-cream/60 transition-colors"
                         >
-                          Already have access? Sign in
+                          Already invited? Sign in
                         </Link>
                       </div>
                       <button
@@ -213,14 +213,14 @@ export function ToolPreviewCards() {
                         <div className="space-y-2">
                           <Link href="/waitlist">
                             <Button variant="primary" size="sm" className="w-full">
-                              Join the Waitlist
+                              Request Early Access
                             </Button>
                           </Link>
                           <Link
                             href={stage.tool!.ctaHref}
                             className="block text-center text-xs text-cream/40 hover:text-cream/60 transition-colors"
                           >
-                            Already have access? Sign in
+                            Already invited? Sign in
                           </Link>
                         </div>
                       </div>

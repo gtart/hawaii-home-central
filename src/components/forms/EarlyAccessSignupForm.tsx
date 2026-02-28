@@ -82,8 +82,8 @@ export function EarlyAccessSignupForm() {
           You&apos;re on the list!
         </h3>
         <p className="text-cream/70 leading-relaxed">
-          Mahalo! We&apos;ll email you when Hawaii Home Central officially
-          launches. In the meantime, feel free to browse our{' '}
+          Mahalo! We&apos;ll email you when the next access wave opens.
+          In the meantime, feel free to browse our{' '}
           <Link href="/hawaii-home-renovation" className="text-sandstone hover:text-sandstone-light underline underline-offset-2 transition-colors">
             Hawaii Homeowner resources
           </Link>!
@@ -95,7 +95,7 @@ export function EarlyAccessSignupForm() {
   return (
     <div className="space-y-5">
       <h3 className="font-serif text-xl text-sandstone text-center">
-        Join the waitlist!
+        Request early access
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-3">
@@ -113,7 +113,7 @@ export function EarlyAccessSignupForm() {
           aria-label="Email address"
         />
         <Button type="submit" disabled={status === 'submitting'} className="w-full">
-          {status === 'submitting' ? 'Joining...' : 'Join waitlist'}
+          {status === 'submitting' ? 'Submitting...' : 'Request access'}
         </Button>
       </form>
 

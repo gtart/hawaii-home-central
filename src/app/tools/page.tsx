@@ -10,7 +10,7 @@ import { ToolPreviewCards } from './ToolPreviewCards'
 export const metadata: Metadata = {
   title: 'Tools',
   description:
-    'Homeowner tools for every stage of a Hawaiʻi renovation: contract checklist, finish decisions, and fix list. Sign in to get started.',
+    'Homeowner tools for every stage of a Hawaiʻi renovation: contract checklist, finish decisions, and fix list. Request early access.',
 }
 
 export default async function ToolsMarketingPage() {
@@ -42,7 +42,7 @@ export default async function ToolsMarketingPage() {
               One tool for each stage of your home project.
             </p>
             <p className="text-cream/50 text-sm mb-12 max-w-2xl mx-auto text-center">
-              Built for Hawai&#x02BB;i homeowners. Free to use.
+              Built for Hawai&#x02BB;i homeowners. Currently in early beta.
             </p>
           </FadeInSection>
 
@@ -56,10 +56,10 @@ export default async function ToolsMarketingPage() {
           <FadeInSection delay={200}>
             <div className="bg-basalt-50 rounded-card p-6 text-center mb-12">
               <p className="text-cream/60 text-sm mb-3">
-                Free to use. Google sign-in. No credit card required.
+                Free during beta. Google sign-in. No credit card.
               </p>
               <p className="text-cream/50 text-xs">
-                Nothing is shared unless you add collaborators or publish a share link.
+                We&apos;re opening access in waves. Request early access to get invited.
               </p>
             </div>
           </FadeInSection>

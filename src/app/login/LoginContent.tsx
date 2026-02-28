@@ -105,16 +105,16 @@ export function LoginContent() {
               Not Yet Available
             </h1>
             <p className="text-cream/70 leading-relaxed">
-              Hawaii Home Central hasn&apos;t launched yet. Your email isn&apos;t on the early access list.
+              We&apos;re in early beta, opening access in waves. Your email isn&apos;t on the list yet.
             </p>
           </div>
           <div className="bg-basalt-50 rounded-card p-6 text-center">
             <p className="text-cream/60 text-sm mb-4">
-              Join the waitlist and we&apos;ll let you know when we launch.
+              Request early access and we&apos;ll invite you when the next wave opens.
             </p>
             <Link href="/waitlist">
               <Button variant="primary" size="lg" className="w-full">
-                Join the Waitlist
+                Request Early Access
               </Button>
             </Link>
           </div>
@@ -187,7 +187,7 @@ export function LoginContent() {
               You&apos;re on the list!
             </h1>
             <p className="text-cream/70 leading-relaxed mb-6">
-              We&apos;ll email you when Hawaii Home Central launches. In the meantime, check out our free guides.
+              We&apos;ll email you when the next access wave opens. In the meantime, check out our free guides.
             </p>
             <p className="text-cream/40 text-sm">Redirecting to guides...</p>
           </div>
@@ -200,10 +200,10 @@ export function LoginContent() {
         <div className="max-w-sm mx-auto">
           <div className="text-center mb-10">
             <h1 className="font-serif text-3xl md:text-4xl text-sandstone mb-4">
-              We Haven&apos;t Launched Yet
+              We&apos;re in Early Beta
             </h1>
             <p className="text-cream/70 leading-relaxed">
-              Sign up to be notified when we launch.
+              Request access and we&apos;ll invite you when the next wave opens.
             </p>
           </div>
 
@@ -227,7 +227,7 @@ export function LoginContent() {
               size="lg"
               className="w-full"
             >
-              {submitting ? 'Signing up...' : 'Join the Waitlist'}
+              {submitting ? 'Submitting...' : 'Request Access'}
             </Button>
           </form>
 
@@ -238,7 +238,7 @@ export function LoginContent() {
           </div>
 
           <p className="text-center text-sm text-cream/50">
-            Already have early access?{' '}
+            Already invited?{' '}
             <button
               type="button"
               onClick={() => signIn('google', { callbackUrl })}

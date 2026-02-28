@@ -47,10 +47,10 @@ export default function DirectoryPage() {
 
         <FadeInSection delay={200}>
           <p className="text-cream/50 mb-6">
-            Be first to access the directory when it launches.
+            Be first to know when the directory is ready.
           </p>
           <Link href="/waitlist">
-            <Button size="lg">Join the Waitlist</Button>
+            <Button size="lg">Request Early Access</Button>
           </Link>
         </FadeInSection>
       </div>

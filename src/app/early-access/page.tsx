@@ -5,7 +5,7 @@ import { EarlyAccessSignupForm } from '@/components/forms/EarlyAccessSignupForm'
 
 export const metadata: Metadata = {
   title: 'Early Access — Beta Preview',
-  description: 'Hawaii Home Central is in beta preview. Sign in with Google for an early look, or leave your email to be notified at launch.',
+  description: 'Hawaii Home Central is in early beta. Request access or leave your email to be invited when the next wave opens.',
   robots: { index: false, follow: false },
 }
 
@@ -22,7 +22,7 @@ export default function EarlyAccessPage() {
               We&apos;re Building Something
             </h1>
             <p className="text-lg text-cream/70 leading-relaxed">
-              Hawaii Home Central is under construction. The site is being actively updated and will change continuously as we add new content and features.
+              Hawaii Home Central is in early beta. We&apos;re opening access in waves and actively improving every week.
             </p>
           </div>
         </FadeInSection>
@@ -45,13 +45,13 @@ export default function EarlyAccessPage() {
                 <div className="bg-basalt-50/50 rounded-lg p-5">
                   <p className="text-cream font-medium mb-1">Sign in with Google</p>
                   <p className="text-cream/60 text-sm leading-relaxed">
-                    Get early preview access right now. Browse renovation basics, stories, and tools as we build them. Just be patient with us while things are still in progress.
+                    If you&apos;ve already been invited, sign in to access your tools.
                   </p>
                 </div>
                 <div className="bg-basalt-50/50 rounded-lg p-5">
                   <p className="text-cream font-medium mb-1">Leave your email</p>
                   <p className="text-cream/60 text-sm leading-relaxed">
-                    We&apos;ll send you one email when the site officially launches. No spam.
+                    We&apos;ll email you when the next wave opens. No spam.
                   </p>
                 </div>
               </div>

@@ -75,33 +75,27 @@ export function HeroSection() {
           ))}
         </ul>
 
-        {/* Proof of product */}
+        {/* Truth line */}
         <p className="text-cream/40 text-xs tracking-wide uppercase mb-6">
-          Used by Hawai&#x02BB;i homeowners managing real renovations
+          In early beta &middot; Built for Hawai&#x02BB;i homeowners
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-          <Link href="/tools">
+          <Link href="/waitlist">
             <Button variant="primary" size="lg">
-              Start Organizing — Free
+              Request Early Access
             </Button>
           </Link>
-          <Link href="/stories">
+          <Link href="/tools">
             <Button variant="secondary" size="lg">
-              See How Others Did It
+              See the Tools
             </Button>
           </Link>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            document.getElementById('waitlist-form')?.scrollIntoView({ behavior: 'smooth' })
-          }}
-          className="text-cream/60 hover:text-cream text-sm transition-colors"
-        >
-          Join the Waitlist &darr;
-        </button>
+        <p className="text-cream/50 text-sm max-w-md mx-auto">
+          We&apos;re opening access in waves. Join the list to get invited.
+        </p>
       </div>
     </section>
   )
