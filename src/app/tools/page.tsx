@@ -54,7 +54,7 @@ export default async function ToolsMarketingPage() {
           <FadeInSection delay={200}>
             <div className="bg-basalt-50 rounded-card p-6 text-center mb-12">
               <p className="text-cream/60 text-sm">
-                Limited beta (waitlist + whitelist). Google sign-in once approved. No credit card required.
+                Free to use. Google sign-in once approved.
               </p>
             </div>
           </FadeInSection>
