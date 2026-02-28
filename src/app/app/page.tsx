@@ -1,28 +1,28 @@
 import type { Metadata } from 'next'
-import { Badge } from '@/components/ui/Badge'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { ToolGrid } from '@/components/app/ToolGrid'
 import { ProjectBanner } from '@/components/app/ProjectBanner'
 import { NextStepsCard } from '@/components/app/NextStepsCard'
+import { ManageToolsButton } from '@/components/app/ManageToolsButton'
 
 export const metadata: Metadata = {
-  title: 'My Home Tools',
+  title: 'My Project',
 }
 
 export default function AppPage() {
   return (
     <div className="pt-32 pb-24 px-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <FadeInSection className="relative z-10">
-          <div className="mb-12">
-            <div className="flex items-center gap-3 mb-4">
-              <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
-                My Home Tools
+          <div className="mb-8">
+            <div className="flex items-center justify-between gap-4">
+              <h1 className="font-serif text-3xl md:text-4xl text-sandstone">
+                My Project
               </h1>
-              <Badge variant="accent">Early Preview</Badge>
+              <ManageToolsButton />
             </div>
-            <p className="text-cream/70 text-lg leading-relaxed max-w-2xl">
-              Tools for each stage of your home project.
+            <p className="text-cream/50 text-base mt-2">
+              Your tools at a glance.
             </p>
           </div>
         </FadeInSection>

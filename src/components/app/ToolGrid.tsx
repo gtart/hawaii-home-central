@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Badge } from '@/components/ui/Badge'
 import { useProject } from '@/contexts/ProjectContext'
 import { TOOL_REGISTRY } from '@/lib/tool-registry'
 
@@ -37,83 +36,88 @@ function getInitials(name: string | null): string {
   return parts[0].slice(0, 2).toUpperCase()
 }
 
-function ToolStats({ toolKey, stats }: { toolKey: string; stats?: Record<string, unknown> }) {
-  if (!stats) return null
+interface DashboardStat {
+  label: string
+  value: string
+}
 
-  let text: string | null = null
+function getDashboardStats(toolKey: string, stats?: Record<string, unknown>): DashboardStat[] {
+  if (!stats) return []
 
   if (toolKey === 'before_you_sign') {
     const count = (stats.contractorCount as number | undefined) ?? 0
-    const names = (stats.contractorNames as string[] | undefined) ?? []
-    if (count === 0) {
-      text = 'No contractors added'
-    } else {
-      const shown = names.slice(0, 2).join(', ')
-      const extra = names.length > 2 ? ` +${names.length - 2} more` : ''
-      text = count === 1
-        ? `1 contractor being evaluated${shown ? ` — ${shown}` : ''}`
-        : `${count} contractors being evaluated — ${shown}${extra}`
-    }
-  } else if (toolKey === 'finish_decisions') {
+    return [{ label: 'Contractors', value: String(count) }]
+  }
+  if (toolKey === 'finish_decisions') {
     const total = (stats.total as number | undefined) ?? 0
     const finalized = (stats.finalized as number | undefined) ?? 0
-    if (total === 0) {
-      text = 'No finish decisions added yet'
-    } else {
-      const pct = Math.round((finalized / total) * 100)
-      text = `${total} decision${total !== 1 ? 's' : ''} · ${pct}% finalized`
-    }
-  } else if (toolKey === 'punchlist') {
+    const pct = total > 0 ? Math.round((finalized / total) * 100) : 0
+    return [
+      { label: 'Decisions', value: String(total) },
+      { label: 'Finalized', value: `${pct}%` },
+    ]
+  }
+  if (toolKey === 'punchlist') {
     const total = (stats.total as number | undefined) ?? 0
     const done = (stats.done as number | undefined) ?? 0
-    if (total === 0) {
-      text = 'No issues tracked yet'
-    } else {
-      const open = total - done
-      text = `${total} issue${total !== 1 ? 's' : ''} tracked · ${open} open`
-    }
-  } else if (toolKey === 'mood_boards') {
+    return [
+      { label: 'Issues', value: String(total) },
+      { label: 'Open', value: String(total - done) },
+    ]
+  }
+  if (toolKey === 'mood_boards') {
     const boardCount = (stats.boardCount as number | undefined) ?? 0
     const ideaCount = (stats.ideaCount as number | undefined) ?? 0
-    if (ideaCount === 0) {
-      text = 'No ideas saved yet'
-    } else {
-      text = `${boardCount} board${boardCount !== 1 ? 's' : ''} · ${ideaCount} idea${ideaCount !== 1 ? 's' : ''}`
-    }
+    return [
+      { label: 'Boards', value: String(boardCount) },
+      { label: 'Ideas', value: String(ideaCount) },
+    ]
   }
+  return []
+}
 
-  if (!text) return null
+function getEmptyLabel(toolKey: string): string {
+  if (toolKey === 'mood_boards') return 'Save your first idea'
+  if (toolKey === 'finish_decisions') return 'Add your first room'
+  if (toolKey === 'before_you_sign') return 'Start your checklist'
+  if (toolKey === 'punchlist') return 'Track your first fix'
+  return 'Get started'
+}
 
-  return <p className="text-xs text-sandstone/60 mt-1.5">{text}</p>
+function isToolEmpty(toolKey: string, stats?: Record<string, unknown>): boolean {
+  if (!stats) return true
+  if (toolKey === 'mood_boards') return ((stats.ideaCount as number) ?? 0) === 0
+  if (toolKey === 'finish_decisions') return ((stats.total as number) ?? 0) === 0
+  if (toolKey === 'before_you_sign') return ((stats.contractorCount as number) ?? 0) === 0
+  if (toolKey === 'punchlist') return ((stats.total as number) ?? 0) === 0
+  return true
 }
 
 function ToolMeta({ summary }: { summary: ToolSummary | undefined }) {
-  if (!summary) {
-    return <span className="text-cream/30 text-xs">Not started yet</span>
-  }
+  if (!summary) return null
 
   const user = summary.updatedBy
   return (
     <div className="flex items-center gap-2 text-xs text-cream/40">
       {user && (
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-cream/5 text-cream/50">
+        <span className="inline-flex items-center gap-1.5">
           {user.image ? (
             <Image
               src={user.image}
               alt=""
-              width={16}
-              height={16}
-              className="w-4 h-4 rounded-full object-cover"
+              width={14}
+              height={14}
+              className="w-3.5 h-3.5 rounded-full object-cover"
             />
           ) : (
-            <span className="w-4 h-4 rounded-full bg-cream/10 flex items-center justify-center text-[9px] font-semibold text-cream/40">
+            <span className="w-3.5 h-3.5 rounded-full bg-cream/10 flex items-center justify-center text-[8px] font-semibold text-cream/40">
               {getInitials(user.name)}
             </span>
           )}
           <span className="leading-none">{user.name || 'Someone'}</span>
         </span>
       )}
-      <span>Updated {relativeTime(summary.updatedAt)}</span>
+      <span>{relativeTime(summary.updatedAt)}</span>
     </div>
   )
 }
@@ -136,12 +140,15 @@ export function ToolGrid() {
     return () => { cancelled = true }
   }, [currentProject?.id])
 
-  // Owners see all tools. Members only see tools they have access to.
+  // Members: filter by explicit tool access. Owners: filter by activeToolKeys.
+  const activeKeys = currentProject?.activeToolKeys ?? []
   const visibleTools = currentProject?.role === 'MEMBER' && currentProject.toolAccess
     ? TOOL_REGISTRY.filter((t) =>
         currentProject.toolAccess!.some((a) => a.toolKey === t.toolKey)
       )
-    : TOOL_REGISTRY
+    : activeKeys.length > 0
+      ? TOOL_REGISTRY.filter((t) => activeKeys.includes(t.toolKey))
+      : TOOL_REGISTRY
 
   const summaryMap = new Map(summaries.map((s) => [s.toolKey, s]))
 
@@ -156,33 +163,53 @@ export function ToolGrid() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {visibleTools.map((tool) => {
         const summary = summaryMap.get(tool.toolKey)
+        const dashStats = getDashboardStats(tool.toolKey, summary?.stats)
+        const empty = isToolEmpty(tool.toolKey, summary?.stats)
+
         return (
-          <div key={tool.toolKey} className="flex flex-col sm:flex-row sm:items-stretch gap-0 sm:gap-0">
-            {/* Stage label — above on mobile, left column on desktop */}
-            <div className="sm:w-40 sm:shrink-0 sm:flex sm:flex-col sm:justify-center sm:pr-5 sm:border-r sm:border-cream/10 mb-2 sm:mb-0">
-              <span className="text-[11px] uppercase tracking-wider text-cream/30 sm:hidden">Stage</span>
-              <p className="text-sm font-medium text-cream/50">{tool.stage}</p>
+          <Link
+            key={tool.toolKey}
+            href={tool.href}
+            className="group block p-5 bg-basalt-50 rounded-card border border-cream/5 hover:border-sandstone/20 transition-colors"
+          >
+            {/* Header: title + stage */}
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <h3 className="font-serif text-lg text-sandstone group-hover:text-sandstone-light transition-colors">
+                {tool.title}
+              </h3>
+              <span className="text-[10px] uppercase tracking-wider text-cream/30 shrink-0 mt-1">
+                {tool.stage}
+              </span>
             </div>
 
-            {/* Tool card */}
-            <Link
-              href={tool.href}
-              className="block flex-1 p-5 bg-basalt-50 rounded-card card-hover sm:ml-5"
-            >
-              <div className="flex items-start justify-between gap-4 mb-2">
-                <h3 className="font-serif text-lg text-sandstone">{tool.title}</h3>
-                <Badge>Live</Badge>
+            {/* Stats or empty state */}
+            {empty ? (
+              <p className="text-cream/40 text-sm mb-3">
+                {getEmptyLabel(tool.toolKey)}
+              </p>
+            ) : (
+              <div className="flex gap-5 mb-3">
+                {dashStats.map((s) => (
+                  <div key={s.label}>
+                    <p className="text-2xl font-semibold text-cream tabular-nums">{s.value}</p>
+                    <p className="text-[11px] text-cream/40 uppercase tracking-wide">{s.label}</p>
+                  </div>
+                ))}
               </div>
-              <p className="text-cream/70 text-sm leading-relaxed">{tool.description}</p>
-              <ToolStats toolKey={tool.toolKey} stats={summary?.stats} />
-              <div className="pt-2 border-t border-cream/5 mt-3">
+            )}
+
+            {/* Last activity */}
+            <div className="pt-2 border-t border-cream/5">
+              {summary ? (
                 <ToolMeta summary={summary} />
-              </div>
-            </Link>
-          </div>
+              ) : (
+                <span className="text-cream/25 text-xs">Not started</span>
+              )}
+            </div>
+          </Link>
         )
       })}
     </div>

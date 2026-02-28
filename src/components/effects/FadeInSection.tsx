@@ -18,22 +18,26 @@ export function FadeInSection({
   delay = 0,
 }: FadeInSectionProps) {
   const ref = useRef<HTMLDivElement>(null)
-  const [isVisible, setIsVisible] = useState(false)
+  // Start as 'idle' (visible by default), JS sets to 'pending' then 'visible'
+  const [state, setState] = useState<'idle' | 'pending' | 'visible'>('idle')
   const prefersReducedMotion = useReducedMotion()
 
   useEffect(() => {
     if (prefersReducedMotion) {
-      setIsVisible(true)
+      setState('visible')
       return
     }
+
+    // Once JS loads, hide elements that are below the fold
+    setState('pending')
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           if (delay > 0) {
-            setTimeout(() => setIsVisible(true), delay)
+            setTimeout(() => setState('visible'), delay)
           } else {
-            setIsVisible(true)
+            setState('visible')
           }
           observer.disconnect()
         }
@@ -50,7 +54,8 @@ export function FadeInSection({
       ref={ref}
       className={cn(
         prefersReducedMotion ? '' : 'animate-on-scroll',
-        isVisible ? 'visible' : '',
+        state === 'pending' ? 'pending' : '',
+        state === 'visible' ? 'visible' : '',
         className
       )}
     >

@@ -121,6 +121,18 @@ export async function POST(_request: Request, { params }: RouteParams) {
       update: { level: invite.level },
     })
 
+    // Auto-activate tool on the project if not already active
+    const project = await tx.project.findUnique({
+      where: { id: invite.projectId },
+      select: { activeToolKeys: true },
+    })
+    if (project && project.activeToolKeys.length > 0 && !project.activeToolKeys.includes(invite.toolKey)) {
+      await tx.project.update({
+        where: { id: invite.projectId },
+        data: { activeToolKeys: [...project.activeToolKeys, invite.toolKey] },
+      })
+    }
+
     // Mark invite as accepted
     await tx.projectInvite.update({
       where: { id: invite.id },

@@ -18,6 +18,7 @@ export interface ProjectInfo {
   status: ProjectStatus
   role: ProjectRole
   currentStage: string | null
+  activeToolKeys: string[]
   createdAt: string
   updatedAt: string
   toolAccess?: ToolAccessInfo[]
@@ -30,6 +31,7 @@ interface ProjectContextValue {
   switchProject: (projectId: string) => Promise<void>
   createProject: (name: string) => Promise<string>
   setProjectStage: (stage: string) => Promise<void>
+  setActiveTools: (toolKeys: string[]) => Promise<void>
   refreshProjects: () => Promise<void>
 }
 
@@ -106,10 +108,24 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     })
     if (!res.ok) throw new Error('Failed to set project stage')
 
-    // Update local state so UI reacts immediately
     setProjects((prev) =>
       prev.map((p) =>
         p.id === currentProjectId ? { ...p, currentStage: stage } : p
+      )
+    )
+  }, [currentProjectId])
+
+  const setActiveTools = useCallback(async (toolKeys: string[]) => {
+    const res = await fetch('/api/projects/active-tools', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ toolKeys }),
+    })
+    if (!res.ok) throw new Error('Failed to update active tools')
+
+    setProjects((prev) =>
+      prev.map((p) =>
+        p.id === currentProjectId ? { ...p, activeToolKeys: toolKeys } : p
       )
     )
   }, [currentProjectId])
@@ -125,6 +141,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         switchProject,
         createProject,
         setProjectStage,
+        setActiveTools,
         refreshProjects: fetchProjects,
       }}
     >

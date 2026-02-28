@@ -152,6 +152,22 @@ export async function POST(request: Request, { params }: RouteParams) {
     },
   })
 
+  // Auto-activate the tool on the project if owner has a custom active-tools list
+  try {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { activeToolKeys: true },
+    })
+    if (project && project.activeToolKeys.length > 0 && !project.activeToolKeys.includes(toolKey)) {
+      await prisma.project.update({
+        where: { id: projectId },
+        data: { activeToolKeys: [...project.activeToolKeys, toolKey] },
+      })
+    }
+  } catch {
+    // non-blocking
+  }
+
   // Auto-whitelist the invited email so they can sign in (REQUIRE_WHITELIST mode)
   try {
     await prisma.earlyAccessAllowlist.upsert({

@@ -19,7 +19,7 @@ export async function GET() {
     where: { userId },
     include: {
       project: {
-        select: { id: true, name: true, status: true, currentStage: true, createdAt: true, updatedAt: true },
+        select: { id: true, name: true, status: true, currentStage: true, activeToolKeys: true, createdAt: true, updatedAt: true },
       },
     },
     orderBy: { project: { createdAt: 'asc' } },
@@ -51,6 +51,7 @@ export async function GET() {
       status: m.project.status,
       role: m.role,
       currentStage: m.project.currentStage,
+      activeToolKeys: m.project.activeToolKeys,
       createdAt: m.project.createdAt,
       updatedAt: m.project.updatedAt,
       toolAccess: m.role === 'MEMBER' ? (toolAccessByProject.get(m.project.id) || []) : undefined,

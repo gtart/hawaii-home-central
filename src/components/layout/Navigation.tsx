@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { UserMenu } from '@/components/auth/UserMenu'
 import { ProjectSwitcher } from '@/components/app/ProjectSwitcher'
 import { TOOL_REGISTRY } from '@/lib/tool-registry'
+import { useProjectOptional } from '@/contexts/ProjectContext'
 
 interface NavLink {
   href: string
@@ -17,6 +18,7 @@ interface NavLink {
 
 export function Navigation() {
   const { data: session } = useSession()
+  const projectCtx = useProjectOptional()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -56,25 +58,46 @@ export function Navigation() {
   // Hide nav on admin, public share, and report pages
   if (pathname.startsWith('/admin') || pathname.startsWith('/share') || pathname.includes('/report')) return null
 
-  const toolsLabel = session?.user ? 'My Home Tools' : 'Tools'
-  const toolsHref = session?.user ? '/app' : '/tools'
+  const isLoggedIn = !!session?.user
 
-  const primaryLinks: NavLink[] = [
-    { href: '/hawaii-home-renovation', label: 'Renovation Guides', matchMode: 'prefix' },
-    { href: toolsHref, label: toolsLabel, matchMode: 'prefix' },
-    { href: '/stories', label: 'Stories' },
-  ]
+  // Filter tools by activation state (empty array = all tools active)
+  const activeKeys = projectCtx?.currentProject?.activeToolKeys ?? []
+  const navTools = activeKeys.length > 0
+    ? TOOL_REGISTRY.filter((t) => activeKeys.includes(t.toolKey))
+    : TOOL_REGISTRY
 
-  const moreLinks: NavLink[] = [
-    { href: '/about', label: 'About' },
-    { href: '/directory', label: 'Directory' },
-    { href: '/waitlist', label: 'Waitlist' },
-    { href: '/contact', label: 'Contact' },
-  ]
+  // Marketing nav for visitors, app nav for logged-in users
+  const primaryLinks: NavLink[] = isLoggedIn
+    ? [
+        { href: '/app', label: 'My Project', matchMode: 'prefix' },
+      ]
+    : [
+        { href: '/hawaii-home-renovation', label: 'Renovation Guides', matchMode: 'prefix' },
+        { href: '/tools', label: 'Tools', matchMode: 'prefix' },
+        { href: '/stories', label: 'Stories' },
+      ]
+
+  const moreLinks: NavLink[] = isLoggedIn
+    ? [
+        { href: '/hawaii-home-renovation', label: 'Renovation Guides', matchMode: 'prefix' },
+        { href: '/stories', label: 'Stories' },
+        { href: '/about', label: 'About' },
+        { href: '/directory', label: 'Directory' },
+        { href: '/contact', label: 'Contact' },
+      ]
+    : [
+        { href: '/about', label: 'About' },
+        { href: '/directory', label: 'Directory' },
+        { href: '/waitlist', label: 'Waitlist' },
+        { href: '/contact', label: 'Contact' },
+      ]
 
   const isLinkActive = (link: NavLink) => {
-    if (link.href === '/app' || link.href === '/tools') {
+    if (link.href === '/app') {
       return pathname.startsWith('/app') || pathname.startsWith('/tools')
+    }
+    if (link.href === '/tools') {
+      return pathname.startsWith('/tools')
     }
     // Renovation Guides link: active for both /hawaii-home-renovation and /resources sub-pages
     if (link.href === '/hawaii-home-renovation') {
@@ -139,10 +162,10 @@ export function Navigation() {
             <div className="hidden lg:flex items-center gap-6">
               <ul className="flex items-center gap-6">
                 {primaryLinks.map((link) => {
-                  const isTools = link.href === '/app' || link.href === '/tools'
+                  const isAppHome = link.href === '/app' && isLoggedIn
                   const active = isLinkActive(link)
 
-                  if (isTools && session?.user) {
+                  if (isAppHome) {
                     return (
                       <li key={link.href}>
                         <div className="relative" ref={toolsRef}>
@@ -180,7 +203,7 @@ export function Navigation() {
                           </div>
                           {toolsOpen && (
                             <div className="absolute left-0 top-full mt-2 bg-basalt-50 border border-cream/10 rounded-card shadow-lg py-2 min-w-[200px]">
-                              {TOOL_REGISTRY.map((tool) => (
+                              {navTools.map((tool) => (
                                 <Link
                                   key={tool.toolKey}
                                   href={tool.href}
@@ -308,14 +331,14 @@ export function Navigation() {
               )}
 
               {primaryLinks.map((link) => {
-                const isTools = (link.href === '/app' || link.href === '/tools') && session?.user
+                const isAppHome = link.href === '/app' && isLoggedIn
                 return (
                   <li key={link.href}>
                     <Link
                       href={link.href}
                       className={cn(
                         'block py-2.5 text-base transition-colors',
-                        isTools && 'font-medium',
+                        isAppHome && 'font-medium',
                         isLinkActive(link)
                           ? 'text-sandstone'
                           : 'text-cream/70 hover:text-cream'
@@ -324,9 +347,9 @@ export function Navigation() {
                     >
                       {link.label}
                     </Link>
-                    {isTools && (
+                    {isAppHome && (
                       <ul className="pl-4 pb-1 space-y-0.5">
-                        {TOOL_REGISTRY.map((tool) => (
+                        {navTools.map((tool) => (
                           <li key={tool.toolKey}>
                             <Link
                               href={tool.href}
