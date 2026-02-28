@@ -162,7 +162,7 @@ export function ToolPreviewCards() {
                           href={stage.tool!.ctaHref}
                           className="block text-center text-xs text-cream/40 hover:text-cream/60 transition-colors"
                         >
-                          Already invited? Sign in
+                          Have access? Sign in
                         </Link>
                       </div>
                       <button
@@ -220,7 +220,7 @@ export function ToolPreviewCards() {
                             href={stage.tool!.ctaHref}
                             className="block text-center text-xs text-cream/40 hover:text-cream/60 transition-colors"
                           >
-                            Already invited? Sign in
+                            Have access? Sign in
                           </Link>
                         </div>
                       </div>

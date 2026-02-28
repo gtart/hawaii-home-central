@@ -10,7 +10,7 @@ import { ToolPreviewCards } from './ToolPreviewCards'
 export const metadata: Metadata = {
   title: 'Tools',
   description:
-    'Homeowner tools for every stage of a Hawaiʻi renovation: contract checklist, finish decisions, and fix list. Request early access.',
+    'Tools for every part of a Hawaiʻi renovation — save ideas, compare bids, lock decisions, and track punch items. Currently in limited beta.',
 }
 
 export default async function ToolsMarketingPage() {
@@ -39,10 +39,13 @@ export default async function ToolsMarketingPage() {
               Tools
             </h1>
             <p className="text-lg text-cream/70 mb-4 max-w-3xl mx-auto text-center leading-relaxed">
-              One tool for each stage of your home project.
+              Tools for every part of a Hawai&#x02BB;i renovation&mdash;use them anytime.
+            </p>
+            <p className="text-cream/70 text-sm mb-2 max-w-2xl mx-auto text-center leading-relaxed">
+              Save ideas, compare bids, lock decisions, and track punch items&mdash;without spreadsheets and endless texts.
             </p>
             <p className="text-cream/50 text-sm mb-12 max-w-2xl mx-auto text-center">
-              Built for Hawai&#x02BB;i homeowners. Currently in early beta.
+              Currently in limited beta (waitlist + whitelist). Request access below.
             </p>
           </FadeInSection>
 
@@ -55,11 +58,8 @@ export default async function ToolsMarketingPage() {
           {/* Trust messaging */}
           <FadeInSection delay={200}>
             <div className="bg-basalt-50 rounded-card p-6 text-center mb-12">
-              <p className="text-cream/60 text-sm mb-3">
-                Free during beta. Google sign-in. No credit card.
-              </p>
-              <p className="text-cream/50 text-xs">
-                We&apos;re opening access in waves. Request early access to get invited.
+              <p className="text-cream/60 text-sm">
+                Limited beta (waitlist + whitelist). Google sign-in once approved. No credit card required.
               </p>
             </div>
           </FadeInSection>
