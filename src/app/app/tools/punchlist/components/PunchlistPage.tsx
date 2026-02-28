@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import type { PunchlistStateAPI } from '../usePunchlistState'
 import type { PunchlistStatus } from '../types'
 import { PunchlistItemCard } from './PunchlistItemCard'
@@ -24,12 +24,13 @@ const PRIORITY_ORDER = { HIGH: 0, MED: 1, LOW: 2 } as const
 
 interface Props {
   api: PunchlistStateAPI
+  onShareExport?: () => void
 }
 
-export function PunchlistPage({ api }: Props) {
+export function PunchlistPage({ api, onShareExport }: Props) {
   const { payload, readOnly } = api
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('ALL')
-  const [filterLocation, setFilterLocation] = useState<string | null>(null)
+  const [filterLocations, setFilterLocations] = useState<Set<string>>(new Set())
   const [filterAssignee, setFilterAssignee] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortMode>('newest')
@@ -40,11 +41,6 @@ export function PunchlistPage({ api }: Props) {
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [viewingId, setViewingId] = useState<string | null>(null)
-  const [showLocationMenu, setShowLocationMenu] = useState(false)
-  const [locationSearch, setLocationSearch] = useState('')
-  const locationBtnRef = useRef<HTMLButtonElement>(null)
-  const locationMenuRef = useRef<HTMLDivElement>(null)
-
   const uniqueLocations = useMemo(() => {
     const locs = new Set(payload.items.map((i) => i.location).filter(Boolean))
     return Array.from(locs).sort()
@@ -55,29 +51,6 @@ export function PunchlistPage({ api }: Props) {
     return Array.from(assignees).sort()
   }, [payload.items])
 
-  const filteredLocations = useMemo(
-    () =>
-      uniqueLocations.filter(
-        (loc) => !locationSearch || loc.toLowerCase().includes(locationSearch.toLowerCase())
-      ),
-    [uniqueLocations, locationSearch]
-  )
-
-  // Close location menu on Escape key
-  const closeLocationMenu = useCallback(() => {
-    setShowLocationMenu(false)
-    setLocationSearch('')
-  }, [])
-
-  useEffect(() => {
-    if (!showLocationMenu) return
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeLocationMenu()
-    }
-    document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [showLocationMenu, closeLocationMenu])
-
   const filtered = useMemo(() => {
     let items = payload.items
 
@@ -85,8 +58,8 @@ export function PunchlistPage({ api }: Props) {
       items = items.filter((i) => i.status === filterStatus)
     }
 
-    if (filterLocation) {
-      items = items.filter((i) => i.location === filterLocation)
+    if (filterLocations.size > 0) {
+      items = items.filter((i) => filterLocations.has(i.location))
     }
 
     if (filterAssignee) {
@@ -117,7 +90,7 @@ export function PunchlistPage({ api }: Props) {
     }
 
     return sorted
-  }, [payload.items, filterStatus, filterLocation, filterAssignee, search, sort])
+  }, [payload.items, filterStatus, filterLocations, filterAssignee, search, sort])
 
   const counts = useMemo(() => {
     const c = { OPEN: 0, ACCEPTED: 0, DONE: 0, total: payload.items.length }
@@ -132,8 +105,8 @@ export function PunchlistPage({ api }: Props) {
 
   return (
     <>
-      {/* Summary stats */}
-      <div className="flex flex-wrap gap-3 mb-6">
+      {/* Row 1: Summary stats + Share & Export */}
+      <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="bg-basalt-50 rounded-lg px-4 py-2 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-red-400" />
           <span className="text-sm text-cream/70">{counts.OPEN} open</span>
@@ -146,14 +119,29 @@ export function PunchlistPage({ api }: Props) {
           <span className="w-2 h-2 rounded-full bg-emerald-400" />
           <span className="text-sm text-cream/70">{counts.DONE} done</span>
         </div>
+
+        {onShareExport && (
+          <button
+            type="button"
+            onClick={onShareExport}
+            className="ml-auto inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-sandstone/15 text-sandstone hover:bg-sandstone/25 transition-colors"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
+              <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
+              <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
+            </svg>
+            Share &amp; Export
+          </button>
+        )}
       </div>
 
       <p className="text-xs text-cream/30 mb-6">
         Open = waiting for review &middot; Accepted = acknowledged &middot; Done = completed
       </p>
 
-      {/* Row 1: Status pills + Assignee chips + Search + Sort + Desktop Add buttons */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
+      {/* Row 2: Status filter pills + Location pills + Assignee chips */}
+      <div className="flex flex-wrap items-center gap-2 mb-3">
         {/* Status filter pills */}
         <div className="flex gap-1.5">
           {STATUS_OPTIONS.map((opt) => (
@@ -174,11 +162,47 @@ export function PunchlistPage({ api }: Props) {
           ))}
         </div>
 
+        {/* Divider + Location multi-select pills */}
+        {uniqueLocations.length > 0 && (
+          <>
+            <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Location</span>
+              {uniqueLocations.map((loc) => {
+                const active = filterLocations.has(loc)
+                return (
+                  <button
+                    key={loc}
+                    type="button"
+                    onClick={() => {
+                      setFilterLocations((prev) => {
+                        const next = new Set(prev)
+                        if (next.has(loc)) next.delete(loc)
+                        else next.add(loc)
+                        return next
+                      })
+                    }}
+                    aria-label={`Filter by location: ${loc}`}
+                    aria-pressed={active}
+                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
+                      active
+                        ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
+                        : 'border-cream/15 text-cream/40 hover:border-cream/30'
+                    }`}
+                  >
+                    {loc}
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        )}
+
         {/* Divider + Assignee chips (if more than 1 assignee) */}
         {uniqueAssignees.length > 1 && (
           <>
             <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Assignee</span>
               {uniqueAssignees.map((a) => (
                 <button
@@ -199,8 +223,10 @@ export function PunchlistPage({ api }: Props) {
             </div>
           </>
         )}
+      </div>
 
-        {/* Search */}
+      {/* Row 3: Search + Sort + Desktop Add buttons */}
+      <div className="flex flex-wrap items-center gap-3 mb-3">
         <input
           type="text"
           value={search}
@@ -210,7 +236,6 @@ export function PunchlistPage({ api }: Props) {
           className="flex-1 min-w-[140px] bg-basalt border border-cream/20 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
         />
 
-        {/* Sort */}
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortMode)}
@@ -250,106 +275,9 @@ export function PunchlistPage({ api }: Props) {
         )}
       </div>
 
-      {/* Row 2: Location dropdown + active filter summary */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        {/* Location dropdown */}
-        {uniqueLocations.length > 0 && (
-          <div className="relative">
-            <button
-              ref={locationBtnRef}
-              type="button"
-              onClick={() => setShowLocationMenu(!showLocationMenu)}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer flex items-center gap-1.5 ${
-                filterLocation
-                  ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
-                  : 'border-cream/20 text-cream/50 hover:border-cream/40'
-              }`}
-              aria-label="Filter by location"
-              aria-expanded={showLocationMenu}
-              aria-haspopup="listbox"
-            >
-              <span>{filterLocation || 'All Locations'}</span>
-              <svg className="w-3 h-3 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-
-            {showLocationMenu && (
-              <>
-                {/* Backdrop */}
-                <div
-                  className="fixed inset-0 z-30"
-                  onClick={closeLocationMenu}
-                  aria-hidden="true"
-                />
-
-                {/* Desktop dropdown / Mobile bottom sheet */}
-                <div
-                  ref={locationMenuRef}
-                  role="listbox"
-                  aria-label="Select location"
-                  className="absolute left-0 top-full mt-1 z-40 w-56 max-h-64 overflow-y-auto bg-basalt-50 border border-cream/15 rounded-lg shadow-xl py-1
-                             md:w-56
-                             max-md:fixed max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:top-auto max-md:rounded-t-xl max-md:rounded-b-none max-md:max-h-[60vh] max-md:w-full max-md:mt-0"
-                >
-                  {/* Mobile drag handle */}
-                  <div className="md:hidden flex justify-center py-2">
-                    <div className="w-8 h-1 rounded-full bg-cream/20" />
-                  </div>
-
-                  {/* Search (if > 5 locations) */}
-                  {uniqueLocations.length > 5 && (
-                    <div className="px-3 py-2 border-b border-cream/10">
-                      <input
-                        type="text"
-                        value={locationSearch}
-                        onChange={(e) => setLocationSearch(e.target.value)}
-                        placeholder="Search locations..."
-                        className="w-full bg-basalt border border-cream/20 rounded px-2 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
-                        autoFocus
-                        aria-label="Search locations"
-                      />
-                    </div>
-                  )}
-
-                  {/* All Locations option */}
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={!filterLocation}
-                    onClick={() => { setFilterLocation(null); closeLocationMenu() }}
-                    className={`w-full text-left px-3 py-2.5 text-sm transition-colors flex items-center justify-between ${
-                      !filterLocation ? 'text-sandstone bg-sandstone/10' : 'text-cream/70 hover:bg-cream/5'
-                    }`}
-                  >
-                    All Locations
-                    {!filterLocation && <span className="text-sandstone" aria-hidden="true">&#10003;</span>}
-                  </button>
-
-                  {/* Location items */}
-                  {filteredLocations.map((loc) => (
-                    <button
-                      key={loc}
-                      type="button"
-                      role="option"
-                      aria-selected={filterLocation === loc}
-                      onClick={() => { setFilterLocation(filterLocation === loc ? null : loc); closeLocationMenu() }}
-                      className={`w-full text-left px-3 py-2.5 text-sm transition-colors flex items-center justify-between ${
-                        filterLocation === loc ? 'text-sandstone bg-sandstone/10' : 'text-cream/70 hover:bg-cream/5'
-                      }`}
-                    >
-                      {loc}
-                      {filterLocation === loc && <span className="text-sandstone" aria-hidden="true">&#10003;</span>}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Active filter summary */}
-        {(filterStatus !== 'ALL' || filterLocation || filterAssignee || search.trim()) && (
+      {/* Row 4: Active filter summary */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        {(filterStatus !== 'ALL' || filterLocations.size > 0 || filterAssignee || search.trim()) && (
           <>
             <span className="text-xs text-cream/40">
               Showing {filtered.length} of {payload.items.length}
@@ -357,7 +285,7 @@ export function PunchlistPage({ api }: Props) {
             <span className="mx-0.5 text-cream/20" aria-hidden="true">&middot;</span>
             <button
               type="button"
-              onClick={() => { setFilterStatus('ALL'); setFilterLocation(null); setFilterAssignee(null); setSearch('') }}
+              onClick={() => { setFilterStatus('ALL'); setFilterLocations(new Set()); setFilterAssignee(null); setSearch('') }}
               className="text-xs text-sandstone/70 hover:text-sandstone transition-colors"
               aria-label="Clear all filters"
             >
