@@ -1,9 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useProject } from '@/contexts/ProjectContext'
 import { TOOL_REGISTRY } from '@/lib/tool-registry'
+import { getDashboardStats } from '@/lib/tool-stats'
 import { cn } from '@/lib/utils'
+
+interface ToolSummary {
+  toolKey: string
+  stats?: Record<string, unknown>
+}
 
 interface Props {
   open: boolean
@@ -20,8 +26,36 @@ export function ManageToolsDrawer({ open, onClose }: Props) {
 
   const [selected, setSelected] = useState<Set<string>>(effectiveKeys)
   const [saving, setSaving] = useState(false)
+  const [summaries, setSummaries] = useState<Map<string, ToolSummary>>(new Map())
+
+  // Reset selection when drawer opens or project changes
+  useEffect(() => {
+    if (!open) return
+    const keys = (currentProject?.activeToolKeys ?? []).length > 0
+      ? new Set(currentProject!.activeToolKeys)
+      : new Set(TOOL_REGISTRY.map((t) => t.toolKey))
+    setSelected(keys)
+  }, [open, currentProject?.id, currentProject?.activeToolKeys])
+
+  // Fetch tool summaries when drawer opens
+  useEffect(() => {
+    if (!open) return
+    fetch('/api/tool-summaries')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.summaries) {
+          setSummaries(new Map(
+            (data.summaries as ToolSummary[]).map((s) => [s.toolKey, s])
+          ))
+        }
+      })
+      .catch(() => {})
+  }, [open])
 
   if (!open) return null
+
+  const isOwner = currentProject?.role === 'OWNER'
+  if (!isOwner) return null
 
   const toggle = (toolKey: string) => {
     setSelected((prev) => {
@@ -50,9 +84,6 @@ export function ManageToolsDrawer({ open, onClose }: Props) {
     }
   }
 
-  const isOwner = currentProject?.role === 'OWNER'
-  if (!isOwner) return null
-
   return (
     <>
       {/* Backdrop */}
@@ -65,7 +96,7 @@ export function ManageToolsDrawer({ open, onClose }: Props) {
       {/* Drawer */}
       <div className="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-basalt-50 border-l border-cream/10 shadow-2xl flex flex-col">
         <div className="flex items-center justify-between px-6 py-5 border-b border-cream/10">
-          <h2 className="font-serif text-xl text-sandstone">Manage Tools</h2>
+          <h2 className="font-serif text-xl text-sandstone">Show / Hide Tools</h2>
           <button
             type="button"
             onClick={onClose}
@@ -80,12 +111,16 @@ export function ManageToolsDrawer({ open, onClose }: Props) {
 
         <div className="flex-1 overflow-y-auto px-6 py-5">
           <p className="text-cream/50 text-sm mb-5">
-            Choose which tools appear on your project dashboard. You can always turn them back on.
+            Hide tools you&apos;re not using yet. You can always turn them back on.
           </p>
 
           <div className="space-y-3">
             {TOOL_REGISTRY.map((tool) => {
               const active = selected.has(tool.toolKey)
+              const summary = summaries.get(tool.toolKey)
+              const stats = getDashboardStats(tool.toolKey, summary?.stats)
+              const statLine = stats.map((s) => `${s.value} ${s.label}`).join(' \u00B7 ')
+
               return (
                 <button
                   key={tool.toolKey}
@@ -119,6 +154,9 @@ export function ManageToolsDrawer({ open, onClose }: Props) {
                       {tool.title}
                     </p>
                     <p className="text-xs text-cream/40 mt-0.5">{tool.stage}</p>
+                    <p className="text-[11px] text-cream/30 mt-1">
+                      {summary ? (statLine || 'In progress') : 'Not started'}
+                    </p>
                   </div>
                 </button>
               )

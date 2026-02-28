@@ -88,6 +88,16 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: '/app/tools/decision-tracker',
+        destination: '/app/tools/finish-decisions',
+        permanent: true,
+      },
+      {
+        source: '/app/tools/decision-tracker/:path*',
+        destination: '/app/tools/finish-decisions/:path*',
+        permanent: true,
+      },
+      {
         source: '/tools/fair-bid-checklist',
         destination: '/resources/playbooks/fair-bid-checklist',
         permanent: true,

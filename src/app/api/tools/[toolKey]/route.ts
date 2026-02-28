@@ -160,16 +160,15 @@ export async function PUT(
         const storedBoard = storedMap.get(incomingBoard.id)
         if (!storedBoard) continue // new board — tool-level EDIT is sufficient
 
-        // Quick check: has this board changed?
-        if (JSON.stringify(storedBoard) === JSON.stringify(incomingBoard)) continue
-
-        // Board was modified — check board-level access
-        const boardAccess = resolveBoardAccess(storedBoard, userEmail, access)
-        if (boardAccess !== 'edit') {
-          return NextResponse.json(
-            { error: 'No edit access to board', code: 'BOARD_VIEW_ONLY', boardId: incomingBoard.id },
-            { status: 403 }
-          )
+        // For invite-only boards, always enforce board-level access
+        if (storedBoard.visibility === 'invite-only') {
+          const boardAccess = resolveBoardAccess(storedBoard, userEmail, access)
+          if (boardAccess !== 'edit') {
+            return NextResponse.json(
+              { error: 'No edit access to board', code: 'BOARD_VIEW_ONLY', boardId: incomingBoard.id },
+              { status: 403 }
+            )
+          }
         }
       }
 

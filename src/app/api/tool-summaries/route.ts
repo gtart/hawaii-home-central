@@ -14,8 +14,7 @@ function computeStats(toolKey: string, raw: unknown): ToolStats {
       const contractors = Array.isArray(payload?.contractors)
         ? (payload.contractors as Array<{ name?: string }>)
         : []
-      const names = contractors.map((c) => (c.name ?? '').trim()).filter(Boolean)
-      return { contractorCount: contractors.length, contractorNames: names }
+      return { contractorCount: contractors.length }
     }
 
     if (toolKey === 'finish_decisions') {

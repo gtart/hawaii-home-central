@@ -23,6 +23,7 @@ export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const [toolsOpen, setToolsOpen] = useState(false)
+  const [mobileProjectsOpen, setMobileProjectsOpen] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
   const toolsRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
@@ -38,6 +39,7 @@ export function Navigation() {
     setIsMobileMenuOpen(false)
     setMoreOpen(false)
     setToolsOpen(false)
+    setMobileProjectsOpen(false)
   }, [pathname])
 
   // Close dropdowns on outside click
@@ -323,10 +325,82 @@ export function Navigation() {
           {/* Mobile menu */}
           {isMobileMenuOpen && (
             <ul className="lg:hidden mt-4 py-4 border-t border-cream/10 space-y-1 bg-basalt rounded-b-card">
-              {/* Project context on mobile */}
-              {session?.user && (
-                <li className="px-1 py-2 mb-2">
-                  <ProjectSwitcher />
+              {/* Project context on mobile — inline (no floating dropdown) */}
+              {session?.user && projectCtx && !projectCtx.isLoading && (
+                <li className="pb-3 mb-2 border-b border-cream/10">
+                  <p className="text-[11px] text-cream/30 uppercase tracking-wide mb-1.5">Project</p>
+                  <p className="text-sm font-medium text-sandstone truncate">
+                    {projectCtx.currentProject?.name ?? 'No project selected'}
+                  </p>
+
+                  {projectCtx.projects.filter((p) => p.status === 'ACTIVE').length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setMobileProjectsOpen(!mobileProjectsOpen)}
+                        className="mt-2 flex items-center gap-1.5 text-xs text-cream/50 hover:text-cream transition-colors"
+                      >
+                        <span>Switch project</span>
+                        <svg
+                          className={cn('w-3 h-3 transition-transform', mobileProjectsOpen && 'rotate-180')}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                      {mobileProjectsOpen && (
+                        <ul className="mt-1.5 space-y-0.5 pl-1">
+                          {projectCtx.projects
+                            .filter((p) => p.status === 'ACTIVE')
+                            .map((p) => (
+                              <li key={p.id}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (p.id !== projectCtx.currentProject?.id) {
+                                      projectCtx.switchProject(p.id)
+                                    }
+                                    setMobileProjectsOpen(false)
+                                  }}
+                                  className={cn(
+                                    'block w-full text-left py-1.5 text-sm transition-colors',
+                                    p.id === projectCtx.currentProject?.id
+                                      ? 'text-sandstone'
+                                      : 'text-cream/60 hover:text-cream'
+                                  )}
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <span className="truncate">{p.name}</span>
+                                    {p.id === projectCtx.currentProject?.id && (
+                                      <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                    )}
+                                    {p.role === 'MEMBER' && (
+                                      <span className="text-[10px] text-cream/30">shared</span>
+                                    )}
+                                  </span>
+                                </button>
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </>
+                  )}
+
+                  <a
+                    href="/app/projects"
+                    className="mt-2 flex items-center gap-1.5 text-xs text-cream/40 hover:text-cream/60 transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    Manage Home Projects
+                  </a>
                 </li>
               )}
 

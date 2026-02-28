@@ -18,7 +18,7 @@ export function ManageToolsButton() {
         onClick={() => setOpen(true)}
         className="text-xs text-cream/40 hover:text-cream/70 transition-colors"
       >
-        Manage tools
+        Show / Hide Tools
       </button>
       <ManageToolsDrawer open={open} onClose={() => setOpen(false)} />
     </>
