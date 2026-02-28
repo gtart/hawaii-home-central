@@ -19,7 +19,7 @@ import { PERSONAS, DEFAULT_PERSONA } from './personas'
 // Load .env from project root
 dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
 
-setup('create authenticated sessions for all personas', async ({ browser }) => {
+setup('create authenticated sessions for all personas', async () => {
   const secret = process.env.AUTH_SECRET
   if (!secret) throw new Error('AUTH_SECRET not found in .env -- cannot create test sessions')
 
@@ -81,21 +81,23 @@ setup('create authenticated sessions for all personas', async ({ browser }) => {
   fs.copyFileSync(DEFAULT_PERSONA.storageStatePath, legacyPath)
   console.log('  Auth: backward compat -> user.json')
 
-  // Verify the default persona session works
-  const context = await browser.newContext({
-    storageState: DEFAULT_PERSONA.storageStatePath,
+  // Verify the default persona session works via API fetch (avoids slow browser render)
+  const storageData = JSON.parse(fs.readFileSync(DEFAULT_PERSONA.storageStatePath, 'utf-8'))
+  const sessionCookie = storageData.cookies[0]
+  const res = await fetch(`${baseURL}/api/auth/session`, {
+    headers: { Cookie: `${sessionCookie.name}=${sessionCookie.value}` },
   })
-  const page = await context.newPage()
-  await page.goto(`${baseURL}/app`)
-
-  const url = page.url()
-  if (url.includes('/login')) {
-    await context.close()
+  if (!res.ok) {
     throw new Error(
-      'Auth setup failed -- redirected to login. Check AUTH_SECRET matches your running dev server.'
+      `Auth setup failed -- /api/auth/session returned ${res.status}. Check AUTH_SECRET matches your running dev server.`
+    )
+  }
+  const session = await res.json()
+  if (!session?.user?.email) {
+    throw new Error(
+      'Auth setup failed -- session has no user. Check AUTH_SECRET matches your running dev server.'
     )
   }
 
-  console.log(`  Auth verification passed for ${DEFAULT_PERSONA.name}`)
-  await context.close()
+  console.log(`  Auth verification passed for ${DEFAULT_PERSONA.name} (${session.user.email})`)
 })

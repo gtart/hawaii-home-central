@@ -1,13 +1,7 @@
 import type { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
+import { TOOL_LABELS } from '@/lib/tool-registry'
 import { InviteAcceptClient } from './InviteAcceptClient'
-
-const TOOL_LABELS: Record<string, string> = {
-  before_you_sign: 'Contract Checklist',
-  finish_decisions: 'Decision Tracker',
-  punchlist: 'Fix List',
-  mood_boards: 'Mood Boards',
-}
 
 interface PageProps {
   params: Promise<{ token: string }>

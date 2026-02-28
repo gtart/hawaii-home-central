@@ -63,6 +63,14 @@ export const PERSONAS: PersonaConfig[] = [
     storageStatePath: path.join(authDir, 'persona-full-setup.json'),
     testMatch: /persona-full-setup\.spec\.ts/,
   },
+  {
+    key: 'collaborator',
+    name: 'Collaborator User',
+    email: 'e2e-collaborator@test.hhc.local',
+    userId: 'e2e-persona-collaborator',
+    storageStatePath: path.join(authDir, 'persona-collaborator.json'),
+    testMatch: /share-collaboration\.spec\.ts/,
+  },
 ]
 
 /**

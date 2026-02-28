@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { cn } from '@/lib/utils'
+import { TOOL_LABELS } from '@/lib/tool-registry'
 
 interface AccessEntry {
   id: string
@@ -27,13 +28,6 @@ interface ShareToolModalProps {
   projectId: string
   toolKey: string
   onClose: () => void
-}
-
-const TOOL_LABELS: Record<string, string> = {
-  before_you_sign: 'Contract Checklist',
-  finish_decisions: 'Decision Tracker',
-  punchlist: 'Fix List',
-  mood_boards: 'Mood Boards',
 }
 
 export function ShareToolModal({ projectId, toolKey, onClose }: ShareToolModalProps) {

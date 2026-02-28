@@ -1,15 +1,10 @@
 import type { Metadata } from 'next'
 import { validateShareToken } from '@/lib/share-tokens'
+import { TOOL_LABELS } from '@/lib/tool-registry'
 import { PublicPunchlistView } from './PublicPunchlistView'
 import { PublicMoodBoardView } from './PublicMoodBoardView'
 import { PublicFinishDecisionsView } from './PublicFinishDecisionsView'
 import { InvalidTokenPage } from './InvalidTokenPage'
-
-const TOOL_LABELS: Record<string, string> = {
-  punchlist: 'Fix List',
-  mood_boards: 'Mood Board',
-  finish_decisions: 'Decision Tracker',
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { toolKey, token } = await params

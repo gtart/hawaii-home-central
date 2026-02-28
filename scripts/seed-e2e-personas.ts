@@ -37,6 +37,11 @@ const PERSONA_USERS = [
     name: 'Full Setup User',
     email: 'e2e-full-setup@test.hhc.local',
   },
+  {
+    userId: 'e2e-persona-collaborator',
+    name: 'Collaborator User',
+    email: 'e2e-collaborator@test.hhc.local',
+  },
 ]
 
 // ============================================================================
@@ -50,8 +55,8 @@ async function ensureProject(
 ) {
   await prisma.project.upsert({
     where: { id: projectId },
-    create: { id: projectId, userId, name: projectName, status: 'ACTIVE' },
-    update: { name: projectName, status: 'ACTIVE' },
+    create: { id: projectId, userId, name: projectName, status: 'ACTIVE', currentStage: 'decide-order' },
+    update: { name: projectName, status: 'ACTIVE', currentStage: 'decide-order' },
   })
 
   await prisma.projectMember.upsert({
@@ -643,13 +648,58 @@ async function seedPersona4_FullSetup() {
 }
 
 // ============================================================================
+// Collaborator — gets access to full-setup project (no own projects)
+// ============================================================================
+
+async function seedPersona5_Collaborator() {
+  console.log('\n-- Persona 5: Collaborator (shared access to full-setup project) --')
+
+  const userId = 'e2e-persona-collaborator'
+  const projectId = 'e2e-proj-full'
+
+  // Add as ProjectMember (MEMBER role gives project-level access)
+  await prisma.projectMember.upsert({
+    where: { projectId_userId: { projectId, userId } },
+    create: { projectId, userId, role: 'MEMBER' },
+    update: {},
+  })
+
+  // Grant VIEW access to mood_boards
+  await prisma.projectToolAccess.upsert({
+    where: {
+      projectId_toolKey_userId: { projectId, toolKey: 'mood_boards', userId },
+    },
+    create: { projectId, toolKey: 'mood_boards', userId, level: 'VIEW' },
+    update: { level: 'VIEW' },
+  })
+
+  // Grant EDIT access to finish_decisions
+  await prisma.projectToolAccess.upsert({
+    where: {
+      projectId_toolKey_userId: { projectId, toolKey: 'finish_decisions', userId },
+    },
+    create: { projectId, toolKey: 'finish_decisions', userId, level: 'EDIT' },
+    update: { level: 'EDIT' },
+  })
+
+  // Set current project for collaborator
+  await prisma.user.update({
+    where: { id: userId },
+    data: { currentProjectId: projectId },
+  })
+
+  console.log(`  ProjectMember: MEMBER on ${projectId}`)
+  console.log('  ToolAccess: mood_boards=VIEW, finish_decisions=EDIT')
+}
+
+// ============================================================================
 // Main
 // ============================================================================
 
 async function main() {
   console.log('Seeding E2E test personas...')
 
-  // Upsert all 4 users
+  // Upsert all 5 users
   for (const p of PERSONA_USERS) {
     await prisma.user.upsert({
       where: { id: p.userId },
@@ -658,11 +708,15 @@ async function main() {
         name: p.name,
         email: p.email,
         hasBootstrappedProject: true,
+        hasSeenNewsletterPrompt: true,
+        hasSeenAppOnboarding: true,
       },
       update: {
         name: p.name,
         email: p.email,
         hasBootstrappedProject: true,
+        hasSeenNewsletterPrompt: true,
+        hasSeenAppOnboarding: true,
       },
     })
     console.log(`  User: ${p.name} (${p.userId})`)
@@ -672,6 +726,7 @@ async function main() {
   await seedPersona2_Fixlist()
   await seedPersona3_TwoProjects()
   await seedPersona4_FullSetup()
+  await seedPersona5_Collaborator()
 
   console.log('\nAll personas seeded successfully.')
 }

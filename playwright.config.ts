@@ -24,6 +24,7 @@ export default defineConfig({
     {
       name: 'auth-setup',
       testMatch: /auth\.setup\.ts/,
+      timeout: 60_000,
     },
 
     // ----------------------------------------------------------------
@@ -93,9 +94,11 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: 'npm run dev',
+        command: process.env.E2E_PROD_BUILD
+          ? 'npm run build && npx next start -p 3000'
+          : 'npm run dev',
         url: 'http://localhost:3000',
         reuseExistingServer: true,
-        timeout: 30_000,
+        timeout: process.env.E2E_PROD_BUILD ? 120_000 : 60_000,
       },
 })

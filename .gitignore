@@ -15,6 +15,9 @@ e2e/.auth/
 e2e/results/
 e2e/report/
 e2e/screenshots/
+e2e/artifacts/
+*.zip
+*.tar.gz
 
 # Environment
 .env

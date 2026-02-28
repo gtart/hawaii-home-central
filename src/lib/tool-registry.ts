@@ -46,3 +46,13 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     stage: 'Build',
   },
 ]
+
+/** toolKey → user-facing title (e.g. "Fix List", "Decision Tracker") */
+export const TOOL_LABELS: Record<string, string> = Object.fromEntries(
+  TOOL_REGISTRY.map((t) => [t.toolKey, t.title]),
+)
+
+/** toolKey → app route path (e.g. "/app/tools/punchlist") */
+export const TOOL_PATHS: Record<string, string> = Object.fromEntries(
+  TOOL_REGISTRY.map((t) => [t.toolKey, t.href]),
+)

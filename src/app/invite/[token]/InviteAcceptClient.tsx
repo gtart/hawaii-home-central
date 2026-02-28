@@ -3,20 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-
-const TOOL_PATHS: Record<string, string> = {
-  before_you_sign: '/app/tools/before-you-sign',
-  finish_decisions: '/app/tools/finish-decisions',
-  punchlist: '/app/tools/punchlist',
-  mood_boards: '/app/tools/mood-boards',
-}
-
-const TOOL_LABELS: Record<string, string> = {
-  before_you_sign: 'Contract Checklist',
-  finish_decisions: 'Decision Tracker',
-  punchlist: 'Fix List',
-  mood_boards: 'Mood Boards',
-}
+import { TOOL_LABELS, TOOL_PATHS } from '@/lib/tool-registry'
 
 interface InviteDetails {
   projectName: string
