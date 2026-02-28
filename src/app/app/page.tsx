@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { ToolGrid } from '@/components/app/ToolGrid'
-import { NextStepsCard } from '@/components/app/NextStepsCard'
 import { AppPageHeader } from '@/components/app/AppPageHeader'
 
 export const metadata: Metadata = {
@@ -17,7 +16,6 @@ export default function AppPage() {
         </FadeInSection>
 
         <FadeInSection delay={100}>
-          <NextStepsCard />
           <ToolGrid />
         </FadeInSection>
       </div>

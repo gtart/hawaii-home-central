@@ -14,6 +14,13 @@ interface ToolSummary {
   stats?: Record<string, unknown>
 }
 
+const HELPER_COPY: Record<string, string> = {
+  mood_boards: 'Save inspiration and products you might use.',
+  finish_decisions: 'Choose finishes by room (tile, paint, fixtures, etc.).',
+  before_you_sign: 'Compare bids and avoid gotchas before you sign.',
+  punchlist: 'Track issues during the build and final walkthrough.',
+}
+
 function relativeTime(dateStr: string): string {
   const now = Date.now()
   const then = new Date(dateStr).getTime()
@@ -35,14 +42,6 @@ function getInitials(name: string | null): string {
   const parts = name.trim().split(/\s+/)
   if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
   return parts[0].slice(0, 2).toUpperCase()
-}
-
-function getEmptyLabel(toolKey: string): string {
-  if (toolKey === 'mood_boards') return 'Save your first idea'
-  if (toolKey === 'finish_decisions') return 'Add your first room'
-  if (toolKey === 'before_you_sign') return 'Start your checklist'
-  if (toolKey === 'punchlist') return 'Track your first fix'
-  return 'Get started'
 }
 
 function ToolMeta({ summary }: { summary: ToolSummary | undefined }) {
@@ -92,15 +91,12 @@ export function ToolGrid() {
     return () => { cancelled = true }
   }, [currentProject?.id])
 
-  // Members: filter by explicit tool access. Owners: filter by activeToolKeys.
-  const activeKeys = currentProject?.activeToolKeys ?? []
+  // Members: filter by explicit tool access. Owners: always see all tools.
   const visibleTools = currentProject?.role === 'MEMBER' && currentProject.toolAccess
     ? TOOL_REGISTRY.filter((t) =>
         currentProject.toolAccess!.some((a) => a.toolKey === t.toolKey)
       )
-    : activeKeys.length > 0
-      ? TOOL_REGISTRY.filter((t) => activeKeys.includes(t.toolKey))
-      : TOOL_REGISTRY
+    : TOOL_REGISTRY
 
   const summaryMap = new Map(summaries.map((s) => [s.toolKey, s]))
 
@@ -120,6 +116,7 @@ export function ToolGrid() {
         const summary = summaryMap.get(tool.toolKey)
         const dashStats = getDashboardStats(tool.toolKey, summary?.stats)
         const empty = isToolEmpty(tool.toolKey, summary?.stats)
+        const helperLine = HELPER_COPY[tool.toolKey]
 
         return (
           <Link
@@ -128,7 +125,7 @@ export function ToolGrid() {
             className="group block p-5 bg-basalt-50 rounded-card border border-cream/5 hover:border-sandstone/20 transition-colors"
           >
             {/* Header: title + stage */}
-            <div className="flex items-start justify-between gap-2 mb-3">
+            <div className="flex items-start justify-between gap-2 mb-1">
               <h3 className="font-serif text-lg text-sandstone group-hover:text-sandstone-light transition-colors">
                 {tool.title}
               </h3>
@@ -137,20 +134,34 @@ export function ToolGrid() {
               </span>
             </div>
 
+            {/* Helper copy */}
+            {helperLine && (
+              <p className="text-cream/50 text-xs mb-3">{helperLine}</p>
+            )}
+
             {/* Stats or empty state */}
             {empty ? (
-              <p className="text-cream/40 text-sm mb-3">
-                {getEmptyLabel(tool.toolKey)}
-              </p>
-            ) : (
-              <div className="flex gap-5 mb-3">
-                {dashStats.map((s) => (
-                  <div key={s.label}>
-                    <p className="text-2xl font-semibold text-cream tabular-nums">{s.value}</p>
-                    <p className="text-[11px] text-cream/40 uppercase tracking-wide">{s.label}</p>
-                  </div>
-                ))}
+              <div className="mb-3">
+                <span className="inline-block px-3 py-1.5 bg-sandstone text-basalt text-xs font-medium rounded-button group-hover:bg-sandstone-light transition-colors">
+                  Start
+                </span>
               </div>
+            ) : (
+              <>
+                <div className="flex gap-5 mb-3">
+                  {dashStats.map((s) => (
+                    <div key={s.label}>
+                      <p className="text-2xl font-semibold text-cream tabular-nums">{s.value}</p>
+                      <p className="text-[11px] text-cream/40 uppercase tracking-wide">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mb-3">
+                  <span className="inline-block px-3 py-1.5 border border-sandstone/30 text-sandstone text-xs font-medium rounded-button group-hover:bg-sandstone/10 transition-colors">
+                    Continue
+                  </span>
+                </div>
+              </>
             )}
 
             {/* Last activity */}
