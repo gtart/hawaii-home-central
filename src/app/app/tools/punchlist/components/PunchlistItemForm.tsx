@@ -11,9 +11,11 @@ interface Props {
   api: PunchlistStateAPI
   editItem?: PunchlistItem
   onClose: () => void
+  onBulkPhotos?: () => void
+  onBulkText?: () => void
 }
 
-export function PunchlistItemForm({ api, editItem, onClose }: Props) {
+export function PunchlistItemForm({ api, editItem, onClose, onBulkPhotos, onBulkText }: Props) {
   const { data: session } = useSession()
   const { addItem, updateItem, payload } = api
 
@@ -265,6 +267,41 @@ export function PunchlistItemForm({ api, editItem, onClose }: Props) {
               {editItem ? 'Save Changes' : 'Save'}
             </button>
           </div>
+
+          {/* Bulk add options — new items only */}
+          {!editItem && (onBulkPhotos || onBulkText) && (
+            <div className="pt-4 border-t border-cream/10">
+              <p className="text-xs text-cream/30 mb-2">Need to add many items at once?</p>
+              <div className="flex gap-2">
+                {onBulkPhotos && (
+                  <button
+                    type="button"
+                    onClick={onBulkPhotos}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 border border-cream/15 text-cream/50 rounded-lg hover:border-cream/30 hover:text-cream/70 transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    Upload photos
+                  </button>
+                )}
+                {onBulkText && (
+                  <button
+                    type="button"
+                    onClick={onBulkText}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 border border-cream/15 text-cream/50 rounded-lg hover:border-cream/30 hover:text-cream/70 transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Add in bulk
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

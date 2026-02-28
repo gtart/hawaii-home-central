@@ -110,19 +110,13 @@ export function BulkPhotoUpload({ api, onClose }: Props) {
 
   function handleSubmit() {
     setSubmitError('')
-    const valid = drafts.filter((d) => d.title.trim())
-    if (valid.length === 0) {
-      setSubmitError('At least one item needs a title')
+    // Each draft already has a photo — submit all of them (title optional, can be added later)
+    if (drafts.length === 0) {
+      setSubmitError('Upload at least one photo')
       return
     }
 
-    const missing = valid.find((d) => !d.location.trim() || !d.assignee.trim())
-    if (missing) {
-      setSubmitError('All items need a location and assignee')
-      return
-    }
-
-    for (const d of valid) {
+    for (const d of drafts) {
       addItem({
         title: d.title.trim(),
         location: d.location.trim(),
@@ -309,7 +303,7 @@ export function BulkPhotoUpload({ api, onClose }: Props) {
                         type="text"
                         value={d.title}
                         onChange={(e) => updateDraft(i, 'title', e.target.value)}
-                        placeholder="What's the issue? *"
+                        placeholder="What's the issue? (optional)"
                         className="w-full bg-basalt-50 border border-cream/20 rounded-lg px-2.5 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
                       />
                       <div className="flex gap-2">
@@ -318,7 +312,7 @@ export function BulkPhotoUpload({ api, onClose }: Props) {
                           value={d.location}
                           onChange={(e) => updateDraft(i, 'location', e.target.value)}
                           list="bulk-locations"
-                          placeholder="Location *"
+                          placeholder="Location"
                           className="flex-1 bg-basalt-50 border border-cream/20 rounded-lg px-2.5 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
                         />
                         <input
@@ -326,7 +320,7 @@ export function BulkPhotoUpload({ api, onClose }: Props) {
                           value={d.assignee}
                           onChange={(e) => updateDraft(i, 'assignee', e.target.value)}
                           list="bulk-assignees"
-                          placeholder="Assignee *"
+                          placeholder="Assignee"
                           className="flex-1 bg-basalt-50 border border-cream/20 rounded-lg px-2.5 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
                         />
                       </div>
@@ -355,7 +349,7 @@ export function BulkPhotoUpload({ api, onClose }: Props) {
               onClick={handleSubmit}
               className="w-full py-3 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors"
             >
-              Add {drafts.filter((d) => d.title.trim()).length} Items
+              Add {drafts.length} {drafts.length === 1 ? 'Item' : 'Items'}
             </button>
           </div>
         )}
