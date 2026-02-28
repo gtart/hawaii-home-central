@@ -100,6 +100,77 @@ export function PunchlistPage({ api, onShareExport }: Props) {
 
   const viewingItem = viewingId ? payload.items.find((i) => i.id === viewingId) : undefined
 
+  // ---- Mini dashboard insights ----
+  const [dashboardOpen, setDashboardOpen] = useState(true)
+
+  const insights = useMemo(() => {
+    const items = payload.items
+    if (items.length === 0) return null
+
+    const now = Date.now()
+    const DAY = 86_400_000
+
+    // Last activity
+    let lastUpdatedAt = 0
+    for (const item of items) {
+      const t = new Date(item.updatedAt).getTime()
+      if (t > lastUpdatedAt) lastUpdatedAt = t
+    }
+
+    // Added this week
+    const weekAgo = now - 7 * DAY
+    const addedThisWeek = items.filter((i) => new Date(i.createdAt).getTime() > weekAgo).length
+
+    // Stale open items (open, not updated in 21+ days)
+    const staleThreshold = now - 21 * DAY
+    const staleOpen = items.filter(
+      (i) => i.status === 'OPEN' && new Date(i.updatedAt).getTime() < staleThreshold
+    ).length
+
+    // High priority open
+    const highPriorityOpen = items.filter(
+      (i) => i.status !== 'DONE' && i.priority === 'HIGH'
+    ).length
+
+    // Completion rate
+    const doneCount = items.filter((i) => i.status === 'DONE').length
+    const completionPct = Math.round((doneCount / items.length) * 100)
+
+    // Average resolution time (for completed items)
+    const completedItems = items.filter((i) => i.completedAt)
+    let avgResolutionDays: number | null = null
+    if (completedItems.length > 0) {
+      const totalMs = completedItems.reduce((sum, i) => {
+        return sum + (new Date(i.completedAt!).getTime() - new Date(i.createdAt).getTime())
+      }, 0)
+      avgResolutionDays = Math.round(totalMs / completedItems.length / DAY)
+    }
+
+    // Relative time for last activity
+    const diffMs = now - lastUpdatedAt
+    let lastActivityLabel: string
+    const mins = Math.floor(diffMs / 60_000)
+    if (mins < 1) lastActivityLabel = 'just now'
+    else if (mins < 60) lastActivityLabel = `${mins}m ago`
+    else {
+      const hours = Math.floor(mins / 60)
+      if (hours < 24) lastActivityLabel = `${hours}h ago`
+      else {
+        const days = Math.floor(hours / 24)
+        lastActivityLabel = days === 1 ? 'yesterday' : `${days}d ago`
+      }
+    }
+
+    return {
+      lastActivityLabel,
+      addedThisWeek,
+      staleOpen,
+      highPriorityOpen,
+      completionPct,
+      avgResolutionDays,
+    }
+  }, [payload.items])
+
   return (
     <>
       {/* Row 1: Summary stats + Share & Export */}
@@ -133,9 +204,69 @@ export function PunchlistPage({ api, onShareExport }: Props) {
         )}
       </div>
 
-      <p className="text-xs text-cream/30 mb-6">
-        Open = waiting for review &middot; Accepted = acknowledged &middot; Done = completed
-      </p>
+      {/* Mini dashboard — activity insights */}
+      {insights && (
+        <div className="mb-5">
+          <button
+            type="button"
+            onClick={() => setDashboardOpen(!dashboardOpen)}
+            className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-cream/30 hover:text-cream/50 transition-colors mb-2"
+          >
+            <svg
+              className={`w-3 h-3 transition-transform ${dashboardOpen ? 'rotate-90' : ''}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Activity
+          </button>
+
+          {dashboardOpen && (
+            <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs">
+              {/* Last activity */}
+              <span className="text-cream/40">
+                Last updated <span className="text-cream/60">{insights.lastActivityLabel}</span>
+              </span>
+
+              {/* Added this week */}
+              {insights.addedThisWeek > 0 && (
+                <span className="text-cream/40">
+                  <span className="text-cream/60">{insights.addedThisWeek}</span> added this week
+                </span>
+              )}
+
+              {/* Completion rate */}
+              <span className="text-cream/40">
+                <span className="text-cream/60">{insights.completionPct}%</span> done
+              </span>
+
+              {/* Avg resolution */}
+              {insights.avgResolutionDays !== null && (
+                <span className="text-cream/40">
+                  Avg <span className="text-cream/60">{insights.avgResolutionDays === 0 ? '<1' : insights.avgResolutionDays}d</span> to complete
+                </span>
+              )}
+
+              {/* High priority open — attention-worthy */}
+              {insights.highPriorityOpen > 0 && (
+                <span className="text-red-400/70">
+                  <span className="text-red-400">{insights.highPriorityOpen}</span> high priority open
+                </span>
+              )}
+
+              {/* Stale items — attention-worthy */}
+              {insights.staleOpen > 0 && (
+                <span className="text-amber-400/70">
+                  <span className="text-amber-400">{insights.staleOpen}</span> open &amp; idle 21+ days
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Row 2: Status filter pills + Location pills + Assignee chips */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
