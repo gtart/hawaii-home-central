@@ -186,12 +186,51 @@ function PunchlistReportInner({ requiredProjectId }: { requiredProjectId: string
     [reportItems, orgMode]
   )
 
-  // Auto-trigger print when loaded and filtered items exist
+  // Auto-trigger print once loaded — wait for all images to finish loading first
   useEffect(() => {
-    if (isLoaded && reportItems.length > 0) {
-      const timeout = setTimeout(() => window.print(), 500)
-      return () => clearTimeout(timeout)
+    if (!isLoaded || reportItems.length === 0) return
+
+    let cancelled = false
+
+    function triggerPrint() {
+      if (cancelled) return
+      // Give a small buffer after images load for rendering
+      setTimeout(() => { if (!cancelled) window.print() }, 300)
     }
+
+    // Wait for all <img> in the report to finish loading
+    function waitForImages() {
+      const images = document.querySelectorAll<HTMLImageElement>('.report-content img')
+      if (images.length === 0) {
+        triggerPrint()
+        return
+      }
+
+      let loaded = 0
+      const total = images.length
+
+      function onDone() {
+        loaded++
+        if (loaded >= total) triggerPrint()
+      }
+
+      for (const img of images) {
+        if (img.complete) {
+          onDone()
+        } else {
+          img.addEventListener('load', onDone, { once: true })
+          img.addEventListener('error', onDone, { once: true })
+        }
+      }
+
+      // Safety timeout — don't wait forever if an image hangs
+      setTimeout(() => { if (loaded < total) triggerPrint() }, 8000)
+    }
+
+    // Allow one frame for DOM to render, then check images
+    requestAnimationFrame(waitForImages)
+
+    return () => { cancelled = true }
   }, [isLoaded, reportItems.length])
 
   if (!isLoaded) {
@@ -344,7 +383,7 @@ function ReportItem({ item, includeNotes, includeComments, includePhotos }: { it
                 src={photo.thumbnailUrl || photo.url}
                 alt=""
                 className="w-16 h-16 object-cover rounded"
-                loading="lazy"
+                crossOrigin="anonymous"
               />
             ))}
             {item.photos.length > 3 && (
