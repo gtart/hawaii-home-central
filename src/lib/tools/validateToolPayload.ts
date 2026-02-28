@@ -86,7 +86,10 @@ function validateFinishDecisions(payload: Record<string, unknown>): ValidationRe
     ? (payload.rooms as unknown[]).map(coerceRoom).filter(Boolean)
     : []
 
-  return { valid: true, payload: { ...payload, version: 3, rooms } }
+  // Coerce ownedKitIds (project-level pack ownership)
+  const ownedKitIds = Array.isArray(payload.ownedKitIds) ? payload.ownedKitIds : []
+
+  return { valid: true, payload: { ...payload, version: 3, rooms, ownedKitIds } }
 }
 
 // ── Mood Boards (V1) ──

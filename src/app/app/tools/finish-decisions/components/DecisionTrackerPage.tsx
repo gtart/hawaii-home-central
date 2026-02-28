@@ -33,6 +33,7 @@ export function DecisionTrackerPage({
   kits = [],
   defaultDecisions = {} as Record<RoomTypeV3, string[]>,
   emojiMap = {},
+  ownedKitIds = [],
 }: {
   rooms: RoomV3[]
   onBatchAddRooms: (selections: RoomSelection[]) => void
@@ -42,6 +43,7 @@ export function DecisionTrackerPage({
   kits?: FinishDecisionKit[]
   defaultDecisions?: Record<RoomTypeV3, string[]>
   emojiMap?: Record<string, string>
+  ownedKitIds?: string[]
 }) {
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(
     () => new Set(rooms.length <= 3 ? rooms.map((r) => r.id) : [])
@@ -61,6 +63,8 @@ export function DecisionTrackerPage({
   const [ideasModalRoomId, setIdeasModalRoomId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; kitId: string; roomId: string } | null>(null)
   const [simpleToast, setSimpleToast] = useState<string | null>(null)
+  // Flag: open pack chooser once rooms appear (set by onboarding "pack" level)
+  const [pendingPackChooser, setPendingPackChooser] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'boards'>(() => {
     if (!LIST_VIEW_ENABLED) return 'boards'
     try {
@@ -114,6 +118,14 @@ export function DecisionTrackerPage({
     }
     prevRoomIdsRef.current = currentIds
   }, [rooms])
+
+  // Open pack modal once rooms appear after "pack" onboarding level
+  useEffect(() => {
+    if (pendingPackChooser && rooms.length > 0) {
+      setPendingPackChooser(false)
+      setIdeasModalRoomId(rooms[0].id)
+    }
+  }, [pendingPackChooser, rooms])
 
   // Toggle a single room's expansion
   const toggleRoom = (roomId: string) => {
@@ -274,7 +286,11 @@ export function DecisionTrackerPage({
     <>
       {/* Onboarding — only for new users with zero rooms */}
       {!readOnly && !hasRooms && (
-        <OnboardingView onBatchCreate={onBatchAddRooms} defaultDecisions={defaultDecisions} />
+        <OnboardingView
+          onBatchCreate={onBatchAddRooms}
+          onRequestPackChooser={() => setPendingPackChooser(true)}
+          defaultDecisions={defaultDecisions}
+        />
       )}
 
       {/* Tracker UI — only when rooms exist */}
@@ -321,6 +337,50 @@ export function DecisionTrackerPage({
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* My Idea Packs shelf */}
+          {!readOnly && kits.length > 0 && (
+            <div className="bg-basalt-50 rounded-card p-4 mb-4 border border-cream/10">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-cream/70">
+                  <span className="mr-1.5">✨</span>My Idea Packs
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Open pack modal for first non-unsorted room
+                    const firstRoom = rooms.find((r) => !isGlobalUnsorted(r))
+                    if (firstRoom) setIdeasModalRoomId(firstRoom.id)
+                  }}
+                  className="text-xs text-sandstone hover:text-sandstone-light transition-colors"
+                >
+                  Browse Idea Packs
+                </button>
+              </div>
+              {ownedKitIds.length === 0 ? (
+                <p className="text-xs text-cream/40">
+                  You don&apos;t own any Idea Packs yet. Browse packs to get starter options for your boards.
+                </p>
+              ) : (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {kits
+                    .filter((k) => ownedKitIds.includes(k.id))
+                    .map((kit) => (
+                      <div
+                        key={kit.id}
+                        className="shrink-0 bg-basalt rounded-lg border border-cream/10 px-3 py-2 w-48"
+                      >
+                        <span className="text-xs font-medium text-cream/80 block truncate">{kit.label}</span>
+                        <span className="text-[10px] text-cream/40">
+                          {kit.decisions.length} decisions &middot;{' '}
+                          {kit.decisions.reduce((s, d) => s + d.options.length, 0)} ideas
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -668,6 +728,7 @@ export function DecisionTrackerPage({
           roomType={ideasModalRoom.type as RoomTypeV3}
           roomName={ideasModalRoom.name}
           appliedKitIds={ideasModalRoom.appliedKitIds || []}
+          ownedKitIds={ownedKitIds}
           onApply={handleApplyKit}
           onClose={() => setIdeasModalRoomId(null)}
           kits={kits}

@@ -958,6 +958,7 @@ export function DecisionDetailContent({
           roomName={foundRoom.name}
           decisionTitle={foundDecision.title}
           appliedKitIds={foundRoom.appliedKitIds || []}
+          ownedKitIds={(state as FinishDecisionsPayloadV3).ownedKitIds || []}
           onApply={handleApplyKitToDecision}
           onClose={() => setIdeasPackOpen(false)}
           kits={kits}

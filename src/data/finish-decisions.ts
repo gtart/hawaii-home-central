@@ -186,6 +186,7 @@ export interface OptionOriginV3 {
   kitId: string
   kitLabel: string
   author: KitAuthorType
+  optionKey?: string // deterministic key for dedup on re-apply (slug of kitId+decision+option)
 }
 
 // Single image attached to an option
@@ -270,6 +271,7 @@ export interface RoomV3 {
 export interface FinishDecisionsPayloadV3 {
   version: 3
   rooms: RoomV3[]
+  ownedKitIds?: string[] // project-level pack ownership (default [])
 }
 
 // ============================================================================
@@ -280,7 +282,7 @@ export interface FinishDecisionsPayloadV3 {
 export interface RoomSelection {
   type: RoomTypeV3
   name: string
-  template: 'standard' | 'none'
+  template: 'standard' | 'none' | 'pack'
 }
 
 // Loaded from editable JSON — edit src/data/default-selections.json to change

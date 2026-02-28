@@ -403,6 +403,7 @@ export function ToolContent({
             kits={kits}
             defaultDecisions={resolvedDefaults}
             emojiMap={emojiMap}
+            ownedKitIds={v3State.ownedKitIds || []}
           />
         ) : !isLoaded ? (
           <div className="text-center py-12 text-cream/50">

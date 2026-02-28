@@ -384,8 +384,42 @@ export function RoomDetailContent({
           </div>
         )}
 
-        {/* Ideas Pack nudge */}
-        {!readOnly && hasAvailableKits && room.decisions.length > 0 && totalOptions <= 1 && (
+        {/* Empty state: has decisions but 0 options */}
+        {!readOnly && room.decisions.length > 0 && totalOptions === 0 && (
+          <div data-testid="empty-state-no-options" className="bg-basalt-50 rounded-card p-6 md:p-8 mb-5 border border-cream/10">
+            <h3 className="font-serif text-lg text-sandstone mb-1">Great&mdash;now add options</h3>
+            <p className="text-sm text-cream/50 leading-relaxed mb-4">
+              You&rsquo;ve got the checklist. Next, add real options (products, finishes, and recommendations) you can compare.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              {hasAvailableKits && (
+                <button
+                  type="button"
+                  onClick={() => setIdeasModalOpen(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-sandstone text-basalt font-medium text-sm rounded-lg hover:bg-sandstone-light transition-colors"
+                >
+                  <span>✨</span> Apply an Idea Pack
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  const first = room.decisions[0]
+                  if (first) window.location.href = `/app/tools/finish-decisions/decision/${first.id}`
+                }}
+                className="inline-flex items-center gap-1 px-3 py-2 text-sm text-cream/60 hover:text-cream/80 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
+              >
+                Add an option manually
+              </button>
+            </div>
+            <p className="text-[11px] text-cream/30 mt-3 italic">
+              Idea Packs can also fill in any missing decisions.
+            </p>
+          </div>
+        )}
+
+        {/* Ideas Pack nudge (1+ options but still low) */}
+        {!readOnly && hasAvailableKits && room.decisions.length > 0 && totalOptions > 0 && totalOptions <= 1 && (
           <div className="px-3 py-2 mb-4 bg-sandstone/5 border border-sandstone/15 rounded-lg flex items-center justify-between">
             <span className="text-xs text-cream/50">
               Add starter ideas from a curated pack
@@ -402,26 +436,37 @@ export function RoomDetailContent({
 
         {/* Selections content */}
         {room.decisions.length === 0 ? (
-          <div data-testid="empty-state-room" className="bg-basalt-50 rounded-card p-8 text-center">
-            <p className="text-cream/50 mb-3">No decisions yet.</p>
+          <div data-testid="empty-state-room" className="bg-basalt-50 rounded-card p-6 md:p-8 text-center border border-cream/10">
+            <h3 className="font-serif text-lg text-sandstone mb-1">This board is empty</h3>
+            <p className="text-sm text-cream/50 leading-relaxed mb-5">
+              Add a decision checklist so you don&rsquo;t miss anything&mdash;or start adding decisions one by one.
+            </p>
             {!readOnly && (
-              <div className="flex items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setQuickAddOpen(true)}
-                  className="text-sandstone text-sm hover:text-sandstone-light transition-colors"
-                >
-                  + Add a decision
-                </button>
-                <span className="text-cream/15">or</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={handleAutoPopulate}
-                  className="text-cream/50 text-sm hover:text-cream/70 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-sandstone text-basalt font-medium text-sm rounded-lg hover:bg-sandstone-light transition-colors"
                 >
-                  Add common decisions
+                  Add decision checklist
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuickAddOpen(true)}
+                  className="text-sm text-cream/60 hover:text-cream/80 transition-colors"
+                >
+                  + Add a decision
                 </button>
               </div>
+            )}
+            {!readOnly && hasAvailableKits && (
+              <button
+                type="button"
+                onClick={() => setIdeasModalOpen(true)}
+                className="mt-3 text-xs text-purple-300/70 hover:text-purple-300 transition-colors"
+              >
+                Use an Idea Pack instead
+              </button>
             )}
           </div>
         ) : selViewMode === 'tile' ? (
@@ -460,6 +505,7 @@ export function RoomDetailContent({
           roomType={room.type as RoomTypeV3}
           roomName={room.name}
           appliedKitIds={room.appliedKitIds || []}
+          ownedKitIds={(state as FinishDecisionsPayloadV3).ownedKitIds || []}
           onApply={handleApplyKit}
           onClose={() => setIdeasModalOpen(false)}
           kits={kits}

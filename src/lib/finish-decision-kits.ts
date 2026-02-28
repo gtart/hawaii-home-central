@@ -8,6 +8,20 @@ import type {
 import { type FinishDecisionKit } from '@/data/finish-decision-kits'
 
 // ============================================================================
+// Deterministic option key for deduplication
+// ============================================================================
+
+/** Generate a stable key for a kit option (used to prevent duplicates on re-apply) */
+export function generateOptionKey(kitId: string, decisionTitle: string, optionName: string): string {
+  return [kitId, decisionTitle, optionName]
+    .join('-')
+    .toLowerCase()
+    .replace(/['']/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+// ============================================================================
 // Finders (parameterized — caller passes the kits array)
 // ============================================================================
 
@@ -70,12 +84,6 @@ export function applyKitToRoom(
   let addedDecisionCount = 0
   let addedOptionCount = 0
 
-  const origin: OptionOriginV3 = {
-    kitId: kit.id,
-    kitLabel: kit.label,
-    author: kit.author,
-  }
-
   // Clone decisions array for mutation
   const decisions = room.decisions.map((d) => ({ ...d }))
 
@@ -85,43 +93,74 @@ export function applyKitToRoom(
       (d) => d.title.toLowerCase() === titleLower
     )
 
-    const newOptions: OptionV3[] = kitDec.options.map((ko) => ({
-      id: crypto.randomUUID(),
-      name: ko.name,
-      notes: ko.notes,
-      urls: [],
-      origin,
-      createdAt: now,
-      updatedAt: now,
-    }))
+    // Build set of existing option keys for dedup
+    const existingKeys = new Set<string>()
+    if (existingIdx >= 0) {
+      for (const opt of decisions[existingIdx].options) {
+        if (opt.origin?.kitId === kit.id && opt.origin?.optionKey) {
+          existingKeys.add(opt.origin.optionKey)
+        }
+      }
+    }
+
+    const newOptions: OptionV3[] = []
+    for (const ko of kitDec.options) {
+      const optionKey = generateOptionKey(kit.id, kitDec.title, ko.name)
+      // Skip if this exact option already exists (idempotent re-apply)
+      if (existingKeys.has(optionKey)) continue
+
+      const origin: OptionOriginV3 = {
+        kitId: kit.id,
+        kitLabel: kit.label,
+        author: kit.author,
+        optionKey,
+      }
+
+      newOptions.push({
+        id: crypto.randomUUID(),
+        name: ko.name,
+        notes: ko.notes,
+        urls: [],
+        origin,
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
 
     addedOptionCount += newOptions.length
 
     if (existingIdx >= 0) {
       // Merge options into existing decision
-      decisions[existingIdx] = {
-        ...decisions[existingIdx],
-        options: [...decisions[existingIdx].options, ...newOptions],
-        updatedAt: now,
+      if (newOptions.length > 0) {
+        decisions[existingIdx] = {
+          ...decisions[existingIdx],
+          options: [...decisions[existingIdx].options, ...newOptions],
+          updatedAt: now,
+        }
       }
     } else {
-      // Create new decision
-      addedDecisionCount++
-      const newDecision: DecisionV3 = {
-        id: crypto.randomUUID(),
-        title: kitDec.title,
-        status: 'deciding',
-        notes: '',
-        options: newOptions,
-        originKitId: kit.id,
-        createdAt: now,
-        updatedAt: now,
+      // Create new decision (only if there are options to add)
+      if (newOptions.length > 0) {
+        addedDecisionCount++
+        const newDecision: DecisionV3 = {
+          id: crypto.randomUUID(),
+          title: kitDec.title,
+          status: 'deciding',
+          notes: '',
+          options: newOptions,
+          originKitId: kit.id,
+          createdAt: now,
+          updatedAt: now,
+        }
+        decisions.push(newDecision)
       }
-      decisions.push(newDecision)
     }
   }
 
-  const appliedKitIds = [...(room.appliedKitIds || []), kit.id]
+  // Ensure kit ID is in appliedKitIds (dedup the ID too)
+  const appliedKitIds = (room.appliedKitIds || []).includes(kit.id)
+    ? (room.appliedKitIds || [])
+    : [...(room.appliedKitIds || []), kit.id]
 
   return {
     room: { ...room, decisions, appliedKitIds, updatedAt: now },
@@ -150,27 +189,42 @@ export function applyKitToDecision(
   const now = new Date().toISOString()
   const titleLower = decision.title.toLowerCase()
 
-  const origin: OptionOriginV3 = {
-    kitId: kit.id,
-    kitLabel: kit.label,
-    author: kit.author,
+  // Build set of existing option keys for dedup
+  const existingKeys = new Set<string>()
+  for (const opt of decision.options) {
+    if (opt.origin?.kitId === kit.id && opt.origin?.optionKey) {
+      existingKeys.add(opt.origin.optionKey)
+    }
   }
 
   const matchingKitDecisions = kit.decisions.filter(
     (kd) => kd.title.toLowerCase() === titleLower
   )
 
-  const newOptions: OptionV3[] = matchingKitDecisions.flatMap((kd) =>
-    kd.options.map((ko) => ({
-      id: crypto.randomUUID(),
-      name: ko.name,
-      notes: ko.notes,
-      urls: [],
-      origin,
-      createdAt: now,
-      updatedAt: now,
-    }))
-  )
+  const newOptions: OptionV3[] = []
+  for (const kd of matchingKitDecisions) {
+    for (const ko of kd.options) {
+      const optionKey = generateOptionKey(kit.id, kd.title, ko.name)
+      if (existingKeys.has(optionKey)) continue
+
+      const origin: OptionOriginV3 = {
+        kitId: kit.id,
+        kitLabel: kit.label,
+        author: kit.author,
+        optionKey,
+      }
+
+      newOptions.push({
+        id: crypto.randomUUID(),
+        name: ko.name,
+        notes: ko.notes,
+        urls: [],
+        origin,
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
+  }
 
   return {
     decision: {
