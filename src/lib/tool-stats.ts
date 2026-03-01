@@ -8,24 +8,22 @@ export function getDashboardStats(toolKey: string, stats?: Record<string, unknow
 
   if (toolKey === 'before_you_sign') {
     const count = (stats.contractorCount as number | undefined) ?? 0
-    return [{ label: 'Contractors', value: String(count) }]
+    if (count === 0) return []
+    return [{ label: `contractor${count !== 1 ? 's' : ''} added`, value: String(count) }]
   }
   if (toolKey === 'finish_decisions') {
     const total = (stats.total as number | undefined) ?? 0
     const finalized = (stats.finalized as number | undefined) ?? 0
-    const pct = total > 0 ? Math.round((finalized / total) * 100) : 0
-    return [
-      { label: 'Decisions', value: String(total) },
-      { label: 'Finalized', value: `${pct}%` },
-    ]
+    const remaining = total - finalized
+    if (total === 0) return []
+    return [{ label: `decision${remaining !== 1 ? 's' : ''} remain`, value: String(remaining) }]
   }
   if (toolKey === 'punchlist') {
     const total = (stats.total as number | undefined) ?? 0
     const done = (stats.done as number | undefined) ?? 0
-    return [
-      { label: 'Issues', value: String(total) },
-      { label: 'Open', value: String(total - done) },
-    ]
+    const open = total - done
+    if (total === 0) return []
+    return [{ label: `open issue${open !== 1 ? 's' : ''}`, value: String(open) }]
   }
   if (toolKey === 'mood_boards') {
     const boardCount = (stats.boardCount as number | undefined) ?? 0
