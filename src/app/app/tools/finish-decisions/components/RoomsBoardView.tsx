@@ -8,7 +8,6 @@ import { relativeTime } from '@/lib/relativeTime'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { isGlobalUnsorted, findUncategorizedDecision } from '@/lib/decisionHelpers'
 import { RoomCoverPickerModal } from './RoomCoverPickerModal'
-import { SaveFromWebCTA } from './SaveFromWebCTA'
 
 /** Stateful image with emoji fallback — no blank tiles */
 function RoomCoverImage({ src, alt, emoji }: { src: string; alt: string; emoji: string }) {
@@ -170,9 +169,6 @@ export function RoomsBoardView({
           </select>
         </div>
       )}
-
-      {/* Save to HHC tip */}
-      {!readOnly && <SaveFromWebCTA className="mb-4" />}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedRooms.map((room) => {

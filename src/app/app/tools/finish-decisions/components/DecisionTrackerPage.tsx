@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import {
@@ -68,6 +68,24 @@ export function DecisionTrackerPage({
   const [destPickerRoomId, setDestPickerRoomId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; kitId: string; roomId: string } | null>(null)
   const [simpleToast, setSimpleToast] = useState<string | null>(null)
+  const [packsPopoverOpen, setPacksPopoverOpen] = useState(false)
+  const [saveInfoOpen, setSaveInfoOpen] = useState(false)
+  const packsPopoverRef = useRef<HTMLDivElement>(null)
+  const saveInfoRef = useRef<HTMLDivElement>(null)
+
+  // Close popovers on outside click
+  const handleClickOutside = useCallback((e: MouseEvent) => {
+    if (packsPopoverRef.current && !packsPopoverRef.current.contains(e.target as Node)) {
+      setPacksPopoverOpen(false)
+    }
+    if (saveInfoRef.current && !saveInfoRef.current.contains(e.target as Node)) {
+      setSaveInfoOpen(false)
+    }
+  }, [])
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [handleClickOutside])
   // Flag: open pack chooser once rooms appear (set by onboarding "pack" level)
   const [pendingPackChooser, setPendingPackChooser] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'boards'>(() => {
@@ -404,61 +422,7 @@ export function DecisionTrackerPage({
             </div>
           )}
 
-          {/* Decision Packs — compact card */}
-          {!readOnly && kits.length > 0 && (() => {
-            const featuredKit = kits[0]
-            const featuredOptionCount = featuredKit?.decisions.reduce((s, d) => s + d.options.length, 0) ?? 0
-            return (
-              <div className="bg-basalt-50 rounded-lg border border-cream/10 p-4 mb-4">
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-medium text-cream mb-0.5">
-                      Decision Packs
-                    </h3>
-                    <p className="text-xs text-cream/40 leading-relaxed">
-                      Curated options that help you choose faster.
-                    </p>
-                  </div>
-                  <Link
-                    href="/app/packs"
-                    className="shrink-0 px-3 py-1.5 text-xs font-medium text-sandstone bg-sandstone/10 hover:bg-sandstone/20 rounded-lg transition-colors"
-                  >
-                    Browse Packs
-                  </Link>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {ownedKitIds.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const firstRoom = rooms.find((r) => !isGlobalUnsorted(r))
-                        if (firstRoom) {
-                          setDestPickerRoomId(firstRoom.id)
-                          setIdeasModalDestPicker(true)
-                          setIdeasModalRoomId(firstRoom.id)
-                        }
-                      }}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-sandstone/70 bg-sandstone/5 hover:bg-sandstone/15 rounded-full transition-colors"
-                    >
-                      My Packs ({ownedKitIds.length})
-                    </button>
-                  )}
-                  {featuredKit && (
-                    <Link
-                      href={`/app/packs/${featuredKit.id}`}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] text-cream/40 hover:text-cream/60 bg-cream/5 hover:bg-cream/10 rounded-full transition-colors"
-                    >
-                      <span className="text-cream/25">✨</span>
-                      {featuredKit.label}
-                      <span className="text-cream/20">&middot; {featuredKit.decisions.length} decisions, {featuredOptionCount} options</span>
-                    </Link>
-                  )}
-                </div>
-              </div>
-            )
-          })()}
-
-          {/* Search + View toggle */}
+          {/* Search + info icon + View toggle */}
           <div className="flex items-center gap-2 mb-3">
             <div className="flex-1">
               <Input
@@ -467,6 +431,53 @@ export function DecisionTrackerPage({
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            {/* Save to HHC info icon */}
+            {!readOnly && (
+              <div className="relative" ref={saveInfoRef}>
+                <button
+                  type="button"
+                  onClick={() => setSaveInfoOpen(!saveInfoOpen)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-cream/30 hover:text-sandstone hover:bg-cream/5 transition-colors shrink-0"
+                  title="Save to HHC"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
+                  </svg>
+                </button>
+                {saveInfoOpen && (
+                  <div className="absolute right-0 top-full mt-1.5 w-72 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl z-50 p-4">
+                    <h4 className="text-sm font-medium text-cream mb-2">Save to HHC</h4>
+                    <ul className="space-y-1.5 mb-3">
+                      <li className="flex items-start gap-2 text-xs text-cream/50">
+                        <span className="text-cream/25 mt-0.5">•</span>
+                        Save images from any website into your boards.
+                      </li>
+                      <li className="flex items-start gap-2 text-xs text-cream/50">
+                        <span className="text-cream/25 mt-0.5">•</span>
+                        Install the Save to HHC bookmarklet for web.
+                      </li>
+                    </ul>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href="/app/save-from-web"
+                        onClick={() => setSaveInfoOpen(false)}
+                        className="px-3 py-1.5 text-xs font-medium text-basalt bg-sandstone hover:bg-sandstone-light rounded-lg transition-colors"
+                      >
+                        Install bookmarklet
+                      </Link>
+                      <Link
+                        href="/app/save-from-web"
+                        onClick={() => setSaveInfoOpen(false)}
+                        className="px-3 py-1.5 text-xs font-medium text-cream/50 hover:text-cream/70 transition-colors"
+                      >
+                        Learn more
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             {LIST_VIEW_ENABLED && (
             <div className="flex bg-cream/5 rounded-lg p-0.5 shrink-0">
               <button
@@ -504,9 +515,9 @@ export function DecisionTrackerPage({
             )}
           </div>
 
-          {/* Summary strip */}
+          {/* Summary strip + Packs chip */}
           {totalDecisions > 0 && (
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-cream/50 mb-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-cream/50 mb-3">
               {isFiltering && <span className="text-cream/30 italic">Filtered:</span>}
               {summaryStats.deciding + summaryStats.selected + summaryStats.ordered > 0 && (
                 <span className="text-cream/70 font-medium">
@@ -529,6 +540,91 @@ export function DecisionTrackerPage({
                   })}
                 </span>
               )}
+              {/* Packs chip */}
+              {!readOnly && kits.length > 0 && (
+                <div className="relative ml-auto" ref={packsPopoverRef}>
+                  <button
+                    type="button"
+                    onClick={() => setPacksPopoverOpen(!packsPopoverOpen)}
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-medium text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-full transition-colors"
+                  >
+                    ✨ Packs{ownedKitIds.length > 0 ? ` (${ownedKitIds.length})` : ''}
+                  </button>
+                  {packsPopoverOpen && (() => {
+                    const featuredKit = kits[0]
+                    const featuredOptionCount = featuredKit?.decisions.reduce((s, d) => s + d.options.length, 0) ?? 0
+                    return (
+                      <div className="absolute right-0 top-full mt-1.5 w-72 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl z-50 p-4">
+                        <h4 className="text-sm font-medium text-cream mb-0.5">Decision Packs</h4>
+                        <p className="text-[11px] text-cream/40 mb-3">Curated ideas that help you choose faster.</p>
+                        {ownedKitIds.length > 0 && (
+                          <p className="text-[11px] text-cream/50 mb-2">My Packs ({ownedKitIds.length})</p>
+                        )}
+                        {featuredKit && (
+                          <div className="flex items-center gap-2 px-2.5 py-2 bg-cream/5 rounded-lg mb-3">
+                            <span className="text-sm">{emojiMap[featuredKit.id] || '✨'}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-cream/70 font-medium truncate">{featuredKit.label}</p>
+                              <p className="text-[10px] text-cream/35">{featuredKit.decisions.length} decisions, {featuredOptionCount} options</p>
+                            </div>
+                          </div>
+                        )}
+                        <Link
+                          href="/app/packs"
+                          onClick={() => setPacksPopoverOpen(false)}
+                          className="block w-full text-center px-3 py-1.5 text-xs font-medium text-basalt bg-sandstone hover:bg-sandstone-light rounded-lg transition-colors"
+                        >
+                          Browse Packs
+                        </Link>
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Standalone Packs chip — when no decisions yet but packs exist */}
+          {totalDecisions === 0 && !readOnly && kits.length > 0 && (
+            <div className="flex items-center mb-3">
+              <div className="relative ml-auto" ref={packsPopoverRef}>
+                <button
+                  type="button"
+                  onClick={() => setPacksPopoverOpen(!packsPopoverOpen)}
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-medium text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-full transition-colors"
+                >
+                  ✨ Packs{ownedKitIds.length > 0 ? ` (${ownedKitIds.length})` : ''}
+                </button>
+                {packsPopoverOpen && (() => {
+                  const featuredKit = kits[0]
+                  const featuredOptionCount = featuredKit?.decisions.reduce((s, d) => s + d.options.length, 0) ?? 0
+                  return (
+                    <div className="absolute right-0 top-full mt-1.5 w-72 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl z-50 p-4">
+                      <h4 className="text-sm font-medium text-cream mb-0.5">Decision Packs</h4>
+                      <p className="text-[11px] text-cream/40 mb-3">Curated ideas that help you choose faster.</p>
+                      {ownedKitIds.length > 0 && (
+                        <p className="text-[11px] text-cream/50 mb-2">My Packs ({ownedKitIds.length})</p>
+                      )}
+                      {featuredKit && (
+                        <div className="flex items-center gap-2 px-2.5 py-2 bg-cream/5 rounded-lg mb-3">
+                          <span className="text-sm">{emojiMap[featuredKit.id] || '✨'}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-cream/70 font-medium truncate">{featuredKit.label}</p>
+                            <p className="text-[10px] text-cream/35">{featuredKit.decisions.length} decisions, {featuredOptionCount} options</p>
+                          </div>
+                        </div>
+                      )}
+                      <Link
+                        href="/app/packs"
+                        onClick={() => setPacksPopoverOpen(false)}
+                        className="block w-full text-center px-3 py-1.5 text-xs font-medium text-basalt bg-sandstone hover:bg-sandstone-light rounded-lg transition-colors"
+                      >
+                        Browse Packs
+                      </Link>
+                    </div>
+                  )
+                })()}
+              </div>
             </div>
           )}
 
