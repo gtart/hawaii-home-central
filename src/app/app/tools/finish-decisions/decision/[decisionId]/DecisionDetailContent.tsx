@@ -6,8 +6,6 @@ import { useSession } from 'next-auth/react'
 import { Input } from '@/components/ui/Input'
 import { useToolState } from '@/hooks/useToolState'
 import { IdeasBoard, AddIdeaMenu, type IdeasBoardAddActions } from '../../components/IdeasBoard'
-import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
-import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
 import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
@@ -47,7 +45,6 @@ export function DecisionDetailContent({
   const router = useRouter()
   const { data: session } = useSession()
   const decisionId = params.decisionId as string
-  const [optionsOpen, setOptionsOpen] = useState(true)
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState(false)
   const [notesExpanded, setNotesExpanded] = useState(false)
@@ -694,140 +691,62 @@ export function DecisionDetailContent({
         {latestStatusLog && foundDecision.status !== 'deciding' && (
           <p className="text-[11px] text-cream/30 mb-4">
             Marked {STATUS_CONFIG_V3[latestStatusLog.status].label} by {latestStatusLog.markedBy} on{' '}
-            {new Date(latestStatusLog.markedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            {new Date(latestStatusLog.markedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
           </p>
         )}
 
-        {/* Final Decision Section */}
-        <div className="mb-6">
-          {finalPick ? (() => {
-            const hero = getHeroImage(finalPick)
-            const heroSrc = hero?.thumbnailUrl || hero?.url
-            const finalComments = userComments.filter((c) => c.refOptionId === finalPick.id)
-            return (
-              <div className="border border-sandstone/25 bg-sandstone/5 rounded-xl overflow-hidden">
-                <div className="flex flex-col md:flex-row">
-                  {/* Final selection image */}
-                  {heroSrc && (
-                    <div className="md:w-48 md:h-auto flex-shrink-0">
-                      <ImageWithFallback
-                        src={displayUrl(heroSrc)}
-                        alt={finalPick.name || 'Final decision'}
-                        className="w-full h-48 md:h-full object-cover"
-                        fallback={
-                          <div className="w-full h-48 md:h-full flex items-center justify-center bg-basalt">
-                            <span className="text-3xl opacity-20">🖼️</span>
-                          </div>
-                        }
-                      />
-                    </div>
-                  )}
-
-                  {/* Final selection details */}
-                  <div className="flex-1 p-4">
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span className="text-[11px] text-sandstone font-semibold">
-                        Final decision selected:
-                      </span>
-                      <span className="text-[11px] text-cream/70 font-medium">
-                        {finalPick.name || 'Untitled'}
-                      </span>
-                      {foundDecision.finalSelection && (
-                        <>
-                          <span className="text-cream/25">&middot;</span>
-                          <span className="px-1.5 py-0.5 bg-cream/10 text-cream/50 text-[10px] rounded-full">
-                            {foundDecision.finalSelection.selectedBy}
-                          </span>
-                          <span className="text-cream/25">&middot;</span>
-                          <span className="text-[10px] text-cream/35">
-                            {new Date(foundDecision.finalSelection.selectedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                          </span>
-                        </>
-                      )}
-                      {!readOnly && (
-                        <button
-                          type="button"
-                          onClick={() => selectOption(finalPick.id)}
-                          className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors ml-auto"
-                        >
-                          Unselect
-                        </button>
-                      )}
-                    </div>
-                    <h3 className="font-serif text-lg text-sandstone mb-1">
-                      {finalPick.name || <span className="text-sandstone/50 italic">Untitled</span>}
-                    </h3>
-                    {finalPick.notes && (
-                      <p className="text-sm text-cream/60 whitespace-pre-wrap mb-2">{finalPick.notes}</p>
-                    )}
-                    {finalPick.urls && finalPick.urls.length > 0 && (
-                      <div className="mb-2">
-                        {finalPick.urls.map((u) => (
-                          <a
-                            key={u.id}
-                            href={u.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-sandstone/60 hover:text-sandstone underline"
-                          >
-                            {u.linkTitle || u.url}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                    {finalComments.length > 0 && (
-                      <div className="mt-3 pt-2 border-t border-sandstone/15 space-y-2 max-h-[120px] overflow-y-auto">
-                        <p className="text-[10px] text-cream/30 uppercase tracking-wide font-medium">Comments</p>
-                        {finalComments.slice(-3).map((c) => (
-                          <div key={c.id} className="text-xs">
-                            <span className="text-cream/50 font-medium">{c.authorName}</span>
-                            <span className="text-cream/20 mx-1">·</span>
-                            <span className="text-cream/25">{relativeTime(c.createdAt)}</span>
-                            <p className="text-cream/60 mt-0.5">{c.text}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setActiveCardId(finalPick.id)}
-                      className="mt-3 text-xs text-sandstone/60 hover:text-sandstone transition-colors"
-                    >
-                      View full details →
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )
-          })() : (
-            <div className={`border rounded-xl p-5 text-center ${doneWithoutFinal ? 'border-red-400/20 bg-red-500/3' : 'border-cream/10 bg-cream/3'}`}>
-              <p className="text-sm text-cream/40">
-                No final decision yet {doneWithoutFinal && <span className="text-red-400/60">— marked Done without a pick</span>}
-              </p>
+        {/* Final Decision Line */}
+        <div className="mb-4">
+          {finalPick ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] text-sandstone font-semibold">Final decision selected:</span>
+              <button
+                type="button"
+                onClick={() => setActiveCardId(finalPick.id)}
+                className="text-[11px] text-cream/70 font-medium hover:text-cream transition-colors underline decoration-cream/20 hover:decoration-cream/40"
+              >
+                {finalPick.name || 'Untitled'}
+              </button>
+              {foundDecision.finalSelection && (
+                <>
+                  <span className="text-cream/25">&middot;</span>
+                  <span className="px-1.5 py-0.5 bg-cream/10 text-cream/50 text-[10px] rounded-full">
+                    {foundDecision.finalSelection.selectedBy}
+                  </span>
+                  <span className="text-cream/25">&middot;</span>
+                  <span className="text-[10px] text-cream/35">
+                    {new Date(foundDecision.finalSelection.selectedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                  </span>
+                </>
+              )}
               {!readOnly && (
-                <p className="text-xs text-cream/25 mt-1">
-                  Pick from options below, or add one and mark it final.
-                </p>
+                <button
+                  type="button"
+                  onClick={() => selectOption(finalPick.id)}
+                  className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors ml-auto"
+                >
+                  Unselect
+                </button>
               )}
             </div>
+          ) : (
+            <p className="text-xs text-cream/35">
+              No final decision yet &mdash; pick from options below, or add one and mark it final.
+              {doneWithoutFinal && <span className="text-red-400/60 ml-1">(marked Done without a pick)</span>}
+            </p>
           )}
         </div>
 
         {/* Options board */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-3">
-            <button
-              type="button"
-              onClick={() => setOptionsOpen(!optionsOpen)}
-              className="flex items-center gap-2 text-lg font-medium text-cream hover:text-cream/80 transition-colors md:pointer-events-none"
-            >
-              <span className="text-cream/30 text-xs md:hidden">{optionsOpen ? '▼' : '▶'}</span>
+            <h2 className="flex items-center gap-2 text-lg font-medium text-cream">
               Options Board
               <span className="text-cream/30 font-normal">&middot;</span>
               <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-cream/10 text-cream/50 text-xs font-medium rounded-full">
                 {foundDecision.options.length}
               </span>
-            </button>
+            </h2>
             <div className="flex-1" />
             {!readOnly && (
               <AddIdeaMenu
@@ -843,7 +762,6 @@ export function DecisionDetailContent({
           <IdeasBoard
             decision={foundDecision}
             readOnly={readOnly}
-            showContent={optionsOpen}
             userEmail={session?.user?.email || ''}
             userName={session?.user?.name || 'Unknown'}
             activeCardId={activeCardId}
@@ -855,6 +773,7 @@ export function DecisionDetailContent({
             }}
             onSelectOption={selectOption}
             hideFinalize={isSystemUncategorized}
+            hideCompare
             onUpdateDecision={updateDecision}
             onAddComment={addComment}
             onCommentOnOption={handleCommentOnOption}
@@ -962,7 +881,7 @@ export function DecisionDetailContent({
                   draftRef={draftRef}
                   onClearDraftRef={() => setDraftRef(null)}
                   onOpenCard={(optId) => {
-                    setOptionsOpen(true)
+
                     setActiveCardId(optId)
                     setCommentsOpen(false)
                   }}
@@ -996,7 +915,7 @@ export function DecisionDetailContent({
                   draftRef={draftRef}
                   onClearDraftRef={() => setDraftRef(null)}
                   onOpenCard={(optId) => {
-                    setOptionsOpen(true)
+
                     setActiveCardId(optId)
                     setCommentsOpen(false)
                   }}

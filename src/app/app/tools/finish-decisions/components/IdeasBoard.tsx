@@ -44,6 +44,7 @@ interface Props {
   hasKits?: boolean
   onOpenPack?: () => void
   hideFinalize?: boolean
+  hideCompare?: boolean
   onMoveOption?: (optionId: string) => void
   rooms?: RoomV3[]
   currentRoomId?: string
@@ -373,6 +374,7 @@ export function IdeasBoard({
   hasKits,
   onOpenPack,
   hideFinalize,
+  hideCompare,
   onMoveOption,
   rooms,
   currentRoomId,
@@ -524,27 +526,28 @@ export function IdeasBoard({
       {showContent !== false && (
         <>
           {/* Action row: Compare + Add */}
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              {decision.options.length >= 2 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCompareMode(!compareMode)
-                    setSelectedForCompare(new Set())
-                  }}
-                  className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
-                    compareMode
-                      ? 'bg-sandstone/20 text-sandstone'
-                      : 'bg-cream/10 text-cream/50 hover:text-cream/70'
-                  }`}
-                >
-                  {compareMode ? 'Cancel' : 'Compare'}
-                </button>
-              )}
+          {!hideCompare && (
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                {decision.options.length >= 2 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCompareMode(!compareMode)
+                      setSelectedForCompare(new Set())
+                    }}
+                    className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
+                      compareMode
+                        ? 'bg-sandstone/20 text-sandstone'
+                        : 'bg-cream/10 text-cream/50 hover:text-cream/70'
+                    }`}
+                  >
+                    {compareMode ? 'Cancel' : 'Compare'}
+                  </button>
+                )}
+              </div>
             </div>
-            {/* Add menu moved to Options Board header in DecisionDetailContent */}
-          </div>
+          )}
 
           {/* Inline note title input */}
           {showNoteInput && (
