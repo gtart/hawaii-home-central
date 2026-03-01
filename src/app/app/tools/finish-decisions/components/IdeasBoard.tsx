@@ -99,9 +99,7 @@ function IdeaCardTile({
   onClick,
   onToggleFinal,
   onComment,
-  onReaction,
   onMove,
-  myReaction,
   commentCount,
   lastCommentAt,
 }: {
@@ -112,22 +110,15 @@ function IdeaCardTile({
   onClick: () => void
   onToggleFinal?: () => void
   onComment?: () => void
-  onReaction?: (reaction: 'love' | 'like' | 'dislike') => void
   onMove?: () => void
-  myReaction?: 'love' | 'like' | 'dislike' | null
   commentCount?: number
   lastCommentAt?: string | null
 }) {
-  const votes = option.votes ?? {}
-  const loveCount = Object.values(votes).filter((v) => v === 'love').length
-  const likeCount = Object.values(votes).filter((v) => v === 'like').length
-  const dislikeCount = Object.values(votes).filter((v) => v === 'dislike').length
   const hero = getHeroImage(option)
   const heroSrc = hero?.thumbnailUrl || hero?.url
   const linkPreview = !heroSrc && option.urls?.[0]?.linkImage
 
   const hasImage = !!(heroSrc || linkPreview)
-  const hasReactions = loveCount > 0 || likeCount > 0 || dislikeCount > 0
 
   return (
     <div
@@ -198,36 +189,6 @@ function IdeaCardTile({
             {relativeTime(lastCommentAt || option.updatedAt)}
           </span>
         </div>
-
-        {/* Reactions */}
-        {onReaction && !readOnly ? (
-          <div className="flex items-center gap-1">
-            {([['love', '❤️'], ['like', '👍'], ['dislike', '👎']] as const).map(([type, emoji]) => {
-              const count = type === 'love' ? loveCount : type === 'like' ? likeCount : dislikeCount
-              const isActive = myReaction === type
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); onReaction(type) }}
-                  className={`text-[11px] px-1.5 py-0.5 rounded-full transition-colors ${
-                    isActive
-                      ? type === 'love' ? 'bg-pink-500/30 text-pink-300' : type === 'like' ? 'bg-green-500/30 text-green-300' : 'bg-red-500/30 text-red-300'
-                      : 'bg-cream/8 text-cream/40 hover:text-cream/70'
-                  }`}
-                >
-                  {emoji}{count > 0 ? ` ${count}` : ''}
-                </button>
-              )
-            })}
-          </div>
-        ) : hasReactions ? (
-          <div className="flex items-center gap-1.5 text-[10px] text-cream/50">
-            {loveCount > 0 && <span>❤️ {loveCount}</span>}
-            {likeCount > 0 && <span>👍 {likeCount}</span>}
-            {dislikeCount > 0 && <span>👎 {dislikeCount}</span>}
-          </div>
-        ) : null}
 
         {/* Action row: move + comment */}
         {(!readOnly || (onComment)) && (
@@ -527,18 +488,6 @@ export function IdeasBoard({
     setShowNoteInput(false)
   }
 
-  function handleReaction(optionId: string, reaction: 'love' | 'like' | 'dislike') {
-    const option = decision.options.find((o) => o.id === optionId)
-    if (!option) return
-    const currentVotes = { ...(option.votes || {}) }
-    if (currentVotes[userEmail] === reaction) {
-      delete currentVotes[userEmail]
-    } else {
-      currentVotes[userEmail] = reaction
-    }
-    onUpdateOption(optionId, { votes: currentVotes })
-  }
-
   function handleWebImport(result: { name: string; notes: string; sourceUrl: string; selectedImages: import('@/data/finish-decisions').OptionImageV3[] }) {
     const id = crypto.randomUUID()
     const now = new Date().toISOString()
@@ -633,8 +582,6 @@ export function IdeasBoard({
                         onToggleFinal={compareMode || hideFinalize ? undefined : () => onSelectOption(opt.id)}
                         onMove={!compareMode && onMoveOption ? () => onMoveOption(opt.id) : undefined}
                         onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
-                        onReaction={compareMode ? undefined : (reaction) => handleReaction(opt.id, reaction)}
-                        myReaction={(opt.votes || {})[userEmail] as 'love' | 'like' | 'dislike' | undefined || null}
                         commentCount={comments.filter((c) => c.refOptionId === opt.id).length}
                         lastCommentAt={(() => {
                           const optComments = comments.filter((c) => c.refOptionId === opt.id)
@@ -674,8 +621,6 @@ export function IdeasBoard({
                         onToggleFinal={compareMode || hideFinalize ? undefined : () => onSelectOption(opt.id)}
                         onMove={!compareMode && onMoveOption ? () => onMoveOption(opt.id) : undefined}
                         onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
-                        onReaction={compareMode ? undefined : (reaction) => handleReaction(opt.id, reaction)}
-                        myReaction={(opt.votes || {})[userEmail] as 'love' | 'like' | 'dislike' | undefined || null}
                         commentCount={comments.filter((c) => c.refOptionId === opt.id).length}
                         lastCommentAt={(() => {
                           const optComments = comments.filter((c) => c.refOptionId === opt.id)

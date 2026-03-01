@@ -70,6 +70,18 @@ export function RoomDetailContent({
     try { localStorage.setItem(SEL_VIEW_KEY, selViewMode) } catch { /* ignore */ }
   }, [selViewMode])
 
+  // Pick up pack-applied flash message from packs page navigation
+  useEffect(() => {
+    try {
+      const flash = sessionStorage.getItem('hhc_pack_flash')
+      if (flash) {
+        sessionStorage.removeItem('hhc_pack_flash')
+        setToast({ message: flash, kitId: '__flash__' })
+        setTimeout(() => setToast(null), 6000)
+      }
+    } catch { /* ignore */ }
+  }, [])
+
   // Clean up undo timer on unmount
   useEffect(() => {
     return () => {

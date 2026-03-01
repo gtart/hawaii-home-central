@@ -97,25 +97,7 @@ export function IdeaCardModal({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showPhotoMenu])
 
-  // ---- Derived state ----
-  const votes = option.votes ?? {}
-  const myReaction = votes[userEmail] as 'love' | 'like' | 'dislike' | undefined
-  const loveCount = Object.values(votes).filter((v) => v === 'love').length
-  const likeCount = Object.values(votes).filter((v) => v === 'like').length
-  const dislikeCount = Object.values(votes).filter((v) => v === 'dislike').length
-
   // ---- Handlers ----
-  function handleReaction(reaction: 'love' | 'like' | 'dislike') {
-    if (readOnly) return
-    const current = votes[userEmail]
-    const next = { ...votes }
-    if (current === reaction) {
-      delete next[userEmail]
-    } else {
-      next[userEmail] = reaction
-    }
-    onUpdate({ votes: next })
-  }
 
   async function handleAddUrl() {
     const url = newUrl.trim()
@@ -291,30 +273,6 @@ export function IdeaCardModal({
               </span>
             ) : null}
 
-            <div className="flex items-center gap-1">
-              {([['love', '❤️', 'Love!'], ['like', '👍', 'Like'], ['dislike', '👎', "Don't Like"]] as const).map(([type, emoji, label]) => {
-                const count = type === 'love' ? loveCount : type === 'like' ? likeCount : dislikeCount
-                const isActive = myReaction === type
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => handleReaction(type)}
-                    disabled={readOnly}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs transition-colors ${
-                      isActive
-                        ? type === 'love' ? 'bg-pink-500/20 text-pink-400 ring-1 ring-pink-500/40'
-                        : type === 'like' ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/40'
-                        : 'bg-red-500/20 text-red-400 ring-1 ring-red-500/40'
-                        : 'bg-cream/10 text-cream/60 hover:bg-cream/20 disabled:opacity-50'
-                    }`}
-                    title={label}
-                  >
-                    {emoji} {count > 0 && <span>{count}</span>}
-                  </button>
-                )
-              })}
-            </div>
           </div>
 
           {/* Title input — no label, clean edit */}

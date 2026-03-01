@@ -351,7 +351,7 @@ export function DecisionDetailContent({
 
   const deleteDecision = () => {
     if (!foundRoom || !foundDecision) return
-    if (confirm(`Delete "${foundDecision.title}"? This will also delete all decisions.`)) {
+    if (confirm(`Delete "${foundDecision.title}"? This decision and all its options will be permanently deleted.`)) {
       setState((prev) => ({
         ...prev,
         rooms: (prev as FinishDecisionsPayloadV3).rooms.map((r) =>

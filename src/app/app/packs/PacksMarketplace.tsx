@@ -83,6 +83,7 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
   const rooms = v3State.rooms || []
 
   const ownedKitIds: string[] = v3State.ownedKitIds || []
+  const canApplyContext = !!contextRoomId && isLoaded && rooms.length > 0
 
   function doAcquire(kitId: string) {
     setState((prev: any) => {
@@ -93,11 +94,12 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
     })
   }
 
-  function applyKitToRoomById(kitId: string, roomId: string) {
+  function applyKitToRoomById(kitId: string, roomId: string): { ok: boolean; reason?: string; message?: string } {
+    if (!isLoaded) return { ok: false, reason: 'Tool state is still loading. Try again in a moment.' }
     const kit = kits.find((k) => k.id === kitId)
-    if (!kit) return
+    if (!kit) return { ok: false, reason: 'Pack not found.' }
     const targetRoom = rooms.find((r) => r.id === roomId)
-    if (!targetRoom) return
+    if (!targetRoom) return { ok: false, reason: `Room not found. It may have been deleted.` }
 
     const result = applyKitToRoom(targetRoom, kit)
     setState((prev: any) => ({
@@ -108,8 +110,7 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
     }))
 
     const msg = `Applied "${kit.label}" to ${targetRoom.name} — +${result.addedDecisionCount} decisions, +${result.addedOptionCount} options`
-    setToast({ text: msg, kitId })
-    setTimeout(() => setToast(null), 6000)
+    return { ok: true, message: msg }
   }
 
   function acquireKit(kitId: string) {
@@ -118,7 +119,14 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
 
     if (contextRoomId) {
       // Context mode: auto-apply and navigate back
-      applyKitToRoomById(kitId, contextRoomId)
+      const result = applyKitToRoomById(kitId, contextRoomId)
+      if (!result.ok) {
+        setToast({ text: result.reason || 'Could not apply pack.', kitId })
+        setTimeout(() => setToast(null), 6000)
+        return
+      }
+      // Store flash message for room page to pick up
+      try { sessionStorage.setItem('hhc_pack_flash', result.message || '') } catch { /* ignore */ }
       router.push(`/app/tools/finish-decisions/room/${contextRoomId}`)
     } else {
       // General mode: show apply-now modal
@@ -129,7 +137,13 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
 
   function handleApplyToBoard(kitId: string) {
     if (contextRoomId) {
-      applyKitToRoomById(kitId, contextRoomId)
+      const result = applyKitToRoomById(kitId, contextRoomId)
+      if (!result.ok) {
+        setToast({ text: result.reason || 'Could not apply pack.', kitId })
+        setTimeout(() => setToast(null), 6000)
+        return
+      }
+      try { sessionStorage.setItem('hhc_pack_flash', result.message || '') } catch { /* ignore */ }
       router.push(`/app/tools/finish-decisions/room/${contextRoomId}`)
     } else {
       // General mode: show apply-now modal for owned packs too
@@ -286,9 +300,10 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
                       <button
                         type="button"
                         onClick={() => acquireKit(kit.id)}
-                        className="px-4 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+                        disabled={!!contextRoomId && !canApplyContext}
+                        className="px-4 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Get pack
+                        {!!contextRoomId && !canApplyContext ? 'Loading…' : 'Get pack'}
                       </button>
                     )}
                   </div>
@@ -350,8 +365,14 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
                     type="button"
                     onClick={() => {
                       if (applyNowRoomId) {
-                        applyKitToRoomById(applyNowModal.kitId, applyNowRoomId)
+                        const result = applyKitToRoomById(applyNowModal.kitId, applyNowRoomId)
                         setApplyNowModal(null)
+                        if (!result.ok) {
+                          setToast({ text: result.reason || 'Could not apply pack.', kitId: applyNowModal.kitId })
+                          setTimeout(() => setToast(null), 6000)
+                          return
+                        }
+                        try { sessionStorage.setItem('hhc_pack_flash', result.message || '') } catch { /* ignore */ }
                         router.push(`/app/tools/finish-decisions/room/${applyNowRoomId}`)
                       }
                     }}
