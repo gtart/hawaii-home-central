@@ -198,10 +198,9 @@ export function SelectionsBoardView({
 
               {/* Meta row: options pill, open, comments */}
               <div className="flex items-center gap-1.5 text-[11px] text-cream/55 mt-1">
-                <span className="inline-flex items-center justify-center min-w-[1.25rem] h-[1.125rem] px-1 bg-cream/10 text-cream/50 text-[10px] font-medium rounded-full">
-                  {decision.options.length}
+                <span className="inline-flex items-center gap-1 px-1.5 h-[1.125rem] bg-cream/10 text-cream/50 text-[10px] font-medium rounded-full">
+                  Options <span className="text-cream/25">&middot;</span> {decision.options.length}
                 </span>
-                <span className="text-cream/30 text-[10px]">options</span>
                 <span className="text-cream/20">·</span>
                 <button
                   type="button"

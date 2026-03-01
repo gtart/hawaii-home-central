@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useToolState } from '@/hooks/useToolState'
+import { useProject } from '@/contexts/ProjectContext'
 import {
   ROOM_EMOJI_MAP,
   type FinishDecisionsPayloadV3,
@@ -21,6 +22,7 @@ import { DecisionsTable } from '../../components/DecisionsTable'
 import { QuickAddDecisionModal } from '../../components/QuickAddDecisionModal'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
 import { RoomCommentsFeed } from '../../components/RoomCommentsFeed'
+import { ShareExportModal } from '@/components/app/ShareExportModal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { TextConfirmDialog } from '@/components/ui/TextConfirmDialog'
 
@@ -39,9 +41,10 @@ export function RoomDetailContent({
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
+  const { currentProject } = useProject()
   const roomId = params.roomId as string
 
-  const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3>({
+  const { state, setState, isLoaded, readOnly, access } = useToolState<FinishDecisionsPayloadV3>({
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2',
     defaultValue: DEFAULT_PAYLOAD,
@@ -55,6 +58,7 @@ export function RoomDetailContent({
   const [populateBanner, setPopulateBanner] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; kitId: string } | null>(null)
   const [commentsFeedOpen, setCommentsFeedOpen] = useState(false)
+  const [showShareExport, setShowShareExport] = useState(false)
   const [selViewMode, setSelViewMode] = useState<'table' | 'tile'>(() => {
     try {
       const stored = typeof window !== 'undefined' ? localStorage.getItem(SEL_VIEW_KEY) : null
@@ -344,6 +348,22 @@ export function RoomDetailContent({
 
             <div className="flex-1" />
 
+            {/* Sharing */}
+            {currentProject && (
+              <button
+                type="button"
+                onClick={() => setShowShareExport(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-cream/40 hover:text-cream/60 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
+                Share
+              </button>
+            )}
+
             {/* Room comments */}
             <button
               type="button"
@@ -614,6 +634,26 @@ export function RoomDetailContent({
             ×
           </button>
         </div>
+      )}
+
+      {/* Share & Export Modal */}
+      {showShareExport && currentProject && room && (
+        <ShareExportModal
+          toolKey="finish_decisions"
+          toolLabel="Decision Tracker"
+          projectId={currentProject.id}
+          isOwner={access === 'OWNER'}
+          onClose={() => setShowShareExport(false)}
+          scopes={[{
+            id: room.id,
+            name: room.name,
+            emoji: ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '🏠',
+          }]}
+          scopeLabel="Rooms"
+          buildExportUrl={({ projectId: pid, includeNotes: notes, includeComments: comments, includePhotos: photos }) => {
+            return `/app/tools/finish-decisions/report?projectId=${pid}&includeNotes=${notes}&includeComments=${comments}&includePhotos=${photos}&roomIds=${encodeURIComponent(room.id)}`
+          }}
+        />
       )}
 
       {/* Room comment feed panel */}

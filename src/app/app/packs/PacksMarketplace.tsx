@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useToolState } from '@/hooks/useToolState'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
-import type { FinishDecisionsPayloadV3, RoomTypeV3 } from '@/data/finish-decisions'
+import { applyKitToRoom } from '@/lib/finish-decision-kits'
+import type { FinishDecisionsPayloadV3, RoomTypeV3, RoomV3 } from '@/data/finish-decisions'
 import { ROOM_EMOJI_MAP, ROOM_TYPE_OPTIONS_V3 } from '@/data/finish-decisions'
 import { cn } from '@/lib/utils'
 
@@ -75,29 +76,66 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
   const [roomTypeFilter, setRoomTypeFilter] = useState<RoomTypeV3 | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [toast, setToast] = useState<{ text: string; kitId: string } | null>(null)
+  const [applyNowModal, setApplyNowModal] = useState<{ kitId: string; kitLabel: string } | null>(null)
+  const [applyNowRoomId, setApplyNowRoomId] = useState<string>('')
 
-  const ownedKitIds: string[] = isLoaded && state.version === 3
-    ? (state as FinishDecisionsPayloadV3).ownedKitIds || []
-    : []
+  const v3State = isLoaded && state.version === 3 ? (state as FinishDecisionsPayloadV3) : { version: 3 as const, rooms: [] as RoomV3[], ownedKitIds: [] as string[] }
+  const rooms = v3State.rooms || []
 
-  function acquireKit(kitId: string) {
+  const ownedKitIds: string[] = v3State.ownedKitIds || []
+
+  function doAcquire(kitId: string) {
     setState((prev: any) => {
       const p = prev as FinishDecisionsPayloadV3
       const existing = p.ownedKitIds || []
       if (existing.includes(kitId)) return prev
       return { ...p, ownedKitIds: [...existing, kitId] }
     })
+  }
+
+  function applyKitToRoomById(kitId: string, roomId: string) {
     const kit = kits.find((k) => k.id === kitId)
-    setToast({ text: `"${kit?.label}" added to My Packs`, kitId })
+    if (!kit) return
+    const targetRoom = rooms.find((r) => r.id === roomId)
+    if (!targetRoom) return
+
+    const result = applyKitToRoom(targetRoom, kit)
+    setState((prev: any) => ({
+      ...prev,
+      rooms: (prev as FinishDecisionsPayloadV3).rooms.map((r: RoomV3) =>
+        r.id === roomId ? result.room : r
+      ),
+    }))
+
+    const msg = `Applied "${kit.label}" to ${targetRoom.name} — +${result.addedDecisionCount} decisions, +${result.addedOptionCount} options`
+    setToast({ text: msg, kitId })
     setTimeout(() => setToast(null), 6000)
   }
 
-  function handleApplyToBoard(kitId: string) {
-    if (returnTo && contextRoomId) {
-      // Return to specific board with pack preselected
-      router.push(`${returnTo}?openPacks=1&roomId=${contextRoomId}&highlightPackId=${kitId}`)
+  function acquireKit(kitId: string) {
+    doAcquire(kitId)
+    const kit = kits.find((k) => k.id === kitId)
+
+    if (contextRoomId) {
+      // Context mode: auto-apply and navigate back
+      applyKitToRoomById(kitId, contextRoomId)
+      router.push(`/app/tools/finish-decisions/room/${contextRoomId}`)
     } else {
-      router.push('/app/tools/finish-decisions?openPacks=1' + (kitId ? `&highlightPackId=${kitId}` : ''))
+      // General mode: show apply-now modal
+      setApplyNowRoomId(rooms[0]?.id || '')
+      setApplyNowModal({ kitId, kitLabel: kit?.label || 'Pack' })
+    }
+  }
+
+  function handleApplyToBoard(kitId: string) {
+    if (contextRoomId) {
+      applyKitToRoomById(kitId, contextRoomId)
+      router.push(`/app/tools/finish-decisions/room/${contextRoomId}`)
+    } else {
+      // General mode: show apply-now modal for owned packs too
+      const kit = kits.find((k) => k.id === kitId)
+      setApplyNowRoomId(rooms[0]?.id || '')
+      setApplyNowModal({ kitId, kitLabel: kit?.label || 'Pack' })
     }
   }
 
@@ -261,7 +299,7 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
         )}
       </div>
 
-      {/* Toast with contextual CTA */}
+      {/* Toast */}
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg px-4 py-3 flex items-center gap-3 max-w-sm">
           <svg className="w-4 h-4 text-green-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -270,14 +308,77 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
           <span className="text-sm text-cream/70 flex-1">{toast.text}</span>
           <button
             type="button"
-            onClick={() => {
-              setToast(null)
-              handleApplyToBoard(toast.kitId)
-            }}
-            className="text-xs text-sandstone font-medium hover:text-sandstone-light transition-colors shrink-0"
+            onClick={() => setToast(null)}
+            className="text-cream/30 hover:text-cream/60 transition-colors"
           >
-            {contextRoomName ? `Apply to ${contextRoomName}` : 'Apply'}
+            &times;
           </button>
+        </div>
+      )}
+
+      {/* Apply Now modal — general mode (no contextRoomId) */}
+      {applyNowModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setApplyNowModal(null)} />
+          <div className="relative bg-basalt-50 border border-cream/15 rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
+            <h3 className="text-lg font-medium text-cream mb-1">Apply this pack now?</h3>
+            <p className="text-sm text-cream/50 mb-4">
+              Choose a room to add &ldquo;{applyNowModal.kitLabel}&rdquo; decisions and options.
+            </p>
+            {rooms.length > 0 ? (
+              <>
+                <select
+                  value={applyNowRoomId}
+                  onChange={(e) => setApplyNowRoomId(e.target.value)}
+                  className="w-full bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream focus:outline-none focus:border-sandstone/50 mb-4"
+                >
+                  {rooms.filter((r) => r.systemKey !== 'global_uncategorized').map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {ROOM_EMOJI_MAP[r.type as RoomTypeV3] || ''} {r.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex items-center gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setApplyNowModal(null)}
+                    className="px-4 py-1.5 text-sm text-cream/50 hover:text-cream/70 transition-colors"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (applyNowRoomId) {
+                        applyKitToRoomById(applyNowModal.kitId, applyNowRoomId)
+                        setApplyNowModal(null)
+                        router.push(`/app/tools/finish-decisions/room/${applyNowRoomId}`)
+                      }
+                    }}
+                    disabled={!applyNowRoomId}
+                    className="px-4 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-50"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-cream/40 mb-4">
+                No rooms yet. Create a room in the Decision Tracker first.
+              </div>
+            )}
+            {rooms.length === 0 && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setApplyNowModal(null)}
+                  className="px-4 py-1.5 text-sm text-cream/50 hover:text-cream/70 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

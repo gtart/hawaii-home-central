@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useImperativeHandle } from 'react'
 import type { OptionV3, DecisionV3, SelectionComment, RoomV3 } from '@/data/finish-decisions'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { relativeTime } from '@/lib/relativeTime'
@@ -8,6 +8,13 @@ import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { IdeaCardModal } from './IdeaCardModal'
 import { CompareModal } from './CompareModal'
 import { SaveFromWebDialog } from './SaveFromWebDialog'
+
+export interface IdeasBoardAddActions {
+  triggerPhoto: () => void
+  triggerNote: () => void
+  triggerWeb: () => void
+  uploading: boolean
+}
 
 interface CommentPayload {
   text: string
@@ -42,6 +49,7 @@ interface Props {
   currentRoomId?: string
   currentDecisionId?: string
   onImportToDecision?: (targetRoomId: string, targetDecisionId: string | null, newTitle: string | undefined, result: { name: string; notes: string; sourceUrl: string; selectedImages: import('@/data/finish-decisions').OptionImageV3[] }) => void
+  addActionsRef?: React.MutableRefObject<IdeasBoardAddActions | null>
 }
 
 // ---- Upload helper (mirrors punchlist utils, points to finish-decisions endpoint) ----
@@ -275,7 +283,7 @@ function IdeaCardTile({
 
 // ---- Add Idea Menu ----
 
-function AddIdeaMenu({
+export function AddIdeaMenu({
   onPhoto,
   onNote,
   onWeb,
@@ -409,6 +417,7 @@ export function IdeasBoard({
   currentRoomId,
   currentDecisionId,
   onImportToDecision,
+  addActionsRef,
 }: Props) {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
@@ -422,6 +431,18 @@ export function IdeasBoard({
   const MOBILE_VISIBLE_COUNT = 3
   const fileInputRef = useRef<HTMLInputElement>(null)
   const noteInputRef = useRef<HTMLInputElement>(null)
+
+  // Expose add actions to parent via ref
+  useEffect(() => {
+    if (addActionsRef) {
+      addActionsRef.current = {
+        triggerPhoto: () => fileInputRef.current?.click(),
+        triggerNote: () => handleAddTextCard(),
+        triggerWeb: () => setShowWebDialog(true),
+        uploading,
+      }
+    }
+  })
 
   function toggleCompareSelect(id: string) {
     setSelectedForCompare((prev) => {
@@ -573,17 +594,7 @@ export function IdeasBoard({
                 </button>
               )}
             </div>
-            {!readOnly && (
-              <div className="hidden md:block">
-                <AddIdeaMenu
-                  onPhoto={() => fileInputRef.current?.click()}
-                  onNote={handleAddTextCard}
-                  onWeb={() => setShowWebDialog(true)}
-                  onPack={hasKits ? onOpenPack : undefined}
-                  uploading={uploading}
-                />
-              </div>
-            )}
+            {/* Add menu moved to Options Board header in DecisionDetailContent */}
           </div>
 
           {/* Inline note title input */}
@@ -831,18 +842,7 @@ export function IdeasBoard({
         />
       )}
 
-      {/* Mobile floating add button */}
-      {!readOnly && (
-        <div className="fixed bottom-6 right-4 z-40 md:hidden pb-[env(safe-area-inset-bottom)]">
-          <AddIdeaMenu
-            onPhoto={() => fileInputRef.current?.click()}
-            onNote={handleAddTextCard}
-            onWeb={() => setShowWebDialog(true)}
-            onPack={hasKits ? onOpenPack : undefined}
-            uploading={uploading}
-          />
-        </div>
-      )}
+      {/* Add menu moved to Options Board header in DecisionDetailContent */}
     </div>
   )
 }

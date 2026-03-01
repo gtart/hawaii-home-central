@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Input } from '@/components/ui/Input'
 import { useToolState } from '@/hooks/useToolState'
-import { IdeasBoard } from '../../components/IdeasBoard'
+import { IdeasBoard, AddIdeaMenu, type IdeasBoardAddActions } from '../../components/IdeasBoard'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
@@ -58,6 +58,7 @@ export function DecisionDetailContent({
   const [assignToast, setAssignToast] = useState<string | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
+  const addActionsRef = useRef<IdeasBoardAddActions | null>(null)
 
   const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3 | any>({
     toolKey: 'finish_decisions',
@@ -725,16 +726,21 @@ export function DecisionDetailContent({
                   {/* Final selection details */}
                   <div className="flex-1 p-4">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-sandstone text-basalt text-[11px] font-semibold rounded-full">
-                        Final Decision
+                      <span className="text-[11px] text-sandstone font-semibold">
+                        Final decision selected:
+                      </span>
+                      <span className="text-[11px] text-cream/70 font-medium">
+                        {finalPick.name || 'Untitled'}
                       </span>
                       {foundDecision.finalSelection && (
                         <>
+                          <span className="text-cream/25">&middot;</span>
                           <span className="px-1.5 py-0.5 bg-cream/10 text-cream/50 text-[10px] rounded-full">
                             {foundDecision.finalSelection.selectedBy}
                           </span>
-                          <span className="text-[10px] text-cream/25">
-                            {new Date(foundDecision.finalSelection.selectedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          <span className="text-cream/25">&middot;</span>
+                          <span className="text-[10px] text-cream/35">
+                            {new Date(foundDecision.finalSelection.selectedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                           </span>
                         </>
                       )}
@@ -817,10 +823,21 @@ export function DecisionDetailContent({
             >
               <span className="text-cream/30 text-xs md:hidden">{optionsOpen ? '▼' : '▶'}</span>
               Options Board
+              <span className="text-cream/30 font-normal">&middot;</span>
               <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-cream/10 text-cream/50 text-xs font-medium rounded-full">
                 {foundDecision.options.length}
               </span>
             </button>
+            <div className="flex-1" />
+            {!readOnly && (
+              <AddIdeaMenu
+                onPhoto={() => addActionsRef.current?.triggerPhoto()}
+                onNote={() => addActionsRef.current?.triggerNote()}
+                onWeb={() => addActionsRef.current?.triggerWeb()}
+                onPack={availableKits.length > 0 ? () => setIdeasPackOpen(true) : undefined}
+                uploading={addActionsRef.current?.uploading}
+              />
+            )}
           </div>
 
           <IdeasBoard
@@ -850,6 +867,7 @@ export function DecisionDetailContent({
             currentDecisionId={foundDecision.id}
             onImportToDecision={handleImportToDecision}
             onMoveOption={(optId) => setMoveOptionId(optId)}
+            addActionsRef={addActionsRef}
           />
         </div>
 
