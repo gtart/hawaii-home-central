@@ -413,7 +413,7 @@ export function RoomDetailContent({
           <div data-testid="empty-state-no-options" className="bg-basalt-50 rounded-card p-6 md:p-8 mb-5 border border-cream/10">
             <h3 className="font-serif text-lg text-sandstone mb-1">Great&mdash;now add options</h3>
             <p className="text-sm text-cream/50 leading-relaxed mb-4">
-              You&rsquo;ve got the checklist. Next, add real options (products, finishes, and recommendations) you can compare.
+              Apply a pack to add curated ideas you can compare.
             </p>
             <div className="flex flex-wrap items-center gap-3">
               {hasAvailableKits && (
@@ -433,12 +433,9 @@ export function RoomDetailContent({
                 }}
                 className="inline-flex items-center gap-1 px-3 py-2 text-sm text-cream/60 hover:text-cream/80 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
               >
-                Add an option manually
+                Add an option
               </button>
             </div>
-            <p className="text-[11px] text-cream/30 mt-3 italic">
-              Decision Packs can also fill in any missing decisions.
-            </p>
           </div>
         )}
 

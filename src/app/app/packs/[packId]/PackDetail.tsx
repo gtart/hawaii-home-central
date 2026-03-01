@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useToolState } from '@/hooks/useToolState'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
@@ -24,6 +25,16 @@ const AUTHOR_LABELS: Record<string, { label: string; description: string; classN
     description: 'Paid placement by a vendor partner. Always labeled.',
     className: 'bg-amber-500/15 text-amber-300 border-amber-400/25',
   },
+  affiliate: {
+    label: 'Affiliate',
+    description: 'Links may earn a commission.',
+    className: 'bg-orange-500/15 text-orange-300 border-orange-400/25',
+  },
+  paid: {
+    label: 'Paid pack',
+    description: 'One-time purchase. Reuse anytime.',
+    className: 'bg-purple-500/15 text-purple-300 border-purple-400/25',
+  },
 }
 
 function roomTypeLabel(type: RoomTypeV3): string {
@@ -37,7 +48,14 @@ export function PackDetail({
   packId: string
   kits: FinishDecisionKit[]
 }) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const kit = kits.find((k) => k.id === packId)
+
+  // Context params — where user came from
+  const returnTo = searchParams.get('returnTo')
+  const contextRoomId = searchParams.get('roomId')
+  const contextRoomName = searchParams.get('roomName')
 
   const { state, setState, isLoaded } = useToolState<FinishDecisionsPayloadV3 | any>({
     toolKey: 'finish_decisions',
@@ -45,7 +63,7 @@ export function PackDetail({
     defaultValue: { version: 3, rooms: [] },
   })
 
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ text: string } | null>(null)
   const [expandedDecision, setExpandedDecision] = useState<string | null>(null)
 
   const ownedKitIds: string[] = isLoaded && state.version === 3
@@ -62,8 +80,17 @@ export function PackDetail({
       if (existing.includes(kit.id)) return prev
       return { ...p, ownedKitIds: [...existing, kit.id] }
     })
-    setToast(`"${kit.label}" added to My Packs!`)
-    setTimeout(() => setToast(null), 4000)
+    setToast({ text: `"${kit.label}" added to My Packs!` })
+    setTimeout(() => setToast(null), 6000)
+  }
+
+  function handleApplyToBoard() {
+    if (!kit) return
+    if (returnTo && contextRoomId) {
+      router.push(`${returnTo}?openPacks=1&roomId=${contextRoomId}&highlightPackId=${kit.id}`)
+    } else {
+      router.push('/app/tools/finish-decisions?openPacks=1' + (kit ? `&highlightPackId=${kit.id}` : ''))
+    }
   }
 
   if (!kit) {
@@ -90,7 +117,7 @@ export function PackDetail({
       <div className="max-w-3xl mx-auto">
         {/* Breadcrumb */}
         <Link
-          href="/app/packs"
+          href={returnTo ? `/app/packs?returnTo=${encodeURIComponent(returnTo)}&roomId=${contextRoomId || ''}&roomName=${encodeURIComponent(contextRoomName || '')}` : '/app/packs'}
           className="text-sm text-cream/40 hover:text-cream/60 transition-colors mb-6 inline-block"
         >
           &larr; All Decision Packs
@@ -166,12 +193,13 @@ export function PackDetail({
             <div className="shrink-0 flex flex-col items-center gap-2">
               {isOwned ? (
                 <>
-                  <Link
-                    href="/app/tools/finish-decisions"
+                  <button
+                    type="button"
+                    onClick={handleApplyToBoard}
                     className="px-6 py-2.5 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors text-sm text-center"
                   >
-                    Apply to a board
-                  </Link>
+                    {contextRoomName ? `Apply to ${contextRoomName}` : 'Apply to a board'}
+                  </button>
                   <span className="inline-flex items-center gap-1 text-[11px] text-green-400/70">
                     <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
@@ -255,11 +283,12 @@ export function PackDetail({
         {/* Bottom CTA */}
         <div className="mt-8 text-center">
           {isOwned ? (
-            <Link
-              href="/app/tools/finish-decisions"
+            <button
+              type="button"
+              onClick={handleApplyToBoard}
               className="inline-flex items-center gap-2 px-6 py-3 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors"
             >
-              Apply to your boards
+              {contextRoomName ? `Apply to ${contextRoomName}` : 'Apply to your boards'}
               <svg
                 className="w-4 h-4"
                 viewBox="0 0 24 24"
@@ -273,7 +302,7 @@ export function PackDetail({
                   strokeLinejoin="round"
                 />
               </svg>
-            </Link>
+            </button>
           ) : (
             <button
               type="button"
@@ -286,23 +315,23 @@ export function PackDetail({
         </div>
       </div>
 
-      {/* Toast */}
+      {/* Toast with contextual CTA */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg px-4 py-2.5 flex items-center gap-2 max-w-xs">
-          <svg
-            className="w-4 h-4 text-green-400 shrink-0"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-          >
-            <path
-              d="M20 6L9 17l-5-5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg px-4 py-3 flex items-center gap-3 max-w-sm">
+          <svg className="w-4 h-4 text-green-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span className="text-sm text-cream/70">{toast}</span>
+          <span className="text-sm text-cream/70 flex-1">{toast.text}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setToast(null)
+              handleApplyToBoard()
+            }}
+            className="text-xs text-sandstone font-medium hover:text-sandstone-light transition-colors shrink-0"
+          >
+            {contextRoomName ? `Apply to ${contextRoomName}` : 'Apply'}
+          </button>
         </div>
       )}
     </div>

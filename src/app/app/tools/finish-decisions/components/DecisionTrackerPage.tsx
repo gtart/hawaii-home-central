@@ -125,12 +125,48 @@ export function DecisionTrackerPage({
   }, [rooms])
 
   // Open pack modal once rooms appear after "pack" onboarding level
+  // Use the newest non-unsorted room (just created by onboarding), not rooms[0]
   useEffect(() => {
     if (pendingPackChooser && rooms.length > 0) {
       setPendingPackChooser(false)
-      setIdeasModalRoomId(rooms[0].id)
+      const newIds = [...rooms.map((r) => r.id)].filter((id) => !prevRoomIdsRef.current.has(id))
+      const targetRoom = newIds.length > 0
+        ? rooms.find((r) => r.id === newIds[0])
+        : rooms.find((r) => !isGlobalUnsorted(r))
+      if (targetRoom) {
+        setDestPickerRoomId(targetRoom.id)
+        setIdeasModalDestPicker(true)
+        setIdeasModalRoomId(targetRoom.id)
+      }
     }
   }, [pendingPackChooser, rooms])
+
+  // Auto-open pack modal when returning from marketplace (openPacks=1 query param)
+  const openPacksHandled = useRef(false)
+  useEffect(() => {
+    if (openPacksHandled.current || !hasRooms) return
+    try {
+      const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+      if (params?.get('openPacks') === '1') {
+        openPacksHandled.current = true
+        const targetRoomId = params.get('roomId')
+        const targetRoom = targetRoomId
+          ? rooms.find((r) => r.id === targetRoomId)
+          : rooms.find((r) => !isGlobalUnsorted(r))
+        if (targetRoom) {
+          setDestPickerRoomId(targetRoom.id)
+          setIdeasModalDestPicker(true)
+          setIdeasModalRoomId(targetRoom.id)
+        }
+        // Clean URL without triggering navigation
+        const url = new URL(window.location.href)
+        url.searchParams.delete('openPacks')
+        url.searchParams.delete('roomId')
+        url.searchParams.delete('highlightPackId')
+        window.history.replaceState({}, '', url.pathname + (url.search || ''))
+      }
+    } catch { /* SSR guard */ }
+  }, [hasRooms, rooms])
 
   // Toggle a single room's expansion
   const toggleRoom = (roomId: string) => {
@@ -368,66 +404,70 @@ export function DecisionTrackerPage({
             </div>
           )}
 
-          {/* My Decision Packs shelf */}
+          {/* Decision Packs module */}
           {!readOnly && kits.length > 0 && (
             <div className="bg-basalt-50 rounded-card p-4 mb-4 border border-cream/10">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-cream/70">
-                  <span className="mr-1.5">✨</span>My Decision Packs
-                </h3>
-                <div className="flex items-center gap-3">
-                  <Link
-                    href="/app/packs"
-                    className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
-                  >
-                    Browse marketplace
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      // Open pack modal with destination picker
-                      const firstRoom = rooms.find((r) => !isGlobalUnsorted(r))
-                      if (firstRoom) {
-                        setDestPickerRoomId(firstRoom.id)
-                        setIdeasModalDestPicker(true)
-                        setIdeasModalRoomId(firstRoom.id)
-                      }
-                    }}
-                    className="text-xs text-sandstone hover:text-sandstone-light transition-colors"
-                  >
-                    Apply to a board
-                  </button>
-                </div>
-              </div>
-              {ownedKitIds.length === 0 ? (
-                <div className="flex items-center gap-3">
-                  <p className="text-xs text-cream/40 flex-1">
-                    Get a pack to instantly populate decisions with curated ideas.
-                  </p>
-                  <Link
-                    href="/app/packs"
-                    className="shrink-0 px-3 py-1.5 bg-sandstone text-basalt text-xs font-medium rounded-lg hover:bg-sandstone-light transition-colors"
-                  >
-                    Browse Packs
-                  </Link>
-                </div>
-              ) : (
-                <div className="flex gap-2 overflow-x-auto pb-1">
+              <h3 className="text-sm font-medium text-cream/70 mb-1">
+                Decision Packs <span className="text-cream/30">✨</span>
+              </h3>
+              <p className="text-xs text-cream/40 mb-3">
+                Curated ideas that help you choose faster.
+              </p>
+
+              {/* Owned pack chips — tap to apply */}
+              {ownedKitIds.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto pb-2 mb-2">
                   {kits
                     .filter((k) => ownedKitIds.includes(k.id))
+                    .slice(0, 4)
                     .map((kit) => (
-                      <div
+                      <button
                         key={kit.id}
-                        className="shrink-0 bg-basalt rounded-lg border border-cream/10 px-3 py-2 w-48"
+                        type="button"
+                        onClick={() => {
+                          const firstRoom = rooms.find((r) => !isGlobalUnsorted(r))
+                          if (firstRoom) {
+                            setDestPickerRoomId(firstRoom.id)
+                            setIdeasModalDestPicker(true)
+                            setIdeasModalRoomId(firstRoom.id)
+                          }
+                        }}
+                        className="shrink-0 bg-basalt rounded-lg border border-cream/10 hover:border-sandstone/30 px-3 py-2 text-left transition-colors max-w-[180px]"
                       >
                         <span className="text-xs font-medium text-cream/80 block truncate">{kit.label}</span>
                         <span className="text-[10px] text-cream/40">
                           {kit.decisions.length} decisions &middot;{' '}
                           {kit.decisions.reduce((s, d) => s + d.options.length, 0)} ideas
                         </span>
-                      </div>
+                      </button>
                     ))}
                 </div>
+              )}
+
+              {/* Single primary CTA */}
+              <Link
+                href="/app/packs"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-sandstone/10 text-sandstone text-xs font-medium rounded-lg hover:bg-sandstone/20 transition-colors"
+              >
+                Browse Decision Packs
+              </Link>
+
+              {/* Secondary: apply (only when user owns packs) */}
+              {ownedKitIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const firstRoom = rooms.find((r) => !isGlobalUnsorted(r))
+                    if (firstRoom) {
+                      setDestPickerRoomId(firstRoom.id)
+                      setIdeasModalDestPicker(true)
+                      setIdeasModalRoomId(firstRoom.id)
+                    }
+                  }}
+                  className="ml-3 text-xs text-cream/40 hover:text-cream/60 transition-colors"
+                >
+                  Apply a pack
+                </button>
               )}
             </div>
           )}

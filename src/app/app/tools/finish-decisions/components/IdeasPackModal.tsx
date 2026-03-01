@@ -23,6 +23,16 @@ const DISCLOSURE_BADGES: Record<string, { label: string; micro?: string; classNa
     micro: 'Paid placement. Always labeled.',
     className: 'bg-amber-500/15 text-amber-300 border-amber-400/25',
   },
+  affiliate: {
+    label: 'Affiliate',
+    micro: 'Links may earn a commission.',
+    className: 'bg-orange-500/15 text-orange-300 border-orange-400/25',
+  },
+  paid: {
+    label: 'Paid pack',
+    micro: 'One-time purchase. Reuse anytime.',
+    className: 'bg-purple-500/15 text-purple-300 border-purple-400/25',
+  },
 }
 
 function DisclosureBadge({ author }: { author: string }) {
@@ -291,7 +301,9 @@ export function IdeasPackModal({
                     Browse available packs
                   </button>
                   <Link
-                    href="/app/packs"
+                    href={selectedRoomId
+                      ? `/app/packs?returnTo=${encodeURIComponent('/app/tools/finish-decisions')}&roomId=${selectedRoomId}&roomName=${encodeURIComponent(activeRoomName)}`
+                      : '/app/packs'}
                     onClick={onClose}
                     className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
                   >
