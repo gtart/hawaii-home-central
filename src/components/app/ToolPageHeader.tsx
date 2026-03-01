@@ -5,7 +5,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useProject } from '@/contexts/ProjectContext'
 import { ShareToolModal } from './ShareToolModal'
-import { ProjectSwitcher } from './ProjectSwitcher'
 import { cn } from '@/lib/utils'
 
 interface Collaborator {
@@ -89,28 +88,19 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
           href="/app"
           className="text-sandstone hover:text-sandstone-light text-sm"
         >
-          &larr; Home Project Tools
+          &larr; {currentProject?.name || 'Home Project Tools'}
         </Link>
       </div>
 
-      {/* Project banner — mobile only (desktop uses navbar picker) */}
-      {currentProject && (
-        <div className="flex sm:hidden items-center gap-3 mb-5 px-4 py-2.5 rounded-lg bg-sandstone/10 border border-sandstone/15">
-          <svg className="w-4 h-4 text-sandstone/60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <div className="flex flex-col min-w-0">
-            <span className="text-[10px] uppercase tracking-wider text-sandstone/50">Currently viewing</span>
-            <span className="text-sm font-medium text-sandstone truncate">{currentProject.name}</span>
-          </div>
-          <ProjectSwitcher />
-        </div>
-      )}
-
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 mb-4">
-        <h1 className="font-serif text-4xl md:text-5xl text-sandstone min-w-0">
-          {title}
-        </h1>
+        <div className="min-w-0">
+          {currentProject && (
+            <p className="text-xs text-cream/40 uppercase tracking-wider mb-1">{currentProject.name}</p>
+          )}
+          <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
+            {title}
+          </h1>
+        </div>
         <div className="flex items-center gap-2 shrink-0 pt-1 sm:pt-2">
           {accessLevel === 'VIEW' && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-cream/10 text-cream/50">
