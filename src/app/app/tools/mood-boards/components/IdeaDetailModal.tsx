@@ -297,42 +297,6 @@ export function IdeaDetailModal({
             </a>
           )}
 
-          {/* Reactions */}
-          <div className="flex items-center gap-2">
-            {(['love', 'like', 'dislike'] as ReactionType[]).map((type) => {
-              const config = REACTION_CONFIG[type]
-              const reactions = idea.reactions || []
-              const count = reactions.filter((r) => r.reaction === type).length
-              const isActive = reactions.some(
-                (r) => r.userId === currentUserEmail && r.reaction === type
-              )
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => onToggleReaction(idea.id, type)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                    isActive
-                      ? 'bg-sandstone/15 border-sandstone/40 text-sandstone'
-                      : 'bg-basalt border-cream/15 text-cream/50 hover:border-cream/30'
-                  }`}
-                >
-                  <span>{config.emoji}</span>
-                  <span className="text-xs">{config.label}</span>
-                  {count > 0 && (
-                    <span
-                      className={`text-[10px] ${
-                        isActive ? 'text-sandstone/70' : 'text-cream/30'
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-
           {/* Notes */}
           <div>
             <label className="block text-xs text-cream/50 mb-1">Notes</label>
@@ -381,6 +345,44 @@ export function IdeaDetailModal({
                 className="w-full px-3 py-2 bg-basalt border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone"
               />
             )}
+          </div>
+
+          {/* Rating — compact */}
+          <div>
+            <label className="block text-xs text-cream/50 mb-1">Rating</label>
+            <div className="flex items-center gap-1.5">
+              {(['love', 'like', 'dislike'] as ReactionType[]).map((type) => {
+                const config = REACTION_CONFIG[type]
+                const reactions = idea.reactions || []
+                const count = reactions.filter((r) => r.reaction === type).length
+                const isActive = reactions.some(
+                  (r) => r.userId === currentUserEmail && r.reaction === type
+                )
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => onToggleReaction(idea.id, type)}
+                    className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border transition-colors ${
+                      isActive
+                        ? 'bg-sandstone/15 border-sandstone/40 text-sandstone'
+                        : 'bg-basalt border-cream/15 text-cream/50 hover:border-cream/30'
+                    }`}
+                  >
+                    <span className="text-sm">{config.emoji}</span>
+                    {count > 0 && (
+                      <span
+                        className={`text-[10px] ${
+                          isActive ? 'text-sandstone/70' : 'text-cream/30'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {/* Comments section — unified thread */}
