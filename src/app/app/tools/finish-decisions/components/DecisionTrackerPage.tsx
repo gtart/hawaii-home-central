@@ -404,37 +404,59 @@ export function DecisionTrackerPage({
             </div>
           )}
 
-          {/* Decision Packs — compact inline module */}
-          {!readOnly && kits.length > 0 && (
-            <div className="flex items-center gap-3 mb-4 px-1">
-              <span className="text-cream/30 text-xs">✨</span>
-              <Link
-                href="/app/packs"
-                className="text-xs text-sandstone font-medium hover:text-sandstone-light transition-colors"
-              >
-                Browse Decision Packs
-              </Link>
-              {ownedKitIds.length > 0 && (
-                <>
-                  <span className="text-cream/15">·</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const firstRoom = rooms.find((r) => !isGlobalUnsorted(r))
-                      if (firstRoom) {
-                        setDestPickerRoomId(firstRoom.id)
-                        setIdeasModalDestPicker(true)
-                        setIdeasModalRoomId(firstRoom.id)
-                      }
-                    }}
-                    className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
+          {/* Decision Packs — compact card */}
+          {!readOnly && kits.length > 0 && (() => {
+            const featuredKit = kits[0]
+            const featuredOptionCount = featuredKit?.decisions.reduce((s, d) => s + d.options.length, 0) ?? 0
+            return (
+              <div className="bg-basalt-50 rounded-lg border border-cream/10 p-4 mb-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-medium text-cream mb-0.5">
+                      Decision Packs
+                    </h3>
+                    <p className="text-xs text-cream/40 leading-relaxed">
+                      Curated options that help you choose faster.
+                    </p>
+                  </div>
+                  <Link
+                    href="/app/packs"
+                    className="shrink-0 px-3 py-1.5 text-xs font-medium text-sandstone bg-sandstone/10 hover:bg-sandstone/20 rounded-lg transition-colors"
                   >
-                    Apply a pack ({ownedKitIds.length} owned)
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+                    Browse Packs
+                  </Link>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {ownedKitIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const firstRoom = rooms.find((r) => !isGlobalUnsorted(r))
+                        if (firstRoom) {
+                          setDestPickerRoomId(firstRoom.id)
+                          setIdeasModalDestPicker(true)
+                          setIdeasModalRoomId(firstRoom.id)
+                        }
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-sandstone/70 bg-sandstone/5 hover:bg-sandstone/15 rounded-full transition-colors"
+                    >
+                      My Packs ({ownedKitIds.length})
+                    </button>
+                  )}
+                  {featuredKit && (
+                    <Link
+                      href={`/app/packs/${featuredKit.id}`}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] text-cream/40 hover:text-cream/60 bg-cream/5 hover:bg-cream/10 rounded-full transition-colors"
+                    >
+                      <span className="text-cream/25">✨</span>
+                      {featuredKit.label}
+                      <span className="text-cream/20">&middot; {featuredKit.decisions.length} decisions, {featuredOptionCount} options</span>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Search + View toggle */}
           <div className="flex items-center gap-2 mb-3">
@@ -486,10 +508,15 @@ export function DecisionTrackerPage({
           {totalDecisions > 0 && (
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-cream/50 mb-3">
               {isFiltering && <span className="text-cream/30 italic">Filtered:</span>}
-              <span>Deciding {summaryStats.deciding}</span>
-              <span>Selected {summaryStats.selected}</span>
-              <span>Ordered {summaryStats.ordered}</span>
-              <span>Done {summaryStats.done}</span>
+              {summaryStats.deciding + summaryStats.selected + summaryStats.ordered > 0 && (
+                <span className="text-cream/70 font-medium">
+                  {summaryStats.deciding + summaryStats.selected + summaryStats.ordered} Decisions Needed
+                </span>
+              )}
+              <span>{summaryStats.deciding} Deciding</span>
+              <span>{summaryStats.selected} Selected</span>
+              <span>{summaryStats.ordered} Ordered</span>
+              <span>{summaryStats.done} Done</span>
               {summaryStats.overdue > 0 && (
                 <span className="text-red-400">Overdue {summaryStats.overdue}</span>
               )}

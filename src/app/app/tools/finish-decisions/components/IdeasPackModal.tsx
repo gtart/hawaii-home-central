@@ -358,25 +358,61 @@ export function IdeasPackModal({
                   </p>
 
                   {/* Expanded preview when selected */}
-                  {isSelected && (
-                    <div className="mt-3 pt-3 border-t border-cream/10 space-y-2">
-                      {kit.decisions.map((dec) => (
-                        <div key={dec.title}>
-                          <span className="text-xs text-cream/60 font-medium">{dec.title}</span>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {dec.options.map((opt) => (
-                              <span
-                                key={opt.name}
-                                className="inline-block px-2 py-0.5 bg-cream/10 rounded text-[11px] text-cream/50"
-                              >
-                                {opt.name}
+                  {isSelected && (() => {
+                    // In decision mode, highlight the matching decision within the pack
+                    const matchTitle = decisionTitle?.toLowerCase().trim()
+                    // Sort: matching decision first when in decision mode
+                    const sortedDecs = isDecisionMode && matchTitle
+                      ? [...kit.decisions].sort((a, b) => {
+                          const aMatch = a.title.toLowerCase().trim() === matchTitle
+                          const bMatch = b.title.toLowerCase().trim() === matchTitle
+                          if (aMatch && !bMatch) return -1
+                          if (!aMatch && bMatch) return 1
+                          return 0
+                        })
+                      : kit.decisions
+
+                    return (
+                      <div className="mt-3 pt-3 border-t border-cream/10 space-y-2">
+                        {sortedDecs.map((dec) => {
+                          const isMatchingDec = isDecisionMode && matchTitle && dec.title.toLowerCase().trim() === matchTitle
+                          return (
+                            <div
+                              key={dec.title}
+                              className={cn(
+                                isMatchingDec && 'bg-sandstone/10 -mx-2 px-2 py-1.5 rounded-lg border border-sandstone/20'
+                              )}
+                            >
+                              <span className={cn(
+                                'text-xs font-medium',
+                                isMatchingDec ? 'text-sandstone' : 'text-cream/60'
+                              )}>
+                                {dec.title}
+                                {isMatchingDec && (
+                                  <span className="ml-1.5 text-[10px] text-sandstone/60 font-normal">
+                                    — matches your decision
+                                  </span>
+                                )}
                               </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {dec.options.map((opt) => (
+                                  <span
+                                    key={opt.name}
+                                    className={cn(
+                                      'inline-block px-2 py-0.5 rounded text-[11px]',
+                                      isMatchingDec ? 'bg-sandstone/15 text-sandstone/70' : 'bg-cream/10 text-cream/50'
+                                    )}
+                                  >
+                                    {opt.name}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })()}
                 </button>
               )
             })
