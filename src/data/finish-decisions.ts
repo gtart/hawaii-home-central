@@ -212,6 +212,10 @@ export interface OptionV3 {
   heroImageId?: string | null        // id of the primary image (null = first in images[])
   votes?: Record<string, 'up' | 'down' | 'love' | 'like' | 'dislike'>  // keyed by user email
   origin?: OptionOriginV3            // set when added by an ideas pack
+  price?: string                     // freeform price string (e.g. "$1,200", "TBD")
+  specs?: string                     // specs text (separate from notes)
+  prosText?: string                  // pros (collapsed in UI by default)
+  consText?: string                  // cons (collapsed in UI by default)
   createdAt: string
   updatedAt: string
 }
@@ -230,6 +234,20 @@ export interface SelectionComment {
 // System selection keys (e.g. "Uncategorized" — cannot be finalized)
 export type SystemSelectionKey = 'uncategorized'
 
+// Final selection metadata (who marked the final pick + when)
+export interface FinalSelectionMeta {
+  optionId: string
+  selectedBy: string   // user display name
+  selectedAt: string   // ISO timestamp
+}
+
+// Status log entry (who changed status + when)
+export interface StatusLogEntry {
+  status: StatusV3
+  markedBy: string     // user display name
+  markedAt: string     // ISO timestamp
+}
+
 // Decision (nested in room)
 export interface DecisionV3 {
   id: string
@@ -243,6 +261,8 @@ export interface DecisionV3 {
   picksByUser?: Record<string, string | null>  // email → optionId (user's "My pick")
   originKitId?: string // set when entire decision was added by a kit
   systemKey?: SystemSelectionKey // system-managed selection (e.g. 'uncategorized')
+  finalSelection?: FinalSelectionMeta | null // who picked the final option + when
+  statusLog?: StatusLogEntry[] // history of status changes (only latest shown in UI)
   createdAt: string
   updatedAt: string
 }
@@ -254,6 +274,17 @@ export interface RoomCoverImage {
   ideaId?: string // set when type === 'idea'
 }
 
+// Room-level comment (not tied to a specific decision)
+export interface RoomComment {
+  id: string
+  text: string
+  authorName: string
+  authorEmail: string
+  createdAt: string
+  refDecisionId?: string    // optional: links comment to a specific decision
+  refDecisionTitle?: string // display name of the referenced decision
+}
+
 // Room (top-level, contains decisions)
 export interface RoomV3 {
   id: string
@@ -263,6 +294,7 @@ export interface RoomV3 {
   appliedKitIds?: string[] // tracks which ideas packs have been applied
   coverImage?: RoomCoverImage // optional cover for boards view
   systemKey?: string // 'global_uncategorized' for global unsorted room
+  comments?: RoomComment[] // room-level comment thread
   createdAt: string
   updatedAt: string
 }

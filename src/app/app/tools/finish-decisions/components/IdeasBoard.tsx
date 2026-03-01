@@ -126,7 +126,7 @@ function IdeaCardTile({
       role="button"
       tabIndex={0}
       data-testid="idea-card"
-      aria-label={`Open idea: ${option.name || 'Untitled'}`}
+      aria-label={`Open option: ${option.name || 'Untitled'}`}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
       className="w-full rounded-xl overflow-hidden bg-basalt border border-cream/10 hover:border-cream/30 transition-colors text-left group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/50"
@@ -313,7 +313,7 @@ function AddIdeaMenu({
             ? 'bg-sandstone text-basalt rotate-45'
             : 'bg-cream/10 text-cream/60 hover:bg-cream/20 hover:text-cream/80'
         } disabled:opacity-50`}
-        title="Add idea"
+        title="Add option"
       >
         {uploading ? (
           <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
@@ -335,7 +335,7 @@ function AddIdeaMenu({
               <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
               <circle cx="12" cy="13" r="4" />
             </svg>
-            Photo
+            Add from Photos
           </button>
           <div className="border-t border-cream/8" />
           <button
@@ -346,7 +346,7 @@ function AddIdeaMenu({
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
             </svg>
-            Note
+            Add as Text
           </button>
           <div className="border-t border-cream/8" />
           <button
@@ -357,7 +357,7 @@ function AddIdeaMenu({
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Save to HHC
+            Add from Save to HHC
           </button>
           {onPack && (
             <>
@@ -370,8 +370,9 @@ function AddIdeaMenu({
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="2" y="7" width="20" height="14" rx="2" />
                   <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+                  <path d="M12 11v6M9 14h6" strokeLinecap="round" />
                 </svg>
-                From pack
+                Add from Decision Pack
               </button>
             </>
           )}
@@ -591,7 +592,7 @@ export function IdeasBoard({
               <input
                 ref={noteInputRef}
                 type="text"
-                placeholder="Idea title..."
+                placeholder="Option name..."
                 className="w-full bg-basalt-50 border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleNoteSubmit((e.target as HTMLInputElement).value)
@@ -697,7 +698,7 @@ export function IdeasBoard({
                     onClick={() => setExpanded(true)}
                     className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors md:hidden"
                   >
-                    Show {hiddenCount} more idea{hiddenCount !== 1 ? 's' : ''}
+                    Show {hiddenCount} more option{hiddenCount !== 1 ? 's' : ''}
                   </button>
                 )}
                 {expanded && decision.options.length > MOBILE_VISIBLE_COUNT && (
@@ -729,9 +730,9 @@ export function IdeasBoard({
           {/* Empty state */}
           {decision.options.length === 0 && (
             <div className="bg-basalt-50 rounded-card p-8 text-center mb-4">
-              <p className="text-cream/60 text-sm font-medium mb-1">Start collecting options</p>
+              <p className="text-cream/60 text-sm font-medium mb-1">No options yet</p>
               <p className="text-cream/35 text-xs mb-4">
-                Save links, photos, and notes here. Vote and discuss with collaborators.
+                Add photos, text, or save from the web to start comparing options.
               </p>
               {!readOnly && (
                 <div className="flex flex-wrap justify-center gap-2">
@@ -741,7 +742,15 @@ export function IdeasBoard({
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80 rounded-full text-xs transition-colors"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></svg>
-                    Add photo
+                    Add from Photos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddTextCard}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80 rounded-full text-xs transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" /></svg>
+                    Add as Text
                   </button>
                   <button
                     type="button"
@@ -750,14 +759,6 @@ export function IdeasBoard({
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     Save to HHC
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleAddTextCard}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80 rounded-full text-xs transition-colors"
-                  >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" /></svg>
-                    Add note
                   </button>
                 </div>
               )}

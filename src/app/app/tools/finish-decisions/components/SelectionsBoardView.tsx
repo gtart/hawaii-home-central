@@ -112,7 +112,7 @@ export function SelectionsBoardView({
         const thumbnail = getSelectionThumbnail(decision)
         const statusCfg = safeStatusConfig(decision.status)
         const selectedOption = decision.options.find((o) => o.isSelected)
-        const commentCount = decision.comments?.length ?? 0
+        const userCommentCount = (decision.comments || []).filter((c) => c.authorEmail !== '').length
 
         const selectionEmoji = getSelectionEmoji(decision.title, emojiMap)
 
@@ -180,15 +180,28 @@ export function SelectionsBoardView({
 
             {/* Card body */}
             <div className="px-3 py-2">
-              {selectedOption && (
+              {/* Final snippet or Done-without-final warning */}
+              {selectedOption ? (
                 <p className="text-[11px] text-sandstone/70 truncate">
-                  Selected: {selectedOption.name}
+                  Final: {selectedOption.name || 'Untitled'}
                 </p>
-              )}
+              ) : decision.status === 'done' && decision.systemKey !== 'uncategorized' ? (
+                <p className="text-[10px] text-red-400/70 inline-flex items-center gap-1">
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  No final selected
+                </p>
+              ) : null}
 
-              {/* Meta row: ideas, open, comments */}
+              {/* Meta row: options pill, open, comments */}
               <div className="flex items-center gap-1.5 text-[11px] text-cream/55 mt-1">
-                <span>{decision.options.length} idea{decision.options.length !== 1 ? 's' : ''}</span>
+                <span className="inline-flex items-center justify-center min-w-[1.25rem] h-[1.125rem] px-1 bg-cream/10 text-cream/50 text-[10px] font-medium rounded-full">
+                  {decision.options.length}
+                </span>
+                <span className="text-cream/30 text-[10px]">options</span>
                 <span className="text-cream/20">·</span>
                 <button
                   type="button"
@@ -201,11 +214,11 @@ export function SelectionsBoardView({
                 >
                   Open
                 </button>
-                {commentCount > 0 && (
+                {userCommentCount > 0 && (
                   <>
                     <span className="text-cream/20">·</span>
                     <span className="inline-flex items-center gap-0.5" title="Comments">
-                      💬 {commentCount}
+                      💬 {userCommentCount}
                     </span>
                   </>
                 )}

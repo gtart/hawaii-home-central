@@ -155,7 +155,7 @@ export function IdeaCardModal({
   }
 
   function handleDelete() {
-    if (confirm('Delete this idea?')) {
+    if (confirm('Delete this option?')) {
       onDelete()
       onClose()
     }
@@ -171,7 +171,7 @@ export function IdeaCardModal({
     }
     const currentCount = getAllImages(option).filter((i) => i.id !== 'legacy').length
     if (currentCount >= MAX_IMAGES) {
-      setUploadError(`Maximum ${MAX_IMAGES} images per idea.`)
+      setUploadError(`Maximum ${MAX_IMAGES} images per option.`)
       return
     }
     setUploadError('')
@@ -202,7 +202,7 @@ export function IdeaCardModal({
     if (!url) return
     const current = getAllImages(option).filter((i) => i.id !== 'legacy')
     if (current.length >= MAX_IMAGES) {
-      setUploadError(`Maximum ${MAX_IMAGES} images per idea.`)
+      setUploadError(`Maximum ${MAX_IMAGES} images per option.`)
       return
     }
     const newImg: OptionImageV3 = { id: crypto.randomUUID(), url, thumbnailUrl: url }
@@ -283,11 +283,11 @@ export function IdeaCardModal({
                     : 'bg-cream/10 text-cream/60 hover:bg-cream/20'
                 }`}
               >
-                {option.isSelected ? '⭐ Final' : '☆ Mark as Final'}
+                {option.isSelected ? 'Final Decision' : 'Mark as Final Decision'}
               </button>
             ) : option.isSelected ? (
               <span className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-sandstone text-basalt">
-                ⭐ Final
+                Final Decision
               </span>
             ) : null}
 
@@ -324,7 +324,7 @@ export function IdeaCardModal({
               value={option.name}
               onChange={(e) => onUpdate({ name: e.target.value })}
               readOnly={readOnly}
-              placeholder="Idea name..."
+              placeholder="Option name..."
               className="w-full bg-transparent text-cream text-lg font-medium placeholder:text-cream/30 focus:outline-none"
             />
           </div>
@@ -366,7 +366,7 @@ export function IdeaCardModal({
                   >
                     <ImageWithFallback
                       src={displayUrl(hero?.url || images[0].url)}
-                      alt={option.name || 'Idea image'}
+                      alt={option.name || 'Option image'}
                       className="w-full max-h-64 object-contain"
                       fallback={
                         <div className="w-full h-32 flex items-center justify-center bg-basalt">
@@ -502,9 +502,24 @@ export function IdeaCardModal({
             {uploadError && <p className="text-sm text-red-400 mt-2">{uploadError}</p>}
           </div>
 
+          {/* ── Price ── */}
+          {(!readOnly || option.price) && (
+            <div>
+              <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-1 block">Price</label>
+              <input
+                value={option.price || ''}
+                onChange={(e) => onUpdate({ price: e.target.value })}
+                readOnly={readOnly}
+                placeholder="e.g. $1,200"
+                className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50"
+              />
+            </div>
+          )}
+
           {/* ── Notes ── */}
           {(!readOnly || option.notes) && (
             <div>
+              <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-1 block">Notes</label>
               <textarea
                 value={option.notes}
                 onChange={(e) => onUpdate({ notes: e.target.value })}
@@ -514,6 +529,39 @@ export function IdeaCardModal({
                 className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 resize-none"
               />
             </div>
+          )}
+
+          {/* ── Pros / Cons (collapsed by default) ── */}
+          {(!readOnly || option.prosText || option.consText) && (
+            <details className="group">
+              <summary className="text-[11px] text-cream/30 uppercase tracking-wider cursor-pointer hover:text-cream/50 transition-colors select-none">
+                Pros / Cons {(option.prosText || option.consText) && <span className="text-cream/15 ml-1">has content</span>}
+              </summary>
+              <div className="mt-2 space-y-2">
+                <div>
+                  <label className="text-[10px] text-green-400/50 uppercase tracking-wider mb-0.5 block">Pros</label>
+                  <textarea
+                    value={option.prosText || ''}
+                    onChange={(e) => onUpdate({ prosText: e.target.value })}
+                    readOnly={readOnly}
+                    rows={2}
+                    placeholder="What's good about this option..."
+                    className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-red-400/50 uppercase tracking-wider mb-0.5 block">Cons</label>
+                  <textarea
+                    value={option.consText || ''}
+                    onChange={(e) => onUpdate({ consText: e.target.value })}
+                    readOnly={readOnly}
+                    rows={2}
+                    placeholder="Drawbacks or concerns..."
+                    className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 resize-none"
+                  />
+                </div>
+              </div>
+            </details>
           )}
 
           {/* ── Links ── */}
@@ -658,7 +706,7 @@ export function IdeaCardModal({
             )}
           </div>
 
-          {/* ── Comments on this idea ── */}
+          {/* ── Comments on this option ── */}
           <div className="pt-2 border-t border-cream/10">
             <div className="flex items-center gap-2 mb-2">
               <svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -707,7 +755,7 @@ export function IdeaCardModal({
                 onClick={handleDelete}
                 className="text-red-400/60 hover:text-red-400 text-sm transition-colors"
               >
-                Delete idea
+                Delete option
               </button>
               <button
                 type="button"

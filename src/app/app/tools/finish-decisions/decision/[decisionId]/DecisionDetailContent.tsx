@@ -18,6 +18,7 @@ import {
   type DecisionV3,
   type OptionV3,
   type StatusV3,
+  type StatusLogEntry,
   type RoomV3,
   type RoomTypeV3,
   type SelectionComment,
@@ -132,7 +133,7 @@ export function DecisionDetailContent({
 
   const deleteOption = (optionId: string) => {
     if (!foundDecision) return
-    if (confirm('Delete this idea?')) {
+    if (confirm('Delete this option?')) {
       updateDecision({
         options: foundDecision.options.filter((opt) => opt.id !== optionId),
       })
@@ -146,19 +147,30 @@ export function DecisionDetailContent({
 
     const alreadySelected = foundDecision.options.find((o) => o.id === optionId)?.isSelected
     const isToggleOff = !!alreadySelected
+    const userName = session?.user?.name || 'Unknown'
+    const now = new Date().toISOString()
 
     const updates: Partial<DecisionV3> = {
       options: foundDecision.options.map((opt) => ({
         ...opt,
         isSelected: isToggleOff ? false : opt.id === optionId,
-        updatedAt: new Date().toISOString(),
+        updatedAt: now,
       })),
+      finalSelection: isToggleOff
+        ? null
+        : { optionId, selectedBy: userName, selectedAt: now },
     }
 
     // Auto-update status unless already Ordered or Done
     const st = foundDecision.status
     if (st !== 'ordered' && st !== 'done') {
       updates.status = isToggleOff ? 'deciding' : 'selected'
+      // Also log status change
+      const newStatus = isToggleOff ? 'deciding' : 'selected'
+      updates.statusLog = [
+        ...(foundDecision.statusLog || []),
+        { status: newStatus as StatusV3, markedBy: userName, markedAt: now },
+      ]
     }
 
     updateDecision(updates)
@@ -195,16 +207,15 @@ export function DecisionDetailContent({
     const oldStatus = foundDecision.status
     if (oldStatus === newStatus) return
 
-    const systemComment: SelectionComment = {
-      id: `cmt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      text: `Status changed: ${STATUS_CONFIG_V3[oldStatus].label} \u2192 ${STATUS_CONFIG_V3[newStatus].label}`,
-      authorName: session?.user?.name || 'System',
-      authorEmail: '',
-      createdAt: new Date().toISOString(),
-    }
+    const userName = session?.user?.name || 'Unknown'
+    const now = new Date().toISOString()
+
     updateDecision({
       status: newStatus,
-      comments: [...(foundDecision.comments || []), systemComment],
+      statusLog: [
+        ...(foundDecision.statusLog || []),
+        { status: newStatus, markedBy: userName, markedAt: now },
+      ],
     })
   }
 
@@ -510,15 +521,22 @@ export function DecisionDetailContent({
   }
 
   const isSystemUncategorized = isUncategorized(foundDecision)
-  const allComments = foundDecision.comments || []
-  const commentCount = allComments.length
-  const lastUserComment = [...allComments].reverse().find((c) => c.authorEmail !== '')
+  // Filter: only show user comments (non-empty authorEmail), not system comments
+  const userComments = (foundDecision.comments || []).filter((c) => c.authorEmail !== '')
+  const commentCount = userComments.length
+  const lastUserComment = [...userComments].reverse()[0]
   const statusCfg = STATUS_CONFIG_V3[foundDecision.status]
   const formattedDue = foundDecision.dueDate
     ? new Date(foundDecision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : null
   const finalPick = foundDecision.options.find((o) => o.isSelected)
-  const ideasCount = foundDecision.options.length
+  const optionsCount = foundDecision.options.length
+  // Latest status log entry (for "Marked X by Y on Z" line)
+  const latestStatusLog = foundDecision.statusLog?.length
+    ? foundDecision.statusLog[foundDecision.statusLog.length - 1]
+    : null
+  // Done without final warning
+  const doneWithoutFinal = foundDecision.status === 'done' && !finalPick
 
   return (
     <div className="pt-20 md:pt-24 pb-36 md:pb-24 px-6">
@@ -627,7 +645,7 @@ export function DecisionDetailContent({
         </div>
 
         {/* Meta row */}
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs mb-4">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs mb-2">
           {formattedDue && (
             <>
               <span className="text-cream/40">Due {formattedDue}</span>
@@ -635,7 +653,7 @@ export function DecisionDetailContent({
             </>
           )}
           <span className="text-cream/40">
-            {ideasCount} idea{ideasCount !== 1 ? 's' : ''}
+            {optionsCount} option{optionsCount !== 1 ? 's' : ''}
           </span>
           <span className="text-cream/20">·</span>
           <button
@@ -656,17 +674,35 @@ export function DecisionDetailContent({
                 )}
               </>
             ) : (
-              <span className="text-cream/40">No comments yet</span>
+              <span className="text-cream/40">Comments</span>
             )}
           </button>
+          {doneWithoutFinal && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/10 text-red-400 text-[10px] font-medium rounded-full border border-red-400/20">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              No final selected
+            </span>
+          )}
         </div>
+
+        {/* Status marked-by line */}
+        {latestStatusLog && foundDecision.status !== 'deciding' && (
+          <p className="text-[11px] text-cream/30 mb-4">
+            Marked {STATUS_CONFIG_V3[latestStatusLog.status].label} by {latestStatusLog.markedBy} on{' '}
+            {new Date(latestStatusLog.markedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </p>
+        )}
 
         {/* Final Decision Section */}
         <div className="mb-6">
           {finalPick ? (() => {
             const hero = getHeroImage(finalPick)
             const heroSrc = hero?.thumbnailUrl || hero?.url
-            const finalComments = allComments.filter((c) => c.refOptionId === finalPick.id)
+            const finalComments = userComments.filter((c) => c.refOptionId === finalPick.id)
             return (
               <div className="border border-sandstone/25 bg-sandstone/5 rounded-xl overflow-hidden">
                 <div className="flex flex-col md:flex-row">
@@ -688,10 +724,29 @@ export function DecisionDetailContent({
 
                   {/* Final selection details */}
                   <div className="flex-1 p-4">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-sandstone text-basalt text-[11px] font-semibold rounded-full">
-                        ⭐ Final Decision
+                        Final Decision
                       </span>
+                      {foundDecision.finalSelection && (
+                        <>
+                          <span className="px-1.5 py-0.5 bg-cream/10 text-cream/50 text-[10px] rounded-full">
+                            {foundDecision.finalSelection.selectedBy}
+                          </span>
+                          <span className="text-[10px] text-cream/25">
+                            {new Date(foundDecision.finalSelection.selectedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        </>
+                      )}
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          onClick={() => selectOption(finalPick.id)}
+                          className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors ml-auto"
+                        >
+                          Unselect
+                        </button>
+                      )}
                     </div>
                     <h3 className="font-serif text-lg text-sandstone mb-1">
                       {finalPick.name || <span className="text-sandstone/50 italic">Untitled</span>}
@@ -739,35 +794,20 @@ export function DecisionDetailContent({
               </div>
             )
           })() : (
-            <div className="border border-cream/10 bg-cream/3 rounded-xl p-5 text-center">
-              <p className="text-sm text-cream/40 mb-2">No final decision yet</p>
+            <div className={`border rounded-xl p-5 text-center ${doneWithoutFinal ? 'border-red-400/20 bg-red-500/3' : 'border-cream/10 bg-cream/3'}`}>
+              <p className="text-sm text-cream/40">
+                No final decision yet {doneWithoutFinal && <span className="text-red-400/60">— marked Done without a pick</span>}
+              </p>
               {!readOnly && (
-                <p className="text-xs text-cream/25">
-                  Choose a final pick from the ideas below, or{' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const id = crypto.randomUUID()
-                      const now = new Date().toISOString()
-                      updateDecision({
-                        options: [
-                          ...foundDecision.options.map((o) => ({ ...o, isSelected: false })),
-                          { id, kind: 'text' as const, name: '', notes: '', urls: [], isSelected: true, createdAt: now, updatedAt: now },
-                        ],
-                      })
-                      setActiveCardId(id)
-                    }}
-                    className="text-sandstone hover:text-sandstone-light transition-colors underline"
-                  >
-                    add your final decision directly
-                  </button>.
+                <p className="text-xs text-cream/25 mt-1">
+                  Pick from options below, or add one and mark it final.
                 </p>
               )}
             </div>
           )}
         </div>
 
-        {/* Ideas board */}
+        {/* Options board */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-3">
             <button
@@ -776,12 +816,10 @@ export function DecisionDetailContent({
               className="flex items-center gap-2 text-lg font-medium text-cream hover:text-cream/80 transition-colors md:pointer-events-none"
             >
               <span className="text-cream/30 text-xs md:hidden">{optionsOpen ? '▼' : '▶'}</span>
-              Idea Board
-              {foundDecision.options.length > 0 && (
-                <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-cream/10 text-cream/50 text-xs font-medium rounded-full">
-                  {foundDecision.options.length}
-                </span>
-              )}
+              Options Board
+              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-cream/10 text-cream/50 text-xs font-medium rounded-full">
+                {foundDecision.options.length}
+              </span>
             </button>
           </div>
 
@@ -899,7 +937,7 @@ export function DecisionDetailContent({
               </div>
               <div className="p-5">
                 <CommentsSection
-                  comments={foundDecision.comments || []}
+                  comments={userComments}
                   onAddComment={addComment}
                   readOnly={readOnly}
                   commentInputRef={commentInputRef}
@@ -933,7 +971,7 @@ export function DecisionDetailContent({
               </div>
               <div className="p-5">
                 <CommentsSection
-                  comments={foundDecision.comments || []}
+                  comments={userComments}
                   onAddComment={addComment}
                   readOnly={readOnly}
                   commentInputRef={commentInputRef}
@@ -1047,7 +1085,7 @@ function CommentsSection({
         Comments are shared with collaborators who can access this tool.
       </p>
 
-      {!readOnly && <CommentInput onAddComment={onAddComment} inputRef={commentInputRef} draftRef={draftRef} onClearDraftRef={onClearDraftRef} />}
+      <CommentInput onAddComment={onAddComment} inputRef={commentInputRef} draftRef={draftRef} onClearDraftRef={onClearDraftRef} />
 
       {allComments.length === 0 && (
         <p className="text-xs text-cream/20 mt-3">No comments yet.</p>
