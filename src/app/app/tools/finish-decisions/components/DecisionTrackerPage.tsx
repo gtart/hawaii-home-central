@@ -14,7 +14,8 @@ import type { RoomTypeV3 } from '@/data/finish-decisions'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { findKitsForRoomType } from '@/lib/finish-decision-kits'
 import { applyKitToRoom, removeKitFromRoom } from '@/lib/finish-decision-kits'
-import { isGlobalUnsorted } from '@/lib/decisionHelpers'
+import { isGlobalUnsorted, findUncategorizedDecision } from '@/lib/decisionHelpers'
+import { useRouter } from 'next/navigation'
 import { RoomSection } from './RoomSection'
 import { RoomsBoardView } from './RoomsBoardView'
 import { OnboardingView } from './OnboardingView'
@@ -23,7 +24,83 @@ import { AddRoomModal } from './AddRoomModal'
 import { IdeasPackModal } from './IdeasPackModal'
 
 const VIEW_MODE_KEY = 'hhc_finish_view_mode_v2'
-const LIST_VIEW_ENABLED = process.env.NEXT_PUBLIC_ENABLE_LIST_VIEW === 'true'
+const SORT_KEY = 'hhc_finish_sort_key'
+
+type SortKey = 'alpha' | 'created' | 'updated' | 'due' | 'inProgress' | 'comments'
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'alpha', label: 'A – Z' },
+  { key: 'created', label: 'Date added' },
+  { key: 'updated', label: 'Recently updated' },
+  { key: 'due', label: 'Next due date' },
+  { key: 'inProgress', label: 'Most in-progress' },
+  { key: 'comments', label: 'Most comments' },
+]
+
+function getRoomSortStats(room: RoomV3) {
+  const decisions = room.decisions.filter((d) => d.systemKey !== 'uncategorized')
+  const deciding = decisions.filter((d) => d.status === 'deciding').length
+
+  let lastUpdated = room.updatedAt
+  for (const d of room.decisions) {
+    if (d.updatedAt > lastUpdated) lastUpdated = d.updatedAt
+  }
+
+  let totalComments = 0
+  for (const d of room.decisions) {
+    totalComments += (d.comments || []).length
+  }
+
+  const today = new Date().toISOString().slice(0, 10)
+  const futureDues = decisions
+    .filter((d) => d.dueDate && d.dueDate >= today && d.status !== 'done')
+    .map((d) => d.dueDate!)
+    .sort()
+  const nextDue = futureDues[0] || null
+
+  return { deciding, lastUpdated, totalComments, nextDue }
+}
+
+function GlobalUnsortedRow({ room }: { room: RoomV3 }) {
+  const router = useRouter()
+  const uncatDecision = findUncategorizedDecision(room)
+  const count = uncatDecision ? uncatDecision.options.length : 0
+
+  return (
+    <div
+      data-testid="unsorted-room-row"
+      role={count > 0 ? 'button' : undefined}
+      tabIndex={count > 0 ? 0 : undefined}
+      onClick={() => { if (count > 0) router.push(`/app/tools/finish-decisions/room/${room.id}`) }}
+      onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && count > 0) { e.preventDefault(); router.push(`/app/tools/finish-decisions/room/${room.id}`) } }}
+      className={`bg-basalt-50 rounded-card overflow-hidden border-2 border-dashed transition-all ${
+        count > 0
+          ? 'border-amber-500/30 hover:border-amber-500/50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/50'
+          : 'border-cream/10'
+      }`}
+    >
+      <div className="flex items-center gap-3 px-4 py-3">
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${count > 0 ? 'bg-amber-500/10' : 'bg-cream/5'}`}>
+          <svg className={`w-5 h-5 ${count > 0 ? 'text-amber-400' : 'text-cream/20'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className={`text-sm font-medium ${count > 0 ? 'text-amber-300' : 'text-cream/30'}`}>Unsorted</h3>
+          <p className="text-[11px] text-cream/30">
+            {count > 0
+              ? `${count} option${count !== 1 ? 's' : ''} to sort into rooms`
+              : 'Saved-from-web items land here until you sort them'}
+          </p>
+        </div>
+        {count > 0 && (
+          <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 bg-amber-500/20 text-amber-300 text-[11px] font-bold rounded-full">
+            {count}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export function DecisionTrackerPage({
   rooms,
@@ -89,21 +166,31 @@ export function DecisionTrackerPage({
   // Flag: open pack chooser once rooms appear (set by onboarding "pack" level)
   const [pendingPackChooser, setPendingPackChooser] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'boards'>(() => {
-    if (!LIST_VIEW_ENABLED) return 'boards'
     try {
       const stored = typeof window !== 'undefined' ? localStorage.getItem(VIEW_MODE_KEY) : null
-      if (stored === 'list') return 'list'
-      // Check for ?view=list query param
+      if (stored === 'boards') return 'boards'
       const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
-      if (params?.get('view') === 'list') return 'list'
-      return 'boards'
-    } catch { return 'boards' }
+      if (params?.get('view') === 'boards') return 'boards'
+      return 'list'
+    } catch { return 'list' }
+  })
+  const [sortKey, setSortKey] = useState<SortKey>(() => {
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem(SORT_KEY) : null
+      return (stored as SortKey) || 'created'
+    } catch { return 'created' }
   })
 
-  // Persist view mode
+  // Persist view mode + sort key
   useEffect(() => {
     try { localStorage.setItem(VIEW_MODE_KEY, viewMode) } catch { /* ignore */ }
   }, [viewMode])
+  useEffect(() => {
+    try { localStorage.setItem(SORT_KEY, sortKey) } catch { /* ignore */ }
+  }, [sortKey])
+
+  // Search auto-expand: save/restore expand state when searching
+  const preSearchExpandRef = useRef<Set<string> | null>(null)
 
   // When navigating with ?room= param, redirect to the room detail page
   const initialRoomHandled = useRef(false)
@@ -262,6 +349,53 @@ export function DecisionTrackerPage({
 
     return result
   }, [rooms, searchQuery, statusFilters, roomFilter])
+
+  // Sorted rooms — applies sort to filteredRooms
+  const sortedFilteredRooms = useMemo(() => {
+    return [...filteredRooms].sort((a, b) => {
+      const aGlobal = isGlobalUnsorted(a) ? 0 : 1
+      const bGlobal = isGlobalUnsorted(b) ? 0 : 1
+      if (aGlobal !== bGlobal) return aGlobal - bGlobal
+
+      const statsA = getRoomSortStats(a)
+      const statsB = getRoomSortStats(b)
+
+      switch (sortKey) {
+        case 'alpha':
+          return a.name.localeCompare(b.name)
+        case 'created':
+          return a.createdAt.localeCompare(b.createdAt)
+        case 'updated':
+          return statsB.lastUpdated.localeCompare(statsA.lastUpdated)
+        case 'due': {
+          if (statsA.nextDue && !statsB.nextDue) return -1
+          if (!statsA.nextDue && statsB.nextDue) return 1
+          if (statsA.nextDue && statsB.nextDue) return statsA.nextDue.localeCompare(statsB.nextDue)
+          return 0
+        }
+        case 'inProgress':
+          return statsB.deciding - statsA.deciding
+        case 'comments':
+          return statsB.totalComments - statsA.totalComments
+        default:
+          return 0
+      }
+    })
+  }, [filteredRooms, sortKey])
+
+  // Search auto-expand effect
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      if (!preSearchExpandRef.current) {
+        preSearchExpandRef.current = new Set(expandedRooms)
+      }
+      setExpandedRooms(new Set(filteredRooms.map((r) => r.id)))
+    } else if (preSearchExpandRef.current) {
+      setExpandedRooms(preSearchExpandRef.current)
+      preSearchExpandRef.current = null
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, filteredRooms])
 
   // Total counts for summary
   const totalDecisions = rooms.reduce((sum, r) => sum + r.decisions.length, 0)
@@ -422,9 +556,9 @@ export function DecisionTrackerPage({
             </div>
           )}
 
-          {/* Search + info icon + View toggle */}
+          {/* Toolbar row: Search + ⓘ + View toggle + Sort + Packs + Expand/Collapse */}
           <div className="flex items-center gap-2 mb-3">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <Input
                 placeholder="Search all rooms and decisions..."
                 value={searchQuery}
@@ -478,7 +612,7 @@ export function DecisionTrackerPage({
                 )}
               </div>
             )}
-            {LIST_VIEW_ENABLED && (
+            {/* View toggle */}
             <div className="flex bg-cream/5 rounded-lg p-0.5 shrink-0">
               <button
                 type="button"
@@ -512,86 +646,26 @@ export function DecisionTrackerPage({
                 </svg>
               </button>
             </div>
-            )}
-          </div>
-
-          {/* Summary strip + Packs chip */}
-          {totalDecisions > 0 && (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-cream/50 mb-3">
-              {isFiltering && <span className="text-cream/30 italic">Filtered:</span>}
-              {summaryStats.deciding + summaryStats.selected + summaryStats.ordered > 0 && (
-                <span className="text-cream/70 font-medium">
-                  {summaryStats.deciding + summaryStats.selected + summaryStats.ordered} Decisions Needed
-                </span>
-              )}
-              <span>{summaryStats.deciding} Deciding</span>
-              <span>{summaryStats.selected} Selected</span>
-              <span>{summaryStats.ordered} Ordered</span>
-              <span>{summaryStats.done} Done</span>
-              {summaryStats.overdue > 0 && (
-                <span className="text-red-400">Overdue {summaryStats.overdue}</span>
-              )}
-              {summaryStats.nextDue && (
-                <span>
-                  Next due:{' '}
-                  {new Date(summaryStats.nextDue + 'T00:00:00').toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </span>
-              )}
-              {/* Packs chip */}
-              {!readOnly && kits.length > 0 && (
-                <div className="relative ml-auto" ref={packsPopoverRef}>
-                  <button
-                    type="button"
-                    onClick={() => setPacksPopoverOpen(!packsPopoverOpen)}
-                    className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-medium text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-full transition-colors"
-                  >
-                    ✨ Packs{ownedKitIds.length > 0 ? ` (${ownedKitIds.length})` : ''}
-                  </button>
-                  {packsPopoverOpen && (() => {
-                    const featuredKit = kits[0]
-                    const featuredOptionCount = featuredKit?.decisions.reduce((s, d) => s + d.options.length, 0) ?? 0
-                    return (
-                      <div className="absolute right-0 top-full mt-1.5 w-72 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl z-50 p-4">
-                        <h4 className="text-sm font-medium text-cream mb-0.5">Decision Packs</h4>
-                        <p className="text-[11px] text-cream/40 mb-3">Curated ideas that help you choose faster.</p>
-                        {ownedKitIds.length > 0 && (
-                          <p className="text-[11px] text-cream/50 mb-2">My Packs ({ownedKitIds.length})</p>
-                        )}
-                        {featuredKit && (
-                          <div className="flex items-center gap-2 px-2.5 py-2 bg-cream/5 rounded-lg mb-3">
-                            <span className="text-sm">{emojiMap[featuredKit.id] || '✨'}</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs text-cream/70 font-medium truncate">{featuredKit.label}</p>
-                              <p className="text-[10px] text-cream/35">{featuredKit.decisions.length} decisions, {featuredOptionCount} options</p>
-                            </div>
-                          </div>
-                        )}
-                        <Link
-                          href="/app/packs"
-                          onClick={() => setPacksPopoverOpen(false)}
-                          className="block w-full text-center px-3 py-1.5 text-xs font-medium text-basalt bg-sandstone hover:bg-sandstone-light rounded-lg transition-colors"
-                        >
-                          Browse Packs
-                        </Link>
-                      </div>
-                    )
-                  })()}
-                </div>
-              )}
+            {/* Sort dropdown (desktop) */}
+            <div className="hidden md:flex items-center gap-1.5 shrink-0">
+              <span className="text-[11px] text-cream/30">Sort</span>
+              <select
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
+                className="bg-basalt-50 text-cream/60 text-[11px] rounded-lg border border-cream/10 px-2 py-1 focus:outline-none focus:border-sandstone/40"
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.key} value={opt.key}>{opt.label}</option>
+                ))}
+              </select>
             </div>
-          )}
-
-          {/* Standalone Packs chip — when no decisions yet but packs exist */}
-          {totalDecisions === 0 && !readOnly && kits.length > 0 && (
-            <div className="flex items-center mb-3">
-              <div className="relative ml-auto" ref={packsPopoverRef}>
+            {/* Packs chip (desktop) */}
+            {!readOnly && kits.length > 0 && (
+              <div className="hidden md:block relative shrink-0" ref={packsPopoverRef}>
                 <button
                   type="button"
                   onClick={() => setPacksPopoverOpen(!packsPopoverOpen)}
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-medium text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-full transition-colors"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-cream/70 hover:text-cream/90 bg-cream/10 hover:bg-cream/15 rounded-full transition-colors"
                 >
                   ✨ Packs{ownedKitIds.length > 0 ? ` (${ownedKitIds.length})` : ''}
                 </button>
@@ -625,6 +699,48 @@ export function DecisionTrackerPage({
                   )
                 })()}
               </div>
+            )}
+            {/* Expand/Collapse (desktop, list view only) */}
+            {viewMode === 'list' && filteredRooms.filter((r) => !isGlobalUnsorted(r)).length > 1 && (
+              <div className="hidden md:flex items-center gap-1 shrink-0 text-[11px]">
+                <button type="button" onClick={expandAll} className="text-cream/40 hover:text-cream/70 transition-colors">Expand all</button>
+                <span className="text-cream/15">|</span>
+                <button type="button" onClick={collapseAll} className="text-cream/40 hover:text-cream/70 transition-colors">Collapse all</button>
+              </div>
+            )}
+            {/* Search match count */}
+            {searchQuery.trim() && (
+              <span className="hidden md:inline text-[11px] text-cream/50 shrink-0">
+                {filteredDecisions} match{filteredDecisions !== 1 ? 'es' : ''}
+              </span>
+            )}
+          </div>
+
+          {/* Summary strip */}
+          {totalDecisions > 0 && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-cream/50 mb-3">
+              {isFiltering && <span className="text-cream/30 italic">Filtered:</span>}
+              {summaryStats.deciding + summaryStats.selected + summaryStats.ordered > 0 && (
+                <span className="text-cream/70 font-medium">
+                  {summaryStats.deciding + summaryStats.selected + summaryStats.ordered} Decisions Needed
+                </span>
+              )}
+              <span>{summaryStats.deciding} Deciding</span>
+              <span>{summaryStats.selected} Selected</span>
+              <span>{summaryStats.ordered} Ordered</span>
+              <span>{summaryStats.done} Done</span>
+              {summaryStats.overdue > 0 && (
+                <span className="text-red-400">Overdue {summaryStats.overdue}</span>
+              )}
+              {summaryStats.nextDue && (
+                <span>
+                  Next due:{' '}
+                  {new Date(summaryStats.nextDue + 'T00:00:00').toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </span>
+              )}
             </div>
           )}
 
@@ -717,7 +833,7 @@ export function DecisionTrackerPage({
           </div>
 
           {/* Content */}
-          {filteredRooms.length === 0 ? (
+          {sortedFilteredRooms.length === 0 ? (
             <div className="bg-basalt-50 rounded-card p-8 text-center">
               <p className="text-cream/50">
                 No decisions match your {searchQuery ? 'search' : 'filters'}.
@@ -735,34 +851,51 @@ export function DecisionTrackerPage({
             </div>
           ) : viewMode === 'boards' ? (
             <RoomsBoardView
-              rooms={filteredRooms}
+              rooms={sortedFilteredRooms}
               onUpdateRoom={onUpdateRoom}
               onQuickAdd={(roomId) => openQuickAdd(roomId)}
               onAddRoom={() => setAddRoomOpen(true)}
               readOnly={readOnly}
             />
           ) : (
-            <div className="space-y-3">
-              {filteredRooms.map((room) => (
-                <RoomSection
-                  key={room.id}
-                  room={room}
-                  isExpanded={expandedRooms.has(room.id)}
-                  onToggleExpand={() => toggleRoom(room.id)}
-                  onUpdateRoom={(updates) => onUpdateRoom(room.id, updates)}
-                  onDeleteRoom={() => onDeleteRoom(room.id)}
-                  onQuickAdd={() => openQuickAdd(room.id)}
-                  onAddIdeasPack={() => {
-                    setIdeasModalDestPicker(false)
-                    setDestPickerRoomId(null)
-                    setIdeasModalRoomId(room.id)
-                  }}
-                  readOnly={readOnly}
-                  hasAvailableKits={findKitsForRoomType(kits, room.type as RoomTypeV3).length > 0}
-                  defaultDecisions={defaultDecisions}
-                  emojiMap={emojiMap}
-                />
-              ))}
+            <div className="space-y-2">
+              {sortedFilteredRooms.map((room) =>
+                isGlobalUnsorted(room) ? (
+                  <GlobalUnsortedRow key={room.id} room={room} />
+                ) : (
+                  <RoomSection
+                    key={room.id}
+                    room={room}
+                    isExpanded={expandedRooms.has(room.id)}
+                    onToggleExpand={() => toggleRoom(room.id)}
+                    onUpdateRoom={(updates) => onUpdateRoom(room.id, updates)}
+                    onDeleteRoom={() => onDeleteRoom(room.id)}
+                    onQuickAdd={() => openQuickAdd(room.id)}
+                    onAddIdeasPack={() => {
+                      setIdeasModalDestPicker(false)
+                      setDestPickerRoomId(null)
+                      setIdeasModalRoomId(room.id)
+                    }}
+                    readOnly={readOnly}
+                    hasAvailableKits={findKitsForRoomType(kits, room.type as RoomTypeV3).length > 0}
+                    defaultDecisions={defaultDecisions}
+                    emojiMap={emojiMap}
+                  />
+                )
+              )}
+              {/* Add Room row */}
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => setAddRoomOpen(true)}
+                  className="hidden md:flex w-full items-center justify-center gap-2 px-4 py-3 bg-basalt-50/50 rounded-card border-2 border-dashed border-cream/15 hover:border-sandstone/40 transition-all cursor-pointer group"
+                >
+                  <svg className="w-4 h-4 text-cream/30 group-hover:text-sandstone transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                  </svg>
+                  <span className="text-sm font-medium text-cream/40 group-hover:text-sandstone transition-colors">Add a Room</span>
+                </button>
+              )}
             </div>
           )}
         </>
@@ -860,6 +993,33 @@ export function DecisionTrackerPage({
                   )}
                 </div>
               </div>
+
+              {/* Sort */}
+              <div>
+                <label className="block text-sm text-cream/70 mb-2">Sort rooms by</label>
+                <select
+                  value={sortKey}
+                  onChange={(e) => setSortKey(e.target.value as SortKey)}
+                  className="w-full bg-basalt text-cream/60 text-sm rounded-lg border border-cream/10 px-3 py-2 focus:outline-none focus:border-sandstone/40"
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.key} value={opt.key}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Packs */}
+              {!readOnly && kits.length > 0 && (
+                <div>
+                  <Link
+                    href="/app/packs"
+                    onClick={() => setFilterSheetOpen(false)}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-cream/70 bg-cream/5 rounded-lg transition-colors"
+                  >
+                    ✨ Packs{ownedKitIds.length > 0 ? ` (${ownedKitIds.length})` : ''}
+                  </Link>
+                </div>
+              )}
 
               {/* Done button */}
               <button

@@ -86,16 +86,6 @@ function getRoomStats(room: RoomV3) {
   return { total: decisions.length, deciding, selected, ordered, done, lastUpdated, totalComments, lastComment, nextDue }
 }
 
-type SortKey = 'created' | 'updated' | 'due' | 'inProgress' | 'comments'
-
-const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: 'created', label: 'Date added' },
-  { key: 'updated', label: 'Recently updated' },
-  { key: 'due', label: 'Next due date' },
-  { key: 'inProgress', label: 'Most in-progress' },
-  { key: 'comments', label: 'Most comments' },
-]
-
 function truncate(text: string, max = 50): string {
   if (text.length <= max) return text
   return text.slice(0, max).trimEnd() + '…'
@@ -116,62 +106,15 @@ export function RoomsBoardView({
 }) {
   const router = useRouter()
   const [coverPickerRoom, setCoverPickerRoom] = useState<RoomV3 | null>(null)
-  const [sortKey, setSortKey] = useState<SortKey>('created')
 
   const navigateToRoom = (roomId: string) => {
     router.push(`/app/tools/finish-decisions/room/${roomId}`)
   }
 
-  // Sort rooms: pin Global Unsorted first, then by chosen metric
-  const sortedRooms = [...rooms].sort((a, b) => {
-    const aGlobal = isGlobalUnsorted(a) ? 0 : 1
-    const bGlobal = isGlobalUnsorted(b) ? 0 : 1
-    if (aGlobal !== bGlobal) return aGlobal - bGlobal
-
-    const statsA = getRoomStats(a)
-    const statsB = getRoomStats(b)
-
-    switch (sortKey) {
-      case 'created':
-        return a.createdAt.localeCompare(b.createdAt)
-      case 'updated':
-        return statsB.lastUpdated.localeCompare(statsA.lastUpdated)
-      case 'due': {
-        // Rooms with a due date first, sorted ascending; no-due last
-        if (statsA.nextDue && !statsB.nextDue) return -1
-        if (!statsA.nextDue && statsB.nextDue) return 1
-        if (statsA.nextDue && statsB.nextDue) return statsA.nextDue.localeCompare(statsB.nextDue)
-        return 0
-      }
-      case 'inProgress':
-        return statsB.deciding - statsA.deciding
-      case 'comments':
-        return statsB.totalComments - statsA.totalComments
-      default:
-        return 0
-    }
-  })
-
   return (
     <>
-      {/* Sort selector */}
-      {rooms.filter((r) => !isGlobalUnsorted(r)).length > 1 && (
-        <div className="flex items-center justify-end gap-2 mb-3">
-          <span className="text-[11px] text-cream/30">Sort by</span>
-          <select
-            value={sortKey}
-            onChange={(e) => setSortKey(e.target.value as SortKey)}
-            className="bg-basalt-50 text-cream/60 text-[11px] rounded-lg border border-cream/10 px-2 py-1 focus:outline-none focus:border-sandstone/40"
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.key} value={opt.key}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-      )}
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sortedRooms.map((room) => {
+        {rooms.map((room) => {
           const isUnsortedRoom = isGlobalUnsorted(room)
           const unsortedCount = isUnsortedRoom
             ? (findUncategorizedDecision(room)?.options.length ?? 0)

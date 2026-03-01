@@ -381,8 +381,7 @@ export function ToolContent({
             description="Avoid delays and rework—by keeping decisions, links, and status updates together for each room."
             accessLevel={access}
             hasContent={v3State.rooms.length > 0}
-          >
-            {v3State.rooms.length > 0 && (
+            actions={v3State.rooms.length > 0 ? (
               <button
                 type="button"
                 onClick={() => setShowShareExport(true)}
@@ -395,8 +394,8 @@ export function ToolContent({
                 </svg>
                 Share &amp; Export
               </button>
-            )}
-          </ToolPageHeader>
+            ) : undefined}
+          />
         )}
         {noAccess ? (
           <div className="bg-basalt-50 rounded-card p-8 text-center">

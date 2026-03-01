@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import Link from 'next/link'
 import {
   ROOM_EMOJI_MAP,
   type RoomV3,
@@ -195,46 +196,55 @@ export function RoomSection({
         </div>
 
         {/* Desktop inline actions */}
-        {!readOnly && (
-          <div className="hidden md:flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onQuickAdd() }}
-              className="px-2 py-1 text-[11px] text-sandstone hover:text-sandstone-light transition-colors font-medium"
-            >
-              + Decision
-            </button>
-            <span className="text-cream/15 select-none">·</span>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); handleAutoPopulate() }}
-              className="px-2 py-1 text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
-              title="Pre-fill with the typical decisions Hawaii homeowners make for this type of room"
-            >
-              Add common decisions
-            </button>
-            <span className="text-cream/15 select-none">·</span>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onAddIdeasPack() }}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-purple-300/60 hover:text-purple-300 bg-purple-400/5 hover:bg-purple-400/10 rounded-full transition-all"
-            >
-              <span>✨</span> Decision Packs
-            </button>
-            <span className="text-cream/15 select-none">·</span>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setDeleteStep('confirm') }}
-              className="px-2 py-1 text-[11px] text-red-400/40 hover:text-red-400 transition-colors"
-            >
-              Delete
-            </button>
-          </div>
-        )}
+        <div className="hidden md:flex items-center gap-1 shrink-0">
+          <Link
+            href={`/app/tools/finish-decisions/room/${room.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="px-2 py-1 text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+          >
+            Open &rarr;
+          </Link>
+          {!readOnly && (
+            <>
+              <span className="text-cream/15 select-none">·</span>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onQuickAdd() }}
+                className="px-2 py-1 text-[11px] text-sandstone hover:text-sandstone-light transition-colors font-medium"
+              >
+                + Decision
+              </button>
+              <span className="text-cream/15 select-none">·</span>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleAutoPopulate() }}
+                className="px-2 py-1 text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+                title="Pre-fill with the typical decisions Hawaii homeowners make for this type of room"
+              >
+                Add common decisions
+              </button>
+              <span className="text-cream/15 select-none">·</span>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onAddIdeasPack() }}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-purple-300/60 hover:text-purple-300 bg-purple-400/5 hover:bg-purple-400/10 rounded-full transition-all"
+              >
+                <span>✨</span> Decision Packs
+              </button>
+              <span className="text-cream/15 select-none">·</span>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setDeleteStep('confirm') }}
+                className="px-2 py-1 text-[11px] text-red-400/40 hover:text-red-400 transition-colors"
+              >
+                Delete
+              </button>
+            </>
+          )}
+        </div>
 
         {/* Mobile kebab menu */}
-        {!readOnly && (
-          <div className="md:hidden relative shrink-0" ref={menuRef}>
+        <div className="md:hidden relative shrink-0" ref={menuRef}>
             <button
               type="button"
               onClick={(e) => {
@@ -252,58 +262,68 @@ export function RoomSection({
             </button>
             {menuOpen && (
               <div className="absolute right-0 top-full mt-1 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg py-1 min-w-[150px]">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setMenuOpen(false)
-                    onQuickAdd()
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
+                <Link
+                  href={`/app/tools/finish-decisions/room/${room.id}`}
+                  onClick={(e) => { e.stopPropagation(); setMenuOpen(false) }}
+                  className="block w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
                 >
-                  Add decision
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setMenuOpen(false)
-                    handleAutoPopulate()
-                  }}
-                  className="w-full text-left px-3 py-2 hover:bg-cream/5 transition-colors"
-                >
-                  <span className="text-sm text-cream/80">Add common decisions</span>
-                  <span className="block text-[11px] text-cream/35 mt-0.5">Typical decisions for this room type</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setMenuOpen(false)
-                    onAddIdeasPack()
-                  }}
-                  className="w-full text-left px-3 py-2 hover:bg-cream/5 transition-colors"
-                >
-                  <span className="text-sm text-purple-300/80 flex items-center gap-1.5">
-                    <span>✨</span> Decision Packs
-                  </span>
-                  <span className="block text-[11px] text-cream/35 mt-0.5 ml-5">Curated starter options for this room</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setMenuOpen(false)
-                    setDeleteStep('confirm')
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
-                >
-                  Delete room
-                </button>
+                  Open room
+                </Link>
+                {!readOnly && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setMenuOpen(false)
+                        onQuickAdd()
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
+                    >
+                      Add decision
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setMenuOpen(false)
+                        handleAutoPopulate()
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-cream/5 transition-colors"
+                    >
+                      <span className="text-sm text-cream/80">Add common decisions</span>
+                      <span className="block text-[11px] text-cream/35 mt-0.5">Typical decisions for this room type</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setMenuOpen(false)
+                        onAddIdeasPack()
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-cream/5 transition-colors"
+                    >
+                      <span className="text-sm text-purple-300/80 flex items-center gap-1.5">
+                        <span>✨</span> Decision Packs
+                      </span>
+                      <span className="block text-[11px] text-cream/35 mt-0.5 ml-5">Curated starter options for this room</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setMenuOpen(false)
+                        setDeleteStep('confirm')
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
+                    >
+                      Delete room
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
-        )}
       </div>
 
       {/* Undo banner */}

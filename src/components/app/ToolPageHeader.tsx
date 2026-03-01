@@ -40,10 +40,12 @@ interface ToolPageHeaderProps {
   accessLevel?: 'OWNER' | 'EDIT' | 'VIEW' | null
   /** Whether the tool has any user-created content. When false, the invite button is de-emphasized. */
   hasContent?: boolean
+  /** Action buttons rendered in the top-right header area (next to collaborators button). */
+  actions?: React.ReactNode
   children?: React.ReactNode
 }
 
-export function ToolPageHeader({ toolKey, title, description, accessLevel, hasContent = true, children }: ToolPageHeaderProps) {
+export function ToolPageHeader({ toolKey, title, description, accessLevel, hasContent = true, actions, children }: ToolPageHeaderProps) {
   const { currentProject } = useProject()
   const [showShare, setShowShare] = useState(false)
   const [collaborators, setCollaborators] = useState<Collaborator[]>([])
@@ -144,6 +146,7 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
               {totalPeople > 0 ? 'Manage collaborators' : 'Add a collaborator'}
             </button>
           )}
+          {actions}
         </div>
       </div>
 
