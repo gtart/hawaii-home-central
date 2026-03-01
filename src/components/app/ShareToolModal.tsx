@@ -28,9 +28,11 @@ interface ShareToolModalProps {
   projectId: string
   toolKey: string
   onClose: () => void
+  /** Optional description shown below the title */
+  description?: string
 }
 
-export function ShareToolModal({ projectId, toolKey, onClose }: ShareToolModalProps) {
+export function ShareToolModal({ projectId, toolKey, onClose, description }: ShareToolModalProps) {
   const [access, setAccess] = useState<AccessEntry[]>([])
   const [invites, setInvites] = useState<InviteEntry[]>([])
   const [editShareCount, setEditShareCount] = useState(0)
@@ -141,9 +143,12 @@ export function ShareToolModal({ projectId, toolKey, onClose }: ShareToolModalPr
         {/* Header */}
         <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 px-6 py-4 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-medium text-cream">Share {toolLabel}</h2>
-            <p className="text-xs text-cream/40 mt-0.5">
-              You can invite up to {maxEditShares} collaborators · {editSeatsUsed} of {maxEditShares} used
+            <h2 className="text-lg font-medium text-cream">Invite people to {toolLabel}</h2>
+            {description && (
+              <p className="text-xs text-cream/40 mt-0.5">{description}</p>
+            )}
+            <p className="text-[11px] text-cream/30 mt-0.5">
+              {editSeatsUsed} of {maxEditShares} edit seats used
             </p>
           </div>
           <button

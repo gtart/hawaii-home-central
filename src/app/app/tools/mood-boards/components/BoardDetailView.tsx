@@ -14,6 +14,8 @@ import { IdeaDetailModal } from './IdeaDetailModal'
 import { CommentsPanel } from './CommentsPanel'
 import { ExportBoardModal } from './ExportBoardModal'
 import { BoardSettingsSheet } from './BoardSettingsSheet'
+import { ShareToolModal } from '@/components/app/ShareToolModal'
+import { ShareExportModal } from '@/components/app/ShareExportModal'
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -52,6 +54,8 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
   const [showAddMenu, setShowAddMenu] = useState(false)
   const [showExport, setShowExport] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [showShareExportForBoard, setShowShareExportForBoard] = useState(false)
 
   // Search + filter state
   const [searchQuery, setSearchQuery] = useState('')
@@ -981,7 +985,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
         />
       )}
 
-      {/* Board settings sheet (includes sharing) */}
+      {/* Board settings sheet */}
       {showSettings && (
         <BoardSettingsSheet
           board={board}
@@ -993,6 +997,46 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
             api.updateBoardAccess(board.id, visibility, accessList)
           }
           onClose={() => setShowSettings(false)}
+          onOpenInvite={() => setShowInviteModal(true)}
+          onManagePublicLinks={() => setShowShareExportForBoard(true)}
+          publicLinkCount={shareLinkCount}
+        />
+      )}
+
+      {/* Invite people modal (tool-level) */}
+      {showInviteModal && currentProject && (
+        <ShareToolModal
+          projectId={currentProject.id}
+          toolKey="mood_boards"
+          onClose={() => setShowInviteModal(false)}
+          description="Invited people can view all boards unless a board is marked Private."
+        />
+      )}
+
+      {/* Share & Export modal opened from board settings (pre-selects this board) */}
+      {showShareExportForBoard && currentProject && (
+        <ShareExportModal
+          toolKey="mood_boards"
+          toolLabel="Mood Boards"
+          projectId={currentProject.id}
+          isOwner={isOwner}
+          onClose={() => setShowShareExportForBoard(false)}
+          scopes={api.payload.boards
+            .filter((b) => !isDefaultBoard(b))
+            .map((b) => ({
+              id: b.id,
+              name: b.name,
+            }))}
+          scopeLabel="Boards"
+          buildExportUrl={({ includeNotes, includeComments, includePhotos, scopeMode, selectedScopeIds }) => {
+            let url = `/app/tools/mood-boards/report?includeNotes=${includeNotes}&includeComments=${includeComments}&includePhotos=${includePhotos}`
+            if (scopeMode === 'selected' && selectedScopeIds.length > 0) {
+              url += `&boardIds=${encodeURIComponent(selectedScopeIds.join(','))}`
+            }
+            return url
+          }}
+          initialTab="share"
+          initialSelectedScopeIds={[board.id]}
         />
       )}
 

@@ -35,6 +35,10 @@ export interface ShareExportModalProps {
   extraExportControls?: React.ReactNode
   // Optional: tool-specific badge renderer for manage links
   renderTokenBadges?: (token: { statuses?: string[]; locations?: string[]; assignees?: string[] }) => React.ReactNode
+  // Optional: open directly to a specific tab
+  initialTab?: 'export' | 'share'
+  // Optional: pre-select specific scope IDs (e.g. a single board)
+  initialSelectedScopeIds?: string[]
 }
 
 export function ShareExportModal({
@@ -48,8 +52,10 @@ export function ShareExportModal({
   buildExportUrl,
   extraExportControls,
   renderTokenBadges,
+  initialTab,
+  initialSelectedScopeIds,
 }: ShareExportModalProps) {
-  const [tab, setTab] = useState<Tab>('export')
+  const [tab, setTab] = useState<Tab>(initialTab && isOwner ? initialTab : 'export')
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -106,6 +112,7 @@ export function ShareExportModal({
               buildExportUrl={buildExportUrl}
               extraExportControls={extraExportControls}
               onClose={onClose}
+              initialSelectedScopeIds={initialSelectedScopeIds}
             />
           ) : (
             <ShareTab
@@ -114,6 +121,7 @@ export function ShareExportModal({
               scopes={scopes}
               scopeLabel={scopeLabel}
               renderTokenBadges={renderTokenBadges}
+              initialSelectedScopeIds={initialSelectedScopeIds}
             />
           )}
         </div>
@@ -135,6 +143,7 @@ function ExportTab({
   buildExportUrl,
   extraExportControls,
   onClose,
+  initialSelectedScopeIds,
 }: {
   toolKey: string
   toolLabel: string
@@ -144,12 +153,13 @@ function ExportTab({
   buildExportUrl: ShareExportModalProps['buildExportUrl']
   extraExportControls?: React.ReactNode
   onClose: () => void
+  initialSelectedScopeIds?: string[]
 }) {
   const [includeNotes, setIncludeNotes] = useState(false)
   const [includeComments, setIncludeComments] = useState(false)
   const [includePhotos, setIncludePhotos] = useState(false)
-  const [scopeMode, setScopeMode] = useState<'all' | 'selected'>('all')
-  const [selectedScopeIds, setSelectedScopeIds] = useState<Set<string>>(new Set())
+  const [scopeMode, setScopeMode] = useState<'all' | 'selected'>(initialSelectedScopeIds?.length ? 'selected' : 'all')
+  const [selectedScopeIds, setSelectedScopeIds] = useState<Set<string>>(new Set(initialSelectedScopeIds || []))
 
   function handleExport() {
     const url = buildExportUrl({
@@ -233,14 +243,16 @@ function ShareTab({
   scopes,
   scopeLabel,
   renderTokenBadges,
+  initialSelectedScopeIds,
 }: {
   toolKey: string
   projectId: string
   scopes: ScopeOption[]
   scopeLabel: string
   renderTokenBadges?: ShareExportModalProps['renderTokenBadges']
+  initialSelectedScopeIds?: string[]
 }) {
-  const [showCreate, setShowCreate] = useState(false)
+  const [showCreate, setShowCreate] = useState(!!initialSelectedScopeIds?.length)
 
   return (
     <div className="space-y-4">
@@ -261,6 +273,7 @@ function ShareTab({
           projectId={projectId}
           scopes={scopes}
           scopeLabel={scopeLabel}
+          initialSelectedScopeIds={initialSelectedScopeIds}
           onCreated={() => {
             setShowCreate(false)
             // ManageShareLinks will refetch on its own via useEffect
@@ -295,6 +308,7 @@ function CreateShareLinkForm({
   scopeLabel,
   onCreated,
   onCancel,
+  initialSelectedScopeIds,
 }: {
   toolKey: string
   projectId: string
@@ -302,12 +316,13 @@ function CreateShareLinkForm({
   scopeLabel: string
   onCreated: () => void
   onCancel: () => void
+  initialSelectedScopeIds?: string[]
 }) {
   const [includeNotes, setIncludeNotes] = useState(false)
   const [includeComments, setIncludeComments] = useState(false)
   const [includePhotos, setIncludePhotos] = useState(false)
-  const [scopeMode, setScopeMode] = useState<'all' | 'selected'>('all')
-  const [selectedScopeIds, setSelectedScopeIds] = useState<Set<string>>(new Set())
+  const [scopeMode, setScopeMode] = useState<'all' | 'selected'>(initialSelectedScopeIds?.length ? 'selected' : 'all')
+  const [selectedScopeIds, setSelectedScopeIds] = useState<Set<string>>(new Set(initialSelectedScopeIds || []))
   const [creating, setCreating] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [shareConfirmText, setShareConfirmText] = useState('')

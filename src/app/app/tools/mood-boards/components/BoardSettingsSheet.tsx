@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import type { Board, BoardAccess, BoardAccessLevel } from '@/data/mood-boards'
-import { BoardShareLinks } from './BoardShareLinks'
 
 interface Props {
   board: Board
@@ -13,6 +12,12 @@ interface Props {
   isOwner: boolean
   onUpdate: (visibility: 'everyone' | 'invite-only', access: BoardAccess[]) => void
   onClose: () => void
+  /** Open the tool-level invite modal (ShareToolModal) */
+  onOpenInvite: () => void
+  /** Open Share & Export modal with this board pre-selected */
+  onManagePublicLinks: () => void
+  /** Number of active public links for this board */
+  publicLinkCount: number
 }
 
 export function BoardSettingsSheet({
@@ -23,6 +28,9 @@ export function BoardSettingsSheet({
   isOwner,
   onUpdate,
   onClose,
+  onOpenInvite,
+  onManagePublicLinks,
+  publicLinkCount,
 }: Props) {
   const [visibility, setVisibility] = useState<'everyone' | 'invite-only'>(
     board.visibility || 'everyone'
@@ -30,9 +38,17 @@ export function BoardSettingsSheet({
   const [accessList, setAccessList] = useState<BoardAccess[]>(
     board.access || []
   )
-  const [addEmail, setAddEmail] = useState('')
 
-  const isCreator = board.createdBy === currentUserEmail
+  // Tool members who are NOT the current user and NOT the board creator
+  const otherMembers = toolMembers.filter(
+    (email) => email !== currentUserEmail && email !== board.createdBy
+  )
+  const hasCollaborators = otherMembers.length > 0
+
+  // Members available to add to the allowlist (not already in access list)
+  const availableMembers = otherMembers.filter(
+    (email) => !accessList.some((a) => a.email === email)
+  )
 
   // Lock body scroll + ESC to close
   useEffect(() => {
@@ -47,18 +63,9 @@ export function BoardSettingsSheet({
     }
   }, [onClose])
 
-  // Filter tool members to those not already in the access list and not the creator
-  const availableMembers = toolMembers.filter(
-    (email) =>
-      email !== currentUserEmail &&
-      email !== board.createdBy &&
-      !accessList.some((a) => a.email === email)
-  )
-
   function handleAddMember(email: string) {
     if (!email.trim() || accessList.some((a) => a.email === email)) return
     setAccessList((prev) => [...prev, { email: email.trim(), level: 'view' }])
-    setAddEmail('')
   }
 
   function handleRemoveMember(email: string) {
@@ -112,7 +119,7 @@ export function BoardSettingsSheet({
 
           {/* Visibility toggle */}
           <div>
-            <p className="text-sm text-cream/70 mb-3">Who can see this board?</p>
+            <p className="text-sm text-cream/70 mb-3">Visibility</p>
             <div className="space-y-2">
               <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
                 <input
@@ -123,9 +130,9 @@ export function BoardSettingsSheet({
                   className="accent-sandstone"
                 />
                 <div>
-                  <p className="text-sm text-cream">Everyone with tool access</p>
+                  <p className="text-sm text-cream">Shared with collaborators</p>
                   <p className="text-xs text-cream/40">
-                    Anyone invited to Mood Boards can see this board
+                    Anyone you&apos;ve invited to Mood Boards can see this board.
                   </p>
                 </div>
               </label>
@@ -138,19 +145,43 @@ export function BoardSettingsSheet({
                   className="accent-sandstone"
                 />
                 <div>
-                  <p className="text-sm text-cream">Only people I choose</p>
+                  <p className="text-sm text-cream">Private board</p>
                   <p className="text-xs text-cream/40">
-                    People with Mood Boards access who aren&apos;t listed won&apos;t see this board
+                    Only you can see it (unless you add exceptions).
                   </p>
                 </div>
               </label>
             </div>
           </div>
 
-          {/* Access list — only shown in invite-only mode */}
-          {visibility === 'invite-only' && (
+          {/* Collaborator state — shown for both visibility modes */}
+          {!hasCollaborators ? (
+            <div className="bg-basalt rounded-lg px-4 py-3">
+              <p className="text-sm text-cream/50 mb-2">No collaborators yet.</p>
+              <p className="text-xs text-cream/30 mb-3">
+                Invited people can view all boards unless a board is marked Private.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose()
+                  onOpenInvite()
+                }}
+                className="text-xs px-3 py-1.5 bg-sandstone/10 text-sandstone rounded-lg hover:bg-sandstone/20 transition-colors font-medium inline-flex items-center gap-1.5"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="8.5" cy="7" r="4" />
+                  <line x1="20" y1="8" x2="20" y2="14" strokeLinecap="round" />
+                  <line x1="23" y1="11" x2="17" y2="11" strokeLinecap="round" />
+                </svg>
+                Invite someone
+              </button>
+            </div>
+          ) : visibility === 'invite-only' ? (
+            /* Access list — only shown in private mode when collaborators exist */
             <div>
-              <p className="text-sm text-cream/70 mb-3">People with access</p>
+              <p className="text-sm text-cream/70 mb-3">Exceptions (can still see this board)</p>
 
               {/* Creator (always has access) */}
               {board.createdBy && (
@@ -189,9 +220,9 @@ export function BoardSettingsSheet({
               ))}
 
               {/* Add member */}
-              {availableMembers.length > 0 ? (
+              {availableMembers.length > 0 && (
                 <div className="mt-3">
-                  <p className="text-xs text-cream/30 mb-1.5">Add from tool members</p>
+                  <p className="text-xs text-cream/30 mb-1.5">Add from collaborators</p>
                   <div className="flex flex-wrap gap-1.5">
                     {availableMembers.map((email) => (
                       <button
@@ -205,22 +236,44 @@ export function BoardSettingsSheet({
                     ))}
                   </div>
                 </div>
-              ) : (
-                <p className="text-xs text-cream/30 mt-3">
-                  All tool members have been added. Invite more people to Mood Boards first.
-                </p>
               )}
+            </div>
+          ) : (
+            /* Shared mode: simple confirmation */
+            <div className="bg-basalt rounded-lg px-4 py-3">
+              <p className="text-xs text-cream/40">
+                {otherMembers.length} collaborator{otherMembers.length !== 1 ? 's' : ''} can see this board.
+              </p>
             </div>
           )}
 
-          {/* Public sharing section (owners only) */}
+          {/* Public links — compact status + manage button (owners only) */}
           {isOwner && projectId && (
-            <BoardShareLinks
-              boardId={board.id}
-              boardName={board.name}
-              projectId={projectId}
-              isOwner={isOwner}
-            />
+            <div className="border-t border-cream/10 pt-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-cream/70">Public links</p>
+                  <p className="text-xs text-cream/40 mt-0.5">
+                    {publicLinkCount > 0
+                      ? `${publicLinkCount} active link${publicLinkCount !== 1 ? 's' : ''}`
+                      : 'None'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose()
+                    onManagePublicLinks()
+                  }}
+                  className="text-xs px-3 py-1.5 bg-sandstone/10 text-sandstone rounded-lg hover:bg-sandstone/20 transition-colors font-medium"
+                >
+                  Manage public links
+                </button>
+              </div>
+              <p className="text-[10px] text-cream/25 mt-2">
+                Public links are read-only and expire after 14 days.
+              </p>
+            </div>
           )}
         </div>
 
