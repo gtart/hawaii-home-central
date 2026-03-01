@@ -315,8 +315,8 @@ export function DecisionTrackerPage({
       onAcquireKit(kit.id)
     }
     const toastMsg = isResync
-      ? `Re-synced "${kit.label}" in ${room.name} (+${result.addedOptionCount} ideas)`
-      : `Applied "${kit.label}" to ${room.name} (+${result.addedDecisionCount} decisions, +${result.addedOptionCount} ideas)`
+      ? `Re-synced "${kit.label}" in ${room.name} (+${result.addedOptionCount} options)`
+      : `Applied "${kit.label}" to ${room.name} (+${result.addedDecisionCount} decisions, +${result.addedOptionCount} options)`
     setToast({ message: toastMsg, kitId: kit.id, roomId: room.id })
     setTimeout(() => setToast(null), 8000)
   }
@@ -404,70 +404,34 @@ export function DecisionTrackerPage({
             </div>
           )}
 
-          {/* Decision Packs module */}
+          {/* Decision Packs — compact inline module */}
           {!readOnly && kits.length > 0 && (
-            <div className="bg-basalt-50 rounded-card p-4 mb-4 border border-cream/10">
-              <h3 className="text-sm font-medium text-cream/70 mb-1">
-                Decision Packs <span className="text-cream/30">✨</span>
-              </h3>
-              <p className="text-xs text-cream/40 mb-3">
-                Curated ideas that help you choose faster.
-              </p>
-
-              {/* Owned pack chips — tap to apply */}
-              {ownedKitIds.length > 0 && (
-                <div className="flex gap-2 overflow-x-auto pb-2 mb-2">
-                  {kits
-                    .filter((k) => ownedKitIds.includes(k.id))
-                    .slice(0, 4)
-                    .map((kit) => (
-                      <button
-                        key={kit.id}
-                        type="button"
-                        onClick={() => {
-                          const firstRoom = rooms.find((r) => !isGlobalUnsorted(r))
-                          if (firstRoom) {
-                            setDestPickerRoomId(firstRoom.id)
-                            setIdeasModalDestPicker(true)
-                            setIdeasModalRoomId(firstRoom.id)
-                          }
-                        }}
-                        className="shrink-0 bg-basalt rounded-lg border border-cream/10 hover:border-sandstone/30 px-3 py-2 text-left transition-colors max-w-[180px]"
-                      >
-                        <span className="text-xs font-medium text-cream/80 block truncate">{kit.label}</span>
-                        <span className="text-[10px] text-cream/40">
-                          {kit.decisions.length} decisions &middot;{' '}
-                          {kit.decisions.reduce((s, d) => s + d.options.length, 0)} ideas
-                        </span>
-                      </button>
-                    ))}
-                </div>
-              )}
-
-              {/* Single primary CTA */}
+            <div className="flex items-center gap-3 mb-4 px-1">
+              <span className="text-cream/30 text-xs">✨</span>
               <Link
                 href="/app/packs"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-sandstone/10 text-sandstone text-xs font-medium rounded-lg hover:bg-sandstone/20 transition-colors"
+                className="text-xs text-sandstone font-medium hover:text-sandstone-light transition-colors"
               >
                 Browse Decision Packs
               </Link>
-
-              {/* Secondary: apply (only when user owns packs) */}
               {ownedKitIds.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const firstRoom = rooms.find((r) => !isGlobalUnsorted(r))
-                    if (firstRoom) {
-                      setDestPickerRoomId(firstRoom.id)
-                      setIdeasModalDestPicker(true)
-                      setIdeasModalRoomId(firstRoom.id)
-                    }
-                  }}
-                  className="ml-3 text-xs text-cream/40 hover:text-cream/60 transition-colors"
-                >
-                  Apply a pack
-                </button>
+                <>
+                  <span className="text-cream/15">·</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const firstRoom = rooms.find((r) => !isGlobalUnsorted(r))
+                      if (firstRoom) {
+                        setDestPickerRoomId(firstRoom.id)
+                        setIdeasModalDestPicker(true)
+                        setIdeasModalRoomId(firstRoom.id)
+                      }
+                    }}
+                    className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
+                  >
+                    Apply a pack ({ownedKitIds.length} owned)
+                  </button>
+                </>
               )}
             </div>
           )}

@@ -287,7 +287,7 @@ export function RoomSection({
                   <span className="text-sm text-purple-300/80 flex items-center gap-1.5">
                     <span>✨</span> Decision Packs
                   </span>
-                  <span className="block text-[11px] text-cream/35 mt-0.5 ml-5">Curated starter ideas for this room</span>
+                  <span className="block text-[11px] text-cream/35 mt-0.5 ml-5">Curated starter options for this room</span>
                 </button>
                 <button
                   type="button"
@@ -338,7 +338,7 @@ export function RoomSection({
       {isExpanded && !readOnly && hasAvailableKits && room.decisions.length > 0 && totalOptions <= 1 && (
         <div className="mx-4 mt-1 mb-2 px-3 py-2 bg-sandstone/5 border border-sandstone/15 rounded-lg flex items-center justify-between">
           <span className="text-xs text-cream/50">
-            Add starter ideas from a curated pack
+            Add starter options from a curated pack
           </span>
           <button
             type="button"
@@ -390,7 +390,7 @@ export function RoomSection({
       {deleteStep === 'confirm' && (
         <ConfirmDialog
           title="Delete room?"
-          message={`"${room.name}" and all its decisions and ideas will be permanently deleted. This cannot be undone.`}
+          message={`"${room.name}" and all its decisions and options will be permanently deleted. This cannot be undone.`}
           onConfirm={() => setDeleteStep('type')}
           onCancel={() => setDeleteStep('none')}
         />

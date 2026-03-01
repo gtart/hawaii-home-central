@@ -176,7 +176,7 @@ export function IdeasPackModal({
   function getApplyLabel(kit: FinishDecisionKit): string {
     const isApplied = effectiveAppliedKitIds.includes(kit.id)
     if (isDecisionMode) {
-      return isApplied ? 'Re-sync ideas' : 'Add Ideas'
+      return isApplied ? 'Re-sync options' : 'Add Options'
     }
     return isApplied ? 'Re-sync pack' : 'Apply to this board'
   }
@@ -213,7 +213,7 @@ export function IdeasPackModal({
         <div className="px-5 pt-5 pb-3 border-b border-cream/10">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium text-cream">
-              {decisionTitle ? `Ideas for \u201c${decisionTitle}\u201d` : 'Decision Packs'}
+              {decisionTitle ? `Options for \u201c${decisionTitle}\u201d` : 'Decision Packs'}
             </h2>
             <button
               type="button"
@@ -227,8 +227,8 @@ export function IdeasPackModal({
           </div>
           <p className="text-xs text-cream/40 mt-1">
             {decisionTitle
-              ? 'Adds curated ideas to this decision so you have options to compare.'
-              : 'Decision Packs add curated ideas to your decisions\u2014so you can compare and choose faster.'}
+              ? 'Adds curated options to this decision so you have more to compare.'
+              : 'Decision Packs add curated options to your decisions\u2014so you can compare and choose faster.'}
           </p>
 
           {/* Destination line */}
@@ -353,7 +353,7 @@ export function IdeasPackModal({
                   <p className="text-xs text-cream/50 leading-relaxed">{kit.description}</p>
                   <p className="text-[11px] text-cream/30 mt-1.5">
                     {kit.decisions.length} decision{kit.decisions.length !== 1 ? 's' : ''},{' '}
-                    {kit.decisions.reduce((s, d) => s + d.options.length, 0)} curated idea
+                    {kit.decisions.reduce((s, d) => s + d.options.length, 0)} option
                     {kit.decisions.reduce((s, d) => s + d.options.length, 0) !== 1 ? 's' : ''}
                   </p>
 
@@ -434,7 +434,7 @@ export function IdeasPackModal({
               disabled={!selectedKit}
               className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              {selectedKit ? getApplyLabel(selectedKit) : (decisionTitle ? 'Add Ideas' : 'Apply to this board')}
+              {selectedKit ? getApplyLabel(selectedKit) : (decisionTitle ? 'Add Options' : 'Apply to this board')}
             </button>
           </div>
         </div>

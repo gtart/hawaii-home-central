@@ -141,7 +141,7 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
             Decision Packs
           </h1>
           <p className="text-cream/50 max-w-xl">
-            Curated ideas to help you choose faster.
+            Curated options to help you choose faster.
           </p>
         </div>
 
@@ -198,7 +198,7 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredKits.map((kit) => {
               const isOwned = ownedKitIds.includes(kit.id)
-              const totalIdeas = kit.decisions.reduce(
+              const totalOptions = kit.decisions.reduce(
                 (s, d) => s + d.options.length, 0
               )
 
@@ -230,7 +230,7 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
                       </div>
                     )}
                     <p className="text-[11px] text-cream/30">
-                      {kit.decisions.length} decision{kit.decisions.length !== 1 ? 's' : ''} &middot; {totalIdeas} curated idea{totalIdeas !== 1 ? 's' : ''}
+                      {kit.decisions.length} decision{kit.decisions.length !== 1 ? 's' : ''} &middot; {totalOptions} option{totalOptions !== 1 ? 's' : ''}
                     </p>
                   </Link>
 

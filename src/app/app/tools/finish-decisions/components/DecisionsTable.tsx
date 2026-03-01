@@ -155,7 +155,7 @@ export function DecisionsTable({
                 Updated{arrow('updated')}
               </th>
               <th className="px-3 py-2 text-center text-xs font-medium text-cream/60 uppercase tracking-wide">
-                Ideas
+                Options
               </th>
               <th className="px-3 py-2 text-center text-xs font-medium text-cream/60 uppercase tracking-wide">
                 Comments

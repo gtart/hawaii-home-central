@@ -1029,7 +1029,7 @@ export function DecisionDetailContent({
       {deleteConfirmOpen && (
         <ConfirmDialog
           title="Delete this decision?"
-          message="All ideas, comments, and images in this decision will be permanently lost. This cannot be undone."
+          message="All options, comments, and images in this decision will be permanently lost. This cannot be undone."
           confirmLabel="Delete Decision"
           confirmVariant="danger"
           onConfirm={() => {

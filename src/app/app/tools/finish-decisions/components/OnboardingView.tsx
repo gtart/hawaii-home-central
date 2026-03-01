@@ -30,14 +30,14 @@ const LEVEL_CARDS: {
     value: 'standard',
     label: 'Start with a decision checklist (recommended)',
     description:
-      "We\u2019ll add the common decisions you\u2019ll need for this room (faucet, sink, lighting, paint, etc.). You\u2019ll add options and curated ideas next.",
+      "We\u2019ll add the common decisions you\u2019ll need for this room (faucet, sink, lighting, paint, etc.). You\u2019ll add options next.",
     micro: "Best for homeowners who don\u2019t want to miss anything.",
   },
   {
     value: 'pack',
     label: 'Start with a Decision Pack (fastest)',
     description:
-      'Adds a decision checklist plus curated ideas (options) for each decision\u2014so you can compare and choose faster.',
+      'Adds a decision checklist plus curated options for each decision\u2014so you can compare and choose faster.',
     micro: 'Includes expert advice and partner shortlists (always labeled).',
   },
 ]

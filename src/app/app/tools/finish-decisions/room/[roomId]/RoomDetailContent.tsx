@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { useToolState } from '@/hooks/useToolState'
 import {
   ROOM_EMOJI_MAP,
@@ -10,6 +11,7 @@ import {
   type RoomTypeV3,
   type DecisionV3,
   type StatusV3,
+  type RoomComment,
 } from '@/data/finish-decisions'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { findKitsForRoomType, applyKitToRoom, removeKitFromRoom } from '@/lib/finish-decision-kits'
@@ -36,6 +38,7 @@ export function RoomDetailContent({
 }) {
   const params = useParams()
   const router = useRouter()
+  const { data: session } = useSession()
   const roomId = params.roomId as string
 
   const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3>({
@@ -169,8 +172,8 @@ export function RoomDetailContent({
     // Auto-acquire
     acquireKit(kit.id)
     const msg = isResync
-      ? `Re-synced "${kit.label}" (+${result.addedOptionCount} ideas)`
-      : `Applied "${kit.label}" — +${result.addedDecisionCount} decisions, +${result.addedOptionCount} ideas`
+      ? `Re-synced "${kit.label}" (+${result.addedOptionCount} options)`
+      : `Applied "${kit.label}" — +${result.addedDecisionCount} decisions, +${result.addedOptionCount} options`
     setToast({ message: msg, kitId: kit.id })
     setTimeout(() => setToast(null), 8000)
   }
@@ -198,6 +201,27 @@ export function RoomDetailContent({
     const updated = removeKitFromRoom(room, toast.kitId)
     updateRoom(updated)
     setToast(null)
+  }
+
+  function addRoomComment(text: string, refDecisionId?: string) {
+    if (!room) return
+    const userName = session?.user?.name || 'Unknown'
+    const userEmail = session?.user?.email || ''
+    const refDecision = refDecisionId ? room.decisions.find((d) => d.id === refDecisionId) : undefined
+    const comment: RoomComment = {
+      id: `rcmt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      text,
+      authorName: userName,
+      authorEmail: userEmail,
+      createdAt: new Date().toISOString(),
+      ...(refDecisionId ? { refDecisionId, refDecisionTitle: refDecision?.title } : {}),
+    }
+    updateRoom({ comments: [...(room.comments || []), comment] })
+  }
+
+  function deleteRoomComment(commentId: string) {
+    if (!room) return
+    updateRoom({ comments: (room.comments || []).filter((c) => c.id !== commentId) })
   }
 
   // --- Loading / not found ---
@@ -247,9 +271,10 @@ export function RoomDetailContent({
   }
 
   const totalCommentCount = room.decisions.reduce(
-    (sum, d) => sum + (d.comments?.length ?? 0),
+    (sum, d) => sum + (d.comments || []).filter((c) => c.authorEmail !== '').length,
     0
   )
+  const roomCommentCount = (room.comments || []).length
 
   return (
     <div className="pt-32 pb-24 px-6">
@@ -272,15 +297,19 @@ export function RoomDetailContent({
             </h1>
             {isUnsortedRoom ? (
               <p className="text-xs text-cream/40 mt-1">
-                {unsortedCount} idea{unsortedCount !== 1 ? 's' : ''} waiting to be sorted into rooms
+                {unsortedCount} option{unsortedCount !== 1 ? 's' : ''} waiting to be sorted into rooms
               </p>
             ) : (
               <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-cream/50 mt-1">
-                <span>{stats.total} decision{stats.total !== 1 ? 's' : ''}</span>
-                {stats.deciding > 0 && <span>{stats.deciding} deciding</span>}
-                {stats.selected > 0 && <span>{stats.selected} selected</span>}
-                {stats.ordered > 0 && <span>{stats.ordered} ordered</span>}
-                {stats.done > 0 && <span>{stats.done} done</span>}
+                {stats.total - stats.done > 0 && (
+                  <span className="text-cream/70 font-medium">
+                    {stats.total - stats.done} Decision{stats.total - stats.done !== 1 ? 's' : ''} Needed
+                  </span>
+                )}
+                {stats.deciding > 0 && <span>{stats.deciding} Deciding</span>}
+                {stats.selected > 0 && <span>{stats.selected} Selected</span>}
+                {stats.ordered > 0 && <span>{stats.ordered} Ordered</span>}
+                {stats.done > 0 && <span className="text-emerald-400/70">{stats.done} Done</span>}
               </div>
             )}
           </div>
@@ -301,7 +330,7 @@ export function RoomDetailContent({
               onClick={handleAutoPopulate}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-cream/60 hover:text-cream/80 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
             >
-              Add common decisions
+              Add common decisions needed
             </button>
             {hasAvailableKits && (
               <button
@@ -315,12 +344,12 @@ export function RoomDetailContent({
 
             <div className="flex-1" />
 
-            {/* Comments feed */}
+            {/* Room comments */}
             <button
               type="button"
               onClick={() => setCommentsFeedOpen(true)}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                totalCommentCount > 0
+                roomCommentCount > 0
                   ? 'text-sandstone bg-sandstone/10 hover:bg-sandstone/20 font-medium'
                   : 'text-cream/40 hover:text-cream/60 bg-cream/5 hover:bg-cream/10'
               }`}
@@ -328,7 +357,7 @@ export function RoomDetailContent({
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
               </svg>
-              {totalCommentCount > 0 ? totalCommentCount : 'Comments'}
+              {roomCommentCount > 0 ? roomCommentCount : 'Comments'}
             </button>
 
             {/* View mode selector */}
@@ -354,12 +383,12 @@ export function RoomDetailContent({
         {/* Read-only action bar */}
         {readOnly && (
           <div className="flex items-center justify-end gap-2 mb-5">
-            {/* Comments feed */}
+            {/* Room comments */}
             <button
               type="button"
               onClick={() => setCommentsFeedOpen(true)}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                totalCommentCount > 0
+                roomCommentCount > 0
                   ? 'text-sandstone bg-sandstone/10 hover:bg-sandstone/20 font-medium'
                   : 'text-cream/40 hover:text-cream/60 bg-cream/5 hover:bg-cream/10'
               }`}
@@ -367,7 +396,7 @@ export function RoomDetailContent({
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
               </svg>
-              {totalCommentCount > 0 ? totalCommentCount : 'Comments'}
+              {roomCommentCount > 0 ? roomCommentCount : 'Comments'}
             </button>
 
             <select
@@ -413,7 +442,7 @@ export function RoomDetailContent({
           <div data-testid="empty-state-no-options" className="bg-basalt-50 rounded-card p-6 md:p-8 mb-5 border border-cream/10">
             <h3 className="font-serif text-lg text-sandstone mb-1">Great&mdash;now add options</h3>
             <p className="text-sm text-cream/50 leading-relaxed mb-4">
-              Apply a pack to add curated ideas you can compare.
+              Apply a pack to add curated options you can compare.
             </p>
             <div className="flex flex-wrap items-center gap-3">
               {hasAvailableKits && (
@@ -443,7 +472,7 @@ export function RoomDetailContent({
         {!readOnly && hasAvailableKits && room.decisions.length > 0 && totalOptions > 0 && totalOptions <= 1 && (
           <div className="px-3 py-2 mb-4 bg-sandstone/5 border border-sandstone/15 rounded-lg flex items-center justify-between">
             <span className="text-xs text-cream/50">
-              Add starter ideas from a curated pack
+              Add starter options from a curated pack
             </span>
             <button
               type="button"
@@ -539,7 +568,7 @@ export function RoomDetailContent({
       {deleteStep === 'confirm' && (
         <ConfirmDialog
           title="Delete room?"
-          message={`"${room.name}" and all its decisions and ideas will be permanently deleted. This cannot be undone.`}
+          message={`"${room.name}" and all its decisions and options will be permanently deleted. This cannot be undone.`}
           onConfirm={() => setDeleteStep('type')}
           onCancel={() => setDeleteStep('none')}
         />
@@ -560,7 +589,7 @@ export function RoomDetailContent({
       {confirmDeleteDecisionId && (
         <ConfirmDialog
           title="Delete decision"
-          message="This will also delete all its options."
+          message="This decision and all its options will be permanently deleted."
           onConfirm={() => handleDeleteDecision(confirmDeleteDecisionId)}
           onCancel={() => setConfirmDeleteDecisionId(null)}
         />
@@ -590,9 +619,13 @@ export function RoomDetailContent({
       {/* Room comment feed panel */}
       {commentsFeedOpen && room && (
         <RoomCommentsFeed
+          comments={room.comments || []}
           decisions={room.decisions}
           roomType={room.type}
+          readOnly={readOnly}
           onClose={() => setCommentsFeedOpen(false)}
+          onAddComment={addRoomComment}
+          onDeleteComment={deleteRoomComment}
           onNavigateToDecision={(decisionId) => {
             setCommentsFeedOpen(false)
             router.push(`/app/tools/finish-decisions/decision/${decisionId}`)

@@ -44,35 +44,6 @@ function getInitials(name: string | null): string {
   return parts[0].slice(0, 2).toUpperCase()
 }
 
-function ToolMeta({ summary }: { summary: ToolSummary | undefined }) {
-  if (!summary) return null
-
-  const user = summary.updatedBy
-  return (
-    <div className="flex items-center gap-2 text-xs text-cream/40">
-      {user && (
-        <span className="inline-flex items-center gap-1.5">
-          {user.image ? (
-            <Image
-              src={user.image}
-              alt=""
-              width={14}
-              height={14}
-              className="w-3.5 h-3.5 rounded-full object-cover"
-            />
-          ) : (
-            <span className="w-3.5 h-3.5 rounded-full bg-cream/10 flex items-center justify-center text-[8px] font-semibold text-cream/40">
-              {getInitials(user.name)}
-            </span>
-          )}
-          <span className="leading-none">{user.name || 'Someone'}</span>
-        </span>
-      )}
-      <span>{relativeTime(summary.updatedAt)}</span>
-    </div>
-  )
-}
-
 export function ToolGrid() {
   const { currentProject } = useProject()
   const [summaries, setSummaries] = useState<ToolSummary[]>([])
@@ -111,66 +82,86 @@ export function ToolGrid() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="space-y-3">
       {visibleTools.map((tool) => {
         const summary = summaryMap.get(tool.toolKey)
         const dashStats = getDashboardStats(tool.toolKey, summary?.stats)
         const empty = isToolEmpty(tool.toolKey, summary?.stats)
         const helperLine = HELPER_COPY[tool.toolKey]
+        const user = summary?.updatedBy
 
         return (
           <Link
             key={tool.toolKey}
             href={tool.href}
-            className="group block p-5 bg-basalt-50 rounded-card border border-cream/5 hover:border-sandstone/20 transition-colors"
+            className="group flex items-center gap-4 p-4 md:p-5 bg-basalt-50 rounded-card border border-cream/5 hover:border-sandstone/20 transition-colors"
           >
-            {/* Header: title + stage */}
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <h3 className="font-serif text-lg text-sandstone group-hover:text-sandstone-light transition-colors">
-                {tool.title}
-              </h3>
-              <span className="text-[10px] uppercase tracking-wider text-cream/30 shrink-0 mt-1">
-                {tool.stage}
-              </span>
-            </div>
-
-            {/* Helper copy */}
-            {helperLine && (
-              <p className="text-cream/50 text-xs mb-3">{helperLine}</p>
-            )}
-
-            {/* Stats or empty state */}
-            {empty ? (
-              <div className="mb-3">
-                <span className="inline-block px-3 py-1.5 bg-sandstone text-basalt text-xs font-medium rounded-button group-hover:bg-sandstone-light transition-colors">
-                  Start
+            {/* Left: title + description */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <h3 className="font-serif text-lg text-sandstone group-hover:text-sandstone-light transition-colors truncate">
+                  {tool.title}
+                </h3>
+                <span className="hidden sm:inline text-[10px] uppercase tracking-wider text-cream/25 shrink-0">
+                  {tool.stage}
                 </span>
               </div>
-            ) : (
-              <>
-                <div className="flex gap-5 mb-3">
+              {helperLine && (
+                <p className="text-cream/45 text-xs leading-relaxed line-clamp-1">{helperLine}</p>
+              )}
+
+              {/* Last activity line */}
+              <div className="flex items-center gap-2 text-[11px] text-cream/30 mt-1.5">
+                {summary ? (
+                  <>
+                    {user && (
+                      <span className="inline-flex items-center gap-1">
+                        {user.image ? (
+                          <Image
+                            src={user.image}
+                            alt=""
+                            width={14}
+                            height={14}
+                            className="w-3.5 h-3.5 rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="w-3.5 h-3.5 rounded-full bg-cream/10 flex items-center justify-center text-[8px] font-semibold text-cream/40">
+                            {getInitials(user.name)}
+                          </span>
+                        )}
+                        <span>{user.name || 'Someone'}</span>
+                      </span>
+                    )}
+                    <span>{relativeTime(summary.updatedAt)}</span>
+                  </>
+                ) : (
+                  <span className="text-cream/20">Not started</span>
+                )}
+              </div>
+            </div>
+
+            {/* Right: stats or CTA */}
+            <div className="flex items-center gap-4 shrink-0">
+              {!empty && dashStats.length > 0 && (
+                <div className="hidden sm:flex gap-4">
                   {dashStats.map((s) => (
-                    <div key={s.label}>
-                      <p className="text-2xl font-semibold text-cream tabular-nums">{s.value}</p>
-                      <p className="text-[11px] text-cream/40 uppercase tracking-wide">{s.label}</p>
+                    <div key={s.label} className="text-right">
+                      <p className="text-xl font-semibold text-cream tabular-nums leading-tight">{s.value}</p>
+                      <p className="text-[10px] text-cream/35 uppercase tracking-wide">{s.label}</p>
                     </div>
                   ))}
                 </div>
-                <div className="mb-3">
-                  <span className="inline-block px-3 py-1.5 border border-sandstone/30 text-sandstone text-xs font-medium rounded-button group-hover:bg-sandstone/10 transition-colors">
-                    Continue
-                  </span>
-                </div>
-              </>
-            )}
-
-            {/* Last activity */}
-            <div className="pt-2 border-t border-cream/5">
-              {summary ? (
-                <ToolMeta summary={summary} />
-              ) : (
-                <span className="text-cream/25 text-xs">Not started</span>
               )}
+              <span className={`inline-flex items-center px-4 py-2 text-xs font-medium rounded-button transition-colors ${
+                empty
+                  ? 'bg-sandstone text-basalt group-hover:bg-sandstone-light'
+                  : 'border border-sandstone/30 text-sandstone group-hover:bg-sandstone/10'
+              }`}>
+                {empty ? 'Start' : 'Continue'}
+              </span>
+              <svg className="w-4 h-4 text-cream/20 group-hover:text-cream/40 transition-colors hidden sm:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </div>
           </Link>
         )

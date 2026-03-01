@@ -74,7 +74,7 @@ export function MoveIdeaSheet({
           {/* Header */}
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium text-cream">
-              {isBulk ? `Move ${options.length} ideas` : 'Move idea'}
+              {isBulk ? `Move ${options.length} options` : 'Move option'}
             </h2>
             <button
               type="button"
@@ -99,7 +99,7 @@ export function MoveIdeaSheet({
                 />
               )}
               <div className="min-w-0">
-                <p className="text-sm text-cream truncate">{firstOption.name || 'Untitled idea'}</p>
+                <p className="text-sm text-cream truncate">{firstOption.name || 'Untitled option'}</p>
                 <p className="text-[10px] text-cream/30">
                   {firstOption.images?.length ?? 0} image{(firstOption.images?.length ?? 0) !== 1 ? 's' : ''}
                 </p>
@@ -110,7 +110,7 @@ export function MoveIdeaSheet({
           {/* Bulk preview */}
           {isBulk && (
             <div className="bg-cream/5 rounded-lg p-2.5">
-              <p className="text-sm text-cream">{options.length} ideas selected</p>
+              <p className="text-sm text-cream">{options.length} options selected</p>
               <p className="text-[10px] text-cream/30 mt-0.5">
                 {options.map((o) => o.name || 'Untitled').slice(0, 3).join(', ')}
                 {options.length > 3 && ` +${options.length - 3} more`}
@@ -198,7 +198,7 @@ export function MoveIdeaSheet({
                             <p className={`text-sm truncate ${isActive ? 'text-sandstone font-medium' : 'text-cream'}`}>
                               {d.title}
                             </p>
-                            <p className="text-[10px] text-cream/30">{d.options.length} ideas</p>
+                            <p className="text-[10px] text-cream/30">{d.options.length} options</p>
                           </button>
                         )
                       })}
@@ -208,7 +208,7 @@ export function MoveIdeaSheet({
                   )}
                   {!selectedDecisionId && (
                     <p className="text-[11px] text-cream/30 mt-1.5">
-                      No decision? Idea will go to Unsorted in this room.
+                      No decision? Option will go to Unsorted in this room.
                     </p>
                   )}
                 </>
@@ -240,7 +240,7 @@ export function MoveIdeaSheet({
               disabled={!canMove}
               className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              {isBulk ? `Move ${options.length} ideas` : 'Move'}
+              {isBulk ? `Move ${options.length} options` : 'Move'}
             </button>
           </div>
         </div>

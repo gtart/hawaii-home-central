@@ -109,7 +109,7 @@ export function PackDetail({
     )
   }
 
-  const totalIdeas = kit.decisions.reduce((s, d) => s + d.options.length, 0)
+  const totalOptions = kit.decisions.reduce((s, d) => s + d.options.length, 0)
   const authorInfo = AUTHOR_LABELS[kit.author]
 
   return (
@@ -181,9 +181,9 @@ export function PackDetail({
                   </span>
                 </div>
                 <div>
-                  <span className="text-cream/80 font-medium">{totalIdeas}</span>
+                  <span className="text-cream/80 font-medium">{totalOptions}</span>
                   <span className="text-cream/40 ml-1">
-                    curated idea{totalIdeas !== 1 ? 's' : ''}
+                    option{totalOptions !== 1 ? 's' : ''}
                   </span>
                 </div>
               </div>
@@ -252,7 +252,7 @@ export function PackDetail({
                     {dec.title}
                   </span>
                   <span className="text-xs text-cream/30 shrink-0">
-                    {dec.options.length} idea
+                    {dec.options.length} option
                     {dec.options.length !== 1 ? 's' : ''}
                   </span>
                 </button>

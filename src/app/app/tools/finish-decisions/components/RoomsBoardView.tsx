@@ -207,7 +207,7 @@ export function RoomsBoardView({
                     <h3 className={`text-sm font-medium ${unsortedCount > 0 ? 'text-amber-300' : 'text-cream/30'}`}>Unsorted</h3>
                     <p className="text-[11px] text-cream/30">
                       {unsortedCount > 0
-                        ? `${unsortedCount} idea${unsortedCount !== 1 ? 's' : ''} to sort into rooms`
+                        ? `${unsortedCount} option${unsortedCount !== 1 ? 's' : ''} to sort into rooms`
                         : 'Saved-from-web items land here until you sort them'}
                     </p>
                   </div>
