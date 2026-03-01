@@ -3,32 +3,51 @@
 import { useState, useEffect } from 'react'
 import type { Board, BoardAccess, BoardAccessLevel } from '@/data/mood-boards'
 
+interface ToolMember {
+  email: string
+  name: string | null
+  image: string | null
+}
+
 interface Props {
   board: Board
-  /** Emails of people who already have tool-level access (candidates for board access) */
-  toolMembers: string[]
+  toolMembers: ToolMember[]
   currentUserEmail: string
+  currentUserName: string | null
   projectId: string
   isOwner: boolean
   onUpdate: (visibility: 'everyone' | 'invite-only', access: BoardAccess[]) => void
   onClose: () => void
-  /** Open the tool-level invite modal (ShareToolModal) */
-  onOpenInvite: () => void
   /** Open Share & Export modal with this board pre-selected */
   onManagePublicLinks: () => void
   /** Number of active public links for this board */
   publicLinkCount: number
 }
 
+function AvatarCircle({ name, email }: { name: string | null; email: string }) {
+  const initials = name
+    ? name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    : email.charAt(0).toUpperCase()
+
+  return (
+    <span
+      className="w-7 h-7 rounded-full bg-cream/10 flex items-center justify-center text-[11px] font-medium text-cream/60 shrink-0"
+      title={name || email}
+    >
+      {initials}
+    </span>
+  )
+}
+
 export function BoardSettingsSheet({
   board,
   toolMembers,
   currentUserEmail,
+  currentUserName,
   projectId,
   isOwner,
   onUpdate,
   onClose,
-  onOpenInvite,
   onManagePublicLinks,
   publicLinkCount,
 }: Props) {
@@ -41,14 +60,13 @@ export function BoardSettingsSheet({
 
   // Tool members who are NOT the current user and NOT the board creator
   const otherMembers = toolMembers.filter(
-    (email) => email !== currentUserEmail && email !== board.createdBy
+    (m) => m.email !== currentUserEmail && m.email !== board.createdBy
   )
-  const hasCollaborators = otherMembers.length > 0
 
-  // Members available to add to the allowlist (not already in access list)
-  const availableMembers = otherMembers.filter(
-    (email) => !accessList.some((a) => a.email === email)
-  )
+  // Members visible in "Shared with" row — depends on visibility mode
+  const visibleMembers = visibility === 'everyone'
+    ? otherMembers
+    : otherMembers.filter(m => accessList.some(a => a.email === m.email))
 
   // Lock body scroll + ESC to close
   useEffect(() => {
@@ -117,6 +135,20 @@ export function BoardSettingsSheet({
             )}
           </div>
 
+          {/* Shared with — avatar row */}
+          <div>
+            <p className="text-xs text-cream/40 mb-2">Shared with</p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <AvatarCircle name={currentUserName} email={currentUserEmail} />
+              {visibleMembers.map((m) => (
+                <AvatarCircle key={m.email} name={m.name} email={m.email} />
+              ))}
+              {visibleMembers.length === 0 && (
+                <span className="text-xs text-cream/30">(Only you)</span>
+              )}
+            </div>
+          </div>
+
           {/* Visibility toggle */}
           <div>
             <p className="text-sm text-cream/70 mb-3">Visibility</p>
@@ -147,103 +179,58 @@ export function BoardSettingsSheet({
                 <div>
                   <p className="text-sm text-cream">Private board</p>
                   <p className="text-xs text-cream/40">
-                    Only you can see it (unless you add exceptions).
+                    Only you can see it (unless you add exceptions below).
                   </p>
                 </div>
               </label>
             </div>
           </div>
 
-          {/* Collaborator state — shown for both visibility modes */}
-          {!hasCollaborators ? (
-            <div className="bg-basalt rounded-lg px-4 py-3">
-              <p className="text-sm text-cream/50 mb-2">No collaborators yet.</p>
-              <p className="text-xs text-cream/30 mb-3">
-                Invited people can view all boards unless a board is marked Private.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  onClose()
-                  onOpenInvite()
-                }}
-                className="text-xs px-3 py-1.5 bg-sandstone/10 text-sandstone rounded-lg hover:bg-sandstone/20 transition-colors font-medium inline-flex items-center gap-1.5"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="8.5" cy="7" r="4" />
-                  <line x1="20" y1="8" x2="20" y2="14" strokeLinecap="round" />
-                  <line x1="23" y1="11" x2="17" y2="11" strokeLinecap="round" />
-                </svg>
-                Invite someone
-              </button>
-            </div>
-          ) : visibility === 'invite-only' ? (
-            /* Access list — only shown in private mode when collaborators exist */
+          {/* Private allowlist — checkbox rows for each tool member */}
+          {visibility === 'invite-only' && otherMembers.length > 0 && (
             <div>
-              <p className="text-sm text-cream/70 mb-3">Exceptions (can still see this board)</p>
-
-              {/* Creator (always has access) */}
-              {board.createdBy && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-basalt mb-2">
-                  <span className="flex-1 text-sm text-cream/60 truncate">
-                    {board.createdBy === currentUserEmail ? 'You (creator)' : board.createdBy}
-                  </span>
-                  <span className="text-xs text-cream/30 px-2 py-0.5 rounded bg-cream/5">
-                    edit
-                  </span>
-                </div>
-              )}
-
-              {/* Access list entries */}
-              {accessList.map((entry) => (
-                <div key={entry.email} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-basalt mb-2">
-                  <span className="flex-1 text-sm text-cream/60 truncate">{entry.email}</span>
-                  <select
-                    value={entry.level}
-                    onChange={(e) => handleChangeLevel(entry.email, e.target.value as BoardAccessLevel)}
-                    className="text-xs bg-basalt-50 border border-cream/15 text-cream/60 rounded px-2 py-0.5"
-                  >
-                    <option value="view">view</option>
-                    <option value="edit">edit</option>
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveMember(entry.email)}
-                    className="text-cream/30 hover:text-red-400 transition-colors"
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-
-              {/* Add member */}
-              {availableMembers.length > 0 && (
-                <div className="mt-3">
-                  <p className="text-xs text-cream/30 mb-1.5">Add from collaborators</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {availableMembers.map((email) => (
-                      <button
-                        key={email}
-                        type="button"
-                        onClick={() => handleAddMember(email)}
-                        className="text-xs px-2.5 py-1 rounded-full border border-cream/15 text-cream/50 hover:border-sandstone/40 hover:text-sandstone transition-colors"
-                      >
-                        + {email}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            /* Shared mode: simple confirmation */
-            <div className="bg-basalt rounded-lg px-4 py-3">
-              <p className="text-xs text-cream/40">
-                {otherMembers.length} collaborator{otherMembers.length !== 1 ? 's' : ''} can see this board.
-              </p>
+              <p className="text-sm text-cream/70 mb-3">Allow access to this board</p>
+              <div className="space-y-1">
+                {otherMembers.map((m) => {
+                  const entry = accessList.find(a => a.email === m.email)
+                  const isAllowed = !!entry
+                  return (
+                    <label
+                      key={m.email}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-cream/5 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isAllowed}
+                        onChange={() =>
+                          isAllowed ? handleRemoveMember(m.email) : handleAddMember(m.email)
+                        }
+                        className="accent-sandstone"
+                      />
+                      <AvatarCircle name={m.name} email={m.email} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-cream/60 truncate">{m.name || m.email}</p>
+                        {m.name && (
+                          <p className="text-[11px] text-cream/30 truncate">{m.email}</p>
+                        )}
+                      </div>
+                      {isAllowed && (
+                        <select
+                          value={entry!.level}
+                          onChange={(e) =>
+                            handleChangeLevel(m.email, e.target.value as BoardAccessLevel)
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-xs bg-basalt-50 border border-cream/15 text-cream/60 rounded px-2 py-0.5"
+                        >
+                          <option value="view">view</option>
+                          <option value="edit">edit</option>
+                        </select>
+                      )}
+                    </label>
+                  )
+                })}
+              </div>
             </div>
           )}
 

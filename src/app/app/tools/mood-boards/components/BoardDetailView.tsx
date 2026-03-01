@@ -89,7 +89,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
   const userName = session?.user?.name || ''
 
   // Lazy-load tool members for board settings
-  const [toolMembers, setToolMembers] = useState<string[]>([])
+  const [toolMembers, setToolMembers] = useState<Array<{ email: string; name: string | null; image: string | null }>>([])
   const loadedMembersRef = useRef(false)
 
   const loadToolMembers = useCallback(async () => {
@@ -99,10 +99,14 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
       const res = await fetch(`/api/projects/${currentProject.id}/tools/mood_boards/share`)
       if (!res.ok) return
       const data = await res.json()
-      const emails: string[] = (data.access || [])
-        .map((a: { email?: string | null }) => a.email)
-        .filter(Boolean)
-      setToolMembers(emails)
+      const members = (data.access || [])
+        .filter((a: { email?: string | null }) => a.email)
+        .map((a: { email?: string | null; name?: string | null; image?: string | null }) => ({
+          email: a.email as string,
+          name: a.name ?? null,
+          image: a.image ?? null,
+        }))
+      setToolMembers(members)
     } catch {
       // fail gracefully — settings sheet will show "no members"
     }
@@ -192,7 +196,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
       for (const a of board.access || []) emails.add(a.email)
       return Array.from(emails).filter((e) => e !== userEmail)
     }
-    return toolMembers.filter((e) => e !== userEmail)
+    return toolMembers.map((m) => m.email).filter((e) => e !== userEmail)
   }, [board.visibility, board.access, board.createdBy, toolMembers, userEmail])
 
   // Search + filter computation
@@ -991,13 +995,13 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
           board={board}
           toolMembers={toolMembers}
           currentUserEmail={userEmail}
+          currentUserName={userName}
           projectId={currentProject?.id || ''}
           isOwner={isOwner}
           onUpdate={(visibility, accessList) =>
             api.updateBoardAccess(board.id, visibility, accessList)
           }
           onClose={() => setShowSettings(false)}
-          onOpenInvite={() => setShowInviteModal(true)}
           onManagePublicLinks={() => setShowShareExportForBoard(true)}
           publicLinkCount={shareLinkCount}
         />
