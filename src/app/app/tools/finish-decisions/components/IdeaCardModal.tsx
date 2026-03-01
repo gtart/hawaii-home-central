@@ -273,6 +273,55 @@ export function IdeaCardModal({
               </span>
             ) : null}
 
+            {/* Voting */}
+            {!readOnly ? (
+              <div className="flex items-center gap-1 ml-auto">
+                {(['love', 'up', 'down'] as const).map((type) => {
+                  const emoji = type === 'love' ? '❤️' : type === 'up' ? '👍' : '👎'
+                  const votes = option.votes ?? {}
+                  const myVote = votes[userEmail]
+                  const isActive = myVote === type
+                  const count = Object.values(votes).filter(v => v === type).length
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => {
+                        const next = { ...(option.votes ?? {}) }
+                        if (next[userEmail] === type) delete next[userEmail]
+                        else next[userEmail] = type
+                        onUpdate({ votes: next })
+                      }}
+                      className={`text-xs px-2 py-1 rounded-full transition-colors ${
+                        isActive
+                          ? 'bg-sandstone/20 text-sandstone'
+                          : 'bg-cream/8 text-cream/40 hover:bg-cream/15'
+                      }`}
+                    >
+                      {emoji}{count > 0 ? ` ${count}` : ''}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (() => {
+              const votes = option.votes ?? {}
+              const hasVotes = Object.keys(votes).length > 0
+              if (!hasVotes) return null
+              return (
+                <div className="flex items-center gap-1 ml-auto">
+                  {(['love', 'up', 'down'] as const).map((type) => {
+                    const emoji = type === 'love' ? '❤️' : type === 'up' ? '👍' : '👎'
+                    const count = Object.values(votes).filter(v => v === type).length
+                    if (count === 0) return null
+                    return (
+                      <span key={type} className="text-xs px-2 py-1 rounded-full bg-cream/5 text-cream/30">
+                        {emoji} {count}
+                      </span>
+                    )
+                  })}
+                </div>
+              )
+            })()}
           </div>
 
           {/* Title input — no label, clean edit */}

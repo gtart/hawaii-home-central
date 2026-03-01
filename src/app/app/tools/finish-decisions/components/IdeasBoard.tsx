@@ -101,6 +101,7 @@ function IdeaCardTile({
   onToggleFinal,
   onComment,
   onMove,
+  onVote,
   commentCount,
   lastCommentAt,
 }: {
@@ -112,6 +113,7 @@ function IdeaCardTile({
   onToggleFinal?: () => void
   onComment?: () => void
   onMove?: () => void
+  onVote?: (type: 'love' | 'up' | 'down') => void
   commentCount?: number
   lastCommentAt?: string | null
 }) {
@@ -173,9 +175,14 @@ function IdeaCardTile({
           {option.name || <span className="text-cream/30 italic">Untitled</span>}
         </p>
 
-        {/* Notes preview (text-only cards) */}
-        {!hasImage && option.notes && (
-          <p className="text-xs text-cream/40 line-clamp-2">{option.notes}</p>
+        {/* Price */}
+        {option.price && (
+          <p className="text-xs text-sandstone font-medium">{option.price}</p>
+        )}
+
+        {/* Notes/Specs preview */}
+        {(option.specs || option.notes) && (
+          <p className="text-[11px] text-cream/35 line-clamp-1">{option.specs || option.notes}</p>
         )}
 
         {/* Meta row: origin, time, comments */}
@@ -190,6 +197,41 @@ function IdeaCardTile({
             {relativeTime(lastCommentAt || option.updatedAt)}
           </span>
         </div>
+
+        {/* Voting row */}
+        {(() => {
+          const votes = option.votes ?? {}
+          const hasVotes = Object.keys(votes).length > 0
+          if (!onVote && !hasVotes) return null
+          return (
+            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              {(['love', 'up', 'down'] as const).map((type) => {
+                const emoji = type === 'love' ? '❤️' : type === 'up' ? '👍' : '👎'
+                const myVote = votes[userEmail]
+                const isActive = myVote === type
+                const count = Object.values(votes).filter(v => v === type).length
+                if (!onVote && count === 0) return null
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => onVote?.(type)}
+                    disabled={!onVote}
+                    className={`text-xs px-1.5 py-0.5 rounded-md transition-colors ${
+                      isActive
+                        ? 'bg-sandstone/20 text-sandstone'
+                        : onVote
+                          ? 'bg-cream/5 text-cream/30 hover:bg-cream/10 hover:text-cream/50'
+                          : 'bg-cream/5 text-cream/30 cursor-default'
+                    }`}
+                  >
+                    {emoji}{count > 0 ? ` ${count}` : ''}
+                  </button>
+                )
+              })}
+            </div>
+          )
+        })()}
 
         {/* Action row: move + comment */}
         {(!readOnly || (onComment)) && (
@@ -585,6 +627,12 @@ export function IdeasBoard({
                         onToggleFinal={compareMode || hideFinalize ? undefined : () => onSelectOption(opt.id)}
                         onMove={!compareMode && onMoveOption ? () => onMoveOption(opt.id) : undefined}
                         onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
+                        onVote={!compareMode && !readOnly ? (type) => {
+                          const votes = { ...(opt.votes ?? {}) }
+                          if (votes[userEmail] === type) delete votes[userEmail]
+                          else votes[userEmail] = type
+                          onUpdateOption(opt.id, { votes })
+                        } : undefined}
                         commentCount={comments.filter((c) => c.refOptionId === opt.id).length}
                         lastCommentAt={(() => {
                           const optComments = comments.filter((c) => c.refOptionId === opt.id)
@@ -624,6 +672,12 @@ export function IdeasBoard({
                         onToggleFinal={compareMode || hideFinalize ? undefined : () => onSelectOption(opt.id)}
                         onMove={!compareMode && onMoveOption ? () => onMoveOption(opt.id) : undefined}
                         onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
+                        onVote={!compareMode && !readOnly ? (type) => {
+                          const votes = { ...(opt.votes ?? {}) }
+                          if (votes[userEmail] === type) delete votes[userEmail]
+                          else votes[userEmail] = type
+                          onUpdateOption(opt.id, { votes })
+                        } : undefined}
                         commentCount={comments.filter((c) => c.refOptionId === opt.id).length}
                         lastCommentAt={(() => {
                           const optComments = comments.filter((c) => c.refOptionId === opt.id)
