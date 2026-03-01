@@ -48,7 +48,7 @@ export function AddRoomModal({
 
   const handleAdd = () => {
     if (!roomName.trim()) {
-      setError('Room name is required')
+      setError('Area name is required')
       return
     }
 
@@ -59,10 +59,10 @@ export function AddRoomModal({
   return (
     <div className="fixed inset-0 bg-basalt/80 flex items-center justify-center z-50 p-4">
       <div className="bg-basalt-50 rounded-card p-6 max-w-md w-full space-y-4">
-        <h3 className="text-xl font-serif text-sandstone">Add Room or Area</h3>
+        <h3 className="text-xl font-serif text-sandstone">Add an Area</h3>
 
         <Select
-          label="Room or Area Type"
+          label="Area Type"
           value={roomType}
           onChange={(e) => setRoomType(e.target.value as RoomTypeV3)}
           options={ROOM_TYPE_OPTIONS_V3.map((opt) => ({
@@ -93,7 +93,7 @@ export function AddRoomModal({
         </div>
 
         <div className="flex gap-2 pt-2">
-          <Button onClick={handleAdd}>Create Room</Button>
+          <Button onClick={handleAdd}>Create Area</Button>
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>

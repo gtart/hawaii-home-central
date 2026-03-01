@@ -23,7 +23,7 @@ const LEVEL_CARDS: {
   {
     value: 'none',
     label: 'Start empty (blank board)',
-    description: 'Create a room board with no decisions. Add only what you want.',
+    description: 'Create an area with no decisions. Add only what you want.',
     micro: 'Best if you already know what you need to pick.',
   },
   {
@@ -80,7 +80,7 @@ export function OnboardingView({
       const label =
         type === 'other' && customOtherName.trim()
           ? customOtherName.trim()
-          : ROOM_TYPE_OPTIONS_V3.find((opt) => opt.value === type)?.label || 'Room'
+          : ROOM_TYPE_OPTIONS_V3.find((opt) => opt.value === type)?.label || 'Area'
       // For "pack" level, create rooms with standard decisions first (pack gets applied after)
       const template = type === 'other' ? 'none' : (level === 'pack' ? 'standard' : level)
       return {
@@ -207,7 +207,7 @@ export function OnboardingView({
           >
             <span className="block">Recommended decisions</span>
             <span className="block text-[10px] font-normal mt-0.5 opacity-70">
-              Pre-fill typical decisions for each room
+              Pre-fill typical decisions for each area
             </span>
           </button>
           <button
@@ -293,9 +293,9 @@ export function OnboardingView({
       {/* Action button */}
       <Button onClick={handleCreate} disabled={selectedTypes.size === 0}>
         {selectedTypes.size === 0
-          ? (isCollapsible ? 'Select rooms' : 'Select rooms to get started')
+          ? (isCollapsible ? 'Select areas' : 'Select areas to get started')
           : isCollapsible
-            ? `Add ${selectedTypes.size} room${selectedTypes.size !== 1 ? 's' : ''}`
+            ? `Add ${selectedTypes.size} area${selectedTypes.size !== 1 ? 's' : ''}`
             : ctaLabel}
       </Button>
     </div>

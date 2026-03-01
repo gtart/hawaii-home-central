@@ -88,7 +88,7 @@ function GlobalUnsortedRow({ room }: { room: RoomV3 }) {
           <h3 className={`text-sm font-medium ${count > 0 ? 'text-amber-300' : 'text-cream/30'}`}>Unsorted</h3>
           <p className="text-[11px] text-cream/30">
             {count > 0
-              ? `${count} option${count !== 1 ? 's' : ''} to sort into rooms`
+              ? `${count} option${count !== 1 ? 's' : ''} to sort into areas`
               : 'Saved-from-web items land here until you sort them'}
           </p>
         </div>
@@ -524,7 +524,7 @@ export function DecisionTrackerPage({
                 <div className="flex-1 min-w-0">
                   <h3 className="font-serif text-lg text-sandstone mb-1">Your boards are ready!</h3>
                   <p className="text-sm text-cream/50 mb-4">
-                    {rooms.length} {rooms.length === 1 ? 'room' : 'rooms'} created
+                    {rooms.length} {rooms.length === 1 ? 'area' : 'areas'} created
                     {rooms.reduce((sum, r) => sum + r.decisions.length, 0) > 0 &&
                       ` with ${rooms.reduce((sum, r) => sum + r.decisions.length, 0)} decisions`
                     }
@@ -560,7 +560,7 @@ export function DecisionTrackerPage({
           <div className="flex items-center gap-2 mb-3">
             <div className="flex-1 min-w-0">
               <Input
-                placeholder="Search all rooms and decisions..."
+                placeholder="Search all areas and decisions..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -770,9 +770,9 @@ export function DecisionTrackerPage({
 
           {/* Desktop filter rows */}
           <div className="hidden md:block mb-4 space-y-2">
-            {/* Row 1: Room filters */}
+            {/* Row 1: Area filters */}
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] text-cream/30 mr-1">Room</span>
+              <span className="text-[11px] text-cream/30 mr-1">Area</span>
               <button
                 onClick={() => setRoomFilter(null)}
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
@@ -883,7 +883,7 @@ export function DecisionTrackerPage({
                   />
                 )
               )}
-              {/* Add Room row */}
+              {/* Add Area row */}
               {!readOnly && (
                 <button
                   type="button"
@@ -893,7 +893,7 @@ export function DecisionTrackerPage({
                   <svg className="w-4 h-4 text-cream/30 group-hover:text-sandstone transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                   </svg>
-                  <span className="text-sm font-medium text-cream/40 group-hover:text-sandstone transition-colors">Add a Room</span>
+                  <span className="text-sm font-medium text-cream/40 group-hover:text-sandstone transition-colors">Add an Area</span>
                 </button>
               )}
             </div>
@@ -901,13 +901,13 @@ export function DecisionTrackerPage({
         </>
       )}
 
-      {/* Mobile FAB — Add a Room */}
+      {/* Mobile FAB — Add an Area */}
       {hasRooms && !readOnly && (
         <button
           type="button"
           onClick={() => setAddRoomOpen(true)}
           className="md:hidden fixed bottom-8 right-8 w-14 h-14 bg-sandstone rounded-full shadow-lg z-40 flex items-center justify-center active:scale-95 transition-transform"
-          aria-label="Add a room"
+          aria-label="Add an area"
         >
           <svg className="w-7 h-7 text-basalt" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M12 5v14M5 12h14" strokeLinecap="round" />
@@ -933,9 +933,9 @@ export function DecisionTrackerPage({
             </div>
 
             <div className="px-5 pb-5 space-y-5">
-              {/* Room section */}
+              {/* Area section */}
               <div>
-                <label className="block text-sm text-cream/70 mb-2">Room</label>
+                <label className="block text-sm text-cream/70 mb-2">Area</label>
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setRoomFilter(null)}
@@ -945,7 +945,7 @@ export function DecisionTrackerPage({
                         : 'bg-cream/10 text-cream/60'
                     }`}
                   >
-                    All Rooms
+                    All Areas
                   </button>
                   {rooms.filter((r) => !isGlobalUnsorted(r)).map((room) => (
                     <button
@@ -996,7 +996,7 @@ export function DecisionTrackerPage({
 
               {/* Sort */}
               <div>
-                <label className="block text-sm text-cream/70 mb-2">Sort rooms by</label>
+                <label className="block text-sm text-cream/70 mb-2">Sort areas by</label>
                 <select
                   value={sortKey}
                   onChange={(e) => setSortKey(e.target.value as SortKey)}

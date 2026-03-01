@@ -378,7 +378,7 @@ export function ToolContent({
           <ToolPageHeader
             toolKey="finish_decisions"
             title="Decision Tracker"
-            description="Avoid delays and rework—by keeping decisions, links, and status updates together for each room."
+            description="Avoid delays and rework—by keeping decisions, links, and status updates together for each area."
             accessLevel={access}
             hasContent={v3State.rooms.length > 0}
             actions={v3State.rooms.length > 0 ? (
@@ -446,7 +446,7 @@ export function ToolContent({
               name: r.name,
               emoji: ROOM_EMOJI_MAP[r.type] || '🏠',
             }))}
-          scopeLabel="Rooms"
+          scopeLabel="Areas"
           buildExportUrl={({ projectId: pid, includeNotes: notes, includeComments: comments, includePhotos: photos, scopeMode, selectedScopeIds }) => {
             let url = `/app/tools/finish-decisions/report?projectId=${pid}&includeNotes=${notes}&includeComments=${comments}&includePhotos=${photos}`
             if (scopeMode === 'selected' && selectedScopeIds.length > 0) {

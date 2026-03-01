@@ -256,7 +256,7 @@ export function RoomDetailContent({
     return (
       <div className="pt-32 pb-24 px-6">
         <div className="max-w-4xl mx-auto text-center py-12">
-          <p className="text-cream/50 mb-4">Room not found.</p>
+          <p className="text-cream/50 mb-4">Area not found.</p>
           <button
             type="button"
             onClick={() => router.push('/app/tools/finish-decisions')}
@@ -313,7 +313,7 @@ export function RoomDetailContent({
             </h1>
             {isUnsortedRoom ? (
               <p className="text-xs text-cream/40 mt-1">
-                {unsortedCount} option{unsortedCount !== 1 ? 's' : ''} waiting to be sorted into rooms
+                {unsortedCount} option{unsortedCount !== 1 ? 's' : ''} waiting to be sorted into areas
               </p>
             ) : (
               <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-cream/50 mt-1">
@@ -407,7 +407,7 @@ export function RoomDetailContent({
               onClick={() => setDeleteStep('confirm')}
               className="px-3 py-1.5 text-xs text-red-400/40 hover:text-red-400 transition-colors"
             >
-              Delete room
+              Delete area
             </button>
           </div>
         )}
@@ -596,21 +596,21 @@ export function RoomDetailContent({
         />
       )}
 
-      {/* Delete room — step 1 */}
+      {/* Delete area — step 1 */}
       {deleteStep === 'confirm' && (
         <ConfirmDialog
-          title="Delete room?"
+          title="Delete area?"
           message={`"${room.name}" and all its decisions and options will be permanently deleted. This cannot be undone.`}
           onConfirm={() => setDeleteStep('type')}
           onCancel={() => setDeleteStep('none')}
         />
       )}
 
-      {/* Delete room — step 2 */}
+      {/* Delete area — step 2 */}
       {deleteStep === 'type' && (
         <TextConfirmDialog
           title="Confirm delete"
-          message={`Type "${room.name}" to permanently delete this room.`}
+          message={`Type "${room.name}" to permanently delete this area.`}
           confirmText={room.name}
           onConfirm={() => { setDeleteStep('none'); deleteRoom() }}
           onCancel={() => setDeleteStep('none')}
@@ -661,7 +661,7 @@ export function RoomDetailContent({
             name: room.name,
             emoji: ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '🏠',
           }]}
-          scopeLabel="Rooms"
+          scopeLabel="Areas"
           buildExportUrl={({ projectId: pid, includeNotes: notes, includeComments: comments, includePhotos: photos }) => {
             return `/app/tools/finish-decisions/report?projectId=${pid}&includeNotes=${notes}&includeComments=${comments}&includePhotos=${photos}&roomIds=${encodeURIComponent(room.id)}`
           }}

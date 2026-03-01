@@ -16,6 +16,54 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { TextConfirmDialog } from '@/components/ui/TextConfirmDialog'
 
 const SEL_VIEW_KEY = 'hhc_finish_selection_view_mode_v2'
+const MAX_DOTS = 15
+
+const DOT_COLOR: Record<string, string> = {
+  deciding: 'bg-amber-400',
+  selected: 'bg-blue-400',
+  ordered: 'bg-indigo-400',
+  done: 'bg-emerald-400/50',
+}
+
+function DecisionDotStrip({ decisions }: { decisions: DecisionV3[] }) {
+  const regular = decisions.filter(d => d.systemKey !== 'uncategorized')
+  const total = regular.length
+  if (total === 0) return null
+
+  const counts: Record<StatusV3, number> = {
+    deciding: 0, selected: 0, ordered: 0, done: 0,
+  }
+  for (const d of regular) counts[d.status]++
+
+  const order: StatusV3[] = ['deciding', 'selected', 'ordered', 'done']
+
+  let dots: StatusV3[]
+  if (total <= MAX_DOTS) {
+    dots = []
+    for (const s of order) for (let i = 0; i < counts[s]; i++) dots.push(s)
+  } else {
+    dots = []
+    for (const s of order) {
+      const n = Math.round((counts[s] / total) * MAX_DOTS)
+      for (let i = 0; i < n; i++) dots.push(s)
+    }
+    while (dots.length > MAX_DOTS) dots.pop()
+    while (dots.length < MAX_DOTS) dots.push('done')
+  }
+
+  const overflow = total > MAX_DOTS ? total - MAX_DOTS : 0
+
+  return (
+    <div className="flex items-center gap-0.5">
+      {dots.map((status, i) => (
+        <span key={i} className={`w-1.5 h-1.5 rounded-full ${DOT_COLOR[status]}`} />
+      ))}
+      {overflow > 0 && (
+        <span className="text-[10px] text-cream/40 ml-0.5">+{overflow}</span>
+      )}
+    </div>
+  )
+}
 
 export function RoomSection({
   room,
@@ -106,20 +154,7 @@ export function RoomSection({
   const missingDefaults = standardTitles.filter(t => !existingTitles.has(t.toLowerCase().trim()))
   const showCommonDecisions = !readOnly && regularDecisions.length < 5 && missingDefaults.length > 0
 
-  // Desktop stats: clean scan format
-  const statChips: string[] = []
-  if (remaining > 0) statChips.push(`${remaining} remaining`)
-  if (stats.selected > 0) statChips.push(`${stats.selected} selected`)
-  if (stats.ordered > 0) statChips.push(`${stats.ordered} ordered`)
-  if (stats.done > 0) statChips.push(`${stats.done} done`)
-  if (uncatCount > 0) statChips.push(`${uncatCount} unsorted`)
-  statChips.push(`Updated ${relativeTime(lastUpdated)}`)
-
-  // Mobile: compact
-  const mobileChips: string[] = []
-  if (remaining > 0) mobileChips.push(`${remaining} left`)
-  if (stats.done > 0) mobileChips.push(`${stats.done} done`)
-  mobileChips.push(relativeTime(lastUpdated))
+  const doneLabel = `${stats.done}/${stats.total} done`
 
   function requestDeleteDecision(decisionId: string) {
     setConfirmDeleteDecisionId(decisionId)
@@ -198,17 +233,23 @@ export function RoomSection({
         </span>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <span className="w-5 h-5 flex items-center justify-center shrink-0 text-sm leading-none">
               {roomEmoji}
             </span>
-            <span className="text-cream font-medium text-lg">{room.name}</span>
-            <span className="hidden md:inline text-xs text-cream/50 ml-1">
-              {statChips.join(' · ')}
-            </span>
+            <span className="text-cream font-medium text-base">{room.name}</span>
+            <div className="hidden md:flex items-center gap-2 ml-1">
+              <DecisionDotStrip decisions={room.decisions} />
+              <span className="text-[11px] text-cream/40">
+                {doneLabel} · {relativeTime(lastUpdated)}
+              </span>
+            </div>
           </div>
-          <div className="md:hidden text-[11px] text-cream/40 mt-0.5 ml-7">
-            {mobileChips.join(' · ')}
+          <div className="md:hidden flex items-center gap-2 mt-1 ml-7">
+            <DecisionDotStrip decisions={room.decisions} />
+            <span className="text-[11px] text-cream/40">
+              {doneLabel} · {relativeTime(lastUpdated)}
+            </span>
           </div>
         </div>
 
@@ -325,7 +366,7 @@ export function RoomSection({
                     onClick={() => setExpandedMenuOpen(false)}
                     className="block w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
                   >
-                    Open room page
+                    Open area
                   </Link>
                   {!readOnly && (
                     <button
@@ -333,7 +374,7 @@ export function RoomSection({
                       onClick={() => { setExpandedMenuOpen(false); setDeleteStep('confirm') }}
                       className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
                     >
-                      Delete room
+                      Delete area
                     </button>
                   )}
                 </div>
@@ -387,7 +428,7 @@ export function RoomSection({
                       onClick={() => setExpandedMenuOpen(false)}
                       className="block w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
                     >
-                      Open room page
+                      Open area
                     </Link>
                     {!readOnly && availableKitCount > 0 && (
                       <button
@@ -413,7 +454,7 @@ export function RoomSection({
                         onClick={() => { setExpandedMenuOpen(false); setDeleteStep('confirm') }}
                         className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
                       >
-                        Delete room
+                        Delete area
                       </button>
                     )}
                   </div>
@@ -444,21 +485,21 @@ export function RoomSection({
         </div>
       )}
 
-      {/* Delete room — step 1: confirm intent */}
+      {/* Delete area — step 1: confirm intent */}
       {deleteStep === 'confirm' && (
         <ConfirmDialog
-          title="Delete room?"
+          title="Delete area?"
           message={`"${room.name}" and all its decisions and options will be permanently deleted. This cannot be undone.`}
           onConfirm={() => setDeleteStep('type')}
           onCancel={() => setDeleteStep('none')}
         />
       )}
 
-      {/* Delete room — step 2: type room name to confirm */}
+      {/* Delete area — step 2: type name to confirm */}
       {deleteStep === 'type' && (
         <TextConfirmDialog
           title="Confirm delete"
-          message={`Type "${room.name}" to permanently delete this room.`}
+          message={`Type "${room.name}" to permanently delete this area.`}
           confirmText={room.name}
           onConfirm={() => { setDeleteStep('none'); onDeleteRoom() }}
           onCancel={() => setDeleteStep('none')}
