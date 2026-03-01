@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { relativeTime } from '@/lib/relativeTime'
 import {
   ROOM_EMOJI_MAP,
   type RoomV3,
@@ -25,7 +26,7 @@ export function RoomSection({
   onQuickAdd,
   onAddIdeasPack,
   readOnly = false,
-  hasAvailableKits = false,
+  availableKitCount = 0,
   defaultDecisions = {} as Record<RoomTypeV3, string[]>,
   emojiMap = {},
 }: {
@@ -37,11 +38,11 @@ export function RoomSection({
   onQuickAdd: () => void
   onAddIdeasPack: () => void
   readOnly?: boolean
-  hasAvailableKits?: boolean
+  availableKitCount?: number
   defaultDecisions?: Record<RoomTypeV3, string[]>
   emojiMap?: Record<string, string>
 }) {
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [expandedMenuOpen, setExpandedMenuOpen] = useState(false)
   const [deleteStep, setDeleteStep] = useState<'none' | 'confirm' | 'type'>('none')
   const [confirmDeleteDecisionId, setConfirmDeleteDecisionId] = useState<string | null>(null)
   const [undoDecision, setUndoDecision] = useState<{ decision: DecisionV3; timer: ReturnType<typeof setTimeout> } | null>(null)
@@ -49,25 +50,25 @@ export function RoomSection({
   const [selViewMode, setSelViewMode] = useState<'table' | 'tile'>(() => {
     try {
       const stored = typeof window !== 'undefined' ? localStorage.getItem(SEL_VIEW_KEY) : null
-      return stored === 'table' ? 'table' : 'tile'
-    } catch { return 'tile' }
+      return stored === 'tile' ? 'tile' : 'table'
+    } catch { return 'table' }
   })
-  const menuRef = useRef<HTMLDivElement>(null)
+  const expandedMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     try { localStorage.setItem(SEL_VIEW_KEY, selViewMode) } catch { /* ignore */ }
   }, [selViewMode])
 
   useEffect(() => {
-    if (!menuOpen) return
+    if (!expandedMenuOpen) return
     function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
+      if (expandedMenuRef.current && !expandedMenuRef.current.contains(e.target as Node)) {
+        setExpandedMenuOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [menuOpen])
+  }, [expandedMenuOpen])
 
   // Clean up undo timer on unmount
   useEffect(() => {
@@ -88,21 +89,37 @@ export function RoomSection({
     ordered: regularDecisions.filter((d) => d.status === 'ordered').length,
     done: regularDecisions.filter((d) => d.status === 'done').length,
   }
+  const remaining = stats.total - stats.done
 
-  // Desktop: full format
-  const summaryParts: string[] = []
-  summaryParts.push(`${stats.total} decision${stats.total !== 1 ? 's' : ''}`)
-  if (stats.selected > 0) summaryParts.push(`${stats.selected} selected`)
-  if (stats.ordered > 0) summaryParts.push(`${stats.ordered} ordered`)
-  if (stats.done > 0) summaryParts.push(`${stats.done} done`)
-  if (uncatCount > 0) summaryParts.push(`${uncatCount} unsorted`)
+  // Last updated across room + all decisions
+  const lastUpdated = (() => {
+    let latest = room.updatedAt
+    for (const d of room.decisions) {
+      if (d.updatedAt > latest) latest = d.updatedAt
+    }
+    return latest
+  })()
 
-  // Mobile: compact format
-  const mobileParts: string[] = [`${stats.total}`]
-  if (stats.selected > 0) mobileParts.push(`${stats.selected} sel`)
-  if (stats.ordered > 0) mobileParts.push(`${stats.ordered} ord`)
-  if (stats.done > 0) mobileParts.push(`${stats.done} done`)
-  if (uncatCount > 0) mobileParts.push(`${uncatCount} unsorted`)
+  // Common decisions gating
+  const standardTitles = defaultDecisions[room.type as RoomTypeV3] || []
+  const existingTitles = new Set(room.decisions.map(d => d.title.toLowerCase().trim()))
+  const missingDefaults = standardTitles.filter(t => !existingTitles.has(t.toLowerCase().trim()))
+  const showCommonDecisions = !readOnly && regularDecisions.length < 5 && missingDefaults.length > 0
+
+  // Desktop stats: clean scan format
+  const statChips: string[] = []
+  if (remaining > 0) statChips.push(`${remaining} remaining`)
+  if (stats.selected > 0) statChips.push(`${stats.selected} selected`)
+  if (stats.ordered > 0) statChips.push(`${stats.ordered} ordered`)
+  if (stats.done > 0) statChips.push(`${stats.done} done`)
+  if (uncatCount > 0) statChips.push(`${uncatCount} unsorted`)
+  statChips.push(`Updated ${relativeTime(lastUpdated)}`)
+
+  // Mobile: compact
+  const mobileChips: string[] = []
+  if (remaining > 0) mobileChips.push(`${remaining} left`)
+  if (stats.done > 0) mobileChips.push(`${stats.done} done`)
+  mobileChips.push(relativeTime(lastUpdated))
 
   function requestDeleteDecision(decisionId: string) {
     setConfirmDeleteDecisionId(decisionId)
@@ -187,143 +204,14 @@ export function RoomSection({
             </span>
             <span className="text-cream font-medium text-lg">{room.name}</span>
             <span className="hidden md:inline text-xs text-cream/50 ml-1">
-              {summaryParts.join(', ')}
+              {statChips.join(' · ')}
             </span>
           </div>
           <div className="md:hidden text-[11px] text-cream/40 mt-0.5 ml-7">
-            {mobileParts.join(' · ')}
+            {mobileChips.join(' · ')}
           </div>
         </div>
 
-        {/* Desktop inline actions */}
-        <div className="hidden md:flex items-center gap-1 shrink-0">
-          <Link
-            href={`/app/tools/finish-decisions/room/${room.id}`}
-            onClick={(e) => e.stopPropagation()}
-            className="px-2 py-1 text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
-          >
-            Open &rarr;
-          </Link>
-          {!readOnly && (
-            <>
-              <span className="text-cream/15 select-none">·</span>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onQuickAdd() }}
-                className="px-2 py-1 text-[11px] text-sandstone hover:text-sandstone-light transition-colors font-medium"
-              >
-                + Decision
-              </button>
-              <span className="text-cream/15 select-none">·</span>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); handleAutoPopulate() }}
-                className="px-2 py-1 text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
-                title="Pre-fill with the typical decisions Hawaii homeowners make for this type of room"
-              >
-                Add common decisions
-              </button>
-              <span className="text-cream/15 select-none">·</span>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onAddIdeasPack() }}
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-purple-300/60 hover:text-purple-300 bg-purple-400/5 hover:bg-purple-400/10 rounded-full transition-all"
-              >
-                <span>✨</span> Decision Packs
-              </button>
-              <span className="text-cream/15 select-none">·</span>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setDeleteStep('confirm') }}
-                className="px-2 py-1 text-[11px] text-red-400/40 hover:text-red-400 transition-colors"
-              >
-                Delete
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Mobile kebab menu */}
-        <div className="md:hidden relative shrink-0" ref={menuRef}>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                setMenuOpen(!menuOpen)
-              }}
-              className="p-1.5 text-cream/30 hover:text-cream/60 transition-colors"
-              aria-label="Room options"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="12" cy="5" r="2" />
-                <circle cx="12" cy="12" r="2" />
-                <circle cx="12" cy="19" r="2" />
-              </svg>
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg py-1 min-w-[150px]">
-                <Link
-                  href={`/app/tools/finish-decisions/room/${room.id}`}
-                  onClick={(e) => { e.stopPropagation(); setMenuOpen(false) }}
-                  className="block w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
-                >
-                  Open room
-                </Link>
-                {!readOnly && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setMenuOpen(false)
-                        onQuickAdd()
-                      }}
-                      className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
-                    >
-                      Add decision
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setMenuOpen(false)
-                        handleAutoPopulate()
-                      }}
-                      className="w-full text-left px-3 py-2 hover:bg-cream/5 transition-colors"
-                    >
-                      <span className="text-sm text-cream/80">Add common decisions</span>
-                      <span className="block text-[11px] text-cream/35 mt-0.5">Typical decisions for this room type</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setMenuOpen(false)
-                        onAddIdeasPack()
-                      }}
-                      className="w-full text-left px-3 py-2 hover:bg-cream/5 transition-colors"
-                    >
-                      <span className="text-sm text-purple-300/80 flex items-center gap-1.5">
-                        <span>✨</span> Decision Packs
-                      </span>
-                      <span className="block text-[11px] text-cream/35 mt-0.5 ml-5">Curated starter options for this room</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setMenuOpen(false)
-                        setDeleteStep('confirm')
-                      }}
-                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
-                    >
-                      Delete room
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
       </div>
 
       {/* Undo banner */}
@@ -355,7 +243,7 @@ export function RoomSection({
       )}
 
       {/* Ideas Pack nudge — show when room has decisions but few options */}
-      {isExpanded && !readOnly && hasAvailableKits && room.decisions.length > 0 && totalOptions <= 1 && (
+      {isExpanded && !readOnly && availableKitCount > 0 && room.decisions.length > 0 && totalOptions <= 1 && (
         <div className="mx-4 mt-1 mb-2 px-3 py-2 bg-sandstone/5 border border-sandstone/15 rounded-lg flex items-center justify-between">
           <span className="text-xs text-cream/50">
             Add starter options from a curated pack
@@ -370,21 +258,171 @@ export function RoomSection({
         </div>
       )}
 
-      {/* Expanded Content */}
+      {/* Expanded Content — workspace header + decisions */}
       {isExpanded && (
         <div className="border-t border-cream/10 px-4 py-4">
-          {/* View mode selector — small dropdown, defaults to tiles */}
-          <div className="flex justify-end mb-3">
+          {/* Desktop workspace header */}
+          <div className="hidden md:flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 text-xs text-cream/50 flex-1 min-w-0">
+              <span className="font-medium text-cream/70">{room.name}</span>
+              <span className="text-cream/20">&middot;</span>
+              <span>{stats.total} decision{stats.total !== 1 ? 's' : ''}</span>
+              <span className="text-cream/20">&middot;</span>
+              <span>Updated {relativeTime(lastUpdated)}</span>
+            </div>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={onQuickAdd}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-basalt bg-sandstone hover:bg-sandstone-light rounded-lg transition-colors"
+              >
+                + Add decision
+              </button>
+            )}
+            {!readOnly && availableKitCount > 0 && (
+              <button
+                type="button"
+                onClick={onAddIdeasPack}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-purple-300/70 hover:text-purple-300 bg-purple-400/5 hover:bg-purple-400/10 rounded-lg transition-all"
+              >
+                <span>✨</span> Packs ({availableKitCount})
+              </button>
+            )}
+            {showCommonDecisions && (
+              <button
+                type="button"
+                onClick={handleAutoPopulate}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
+              >
+                + Common ({missingDefaults.length})
+              </button>
+            )}
             <select
               value={selViewMode}
               onChange={(e) => setSelViewMode(e.target.value as 'table' | 'tile')}
               className="bg-basalt-50 text-cream/50 text-[11px] rounded-lg border border-cream/10 px-2 py-1 focus:outline-none focus:border-sandstone/40"
             >
+              <option value="table">List</option>
               <option value="tile">Tiles</option>
-              <option value="table">Table</option>
             </select>
+            <div className="relative" ref={expandedMenuRef}>
+              <button
+                type="button"
+                onClick={() => setExpandedMenuOpen(!expandedMenuOpen)}
+                className="p-1.5 text-cream/30 hover:text-cream/60 transition-colors rounded-lg hover:bg-cream/5"
+                aria-label="More actions"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="5" cy="12" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="19" cy="12" r="2" />
+                </svg>
+              </button>
+              {expandedMenuOpen && (
+                <div className="absolute right-0 top-full mt-1 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg py-1 min-w-[160px]">
+                  <Link
+                    href={`/app/tools/finish-decisions/room/${room.id}`}
+                    onClick={() => setExpandedMenuOpen(false)}
+                    className="block w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
+                  >
+                    Open room page
+                  </Link>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={() => { setExpandedMenuOpen(false); setDeleteStep('confirm') }}
+                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
+                    >
+                      Delete room
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
+          {/* Mobile workspace header */}
+          <div className="md:hidden mb-3 space-y-2">
+            <div className="flex items-center gap-2 text-xs text-cream/50">
+              <span className="font-medium text-cream/70">{room.name}</span>
+              <span className="text-cream/20">&middot;</span>
+              <span>{stats.total} decision{stats.total !== 1 ? 's' : ''}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={onQuickAdd}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-basalt bg-sandstone hover:bg-sandstone-light rounded-lg transition-colors"
+                >
+                  + Add
+                </button>
+              )}
+              <select
+                value={selViewMode}
+                onChange={(e) => setSelViewMode(e.target.value as 'table' | 'tile')}
+                className="bg-basalt-50 text-cream/50 text-[11px] rounded-lg border border-cream/10 px-2 py-1 focus:outline-none focus:border-sandstone/40"
+              >
+                <option value="table">List</option>
+                <option value="tile">Tiles</option>
+              </select>
+              <div className="flex-1" />
+              <div className="relative" ref={expandedMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setExpandedMenuOpen(!expandedMenuOpen)}
+                  className="p-1.5 text-cream/30 hover:text-cream/60 transition-colors"
+                  aria-label="More actions"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="5" cy="12" r="2" />
+                    <circle cx="12" cy="12" r="2" />
+                    <circle cx="19" cy="12" r="2" />
+                  </svg>
+                </button>
+                {expandedMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg py-1 min-w-[180px]">
+                    <Link
+                      href={`/app/tools/finish-decisions/room/${room.id}`}
+                      onClick={() => setExpandedMenuOpen(false)}
+                      className="block w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
+                    >
+                      Open room page
+                    </Link>
+                    {!readOnly && availableKitCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => { setExpandedMenuOpen(false); onAddIdeasPack() }}
+                        className="w-full text-left px-3 py-2 text-sm text-purple-300/80 hover:bg-cream/5 transition-colors"
+                      >
+                        ✨ Packs ({availableKitCount})
+                      </button>
+                    )}
+                    {showCommonDecisions && (
+                      <button
+                        type="button"
+                        onClick={() => { setExpandedMenuOpen(false); handleAutoPopulate() }}
+                        className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
+                      >
+                        Add common decisions ({missingDefaults.length})
+                      </button>
+                    )}
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => { setExpandedMenuOpen(false); setDeleteStep('confirm') }}
+                        className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
+                      >
+                        Delete room
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Decisions content */}
           {selViewMode === 'tile' ? (
             <SelectionsBoardView
               decisions={room.decisions}

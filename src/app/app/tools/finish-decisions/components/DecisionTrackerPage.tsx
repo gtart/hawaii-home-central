@@ -877,7 +877,7 @@ export function DecisionTrackerPage({
                       setIdeasModalRoomId(room.id)
                     }}
                     readOnly={readOnly}
-                    hasAvailableKits={findKitsForRoomType(kits, room.type as RoomTypeV3).length > 0}
+                    availableKitCount={findKitsForRoomType(kits, room.type as RoomTypeV3).length}
                     defaultDecisions={defaultDecisions}
                     emojiMap={emojiMap}
                   />
