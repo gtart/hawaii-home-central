@@ -64,8 +64,7 @@ function MoodBoardsContent() {
         description="Collect and organize inspiration from anywhere — then turn your favorites into real selections."
         accessLevel={access}
         hasContent={payload.boards.length > 0}
-      >
-        {payload.boards.length > 0 && (
+        actions={payload.boards.length > 0 ? (
           <button
             type="button"
             onClick={() => setShowShareExport(true)}
@@ -78,8 +77,8 @@ function MoodBoardsContent() {
             </svg>
             Share &amp; Export
           </button>
-        )}
-      </ToolPageHeader>
+        ) : undefined}
+      />
 
       {isSyncing && (
         <div className="flex items-center gap-2 text-xs text-cream/30 mb-4">

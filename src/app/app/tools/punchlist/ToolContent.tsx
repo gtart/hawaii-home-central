@@ -52,6 +52,20 @@ function PunchlistContent() {
         description="Track fixes and share with your contractor."
         accessLevel={access}
         hasContent={payload.items.length > 0}
+        actions={payload.items.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setShowShareExport(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-sandstone/15 text-sandstone hover:bg-sandstone/25 transition-colors"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
+              <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
+              <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
+            </svg>
+            Share &amp; Export
+          </button>
+        ) : undefined}
       />
 
       {isSyncing && (
@@ -64,7 +78,7 @@ function PunchlistContent() {
       {payload.items.length === 0 ? (
         <PunchlistEmptyState readOnly={readOnly} api={api} />
       ) : (
-        <PunchlistPage api={api} onShareExport={() => setShowShareExport(true)} />
+        <PunchlistPage api={api} />
       )}
 
       {showShareExport && currentProject && (

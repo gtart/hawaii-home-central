@@ -23,10 +23,9 @@ const PRIORITY_ORDER = { HIGH: 0, MED: 1, LOW: 2 } as const
 
 interface Props {
   api: PunchlistStateAPI
-  onShareExport?: () => void
 }
 
-export function PunchlistPage({ api, onShareExport }: Props) {
+export function PunchlistPage({ api }: Props) {
   const { payload, readOnly } = api
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('ALL')
   const [filterLocations, setFilterLocations] = useState<Set<string>>(new Set())
@@ -188,20 +187,6 @@ export function PunchlistPage({ api, onShareExport }: Props) {
           <span className="text-sm text-cream/70">{counts.DONE} done</span>
         </div>
 
-        {onShareExport && (
-          <button
-            type="button"
-            onClick={onShareExport}
-            className="ml-auto inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-sandstone/15 text-sandstone hover:bg-sandstone/25 transition-colors"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
-              <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
-              <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
-            </svg>
-            Share &amp; Export
-          </button>
-        )}
       </div>
 
       {/* Mini dashboard — activity insights */}
