@@ -45,11 +45,16 @@ function isBlockedIp(ip: string, allowLocalhost: boolean): boolean {
   // fc00::/7 unique-local IPv6
   const first = ip.toLowerCase().split(':')[0]
   if (first && (first.startsWith('fc') || first.startsWith('fd'))) return true
+  // ff00::/8 multicast IPv6
+  if (first && first.startsWith('ff')) return true
 
   const octets = parseIPv4(ip)
   if (octets) return isBlockedIPv4(octets, allowLocalhost)
 
-  return true // unknown format → block
+  // Standard global unicast IPv6 that passed all blocked checks above — allow
+  if (ip.includes(':')) return false
+
+  return true // truly unknown format → block
 }
 
 async function checkSsrf(hostname: string, allowLocalhost: boolean): Promise<string | null> {
