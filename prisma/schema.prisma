@@ -88,6 +88,12 @@ enum IdeaPackAuthor {
   VENDOR
 }
 
+enum CollectionRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
 // ─── Auth (existing) ──────────────────────────────────
 
 model User {
@@ -121,6 +127,14 @@ model User {
   toolInstanceUpdates ToolInstance[] @relation("ToolInstanceUpdater")
   contentFeedback  ContentFeedback[]
   privateFeedback  ContentPrivateFeedback[]
+
+  // ToolCollection relations
+  createdCollections  ToolCollection[]           @relation("CollectionCreator")
+  updatedCollections  ToolCollection[]           @relation("CollectionUpdater")
+  collectionMembers   ToolCollectionMember[]
+  collectionShareTokens ToolCollectionShareToken[] @relation("CollectionShareTokenCreator")
+  collectionInvites   ToolCollectionInvite[]     @relation("CollectionInviteSender")
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -193,6 +207,7 @@ model Project {
   toolAccess      ProjectToolAccess[]
   invites         ProjectInvite[]
   shareTokens     ToolShareToken[]
+  collections     ToolCollection[]
 
   @@index([userId])
   @@map("Property")
@@ -286,6 +301,83 @@ model ToolShareToken {
 
   @@index([projectId, toolKey])
   @@index([token])
+}
+
+// ─── Tool Collections (multi-instance) ───────────────
+
+model ToolCollection {
+  id              String    @id @default(cuid())
+  projectId       String
+  toolKey         String
+  title           String
+  payload         Json      @default("{}")
+  createdByUserId String
+  updatedById     String?
+  archivedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  project     Project                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy   User                      @relation("CollectionCreator", fields: [createdByUserId], references: [id])
+  updatedBy   User?                     @relation("CollectionUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  members     ToolCollectionMember[]
+  shareTokens ToolCollectionShareToken[]
+  invites     ToolCollectionInvite[]
+
+  @@index([projectId, toolKey])
+  @@index([createdByUserId])
+}
+
+model ToolCollectionMember {
+  id           String         @id @default(cuid())
+  collectionId String
+  userId       String
+  role         CollectionRole @default(VIEWER)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  collection ToolCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, userId])
+  @@index([userId])
+}
+
+model ToolCollectionShareToken {
+  id           String    @id @default(cuid())
+  token        String    @unique
+  collectionId String
+  permissions  String    @default("READ")
+  settings     Json      @default("{}")
+  createdBy    String
+  revokedAt    DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  collection ToolCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  creator    User           @relation("CollectionShareTokenCreator", fields: [createdBy], references: [id])
+
+  @@index([collectionId])
+}
+
+model ToolCollectionInvite {
+  id           String         @id @default(cuid())
+  collectionId String
+  email        String
+  role         CollectionRole @default(EDITOR)
+  token        String         @unique @default(cuid())
+  status       InviteStatus   @default(PENDING)
+  invitedBy    String
+  expiresAt    DateTime
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  collection ToolCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  inviter    User           @relation("CollectionInviteSender", fields: [invitedBy], references: [id])
+
+  @@index([collectionId])
+  @@index([email, status])
 }
 
 // ─── Rate Limiting ────────────────────────────────────
