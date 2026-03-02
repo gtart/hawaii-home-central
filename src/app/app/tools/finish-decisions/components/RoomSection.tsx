@@ -326,7 +326,7 @@ export function RoomSection({
                 onClick={onAddIdeasPack}
                 className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-purple-300/70 hover:text-purple-300 bg-purple-400/5 hover:bg-purple-400/10 rounded-lg transition-all"
               >
-                <span>✨</span> Packs ({availableKitCount})
+                <span>✨</span> Import Decision Pack
               </button>
             )}
             {showCommonDecisions && (
@@ -346,40 +346,21 @@ export function RoomSection({
               <option value="table">List</option>
               <option value="tile">Tiles</option>
             </select>
-            <div className="relative" ref={expandedMenuRef}>
+            <Link
+              href={`/app/tools/finish-decisions/room/${room.id}`}
+              className="text-xs text-cream/40 hover:text-cream/70 transition-colors"
+            >
+              Open area
+            </Link>
+            {!readOnly && (
               <button
                 type="button"
-                onClick={() => setExpandedMenuOpen(!expandedMenuOpen)}
-                className="p-1.5 text-cream/30 hover:text-cream/60 transition-colors rounded-lg hover:bg-cream/5"
-                aria-label="More actions"
+                onClick={() => setDeleteStep('confirm')}
+                className="text-xs text-red-400/60 hover:text-red-400 transition-colors"
               >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="5" cy="12" r="2" />
-                  <circle cx="12" cy="12" r="2" />
-                  <circle cx="19" cy="12" r="2" />
-                </svg>
+                Delete area
               </button>
-              {expandedMenuOpen && (
-                <div className="absolute right-0 top-full mt-1 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg py-1 min-w-[160px]">
-                  <Link
-                    href={`/app/tools/finish-decisions/room/${room.id}`}
-                    onClick={() => setExpandedMenuOpen(false)}
-                    className="block w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
-                  >
-                    Open area
-                  </Link>
-                  {!readOnly && (
-                    <button
-                      type="button"
-                      onClick={() => { setExpandedMenuOpen(false); setDeleteStep('confirm') }}
-                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
-                    >
-                      Delete area
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Mobile workspace header */}
@@ -389,7 +370,7 @@ export function RoomSection({
               <span className="text-cream/20">&middot;</span>
               <span>{stats.total} decision{stats.total !== 1 ? 's' : ''}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {!readOnly && (
                 <button
                   type="button"
@@ -397,6 +378,24 @@ export function RoomSection({
                   className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-basalt bg-sandstone hover:bg-sandstone-light rounded-lg transition-colors"
                 >
                   + Add
+                </button>
+              )}
+              {!readOnly && availableKitCount > 0 && (
+                <button
+                  type="button"
+                  onClick={onAddIdeasPack}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-purple-300/70 hover:text-purple-300 bg-purple-400/5 hover:bg-purple-400/10 rounded-lg transition-all"
+                >
+                  <span>✨</span> Import Decision Pack
+                </button>
+              )}
+              {showCommonDecisions && (
+                <button
+                  type="button"
+                  onClick={handleAutoPopulate}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
+                >
+                  + Common ({missingDefaults.length})
                 </button>
               )}
               <select
@@ -422,7 +421,7 @@ export function RoomSection({
                   </svg>
                 </button>
                 {expandedMenuOpen && (
-                  <div className="absolute right-0 top-full mt-1 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg py-1 min-w-[180px]">
+                  <div className="absolute right-0 top-full mt-1 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg py-1 min-w-[160px]">
                     <Link
                       href={`/app/tools/finish-decisions/room/${room.id}`}
                       onClick={() => setExpandedMenuOpen(false)}
@@ -430,24 +429,6 @@ export function RoomSection({
                     >
                       Open area
                     </Link>
-                    {!readOnly && availableKitCount > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => { setExpandedMenuOpen(false); onAddIdeasPack() }}
-                        className="w-full text-left px-3 py-2 text-sm text-purple-300/80 hover:bg-cream/5 transition-colors"
-                      >
-                        ✨ Packs ({availableKitCount})
-                      </button>
-                    )}
-                    {showCommonDecisions && (
-                      <button
-                        type="button"
-                        onClick={() => { setExpandedMenuOpen(false); handleAutoPopulate() }}
-                        className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-cream/5 transition-colors"
-                      >
-                        Add common decisions ({missingDefaults.length})
-                      </button>
-                    )}
                     {!readOnly && (
                       <button
                         type="button"

@@ -392,7 +392,7 @@ export function ToolContent({
                   <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
                   <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
                 </svg>
-                Share &amp; Export
+                Share this board
               </button>
             ) : undefined}
           />

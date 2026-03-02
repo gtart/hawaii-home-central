@@ -186,15 +186,6 @@ export function RoomsBoardView({
                     {roomUnsortedCount} unsorted
                   </span>
                 )}
-                {!readOnly && (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); onQuickAdd(room.id) }}
-                    className="ml-auto text-[11px] text-sandstone hover:text-sandstone-light transition-colors font-medium shrink-0"
-                  >
-                    + Decision
-                  </button>
-                )}
               </div>
 
               {/* Cover image */}
