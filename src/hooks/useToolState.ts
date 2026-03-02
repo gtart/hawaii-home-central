@@ -42,6 +42,7 @@ interface UseToolStateReturn<T> {
 
 const POLL_INTERVAL = 20_000
 
+/** @deprecated Use useCollectionState for new code. Retained for backward compat during migration. */
 export function useToolState<T>({
   toolKey,
   localStorageKey,

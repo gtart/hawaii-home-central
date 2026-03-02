@@ -1,3 +1,7 @@
+/**
+ * @deprecated Legacy tool API. New code should use /api/collections/[id] endpoints.
+ * Retained for backward compatibility during migration to ToolCollection model.
+ */
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
