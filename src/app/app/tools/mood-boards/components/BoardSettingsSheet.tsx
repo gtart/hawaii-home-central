@@ -22,6 +22,8 @@ interface Props {
   onManagePublicLinks: () => void
   /** Number of active public links for this board */
   publicLinkCount: number
+  /** When true, hide visibility toggle and allowlist (privacy is managed at collection level) */
+  isCollectionMode?: boolean
 }
 
 function AvatarCircle({ name, email }: { name: string | null; email: string }) {
@@ -50,6 +52,7 @@ export function BoardSettingsSheet({
   onClose,
   onManagePublicLinks,
   publicLinkCount,
+  isCollectionMode,
 }: Props) {
   const [visibility, setVisibility] = useState<'everyone' | 'invite-only'>(
     board.visibility || 'everyone'
@@ -149,45 +152,57 @@ export function BoardSettingsSheet({
             </div>
           </div>
 
-          {/* Visibility toggle */}
-          <div>
-            <p className="text-sm text-cream/70 mb-3">Visibility</p>
-            <div className="space-y-2">
-              <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
-                <input
-                  type="radio"
-                  name="visibility"
-                  checked={visibility === 'everyone'}
-                  onChange={() => setVisibility('everyone')}
-                  className="accent-sandstone"
-                />
-                <div>
-                  <p className="text-sm text-cream">Shared with collaborators</p>
-                  <p className="text-xs text-cream/40">
-                    Anyone you&apos;ve invited to Mood Boards can see this board.
-                  </p>
-                </div>
-              </label>
-              <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
-                <input
-                  type="radio"
-                  name="visibility"
-                  checked={visibility === 'invite-only'}
-                  onChange={() => setVisibility('invite-only')}
-                  className="accent-sandstone"
-                />
-                <div>
-                  <p className="text-sm text-cream">Private board</p>
-                  <p className="text-xs text-cream/40">
-                    Only you can see it (unless you add exceptions below).
-                  </p>
-                </div>
-              </label>
+          {/* Visibility toggle — hidden in collection mode (privacy managed at collection level) */}
+          {!isCollectionMode && (
+            <div>
+              <p className="text-sm text-cream/70 mb-3">Visibility</p>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
+                  <input
+                    type="radio"
+                    name="visibility"
+                    checked={visibility === 'everyone'}
+                    onChange={() => setVisibility('everyone')}
+                    className="accent-sandstone"
+                  />
+                  <div>
+                    <p className="text-sm text-cream">Shared with collaborators</p>
+                    <p className="text-xs text-cream/40">
+                      Anyone you&apos;ve invited to Mood Boards can see this board.
+                    </p>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
+                  <input
+                    type="radio"
+                    name="visibility"
+                    checked={visibility === 'invite-only'}
+                    onChange={() => setVisibility('invite-only')}
+                    className="accent-sandstone"
+                  />
+                  <div>
+                    <p className="text-sm text-cream">Private board</p>
+                    <p className="text-xs text-cream/40">
+                      Only you can see it (unless you add exceptions below).
+                    </p>
+                  </div>
+                </label>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Private allowlist — checkbox rows for each tool member */}
-          {visibility === 'invite-only' && otherMembers.length > 0 && (
+          {/* Collection mode: read-only sharing notice */}
+          {isCollectionMode && (
+            <div>
+              <p className="text-xs text-cream/40 mb-1">Sharing</p>
+              <p className="text-sm text-cream/60">
+                Access is managed per Mood Board via collaborators above.
+              </p>
+            </div>
+          )}
+
+          {/* Private allowlist — checkbox rows for each tool member (legacy only) */}
+          {!isCollectionMode && visibility === 'invite-only' && otherMembers.length > 0 && (
             <div>
               <p className="text-sm text-cream/70 mb-3">Allow access to this board</p>
               <div className="space-y-1">
@@ -266,20 +281,32 @@ export function BoardSettingsSheet({
 
         {/* Footer */}
         <div className="shrink-0 px-5 py-4 border-t border-cream/10 flex gap-2">
-          <button
-            type="button"
-            onClick={handleSave}
-            className="flex-1 py-2.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
-          >
-            Save Settings
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2.5 text-sm text-cream/60 hover:text-cream transition-colors"
-          >
-            Cancel
-          </button>
+          {isCollectionMode ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+            >
+              Close
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={handleSave}
+                className="flex-1 py-2.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+              >
+                Save Settings
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 text-sm text-cream/60 hover:text-cream transition-colors"
+              >
+                Cancel
+              </button>
+            </>
+          )}
         </div>
       </div>
     </>

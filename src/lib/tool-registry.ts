@@ -32,7 +32,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'finish_decisions',
     href: '/app/tools/finish-decisions',
-    title: 'Decision Tracker',
+    title: 'Decision List',
     description:
       'Keep your renovation moving\u2014by tracking every finish decision, option, and status in one place.',
     stage: 'Choose Your Finishes',
@@ -47,7 +47,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   },
 ]
 
-/** toolKey → user-facing title (e.g. "Fix List", "Decision Tracker") */
+/** toolKey → user-facing title (e.g. "Fix List", "Decision List") */
 export const TOOL_LABELS: Record<string, string> = Object.fromEntries(
   TOOL_REGISTRY.map((t) => [t.toolKey, t.title]),
 )

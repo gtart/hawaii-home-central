@@ -174,7 +174,7 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
 
   const availableRoomTypes = [...new Set(kits.flatMap((k) => k.roomTypes))]
   const backHref = returnTo || '/app/tools/finish-decisions'
-  const backLabel = returnTo ? 'Back to board' : 'Decision Tracker'
+  const backLabel = returnTo ? 'Back to board' : 'Decision List'
 
   return (
     <div className="pt-32 pb-24 px-6">
@@ -385,7 +385,7 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
               </>
             ) : (
               <div className="text-sm text-cream/40 mb-4">
-                No rooms yet. Create a room in the Decision Tracker first.
+                No rooms yet. Create a room in the Decision List first.
               </div>
             )}
             {rooms.length === 0 && (

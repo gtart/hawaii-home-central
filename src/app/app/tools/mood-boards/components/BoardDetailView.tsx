@@ -426,8 +426,8 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
             <p className="text-xs text-cream/40">
               {board.ideas.length} idea{board.ideas.length !== 1 ? 's' : ''}
             </p>
-            {/* Share status chip — actionable for owners, informational for others */}
-            {!isDefaultBoard(board) && (
+            {/* Share status chip — legacy only (hidden in collection mode where privacy is managed at collection level) */}
+            {!isDefaultBoard(board) && !collectionId && (
               isOwner ? (
                 <button
                   type="button"
@@ -1005,6 +1005,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
           onClose={() => setShowSettings(false)}
           onManagePublicLinks={() => setShowShareExportForBoard(true)}
           publicLinkCount={shareLinkCount}
+          isCollectionMode={!!collectionId}
         />
       )}
 

@@ -27,7 +27,7 @@ const TAB_HELPER_COPY: Record<ViewTab, string> = {
   quotes: "Compare what\u2019s included, excluded, and assumed \u2014 this is where surprises hide.",
   agree: "Payment, change orders, and warranty \u2014 confirm the rules before you sign.",
   handoffs: "Prevent \u201CI thought you were doing that.\u201D Assign owner for every task.",
-  notes: "Visible to collaborators on this home.",
+  notes: "Visible to collaborators on this checklist.",
 }
 
 function BYSContent({ collectionId }: { collectionId?: string }) {

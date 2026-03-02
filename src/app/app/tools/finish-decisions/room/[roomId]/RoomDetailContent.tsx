@@ -319,7 +319,7 @@ export function RoomDetailContent({
           onClick={() => router.push(collectionId ? `/app/tools/finish-decisions/${collectionId}` : '/app/tools/finish-decisions')}
           className="text-sm text-cream/40 hover:text-cream/60 transition-colors mb-4 inline-block"
         >
-          &larr; Decision Tracker
+          &larr; Decision List
         </button>
 
         {/* Room header */}
@@ -675,7 +675,7 @@ export function RoomDetailContent({
       {showShareExport && currentProject && room && (
         <ShareExportModal
           toolKey="finish_decisions"
-          toolLabel="Decision Tracker"
+          toolLabel="Decision List"
           projectId={currentProject.id}
           isOwner={access === 'OWNER'}
           onClose={() => setShowShareExport(false)}
