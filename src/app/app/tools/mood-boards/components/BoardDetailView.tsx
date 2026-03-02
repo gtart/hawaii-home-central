@@ -1008,14 +1008,17 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
         />
       )}
 
-      {/* Invite people modal (tool-level) */}
+      {/* Invite people modal */}
       {showInviteModal && currentProject && (
         <ShareToolModal
           projectId={currentProject.id}
           toolKey="mood_boards"
           onClose={() => setShowInviteModal(false)}
-          description="Invited people can view all boards unless a board is marked Private."
+          description={collectionId
+            ? undefined
+            : "Invited people can view all boards unless a board is marked Private."}
           collectionId={collectionId}
+          collectionName={collectionId ? board.name : undefined}
         />
       )}
 

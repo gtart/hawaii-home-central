@@ -32,7 +32,28 @@ export async function GET(request: Request, { params }: Params) {
     orderBy: { createdAt: 'desc' },
   })
 
-  return NextResponse.json({ tokens })
+  // Flatten settings JSON into top-level fields to match UI expectations
+  return NextResponse.json({
+    tokens: tokens.map((t) => {
+      const s = (t.settings ?? {}) as Record<string, unknown>
+      return {
+        id: t.id,
+        token: t.token,
+        includeNotes: s.includeNotes ?? false,
+        includeComments: s.includeComments ?? false,
+        includePhotos: s.includePhotos ?? false,
+        includeSourceUrl: s.includeSourceUrl ?? false,
+        locations: Array.isArray(s.locations) ? s.locations : [],
+        assignees: Array.isArray(s.assignees) ? s.assignees : [],
+        statuses: Array.isArray(s.statuses) ? s.statuses : [],
+        boardId: s.boardId ?? null,
+        boardName: s.boardName ?? null,
+        scope: s.scope ?? null,
+        createdAt: t.createdAt,
+        expiresAt: t.expiresAt,
+      }
+    }),
+  })
 }
 
 /**

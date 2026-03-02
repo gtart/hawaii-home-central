@@ -32,9 +32,11 @@ interface ShareToolModalProps {
   description?: string
   /** When set, use collection-based share endpoints instead of legacy project-based ones */
   collectionId?: string
+  /** Instance name shown in modal title when collectionId is set */
+  collectionName?: string
 }
 
-export function ShareToolModal({ projectId, toolKey, onClose, description, collectionId }: ShareToolModalProps) {
+export function ShareToolModal({ projectId, toolKey, onClose, description, collectionId, collectionName }: ShareToolModalProps) {
   const [access, setAccess] = useState<AccessEntry[]>([])
   const [invites, setInvites] = useState<InviteEntry[]>([])
   const [editShareCount, setEditShareCount] = useState(0)
@@ -193,9 +195,18 @@ export function ShareToolModal({ projectId, toolKey, onClose, description, colle
         {/* Header */}
         <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 px-6 py-4 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-medium text-cream">Invite people to {toolLabel}</h2>
+            <h2 className="text-lg font-medium text-cream">
+              {collectionId
+                ? (collectionName ? `Share "${collectionName}"` : `Share ${toolLabel}`)
+                : `Invite people to ${toolLabel}`}
+            </h2>
             {description && (
               <p className="text-xs text-cream/40 mt-0.5">{description}</p>
+            )}
+            {collectionId && !description && (
+              <p className="text-xs text-cream/40 mt-0.5">
+                Access applies only to this {toolLabel}.
+              </p>
             )}
             <p className="text-[11px] text-cream/30 mt-0.5">
               {editSeatsUsed} of {maxEditShares} edit seats used

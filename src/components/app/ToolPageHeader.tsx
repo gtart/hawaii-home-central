@@ -45,9 +45,11 @@ interface ToolPageHeaderProps {
   children?: React.ReactNode
   /** When set, use collection-based share endpoints instead of legacy project-based ones */
   collectionId?: string
+  /** Instance name shown in share modal title when collectionId is set */
+  collectionName?: string
 }
 
-export function ToolPageHeader({ toolKey, title, description, accessLevel, hasContent = true, actions, children, collectionId }: ToolPageHeaderProps) {
+export function ToolPageHeader({ toolKey, title, description, accessLevel, hasContent = true, actions, children, collectionId, collectionName }: ToolPageHeaderProps) {
   const { currentProject } = useProject()
   const [showShare, setShowShare] = useState(false)
   const [collaborators, setCollaborators] = useState<Collaborator[]>([])
@@ -257,6 +259,7 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
           toolKey={toolKey}
           onClose={handleShareClose}
           collectionId={collectionId}
+          collectionName={collectionName}
         />
       )}
     </>

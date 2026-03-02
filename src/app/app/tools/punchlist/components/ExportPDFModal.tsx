@@ -8,6 +8,7 @@ interface Props {
   locations: string[]
   assignees: string[]
   projectId: string
+  collectionId?: string
 }
 
 type OrgMode = 'room_status' | 'status_room'
@@ -18,7 +19,7 @@ const STATUS_CHECKS: { key: PunchlistStatus; label: string }[] = [
   { key: 'DONE', label: 'Done' },
 ]
 
-export function ExportPDFModal({ onClose, locations, assignees, projectId }: Props) {
+export function ExportPDFModal({ onClose, locations, assignees, projectId, collectionId }: Props) {
   const [includeNotes, setIncludeNotes] = useState(false)
   const [includeComments, setIncludeComments] = useState(false)
   const [org, setOrg] = useState<OrgMode>('room_status')
@@ -59,7 +60,12 @@ export function ExportPDFModal({ onClose, locations, assignees, projectId }: Pro
 
   function handleExport() {
     const statuses = Array.from(includedStatuses).join(',')
-    let url = `/app/tools/punchlist/report?projectId=${projectId}&includeNotes=${includeNotes}&includeComments=${includeComments}&org=${org}&statuses=${statuses}`
+    const reportBase = collectionId
+      ? `/app/tools/punchlist/${collectionId}/report`
+      : '/app/tools/punchlist/report'
+    let url = `${reportBase}?`
+    if (!collectionId) url += `projectId=${projectId}&`
+    url += `includeNotes=${includeNotes}&includeComments=${includeComments}&org=${org}&statuses=${statuses}`
     if (selectedLocations.size > 0) url += `&locations=${encodeURIComponent(Array.from(selectedLocations).join(','))}`
     if (selectedAssignees.size > 0) url += `&assignees=${encodeURIComponent(Array.from(selectedAssignees).join(','))}`
     window.open(url, '_blank')

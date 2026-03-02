@@ -72,6 +72,7 @@ export function ShareExportModal({ onClose, locations, assignees, projectId, isO
                 assignees={assignees}
                 projectId={projectId}
                 onClose={onClose}
+                collectionId={collectionId}
               />
             ) : (
               <ShareTabContent
@@ -120,11 +121,13 @@ function ExportTabContent({
   assignees,
   projectId,
   onClose,
+  collectionId,
 }: {
   locations: string[]
   assignees: string[]
   projectId: string
   onClose: () => void
+  collectionId?: string
 }) {
   const [includeNotes, setIncludeNotes] = useState(false)
   const [includeComments, setIncludeComments] = useState(false)
@@ -144,7 +147,12 @@ function ExportTabContent({
 
   function handleExport() {
     const statuses = Array.from(includedStatuses).join(',')
-    let url = `/app/tools/punchlist/report?projectId=${projectId}&includeNotes=${includeNotes}&includeComments=${includeComments}&includePhotos=${includePhotos}&org=${org}&statuses=${statuses}`
+    const reportBase = collectionId
+      ? `/app/tools/punchlist/${collectionId}/report`
+      : '/app/tools/punchlist/report'
+    let url = `${reportBase}?`
+    if (!collectionId) url += `projectId=${projectId}&`
+    url += `includeNotes=${includeNotes}&includeComments=${includeComments}&includePhotos=${includePhotos}&org=${org}&statuses=${statuses}`
     if (selectedLocations.size > 0) url += `&locations=${encodeURIComponent(Array.from(selectedLocations).join(','))}`
     if (selectedAssignees.size > 0) url += `&assignees=${encodeURIComponent(Array.from(selectedAssignees).join(','))}`
     window.open(url, '_blank')
