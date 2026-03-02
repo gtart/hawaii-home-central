@@ -110,6 +110,7 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
   const useCollection = !!opts?.collectionId
   const result = useCollection ? collResult : toolResult
   const { state: rawState, setState, isLoaded, isSyncing, noAccess } = result
+  const collectionTitle = useCollection ? collResult.title : ''
 
   // Map collection access levels to legacy tool access levels
   function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
@@ -274,6 +275,7 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
     access,
     readOnly,
     noAccess,
+    title: collectionTitle,
     addItem,
     updateItem,
     deleteItem,

@@ -244,6 +244,7 @@ export function ToolContent({
   const useCollMode = !!collectionId
   const result = useCollMode ? collResult : toolResult
   const { state, setState, isLoaded, isSyncing, noAccess } = result
+  const collectionTitle = useCollMode ? collResult.title : undefined
   function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
     if (a === 'OWNER') return 'OWNER'
     if (a === 'EDITOR' || a === 'EDIT') return 'EDIT'
@@ -400,11 +401,12 @@ export function ToolContent({
         {!localOnly && (
           <ToolPageHeader
             toolKey="finish_decisions"
-            title="Decision Tracker"
+            title="Decision List"
             description="Avoid delays and rework—by keeping decisions, links, and status updates together for each area."
             accessLevel={access}
             hasContent={v3State.rooms.length > 0}
             collectionId={collectionId}
+            collectionName={collectionTitle}
             actions={v3State.rooms.length > 0 ? (
               <button
                 type="button"
@@ -416,7 +418,7 @@ export function ToolContent({
                   <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
                   <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
                 </svg>
-                Share this board
+                Share &amp; Export
               </button>
             ) : undefined}
           />
@@ -459,7 +461,7 @@ export function ToolContent({
       {showShareExport && currentProject && (
         <ShareExportModal
           toolKey="finish_decisions"
-          toolLabel="Decision Tracker"
+          toolLabel="Decision List"
           projectId={currentProject.id}
           isOwner={access === 'OWNER'}
           onClose={() => setShowShareExport(false)}

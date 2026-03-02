@@ -10,7 +10,7 @@ import { ShareExportModal } from './components/ShareExportModal'
 
 function PunchlistContent({ collectionId }: { collectionId?: string }) {
   const api = usePunchlistState(collectionId ? { collectionId } : undefined)
-  const { payload, isLoaded, isSyncing, access, readOnly, noAccess } = api
+  const { payload, isLoaded, isSyncing, access, readOnly, noAccess, title: collectionTitle } = api
   const { currentProject } = useProject()
   const isOwner = access === 'OWNER'
   const [showShareExport, setShowShareExport] = useState(false)
@@ -53,6 +53,7 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
         accessLevel={access}
         hasContent={payload.items.length > 0}
         collectionId={collectionId}
+        collectionName={collectionTitle || undefined}
         actions={payload.items.length > 0 ? (
           <button
             type="button"

@@ -4,6 +4,8 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense, useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
+import { ShareExportModal } from '@/components/app/ShareExportModal'
+import { useProject } from '@/contexts/ProjectContext'
 import { useBYSState } from './useBYSState'
 import { ALL_TABS } from './beforeYouSignConfig'
 import { ContractorBar } from './components/ContractorBar'
@@ -40,6 +42,7 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
     access,
     readOnly,
     noAccess,
+    title: collectionTitle,
     addContractor,
     updateContractor,
     removeContractor,
@@ -49,6 +52,8 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
     addCustomAgreeItem,
     removeCustomAgreeItem,
   } = useBYSState(collectionId ? { collectionId } : undefined)
+  const { currentProject } = useProject()
+  const [showShareExport, setShowShareExport] = useState(false)
 
   useEffect(() => {
     if (tabParam && TAB_PILLS.some((t) => t.key === tabParam)) {
@@ -87,6 +92,21 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
         accessLevel={access}
         hasContent={contractors.length > 0}
         collectionId={collectionId}
+        collectionName={collectionTitle || undefined}
+        actions={contractors.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setShowShareExport(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-sandstone/15 text-sandstone hover:bg-sandstone/25 transition-colors"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
+              <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
+              <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
+            </svg>
+            Share &amp; Export
+          </button>
+        ) : undefined}
       />
 
       {noAccess ? (
@@ -201,6 +221,25 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
             </>
           )}
         </>
+      )}
+
+      {showShareExport && currentProject && (
+        <ShareExportModal
+          toolKey="before_you_sign"
+          toolLabel="Contract Checklist"
+          projectId={currentProject.id}
+          isOwner={access === 'OWNER'}
+          onClose={() => setShowShareExport(false)}
+          scopes={[]}
+          scopeLabel="Contractors"
+          buildExportUrl={({ includeNotes, includeComments, includePhotos }) => {
+            const reportBase = collectionId
+              ? `/app/tools/before-you-sign/${collectionId}/report`
+              : '/app/tools/before-you-sign/report'
+            return `${reportBase}?includeNotes=${includeNotes}&includeComments=${includeComments}&includePhotos=${includePhotos}`
+          }}
+          collectionId={collectionId}
+        />
       )}
     </>
   )

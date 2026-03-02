@@ -69,6 +69,7 @@ export function useBYSState(opts?: { collectionId?: string | null }) {
   const useCollection = !!opts?.collectionId
   const result = useCollection ? collResult : toolResult
   const { state: rawState, setState, isLoaded, isSyncing, noAccess } = result
+  const collectionTitle = useCollection ? collResult.title : ''
 
   function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
     if (a === 'OWNER') return 'OWNER'
@@ -302,6 +303,7 @@ export function useBYSState(opts?: { collectionId?: string | null }) {
     access,
     readOnly,
     noAccess,
+    title: collectionTitle,
     addContractor,
     updateContractor,
     removeContractor,

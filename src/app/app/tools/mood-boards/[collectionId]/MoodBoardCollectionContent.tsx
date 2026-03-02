@@ -44,6 +44,7 @@ function Content({ collectionId }: { collectionId: string }) {
         accessLevel={mapAccessForHeader(access)}
         hasContent={board.ideas.length > 0}
         collectionId={collectionId}
+        collectionName={board?.name}
       />
 
       <BoardDetailView
