@@ -220,12 +220,19 @@ export function RoomsBoardView({
               {/* Card body */}
               <div className="px-3 pb-3 pt-2">
                 {/* Status counts */}
-                <div className="flex flex-wrap gap-x-2 text-[11px] text-cream/40 mb-2">
-                  <span>{stats.total} decision{stats.total !== 1 ? 's' : ''}</span>
-                  {stats.deciding > 0 && <span>{stats.deciding} deciding</span>}
-                  {stats.ordered > 0 && <span>{stats.ordered} ordered</span>}
-                  {stats.done > 0 && <span>{stats.done} done</span>}
-                </div>
+                {(() => {
+                  const remaining = stats.total - stats.ordered - stats.done
+                  return (
+                    <div className="flex flex-wrap gap-x-2 text-[11px] text-cream/40 mb-2">
+                      {remaining > 0 && <span>{remaining} decision{remaining !== 1 ? 's' : ''} remain</span>}
+                      {stats.ordered > 0 && <span>{stats.ordered} ordered</span>}
+                      {stats.done > 0 && <span>{stats.done} done</span>}
+                      {remaining === 0 && stats.ordered === 0 && stats.done === 0 && (
+                        <span>No decisions yet</span>
+                      )}
+                    </div>
+                  )
+                })()}
 
                 {/* Last updated */}
                 <p className="text-[10px] text-cream/25 mb-1">
@@ -239,18 +246,17 @@ export function RoomsBoardView({
                   </p>
                 )}
 
-                {/* Comment summary */}
-                {stats.totalComments > 0 && (
-                  <div className="text-[10px] text-cream/25">
-                    <span>💬 {stats.totalComments}</span>
-                    {stats.lastComment && (
-                      <p className="mt-0.5 text-cream/35 line-clamp-1">
-                        &ldquo;{truncate(stats.lastComment.text, 50)}&rdquo;
-                        {' — '}{stats.lastComment.authorName.split(' ')[0]}, {relativeTime(stats.lastComment.createdAt)}
-                      </p>
-                    )}
-                  </div>
-                )}
+                {/* Recent comment indicator */}
+                {stats.lastComment && (() => {
+                  const commentAge = Date.now() - new Date(stats.lastComment.createdAt).getTime()
+                  const threeDays = 3 * 24 * 60 * 60 * 1000
+                  if (commentAge > threeDays) return null
+                  return (
+                    <p className="text-[10px] text-cream/35">
+                      💬 Last comment {relativeTime(stats.lastComment.createdAt)} by {stats.lastComment.authorName.split(' ')[0]}
+                    </p>
+                  )
+                })()}
 
               </div>
             </div>

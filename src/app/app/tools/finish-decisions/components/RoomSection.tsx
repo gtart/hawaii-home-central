@@ -16,54 +16,6 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { TextConfirmDialog } from '@/components/ui/TextConfirmDialog'
 
 const SEL_VIEW_KEY = 'hhc_finish_selection_view_mode_v2'
-const MAX_DOTS = 15
-
-const DOT_COLOR: Record<string, string> = {
-  deciding: 'bg-amber-400',
-  selected: 'bg-blue-400',
-  ordered: 'bg-indigo-400',
-  done: 'bg-emerald-400/50',
-}
-
-function DecisionDotStrip({ decisions }: { decisions: DecisionV3[] }) {
-  const regular = decisions.filter(d => d.systemKey !== 'uncategorized')
-  const total = regular.length
-  if (total === 0) return null
-
-  const counts: Record<StatusV3, number> = {
-    deciding: 0, selected: 0, ordered: 0, done: 0,
-  }
-  for (const d of regular) counts[d.status]++
-
-  const order: StatusV3[] = ['deciding', 'selected', 'ordered', 'done']
-
-  let dots: StatusV3[]
-  if (total <= MAX_DOTS) {
-    dots = []
-    for (const s of order) for (let i = 0; i < counts[s]; i++) dots.push(s)
-  } else {
-    dots = []
-    for (const s of order) {
-      const n = Math.round((counts[s] / total) * MAX_DOTS)
-      for (let i = 0; i < n; i++) dots.push(s)
-    }
-    while (dots.length > MAX_DOTS) dots.pop()
-    while (dots.length < MAX_DOTS) dots.push('done')
-  }
-
-  const overflow = total > MAX_DOTS ? total - MAX_DOTS : 0
-
-  return (
-    <div className="flex items-center gap-0.5">
-      {dots.map((status, i) => (
-        <span key={i} className={`w-1.5 h-1.5 rounded-full ${DOT_COLOR[status]}`} />
-      ))}
-      {overflow > 0 && (
-        <span className="text-[10px] text-cream/40 ml-0.5">+{overflow}</span>
-      )}
-    </div>
-  )
-}
 
 export function RoomSection({
   room,
@@ -137,7 +89,7 @@ export function RoomSection({
     ordered: regularDecisions.filter((d) => d.status === 'ordered').length,
     done: regularDecisions.filter((d) => d.status === 'done').length,
   }
-  const remaining = stats.total - stats.done
+  const remaining = stats.total - stats.ordered - stats.done
 
   // Last updated across room + all decisions
   const lastUpdated = (() => {
@@ -148,13 +100,28 @@ export function RoomSection({
     return latest
   })()
 
+  // Recent comment (within 3 days)
+  const recentComment = (() => {
+    const threeDays = 3 * 24 * 60 * 60 * 1000
+    let latest: { authorName: string; createdAt: string } | null = null
+    for (const d of room.decisions) {
+      for (const c of d.comments || []) {
+        if (c.authorEmail === '') continue
+        const age = Date.now() - new Date(c.createdAt).getTime()
+        if (age > threeDays) continue
+        if (!latest || c.createdAt > latest.createdAt) {
+          latest = { authorName: c.authorName, createdAt: c.createdAt }
+        }
+      }
+    }
+    return latest
+  })()
+
   // Common decisions gating
   const standardTitles = defaultDecisions[room.type as RoomTypeV3] || []
   const existingTitles = new Set(room.decisions.map(d => d.title.toLowerCase().trim()))
   const missingDefaults = standardTitles.filter(t => !existingTitles.has(t.toLowerCase().trim()))
   const showCommonDecisions = !readOnly && regularDecisions.length < 5 && missingDefaults.length > 0
-
-  const doneLabel = `${stats.done}/${stats.total} done`
 
   function requestDeleteDecision(decisionId: string) {
     setConfirmDeleteDecisionId(decisionId)
@@ -238,19 +205,33 @@ export function RoomSection({
               {roomEmoji}
             </span>
             <span className="text-cream font-medium text-base">{room.name}</span>
-            <div className="hidden md:flex items-center gap-2 ml-1">
-              <DecisionDotStrip decisions={room.decisions} />
-              <span className="text-[11px] text-cream/40">
-                {doneLabel} · {relativeTime(lastUpdated)}
-              </span>
+            {!isExpanded && (
+              <div className="hidden md:flex items-center gap-2 ml-1 text-[11px] text-cream/40">
+                {remaining > 0 && <span>{remaining} remaining</span>}
+                {stats.ordered > 0 && <span>{stats.ordered} ordered</span>}
+                {stats.done > 0 && <span>{stats.done} done</span>}
+                {remaining === 0 && stats.ordered === 0 && stats.done === 0 && stats.total === 0 && (
+                  <span>No decisions</span>
+                )}
+                {recentComment && (
+                  <span className="text-cream/30">💬 {relativeTime(recentComment.createdAt)} by {recentComment.authorName.split(' ')[0]}</span>
+                )}
+              </div>
+            )}
+          </div>
+          {!isExpanded && (
+            <div className="md:hidden flex items-center gap-2 mt-1 ml-7 text-[11px] text-cream/40 flex-wrap">
+              {remaining > 0 && <span>{remaining} remaining</span>}
+              {stats.ordered > 0 && <span>{stats.ordered} ordered</span>}
+              {stats.done > 0 && <span>{stats.done} done</span>}
+              {remaining === 0 && stats.ordered === 0 && stats.done === 0 && stats.total === 0 && (
+                <span>No decisions</span>
+              )}
+              {recentComment && (
+                <span className="text-cream/30">💬 {relativeTime(recentComment.createdAt)} by {recentComment.authorName.split(' ')[0]}</span>
+              )}
             </div>
-          </div>
-          <div className="md:hidden flex items-center gap-2 mt-1 ml-7">
-            <DecisionDotStrip decisions={room.decisions} />
-            <span className="text-[11px] text-cream/40">
-              {doneLabel} · {relativeTime(lastUpdated)}
-            </span>
-          </div>
+          )}
         </div>
 
       </div>
