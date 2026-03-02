@@ -7,6 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "seed:demo": "npx tsx scripts/seed-demo-project.ts",
     "seed:e2e": "npx tsx scripts/seed-e2e-personas.ts",
     "test:e2e": "npx playwright test",
     "test:e2e:public": "npx playwright test --project=public --project=public-mobile --project=public-android",
