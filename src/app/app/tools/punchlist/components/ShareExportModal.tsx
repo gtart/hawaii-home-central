@@ -13,9 +13,10 @@ interface Props {
   assignees: string[]
   projectId: string
   isOwner: boolean
+  collectionId?: string
 }
 
-export function ShareExportModal({ onClose, locations, assignees, projectId, isOwner }: Props) {
+export function ShareExportModal({ onClose, locations, assignees, projectId, isOwner, collectionId }: Props) {
   const [tab, setTab] = useState<Tab>('export')
   const [showPublishModal, setShowPublishModal] = useState(false)
 
@@ -78,6 +79,7 @@ export function ShareExportModal({ onClose, locations, assignees, projectId, isO
                 locations={locations}
                 assignees={assignees}
                 onCreateNew={() => setShowPublishModal(true)}
+                collectionId={collectionId}
               />
             )}
           </div>
@@ -92,6 +94,7 @@ export function ShareExportModal({ onClose, locations, assignees, projectId, isO
           assignees={assignees}
           onClose={() => setShowPublishModal(false)}
           onCreated={() => setShowPublishModal(false)}
+          collectionId={collectionId}
         />
       )}
     </>
@@ -269,15 +272,17 @@ function ShareTabContent({
   locations,
   assignees,
   onCreateNew,
+  collectionId,
 }: {
   projectId: string
   locations: string[]
   assignees: string[]
   onCreateNew: () => void
+  collectionId?: string
 }) {
   return (
     <div>
-      <ManageShareLinks toolKey="punchlist" projectId={projectId} locations={locations} assignees={assignees} />
+      <ManageShareLinks toolKey="punchlist" projectId={projectId} locations={locations} assignees={assignees} collectionId={collectionId} />
       <p className="text-xs text-cream/30 mt-4 text-center">
         Public links expire after 14 days. Anyone with a link can view a read-only version.
       </p>

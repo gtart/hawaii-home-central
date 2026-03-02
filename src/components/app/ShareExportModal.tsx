@@ -39,6 +39,8 @@ export interface ShareExportModalProps {
   initialTab?: 'export' | 'share'
   // Optional: pre-select specific scope IDs (e.g. a single board)
   initialSelectedScopeIds?: string[]
+  /** When set, use collection-based share-token endpoints */
+  collectionId?: string
 }
 
 export function ShareExportModal({
@@ -54,6 +56,7 @@ export function ShareExportModal({
   renderTokenBadges,
   initialTab,
   initialSelectedScopeIds,
+  collectionId,
 }: ShareExportModalProps) {
   const [tab, setTab] = useState<Tab>(initialTab && isOwner ? initialTab : 'export')
 
@@ -122,6 +125,7 @@ export function ShareExportModal({
               scopeLabel={scopeLabel}
               renderTokenBadges={renderTokenBadges}
               initialSelectedScopeIds={initialSelectedScopeIds}
+              collectionId={collectionId}
             />
           )}
         </div>
@@ -244,6 +248,7 @@ function ShareTab({
   scopeLabel,
   renderTokenBadges,
   initialSelectedScopeIds,
+  collectionId,
 }: {
   toolKey: string
   projectId: string
@@ -251,6 +256,7 @@ function ShareTab({
   scopeLabel: string
   renderTokenBadges?: ShareExportModalProps['renderTokenBadges']
   initialSelectedScopeIds?: string[]
+  collectionId?: string
 }) {
   const [showCreate, setShowCreate] = useState(!!initialSelectedScopeIds?.length)
 
@@ -281,6 +287,7 @@ function ShareTab({
             window.dispatchEvent(new Event('share-token-created'))
           }}
           onCancel={() => setShowCreate(false)}
+          collectionId={collectionId}
         />
       )}
 
@@ -288,6 +295,7 @@ function ShareTab({
         toolKey={toolKey}
         projectId={projectId}
         renderBadges={renderTokenBadges as never}
+        collectionId={collectionId}
       />
 
       <p className="text-xs text-cream/30 text-center">
@@ -309,6 +317,7 @@ function CreateShareLinkForm({
   onCreated,
   onCancel,
   initialSelectedScopeIds,
+  collectionId,
 }: {
   toolKey: string
   projectId: string
@@ -317,6 +326,7 @@ function CreateShareLinkForm({
   onCreated: () => void
   onCancel: () => void
   initialSelectedScopeIds?: string[]
+  collectionId?: string
 }) {
   const [includeNotes, setIncludeNotes] = useState(false)
   const [includeComments, setIncludeComments] = useState(false)
@@ -348,15 +358,16 @@ function CreateShareLinkForm({
           }
         : { mode: 'all' }
 
-      const res = await fetch(`/api/tools/${toolKey}/share-token?projectId=${projectId}`, {
+      const url = collectionId
+        ? `/api/collections/${collectionId}/share-token`
+        : `/api/tools/${toolKey}/share-token?projectId=${projectId}`
+      const body = collectionId
+        ? { settings: { includeNotes, includeComments, includePhotos, scope: scopePayload } }
+        : { includeNotes, includeComments, includePhotos, scope: scopePayload }
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          includeNotes,
-          includeComments,
-          includePhotos,
-          scope: scopePayload,
-        }),
+        body: JSON.stringify(body),
       })
       if (res.ok) {
         onCreated()

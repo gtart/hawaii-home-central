@@ -86,6 +86,7 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
         description="Spot missing scope and lock expectations before you sign—by walking each bid through the same checklist."
         accessLevel={access}
         hasContent={contractors.length > 0}
+        collectionId={collectionId}
       />
 
       {noAccess ? (

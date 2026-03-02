@@ -404,6 +404,7 @@ export function ToolContent({
             description="Avoid delays and rework—by keeping decisions, links, and status updates together for each area."
             accessLevel={access}
             hasContent={v3State.rooms.length > 0}
+            collectionId={collectionId}
             actions={v3State.rooms.length > 0 ? (
               <button
                 type="button"
@@ -471,12 +472,16 @@ export function ToolContent({
             }))}
           scopeLabel="Areas"
           buildExportUrl={({ projectId: pid, includeNotes: notes, includeComments: comments, includePhotos: photos, scopeMode, selectedScopeIds }) => {
-            let url = `/app/tools/finish-decisions/report?projectId=${pid}&includeNotes=${notes}&includeComments=${comments}&includePhotos=${photos}`
+            const reportBase = collectionId
+              ? `/app/tools/finish-decisions/${collectionId}/report`
+              : '/app/tools/finish-decisions/report'
+            let url = `${reportBase}?projectId=${pid}&includeNotes=${notes}&includeComments=${comments}&includePhotos=${photos}`
             if (scopeMode === 'selected' && selectedScopeIds.length > 0) {
               url += `&roomIds=${encodeURIComponent(selectedScopeIds.join(','))}`
             }
             return url
           }}
+          collectionId={collectionId}
         />
       )}
     </div>

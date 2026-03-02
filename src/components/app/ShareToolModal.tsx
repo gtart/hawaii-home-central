@@ -30,9 +30,11 @@ interface ShareToolModalProps {
   onClose: () => void
   /** Optional description shown below the title */
   description?: string
+  /** When set, use collection-based share endpoints instead of legacy project-based ones */
+  collectionId?: string
 }
 
-export function ShareToolModal({ projectId, toolKey, onClose, description }: ShareToolModalProps) {
+export function ShareToolModal({ projectId, toolKey, onClose, description, collectionId }: ShareToolModalProps) {
   const [access, setAccess] = useState<AccessEntry[]>([])
   const [invites, setInvites] = useState<InviteEntry[]>([])
   const [editShareCount, setEditShareCount] = useState(0)
@@ -50,19 +52,47 @@ export function ShareToolModal({ projectId, toolKey, onClose, description }: Sha
 
   const loadData = useCallback(async () => {
     try {
-      const res = await fetch(`/api/projects/${projectId}/tools/${toolKey}/share`)
-      if (!res.ok) return
-      const data = await res.json()
-      setAccess(data.access)
-      setInvites(data.invites)
-      setEditShareCount(data.editShareCount)
-      setMaxEditShares(data.maxEditShares)
+      if (collectionId) {
+        const res = await fetch(`/api/collections/${collectionId}/share`)
+        if (!res.ok) return
+        const data = await res.json()
+        // Map collection API shape → internal shape
+        setAccess((data.members ?? []).map((m: { id: string; userId: string; role: string; user: { name: string | null; email: string | null; image: string | null } }) => ({
+          id: m.id,
+          userId: m.userId,
+          name: m.user.name,
+          email: m.user.email,
+          image: m.user.image,
+          level: m.role === 'EDITOR' ? 'EDIT' : 'VIEW',
+          createdAt: '',
+        } as AccessEntry)))
+        setInvites((data.invites ?? []).map((i: { id: string; email: string; role: string; status: string; token: string; expiresAt: string; createdAt: string }) => ({
+          id: i.id,
+          email: i.email,
+          level: i.role === 'EDITOR' ? 'EDIT' : 'VIEW',
+          status: i.status,
+          token: i.token,
+          expiresAt: i.expiresAt,
+          createdAt: i.createdAt,
+        } as InviteEntry)))
+        const editorCount = (data.members ?? []).filter((m: { role: string }) => m.role === 'EDITOR').length
+        setEditShareCount(editorCount)
+        setMaxEditShares(10)
+      } else {
+        const res = await fetch(`/api/projects/${projectId}/tools/${toolKey}/share`)
+        if (!res.ok) return
+        const data = await res.json()
+        setAccess(data.access)
+        setInvites(data.invites)
+        setEditShareCount(data.editShareCount)
+        setMaxEditShares(data.maxEditShares)
+      }
     } catch {
       // silent
     } finally {
       setIsLoading(false)
     }
-  }, [projectId, toolKey])
+  }, [projectId, toolKey, collectionId])
 
   useEffect(() => {
     loadData()
@@ -78,10 +108,16 @@ export function ShareToolModal({ projectId, toolKey, onClose, description }: Sha
 
     setSending(true)
     try {
-      const res = await fetch(`/api/projects/${projectId}/tools/${toolKey}/share`, {
+      const url = collectionId
+        ? `/api/collections/${collectionId}/share`
+        : `/api/projects/${projectId}/tools/${toolKey}/share`
+      const body = collectionId
+        ? { email: trimmed, role: level === 'EDIT' ? 'EDITOR' : 'VIEWER' }
+        : { email: trimmed, level }
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmed, level }),
+        body: JSON.stringify(body),
       })
 
       if (!res.ok) {
@@ -91,15 +127,23 @@ export function ShareToolModal({ projectId, toolKey, onClose, description }: Sha
       }
 
       const data = await res.json()
-      setEmailQueued(!!data.emailQueued)
-      // Copy invite link to clipboard
-      const inviteUrl = `${window.location.origin}/invite/${data.invite.token}`
-      try {
-        await navigator.clipboard.writeText(inviteUrl)
-        setCopiedToken(data.invite.token)
-        setTimeout(() => { setCopiedToken(null); setEmailQueued(false) }, 4000)
-      } catch {
-        // fallback: select for manual copy
+      if (collectionId) {
+        // Collection API: addedDirectly (user existed) or inviteId (invite created)
+        if (!data.addedDirectly) {
+          setCopiedToken('sent')
+          setTimeout(() => { setCopiedToken(null) }, 4000)
+        }
+      } else {
+        setEmailQueued(!!data.emailQueued)
+        // Copy invite link to clipboard
+        const inviteUrl = `${window.location.origin}/invite/${data.invite.token}`
+        try {
+          await navigator.clipboard.writeText(inviteUrl)
+          setCopiedToken(data.invite.token)
+          setTimeout(() => { setCopiedToken(null); setEmailQueued(false) }, 4000)
+        } catch {
+          // fallback: select for manual copy
+        }
       }
 
       setEmail('')
@@ -114,7 +158,10 @@ export function ShareToolModal({ projectId, toolKey, onClose, description }: Sha
   const handleRevoke = async (userId: string) => {
     if (!confirm('Remove this person\'s access?')) return
 
-    await fetch(`/api/projects/${projectId}/tools/${toolKey}/share`, {
+    const url = collectionId
+      ? `/api/collections/${collectionId}/share`
+      : `/api/projects/${projectId}/tools/${toolKey}/share`
+    await fetch(url, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId }),
@@ -123,7 +170,10 @@ export function ShareToolModal({ projectId, toolKey, onClose, description }: Sha
   }
 
   const handleCancelInvite = async (inviteId: string) => {
-    await fetch(`/api/projects/${projectId}/tools/${toolKey}/share`, {
+    const url = collectionId
+      ? `/api/collections/${collectionId}/share`
+      : `/api/projects/${projectId}/tools/${toolKey}/share`
+    await fetch(url, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ inviteId }),
@@ -197,7 +247,7 @@ export function ShareToolModal({ projectId, toolKey, onClose, description }: Sha
             )}
             {copiedToken && (
               <p className="text-sm text-emerald-400 mt-1.5">
-                Invite link copied to clipboard{emailQueued ? ' · Email sent' : ''}
+                {collectionId ? 'Invite sent' : `Invite link copied to clipboard${emailQueued ? ' · Email sent' : ''}`}
               </p>
             )}
           </div>

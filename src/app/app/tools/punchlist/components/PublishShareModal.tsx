@@ -10,6 +10,7 @@ interface Props {
   assignees: string[]
   onClose: () => void
   onCreated: () => void
+  collectionId?: string
 }
 
 const STATUS_CHECKS: { key: PunchlistStatus; label: string }[] = [
@@ -18,7 +19,7 @@ const STATUS_CHECKS: { key: PunchlistStatus; label: string }[] = [
   { key: 'DONE', label: 'Done' },
 ]
 
-export function PublishShareModal({ toolKey, projectId, locations, assignees, onClose, onCreated }: Props) {
+export function PublishShareModal({ toolKey, projectId, locations, assignees, onClose, onCreated, collectionId }: Props) {
   const [includeNotes, setIncludeNotes] = useState(false)
   const [includeComments, setIncludeComments] = useState(false)
   const [includePhotos, setIncludePhotos] = useState(true)
@@ -74,17 +75,22 @@ export function PublishShareModal({ toolKey, projectId, locations, assignees, on
     setCreating(true)
 
     try {
-      const res = await fetch(`/api/tools/${toolKey}/share-token?projectId=${projectId}`, {
+      const settings = {
+        includeNotes,
+        includeComments,
+        includePhotos,
+        statuses: Array.from(includedStatuses),
+        locations: Array.from(selectedLocations),
+        assignees: Array.from(selectedAssignees),
+      }
+      const fetchUrl = collectionId
+        ? `/api/collections/${collectionId}/share-token`
+        : `/api/tools/${toolKey}/share-token?projectId=${projectId}`
+      const fetchBody = collectionId ? { settings } : settings
+      const res = await fetch(fetchUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          includeNotes,
-          includeComments,
-          includePhotos,
-          statuses: Array.from(includedStatuses),
-          locations: Array.from(selectedLocations),
-          assignees: Array.from(selectedAssignees),
-        }),
+        body: JSON.stringify(fetchBody),
       })
 
       if (!res.ok) {
@@ -94,7 +100,7 @@ export function PublishShareModal({ toolKey, projectId, locations, assignees, on
       }
 
       const data = await res.json()
-      const url = `${window.location.origin}/share/${toolKey}/${data.token}`
+      const url = data.url || `${window.location.origin}/share/${toolKey}/${data.token}`
       setShareUrl(url)
       onCreated()
     } catch {

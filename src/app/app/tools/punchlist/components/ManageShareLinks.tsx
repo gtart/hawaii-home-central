@@ -21,9 +21,10 @@ interface Props {
   projectId: string
   locations: string[]
   assignees: string[]
+  collectionId?: string
 }
 
-export function ManageShareLinks({ toolKey, projectId, locations, assignees }: Props) {
+export function ManageShareLinks({ toolKey, projectId, locations, assignees, collectionId }: Props) {
   const [tokens, setTokens] = useState<ShareTokenEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
@@ -31,7 +32,10 @@ export function ManageShareLinks({ toolKey, projectId, locations, assignees }: P
 
   const loadTokens = useCallback(async () => {
     try {
-      const res = await fetch(`/api/tools/${toolKey}/share-token?projectId=${projectId}`)
+      const url = collectionId
+        ? `/api/collections/${collectionId}/share-token`
+        : `/api/tools/${toolKey}/share-token?projectId=${projectId}`
+      const res = await fetch(url)
       if (!res.ok) return
       const data = await res.json()
       setTokens(data.tokens)
@@ -40,7 +44,7 @@ export function ManageShareLinks({ toolKey, projectId, locations, assignees }: P
     } finally {
       setLoading(false)
     }
-  }, [toolKey, projectId])
+  }, [toolKey, projectId, collectionId])
 
   useEffect(() => {
     loadTokens()
@@ -49,7 +53,10 @@ export function ManageShareLinks({ toolKey, projectId, locations, assignees }: P
   async function handleRevoke(tokenId: string) {
     if (!confirm('Revoke this public link? Anyone with it will no longer be able to view your fix list.')) return
 
-    await fetch(`/api/tools/${toolKey}/share-token?projectId=${projectId}`, {
+    const url = collectionId
+      ? `/api/collections/${collectionId}/share-token`
+      : `/api/tools/${toolKey}/share-token?projectId=${projectId}`
+    await fetch(url, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tokenId }),
@@ -183,6 +190,7 @@ export function ManageShareLinks({ toolKey, projectId, locations, assignees }: P
           assignees={assignees}
           onClose={() => setShowCreate(false)}
           onCreated={() => loadTokens()}
+          collectionId={collectionId}
         />
       )}
     </div>

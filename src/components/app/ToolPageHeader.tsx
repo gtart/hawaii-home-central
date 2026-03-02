@@ -43,9 +43,11 @@ interface ToolPageHeaderProps {
   /** Action buttons rendered in the top-right header area (next to collaborators button). */
   actions?: React.ReactNode
   children?: React.ReactNode
+  /** When set, use collection-based share endpoints instead of legacy project-based ones */
+  collectionId?: string
 }
 
-export function ToolPageHeader({ toolKey, title, description, accessLevel, hasContent = true, actions, children }: ToolPageHeaderProps) {
+export function ToolPageHeader({ toolKey, title, description, accessLevel, hasContent = true, actions, children, collectionId }: ToolPageHeaderProps) {
   const { currentProject } = useProject()
   const [showShare, setShowShare] = useState(false)
   const [collaborators, setCollaborators] = useState<Collaborator[]>([])
@@ -54,23 +56,47 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
   const isOwner = accessLevel === 'OWNER' || currentProject?.role === 'OWNER'
 
   const loadCollaborators = useCallback(async () => {
-    if (!isOwner || !currentProject?.id) return
+    if (!isOwner) return
     try {
-      const res = await fetch(`/api/projects/${currentProject.id}/tools/${toolKey}/share`)
-      if (!res.ok) return
-      const data = await res.json()
-      setCollaborators(data.access ?? [])
-      setPendingInvites(
-        (data.invites ?? []).map((inv: { id: string; email: string; level: string }) => ({
-          id: inv.id,
-          email: inv.email,
-          level: inv.level as 'VIEW' | 'EDIT',
-        }))
-      )
+      if (collectionId) {
+        const res = await fetch(`/api/collections/${collectionId}/share`)
+        if (!res.ok) return
+        const data = await res.json()
+        setCollaborators(
+          (data.members ?? []).map((m: { id: string; userId: string; role: string; user: { name: string | null; email: string | null; image: string | null } }) => ({
+            id: m.id,
+            userId: m.userId,
+            name: m.user.name,
+            email: m.user.email,
+            image: m.user.image,
+            level: m.role === 'EDITOR' ? 'EDIT' : 'VIEW',
+          } as Collaborator))
+        )
+        setPendingInvites(
+          (data.invites ?? []).map((inv: { id: string; email: string; role: string }) => ({
+            id: inv.id,
+            email: inv.email,
+            level: inv.role === 'EDITOR' ? 'EDIT' : 'VIEW',
+          } as PendingInvite))
+        )
+      } else {
+        if (!currentProject?.id) return
+        const res = await fetch(`/api/projects/${currentProject.id}/tools/${toolKey}/share`)
+        if (!res.ok) return
+        const data = await res.json()
+        setCollaborators(data.access ?? [])
+        setPendingInvites(
+          (data.invites ?? []).map((inv: { id: string; email: string; level: string }) => ({
+            id: inv.id,
+            email: inv.email,
+            level: inv.level as 'VIEW' | 'EDIT',
+          }))
+        )
+      }
     } catch {
       // silent
     }
-  }, [isOwner, currentProject?.id, toolKey])
+  }, [isOwner, currentProject?.id, toolKey, collectionId])
 
   useEffect(() => {
     loadCollaborators()
@@ -230,6 +256,7 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
           projectId={currentProject.id}
           toolKey={toolKey}
           onClose={handleShareClose}
+          collectionId={collectionId}
         />
       )}
     </>

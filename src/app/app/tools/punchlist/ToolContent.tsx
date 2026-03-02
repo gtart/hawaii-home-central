@@ -52,6 +52,7 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
         description="Track fixes and share with your contractor."
         accessLevel={access}
         hasContent={payload.items.length > 0}
+        collectionId={collectionId}
         actions={payload.items.length > 0 ? (
           <button
             type="button"
@@ -88,6 +89,7 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
           assignees={uniqueAssignees}
           projectId={currentProject.id}
           isOwner={isOwner}
+          collectionId={collectionId}
         />
       )}
     </>

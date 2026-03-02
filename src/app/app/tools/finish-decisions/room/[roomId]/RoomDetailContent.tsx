@@ -691,6 +691,7 @@ export function RoomDetailContent({
               : '/app/tools/finish-decisions/report'
             return `${reportBase}?projectId=${pid}&includeNotes=${notes}&includeComments=${comments}&includePhotos=${photos}&roomIds=${encodeURIComponent(room.id)}`
           }}
+          collectionId={collectionId}
         />
       )}
 

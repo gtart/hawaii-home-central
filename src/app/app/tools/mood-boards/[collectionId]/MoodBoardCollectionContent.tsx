@@ -43,6 +43,7 @@ function Content({ collectionId }: { collectionId: string }) {
         description="Collect and organize inspiration from anywhere — then turn your favorites into real selections."
         accessLevel={mapAccessForHeader(access)}
         hasContent={board.ideas.length > 0}
+        collectionId={collectionId}
       />
 
       <BoardDetailView

@@ -24,18 +24,23 @@ interface Props {
   projectId: string
   /** Render tool-specific badges for a token row */
   renderBadges?: (token: ShareTokenEntry) => React.ReactNode
+  /** When set, use collection-based share-token endpoints */
+  collectionId?: string
 }
 
 export type { ShareTokenEntry }
 
-export function ManageShareLinks({ toolKey, projectId, renderBadges }: Props) {
+export function ManageShareLinks({ toolKey, projectId, renderBadges, collectionId }: Props) {
   const [tokens, setTokens] = useState<ShareTokenEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const loadTokens = useCallback(async () => {
     try {
-      const res = await fetch(`/api/tools/${toolKey}/share-token?projectId=${projectId}`)
+      const url = collectionId
+        ? `/api/collections/${collectionId}/share-token`
+        : `/api/tools/${toolKey}/share-token?projectId=${projectId}`
+      const res = await fetch(url)
       if (!res.ok) return
       const data = await res.json()
       setTokens(data.tokens)
@@ -44,7 +49,7 @@ export function ManageShareLinks({ toolKey, projectId, renderBadges }: Props) {
     } finally {
       setLoading(false)
     }
-  }, [toolKey, projectId])
+  }, [toolKey, projectId, collectionId])
 
   useEffect(() => {
     loadTokens()
@@ -59,7 +64,10 @@ export function ManageShareLinks({ toolKey, projectId, renderBadges }: Props) {
 
   async function handleRevoke(tokenId: string) {
     if (!confirm('Revoke this public link? Anyone with it will no longer be able to view.')) return
-    await fetch(`/api/tools/${toolKey}/share-token?projectId=${projectId}`, {
+    const url = collectionId
+      ? `/api/collections/${collectionId}/share-token`
+      : `/api/tools/${toolKey}/share-token?projectId=${projectId}`
+    await fetch(url, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tokenId }),

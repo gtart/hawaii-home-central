@@ -806,10 +806,10 @@ export function SaveFromWebContent() {
               </div>
             </div>
 
-            {/* ══ Project Picker (shown when user has 2+ active projects) ══ */}
+            {/* ══ Home Picker (shown when user has 2+ active homes) ══ */}
             {activeProjects.length > 1 && (
               <div>
-                <label className="block text-xs text-cream/50 mb-2">Project</label>
+                <label className="block text-xs text-cream/50 mb-2">Home</label>
                 <select
                   value={projectIdOverride || ''}
                   onChange={(e) => {

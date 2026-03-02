@@ -1015,6 +1015,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
           toolKey="mood_boards"
           onClose={() => setShowInviteModal(false)}
           description="Invited people can view all boards unless a board is marked Private."
+          collectionId={collectionId}
         />
       )}
 
@@ -1045,6 +1046,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
           }}
           initialTab="share"
           initialSelectedScopeIds={[board.id]}
+          collectionId={collectionId}
         />
       )}
 

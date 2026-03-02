@@ -19,6 +19,7 @@ interface Props {
   boardName: string
   projectId: string
   isOwner: boolean
+  collectionId?: string
 }
 
 const FLAG_LABELS: { key: keyof ShareFlags; label: string }[] = [
@@ -44,7 +45,7 @@ function flagSummary(t: ShareTokenEntry): string {
   return parts.length > 0 ? parts.join(' + ') : 'Names & tags only'
 }
 
-export function BoardShareLinks({ boardId, boardName, projectId, isOwner }: Props) {
+export function BoardShareLinks({ boardId, boardName, projectId, isOwner, collectionId }: Props) {
   const [tokens, setTokens] = useState<ShareTokenEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -59,20 +60,28 @@ export function BoardShareLinks({ boardId, boardName, projectId, isOwner }: Prop
 
   const loadTokens = useCallback(async () => {
     try {
-      const res = await fetch(`/api/tools/mood_boards/share-token?projectId=${projectId}`)
-      if (!res.ok) return
-      const data = await res.json()
-      setTokens(
-        (data.tokens as ShareTokenEntry[]).filter(
-          (t) => t.boardId === boardId
+      if (collectionId) {
+        // Collection mode: all tokens belong to this collection (= board)
+        const res = await fetch(`/api/collections/${collectionId}/share-token`)
+        if (!res.ok) return
+        const data = await res.json()
+        setTokens(data.tokens ?? [])
+      } else {
+        const res = await fetch(`/api/tools/mood_boards/share-token?projectId=${projectId}`)
+        if (!res.ok) return
+        const data = await res.json()
+        setTokens(
+          (data.tokens as ShareTokenEntry[]).filter(
+            (t) => t.boardId === boardId
+          )
         )
-      )
+      }
     } catch {
       // silent
     } finally {
       setLoading(false)
     }
-  }, [boardId, projectId])
+  }, [boardId, projectId, collectionId])
 
   useEffect(() => {
     if (isOwner) loadTokens()
@@ -82,14 +91,16 @@ export function BoardShareLinks({ boardId, boardName, projectId, isOwner }: Prop
   async function handleCreate() {
     setCreating(true)
     try {
-      const res = await fetch(`/api/tools/mood_boards/share-token?projectId=${projectId}`, {
+      const url = collectionId
+        ? `/api/collections/${collectionId}/share-token`
+        : `/api/tools/mood_boards/share-token?projectId=${projectId}`
+      const body = collectionId
+        ? { settings: { ...flags } }
+        : { ...flags, boardId, boardName }
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...flags,
-          boardId,
-          boardName,
-        }),
+        body: JSON.stringify(body),
       })
       if (res.ok) {
         setShowForm(false)
@@ -104,7 +115,10 @@ export function BoardShareLinks({ boardId, boardName, projectId, isOwner }: Prop
 
   async function handleRevoke(tokenId: string) {
     if (!confirm('Revoke this public link? Anyone with it will no longer be able to view this board.')) return
-    await fetch(`/api/tools/mood_boards/share-token?projectId=${projectId}`, {
+    const url = collectionId
+      ? `/api/collections/${collectionId}/share-token`
+      : `/api/tools/mood_boards/share-token?projectId=${projectId}`
+    await fetch(url, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tokenId }),
