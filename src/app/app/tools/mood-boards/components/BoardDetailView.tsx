@@ -34,9 +34,10 @@ interface Props {
   api: MoodBoardStateAPI
   readOnly: boolean
   toolAccess: string
+  collectionId?: string
 }
 
-export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
+export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId }: Props) {
   const router = useRouter()
   const { data: session } = useSession()
   const { currentProject } = useProject()
@@ -1033,8 +1034,11 @@ export function BoardDetailView({ board, api, readOnly, toolAccess }: Props) {
             }))}
           scopeLabel="Boards"
           buildExportUrl={({ includeNotes, includeComments, includePhotos, scopeMode, selectedScopeIds }) => {
-            let url = `/app/tools/mood-boards/report?includeNotes=${includeNotes}&includeComments=${includeComments}&includePhotos=${includePhotos}`
-            if (scopeMode === 'selected' && selectedScopeIds.length > 0) {
+            const reportBase = collectionId
+              ? `/app/tools/mood-boards/${collectionId}/report`
+              : '/app/tools/mood-boards/report'
+            let url = `${reportBase}?includeNotes=${includeNotes}&includeComments=${includeComments}&includePhotos=${includePhotos}`
+            if (!collectionId && scopeMode === 'selected' && selectedScopeIds.length > 0) {
               url += `&boardIds=${encodeURIComponent(selectedScopeIds.join(','))}`
             }
             return url

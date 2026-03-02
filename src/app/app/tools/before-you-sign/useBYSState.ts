@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react'
 import { useToolState } from '@/hooks/useToolState'
+import { useCollectionState } from '@/hooks/useCollectionState'
 import type {
   BYSPayload,
   BYSContractor,
@@ -51,13 +52,32 @@ function ensureShape(raw: unknown): BYSPayload {
   return DEFAULT_PAYLOAD
 }
 
-export function useBYSState() {
-  const { state: rawState, setState, isLoaded, isSyncing, access, readOnly, noAccess } =
-    useToolState<BYSPayload>({
-      toolKey: 'before_you_sign',
-      localStorageKey: 'hhc_before_you_sign_v1',
-      defaultValue: DEFAULT_PAYLOAD,
-    })
+export function useBYSState(opts?: { collectionId?: string | null }) {
+  const collResult = useCollectionState<BYSPayload>({
+    collectionId: opts?.collectionId ?? null,
+    toolKey: 'before_you_sign',
+    localStorageKey: 'hhc_before_you_sign_v1',
+    defaultValue: DEFAULT_PAYLOAD,
+  })
+
+  const toolResult = useToolState<BYSPayload>({
+    toolKey: 'before_you_sign',
+    localStorageKey: 'hhc_before_you_sign_v1',
+    defaultValue: DEFAULT_PAYLOAD,
+  })
+
+  const useCollection = !!opts?.collectionId
+  const result = useCollection ? collResult : toolResult
+  const { state: rawState, setState, isLoaded, isSyncing, noAccess } = result
+
+  function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
+    if (a === 'OWNER') return 'OWNER'
+    if (a === 'EDITOR' || a === 'EDIT') return 'EDIT'
+    if (a === 'VIEWER' || a === 'VIEW') return 'VIEW'
+    return a as 'OWNER' | 'EDIT' | 'VIEW' | null
+  }
+  const access = mapAccess(result.access)
+  const readOnly = access === 'VIEW'
 
   const payload = ensureShape(rawState)
   const migrationRan = useRef(false)

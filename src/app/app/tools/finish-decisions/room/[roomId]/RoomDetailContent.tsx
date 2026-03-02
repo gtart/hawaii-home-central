@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useToolState } from '@/hooks/useToolState'
+import { useCollectionState } from '@/hooks/useCollectionState'
 import { useProject } from '@/contexts/ProjectContext'
 import {
   ROOM_EMOJI_MAP,
@@ -29,14 +30,23 @@ import { TextConfirmDialog } from '@/components/ui/TextConfirmDialog'
 const DEFAULT_PAYLOAD: FinishDecisionsPayloadV3 = { version: 3, rooms: [] }
 const SEL_VIEW_KEY = 'hhc_finish_selection_view_mode_v2'
 
+function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
+  if (!a) return null
+  if (a === 'EDITOR') return 'EDIT'
+  if (a === 'VIEWER') return 'VIEW'
+  return a as 'OWNER' | 'EDIT' | 'VIEW'
+}
+
 export function RoomDetailContent({
   kits = [],
   defaultDecisions = {} as Record<RoomTypeV3, string[]>,
   emojiMap = {},
+  collectionId,
 }: {
   kits?: FinishDecisionKit[]
   defaultDecisions?: Record<RoomTypeV3, string[]>
   emojiMap?: Record<string, string>
+  collectionId?: string
 }) {
   const params = useParams()
   const router = useRouter()
@@ -44,11 +54,22 @@ export function RoomDetailContent({
   const { currentProject } = useProject()
   const roomId = params.roomId as string
 
-  const { state, setState, isLoaded, readOnly, access } = useToolState<FinishDecisionsPayloadV3>({
+  const collResult = useCollectionState<FinishDecisionsPayloadV3>({
+    collectionId: collectionId ?? null,
+    toolKey: 'finish_decisions',
+    localStorageKey: `hhc_finish_decisions_coll_${collectionId}`,
+    defaultValue: DEFAULT_PAYLOAD,
+  })
+  const toolResult = useToolState<FinishDecisionsPayloadV3>({
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2',
     defaultValue: DEFAULT_PAYLOAD,
   })
+  const useCollection = !!collectionId
+  const result = useCollection ? collResult : toolResult
+  const { state, setState, isLoaded } = result
+  const readOnly = useCollection ? collResult.readOnly : toolResult.readOnly
+  const access = useCollection ? mapAccess(collResult.access) : toolResult.access
 
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [ideasModalOpen, setIdeasModalOpen] = useState(false)
@@ -109,7 +130,8 @@ export function RoomDetailContent({
       ...prev,
       rooms: (prev as FinishDecisionsPayloadV3).rooms.filter((r) => r.id !== roomId),
     }))
-    router.push('/app/tools/finish-decisions')
+    const basePath = collectionId ? `/app/tools/finish-decisions/${collectionId}` : '/app/tools/finish-decisions'
+    router.push(basePath)
   }
 
   function handleQuickAddDecision(_roomId: string, decision: DecisionV3) {
@@ -254,7 +276,8 @@ export function RoomDetailContent({
 
   if (!room) {
     // Room doesn't exist in current project (e.g. user switched projects) — redirect home
-    router.replace('/app/tools/finish-decisions')
+    const basePath = collectionId ? `/app/tools/finish-decisions/${collectionId}` : '/app/tools/finish-decisions'
+    router.replace(basePath)
     return (
       <div className="pt-32 pb-24 px-6">
         <div className="max-w-4xl mx-auto text-center py-12 text-cream/50">
@@ -293,7 +316,7 @@ export function RoomDetailContent({
         {/* Breadcrumb */}
         <button
           type="button"
-          onClick={() => router.push('/app/tools/finish-decisions')}
+          onClick={() => router.push(collectionId ? `/app/tools/finish-decisions/${collectionId}` : '/app/tools/finish-decisions')}
           className="text-sm text-cream/40 hover:text-cream/60 transition-colors mb-4 inline-block"
         >
           &larr; Decision Tracker
@@ -485,7 +508,12 @@ export function RoomDetailContent({
                 type="button"
                 onClick={() => {
                   const first = room.decisions[0]
-                  if (first) window.location.href = `/app/tools/finish-decisions/decision/${first.id}`
+                  if (first) {
+                    const decPath = collectionId
+                      ? `/app/tools/finish-decisions/${collectionId}/decision/${first.id}`
+                      : `/app/tools/finish-decisions/decision/${first.id}`
+                    window.location.href = decPath
+                  }
                 }}
                 className="inline-flex items-center gap-1 px-3 py-2 text-sm text-cream/60 hover:text-cream/80 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
               >
@@ -658,7 +686,10 @@ export function RoomDetailContent({
           }]}
           scopeLabel="Areas"
           buildExportUrl={({ projectId: pid, includeNotes: notes, includeComments: comments, includePhotos: photos }) => {
-            return `/app/tools/finish-decisions/report?projectId=${pid}&includeNotes=${notes}&includeComments=${comments}&includePhotos=${photos}&roomIds=${encodeURIComponent(room.id)}`
+            const reportBase = collectionId
+              ? `/app/tools/finish-decisions/${collectionId}/report`
+              : '/app/tools/finish-decisions/report'
+            return `${reportBase}?projectId=${pid}&includeNotes=${notes}&includeComments=${comments}&includePhotos=${photos}&roomIds=${encodeURIComponent(room.id)}`
           }}
         />
       )}
@@ -675,7 +706,10 @@ export function RoomDetailContent({
           onDeleteComment={deleteRoomComment}
           onNavigateToDecision={(decisionId) => {
             setCommentsFeedOpen(false)
-            router.push(`/app/tools/finish-decisions/decision/${decisionId}`)
+            const decPath = collectionId
+              ? `/app/tools/finish-decisions/${collectionId}/decision/${decisionId}`
+              : `/app/tools/finish-decisions/decision/${decisionId}`
+            router.push(decPath)
           }}
         />
       )}

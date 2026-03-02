@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { useToolState } from '@/hooks/useToolState'
+import { useCollectionState } from '@/hooks/useCollectionState'
 import { useProject } from '@/contexts/ProjectContext'
 import { LocalModeBanner } from '@/components/guides/LocalModeBanner'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
@@ -207,6 +208,7 @@ function migrateToV3(payload: any): FinishDecisionsPayloadV3 {
 
 interface ToolContentProps {
   localOnly?: boolean
+  collectionId?: string
   kits?: FinishDecisionKit[]
   defaultDecisions?: Record<RoomTypeV3, string[]>
   emojiMap?: Record<string, string>
@@ -214,6 +216,7 @@ interface ToolContentProps {
 
 export function ToolContent({
   localOnly = false,
+  collectionId,
   kits = [],
   defaultDecisions,
   emojiMap = {},
@@ -221,14 +224,34 @@ export function ToolContent({
   const resolvedDefaults = defaultDecisions || DEFAULT_DECISIONS_BY_ROOM_TYPE
   const { projects, currentProject } = useProject()
   const [showShareExport, setShowShareExport] = useState(false)
-  const { state, setState, isLoaded, isSyncing, access, readOnly, noAccess } = useToolState<
-    FinishDecisionsPayloadV3 | any
-  >({
+
+  // Collection mode: use collection-based state
+  const collResult = useCollectionState<FinishDecisionsPayloadV3 | any>({
+    collectionId: collectionId ?? null,
     toolKey: 'finish_decisions',
-    localStorageKey: 'hhc_finish_decisions_v2', // Keep same key for migration
+    localStorageKey: 'hhc_finish_decisions_v2',
+    defaultValue: { version: 3, rooms: [] },
+  })
+
+  // Legacy mode: use tool-based state
+  const toolResult = useToolState<FinishDecisionsPayloadV3 | any>({
+    toolKey: 'finish_decisions',
+    localStorageKey: 'hhc_finish_decisions_v2',
     defaultValue: { version: 3, rooms: [] },
     localOnly,
   })
+
+  const useCollMode = !!collectionId
+  const result = useCollMode ? collResult : toolResult
+  const { state, setState, isLoaded, isSyncing, noAccess } = result
+  function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
+    if (a === 'OWNER') return 'OWNER'
+    if (a === 'EDITOR' || a === 'EDIT') return 'EDIT'
+    if (a === 'VIEWER' || a === 'VIEW') return 'VIEW'
+    return a as 'OWNER' | 'EDIT' | 'VIEW' | null
+  }
+  const access = mapAccess(result.access)
+  const readOnly = access === 'VIEW'
 
   // Auto-migrate on load
   useEffect(() => {

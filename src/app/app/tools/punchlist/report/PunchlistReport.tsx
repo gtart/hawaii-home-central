@@ -85,11 +85,16 @@ function buildGroups(items: PunchlistItem[], orgMode: string): GroupedSection[] 
   })
 }
 
-export function PunchlistReport() {
+export function PunchlistReport({ collectionIdOverride }: { collectionIdOverride?: string } = {}) {
   const searchParams = useSearchParams()
   const requiredProjectId = searchParams.get('projectId')
 
-  // P0: Hard block — never fall back to session's currentProject
+  // Collection mode: skip projectId requirement
+  if (collectionIdOverride) {
+    return <PunchlistReportInner collectionId={collectionIdOverride} />
+  }
+
+  // Legacy: require projectId
   if (!requiredProjectId) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-white">
@@ -105,7 +110,7 @@ export function PunchlistReport() {
   return <PunchlistReportInner requiredProjectId={requiredProjectId} />
 }
 
-function PunchlistReportInner({ requiredProjectId }: { requiredProjectId: string }) {
+function PunchlistReportInner({ requiredProjectId, collectionId }: { requiredProjectId?: string; collectionId?: string }) {
   const searchParams = useSearchParams()
   const includeNotes = searchParams.get('includeNotes') === 'true'
   const includeComments = searchParams.get('includeComments') === 'true'
@@ -127,9 +132,9 @@ function PunchlistReportInner({ requiredProjectId }: { requiredProjectId: string
     [assigneesParam]
   )
 
-  // Fetch data for the URL's projectId, not the session's currentProject
+  // Fetch data for the URL's projectId or collectionId
   const { payload, isLoaded } = usePunchlistState(
-    { projectIdOverride: requiredProjectId }
+    collectionId ? { collectionId } : { projectIdOverride: requiredProjectId ?? null }
   )
 
   // Fetch project name from API for the report header

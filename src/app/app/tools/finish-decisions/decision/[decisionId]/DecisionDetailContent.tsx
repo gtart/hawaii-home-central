@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Input } from '@/components/ui/Input'
 import { useToolState } from '@/hooks/useToolState'
+import { useCollectionState } from '@/hooks/useCollectionState'
 import { IdeasBoard, AddIdeaMenu, type IdeasBoardAddActions } from '../../components/IdeasBoard'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
 import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
@@ -34,12 +35,21 @@ function truncateLabel(s: string, max = 40): string {
   return s.length > max ? s.slice(0, max).trimEnd() + '…' : s
 }
 
+function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
+  if (!a) return null
+  if (a === 'EDITOR') return 'EDIT'
+  if (a === 'VIEWER') return 'VIEW'
+  return a as 'OWNER' | 'EDIT' | 'VIEW'
+}
+
 export function DecisionDetailContent({
   kits = [],
   emojiMap = {},
+  collectionId,
 }: {
   kits?: FinishDecisionKit[]
   emojiMap?: Record<string, string>
+  collectionId?: string
 }) {
   const params = useParams()
   const router = useRouter()
@@ -57,11 +67,21 @@ export function DecisionDetailContent({
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
   const addActionsRef = useRef<IdeasBoardAddActions | null>(null)
 
-  const { state, setState, isLoaded, readOnly } = useToolState<FinishDecisionsPayloadV3 | any>({
+  const collResult = useCollectionState<FinishDecisionsPayloadV3>({
+    collectionId: collectionId ?? null,
+    toolKey: 'finish_decisions',
+    localStorageKey: `hhc_finish_decisions_coll_${collectionId}`,
+    defaultValue: { version: 3, rooms: [] },
+  })
+  const toolResult = useToolState<FinishDecisionsPayloadV3 | any>({
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2',
     defaultValue: { version: 3, rooms: [] },
   })
+  const useCollectionMode = !!collectionId
+  const result = useCollectionMode ? collResult : toolResult
+  const { state, setState, isLoaded } = result
+  const readOnly = useCollectionMode ? collResult.readOnly : toolResult.readOnly
 
   const v3State =
     state.version === 3
@@ -361,7 +381,8 @@ export function DecisionDetailContent({
             : r
         ),
       }))
-      router.push('/app/tools/finish-decisions')
+      const basePath = collectionId ? `/app/tools/finish-decisions/${collectionId}` : '/app/tools/finish-decisions'
+      router.push(basePath)
     }
   }
 
@@ -377,7 +398,8 @@ export function DecisionDetailContent({
 
   if (!foundDecision || !foundRoom) {
     // Decision doesn't exist in current project (e.g. user switched projects) — redirect home
-    router.replace('/app/tools/finish-decisions')
+    const basePath = collectionId ? `/app/tools/finish-decisions/${collectionId}` : '/app/tools/finish-decisions'
+    router.replace(basePath)
     return (
       <div className="pt-32 pb-24 px-6">
         <div className="max-w-3xl mx-auto text-center py-12 text-cream/50">
@@ -535,7 +557,12 @@ export function DecisionDetailContent({
       <div className="max-w-3xl mx-auto">
         {/* Back link */}
         <button
-          onClick={() => router.push(`/app/tools/finish-decisions/room/${foundRoom.id}`)}
+          onClick={() => {
+            const roomPath = collectionId
+              ? `/app/tools/finish-decisions/${collectionId}/room/${foundRoom.id}`
+              : `/app/tools/finish-decisions/room/${foundRoom.id}`
+            router.push(roomPath)
+          }}
           className="inline-flex items-center gap-1.5 text-sandstone hover:text-sandstone-light text-sm mb-4"
         >
           <span>←</span>

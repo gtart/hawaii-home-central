@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
-import { BeforeYouSignContent } from './BeforeYouSignContent'
+import { CollectionPickerWrapper } from './CollectionPickerWrapper'
 
 export const metadata: Metadata = {
   title: 'Contract Checklist',
 }
 
 export default function BeforeYouSignPage() {
-  return <BeforeYouSignContent />
+  return <CollectionPickerWrapper />
 }

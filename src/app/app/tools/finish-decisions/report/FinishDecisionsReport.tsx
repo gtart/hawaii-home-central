@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useToolState } from '@/hooks/useToolState'
+import { useCollectionState } from '@/hooks/useCollectionState'
 import type {
   FinishDecisionsPayloadV3,
   RoomV3,
@@ -21,11 +22,11 @@ interface ReportSettings {
   footerText: string
 }
 
-export function FinishDecisionsReport() {
+export function FinishDecisionsReport({ collectionIdOverride }: { collectionIdOverride?: string } = {}) {
   const searchParams = useSearchParams()
   const requiredProjectId = searchParams.get('projectId')
 
-  if (!requiredProjectId) {
+  if (!requiredProjectId && !collectionIdOverride) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-white">
         <p className="text-red-600 font-medium">Missing project ID</p>
@@ -37,10 +38,10 @@ export function FinishDecisionsReport() {
     )
   }
 
-  return <ReportInner requiredProjectId={requiredProjectId} />
+  return <ReportInner requiredProjectId={requiredProjectId} collectionIdOverride={collectionIdOverride} />
 }
 
-function ReportInner({ requiredProjectId }: { requiredProjectId: string }) {
+function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProjectId: string | null; collectionIdOverride?: string }) {
   const searchParams = useSearchParams()
   const includeNotes = searchParams.get('includeNotes') === 'true'
   const includeComments = searchParams.get('includeComments') === 'true'
@@ -51,12 +52,20 @@ function ReportInner({ requiredProjectId }: { requiredProjectId: string }) {
     [roomIdsParam]
   )
 
-  const { state, isLoaded } = useToolState<FinishDecisionsPayloadV3>({
+  const collResult = useCollectionState<FinishDecisionsPayloadV3>({
+    collectionId: collectionIdOverride ?? null,
+    toolKey: 'finish_decisions',
+    localStorageKey: `hhc_finish_decisions_coll_${collectionIdOverride}`,
+    defaultValue: { version: 3, rooms: [] },
+  })
+  const toolResult = useToolState<FinishDecisionsPayloadV3>({
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2',
     defaultValue: { version: 3, rooms: [] },
-    projectIdOverride: requiredProjectId,
+    projectIdOverride: requiredProjectId || undefined,
   })
+  const useCollection = !!collectionIdOverride
+  const { state, isLoaded } = useCollection ? collResult : toolResult
 
   const [projectName, setProjectName] = useState<string | null>(null)
   useEffect(() => {

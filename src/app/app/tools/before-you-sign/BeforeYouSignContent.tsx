@@ -28,7 +28,7 @@ const TAB_HELPER_COPY: Record<ViewTab, string> = {
   notes: "Visible to collaborators on this home.",
 }
 
-function BYSContent() {
+function BYSContent({ collectionId }: { collectionId?: string }) {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab') as ViewTab | null
   const [activeTab, setActiveTab] = useState<ViewTab>(
@@ -48,7 +48,7 @@ function BYSContent() {
     getAnswer,
     addCustomAgreeItem,
     removeCustomAgreeItem,
-  } = useBYSState()
+  } = useBYSState(collectionId ? { collectionId } : undefined)
 
   useEffect(() => {
     if (tabParam && TAB_PILLS.some((t) => t.key === tabParam)) {
@@ -205,12 +205,12 @@ function BYSContent() {
   )
 }
 
-export function BeforeYouSignContent() {
+export function BeforeYouSignContent({ collectionId }: { collectionId?: string } = {}) {
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-6xl mx-auto">
         <Suspense fallback={null}>
-          <BYSContent />
+          <BYSContent collectionId={collectionId} />
         </Suspense>
       </div>
     </div>

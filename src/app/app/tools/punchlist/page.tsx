@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
-import { ToolContent } from './ToolContent'
+import { CollectionPickerWrapper } from './CollectionPickerWrapper'
 
 export const metadata: Metadata = {
   title: 'Fix List',
 }
 
 export default function PunchlistPage() {
-  return <ToolContent />
+  return <CollectionPickerWrapper />
 }

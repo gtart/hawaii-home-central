@@ -3,11 +3,11 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useProject } from '@/contexts/ProjectContext'
-import { useMoodBoardState } from '../useMoodBoardState'
+import { useMoodBoardState, useMoodBoardCollectionState } from '../useMoodBoardState'
 import { REACTION_CONFIG } from '@/data/mood-boards'
 import type { Idea, Board, MoodBoardComment, IdeaReaction, ReactionType } from '@/data/mood-boards'
 
-export function MoodBoardReport() {
+export function MoodBoardReport({ collectionIdOverride }: { collectionIdOverride?: string } = {}) {
   const searchParams = useSearchParams()
   // Legacy single-board param (back-compat with old links)
   const singleBoardId = searchParams.get('board') || ''
@@ -19,7 +19,9 @@ export function MoodBoardReport() {
   const includePhotos = searchParams.get('includePhotos') !== 'false' // default true for legacy compat
   const layout = searchParams.get('layout') || 'grid'
 
-  const { payload, isLoaded } = useMoodBoardState()
+  const toolState = useMoodBoardState()
+  const collState = useMoodBoardCollectionState(collectionIdOverride ?? null)
+  const { payload, isLoaded } = collectionIdOverride ? collState : toolState
   const { currentProject } = useProject()
   const [imagesReady, setImagesReady] = useState(false)
 

@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react'
 import { useToolState } from '@/hooks/useToolState'
+import { useCollectionState } from '@/hooks/useCollectionState'
 import type {
   PunchlistPayload,
   PunchlistItem,
@@ -88,14 +89,37 @@ function now() {
   return new Date().toISOString()
 }
 
-export function usePunchlistState(opts?: { projectIdOverride?: string | null }) {
-  const { state: rawState, setState, isLoaded, isSyncing, access, readOnly, noAccess } =
-    useToolState<PunchlistPayload>({
-      toolKey: 'punchlist',
-      localStorageKey: 'hhc_punchlist_v1',
-      defaultValue: DEFAULT_PAYLOAD,
-      projectIdOverride: opts?.projectIdOverride,
-    })
+export function usePunchlistState(opts?: { projectIdOverride?: string | null; collectionId?: string | null }) {
+  // Collection mode: use new collection-based state
+  const collResult = useCollectionState<PunchlistPayload>({
+    collectionId: opts?.collectionId ?? null,
+    toolKey: 'punchlist',
+    localStorageKey: 'hhc_punchlist_v1',
+    defaultValue: DEFAULT_PAYLOAD,
+  })
+
+  // Legacy mode: use old tool-based state
+  const toolResult = useToolState<PunchlistPayload>({
+    toolKey: 'punchlist',
+    localStorageKey: 'hhc_punchlist_v1',
+    defaultValue: DEFAULT_PAYLOAD,
+    projectIdOverride: opts?.projectIdOverride,
+  })
+
+  // Use collection mode when collectionId is provided
+  const useCollection = !!opts?.collectionId
+  const result = useCollection ? collResult : toolResult
+  const { state: rawState, setState, isLoaded, isSyncing, noAccess } = result
+
+  // Map collection access levels to legacy tool access levels
+  function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
+    if (a === 'OWNER') return 'OWNER'
+    if (a === 'EDITOR' || a === 'EDIT') return 'EDIT'
+    if (a === 'VIEWER' || a === 'VIEW') return 'VIEW'
+    return a as 'OWNER' | 'EDIT' | 'VIEW' | null
+  }
+  const access = mapAccess(result.access)
+  const readOnly = access === 'VIEW'
 
   const payload = ensureShape(rawState)
 

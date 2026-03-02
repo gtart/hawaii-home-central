@@ -8,8 +8,8 @@ import { PunchlistPage } from './components/PunchlistPage'
 import { PunchlistEmptyState } from './components/PunchlistEmptyState'
 import { ShareExportModal } from './components/ShareExportModal'
 
-function PunchlistContent() {
-  const api = usePunchlistState()
+function PunchlistContent({ collectionId }: { collectionId?: string }) {
+  const api = usePunchlistState(collectionId ? { collectionId } : undefined)
   const { payload, isLoaded, isSyncing, access, readOnly, noAccess } = api
   const { currentProject } = useProject()
   const isOwner = access === 'OWNER'
@@ -94,12 +94,12 @@ function PunchlistContent() {
   )
 }
 
-export function ToolContent() {
+export function ToolContent({ collectionId }: { collectionId?: string } = {}) {
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-4xl mx-auto">
         <Suspense fallback={null}>
-          <PunchlistContent />
+          <PunchlistContent collectionId={collectionId} />
         </Suspense>
       </div>
     </div>
