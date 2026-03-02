@@ -56,10 +56,18 @@ export async function GET(
   })
 
   if (instance) {
+    // Backward compat: include collectionId so clients can migrate
+    const defaultCollection = await prisma.toolCollection.findFirst({
+      where: { projectId, toolKey, archivedAt: null },
+      select: { id: true },
+      orderBy: { createdAt: 'asc' },
+    })
+
     return NextResponse.json({
       payload: instance.payload,
       updatedAt: instance.updatedAt,
       access,
+      collectionId: defaultCollection?.id ?? null,
     })
   }
 

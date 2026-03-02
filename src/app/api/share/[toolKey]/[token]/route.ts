@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateShareToken, getReportSettings } from '@/lib/share-tokens'
+import { validateCollectionShareToken } from '@/lib/collection-access'
 import { toPublicItem } from '@/app/app/tools/punchlist/types'
 import type { PunchlistItem } from '@/app/app/tools/punchlist/types'
 import { toPublicBoard } from '@/data/mood-boards'
@@ -20,28 +21,62 @@ export async function GET(
     return NextResponse.json({ error: 'Invalid tool' }, { status: 400 })
   }
 
-  const record = await validateShareToken(token)
-  if (!record || record.toolKey !== toolKey) {
-    return NextResponse.json(
-      { error: 'Invalid or expired link' },
-      { status: 404 }
-    )
+  // Dual-lookup: check ToolCollectionShareToken first, then fall back to legacy ToolShareToken
+  const collectionToken = await validateCollectionShareToken(token)
+  let record: Awaited<ReturnType<typeof validateShareToken>> = null
+  let payloadData: unknown = null
+
+  if (collectionToken && collectionToken.collection.toolKey === toolKey) {
+    // Use collection-based data
+    payloadData = collectionToken.collection.payload
+    // Build a compat record shape for downstream code
+    record = {
+      id: collectionToken.id,
+      token: collectionToken.token,
+      projectId: collectionToken.collection.projectId,
+      toolKey: collectionToken.collection.toolKey,
+      permissions: collectionToken.permissions,
+      settings: collectionToken.settings,
+      createdBy: collectionToken.createdBy,
+      revokedAt: collectionToken.revokedAt,
+      expiresAt: collectionToken.expiresAt,
+      createdAt: collectionToken.createdAt,
+      updatedAt: collectionToken.updatedAt,
+      project: collectionToken.collection.project,
+    }
+  } else {
+    // Legacy fallback
+    record = await validateShareToken(token)
+    if (!record || record.toolKey !== toolKey) {
+      return NextResponse.json(
+        { error: 'Invalid or expired link' },
+        { status: 404 }
+      )
+    }
+
+    // Load tool data from ToolInstance
+    const instance = await prisma.toolInstance.findUnique({
+      where: {
+        projectId_toolKey: {
+          projectId: record.projectId,
+          toolKey,
+        },
+      },
+      select: { payload: true },
+    })
+
+    if (!instance) {
+      return NextResponse.json(
+        { error: 'No data found' },
+        { status: 404 }
+      )
+    }
+    payloadData = instance.payload
   }
 
-  // Load tool data
-  const instance = await prisma.toolInstance.findUnique({
-    where: {
-      projectId_toolKey: {
-        projectId: record.projectId,
-        toolKey,
-      },
-    },
-    select: { payload: true },
-  })
-
-  if (!instance) {
+  if (!record) {
     return NextResponse.json(
-      { error: 'No data found' },
+      { error: 'Invalid or expired link' },
       { status: 404 }
     )
   }
@@ -63,7 +98,7 @@ export async function GET(
   }
 
   const boardId = typeof settings?.boardId === 'string' ? (settings.boardId as string) : null
-  let payload: Record<string, unknown> = instance.payload as Record<string, unknown>
+  let payload: Record<string, unknown> = payloadData as Record<string, unknown>
 
   // Mood boards: allowlist sanitization — strip sensitive fields, respect token flags
   if (toolKey === 'mood_boards' && Array.isArray(payload?.boards)) {
