@@ -14,7 +14,6 @@ import { IdeaDetailModal } from './IdeaDetailModal'
 import { CommentsPanel } from './CommentsPanel'
 import { ExportBoardModal } from './ExportBoardModal'
 import { BoardSettingsSheet } from './BoardSettingsSheet'
-import { ShareToolModal } from '@/components/app/ShareToolModal'
 import { ShareExportModal } from '@/components/app/ShareExportModal'
 
 function relativeTime(iso: string): string {
@@ -55,7 +54,6 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
   const [showAddMenu, setShowAddMenu] = useState(false)
   const [showExport, setShowExport] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [showInviteModal, setShowInviteModal] = useState(false)
   const [showShareExportForBoard, setShowShareExportForBoard] = useState(false)
 
   // Search + filter state
@@ -1006,20 +1004,6 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
           onManagePublicLinks={() => setShowShareExportForBoard(true)}
           publicLinkCount={shareLinkCount}
           isCollectionMode={!!collectionId}
-        />
-      )}
-
-      {/* Invite people modal */}
-      {showInviteModal && currentProject && (
-        <ShareToolModal
-          projectId={currentProject.id}
-          toolKey="mood_boards"
-          onClose={() => setShowInviteModal(false)}
-          description={collectionId
-            ? undefined
-            : "Invited people can view all boards unless a board is marked Private."}
-          collectionId={collectionId}
-          collectionName={collectionId ? board.name : undefined}
         />
       )}
 
