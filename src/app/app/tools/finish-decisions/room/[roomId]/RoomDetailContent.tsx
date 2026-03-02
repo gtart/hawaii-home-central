@@ -253,17 +253,12 @@ export function RoomDetailContent({
   }
 
   if (!room) {
+    // Room doesn't exist in current project (e.g. user switched projects) — redirect home
+    router.replace('/app/tools/finish-decisions')
     return (
       <div className="pt-32 pb-24 px-6">
-        <div className="max-w-4xl mx-auto text-center py-12">
-          <p className="text-cream/50 mb-4">Area not found.</p>
-          <button
-            type="button"
-            onClick={() => router.push('/app/tools/finish-decisions')}
-            className="text-sandstone hover:text-sandstone-light text-sm transition-colors"
-          >
-            &larr; Back to Decision Tracker
-          </button>
+        <div className="max-w-4xl mx-auto text-center py-12 text-cream/50">
+          <p>Redirecting...</p>
         </div>
       </div>
     )

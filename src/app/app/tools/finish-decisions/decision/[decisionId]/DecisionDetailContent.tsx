@@ -376,18 +376,12 @@ export function DecisionDetailContent({
   }
 
   if (!foundDecision || !foundRoom) {
+    // Decision doesn't exist in current project (e.g. user switched projects) — redirect home
+    router.replace('/app/tools/finish-decisions')
     return (
       <div className="pt-32 pb-24 px-6">
-        <div className="max-w-3xl mx-auto">
-          <button
-            onClick={() => router.push('/app/tools/finish-decisions')}
-            className="text-sandstone hover:text-sandstone-light text-sm mb-6"
-          >
-            ← Back to Decisions
-          </button>
-          <div className="bg-basalt-50 rounded-card p-12 text-center">
-            <p className="text-cream/50">Decision not found.</p>
-          </div>
+        <div className="max-w-3xl mx-auto text-center py-12 text-cream/50">
+          <p>Redirecting...</p>
         </div>
       </div>
     )
