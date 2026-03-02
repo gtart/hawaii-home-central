@@ -4,7 +4,7 @@ import { PacksMarketplace } from './PacksMarketplace'
 
 export const metadata: Metadata = {
   title: 'Decision Packs',
-  description: 'Browse curated Decision Packs for your renovation project.',
+  description: 'Browse curated Decision Packs for your renovation.',
 }
 
 export default async function PacksPage() {

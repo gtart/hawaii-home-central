@@ -452,7 +452,7 @@ export function SaveFromWebContent() {
     return (
       <div className="pt-32 pb-24 px-6">
         <div className="max-w-xl mx-auto text-center">
-          <p className="text-cream/60">No project found. Create a project first.</p>
+          <p className="text-cream/60">No home found. Create a home first.</p>
           <button
             type="button"
             onClick={() => router.push('/app')}
@@ -469,7 +469,7 @@ export function SaveFromWebContent() {
     return (
       <div className="pt-32 pb-24 px-6">
         <div className="max-w-xl mx-auto text-center">
-          <p className="text-cream/60">You have view-only access to this project.</p>
+          <p className="text-cream/60">You have view-only access to this home.</p>
           <button
             type="button"
             onClick={() => router.push('/app')}

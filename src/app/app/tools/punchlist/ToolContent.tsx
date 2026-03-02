@@ -38,7 +38,7 @@ function PunchlistContent() {
       <div className="text-center py-24">
         <h2 className="font-serif text-2xl text-cream mb-2">No Access</h2>
         <p className="text-cream/50 text-sm">
-          You don&apos;t have access to this tool for the current project.
+          You don&apos;t have access to this tool for the current home.
         </p>
       </div>
     )

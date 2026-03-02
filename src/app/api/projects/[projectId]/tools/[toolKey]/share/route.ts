@@ -26,7 +26,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
   }
 
   if (member.role !== 'OWNER') {
-    return NextResponse.json({ error: 'Only the project owner can manage sharing' }, { status: 403 })
+    return NextResponse.json({ error: 'Only the home owner can manage sharing' }, { status: 403 })
   }
 
   // Get current access grants
@@ -90,7 +90,7 @@ export async function POST(request: Request, { params }: RouteParams) {
   }
 
   if (member.role !== 'OWNER') {
-    return NextResponse.json({ error: 'Only the project owner can share tools' }, { status: 403 })
+    return NextResponse.json({ error: 'Only the home owner can share tools' }, { status: 403 })
   }
 
   const body = await request.json()
@@ -234,7 +234,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
   }
 
   if (member.role !== 'OWNER') {
-    return NextResponse.json({ error: 'Only the project owner can revoke access' }, { status: 403 })
+    return NextResponse.json({ error: 'Only the home owner can revoke access' }, { status: 403 })
   }
 
   const body = await request.json()

@@ -94,7 +94,7 @@ export async function DELETE(
 
   if (!project || project.status !== 'TRASHED') {
     return NextResponse.json(
-      { error: 'Project must be in trash before permanent deletion' },
+      { error: 'Home must be in trash before permanent deletion' },
       { status: 400 }
     )
   }

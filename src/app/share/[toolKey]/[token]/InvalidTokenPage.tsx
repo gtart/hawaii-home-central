@@ -15,7 +15,7 @@ export function InvalidTokenPage() {
         </h1>
         <p className="text-cream/50 text-sm mb-6">
           This shared link is no longer valid. It may have been revoked by the
-          project owner or expired.
+          home owner or expired.
         </p>
         <Link
           href="/"

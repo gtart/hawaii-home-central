@@ -90,7 +90,7 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
           href="/app"
           className="text-sandstone hover:text-sandstone-light text-sm"
         >
-          &larr; {currentProject?.name || 'Home Project Tools'}
+          &larr; {currentProject?.name || 'Tools'}
         </Link>
       </div>
 

@@ -41,7 +41,7 @@ export function ProjectBanner() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm text-cream/70">
-              We created <strong className="text-cream">My Home</strong> as your starter project.
+              We created <strong className="text-cream">My Home</strong> as your starter home.
               Rename it anytime.
             </p>
             <div className="flex items-center gap-3 mt-2">

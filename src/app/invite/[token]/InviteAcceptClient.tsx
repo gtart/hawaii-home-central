@@ -84,7 +84,7 @@ export function InviteAcceptClient() {
             <h1 className="text-xl font-medium text-cream mb-2">Invite Not Available</h1>
             <p className="text-cream/50 text-sm mb-6">{error}</p>
             <Link href="/app" className="text-sandstone hover:text-sandstone-light text-sm">
-              Go to Home Project Tools
+              Go to My Tools
             </Link>
           </div>
         ) : !invite ? (
@@ -101,7 +101,7 @@ export function InviteAcceptClient() {
               <p className="text-cream/50 text-sm">Redirecting to {TOOL_LABELS[invite.toolKey] || 'the tool'}...</p>
             ) : (
               <Link href="/app" className="text-sandstone hover:text-sandstone-light text-sm">
-                Go to Home Project Tools
+                Go to My Tools
               </Link>
             )}
           </div>
@@ -124,7 +124,7 @@ export function InviteAcceptClient() {
 
             <div className="bg-basalt rounded-lg p-4 mb-6 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-cream/40">Project</span>
+                <span className="text-cream/40">Home</span>
                 <span className="text-cream">{invite.projectName}</span>
               </div>
               <div className="flex justify-between text-sm">

@@ -66,7 +66,7 @@ export function SettingsContent() {
         </div>
 
         <div className="bg-basalt-50 rounded-card p-6 mb-6">
-          <h2 className="font-serif text-xl text-cream mb-4">My Projects</h2>
+          <h2 className="font-serif text-xl text-cream mb-4">My Homes</h2>
           <div className="space-y-2 mb-4">
             {projects.filter((p) => p.status === 'ACTIVE').map((p) => (
               <div key={p.id} className="flex items-center justify-between text-sm">
@@ -81,7 +81,7 @@ export function SettingsContent() {
             href="/app/projects"
             className="text-sandstone hover:text-sandstone-light text-sm transition-colors"
           >
-            Manage projects &rarr;
+            Manage homes &rarr;
           </Link>
         </div>
 

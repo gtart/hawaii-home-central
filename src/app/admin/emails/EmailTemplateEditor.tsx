@@ -17,7 +17,7 @@ const DEFAULT_BODY = `<div style="font-family: -apple-system, BlinkMacSystemFont
   <h2 style="color: #1a1a1a; font-size: 22px; margin: 0 0 8px;">You've been invited to collaborate</h2>
   <p style="color: #555; font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
     <strong>{{inviterName}}</strong> has invited you to <strong>{{accessLevel}}</strong>
-    the <strong>{{toolName}}</strong> for their project <strong>{{projectName}}</strong>
+    the <strong>{{toolName}}</strong> for their home <strong>{{projectName}}</strong>
     on Hawaii Home Central.
   </p>
   <a href="{{inviteLink}}"

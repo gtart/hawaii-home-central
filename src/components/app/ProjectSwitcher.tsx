@@ -30,6 +30,9 @@ export function ProjectSwitcher() {
   const { currentProject, projects, switchProject, createProject } = projectCtx
   const activeProjects = projects.filter((p) => p.status === 'ACTIVE')
 
+  // Tuck: hide switcher when user has exactly 1 home (no need to switch)
+  if (activeProjects.length === 1 && currentProject) return null
+
   // No projects at all (unauthenticated or truly empty)
   if (!currentProject && activeProjects.length === 0) {
     return (
@@ -61,7 +64,7 @@ export function ProjectSwitcher() {
                   }
                   if (e.key === 'Escape') { setOpen(false); setNewName('') }
                 }}
-                placeholder="Project name..."
+                placeholder="Home name..."
                 className="w-full bg-basalt border border-cream/20 rounded px-2.5 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
               />
               <button
@@ -84,7 +87,7 @@ export function ProjectSwitcher() {
   }
 
   // Determine trigger label
-  const triggerLabel = currentProject?.name ?? 'Select home project'
+  const triggerLabel = currentProject?.name ?? 'Select home'
 
   const handleSwitch = async (projectId: string) => {
     if (projectId === currentProject?.id) {
@@ -157,7 +160,7 @@ export function ProjectSwitcher() {
                     if (e.key === 'Enter') handleCreate()
                     if (e.key === 'Escape') { setCreating(false); setNewName('') }
                   }}
-                  placeholder="Project name..."
+                  placeholder="Home name..."
                   className="w-full bg-basalt border border-cream/20 rounded px-2.5 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
                 />
                 <div className="flex gap-2 mt-2">
@@ -186,7 +189,7 @@ export function ProjectSwitcher() {
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 5v14m-7-7h14" strokeLinecap="round" />
                 </svg>
-                New Project
+                New Home
               </button>
             )}
           </div>
@@ -201,7 +204,7 @@ export function ProjectSwitcher() {
                 <path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z" strokeLinecap="round" strokeLinejoin="round" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
-              Manage Home Projects
+              Manage Homes
             </a>
           </div>
         </div>

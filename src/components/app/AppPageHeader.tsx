@@ -4,7 +4,7 @@ import { useProject } from '@/contexts/ProjectContext'
 
 export function AppPageHeader() {
   const { currentProject } = useProject()
-  const name = currentProject?.name ?? 'My Project'
+  const name = currentProject?.name ?? 'My Home'
 
   return (
     <div className="mb-8">

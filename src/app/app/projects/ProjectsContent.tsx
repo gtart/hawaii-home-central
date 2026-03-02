@@ -266,10 +266,10 @@ export function ProjectsContent() {
           href="/app"
           className="text-sandstone hover:text-sandstone-light text-sm mb-4 inline-block"
         >
-          &larr; Home Project Tools
+          &larr; Tools
         </Link>
         <h1 className="font-serif text-4xl md:text-5xl text-sandstone mb-8">
-          My Projects
+          My Homes
         </h1>
 
         {/* Active */}
@@ -284,7 +284,7 @@ export function ProjectsContent() {
                 onClick={() => setCreating(true)}
                 className="text-xs text-sandstone hover:text-sandstone-light transition-colors"
               >
-                + New project
+                + New home
               </button>
             )}
           </div>
@@ -302,7 +302,7 @@ export function ProjectsContent() {
                     if (e.key === 'Enter') handleCreate()
                     if (e.key === 'Escape') { setCreating(false); setNewName('') }
                   }}
-                  placeholder="Project name..."
+                  placeholder="Home name..."
                   className="w-full bg-basalt border border-cream/20 rounded px-2.5 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50 mb-2"
                 />
                 <div className="flex gap-2">
@@ -346,7 +346,7 @@ export function ProjectsContent() {
               Trash ({trashedProjects.length})
             </h2>
             <p className="text-xs text-cream/30 mb-3">
-              Trashed projects can be restored or permanently deleted.
+              Trashed homes can be restored or permanently deleted.
             </p>
             <div className="space-y-2">
               {trashedProjects.map((p) => renderProjectRow(p, 'trashed'))}

@@ -25,7 +25,7 @@ const TAB_HELPER_COPY: Record<ViewTab, string> = {
   quotes: "Compare what\u2019s included, excluded, and assumed \u2014 this is where surprises hide.",
   agree: "Payment, change orders, and warranty \u2014 confirm the rules before you sign.",
   handoffs: "Prevent \u201CI thought you were doing that.\u201D Assign owner for every task.",
-  notes: "Visible to collaborators on this project.",
+  notes: "Visible to collaborators on this home.",
 }
 
 function BYSContent() {
@@ -90,8 +90,8 @@ function BYSContent() {
 
       {noAccess ? (
         <div className="bg-basalt-50 rounded-card p-8 text-center">
-          <p className="text-cream/50 mb-2">You don&apos;t have access to this tool for the current project.</p>
-          <a href="/app" className="text-sandstone hover:text-sandstone-light text-sm">Back to Home Project Tools</a>
+          <p className="text-cream/50 mb-2">You don&apos;t have access to this tool for the current home.</p>
+          <a href="/app" className="text-sandstone hover:text-sandstone-light text-sm">Back to Tools</a>
         </div>
       ) : contractors.length === 0 ? (
         readOnly ? (

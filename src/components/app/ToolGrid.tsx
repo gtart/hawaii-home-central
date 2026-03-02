@@ -75,7 +75,7 @@ export function ToolGrid() {
     return (
       <div className="text-center py-12">
         <p className="text-cream/40 text-sm">
-          No tools have been shared with you for this project yet.
+          No tools have been shared with you for this home yet.
         </p>
       </div>
     )
