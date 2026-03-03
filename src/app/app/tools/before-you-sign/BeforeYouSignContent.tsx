@@ -93,14 +93,6 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
     } catch { /* ignore */ }
   }, [collectionId, router])
 
-  if (!isLoaded) {
-    return (
-      <div className="py-12 text-center text-cream/30 text-sm">
-        Loading...
-      </div>
-    )
-  }
-
   const { contractors, selectedContractorIds, customAgreeItems } = payload
   const selectedContractors = contractors.filter((c) =>
     selectedContractorIds.includes(c.id)
@@ -134,6 +126,14 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
   }, [selectedContractors, customAgreeItems, getAnswer])
 
   const progressPct = total > 0 ? Math.round((answered / total) * 100) : 0
+
+  if (!isLoaded) {
+    return (
+      <div className="py-12 text-center text-cream/30 text-sm">
+        Loading...
+      </div>
+    )
+  }
 
   return (
     <>
