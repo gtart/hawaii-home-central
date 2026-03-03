@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useToolState } from '@/hooks/useToolState'
 import { useCollectionState } from '@/hooks/useCollectionState'
 import { useProject } from '@/contexts/ProjectContext'
@@ -8,7 +9,6 @@ import { LocalModeBanner } from '@/components/guides/LocalModeBanner'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
 import { DecisionTrackerPage } from './components/DecisionTrackerPage'
-import { ShareExportModal } from '@/components/app/ShareExportModal'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import {
   DEFAULT_DECISIONS_BY_ROOM_TYPE,
@@ -224,7 +224,7 @@ export function ToolContent({
 }: ToolContentProps) {
   const resolvedDefaults = defaultDecisions || DEFAULT_DECISIONS_BY_ROOM_TYPE
   const { projects, currentProject } = useProject()
-  const [showShareExport, setShowShareExport] = useState(false)
+  const router = useRouter()
 
   // Collection mode: use collection-based state
   const collResult = useCollectionState<FinishDecisionsPayloadV3 | any>({
@@ -393,6 +393,30 @@ export function ToolContent({
     })
   }
 
+  const handleRename = useCallback(async (newTitle: string) => {
+    if (!collectionId) return
+    try {
+      await fetch(`/api/collections/${collectionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle }),
+      })
+      router.refresh()
+    } catch { /* ignore */ }
+  }, [collectionId, router])
+
+  const handleArchive = useCallback(async () => {
+    if (!collectionId || !confirm('Archive this decision list? You can restore it later.')) return
+    try {
+      await fetch(`/api/collections/${collectionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+      })
+      router.push('/app/tools/finish-decisions')
+    } catch { /* ignore */ }
+  }, [collectionId, router])
+
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-4xl mx-auto">
@@ -412,20 +436,28 @@ export function ToolContent({
             backHref={collectionId ? '/app/tools/finish-decisions' : undefined}
             backLabel={collectionId ? 'All Decision Lists' : undefined}
             headerSlot={collectionId ? <InstanceSwitcher toolKey="finish_decisions" currentCollectionId={collectionId} itemNoun="list" /> : undefined}
-            actions={v3State.rooms.length > 0 ? (
-              <button
-                type="button"
-                onClick={() => setShowShareExport(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-sandstone/15 text-sandstone hover:bg-sandstone/25 transition-colors"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
-                  <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
-                  <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
-                </svg>
-                Share &amp; Export
-              </button>
-            ) : undefined}
+            toolLabel="Decision List"
+            scopes={v3State.rooms
+              .filter((r) => r.systemKey !== 'global_uncategorized')
+              .map((r) => ({
+                id: r.id,
+                name: r.name,
+                emoji: ROOM_EMOJI_MAP[r.type] || '🏠',
+              }))}
+            scopeLabel="Areas"
+            buildExportUrl={({ projectId: pid, selectedScopeIds, scopeMode, includeNotes, includeComments, includePhotos }) => {
+              const reportBase = collectionId
+                ? `/app/tools/finish-decisions/${collectionId}/report`
+                : `/app/tools/finish-decisions/report?projectId=${pid}`
+              const sep = reportBase.includes('?') ? '&' : '?'
+              let url = `${reportBase}${sep}includeNotes=${includeNotes}&includeComments=${includeComments}&includePhotos=${includePhotos}`
+              if (scopeMode === 'selected' && selectedScopeIds.length > 0) {
+                url += `&roomIds=${encodeURIComponent(selectedScopeIds.join(','))}`
+              }
+              return url
+            }}
+            onRename={collectionId ? handleRename : undefined}
+            onArchive={collectionId ? handleArchive : undefined}
           />
         )}
         {noAccess ? (
@@ -462,35 +494,6 @@ export function ToolContent({
           </div>
         )}
       </div>
-
-      {showShareExport && currentProject && (
-        <ShareExportModal
-          toolKey="finish_decisions"
-          toolLabel="Decision List"
-          projectId={currentProject.id}
-          isOwner={access === 'OWNER'}
-          onClose={() => setShowShareExport(false)}
-          scopes={v3State.rooms
-            .filter((r) => r.systemKey !== 'global_uncategorized')
-            .map((r) => ({
-              id: r.id,
-              name: r.name,
-              emoji: ROOM_EMOJI_MAP[r.type] || '🏠',
-            }))}
-          scopeLabel="Areas"
-          buildExportUrl={({ projectId: pid, includeNotes: notes, includeComments: comments, includePhotos: photos, scopeMode, selectedScopeIds }) => {
-            const reportBase = collectionId
-              ? `/app/tools/finish-decisions/${collectionId}/report`
-              : '/app/tools/finish-decisions/report'
-            let url = `${reportBase}?projectId=${pid}&includeNotes=${notes}&includeComments=${comments}&includePhotos=${photos}`
-            if (scopeMode === 'selected' && selectedScopeIds.length > 0) {
-              url += `&roomIds=${encodeURIComponent(selectedScopeIds.join(','))}`
-            }
-            return url
-          }}
-          collectionId={collectionId}
-        />
-      )}
     </div>
   )
 }

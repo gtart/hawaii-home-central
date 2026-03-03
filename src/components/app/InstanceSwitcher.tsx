@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useProject } from '@/contexts/ProjectContext'
-import { TOOL_PATHS } from '@/lib/tool-registry'
+import { TOOL_PATHS, TOOL_LABELS } from '@/lib/tool-registry'
 
 interface CollectionItem {
   id: string
@@ -13,7 +14,7 @@ interface CollectionItem {
 interface InstanceSwitcherProps {
   toolKey: string
   currentCollectionId: string
-  itemNoun: string // "list" | "board"
+  itemNoun: string // "list" | "board" | "checklist"
 }
 
 export function InstanceSwitcher({ toolKey, currentCollectionId, itemNoun }: InstanceSwitcherProps) {
@@ -26,6 +27,7 @@ export function InstanceSwitcher({ toolKey, currentCollectionId, itemNoun }: Ins
   const ref = useRef<HTMLDivElement>(null)
 
   const toolPath = TOOL_PATHS[toolKey] ?? `/app/tools/${toolKey}`
+  const toolLabel = TOOL_LABELS[toolKey] ?? toolKey
 
   // Fetch collections on mount
   useEffect(() => {
@@ -68,9 +70,6 @@ export function InstanceSwitcher({ toolKey, currentCollectionId, itemNoun }: Ins
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
-  // Don't render if only 1 collection (no switching needed)
-  if (collections.length <= 1) return null
-
   const handleCreate = async () => {
     const title = newTitle.trim()
     if (!title || !currentProject?.id) return
@@ -92,6 +91,31 @@ export function InstanceSwitcher({ toolKey, currentCollectionId, itemNoun }: Ins
     }
   }
 
+  // With 0 or 1 collections: show just "+ New" button (no dropdown needed)
+  if (collections.length <= 1) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          if (collections.length === 0) {
+            // No collections to show, just go to picker which has empty state
+            router.push(toolPath)
+          } else {
+            // 1 collection — show inline create
+            setOpen(true)
+          }
+        }}
+        className="inline-flex items-center gap-1 text-sandstone/50 hover:text-sandstone transition-colors text-sm"
+      >
+        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 5v14m-7-7h14" strokeLinecap="round" />
+        </svg>
+        <span className="hidden sm:inline">New {itemNoun}</span>
+      </button>
+    )
+  }
+
+  // 2+ collections: full dropdown
   return (
     <div className="relative" ref={ref}>
       <button
@@ -166,16 +190,25 @@ export function InstanceSwitcher({ toolKey, currentCollectionId, itemNoun }: Ins
                 </button>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => setCreating(true)}
-                className="w-full text-left px-3 py-2.5 text-sm text-sandstone/70 hover:text-sandstone hover:bg-cream/5 transition-colors flex items-center gap-2"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 5v14m-7-7h14" strokeLinecap="round" />
-                </svg>
-                New {itemNoun}
-              </button>
+              <div className="flex flex-col">
+                <button
+                  type="button"
+                  onClick={() => setCreating(true)}
+                  className="w-full text-left px-3 py-2.5 text-sm text-sandstone/70 hover:text-sandstone hover:bg-cream/5 transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 5v14m-7-7h14" strokeLinecap="round" />
+                  </svg>
+                  New {itemNoun}
+                </button>
+                <Link
+                  href={toolPath}
+                  onClick={() => setOpen(false)}
+                  className="w-full text-left px-3 py-2 text-xs text-cream/30 hover:text-cream/50 hover:bg-cream/5 transition-colors border-t border-cream/5"
+                >
+                  View all {toolLabel}
+                </Link>
+              </div>
             )}
           </div>
         </div>

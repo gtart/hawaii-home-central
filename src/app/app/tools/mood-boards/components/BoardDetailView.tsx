@@ -76,6 +76,10 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
   const [textIdeaName, setTextIdeaName] = useState('')
   const [textIdeaNotes, setTextIdeaNotes] = useState('')
 
+  // Quick URL add state
+  const [quickUrl, setQuickUrl] = useState('')
+  const [quickUrlError, setQuickUrlError] = useState('')
+
   const galleryRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
 
@@ -309,6 +313,30 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
     setTextIdeaName('')
     setTextIdeaNotes('')
     setShowTextForm(false)
+  }
+
+  const handleQuickUrlAdd = () => {
+    const trimmed = quickUrl.trim()
+    if (!trimmed) return
+    try {
+      const parsed = new URL(trimmed)
+      if (!parsed.protocol.startsWith('http')) throw new Error('invalid')
+    } catch {
+      setQuickUrlError('Please enter a valid URL')
+      return
+    }
+    setQuickUrlError('')
+    const imageId = crypto.randomUUID()
+    api.addIdea(board.id, {
+      name: '',
+      notes: '',
+      images: [{ id: imageId, url: trimmed }],
+      heroImageId: null,
+      sourceUrl: trimmed,
+      sourceTitle: null,
+      tags: [],
+    })
+    setQuickUrl('')
   }
 
   const handleCommentOnIdea = (ideaId: string, ideaName: string) => {
@@ -739,6 +767,33 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
               Cancel
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Quick add image URL */}
+      {!readOnly && (
+        <div className="mb-4">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={quickUrl}
+              onChange={(e) => { setQuickUrl(e.target.value); setQuickUrlError('') }}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleQuickUrlAdd() }}
+              placeholder="Paste image URL..."
+              className="flex-1 px-3 py-2 bg-basalt border border-cream/15 text-cream text-sm rounded-lg placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
+            />
+            <button
+              type="button"
+              onClick={handleQuickUrlAdd}
+              disabled={!quickUrl.trim()}
+              className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30"
+            >
+              Add
+            </button>
+          </div>
+          {quickUrlError && (
+            <p className="text-xs text-red-400 mt-1">{quickUrlError}</p>
+          )}
         </div>
       )}
 

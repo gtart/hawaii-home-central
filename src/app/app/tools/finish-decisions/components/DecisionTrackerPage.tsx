@@ -25,6 +25,14 @@ import { IdeasPackModal } from './IdeasPackModal'
 
 const VIEW_MODE_KEY = 'hhc_finish_view_mode_v2'
 const SORT_KEY = 'hhc_finish_sort_key'
+const GROUP_BY_KEY = 'hhc_finish_group_by'
+
+type GroupBy = 'none' | 'area' | 'status'
+const GROUP_BY_OPTIONS: { key: GroupBy; label: string }[] = [
+  { key: 'none', label: 'All decisions' },
+  { key: 'area', label: 'By area' },
+  { key: 'status', label: 'By status' },
+]
 
 type SortKey = 'alpha' | 'created' | 'updated' | 'due' | 'inProgress' | 'comments'
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
@@ -180,14 +188,24 @@ export function DecisionTrackerPage({
       return (stored as SortKey) || 'created'
     } catch { return 'created' }
   })
+  const [groupBy, setGroupBy] = useState<GroupBy>(() => {
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem(GROUP_BY_KEY) : null
+      if (stored === 'area' || stored === 'status' || stored === 'none') return stored
+      return 'none'
+    } catch { return 'none' }
+  })
 
-  // Persist view mode + sort key
+  // Persist view mode + sort key + groupBy
   useEffect(() => {
     try { localStorage.setItem(VIEW_MODE_KEY, viewMode) } catch { /* ignore */ }
   }, [viewMode])
   useEffect(() => {
     try { localStorage.setItem(SORT_KEY, sortKey) } catch { /* ignore */ }
   }, [sortKey])
+  useEffect(() => {
+    try { localStorage.setItem(GROUP_BY_KEY, groupBy) } catch { /* ignore */ }
+  }, [groupBy])
 
   // Search auto-expand: save/restore expand state when searching
   const preSearchExpandRef = useRef<Set<string> | null>(null)
@@ -646,6 +664,19 @@ export function DecisionTrackerPage({
                 </svg>
               </button>
             </div>
+            {/* Group By dropdown (desktop) */}
+            <div className="hidden md:flex items-center gap-1.5 shrink-0">
+              <span className="text-[11px] text-cream/30">Group</span>
+              <select
+                value={groupBy}
+                onChange={(e) => setGroupBy(e.target.value as GroupBy)}
+                className="bg-basalt-50 text-cream/60 text-[11px] rounded-lg border border-cream/10 px-2 py-1 focus:outline-none focus:border-sandstone/40"
+              >
+                {GROUP_BY_OPTIONS.map((opt) => (
+                  <option key={opt.key} value={opt.key}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
             {/* Sort dropdown (desktop) */}
             <div className="hidden md:flex items-center gap-1.5 shrink-0">
               <span className="text-[11px] text-cream/30">Sort</span>
@@ -857,7 +888,112 @@ export function DecisionTrackerPage({
               onAddRoom={() => setAddRoomOpen(true)}
               readOnly={readOnly}
             />
+          ) : groupBy === 'none' ? (
+            /* Flat view — all decisions in one list */
+            <div className="space-y-1.5">
+              {sortedFilteredRooms
+                .flatMap((room) =>
+                  room.decisions
+                    .filter((d) => d.systemKey !== 'uncategorized')
+                    .map((d) => ({ decision: d, roomName: room.name, roomId: room.id }))
+                )
+                .sort((a, b) => b.decision.updatedAt.localeCompare(a.decision.updatedAt))
+                .map(({ decision, roomName, roomId }) => {
+                  const config = STATUS_CONFIG_V3[decision.status]
+                  return (
+                    <Link
+                      key={decision.id}
+                      href={`/app/tools/finish-decisions/decision/${decision.id}?room=${roomId}`}
+                      className="flex items-center gap-3 px-4 py-3 bg-basalt-50 rounded-lg border border-cream/10 hover:border-sandstone/30 transition-colors group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h4 className="text-sm font-medium text-cream truncate">{decision.title}</h4>
+                          <span className="text-[10px] text-cream/30 bg-cream/5 rounded px-1.5 py-0.5 shrink-0">{roomName}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-cream/40">
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium ${config.pillClass}`}>
+                            {config.label}
+                          </span>
+                          {decision.options.length > 0 && (
+                            <span>{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
+                          )}
+                          {decision.dueDate && (
+                            <span>{new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                          )}
+                        </div>
+                      </div>
+                      <svg className="w-4 h-4 text-cream/20 group-hover:text-cream/40 transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </Link>
+                  )
+                })}
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => openQuickAdd(null)}
+                  className="hidden md:flex w-full items-center justify-center gap-2 px-4 py-3 bg-basalt-50/50 rounded-card border-2 border-dashed border-cream/15 hover:border-sandstone/40 transition-all cursor-pointer group"
+                >
+                  <svg className="w-4 h-4 text-cream/30 group-hover:text-sandstone transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                  </svg>
+                  <span className="text-sm font-medium text-cream/40 group-hover:text-sandstone transition-colors">Add a Decision</span>
+                </button>
+              )}
+            </div>
+          ) : groupBy === 'status' ? (
+            /* Grouped by status */
+            <div className="space-y-4">
+              {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, (typeof STATUS_CONFIG_V3)[StatusV3]][]).map(([status, config]) => {
+                const decisionsForStatus = sortedFilteredRooms
+                  .flatMap((room) =>
+                    room.decisions
+                      .filter((d) => d.status === status && d.systemKey !== 'uncategorized')
+                      .map((d) => ({ decision: d, roomName: room.name, roomId: room.id }))
+                  )
+                if (decisionsForStatus.length === 0) return null
+                return (
+                  <div key={status}>
+                    <h3 className="text-sm font-medium text-cream/60 mb-2 flex items-center gap-2">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[11px] font-medium ${config.pillClass}`}>
+                        {config.label}
+                      </span>
+                      <span className="text-[11px] text-cream/30">{decisionsForStatus.length}</span>
+                    </h3>
+                    <div className="space-y-1.5">
+                      {decisionsForStatus.map(({ decision, roomName, roomId }) => (
+                        <Link
+                          key={decision.id}
+                          href={`/app/tools/finish-decisions/decision/${decision.id}?room=${roomId}`}
+                          className="flex items-center gap-3 px-4 py-3 bg-basalt-50 rounded-lg border border-cream/10 hover:border-sandstone/30 transition-colors group"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-medium text-cream truncate">{decision.title}</h4>
+                              <span className="text-[10px] text-cream/30 bg-cream/5 rounded px-1.5 py-0.5 shrink-0">{roomName}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-[11px] text-cream/40 mt-0.5">
+                              {decision.options.length > 0 && (
+                                <span>{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
+                              )}
+                              {decision.dueDate && (
+                                <span>{new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                              )}
+                            </div>
+                          </div>
+                          <svg className="w-4 h-4 text-cream/20 group-hover:text-cream/40 transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           ) : (
+            /* groupBy === 'area' — existing room sections */
             <div className="space-y-2">
               {sortedFilteredRooms.map((room) =>
                 isGlobalUnsorted(room) ? (

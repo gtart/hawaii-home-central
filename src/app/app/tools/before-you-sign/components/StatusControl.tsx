@@ -28,7 +28,7 @@ export function StatusControl({ status, onChange, compact }: StatusControlProps)
           status === 'no' && 'bg-red-400/20 text-red-400',
           status === 'unknown' && 'bg-amber-400/20 text-amber-400'
         )}
-        aria-label={`Status: ${status}. Click to change.`}
+        aria-label={`Status: ${status === 'yes' ? 'Confirmed' : status === 'no' ? 'Flagged' : 'Not reviewed'}. Click to change.`}
       >
         {status === 'yes' && (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -62,7 +62,7 @@ export function StatusControl({ status, onChange, compact }: StatusControlProps)
             status === s && s === 'unknown' && 'bg-amber-400/20 text-amber-400',
             status !== s && 'text-cream/25 hover:text-cream/50 hover:bg-cream/5'
           )}
-          aria-label={s === 'yes' ? 'Yes' : s === 'no' ? 'No' : 'Incomplete'}
+          aria-label={s === 'yes' ? 'Confirmed' : s === 'no' ? 'Flagged' : 'Not reviewed'}
         >
           {s === 'yes' && (
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -77,7 +77,7 @@ export function StatusControl({ status, onChange, compact }: StatusControlProps)
           )}
           {s === 'unknown' && <span>?</span>}
           <span className="hidden sm:inline">
-            {s === 'yes' ? 'Yes' : s === 'no' ? 'No' : 'Incomplete'}
+            {s === 'yes' ? 'Confirmed' : s === 'no' ? 'Flagged' : 'Not reviewed'}
           </span>
         </button>
       ))}

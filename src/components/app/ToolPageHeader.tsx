@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useProject } from '@/contexts/ProjectContext'
-import { ShareToolModal } from './ShareToolModal'
+import { UnifiedShareModal, type ScopeOption } from './UnifiedShareModal'
+import { HeaderMoreMenu } from './HeaderMoreMenu'
 import { cn } from '@/lib/utils'
 
 interface Collaborator {
@@ -40,7 +41,7 @@ interface ToolPageHeaderProps {
   accessLevel?: 'OWNER' | 'EDIT' | 'VIEW' | null
   /** Whether the tool has any user-created content. When false, the invite button is de-emphasized. */
   hasContent?: boolean
-  /** Action buttons rendered in the top-right header area (next to collaborators button). */
+  /** Action buttons rendered in the top-right header area (next to Share button). */
   actions?: React.ReactNode
   children?: React.ReactNode
   /** When set, use collection-based share endpoints instead of legacy project-based ones */
@@ -55,13 +56,57 @@ interface ToolPageHeaderProps {
   backLabel?: string
   /** Slot for InstanceSwitcher dropdown, rendered next to the title */
   headerSlot?: React.ReactNode
+  /** User-facing label for this tool (e.g. "Fix List") */
+  toolLabel?: string
+  /** Scope options for UnifiedShareModal export tab */
+  scopes?: ScopeOption[]
+  /** Label for scope picker (e.g. "rooms", "areas") */
+  scopeLabel?: string
+  /** Build export URL for print preview */
+  buildExportUrl?: (opts: { projectId: string; includeNotes: boolean; includeComments: boolean; includePhotos: boolean; scopeMode: 'all' | 'selected'; selectedScopeIds: string[] }) => string
+  /** Extra controls for export tab (e.g. punchlist status filters) */
+  extraExportControls?: React.ReactNode
+  /** Custom badge renderer for share link tokens */
+  renderTokenBadges?: (token: { statuses?: string[]; locations?: string[]; assignees?: string[] }) => React.ReactNode
+  /** Initial scope IDs for export tab */
+  initialSelectedScopeIds?: string[]
+  /** Callback when user renames the instance */
+  onRename?: (newTitle: string) => void
+  /** Callback when user archives the instance */
+  onArchive?: () => void
 }
 
-export function ToolPageHeader({ toolKey, title, description, accessLevel, hasContent = true, actions, children, collectionId, collectionName, eyebrowLabel, backHref, backLabel, headerSlot }: ToolPageHeaderProps) {
+export function ToolPageHeader({
+  toolKey,
+  title,
+  description,
+  accessLevel,
+  hasContent = true,
+  actions,
+  children,
+  collectionId,
+  collectionName,
+  eyebrowLabel,
+  backHref,
+  backLabel,
+  headerSlot,
+  toolLabel,
+  scopes = [],
+  scopeLabel = 'items',
+  buildExportUrl,
+  extraExportControls,
+  renderTokenBadges,
+  initialSelectedScopeIds,
+  onRename,
+  onArchive,
+}: ToolPageHeaderProps) {
   const { currentProject } = useProject()
   const [showShare, setShowShare] = useState(false)
+  const [shareInitialTab, setShareInitialTab] = useState<'people' | 'link' | 'export'>('people')
   const [collaborators, setCollaborators] = useState<Collaborator[]>([])
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([])
+  const [renaming, setRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState('')
 
   const isOwner = accessLevel === 'OWNER' || currentProject?.role === 'OWNER'
 
@@ -117,6 +162,19 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
     loadCollaborators()
   }
 
+  const handleRenameStart = () => {
+    setRenameValue(collectionName || title)
+    setRenaming(true)
+  }
+
+  const handleRenameSubmit = () => {
+    const trimmed = renameValue.trim()
+    if (trimmed && trimmed !== (collectionName || title) && onRename) {
+      onRename(trimmed)
+    }
+    setRenaming(false)
+  }
+
   const totalPeople = collaborators.length + pendingInvites.length
 
   return (
@@ -140,9 +198,23 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
             <p className="text-xs text-cream/40 uppercase tracking-wider mb-1">{currentProject.name}</p>
           ) : null}
           <div className="flex items-center gap-3">
-            <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
-              {collectionName || title}
-            </h1>
+            {renaming ? (
+              <input
+                autoFocus
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleRenameSubmit()
+                  if (e.key === 'Escape') setRenaming(false)
+                }}
+                onBlur={handleRenameSubmit}
+                className="font-serif text-4xl md:text-5xl text-sandstone bg-transparent border-b-2 border-sandstone/30 focus:border-sandstone outline-none min-w-0"
+              />
+            ) : (
+              <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
+                {collectionName || title}
+              </h1>
+            )}
             {headerSlot}
           </div>
         </div>
@@ -165,40 +237,41 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
               Can edit
             </span>
           )}
-          {isOwner && hasContent && (
+          {isOwner && (
             <button
               type="button"
-              onClick={() => setShowShare(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-sandstone text-basalt hover:bg-sandstone-light transition-colors"
+              onClick={() => { setShareInitialTab('people'); setShowShare(true) }}
+              className={cn(
+                'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                hasContent
+                  ? 'bg-sandstone text-basalt hover:bg-sandstone-light'
+                  : 'text-cream/40 hover:text-cream/70'
+              )}
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="8.5" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
-                <line x1="20" y1="8" x2="20" y2="14" strokeLinecap="round" />
-                <line x1="23" y1="11" x2="17" y2="11" strokeLinecap="round" />
+                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
+                <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
+                <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              {totalPeople > 0 ? 'Manage collaborators' : 'Add a collaborator'}
+              Share
             </button>
           )}
-          {isOwner && !hasContent && (
-            <button
-              type="button"
-              onClick={() => setShowShare(true)}
-              className="text-xs text-cream/40 hover:text-cream/70 transition-colors"
-            >
-              {totalPeople > 0 ? 'Manage collaborators' : 'Add a collaborator'}
-            </button>
+          {isOwner && (
+            <HeaderMoreMenu
+              onExport={buildExportUrl ? () => { setShareInitialTab('export'); setShowShare(true) } : undefined}
+              onRename={onRename ? handleRenameStart : undefined}
+              onArchive={onArchive}
+            />
           )}
           {actions}
         </div>
       </div>
 
-      {/* Collaborator pills — each person as an individual pill */}
+      {/* Collaborator pills */}
       {isOwner && totalPeople > 0 && (
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           <span className="text-xs text-cream/40 uppercase tracking-wider">Shared with</span>
 
-          {/* Accepted collaborators */}
           {collaborators.map((c) => (
             <div
               key={c.id}
@@ -230,7 +303,6 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
               )}
               <span className="leading-none">{getInitials(c.name, c.email)}</span>
 
-              {/* Hover tooltip */}
               <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-md bg-basalt-50 border border-cream/15 text-xs text-cream whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-10">
                 {c.name || c.email}
                 <span className="text-cream/40 ml-1">
@@ -240,7 +312,6 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
             </div>
           ))}
 
-          {/* Pending invites */}
           {pendingInvites.map((inv) => (
             <div
               key={inv.id}
@@ -252,7 +323,6 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
               </span>
               <span className="leading-none">{inv.email.split('@')[0]}</span>
 
-              {/* Hover tooltip */}
               <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-md bg-basalt-50 border border-cream/15 text-xs text-cream whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-10">
                 {inv.email}
                 <span className="text-cream/40 ml-1">(Pending)</span>
@@ -271,12 +341,21 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
       {children}
 
       {showShare && currentProject && (
-        <ShareToolModal
+        <UnifiedShareModal
           projectId={currentProject.id}
           toolKey={toolKey}
+          toolLabel={toolLabel || title}
           onClose={handleShareClose}
           collectionId={collectionId}
           collectionName={collectionName}
+          isOwner={isOwner}
+          scopes={scopes}
+          scopeLabel={scopeLabel}
+          buildExportUrl={buildExportUrl || (() => '#')}
+          extraExportControls={extraExportControls}
+          renderTokenBadges={renderTokenBadges}
+          initialTab={shareInitialTab}
+          initialSelectedScopeIds={initialSelectedScopeIds}
         />
       )}
     </>

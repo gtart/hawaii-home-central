@@ -2,7 +2,7 @@ import type { PunchlistStatus } from './types'
 
 export const STATUS_CONFIG: Record<PunchlistStatus, { label: string; dot: string; bg: string; text: string }> = {
   OPEN: { label: 'Open', dot: 'bg-red-400', bg: 'bg-red-400/10', text: 'text-red-400' },
-  ACCEPTED: { label: 'Accepted', dot: 'bg-amber-400', bg: 'bg-amber-400/10', text: 'text-amber-400' },
+  ACCEPTED: { label: 'In Progress', dot: 'bg-amber-400', bg: 'bg-amber-400/10', text: 'text-amber-400' },
   DONE: { label: 'Done', dot: 'bg-emerald-400', bg: 'bg-emerald-400/10', text: 'text-emerald-400' },
 }
 

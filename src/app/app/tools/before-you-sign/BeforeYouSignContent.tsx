@@ -1,10 +1,11 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useCallback, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
-import { ShareExportModal } from '@/components/app/ShareExportModal'
+import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
 import { useProject } from '@/contexts/ProjectContext'
 import { useBYSState } from './useBYSState'
 import { ALL_TABS } from './beforeYouSignConfig'
@@ -14,7 +15,7 @@ import { PricingSnapshot } from './components/PricingSnapshot'
 import { EmptyState } from './components/EmptyState'
 import { CompareGrid } from './components/CompareGrid'
 import { NotesTab } from './components/NotesTab'
-import type { ViewTab } from './types'
+import type { ViewTab, TabKey } from './types'
 
 const TAB_PILLS: { key: ViewTab; label: string }[] = [
   { key: 'quotes', label: 'Contract Scope' },
@@ -53,7 +54,7 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
     removeCustomAgreeItem,
   } = useBYSState(collectionId ? { collectionId } : undefined)
   const { currentProject } = useProject()
-  const [showShareExport, setShowShareExport] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     if (tabParam && TAB_PILLS.some((t) => t.key === tabParam)) {
@@ -67,6 +68,30 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
     url.searchParams.set('tab', tab)
     window.history.replaceState({}, '', url.toString())
   }
+
+  const handleRename = useCallback(async (newTitle: string) => {
+    if (!collectionId) return
+    try {
+      await fetch(`/api/collections/${collectionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle }),
+      })
+      router.refresh()
+    } catch { /* ignore */ }
+  }, [collectionId, router])
+
+  const handleArchive = useCallback(async () => {
+    if (!collectionId || !confirm('Archive this checklist? You can restore it later.')) return
+    try {
+      await fetch(`/api/collections/${collectionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+      })
+      router.push('/app/tools/before-you-sign')
+    } catch { /* ignore */ }
+  }, [collectionId, router])
 
   if (!isLoaded) {
     return (
@@ -83,6 +108,33 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
   const isNotesTab = activeTab === 'notes'
   const tabConfig = ALL_TABS.find((t) => t.key === activeTab) ?? ALL_TABS[0]
 
+  // Progress bar: count all items across all tabs and how many are answered
+  const { answered, total } = useMemo(() => {
+    const allItemIds: { tab: TabKey; id: string }[] = []
+    for (const tab of ALL_TABS) {
+      for (const section of tab.sections) {
+        for (const item of section.items) {
+          allItemIds.push({ tab: tab.key, id: item.id })
+        }
+      }
+    }
+    // Also count custom agree items
+    for (const ci of customAgreeItems) {
+      allItemIds.push({ tab: 'agree', id: ci.id })
+    }
+    let answeredCount = 0
+    for (const { tab, id } of allItemIds) {
+      const isAnswered = selectedContractors.some((c) => {
+        const answer = getAnswer(tab, c.id, id)
+        return answer.status !== 'unknown'
+      })
+      if (isAnswered) answeredCount++
+    }
+    return { answered: answeredCount, total: allItemIds.length }
+  }, [selectedContractors, customAgreeItems, getAnswer])
+
+  const progressPct = total > 0 ? Math.round((answered / total) * 100) : 0
+
   return (
     <>
       <ToolPageHeader
@@ -93,20 +145,21 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
         hasContent={contractors.length > 0}
         collectionId={collectionId}
         collectionName={collectionTitle || undefined}
-        actions={contractors.length > 0 ? (
-          <button
-            type="button"
-            onClick={() => setShowShareExport(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-sandstone/15 text-sandstone hover:bg-sandstone/25 transition-colors"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
-              <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
-              <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
-            </svg>
-            Share &amp; Export
-          </button>
-        ) : undefined}
+        eyebrowLabel="Contract Checklist"
+        backHref={collectionId ? '/app/tools/before-you-sign' : undefined}
+        backLabel={collectionId ? 'All Checklists' : undefined}
+        headerSlot={collectionId ? <InstanceSwitcher toolKey="before_you_sign" currentCollectionId={collectionId} itemNoun="checklist" /> : undefined}
+        toolLabel="Contract Checklist"
+        scopes={[]}
+        scopeLabel="Contractors"
+        buildExportUrl={(opts) => {
+          const reportBase = collectionId
+            ? `/app/tools/before-you-sign/${collectionId}/report`
+            : `/app/tools/before-you-sign/report`
+          return `${reportBase}?includeNotes=${opts.includeNotes}&includeComments=${opts.includeComments}&includePhotos=${opts.includePhotos}`
+        }}
+        onRename={collectionId ? handleRename : undefined}
+        onArchive={collectionId ? handleArchive : undefined}
       />
 
       {noAccess ? (
@@ -165,6 +218,23 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
       {/* Only show tabs + content when we have at least one contractor */}
       {contractors.length > 0 && (
         <>
+          {/* Overall progress bar */}
+          {total > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-2 bg-cream/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-sandstone rounded-full transition-all duration-500"
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+                <span className="text-xs text-cream/50 whitespace-nowrap">
+                  {answered}/{total} answered
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Tab pills */}
           <div className="flex flex-wrap gap-2 mb-2">
             {TAB_PILLS.map((tab) => (
@@ -221,25 +291,6 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
             </>
           )}
         </>
-      )}
-
-      {showShareExport && currentProject && (
-        <ShareExportModal
-          toolKey="before_you_sign"
-          toolLabel="Contract Checklist"
-          projectId={currentProject.id}
-          isOwner={access === 'OWNER'}
-          onClose={() => setShowShareExport(false)}
-          scopes={[]}
-          scopeLabel="Contractors"
-          buildExportUrl={({ includeNotes, includeComments, includePhotos }) => {
-            const reportBase = collectionId
-              ? `/app/tools/before-you-sign/${collectionId}/report`
-              : '/app/tools/before-you-sign/report'
-            return `${reportBase}?includeNotes=${includeNotes}&includeComments=${includeComments}&includePhotos=${includePhotos}`
-          }}
-          collectionId={collectionId}
-        />
       )}
     </>
   )

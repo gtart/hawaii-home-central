@@ -15,7 +15,7 @@ type FilterStatus = 'ALL' | PunchlistStatus
 const STATUS_OPTIONS: { key: FilterStatus; label: string }[] = [
   { key: 'ALL', label: 'All' },
   { key: 'OPEN', label: 'Open' },
-  { key: 'ACCEPTED', label: 'Accepted' },
+  { key: 'ACCEPTED', label: 'In Progress' },
   { key: 'DONE', label: 'Done' },
 ]
 
@@ -100,7 +100,7 @@ export function PunchlistPage({ api }: Props) {
   const viewingItem = viewingId ? payload.items.find((i) => i.id === viewingId) : undefined
 
   // ---- Mini dashboard insights ----
-  const [dashboardOpen, setDashboardOpen] = useState(true)
+  const [dashboardOpen, setDashboardOpen] = useState(false)
 
   const insights = useMemo(() => {
     const items = payload.items

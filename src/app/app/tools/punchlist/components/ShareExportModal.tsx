@@ -110,7 +110,7 @@ import type { PunchlistStatus } from '../types'
 
 const STATUS_CHECKS: { key: PunchlistStatus; label: string }[] = [
   { key: 'OPEN', label: 'Open' },
-  { key: 'ACCEPTED', label: 'Accepted' },
+  { key: 'ACCEPTED', label: 'In Progress' },
   { key: 'DONE', label: 'Done' },
 ]
 

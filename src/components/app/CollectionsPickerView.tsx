@@ -91,13 +91,6 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
     return () => { cancelled = true }
   }, [previewMode, currentProject?.id, toolKey, loading, collections.length])
 
-  // Auto-redirect when exactly 1 collection
-  useEffect(() => {
-    if (!loading && collections.length === 1) {
-      router.replace(`${toolPath}/${collections[0].id}`)
-    }
-  }, [loading, collections, toolPath, router])
-
   // Click-away close for menu
   useEffect(() => {
     if (!menuOpenId) return
@@ -111,15 +104,6 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
   }, [menuOpenId])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="w-5 h-5 border-2 border-sandstone/30 border-t-sandstone rounded-full animate-spin" />
-      </div>
-    )
-  }
-
-  // Show loading while auto-redirecting
-  if (collections.length === 1) {
     return (
       <div className="flex items-center justify-center py-24">
         <div className="w-5 h-5 border-2 border-sandstone/30 border-t-sandstone rounded-full animate-spin" />

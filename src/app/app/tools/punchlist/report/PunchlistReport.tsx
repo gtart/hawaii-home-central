@@ -7,7 +7,7 @@ import type { PunchlistItem, PunchlistStatus } from '../types'
 
 const STATUS_LABEL: Record<PunchlistStatus, string> = {
   OPEN: 'Open',
-  ACCEPTED: 'Accepted',
+  ACCEPTED: 'In Progress',
   DONE: 'Done',
 }
 

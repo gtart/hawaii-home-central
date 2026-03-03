@@ -1,6 +1,7 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
 import { useMoodBoardCollectionState } from '../useMoodBoardState'
@@ -13,6 +14,30 @@ function mapAccessForHeader(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null 
 function Content({ collectionId }: { collectionId: string }) {
   const api = useMoodBoardCollectionState(collectionId)
   const { payload, isLoaded, noAccess, access, readOnly } = api
+  const router = useRouter()
+
+  const handleRename = useCallback(async (newTitle: string) => {
+    try {
+      await fetch(`/api/collections/${collectionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle }),
+      })
+      router.refresh()
+    } catch { /* ignore */ }
+  }, [collectionId, router])
+
+  const handleArchive = useCallback(async () => {
+    if (!confirm('Archive this mood board? You can restore it later.')) return
+    try {
+      await fetch(`/api/collections/${collectionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+      })
+      router.push('/app/tools/mood-boards')
+    } catch { /* ignore */ }
+  }, [collectionId, router])
 
   if (!isLoaded) {
     return (
@@ -50,6 +75,14 @@ function Content({ collectionId }: { collectionId: string }) {
         backHref="/app/tools/mood-boards"
         backLabel="All Mood Boards"
         headerSlot={<InstanceSwitcher toolKey="mood_boards" currentCollectionId={collectionId} itemNoun="board" />}
+        toolLabel="Mood Boards"
+        scopes={[]}
+        scopeLabel="Boards"
+        buildExportUrl={(opts) => {
+          return `/app/tools/mood-boards/${collectionId}/report?includeNotes=${opts.includeNotes}&includePhotos=${opts.includePhotos}`
+        }}
+        onRename={handleRename}
+        onArchive={handleArchive}
       />
 
       <BoardDetailView
