@@ -43,6 +43,7 @@ export async function GET(request: Request) {
         toolKey: true,
         createdAt: true,
         updatedAt: true,
+        updatedBy: { select: { name: true } },
         members: {
           select: { userId: true, role: true, user: { select: { name: true, image: true } } },
         },
@@ -64,6 +65,7 @@ export async function GET(request: Request) {
         toolKey: true,
         createdAt: true,
         updatedAt: true,
+        updatedBy: { select: { name: true } },
         members: {
           select: { userId: true, role: true, user: { select: { name: true, image: true } } },
         },

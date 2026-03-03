@@ -12,11 +12,18 @@ interface CollectionSummary {
   toolKey: string
   createdAt: string
   updatedAt: string
+  updatedBy?: { name: string | null } | null
   members: Array<{
     userId: string
     role: string
     user: { name: string | null; image: string | null }
   }>
+}
+
+interface PreviewData {
+  imageUrls: string[]
+  ideaCount: number
+  commentCount: number
 }
 
 interface CollectionsPickerViewProps {
@@ -25,6 +32,59 @@ interface CollectionsPickerViewProps {
   itemNoun: string
   /** When 'thumbnails', fetch and show image previews on cards (mood boards) */
   previewMode?: 'thumbnails'
+}
+
+function ThumbnailGrid({ imageUrls }: { imageUrls: string[] }) {
+  const count = Math.min(imageUrls.length, 4)
+  const proxy = (url: string) => `/api/image-proxy?url=${encodeURIComponent(url)}`
+
+  if (count === 0) {
+    return (
+      <div className="aspect-[16/9] bg-basalt flex items-center justify-center text-cream/20">
+        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+    )
+  }
+
+  if (count === 1) {
+    return (
+      <div className="aspect-[16/9] bg-basalt overflow-hidden">
+        <img src={proxy(imageUrls[0])} alt="" className="w-full h-full object-cover" loading="lazy" />
+      </div>
+    )
+  }
+
+  if (count === 2) {
+    return (
+      <div className="aspect-[16/9] bg-basalt overflow-hidden grid grid-cols-2 gap-0.5">
+        {imageUrls.slice(0, 2).map((url, i) => (
+          <img key={i} src={proxy(url)} alt="" className="w-full h-full object-cover" loading="lazy" />
+        ))}
+      </div>
+    )
+  }
+
+  if (count === 3) {
+    return (
+      <div className="aspect-[16/9] bg-basalt overflow-hidden grid grid-cols-3 grid-rows-2 gap-0.5">
+        <img src={proxy(imageUrls[0])} alt="" className="col-span-2 row-span-2 w-full h-full object-cover" loading="lazy" />
+        <img src={proxy(imageUrls[1])} alt="" className="w-full h-full object-cover" loading="lazy" />
+        <img src={proxy(imageUrls[2])} alt="" className="w-full h-full object-cover" loading="lazy" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="aspect-[16/9] bg-basalt overflow-hidden grid grid-cols-2 grid-rows-2 gap-0.5">
+      {imageUrls.slice(0, 4).map((url, i) => (
+        <img key={i} src={proxy(url)} alt="" className="w-full h-full object-cover" loading="lazy" />
+      ))}
+    </div>
+  )
 }
 
 export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: CollectionsPickerViewProps) {
@@ -38,7 +98,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
   const [editTitle, setEditTitle] = useState('')
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
   const [shareTarget, setShareTarget] = useState<{ collectionId: string; collectionName: string } | null>(null)
-  const [previews, setPreviews] = useState<Record<string, string[]>>({})
+  const [previews, setPreviews] = useState<Record<string, PreviewData>>({})
   const menuRef = useRef<HTMLDivElement>(null)
 
   const toolLabel = TOOL_LABELS[toolKey] ?? toolKey
@@ -76,9 +136,13 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
         if (!res.ok || cancelled) return
         const data = await res.json()
         if (!cancelled) {
-          const map: Record<string, string[]> = {}
+          const map: Record<string, PreviewData> = {}
           for (const p of data.previews ?? []) {
-            map[p.collectionId] = p.imageUrls ?? []
+            map[p.collectionId] = {
+              imageUrls: p.imageUrls ?? [],
+              ideaCount: p.ideaCount ?? 0,
+              commentCount: p.commentCount ?? 0,
+            }
           }
           setPreviews(map)
         }
@@ -254,7 +318,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {collections.map((coll) => {
-          const imageUrls = previews[coll.id] ?? []
+          const preview = previews[coll.id] ?? { imageUrls: [], ideaCount: 0, commentCount: 0 }
           const hasThumbnails = previewMode === 'thumbnails'
 
           return (
@@ -263,43 +327,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
               className="group relative bg-basalt-50 border border-cream/10 rounded-lg overflow-hidden hover:border-sandstone/30 transition-colors cursor-pointer"
               onClick={() => router.push(`${toolPath}/${coll.id}`)}
             >
-              {/* Thumbnail mosaic (mood boards only) */}
-              {hasThumbnails && (
-                <div className="grid grid-cols-2 gap-0.5 bg-cream/5">
-                  {imageUrls.length > 0 ? (
-                    imageUrls.slice(0, 4).map((url, i) => (
-                      <div key={i} className="aspect-[4/3] bg-basalt">
-                        <img
-                          src={`/api/image-proxy?url=${encodeURIComponent(url)}`}
-                          alt=""
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    ))
-                  ) : (
-                    <div className="col-span-2 aspect-[8/3] flex items-center justify-center text-cream/20">
-                      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <circle cx="8.5" cy="8.5" r="1.5" />
-                        <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                  )}
-                  {/* Fill remaining slots if 1-3 images */}
-                  {imageUrls.length > 0 && imageUrls.length < 4 && (
-                    Array.from({ length: 4 - imageUrls.length }).map((_, i) => (
-                      <div key={`placeholder-${i}`} className="aspect-[4/3] bg-basalt flex items-center justify-center text-cream/10">
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <rect x="3" y="3" width="18" height="18" rx="2" />
-                          <circle cx="8.5" cy="8.5" r="1.5" />
-                          <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
+              {/* Thumbnail grid (mood boards only) */}
+              {hasThumbnails && <ThumbnailGrid imageUrls={preview.imageUrls} />}
 
               <div className="p-4">
                 {editingId === coll.id ? (
@@ -319,9 +348,37 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
                   <h3 className="font-medium text-cream truncate">{coll.title}</h3>
                 )}
 
-                <div className="flex items-center gap-2 mt-1">
+                {/* Stats row (mood boards only) */}
+                {hasThumbnails && (preview.ideaCount > 0 || preview.commentCount > 0) && (
+                  <div className="flex items-center gap-3 mt-1.5">
+                    {preview.ideaCount > 0 && (
+                      <span className="inline-flex items-center gap-1 text-xs text-cream/50">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        {preview.ideaCount} {preview.ideaCount === 1 ? 'mood' : 'moods'}
+                      </span>
+                    )}
+                    {preview.commentCount > 0 && (
+                      <span className="inline-flex items-center gap-1 text-xs text-cream/50">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        {preview.commentCount}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Updated + shared */}
+                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   <p className="text-xs text-cream/40">
                     Updated {new Date(coll.updatedAt).toLocaleDateString()}
+                    {coll.updatedBy?.name && (
+                      <span> by {coll.updatedBy.name.split(' ')[0]}</span>
+                    )}
                   </p>
                   {coll.members.length > 0 && (
                     <span className="inline-flex items-center gap-1 text-[10px] text-sandstone/60 bg-sandstone/10 rounded-full px-1.5 py-0.5">

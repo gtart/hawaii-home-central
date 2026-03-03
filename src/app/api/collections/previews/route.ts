@@ -67,6 +67,8 @@ export async function GET(request: Request) {
 
   const previews = collections.map((coll) => {
     const imageUrls: string[] = []
+    let ideaCount = 0
+    let commentCount = 0
     try {
       const payload = coll.payload as Record<string, unknown>
 
@@ -74,13 +76,19 @@ export async function GET(request: Request) {
       const directIdeas = payload?.ideas as IdeaLike[] | undefined
       if (Array.isArray(directIdeas) && directIdeas.length > 0) {
         extractImagesFromIdeas(directIdeas, imageUrls, 4)
+        ideaCount = directIdeas.length
+        const directComments = payload?.comments as unknown[] | undefined
+        if (Array.isArray(directComments)) {
+          commentCount = directComments.length
+        }
       }
 
       // v1 legacy payload: ideas nested under payload.boards[].ideas[]
-      if (imageUrls.length === 0) {
+      if (ideaCount === 0) {
         const boards = payload?.boards as Array<{
           isDefault?: boolean
           ideas?: IdeaLike[]
+          comments?: unknown[]
         }> | undefined
 
         if (boards && boards.length > 0) {
@@ -90,16 +98,19 @@ export async function GET(request: Request) {
             return 0
           })
           for (const board of sorted) {
-            if (imageUrls.length >= 4) break
-            extractImagesFromIdeas(board.ideas ?? [], imageUrls, 4)
+            if (imageUrls.length < 4) {
+              extractImagesFromIdeas(board.ideas ?? [], imageUrls, 4)
+            }
+            ideaCount += (board.ideas ?? []).length
+            commentCount += (board.comments ?? []).length
           }
         }
       }
     } catch {
-      // payload parsing failed — return empty
+      // payload parsing failed — return zeros
     }
 
-    return { collectionId: coll.id, imageUrls }
+    return { collectionId: coll.id, imageUrls, ideaCount, commentCount }
   })
 
   return NextResponse.json({ previews })
