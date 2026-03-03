@@ -263,6 +263,23 @@ export function ToolContent({
     }
   }, [isLoaded, state, setState])
 
+  // Flatten multi-room collections into single room (board = area model)
+  useEffect(() => {
+    if (!isLoaded || state.version !== 3) return
+    const v3 = state as FinishDecisionsPayloadV3
+    if (v3.rooms.length <= 1) return // already flat or empty
+    const allDecisions = v3.rooms.flatMap((r) => r.decisions)
+    const primary = v3.rooms[0]
+    setState(() => ({
+      ...v3,
+      rooms: [{
+        ...primary,
+        decisions: allDecisions,
+        appliedKitIds: v3.rooms.flatMap((r) => r.appliedKitIds ?? []),
+      }],
+    }))
+  }, [isLoaded, state, setState])
+
   // One-time import: migrate pre-account localStorage data into the user's FIRST project only.
   // Never runs when the user has multiple projects — empty projects should stay empty.
   useEffect(() => {
@@ -393,6 +410,42 @@ export function ToolContent({
     })
   }
 
+  // Add a single selection to the board (auto-creates the room if needed)
+  const handleAddSelection = (title: string) => {
+    const ts = new Date().toISOString()
+    const decision: DecisionV3 = {
+      id: crypto.randomUUID(),
+      title,
+      status: 'deciding' as StatusV3,
+      notes: '',
+      options: [],
+      createdAt: ts,
+      updatedAt: ts,
+    }
+    setState((prev) => {
+      const p = prev as FinishDecisionsPayloadV3
+      if (p.rooms.length === 0) {
+        // Auto-create a single room for this board
+        const room: RoomV3 = {
+          id: crypto.randomUUID(),
+          type: 'other' as RoomTypeV3,
+          name: collectionTitle || 'Selections',
+          decisions: [decision],
+          createdAt: ts,
+          updatedAt: ts,
+        }
+        return { ...p, rooms: [room] }
+      }
+      // Add to the first (only) room
+      return {
+        ...p,
+        rooms: p.rooms.map((r, i) =>
+          i === 0 ? { ...r, decisions: [...r.decisions, decision], updatedAt: ts } : r
+        ),
+      }
+    })
+  }
+
   const handleRename = useCallback(async (newTitle: string) => {
     if (!collectionId) return
     try {
@@ -406,7 +459,7 @@ export function ToolContent({
   }, [collectionId, router])
 
   const handleArchive = useCallback(async () => {
-    if (!collectionId || !confirm('Archive this decision list? You can restore it later.')) return
+    if (!collectionId || !confirm('Archive this board? You can restore it later.')) return
     try {
       await fetch(`/api/collections/${collectionId}`, {
         method: 'PATCH',
@@ -426,17 +479,17 @@ export function ToolContent({
         {!localOnly && (
           <ToolPageHeader
             toolKey="finish_decisions"
-            title="Decision List"
-            description="Avoid delays and rework—by keeping decisions, links, and status updates together for each area."
+            title="Selection Board"
+            description="Track the choices you need to make—and what you picked."
             accessLevel={access}
             hasContent={v3State.rooms.length > 0}
             collectionId={collectionId}
             collectionName={collectionTitle}
-            eyebrowLabel="Decision List"
+            eyebrowLabel="Selection Board"
             backHref={collectionId ? '/app/tools/finish-decisions' : undefined}
-            backLabel={collectionId ? 'All Decision Lists' : undefined}
-            headerSlot={collectionId ? <InstanceSwitcher toolKey="finish_decisions" currentCollectionId={collectionId} itemNoun="list" /> : undefined}
-            toolLabel="Decision List"
+            backLabel={collectionId ? 'All Selection Boards' : undefined}
+            headerSlot={collectionId ? <InstanceSwitcher toolKey="finish_decisions" currentCollectionId={collectionId} itemNoun="board" /> : undefined}
+            toolLabel="Selection Board"
             scopes={v3State.rooms
               .filter((r) => r.systemKey !== 'global_uncategorized')
               .map((r) => ({
@@ -472,6 +525,7 @@ export function ToolContent({
             onUpdateRoom={handleUpdateRoom}
             onDeleteRoom={handleDeleteRoom}
             onAcquireKit={handleAcquireKit}
+            onAddSelection={handleAddSelection}
             readOnly={readOnly}
             kits={kits}
             defaultDecisions={resolvedDefaults}

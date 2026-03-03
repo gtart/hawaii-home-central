@@ -24,14 +24,15 @@ interface PreviewData {
   imageUrls: string[]
   ideaCount: number
   commentCount: number
+  statuses?: Record<string, number>
 }
 
 interface CollectionsPickerViewProps {
   toolKey: string
   /** Noun for empty state, e.g. "decision list", "fix list", "board" */
   itemNoun: string
-  /** When 'thumbnails', fetch and show image previews on cards (mood boards) */
-  previewMode?: 'thumbnails'
+  /** When set, fetch preview data for cards ('thumbnails' for images, 'statuses' for status counts) */
+  previewMode?: 'thumbnails' | 'statuses'
 }
 
 function ThumbnailGrid({ imageUrls }: { imageUrls: string[] }) {
@@ -91,6 +92,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
   const { currentProject } = useProject()
   const router = useRouter()
   const [collections, setCollections] = useState<CollectionSummary[]>([])
+  const [archivedCollections, setArchivedCollections] = useState<CollectionSummary[]>([])
+  const [showArchived, setShowArchived] = useState(false)
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [newTitle, setNewTitle] = useState('')
@@ -110,10 +113,13 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
 
     async function load() {
       try {
-        const res = await fetch(`/api/collections?projectId=${currentProject!.id}&toolKey=${toolKey}`)
+        const res = await fetch(`/api/collections?projectId=${currentProject!.id}&toolKey=${toolKey}&includeArchived=true`)
         if (!res.ok || cancelled) return
         const data = await res.json()
-        if (!cancelled) setCollections(data.collections ?? [])
+        if (!cancelled) {
+          setCollections(data.collections ?? [])
+          setArchivedCollections(data.archived ?? [])
+        }
       } catch {
         // ignore
       } finally {
@@ -125,9 +131,9 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
     return () => { cancelled = true }
   }, [currentProject?.id, toolKey])
 
-  // Fetch thumbnail previews when in thumbnails mode
+  // Fetch preview data when previewMode is set
   useEffect(() => {
-    if (previewMode !== 'thumbnails' || !currentProject?.id || loading || collections.length === 0) return
+    if (!previewMode || !currentProject?.id || loading || collections.length === 0) return
     let cancelled = false
 
     async function loadPreviews() {
@@ -142,6 +148,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
               imageUrls: p.imageUrls ?? [],
               ideaCount: p.ideaCount ?? 0,
               commentCount: p.commentCount ?? 0,
+              statuses: p.statuses ?? undefined,
             }
           }
           setPreviews(map)
@@ -221,7 +228,28 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ archivedAt: true }),
       })
+      const archived = collections.find((c) => c.id === collId)
       setCollections((prev) => prev.filter((c) => c.id !== collId))
+      if (archived) {
+        setArchivedCollections((prev) => [archived, ...prev])
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleRestore = async (collId: string) => {
+    try {
+      await fetch(`/api/collections/${collId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archivedAt: null }),
+      })
+      const restored = archivedCollections.find((c) => c.id === collId)
+      setArchivedCollections((prev) => prev.filter((c) => c.id !== collId))
+      if (restored) {
+        setCollections((prev) => [...prev, restored])
+      }
     } catch {
       // ignore
     }
@@ -346,6 +374,16 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
                   />
                 ) : (
                   <h3 className="font-medium text-cream truncate">{coll.title}</h3>
+                )}
+
+                {/* Status counts (selection boards) */}
+                {preview.statuses && Object.values(preview.statuses).some(v => v > 0) && (
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-[11px] text-cream/50">
+                    {(preview.statuses.deciding ?? 0) > 0 && <span>{preview.statuses.deciding} deciding</span>}
+                    {(preview.statuses.selected ?? 0) > 0 && <span>{preview.statuses.selected} selected</span>}
+                    {(preview.statuses.ordered ?? 0) > 0 && <span>{preview.statuses.ordered} ordered</span>}
+                    {(preview.statuses.done ?? 0) > 0 && <span>{preview.statuses.done} done</span>}
+                  </div>
                 )}
 
                 {/* Stats row (mood boards only) */}
@@ -509,6 +547,52 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
           )
         })}
       </div>
+
+      {/* Archived section */}
+      {archivedCollections.length > 0 && (
+        <div className="mt-8">
+          <button
+            type="button"
+            onClick={() => setShowArchived(!showArchived)}
+            className="flex items-center gap-2 text-sm text-cream/40 hover:text-cream/60 transition-colors mb-3"
+          >
+            <svg
+              className={`w-3 h-3 transition-transform ${showArchived ? 'rotate-90' : ''}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Archived ({archivedCollections.length})
+          </button>
+          {showArchived && (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {archivedCollections.map((coll) => (
+                <div
+                  key={coll.id}
+                  className="relative bg-basalt-50 border border-cream/5 rounded-lg overflow-hidden opacity-60"
+                >
+                  <div className="p-4">
+                    <h3 className="font-medium text-cream/60 truncate">{coll.title}</h3>
+                    <p className="text-xs text-cream/30 mt-1">
+                      Archived {new Date(coll.updatedAt).toLocaleDateString()}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => handleRestore(coll.id)}
+                      className="mt-2 text-xs text-sandstone hover:text-sandstone-light transition-colors font-medium"
+                    >
+                      Restore
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {shareTarget && currentProject && (
         <ShareToolModal

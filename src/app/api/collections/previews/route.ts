@@ -110,7 +110,28 @@ export async function GET(request: Request) {
       // payload parsing failed — return zeros
     }
 
-    return { collectionId: coll.id, imageUrls, ideaCount, commentCount }
+    // For finish_decisions: extract status counts from payload.rooms[].decisions[]
+    let statuses: Record<string, number> | undefined
+    if (toolKey === 'finish_decisions') {
+      try {
+        const payload = coll.payload as Record<string, unknown>
+        const rooms = payload?.rooms as Array<{ decisions?: Array<{ status?: string }> }> | undefined
+        if (Array.isArray(rooms)) {
+          const counts: Record<string, number> = {}
+          for (const room of rooms) {
+            for (const d of room.decisions ?? []) {
+              const s = d.status ?? 'deciding'
+              counts[s] = (counts[s] ?? 0) + 1
+            }
+          }
+          statuses = counts
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    return { collectionId: coll.id, imageUrls, ideaCount, commentCount, statuses }
   })
 
   return NextResponse.json({ previews })

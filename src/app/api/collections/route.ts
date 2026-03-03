@@ -16,6 +16,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url)
   const projectId = url.searchParams.get('projectId')
   const toolKey = url.searchParams.get('toolKey')
+  const includeArchived = url.searchParams.get('includeArchived') === 'true'
 
   if (!projectId || !toolKey) {
     return NextResponse.json({ error: 'projectId and toolKey required' }, { status: 400 })
@@ -32,26 +33,27 @@ export async function GET(request: Request) {
     where: { projectId_userId: { projectId, userId } },
   })
 
+  const collectionSelect = {
+    id: true,
+    title: true,
+    toolKey: true,
+    createdAt: true,
+    updatedAt: true,
+    archivedAt: true,
+    updatedBy: { select: { name: true } },
+    members: {
+      select: { userId: true, role: true, user: { select: { name: true, image: true } } },
+    },
+  } as const
+
   let collections
   if (member?.role === 'OWNER') {
-    // Owner sees all (non-archived)
     collections = await prisma.toolCollection.findMany({
       where: { projectId, toolKey, archivedAt: null },
-      select: {
-        id: true,
-        title: true,
-        toolKey: true,
-        createdAt: true,
-        updatedAt: true,
-        updatedBy: { select: { name: true } },
-        members: {
-          select: { userId: true, role: true, user: { select: { name: true, image: true } } },
-        },
-      },
+      select: collectionSelect,
       orderBy: { createdAt: 'asc' },
     })
   } else {
-    // Member sees only collections they have access to
     collections = await prisma.toolCollection.findMany({
       where: {
         projectId,
@@ -59,22 +61,22 @@ export async function GET(request: Request) {
         archivedAt: null,
         members: { some: { userId } },
       },
-      select: {
-        id: true,
-        title: true,
-        toolKey: true,
-        createdAt: true,
-        updatedAt: true,
-        updatedBy: { select: { name: true } },
-        members: {
-          select: { userId: true, role: true, user: { select: { name: true, image: true } } },
-        },
-      },
+      select: collectionSelect,
       orderBy: { createdAt: 'asc' },
     })
   }
 
-  return NextResponse.json({ collections })
+  // Optionally include archived collections
+  let archived: typeof collections = []
+  if (includeArchived && member?.role === 'OWNER') {
+    archived = await prisma.toolCollection.findMany({
+      where: { projectId, toolKey, archivedAt: { not: null } },
+      select: collectionSelect,
+      orderBy: { updatedAt: 'desc' },
+    })
+  }
+
+  return NextResponse.json({ collections, archived })
 }
 
 /**
