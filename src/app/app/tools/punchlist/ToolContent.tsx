@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo, useState } from 'react'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
+import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
 import { useProject } from '@/contexts/ProjectContext'
 import { usePunchlistState } from './usePunchlistState'
 import { PunchlistPage } from './components/PunchlistPage'
@@ -54,6 +55,10 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
         hasContent={payload.items.length > 0}
         collectionId={collectionId}
         collectionName={collectionTitle || undefined}
+        eyebrowLabel="Fix List"
+        backHref={collectionId ? '/app/tools/punchlist' : undefined}
+        backLabel={collectionId ? 'All Fix Lists' : undefined}
+        headerSlot={collectionId ? <InstanceSwitcher toolKey="punchlist" currentCollectionId={collectionId} itemNoun="list" /> : undefined}
         actions={payload.items.length > 0 ? (
           <button
             type="button"

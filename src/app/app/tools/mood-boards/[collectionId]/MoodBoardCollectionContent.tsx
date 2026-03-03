@@ -2,6 +2,7 @@
 
 import { Suspense } from 'react'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
+import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
 import { useMoodBoardCollectionState } from '../useMoodBoardState'
 import { BoardDetailView } from '../components/BoardDetailView'
 
@@ -45,6 +46,10 @@ function Content({ collectionId }: { collectionId: string }) {
         hasContent={board.ideas.length > 0}
         collectionId={collectionId}
         collectionName={board?.name}
+        eyebrowLabel="Mood Board"
+        backHref="/app/tools/mood-boards"
+        backLabel="All Mood Boards"
+        headerSlot={<InstanceSwitcher toolKey="mood_boards" currentCollectionId={collectionId} itemNoun="board" />}
       />
 
       <BoardDetailView

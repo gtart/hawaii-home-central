@@ -6,6 +6,7 @@ import { useCollectionState } from '@/hooks/useCollectionState'
 import { useProject } from '@/contexts/ProjectContext'
 import { LocalModeBanner } from '@/components/guides/LocalModeBanner'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
+import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
 import { DecisionTrackerPage } from './components/DecisionTrackerPage'
 import { ShareExportModal } from '@/components/app/ShareExportModal'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
@@ -407,6 +408,10 @@ export function ToolContent({
             hasContent={v3State.rooms.length > 0}
             collectionId={collectionId}
             collectionName={collectionTitle}
+            eyebrowLabel="Decision List"
+            backHref={collectionId ? '/app/tools/finish-decisions' : undefined}
+            backLabel={collectionId ? 'All Decision Lists' : undefined}
+            headerSlot={collectionId ? <InstanceSwitcher toolKey="finish_decisions" currentCollectionId={collectionId} itemNoun="list" /> : undefined}
             actions={v3State.rooms.length > 0 ? (
               <button
                 type="button"

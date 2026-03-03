@@ -47,9 +47,17 @@ interface ToolPageHeaderProps {
   collectionId?: string
   /** Instance name shown in share modal title when collectionId is set */
   collectionName?: string
+  /** Small label above H1 when viewing an instance, e.g. "FIX LIST" */
+  eyebrowLabel?: string
+  /** Override back link destination (e.g. picker page) */
+  backHref?: string
+  /** Override back link text (e.g. "All Fix Lists") */
+  backLabel?: string
+  /** Slot for InstanceSwitcher dropdown, rendered next to the title */
+  headerSlot?: React.ReactNode
 }
 
-export function ToolPageHeader({ toolKey, title, description, accessLevel, hasContent = true, actions, children, collectionId, collectionName }: ToolPageHeaderProps) {
+export function ToolPageHeader({ toolKey, title, description, accessLevel, hasContent = true, actions, children, collectionId, collectionName, eyebrowLabel, backHref, backLabel, headerSlot }: ToolPageHeaderProps) {
   const { currentProject } = useProject()
   const [showShare, setShowShare] = useState(false)
   const [collaborators, setCollaborators] = useState<Collaborator[]>([])
@@ -115,21 +123,28 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
     <>
       <div className="flex items-center gap-3 mb-4">
         <Link
-          href="/app"
+          href={backHref || '/app'}
           className="text-sandstone hover:text-sandstone-light text-sm"
         >
-          &larr; {currentProject?.name || 'Tools'}
+          &larr; {backLabel || currentProject?.name || 'Tools'}
         </Link>
       </div>
 
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 mb-4">
         <div className="min-w-0">
-          {currentProject && (
+          {collectionName ? (
+            <p className="text-xs text-cream/40 uppercase tracking-wider mb-1">
+              {eyebrowLabel || title}
+            </p>
+          ) : currentProject ? (
             <p className="text-xs text-cream/40 uppercase tracking-wider mb-1">{currentProject.name}</p>
-          )}
-          <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
-            {title}
-          </h1>
+          ) : null}
+          <div className="flex items-center gap-3">
+            <h1 className="font-serif text-4xl md:text-5xl text-sandstone">
+              {collectionName || title}
+            </h1>
+            {headerSlot}
+          </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 pt-1 sm:pt-2">
           {accessLevel === 'VIEW' && (
@@ -247,9 +262,11 @@ export function ToolPageHeader({ toolKey, title, description, accessLevel, hasCo
         </div>
       )}
 
-      <p className="text-cream/70 text-lg mb-8 leading-relaxed">
-        {description}
-      </p>
+      {!collectionName && (
+        <p className="text-cream/70 text-lg mb-8 leading-relaxed">
+          {description}
+        </p>
+      )}
 
       {children}
 
