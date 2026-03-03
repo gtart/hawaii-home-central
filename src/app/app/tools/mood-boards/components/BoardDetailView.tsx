@@ -53,6 +53,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
   const [addTileMode, setAddTileMode] = useState<'closed' | 'menu' | 'url' | 'text'>('closed')
   const [showShareExportForBoard, setShowShareExportForBoard] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [inlineCommentText, setInlineCommentText] = useState('')
 
   // Search + filter state
   const [searchQuery, setSearchQuery] = useState('')
@@ -136,7 +137,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
       .catch(() => {})
   }, [toolAccess, currentProject?.id, board.id])
 
-  // Unread comments detection (localStorage-based)
+  // Comments are visible inline — mark as seen on page load
   useEffect(() => {
     const comments = board.comments || []
     if (comments.length === 0) {
@@ -149,28 +150,11 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
       comments[0].createdAt
     )
     setLastActivity(latest)
-    try {
-      const stored = localStorage.getItem(`hhc_mb_seen_${board.id}`)
-      setHasUnread(!stored || latest > stored)
-    } catch {
-      setHasUnread(false)
-    }
-  }, [board.comments, board.id])
-
-  // Mark comments as seen when panel opens
-  useEffect(() => {
-    if (!commentsOpen) return
-    const comments = board.comments || []
-    if (comments.length === 0) return
-    const latest = comments.reduce(
-      (max, c) => (c.createdAt > max ? c.createdAt : max),
-      comments[0].createdAt
-    )
+    setHasUnread(false)
     try {
       localStorage.setItem(`hhc_mb_seen_${board.id}`, latest)
     } catch {}
-    setHasUnread(false)
-  }, [commentsOpen, board.comments, board.id])
+  }, [board.comments, board.id])
 
   // Cleanup undo timer on unmount
   useEffect(() => {
@@ -235,6 +219,21 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
   }, [board.ideas, board.comments, searchQuery, activeFilters])
 
   const isFiltering = searchQuery.trim() !== '' || activeFilters.size > 0
+
+  const recentComments = useMemo(() => {
+    const comments = board.comments || []
+    return [...comments]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 2)
+  }, [board.comments])
+
+  const getIdeaThumbnail = useCallback((ideaId: string): string | null => {
+    const idea = board.ideas.find((i) => i.id === ideaId)
+    if (!idea || idea.images.length === 0) return null
+    const heroImg = idea.heroImageId ? idea.images.find((img) => img.id === idea.heroImageId) : null
+    const target = heroImg || idea.images[0]
+    return target.thumbnailUrl || target.url
+  }, [board.ideas])
 
   const handleRename = () => {
     const trimmed = boardName.trim()
@@ -341,6 +340,17 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
   const handleCommentOnIdea = (ideaId: string, ideaName: string) => {
     setDraftRef({ ideaId, ideaLabel: ideaName })
     setCommentsOpen(true)
+  }
+
+  const handleInlineComment = () => {
+    const trimmed = inlineCommentText.trim()
+    if (!trimmed || !session?.user) return
+    api.addComment(board.id, {
+      text: trimmed,
+      authorName: session.user.name || 'Anonymous',
+      authorEmail: session.user.email || '',
+    })
+    setInlineCommentText('')
   }
 
   const handleDeleteWithUndo = (ideaId: string) => {
@@ -1074,6 +1084,109 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
                   className="px-4 py-1.5 text-sm text-cream/50 hover:text-cream transition-colors"
                 >
                   Back
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Inline comments section */}
+      {(commentCount > 0 || !readOnly) && (
+        <div className="mt-8 border-t border-cream/10 pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-cream/60 flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Comments
+              {commentCount > 0 && (
+                <span className="text-cream/30">({commentCount})</span>
+              )}
+            </h3>
+            {commentCount > 2 && (
+              <button
+                type="button"
+                onClick={() => setCommentsOpen(true)}
+                className="text-xs text-sandstone/70 hover:text-sandstone transition-colors flex items-center gap-1"
+              >
+                View all {commentCount}
+              </button>
+            )}
+          </div>
+
+          {recentComments.length > 0 ? (
+            <div className="space-y-3 mb-4">
+              {recentComments.map((comment) => {
+                const thumbUrl = comment.refIdeaId ? getIdeaThumbnail(comment.refIdeaId) : null
+                return (
+                  <div key={comment.id} className="flex gap-3">
+                    <span className="w-7 h-7 rounded-full bg-sandstone/20 text-sandstone text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                      {comment.authorName.charAt(0).toUpperCase()}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-cream/70">{comment.authorName}</span>
+                        <span className="text-cream/20">&middot;</span>
+                        <span className="text-[11px] text-cream/30">{relativeTime(comment.createdAt)}</span>
+                      </div>
+                      {comment.refIdeaId && comment.refIdeaLabel && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedIdeaId(comment.refIdeaId!)}
+                          className="mt-1 flex items-center gap-2 px-2 py-1 rounded-md bg-sandstone/10 hover:bg-sandstone/20 transition-colors"
+                        >
+                          {thumbUrl && (
+                            <img
+                              src={thumbUrl}
+                              alt=""
+                              className="w-6 h-6 rounded object-cover shrink-0"
+                              loading="lazy"
+                            />
+                          )}
+                          <span className="text-[11px] text-sandstone/80 truncate">
+                            Re: {comment.refIdeaLabel.length > 40
+                              ? comment.refIdeaLabel.slice(0, 40).trimEnd() + '...'
+                              : comment.refIdeaLabel}
+                          </span>
+                        </button>
+                      )}
+                      <p className="text-sm text-cream/80 whitespace-pre-wrap mt-0.5">{comment.text}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-cream/30 mb-4">No comments yet. Start the conversation.</p>
+          )}
+
+          {!readOnly && (
+            <div className="flex gap-3 items-start">
+              <span className="w-7 h-7 rounded-full bg-sandstone/20 text-sandstone text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                {(userName || userEmail || '?').charAt(0).toUpperCase()}
+              </span>
+              <div className="flex-1 flex gap-2">
+                <textarea
+                  value={inlineCommentText}
+                  onChange={(e) => setInlineCommentText(e.target.value.slice(0, 400))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleInlineComment()
+                    }
+                  }}
+                  placeholder="Add a comment..."
+                  rows={1}
+                  className="flex-1 px-3 py-2 bg-basalt border border-cream/15 text-cream text-sm rounded-lg placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40 resize-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleInlineComment}
+                  disabled={!inlineCommentText.trim()}
+                  className="px-3 py-2 bg-sandstone text-basalt text-xs font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 shrink-0 self-end"
+                >
+                  Post
                 </button>
               </div>
             </div>
