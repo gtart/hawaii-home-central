@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { cn } from '@/lib/utils'
-import { TOOL_LABELS } from '@/lib/tool-registry'
 import { ScopePicker, type ScopeOption } from './ScopePicker'
 export type { ScopeOption }
 import { ManageShareLinks } from './ManageShareLinks'
@@ -121,7 +120,7 @@ export function UnifiedShareModal({
                     : 'text-cream/50 hover:text-cream/70'
                 }`}
               >
-                Link
+                Read-Only Link
               </button>
             )}
             <button
@@ -133,7 +132,7 @@ export function UnifiedShareModal({
                   : 'text-cream/50 hover:text-cream/70'
               }`}
             >
-              Export
+              Export PDF
             </button>
           </div>
         </div>
@@ -146,6 +145,7 @@ export function UnifiedShareModal({
               toolKey={toolKey}
               toolLabel={toolLabel}
               collectionId={collectionId}
+              collectionName={collectionName}
               isOwner={isOwner}
             />
           )}
@@ -188,12 +188,14 @@ function PeopleTab({
   toolKey,
   toolLabel,
   collectionId,
+  collectionName,
   isOwner,
 }: {
   projectId: string
   toolKey: string
   toolLabel: string
   collectionId?: string
+  collectionName?: string
   isOwner: boolean
 }) {
   const [access, setAccess] = useState<AccessEntry[]>([])
@@ -332,7 +334,7 @@ function PeopleTab({
     <div className="space-y-5">
       {collectionId && (
         <p className="text-xs text-cream/40">
-          Access applies only to this {TOOL_LABELS[toolKey] || toolKey}.
+          Access applies only to this {toolLabel}{collectionName ? `: ${collectionName}` : ''}.
         </p>
       )}
 

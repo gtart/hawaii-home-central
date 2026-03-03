@@ -163,10 +163,20 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
     }
   }
 
+  const breadcrumb = (
+    <a href="/app" className="inline-flex items-center gap-1 text-xs text-cream/40 hover:text-cream/60 transition-colors mb-4">
+      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <polyline points="15 18 9 12 15 6" />
+      </svg>
+      Tools
+    </a>
+  )
+
   // Empty state
   if (collections.length === 0) {
     return (
       <div className="text-center py-24">
+        <div className="text-left">{breadcrumb}</div>
         <h2 className="font-serif text-2xl text-cream mb-2">{toolLabel}</h2>
         <p className="text-cream/50 text-sm mb-6">
           Create your first {itemNoun} to get started.
@@ -196,6 +206,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
   // Multi-collection picker
   return (
     <div>
+      {breadcrumb}
       <div className="flex items-center justify-between mb-6 gap-3">
         <h2 className="font-serif text-2xl text-cream">{toolLabel}</h2>
         {!creating ? (

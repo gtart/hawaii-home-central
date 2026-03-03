@@ -51,8 +51,9 @@ export async function GET(request: Request) {
     try {
       const payload = coll.payload as Record<string, unknown>
 
-      // Mood boards: payload.boards[0].ideas[].images[]
+      // Mood boards: payload.boards[].ideas[].images[]
       const boards = payload?.boards as Array<{
+        isDefault?: boolean
         ideas?: Array<{
           images?: Array<{ id: string; url: string; thumbnailUrl?: string }>
           heroImageId?: string | null
@@ -60,16 +61,25 @@ export async function GET(request: Request) {
       }> | undefined
 
       if (boards && boards.length > 0) {
-        const ideas = boards[0].ideas ?? []
-        for (const idea of ideas) {
+        // Prioritize non-default boards (default "Saved Ideas" is often empty)
+        const sorted = [...boards].sort((a, b) => {
+          if (a.isDefault && !b.isDefault) return 1
+          if (!a.isDefault && b.isDefault) return -1
+          return 0
+        })
+        for (const board of sorted) {
           if (imageUrls.length >= 4) break
-          if (!idea.images || idea.images.length === 0) continue
+          const ideas = board.ideas ?? []
+          for (const idea of ideas) {
+            if (imageUrls.length >= 4) break
+            if (!idea.images || idea.images.length === 0) continue
 
-          const heroId = idea.heroImageId
-          const hero = heroId ? idea.images.find((img) => img.id === heroId) : null
-          const img = hero ?? idea.images[0]
-          if (img) {
-            imageUrls.push(img.thumbnailUrl ?? img.url)
+            const heroId = idea.heroImageId
+            const hero = heroId ? idea.images.find((img) => img.id === heroId) : null
+            const img = hero ?? idea.images[0]
+            if (img) {
+              imageUrls.push(img.thumbnailUrl ?? img.url)
+            }
           }
         }
       }

@@ -75,7 +75,7 @@ function Content({ collectionId }: { collectionId: string }) {
         backHref="/app/tools/mood-boards"
         backLabel="All Mood Boards"
         headerSlot={<InstanceSwitcher toolKey="mood_boards" currentCollectionId={collectionId} itemNoun="board" />}
-        toolLabel="Mood Boards"
+        toolLabel="Mood Board"
         scopes={[]}
         scopeLabel="Boards"
         buildExportUrl={(opts) => {
