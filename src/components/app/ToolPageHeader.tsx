@@ -179,13 +179,24 @@ export function ToolPageHeader({
 
   return (
     <>
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-1.5 mb-4 text-sm">
         <Link
-          href={backHref || '/app'}
-          className="text-sandstone hover:text-sandstone-light text-sm"
+          href="/app"
+          className="inline-flex items-center gap-1 text-cream/40 hover:text-cream/60 transition-colors"
         >
-          &larr; {backLabel || currentProject?.name || 'Tools'}
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Tools
         </Link>
+        <span className="text-cream/20">/</span>
+        {backHref ? (
+          <Link href={backHref} className="text-cream/40 hover:text-cream/60 transition-colors">
+            {toolLabel || backLabel || title}
+          </Link>
+        ) : (
+          <span className="text-cream/60">{toolLabel || title}</span>
+        )}
       </div>
 
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 mb-4">

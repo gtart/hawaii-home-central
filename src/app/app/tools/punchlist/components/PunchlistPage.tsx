@@ -8,6 +8,7 @@ import { PunchlistItemDetail } from './PunchlistItemDetail'
 import { PunchlistItemForm } from './PunchlistItemForm'
 import { BulkPhotoUpload } from './BulkPhotoUpload'
 import { BulkTextEntry } from './BulkTextEntry'
+import { QuickAddStrip } from './QuickAddStrip'
 
 type SortMode = 'newest' | 'oldest' | 'priority'
 type FilterStatus = 'ALL' | PunchlistStatus
@@ -38,6 +39,7 @@ export function PunchlistPage({ api }: Props) {
   const [viewingId, setViewingId] = useState<string | null>(null)
   const [expandedLocations, setExpandedLocations] = useState(false)
   const [expandedAssignees, setExpandedAssignees] = useState(false)
+  const [quickAddOpen, setQuickAddOpen] = useState(false)
   const uniqueLocations = useMemo(() => {
     const locs = new Set(payload.items.map((i) => i.location).filter(Boolean))
     return Array.from(locs).sort()
@@ -419,15 +421,24 @@ export function PunchlistPage({ api }: Props) {
           <option value="priority">Priority</option>
         </select>
 
-        {/* Desktop Add button — hidden on mobile, visible md+ */}
+        {/* Desktop Add buttons — hidden on mobile, visible md+ */}
         {!readOnly && (
-          <button
-            type="button"
-            onClick={() => setShowForm(true)}
-            className="hidden md:inline-flex items-center gap-1.5 ml-auto text-xs px-3 py-1.5 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors"
-          >
-            + Add Item
-          </button>
+          <div className="hidden md:flex items-center gap-2 ml-auto">
+            <button
+              type="button"
+              onClick={() => setQuickAddOpen(true)}
+              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+            >
+              + Quick Add
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 border border-cream/20 text-cream/60 font-medium rounded-lg hover:border-cream/40 hover:text-cream transition-colors"
+            >
+              Full Form
+            </button>
+          </div>
         )}
       </div>
 
@@ -469,18 +480,28 @@ export function PunchlistPage({ api }: Props) {
         </div>
       )}
 
-      {/* Mobile FAB — single tap opens Add Item form */}
-      {!readOnly && (
+      {/* Mobile FAB — opens QuickAddStrip */}
+      {!readOnly && !quickAddOpen && (
         <button
           type="button"
-          onClick={() => setShowForm(true)}
+          onClick={() => setQuickAddOpen(true)}
           className="md:hidden fixed bottom-8 right-8 w-14 h-14 bg-sandstone text-basalt rounded-full shadow-lg hover:bg-sandstone-light transition-all flex items-center justify-center z-40"
-          aria-label="Add item"
+          aria-label="Quick add"
         >
           <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M12 5v14M5 12h14" strokeLinecap="round" />
           </svg>
         </button>
+      )}
+
+      {/* Quick Add Strip */}
+      {quickAddOpen && (
+        <QuickAddStrip
+          api={api}
+          onDone={() => setQuickAddOpen(false)}
+          onViewItem={(id) => { setQuickAddOpen(false); setViewingId(id) }}
+          onOpenForm={() => { setQuickAddOpen(false); setShowForm(true) }}
+        />
       )}
 
       {/* Add Item form modal */}

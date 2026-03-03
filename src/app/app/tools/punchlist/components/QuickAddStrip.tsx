@@ -10,9 +10,10 @@ interface Props {
   api: PunchlistStateAPI
   onDone: () => void
   onViewItem?: (id: string) => void
+  onOpenForm?: () => void
 }
 
-export function QuickAddStrip({ api, onDone, onViewItem }: Props) {
+export function QuickAddStrip({ api, onDone, onViewItem, onOpenForm }: Props) {
   const { data: session } = useSession()
   const [title, setTitle] = useState('')
   const [location, setLocation] = useState('')
@@ -289,13 +290,24 @@ export function QuickAddStrip({ api, onDone, onViewItem }: Props) {
                 <span className="text-cream/30">{savedCount} added</span>
               )}
             </div>
-            <button
-              type="button"
-              onClick={onDone}
-              className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
-            >
-              Done
-            </button>
+            <div className="flex items-center gap-3">
+              {onOpenForm && (
+                <button
+                  type="button"
+                  onClick={onOpenForm}
+                  className="text-xs text-sandstone/60 hover:text-sandstone transition-colors"
+                >
+                  Full form
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onDone}
+                className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -387,13 +399,24 @@ export function QuickAddStrip({ api, onDone, onViewItem }: Props) {
               <span className="text-cream/30">{savedCount} added</span>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onDone}
-            className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
-          >
-            Done
-          </button>
+          <div className="flex items-center gap-3">
+            {onOpenForm && (
+              <button
+                type="button"
+                onClick={onOpenForm}
+                className="text-xs text-sandstone/60 hover:text-sandstone transition-colors"
+              >
+                Full form
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onDone}
+              className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
+            >
+              Done
+            </button>
+          </div>
         </div>
       </div>
     </>

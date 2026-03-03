@@ -258,12 +258,16 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
   }
 
   const breadcrumb = (
-    <a href="/app" className="inline-flex items-center gap-1 text-xs text-cream/40 hover:text-cream/60 transition-colors mb-4">
-      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <polyline points="15 18 9 12 15 6" />
-      </svg>
-      Tools
-    </a>
+    <nav className="flex items-center gap-1.5 text-xs mb-4">
+      <a href="/app" className="inline-flex items-center gap-1 text-cream/40 hover:text-cream/60 transition-colors">
+        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Tools
+      </a>
+      <span className="text-cream/20">/</span>
+      <span className="text-cream/60">{toolLabel}</span>
+    </nav>
   )
 
   // Empty state
@@ -314,51 +318,6 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {/* + Add a new board tile */}
-        {!creating ? (
-          <button
-            type="button"
-            onClick={() => setCreating(true)}
-            className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-cream/15 hover:border-sandstone/40 bg-basalt-50 transition-colors cursor-pointer min-h-[120px]"
-          >
-            <svg className="w-7 h-7 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            <span className="text-sm text-cream/40 font-medium">Add a new {itemNoun}</span>
-          </button>
-        ) : (
-          <div className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-sandstone/40 bg-basalt-50 p-4 min-h-[120px]">
-            <input
-              autoFocus
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleCreate()
-                if (e.key === 'Escape') { setCreating(false); setNewTitle('') }
-              }}
-              placeholder={`${itemNoun.charAt(0).toUpperCase() + itemNoun.slice(1)} name...`}
-              className="w-full bg-basalt border border-cream/20 rounded px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
-            />
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleCreate}
-                disabled={!newTitle.trim()}
-                className="text-xs font-medium text-basalt bg-sandstone rounded px-3 py-1.5 hover:bg-sandstone-light transition-colors disabled:opacity-40 whitespace-nowrap"
-              >
-                Create
-              </button>
-              <button
-                type="button"
-                onClick={() => { setCreating(false); setNewTitle('') }}
-                className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
         {collections.map((coll) => {
           const preview = previews[coll.id] ?? { imageUrls: [], ideaCount: 0, commentCount: 0 }
           const hasThumbnails = previewMode === 'thumbnails'
@@ -560,6 +519,51 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
             </div>
           )
         })}
+        {/* + Add a new board tile */}
+        {!creating ? (
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-cream/15 hover:border-sandstone/40 bg-basalt-50 transition-colors cursor-pointer min-h-[120px]"
+          >
+            <svg className="w-7 h-7 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span className="text-sm text-cream/40 font-medium">Add a new {itemNoun}</span>
+          </button>
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-sandstone/40 bg-basalt-50 p-4 min-h-[120px]">
+            <input
+              autoFocus
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCreate()
+                if (e.key === 'Escape') { setCreating(false); setNewTitle('') }
+              }}
+              placeholder={`${itemNoun.charAt(0).toUpperCase() + itemNoun.slice(1)} name...`}
+              className="w-full bg-basalt border border-cream/20 rounded px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCreate}
+                disabled={!newTitle.trim()}
+                className="text-xs font-medium text-basalt bg-sandstone rounded px-3 py-1.5 hover:bg-sandstone-light transition-colors disabled:opacity-40 whitespace-nowrap"
+              >
+                Create
+              </button>
+              <button
+                type="button"
+                onClick={() => { setCreating(false); setNewTitle('') }}
+                className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Archived section */}
