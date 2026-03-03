@@ -12,7 +12,6 @@ import { uploadMoodBoardFile } from '../uploadMoodBoardFile'
 import { IdeaTile } from './IdeaTile'
 import { IdeaDetailModal } from './IdeaDetailModal'
 import { CommentsPanel } from './CommentsPanel'
-import { ExportBoardModal } from './ExportBoardModal'
 import { BoardSettingsSheet } from './BoardSettingsSheet'
 import { ShareExportModal } from '@/components/app/ShareExportModal'
 
@@ -43,7 +42,6 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
   const [selectedIdeaId, setSelectedIdeaId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState(false)
   const [boardName, setBoardName] = useState(board.name)
-  const [showTextForm, setShowTextForm] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [commentsOpen, setCommentsOpen] = useState(false)
@@ -51,10 +49,10 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
     ideaId: string
     ideaLabel: string
   } | null>(null)
-  const [showAddMenu, setShowAddMenu] = useState(false)
-  const [showExport, setShowExport] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
+  // +Add tile / empty state mode: closed → menu → url/text
+  const [addTileMode, setAddTileMode] = useState<'closed' | 'menu' | 'url' | 'text'>('closed')
   const [showShareExportForBoard, setShowShareExportForBoard] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
   // Search + filter state
   const [searchQuery, setSearchQuery] = useState('')
@@ -181,15 +179,15 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
     }
   }, [])
 
-  // ESC to close + Add dropdown
+  // ESC to close +Add tile
   useEffect(() => {
-    if (!showAddMenu) return
+    if (addTileMode === 'closed') return
     const h = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowAddMenu(false)
+      if (e.key === 'Escape') setAddTileMode('closed')
     }
     document.addEventListener('keydown', h)
     return () => document.removeEventListener('keydown', h)
-  }, [showAddMenu])
+  }, [addTileMode])
 
   // Board collaborators for membership display
   const boardCollaborators = useMemo(() => {
@@ -312,7 +310,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
     })
     setTextIdeaName('')
     setTextIdeaNotes('')
-    setShowTextForm(false)
+    setAddTileMode('closed')
   }
 
   const handleQuickUrlAdd = () => {
@@ -322,7 +320,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
       const parsed = new URL(trimmed)
       if (!parsed.protocol.startsWith('http')) throw new Error('invalid')
     } catch {
-      setQuickUrlError('Please enter a valid URL')
+      setQuickUrlError('Please enter a valid image URL')
       return
     }
     setQuickUrlError('')
@@ -337,6 +335,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
       tags: [],
     })
     setQuickUrl('')
+    setAddTileMode('closed')
   }
 
   const handleCommentOnIdea = (ideaId: string, ideaName: string) => {
@@ -471,7 +470,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
               ) : null
             )}
           </div>
-          {isDefaultBoard(board) && (
+          {isDefaultBoard(board) && !collectionId && (
             <div className="flex items-center gap-1.5 mt-0.5">
               <p className="text-[11px] text-cream/30">
                 Ideas saved from the web land here. Sort them into boards when you&apos;re ready.
@@ -550,27 +549,6 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
           </span>
         )}
 
-        {/* Export button */}
-        {board.ideas.length > 0 && (
-          <span className="relative group/tip shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowExport(true)}
-              className="h-9 rounded-lg flex items-center gap-1.5 px-2 text-cream/40 hover:text-cream/60 hover:bg-cream/5 transition-colors"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
-                <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
-                <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span className="hidden sm:inline text-xs">Export</span>
-            </button>
-            <span className="sm:hidden absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 rounded bg-basalt border border-cream/15 text-[10px] text-cream/60 whitespace-nowrap opacity-0 pointer-events-none group-hover/tip:opacity-100 transition-opacity z-20 shadow-lg">
-              Export PDF
-            </span>
-          </span>
-        )}
-
         {/* Comments button */}
         <span className="relative group/tip shrink-0">
           <button
@@ -606,94 +584,9 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
           </span>
         </span>
 
-        {/* Unified "+ Add" dropdown — same on desktop and mobile */}
-        {!readOnly && (
-          <div className="relative shrink-0">
-            <button
-              type="button"
-              data-testid="add-idea-btn"
-              onClick={() => setShowAddMenu(!showAddMenu)}
-              disabled={uploading}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-40"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              <span className="hidden sm:inline">{uploading ? 'Uploading...' : 'Add'}</span>
-            </button>
-            {showAddMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowAddMenu(false)}
-                />
-                <div className="absolute right-0 top-full mt-1 z-20 w-48 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl py-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddMenu(false)
-                      galleryRef.current?.click()
-                    }}
-                    disabled={uploading}
-                    className="w-full text-left px-3 py-2.5 text-sm text-cream/70 hover:bg-cream/5 transition-colors disabled:opacity-40 flex items-center gap-2.5"
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/40 shrink-0">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                      <circle cx="8.5" cy="8.5" r="1.5" />
-                      <polyline points="21 15 16 10 5 21" />
-                    </svg>
-                    Upload Photos
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddMenu(false)
-                      cameraRef.current?.click()
-                    }}
-                    disabled={uploading}
-                    className="w-full text-left px-3 py-2.5 text-sm text-cream/70 hover:bg-cream/5 transition-colors disabled:opacity-40 flex items-center gap-2.5 sm:hidden"
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/40 shrink-0">
-                      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                      <circle cx="12" cy="13" r="4" />
-                    </svg>
-                    Take Photo
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="text-note-btn"
-                    onClick={() => {
-                      setShowAddMenu(false)
-                      setShowTextForm(true)
-                    }}
-                    className="w-full text-left px-3 py-2.5 text-sm text-cream/70 hover:bg-cream/5 transition-colors flex items-center gap-2.5"
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/40 shrink-0">
-                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                    Text Note
-                  </button>
-                  <div className="border-t border-cream/10 mt-1 pt-1">
-                    <Link
-                      href={`/app/save-from-web?from=mood-boards&boardId=${board.id}`}
-                      data-testid="save-from-web-link"
-                      className="w-full text-left px-3 py-2.5 text-sm text-cream/70 hover:bg-cream/5 transition-colors flex items-center gap-2.5"
-                      onClick={() => setShowAddMenu(false)}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/40 shrink-0">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="2" y1="12" x2="22" y2="12" />
-                        <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
-                      </svg>
-                      Save from Web
-                    </Link>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+        {/* Uploading indicator in header */}
+        {uploading && !readOnly && (
+          <span className="text-xs text-cream/40 shrink-0">Uploading...</span>
         )}
       </div>
 
@@ -719,83 +612,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
         </div>
       )}
 
-      {/* Text idea form */}
-      {showTextForm && !readOnly && (
-        <div className="mb-6 bg-basalt-50 rounded-xl p-4 border border-cream/10 space-y-3">
-          <h4 className="text-sm font-medium text-cream/70">Add a text note</h4>
-          <input
-            type="text"
-            value={textIdeaName}
-            onChange={(e) => setTextIdeaName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && textIdeaName.trim()) handleAddTextIdea()
-              if (e.key === 'Escape') {
-                setShowTextForm(false)
-                setTextIdeaName('')
-                setTextIdeaNotes('')
-              }
-            }}
-            placeholder="Idea name..."
-            autoFocus
-            className="w-full px-3 py-2 bg-basalt border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone"
-          />
-          <textarea
-            value={textIdeaNotes}
-            onChange={(e) => setTextIdeaNotes(e.target.value)}
-            placeholder="Notes (optional) — price, dimensions, color, where you saw it..."
-            rows={2}
-            className="w-full px-3 py-2 bg-basalt border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone resize-none"
-          />
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleAddTextIdea}
-              disabled={!textIdeaName.trim()}
-              className="px-4 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30"
-            >
-              Add Idea
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowTextForm(false)
-                setTextIdeaName('')
-                setTextIdeaNotes('')
-              }}
-              className="px-4 py-1.5 text-sm text-cream/60 hover:text-cream transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Quick add image URL */}
-      {!readOnly && (
-        <div className="mb-4">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={quickUrl}
-              onChange={(e) => { setQuickUrl(e.target.value); setQuickUrlError('') }}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleQuickUrlAdd() }}
-              placeholder="Paste image URL..."
-              className="flex-1 px-3 py-2 bg-basalt border border-cream/15 text-cream text-sm rounded-lg placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
-            />
-            <button
-              type="button"
-              onClick={handleQuickUrlAdd}
-              disabled={!quickUrl.trim()}
-              className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30"
-            >
-              Add
-            </button>
-          </div>
-          {quickUrlError && (
-            <p className="text-xs text-red-400 mt-1">{quickUrlError}</p>
-          )}
-        </div>
-      )}
+      {/* Text form and URL input moved into +Add tile and empty state below */}
 
       {/* Search + filter controls */}
       {board.ideas.length > 0 && (
@@ -918,6 +735,176 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
                 />
               </div>
             ))}
+
+            {/* +Add tile — last item in masonry grid */}
+            {!readOnly && (
+              <div className="break-inside-avoid mb-3">
+                <div className="rounded-xl border-2 border-dashed border-cream/15 hover:border-sandstone/40 overflow-hidden bg-basalt-50 transition-colors">
+                  {addTileMode === 'closed' && (
+                    <button
+                      type="button"
+                      onClick={() => setAddTileMode('menu')}
+                      className="w-full aspect-[4/3] flex flex-col items-center justify-center gap-2 text-cream/30 hover:text-sandstone transition-colors"
+                    >
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                      <span className="text-sm font-medium">Add</span>
+                    </button>
+                  )}
+
+                  {addTileMode === 'menu' && (
+                    <div className="p-3 space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => { setAddTileMode('closed'); galleryRef.current?.click() }}
+                        disabled={uploading}
+                        className="w-full text-left px-3 py-2.5 text-sm text-cream/70 hover:bg-cream/5 rounded-lg transition-colors flex items-center gap-2.5 disabled:opacity-40"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/40 shrink-0">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <polyline points="21 15 16 10 5 21" />
+                        </svg>
+                        Upload photo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setAddTileMode('closed'); cameraRef.current?.click() }}
+                        disabled={uploading}
+                        className="w-full text-left px-3 py-2.5 text-sm text-cream/70 hover:bg-cream/5 rounded-lg transition-colors flex items-center gap-2.5 disabled:opacity-40 sm:hidden"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/40 shrink-0">
+                          <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                          <circle cx="12" cy="13" r="4" />
+                        </svg>
+                        Take photo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAddTileMode('url')}
+                        className="w-full text-left px-3 py-2.5 text-sm text-cream/70 hover:bg-cream/5 rounded-lg transition-colors flex items-center gap-2.5"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/40 shrink-0">
+                          <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+                          <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+                        </svg>
+                        From image URL
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAddTileMode('text')}
+                        className="w-full text-left px-3 py-2.5 text-sm text-cream/70 hover:bg-cream/5 rounded-lg transition-colors flex items-center gap-2.5"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/40 shrink-0">
+                          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                        Text note
+                      </button>
+                      <Link
+                        href={`/app/save-from-web?from=mood-boards&boardId=${board.id}`}
+                        onClick={() => setAddTileMode('closed')}
+                        className="hidden sm:flex w-full text-left px-3 py-2.5 text-sm text-cream/70 hover:bg-cream/5 rounded-lg transition-colors items-center gap-2.5"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/40 shrink-0">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="2" y1="12" x2="22" y2="12" />
+                          <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+                        </svg>
+                        Save from web
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setAddTileMode('closed')}
+                        className="w-full text-center px-3 py-1.5 text-xs text-cream/30 hover:text-cream/50 transition-colors mt-1"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+
+                  {addTileMode === 'url' && (
+                    <div className="p-3 space-y-2">
+                      <h4 className="text-xs font-medium text-cream/50">Add from image URL</h4>
+                      <input
+                        type="text"
+                        autoFocus
+                        value={quickUrl}
+                        onChange={(e) => { setQuickUrl(e.target.value); setQuickUrlError('') }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleQuickUrlAdd()
+                          if (e.key === 'Escape') { setAddTileMode('menu'); setQuickUrl(''); setQuickUrlError('') }
+                        }}
+                        placeholder="https://..."
+                        className="w-full px-3 py-2 bg-basalt border border-cream/15 text-cream text-sm rounded-lg placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
+                      />
+                      {quickUrlError && <p className="text-xs text-red-400">{quickUrlError}</p>}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleQuickUrlAdd}
+                          disabled={!quickUrl.trim()}
+                          className="px-3 py-1.5 bg-sandstone text-basalt text-xs font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30"
+                        >
+                          Add
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setAddTileMode('menu'); setQuickUrl(''); setQuickUrlError('') }}
+                          className="px-3 py-1.5 text-xs text-cream/50 hover:text-cream transition-colors"
+                        >
+                          Back
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {addTileMode === 'text' && (
+                    <div className="p-3 space-y-2">
+                      <h4 className="text-xs font-medium text-cream/50">Add a text note</h4>
+                      <input
+                        type="text"
+                        autoFocus
+                        value={textIdeaName}
+                        onChange={(e) => setTextIdeaName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && textIdeaName.trim()) handleAddTextIdea()
+                          if (e.key === 'Escape') { setAddTileMode('menu'); setTextIdeaName(''); setTextIdeaNotes('') }
+                        }}
+                        placeholder="Idea name..."
+                        className="w-full px-3 py-2 bg-basalt border border-cream/15 text-cream text-sm rounded-lg placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
+                      />
+                      <textarea
+                        value={textIdeaNotes}
+                        onChange={(e) => setTextIdeaNotes(e.target.value)}
+                        placeholder="Notes (optional)"
+                        rows={2}
+                        className="w-full px-3 py-2 bg-basalt border border-cream/15 text-cream text-sm rounded-lg placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40 resize-none"
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleAddTextIdea}
+                          disabled={!textIdeaName.trim()}
+                          className="px-3 py-1.5 bg-sandstone text-basalt text-xs font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30"
+                        >
+                          Add
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setAddTileMode('menu'); setTextIdeaName(''); setTextIdeaNotes('') }}
+                          className="px-3 py-1.5 text-xs text-cream/50 hover:text-cream transition-colors"
+                        >
+                          Back
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-12">
@@ -935,53 +922,160 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
           </div>
         )
       ) : (
-        <div data-testid="board-empty-state" className="text-center py-16 bg-basalt-50 rounded-xl border border-cream/10">
-          <p className="text-4xl mb-3 opacity-30">
-            {isDefaultBoard(board) ? '\u2764' : '\uD83C\uDFA8'}
-          </p>
-          <h3 className="text-lg font-serif text-sandstone mb-2">
-            No ideas yet
-          </h3>
-          <p className="text-cream/50 text-sm mb-6 max-w-sm mx-auto">
-            Start collecting inspiration for this board.
-          </p>
-          {!readOnly && (
-            <div className="flex flex-wrap items-center justify-center gap-3">
+        /* Empty state */
+        <div data-testid="board-empty-state" className="py-12 bg-basalt-50 rounded-xl border border-cream/10">
+          <div className="text-center mb-6">
+            <p className="text-4xl mb-3 opacity-30">
+              {isDefaultBoard(board) ? '\u2764' : '\uD83C\uDFA8'}
+            </p>
+            <h3 className="text-lg font-serif text-sandstone mb-2">
+              No ideas yet
+            </h3>
+            <p className="text-cream/50 text-sm max-w-sm mx-auto">
+              Start collecting inspiration for this board.
+            </p>
+          </div>
+
+          {!readOnly && addTileMode !== 'url' && addTileMode !== 'text' && (
+            <div className="max-w-xs mx-auto space-y-1 px-4">
               <button
                 type="button"
                 onClick={() => galleryRef.current?.click()}
                 disabled={uploading}
-                className="px-4 py-2.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors inline-flex items-center gap-2 disabled:opacity-40"
+                className="w-full text-left px-4 py-3 text-sm text-cream/70 hover:bg-cream/5 rounded-lg transition-colors flex items-center gap-3 disabled:opacity-40"
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/40 shrink-0">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                   <circle cx="8.5" cy="8.5" r="1.5" />
                   <polyline points="21 15 16 10 5 21" />
                 </svg>
-                Upload photos
+                Upload photo
+              </button>
+              <button
+                type="button"
+                onClick={() => cameraRef.current?.click()}
+                disabled={uploading}
+                className="w-full text-left px-4 py-3 text-sm text-cream/70 hover:bg-cream/5 rounded-lg transition-colors flex items-center gap-3 disabled:opacity-40 sm:hidden"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/40 shrink-0">
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+                Take photo
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddTileMode('url')}
+                className="w-full text-left px-4 py-3 text-sm text-cream/70 hover:bg-cream/5 rounded-lg transition-colors flex items-center gap-3"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/40 shrink-0">
+                  <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+                  <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+                </svg>
+                Add from image URL
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddTileMode('text')}
+                className="w-full text-left px-4 py-3 text-sm text-cream/70 hover:bg-cream/5 rounded-lg transition-colors flex items-center gap-3"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/40 shrink-0">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Add a text note
               </button>
               <Link
                 href={`/app/save-from-web?from=mood-boards&boardId=${board.id}`}
-                className="px-4 py-2.5 border border-cream/20 text-cream/70 text-sm font-medium rounded-lg hover:border-cream/40 hover:text-cream transition-colors inline-flex items-center gap-2"
+                className="hidden sm:flex w-full text-left px-4 py-3 text-sm text-cream/70 hover:bg-cream/5 rounded-lg transition-colors items-center gap-3"
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/40 shrink-0">
                   <circle cx="12" cy="12" r="10" />
                   <line x1="2" y1="12" x2="22" y2="12" />
                   <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
                 </svg>
                 Save from web
               </Link>
-              <button
-                type="button"
-                onClick={() => setShowTextForm(true)}
-                className="px-4 py-2.5 border border-cream/20 text-cream/70 text-sm font-medium rounded-lg hover:border-cream/40 hover:text-cream transition-colors inline-flex items-center gap-2"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-                Add a note
-              </button>
+            </div>
+          )}
+
+          {/* Inline URL input in empty state */}
+          {!readOnly && addTileMode === 'url' && (
+            <div className="max-w-sm mx-auto px-4 space-y-2">
+              <h4 className="text-xs font-medium text-cream/50">Add from image URL</h4>
+              <input
+                type="text"
+                autoFocus
+                value={quickUrl}
+                onChange={(e) => { setQuickUrl(e.target.value); setQuickUrlError('') }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleQuickUrlAdd()
+                  if (e.key === 'Escape') { setAddTileMode('closed'); setQuickUrl(''); setQuickUrlError('') }
+                }}
+                placeholder="https://..."
+                className="w-full px-3 py-2 bg-basalt border border-cream/15 text-cream text-sm rounded-lg placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
+              />
+              {quickUrlError && <p className="text-xs text-red-400">{quickUrlError}</p>}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleQuickUrlAdd}
+                  disabled={!quickUrl.trim()}
+                  className="px-4 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAddTileMode('closed'); setQuickUrl(''); setQuickUrlError('') }}
+                  className="px-4 py-1.5 text-sm text-cream/50 hover:text-cream transition-colors"
+                >
+                  Back
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Inline text form in empty state */}
+          {!readOnly && addTileMode === 'text' && (
+            <div className="max-w-sm mx-auto px-4 space-y-2">
+              <h4 className="text-xs font-medium text-cream/50">Add a text note</h4>
+              <input
+                type="text"
+                autoFocus
+                value={textIdeaName}
+                onChange={(e) => setTextIdeaName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && textIdeaName.trim()) handleAddTextIdea()
+                  if (e.key === 'Escape') { setAddTileMode('closed'); setTextIdeaName(''); setTextIdeaNotes('') }
+                }}
+                placeholder="Idea name..."
+                className="w-full px-3 py-2 bg-basalt border border-cream/15 text-cream text-sm rounded-lg placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
+              />
+              <textarea
+                value={textIdeaNotes}
+                onChange={(e) => setTextIdeaNotes(e.target.value)}
+                placeholder="Notes (optional)"
+                rows={2}
+                className="w-full px-3 py-2 bg-basalt border border-cream/15 text-cream text-sm rounded-lg placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40 resize-none"
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleAddTextIdea}
+                  disabled={!textIdeaName.trim()}
+                  className="px-4 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAddTileMode('closed'); setTextIdeaName(''); setTextIdeaNotes('') }}
+                  className="px-4 py-1.5 text-sm text-cream/50 hover:text-cream transition-colors"
+                >
+                  Back
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -1031,15 +1125,6 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
           }}
           draftRef={draftRef}
           onClearDraftRef={() => setDraftRef(null)}
-        />
-      )}
-
-      {/* Export modal */}
-      {showExport && (
-        <ExportBoardModal
-          boardId={board.id}
-          boardName={board.name}
-          onClose={() => setShowExport(false)}
         />
       )}
 
