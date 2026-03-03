@@ -33,6 +33,8 @@ interface CollectionsPickerViewProps {
   itemNoun: string
   /** When set, fetch preview data for cards ('thumbnails' for images, 'statuses' for status counts) */
   previewMode?: 'thumbnails' | 'statuses'
+  /** Custom empty state rendered instead of the default input when there are zero boards */
+  customEmptyState?: (onCreate: (title: string) => void) => React.ReactNode
 }
 
 function ThumbnailGrid({ imageUrls }: { imageUrls: string[] }) {
@@ -88,7 +90,7 @@ function ThumbnailGrid({ imageUrls }: { imageUrls: string[] }) {
   )
 }
 
-export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: CollectionsPickerViewProps) {
+export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEmptyState }: CollectionsPickerViewProps) {
   const { currentProject } = useProject()
   const router = useRouter()
   const [collections, setCollections] = useState<CollectionSummary[]>([])
@@ -182,15 +184,13 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
     )
   }
 
-  const handleCreate = async () => {
-    const title = newTitle.trim()
-    if (!title || !currentProject?.id) return
-
+  const createBoard = async (title: string) => {
+    if (!title.trim() || !currentProject?.id) return
     try {
       const res = await fetch('/api/collections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: currentProject.id, toolKey, title }),
+        body: JSON.stringify({ projectId: currentProject.id, toolKey, title: title.trim() }),
       })
       if (!res.ok) return
       const data = await res.json()
@@ -199,6 +199,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
       // ignore
     }
   }
+
+  const handleCreate = () => createBoard(newTitle)
 
   const handleRename = async (collId: string) => {
     const title = editTitle.trim()
@@ -266,6 +268,14 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode }: Collec
 
   // Empty state
   if (collections.length === 0) {
+    if (customEmptyState) {
+      return (
+        <div className="py-12">
+          <div className="text-left mb-6">{breadcrumb}</div>
+          {customEmptyState(createBoard)}
+        </div>
+      )
+    }
     return (
       <div className="text-center py-24">
         <div className="text-left">{breadcrumb}</div>

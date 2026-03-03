@@ -10,6 +10,7 @@ import {
   type DecisionV3,
 } from '@/data/finish-decisions'
 import Link from 'next/link'
+import { buildDecisionHref } from '../lib/routing'
 
 interface DecisionWithRoom extends DecisionV3 {
   roomId: string
@@ -131,7 +132,7 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
                           key={`${d.roomId}-${d.id}`}
                           className="border-b border-cream/5 hover:bg-basalt/50 cursor-pointer transition-colors"
                           onClick={() =>
-                            router.push(`/app/tools/finish-decisions/decision/${d.id}`)
+                            router.push(buildDecisionHref({ decisionId: d.id }))
                           }
                         >
                           <td className="px-4 py-2.5 text-sm text-cream font-medium">
@@ -212,7 +213,7 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
                           key={`${d.roomId}-${d.id}`}
                           className="border-b border-cream/5 hover:bg-basalt/50 cursor-pointer transition-colors"
                           onClick={() =>
-                            router.push(`/app/tools/finish-decisions/decision/${d.id}`)
+                            router.push(buildDecisionHref({ decisionId: d.id }))
                           }
                         >
                           <td className="px-4 py-2.5 text-sm text-cream font-medium">

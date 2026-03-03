@@ -18,6 +18,7 @@ import {
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { findKitsForRoomType, applyKitToRoom, removeKitFromRoom } from '@/lib/finish-decision-kits'
 import { isGlobalUnsorted, findUncategorizedDecision } from '@/lib/decisionHelpers'
+import { buildDecisionHref, buildBoardHref } from '../../lib/routing'
 import { SelectionsBoardView } from '../../components/SelectionsBoardView'
 import { DecisionsTable } from '../../components/DecisionsTable'
 import { QuickAddDecisionModal } from '../../components/QuickAddDecisionModal'
@@ -357,14 +358,7 @@ export function RoomDetailContent({
               onClick={() => setQuickAddOpen(true)}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-sandstone font-medium bg-sandstone/10 hover:bg-sandstone/20 rounded-lg transition-colors"
             >
-              + Decision
-            </button>
-            <button
-              type="button"
-              onClick={handleAutoPopulate}
-              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-cream/60 hover:text-cream/80 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
-            >
-              Add common decisions needed
+              + Selection
             </button>
             {hasAvailableKits && (
               <button
@@ -509,10 +503,7 @@ export function RoomDetailContent({
                 onClick={() => {
                   const first = room.decisions[0]
                   if (first) {
-                    const decPath = collectionId
-                      ? `/app/tools/finish-decisions/${collectionId}/decision/${first.id}`
-                      : `/app/tools/finish-decisions/decision/${first.id}`
-                    window.location.href = decPath
+                    window.location.href = buildDecisionHref({ decisionId: first.id, collectionId })
                   }
                 }}
                 className="inline-flex items-center gap-1 px-3 py-2 text-sm text-cream/60 hover:text-cream/80 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
@@ -544,34 +535,27 @@ export function RoomDetailContent({
           <div data-testid="empty-state-room" className="bg-basalt-50 rounded-card p-6 md:p-8 text-center border border-cream/10">
             <h3 className="font-serif text-lg text-sandstone mb-1">This board is empty</h3>
             <p className="text-sm text-cream/50 leading-relaxed mb-5">
-              Add a decision checklist so you don&rsquo;t miss anything&mdash;or start adding decisions one by one.
+              Start adding selections&mdash;or apply a Decision Pack to get started quickly.
             </p>
             {!readOnly && (
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleAutoPopulate}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-sandstone text-basalt font-medium text-sm rounded-lg hover:bg-sandstone-light transition-colors"
-                >
-                  Add decision checklist
-                </button>
+                {hasAvailableKits && (
+                  <button
+                    type="button"
+                    onClick={() => setIdeasModalOpen(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-sandstone text-basalt font-medium text-sm rounded-lg hover:bg-sandstone-light transition-colors"
+                  >
+                    <span>&#10024;</span> Add a Decision Pack
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setQuickAddOpen(true)}
                   className="text-sm text-cream/60 hover:text-cream/80 transition-colors"
                 >
-                  + Add a decision
+                  + Add a selection
                 </button>
               </div>
-            )}
-            {!readOnly && hasAvailableKits && (
-              <button
-                type="button"
-                onClick={() => setIdeasModalOpen(true)}
-                className="mt-3 text-xs text-purple-300/70 hover:text-purple-300 transition-colors"
-              >
-                Use a Decision Pack instead
-              </button>
             )}
           </div>
         ) : selViewMode === 'tile' ? (
@@ -707,10 +691,7 @@ export function RoomDetailContent({
           onDeleteComment={deleteRoomComment}
           onNavigateToDecision={(decisionId) => {
             setCommentsFeedOpen(false)
-            const decPath = collectionId
-              ? `/app/tools/finish-decisions/${collectionId}/decision/${decisionId}`
-              : `/app/tools/finish-decisions/decision/${decisionId}`
-            router.push(decPath)
+            router.push(buildDecisionHref({ decisionId, collectionId }))
           }}
         />
       )}

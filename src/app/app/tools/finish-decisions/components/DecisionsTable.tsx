@@ -9,6 +9,7 @@ import {
 } from '@/data/finish-decisions'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { DecisionCard } from './DecisionCard'
+import { buildDecisionHref } from '../lib/routing'
 
 function getDecisionThumbnail(decision: DecisionV3): string | null {
   // 1. Selected option with image
@@ -41,12 +42,14 @@ export function DecisionsTable({
   onDeleteDecision,
   readOnly = false,
   emojiMap = {},
+  collectionId,
 }: {
   decisions: DecisionV3[]
   roomType: string
   onDeleteDecision: (decisionId: string) => void
   readOnly?: boolean
   emojiMap?: Record<string, string>
+  collectionId?: string
 }) {
   const router = useRouter()
   const [sortColumn, setSortColumn] = useState<'title' | 'status' | 'dueDate' | 'updated'>('title')
@@ -104,7 +107,7 @@ export function DecisionsTable({
   if (decisions.length === 0) {
     return (
       <div className="text-center py-8 text-cream/50 text-sm">
-        No decisions yet. Use <strong className="text-cream/60">+ Decision</strong> in this room to get started.
+        No selections yet. Use <strong className="text-cream/60">+ Selection</strong> to get started.
       </div>
     )
   }
@@ -120,6 +123,7 @@ export function DecisionsTable({
             thumbnail={getDecisionThumbnail(decision)}
             onDelete={() => onDeleteDecision(decision.id)}
             readOnly={readOnly}
+            collectionId={collectionId}
           />
         ))}
       </div>
@@ -176,7 +180,7 @@ export function DecisionsTable({
                   key={decision.id}
                   className="border-b border-cream/5 hover:bg-basalt/50 transition-colors cursor-pointer"
                   onClick={() =>
-                    router.push(`/app/tools/finish-decisions/decision/${decision.id}`)
+                    router.push(buildDecisionHref({ decisionId: decision.id, collectionId }))
                   }
                 >
                   {/* Thumbnail cell */}

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge'
 import { STATUS_CONFIG_V3, type DecisionV3 } from '@/data/finish-decisions'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { relativeTime } from '@/lib/relativeTime'
+import { buildDecisionHref } from '../lib/routing'
 
 function getSelectionThumbnail(decision: DecisionV3): string | null {
   // 1. Selected option with image
@@ -65,6 +66,7 @@ export function SelectionsBoardView({
   onAddSelection,
   readOnly = false,
   emojiMap = {},
+  collectionId,
 }: {
   decisions: DecisionV3[]
   roomType: string
@@ -72,6 +74,7 @@ export function SelectionsBoardView({
   onAddSelection?: () => void
   readOnly?: boolean
   emojiMap?: Record<string, string>
+  collectionId?: string
 }) {
   const router = useRouter()
 
@@ -97,7 +100,7 @@ export function SelectionsBoardView({
               onClick={onAddSelection}
               className="text-sandstone hover:text-sandstone-light font-medium transition-colors"
             >
-              + Add a decision
+              + Add a selection
             </button>{' '}
             to get started.
           </>
@@ -122,11 +125,11 @@ export function SelectionsBoardView({
             data-testid="selection-card"
             role="button"
             tabIndex={0}
-            onClick={() => router.push(`/app/tools/finish-decisions/decision/${decision.id}`)}
+            onClick={() => router.push(buildDecisionHref({ decisionId: decision.id, collectionId }))}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
-                router.push(`/app/tools/finish-decisions/decision/${decision.id}`)
+                router.push(buildDecisionHref({ decisionId: decision.id, collectionId }))
               }
             }}
             className="bg-basalt-50 rounded-xl overflow-hidden border border-cream/10 hover:border-cream/25 transition-all cursor-pointer group focus:outline-none focus:ring-2 focus:ring-sandstone/50"
@@ -207,7 +210,7 @@ export function SelectionsBoardView({
                   data-testid="selection-open"
                   onClick={(e) => {
                     e.stopPropagation()
-                    router.push(`/app/tools/finish-decisions/decision/${decision.id}`)
+                    router.push(buildDecisionHref({ decisionId: decision.id, collectionId }))
                   }}
                   className="text-sandstone hover:text-sandstone-light font-medium transition-colors"
                 >
@@ -253,7 +256,7 @@ export function SelectionsBoardView({
             </svg>
           </div>
           <span className="text-xs text-cream/40 group-hover/add:text-cream/60 font-medium transition-colors">
-            Add a decision
+            Add a selection
           </span>
         </button>
       )}

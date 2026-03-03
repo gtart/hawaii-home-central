@@ -298,7 +298,7 @@ export function RoomSection({
                 onClick={onQuickAdd}
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-basalt bg-sandstone hover:bg-sandstone-light rounded-lg transition-colors"
               >
-                + Add decision
+                + Add selection
               </button>
             )}
             {!readOnly && availableKitCount > 0 && (

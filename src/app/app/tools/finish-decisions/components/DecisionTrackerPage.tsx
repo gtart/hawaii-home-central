@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 import { Input } from '@/components/ui/Input'
 import {
   STATUS_CONFIG_V3,
@@ -9,6 +10,7 @@ import {
   type DecisionV3,
   type StatusV3,
   type RoomSelection,
+  type SelectionComment,
 } from '@/data/finish-decisions'
 import type { RoomTypeV3 } from '@/data/finish-decisions'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
@@ -16,6 +18,7 @@ import { findKitsForRoomType } from '@/lib/finish-decision-kits'
 import { applyKitToRoom, removeKitFromRoom } from '@/lib/finish-decision-kits'
 import { OnboardingView } from './OnboardingView'
 import { IdeasPackModal } from './IdeasPackModal'
+import { buildDecisionHref } from '../lib/routing'
 
 function getSelectedOptionThumb(decision: DecisionV3): string | null {
   const sel = decision.options.find((o) => o.isSelected)
@@ -77,6 +80,7 @@ export function DecisionTrackerPage({
   ownedKitIds?: string[]
   collectionId?: string
 }) {
+  const { data: session } = useSession()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilters, setStatusFilters] = useState<StatusV3[]>([])
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
@@ -85,6 +89,8 @@ export function DecisionTrackerPage({
   const [simpleToast, setSimpleToast] = useState<string | null>(null)
   const [addInputValue, setAddInputValue] = useState('')
   const [addInputVisible, setAddInputVisible] = useState(false)
+  const [replyTexts, setReplyTexts] = useState<Record<string, string>>({})
+  const [replyOpenId, setReplyOpenId] = useState<string | null>(null)
 
   const [sortKey, setSortKey] = useState<SortKey>(() => {
     try {
@@ -254,6 +260,26 @@ export function DecisionTrackerPage({
     setTimeout(() => setSimpleToast(null), 3000)
   }
 
+  function handleInlineComment(decisionId: string) {
+    const text = (replyTexts[decisionId] || '').trim()
+    if (!text || !room) return
+    const comment: SelectionComment = {
+      id: `cmt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      text,
+      authorName: session?.user?.name || 'Unknown',
+      authorEmail: session?.user?.email || '',
+      createdAt: new Date().toISOString(),
+    }
+    const updated = room.decisions.map((d) =>
+      d.id === decisionId
+        ? { ...d, comments: [...(d.comments || []), comment] }
+        : d
+    )
+    onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+    setReplyTexts((prev) => ({ ...prev, [decisionId]: '' }))
+    setReplyOpenId(null)
+  }
+
   return (
     <>
       {/* Empty state — no decisions yet */}
@@ -420,81 +446,148 @@ export function DecisionTrackerPage({
                 const config = STATUS_CONFIG_V3[decision.status]
                 const selectedOption = decision.options.find((o) => o.isSelected)
                 const thumbUrl = getSelectedOptionThumb(decision)
-                const commentCount = (decision.comments || []).length
+                const comments = (decision.comments || []).filter((c) => c.authorEmail !== '')
+                const commentCount = comments.length
+                const lastComment = commentCount > 0 ? comments[comments.length - 1] : null
                 const today = new Date().toISOString().slice(0, 10)
                 const isOverdue = decision.dueDate && decision.dueDate < today && decision.status !== 'done'
+                const isReplyOpen = replyOpenId === decision.id
 
                 return (
-                  <Link
-                    key={decision.id}
-                    href={collectionId
-                      ? `/app/tools/finish-decisions/${collectionId}/decision/${decision.id}`
-                      : `/app/tools/finish-decisions/decision/${decision.id}?room=${room?.id}`
-                    }
-                    className="flex items-center gap-3 px-4 py-3 bg-basalt-50 rounded-lg border border-cream/10 hover:border-sandstone/30 transition-colors group"
-                  >
-                    {/* Thumbnail */}
-                    {thumbUrl ? (
-                      <img
-                        src={thumbUrl}
-                        alt=""
-                        className="w-10 h-10 rounded object-cover shrink-0"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded bg-cream/5 shrink-0 flex items-center justify-center">
-                        <svg className="w-4 h-4 text-cream/15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <rect x="3" y="3" width="18" height="18" rx="2" />
-                          <circle cx="8.5" cy="8.5" r="1.5" />
-                          <path d="M21 15l-5-5L5 21" />
-                        </svg>
+                  <div key={decision.id} className="bg-basalt-50 rounded-lg border border-cream/10 hover:border-sandstone/30 transition-colors">
+                    <Link
+                      href={buildDecisionHref({ decisionId: decision.id, collectionId })}
+                      className="flex items-center gap-3 px-4 py-3 group"
+                    >
+                      {/* Thumbnail */}
+                      {thumbUrl ? (
+                        <img
+                          src={thumbUrl}
+                          alt=""
+                          className="w-10 h-10 rounded object-cover shrink-0"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded bg-cream/5 shrink-0 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-cream/15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <path d="M21 15l-5-5L5 21" />
+                          </svg>
+                        </div>
+                      )}
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h4 className="text-sm font-medium text-cream truncate">{decision.title}</h4>
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium shrink-0 ${config.pillClass}`}>
+                            {config.label}
+                          </span>
+                        </div>
+
+                        {/* Selected option / snippet */}
+                        {selectedOption ? (
+                          <p className="text-[11px] text-sandstone/70 truncate mb-0.5">
+                            Picked: {selectedOption.name}
+                            {selectedOption.price ? ` · ${selectedOption.price}` : ''}
+                          </p>
+                        ) : decision.notes ? (
+                          <p className="text-[11px] text-cream/30 truncate mb-0.5">{decision.notes}</p>
+                        ) : null}
+
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-cream/40">
+                          {decision.options.length > 0 && (
+                            <span>{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
+                          )}
+                          {commentCount > 0 && (
+                            <span className="inline-flex items-center gap-0.5">
+                              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                              </svg>
+                              {commentCount}
+                            </span>
+                          )}
+                          {decision.dueDate && (
+                            <span className={isOverdue ? 'text-red-400' : ''}>
+                              {isOverdue ? 'Overdue: ' : 'Due '}
+                              {new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </span>
+                          )}
+                          <span className="hidden sm:inline">Updated {relativeTime(decision.updatedAt)}</span>
+                        </div>
+                      </div>
+
+                      <svg className="w-4 h-4 text-cream/20 group-hover:text-cream/40 transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </Link>
+
+                    {/* Per-tile comment preview + inline reply */}
+                    {(lastComment || isReplyOpen) && (
+                      <div className="px-4 pb-3 border-t border-cream/5">
+                        {lastComment && (
+                          <div className="pt-2 flex items-start gap-2">
+                            <div className="w-5 h-5 rounded-full bg-sandstone/20 text-sandstone text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                              {lastComment.authorName.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 text-[10px] text-cream/40">
+                                <span className="font-medium text-cream/60">{lastComment.authorName}</span>
+                                <span>{relativeTime(lastComment.createdAt)}</span>
+                              </div>
+                              <p className="text-[11px] text-cream/50 line-clamp-2 leading-relaxed">{lastComment.text}</p>
+                            </div>
+                            {!readOnly && !isReplyOpen && (
+                              <button
+                                type="button"
+                                onClick={() => setReplyOpenId(decision.id)}
+                                className="text-[10px] text-sandstone/60 hover:text-sandstone transition-colors shrink-0 mt-0.5"
+                              >
+                                Reply
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {!readOnly && isReplyOpen && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <input
+                              type="text"
+                              autoFocus
+                              value={replyTexts[decision.id] || ''}
+                              onChange={(e) => setReplyTexts((prev) => ({ ...prev, [decision.id]: e.target.value }))}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleInlineComment(decision.id)
+                                if (e.key === 'Escape') setReplyOpenId(null)
+                              }}
+                              placeholder="Reply..."
+                              className="flex-1 bg-basalt border border-cream/15 rounded px-2.5 py-1.5 text-[11px] text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleInlineComment(decision.id)}
+                              disabled={!(replyTexts[decision.id] || '').trim()}
+                              className="px-2.5 py-1.5 bg-sandstone text-basalt text-[11px] font-medium rounded hover:bg-sandstone-light transition-colors disabled:opacity-30"
+                            >
+                              Send
+                            </button>
+                          </div>
+                        )}
+                        {!lastComment && !readOnly && isReplyOpen && (
+                          <p className="text-[10px] text-cream/30 mt-1">Leave a comment on this selection.</p>
+                        )}
                       </div>
                     )}
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h4 className="text-sm font-medium text-cream truncate">{decision.title}</h4>
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium shrink-0 ${config.pillClass}`}>
-                          {config.label}
-                        </span>
-                      </div>
-
-                      {/* Selected option / snippet */}
-                      {selectedOption ? (
-                        <p className="text-[11px] text-sandstone/70 truncate mb-0.5">
-                          Picked: {selectedOption.name}
-                          {selectedOption.price ? ` · ${selectedOption.price}` : ''}
-                        </p>
-                      ) : decision.notes ? (
-                        <p className="text-[11px] text-cream/30 truncate mb-0.5">{decision.notes}</p>
-                      ) : null}
-
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-cream/40">
-                        {decision.options.length > 0 && (
-                          <span>{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
-                        )}
-                        {commentCount > 0 && (
-                          <span className="inline-flex items-center gap-0.5">
-                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                            </svg>
-                            {commentCount}
-                          </span>
-                        )}
-                        {decision.dueDate && (
-                          <span className={isOverdue ? 'text-red-400' : ''}>
-                            {isOverdue ? 'Overdue: ' : 'Due '}
-                            {new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </span>
-                        )}
-                        <span className="hidden sm:inline">Updated {relativeTime(decision.updatedAt)}</span>
-                      </div>
-                    </div>
-
-                    <svg className="w-4 h-4 text-cream/20 group-hover:text-cream/40 transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </Link>
+                    {/* Comment toggle for rows with no comments yet */}
+                    {!lastComment && !isReplyOpen && !readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => setReplyOpenId(decision.id)}
+                        className="w-full px-4 py-1.5 border-t border-cream/5 text-[10px] text-cream/25 hover:text-cream/40 transition-colors text-left"
+                      >
+                        + Add comment
+                      </button>
+                    )}
+                  </div>
                 )
               })}
 

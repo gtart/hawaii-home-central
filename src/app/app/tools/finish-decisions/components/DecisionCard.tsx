@@ -4,17 +4,20 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/Badge'
 import { STATUS_CONFIG_V3, type DecisionV3 } from '@/data/finish-decisions'
+import { buildDecisionHref } from '../lib/routing'
 
 export function DecisionCard({
   decision,
   thumbnail,
   onDelete,
   readOnly = false,
+  collectionId,
 }: {
   decision: DecisionV3
   thumbnail?: string | null
   onDelete: () => void
   readOnly?: boolean
+  collectionId?: string
 }) {
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -51,7 +54,7 @@ export function DecisionCard({
   return (
     <div
       className="bg-basalt-50 rounded-card p-4 cursor-pointer hover:bg-basalt-50/80 transition-colors"
-      onClick={() => router.push(`/app/tools/finish-decisions/decision/${decision.id}`)}
+      onClick={() => router.push(buildDecisionHref({ decisionId: decision.id, collectionId }))}
     >
       {/* Top row: thumbnail + title + kebab */}
       <div className="flex items-start gap-3 mb-2">

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { useToolState } from '@/hooks/useToolState'
 import { useCollectionState } from '@/hooks/useCollectionState'
 import { IdeasBoard, AddIdeaMenu, type IdeasBoardAddActions } from '../../components/IdeasBoard'
+import { buildBoardHref } from '../../lib/routing'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
 import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
@@ -557,16 +558,11 @@ export function DecisionDetailContent({
       <div className="max-w-3xl mx-auto">
         {/* Back link */}
         <button
-          onClick={() => {
-            const backPath = collectionId
-              ? `/app/tools/finish-decisions/${collectionId}`
-              : `/app/tools/finish-decisions/room/${foundRoom.id}`
-            router.push(backPath)
-          }}
+          onClick={() => router.push(buildBoardHref(collectionId))}
           className="inline-flex items-center gap-1.5 text-sandstone hover:text-sandstone-light text-sm mb-4"
         >
           <span>←</span>
-          <span>{collectionId ? 'Back to board' : 'Back to selections'}</span>
+          <span>Back to board</span>
         </button>
 
         {/* Desktop header: title + status + due in one row */}
