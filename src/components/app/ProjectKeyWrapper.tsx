@@ -48,7 +48,7 @@ function NoProjectsFallback({ onCreate }: { onCreate: (name: string) => Promise<
         </svg>
         <h2 className="font-serif text-2xl text-sandstone mb-2">Welcome to Hawaii Home Central</h2>
         <p className="text-cream/50 text-sm mb-6 leading-relaxed">
-          Create your first home to get started with Mood Boards, Selection Boards, and more.
+          Create your first home to get started with Mood Boards, Selection Lists, and more.
         </p>
         <button
           type="button"

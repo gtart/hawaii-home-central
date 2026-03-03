@@ -184,10 +184,10 @@ test('save-from-web: save to mood board via hash', async ({ page }, testInfo) =>
 })
 
 // -- Back link --
-test('save-from-web: back link navigates to Selection Boards', async ({ page }, testInfo) => {
+test('save-from-web: back link navigates to Selection Lists', async ({ page }, testInfo) => {
   await page.goto('/app/save-from-web', { waitUntil: 'networkidle' })
 
-  const backLink = page.getByText('Back to Selection Boards')
+  const backLink = page.getByText('Back to Selection Lists')
   await expect(backLink).toBeVisible()
 
   await backLink.click()

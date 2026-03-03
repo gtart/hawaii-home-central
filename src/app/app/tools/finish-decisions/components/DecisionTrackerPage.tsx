@@ -20,15 +20,27 @@ import { OnboardingView } from './OnboardingView'
 import { IdeasPackModal } from './IdeasPackModal'
 import { buildDecisionHref } from '../lib/routing'
 
-function getSelectedOptionThumb(decision: DecisionV3): string | null {
+function getDecisionThumb(decision: DecisionV3): string | null {
+  // 1. Final/selected option hero image
   const sel = decision.options.find((o) => o.isSelected)
-  if (!sel) return null
-  if (sel.images && sel.images.length > 0) {
-    const heroId = sel.heroImageId
-    const hero = heroId ? sel.images.find((img) => img.id === heroId) : null
-    return hero?.thumbnailUrl || hero?.url || sel.images[0].thumbnailUrl || sel.images[0].url
+  if (sel) {
+    if (sel.images && sel.images.length > 0) {
+      const hero = sel.heroImageId ? sel.images.find((img) => img.id === sel.heroImageId) : null
+      const url = hero?.thumbnailUrl || hero?.url || sel.images[0].thumbnailUrl || sel.images[0].url
+      if (url) return url
+    }
+    if (sel.thumbnailUrl || sel.imageUrl) return sel.thumbnailUrl || sel.imageUrl || null
   }
-  return sel.thumbnailUrl || sel.imageUrl || null
+  // 2. Most recent option with an image (hero first)
+  for (let i = decision.options.length - 1; i >= 0; i--) {
+    const opt = decision.options[i]
+    if (opt.images && opt.images.length > 0) {
+      const hero = opt.heroImageId ? opt.images.find((img) => img.id === opt.heroImageId) : null
+      return hero?.thumbnailUrl || hero?.url || opt.images[0].thumbnailUrl || opt.images[0].url
+    }
+    if (opt.thumbnailUrl || opt.imageUrl) return opt.thumbnailUrl || opt.imageUrl || null
+  }
+  return null
 }
 
 function relativeTime(iso: string): string {
@@ -329,6 +341,7 @@ export function DecisionTrackerPage({
                 onClick={() => setIdeasModalOpen(true)}
                 className="hidden md:inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-cream/70 hover:text-cream/90 bg-cream/10 hover:bg-cream/15 rounded-full transition-colors shrink-0"
               >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                 Add from Packs
               </button>
             )}
@@ -441,160 +454,226 @@ export function DecisionTrackerPage({
               </button>
             </div>
           ) : (
-            <div className="space-y-1.5">
-              {sortedDecisions.map((decision) => {
-                const config = STATUS_CONFIG_V3[decision.status]
-                const selectedOption = decision.options.find((o) => o.isSelected)
-                const thumbUrl = getSelectedOptionThumb(decision)
-                const comments = (decision.comments || []).filter((c) => c.authorEmail !== '')
-                const commentCount = comments.length
-                const lastComment = commentCount > 0 ? comments[comments.length - 1] : null
-                const today = new Date().toISOString().slice(0, 10)
-                const isOverdue = decision.dueDate && decision.dueDate < today && decision.status !== 'done'
-                const isReplyOpen = replyOpenId === decision.id
+            <>
+              {/* ── Desktop: table layout ── */}
+              <table className="hidden md:table w-full border-collapse">
+                <thead>
+                  <tr className="text-[11px] text-cream/40 uppercase tracking-wider">
+                    <th className="text-left font-medium pb-2 pl-2 w-12" />
+                    <th className="text-left font-medium pb-2">Decision</th>
+                    <th className="text-left font-medium pb-2 w-24">Status</th>
+                    <th className="text-left font-medium pb-2 w-28">Updated</th>
+                    <th className="text-left font-medium pb-2">Last comment</th>
+                    <th className="w-8 pb-2" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedDecisions.map((decision) => {
+                    const config = STATUS_CONFIG_V3[decision.status]
+                    const thumbUrl = getDecisionThumb(decision)
+                    const userComments = (decision.comments || []).filter((c) => c.authorEmail !== '')
+                    const lastComment = userComments.length > 0 ? userComments[userComments.length - 1] : null
 
-                return (
-                  <div key={decision.id} className="bg-basalt-50 rounded-lg border border-cream/10 hover:border-sandstone/30 transition-colors">
-                    <Link
-                      href={buildDecisionHref({ decisionId: decision.id, collectionId })}
-                      className="flex items-center gap-3 px-4 py-3 group"
-                    >
-                      {/* Thumbnail */}
-                      {thumbUrl ? (
-                        <img
-                          src={thumbUrl}
-                          alt=""
-                          className="w-10 h-10 rounded object-cover shrink-0"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded bg-cream/5 shrink-0 flex items-center justify-center">
-                          <svg className="w-4 h-4 text-cream/15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                            <rect x="3" y="3" width="18" height="18" rx="2" />
-                            <circle cx="8.5" cy="8.5" r="1.5" />
-                            <path d="M21 15l-5-5L5 21" />
-                          </svg>
-                        </div>
-                      )}
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <h4 className="text-sm font-medium text-cream truncate">{decision.title}</h4>
-                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium shrink-0 ${config.pillClass}`}>
+                    return (
+                      <tr key={decision.id} className="group border-t border-cream/5 first:border-t-0 hover:bg-cream/[0.02] transition-colors">
+                        <td className="py-2.5 pl-2">
+                          <Link href={buildDecisionHref({ decisionId: decision.id, collectionId })}>
+                            {thumbUrl ? (
+                              <img src={thumbUrl} alt="" className="w-9 h-9 rounded object-cover" loading="lazy" />
+                            ) : (
+                              <div className="w-9 h-9 rounded bg-cream/5 flex items-center justify-center">
+                                <svg className="w-4 h-4 text-cream/15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                                  <circle cx="8.5" cy="8.5" r="1.5" />
+                                  <path d="M21 15l-5-5L5 21" />
+                                </svg>
+                              </div>
+                            )}
+                          </Link>
+                        </td>
+                        <td className="py-2.5 pr-3">
+                          <Link href={buildDecisionHref({ decisionId: decision.id, collectionId })} className="block">
+                            <span className="text-sm font-medium text-cream group-hover:text-sandstone transition-colors">{decision.title}</span>
+                            {decision.options.length > 0 && (
+                              <span className="text-[11px] text-cream/30 ml-2">{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
+                            )}
+                          </Link>
+                        </td>
+                        <td className="py-2.5 pr-3">
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium ${config.pillClass}`}>
                             {config.label}
                           </span>
-                        </div>
-
-                        {/* Selected option / snippet */}
-                        {selectedOption ? (
-                          <p className="text-[11px] text-sandstone/70 truncate mb-0.5">
-                            Picked: {selectedOption.name}
-                            {selectedOption.price ? ` · ${selectedOption.price}` : ''}
-                          </p>
-                        ) : decision.notes ? (
-                          <p className="text-[11px] text-cream/30 truncate mb-0.5">{decision.notes}</p>
-                        ) : null}
-
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-cream/40">
-                          {decision.options.length > 0 && (
-                            <span>{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
-                          )}
-                          {commentCount > 0 && (
-                            <span className="inline-flex items-center gap-0.5">
-                              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                              </svg>
-                              {commentCount}
-                            </span>
-                          )}
-                          {decision.dueDate && (
-                            <span className={isOverdue ? 'text-red-400' : ''}>
-                              {isOverdue ? 'Overdue: ' : 'Due '}
-                              {new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                            </span>
-                          )}
-                          <span className="hidden sm:inline">Updated {relativeTime(decision.updatedAt)}</span>
-                        </div>
-                      </div>
-
-                      <svg className="w-4 h-4 text-cream/20 group-hover:text-cream/40 transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </Link>
-
-                    {/* Per-tile comment preview + inline reply */}
-                    {(lastComment || isReplyOpen) && (
-                      <div className="px-4 pb-3 border-t border-cream/5">
-                        {lastComment && (
-                          <div className="pt-2 flex items-start gap-2">
-                            <div className="w-5 h-5 rounded-full bg-sandstone/20 text-sandstone text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
-                              {lastComment.authorName.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 text-[10px] text-cream/40">
-                                <span className="font-medium text-cream/60">{lastComment.authorName}</span>
-                                <span>{relativeTime(lastComment.createdAt)}</span>
+                        </td>
+                        <td className="py-2.5 pr-3 text-[11px] text-cream/40">
+                          {relativeTime(decision.updatedAt)}
+                        </td>
+                        <td className="py-2.5 pr-3">
+                          {lastComment ? (
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <div className="w-4 h-4 rounded-full bg-sandstone/20 text-sandstone text-[9px] font-bold flex items-center justify-center shrink-0">
+                                {lastComment.authorName.charAt(0).toUpperCase()}
                               </div>
-                              <p className="text-[11px] text-cream/50 line-clamp-2 leading-relaxed">{lastComment.text}</p>
+                              <span className="text-[11px] text-cream/50 truncate max-w-[200px]">{lastComment.text}</span>
                             </div>
-                            {!readOnly && !isReplyOpen && (
+                          ) : (
+                            <span className="text-[11px] text-cream/20">—</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 pr-2">
+                          <Link href={buildDecisionHref({ decisionId: decision.id, collectionId })}>
+                            <svg className="w-4 h-4 text-cream/15 group-hover:text-cream/40 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </Link>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+
+              {/* ── Mobile: card layout ── */}
+              <div className="md:hidden space-y-1.5">
+                {sortedDecisions.map((decision) => {
+                  const config = STATUS_CONFIG_V3[decision.status]
+                  const selectedOption = decision.options.find((o) => o.isSelected)
+                  const thumbUrl = getDecisionThumb(decision)
+                  const comments = (decision.comments || []).filter((c) => c.authorEmail !== '')
+                  const commentCount = comments.length
+                  const lastComment = commentCount > 0 ? comments[comments.length - 1] : null
+                  const today = new Date().toISOString().slice(0, 10)
+                  const isOverdue = decision.dueDate && decision.dueDate < today && decision.status !== 'done'
+                  const isReplyOpen = replyOpenId === decision.id
+
+                  return (
+                    <div key={decision.id} className="bg-basalt-50 rounded-lg border border-cream/10 hover:border-sandstone/30 transition-colors">
+                      <Link
+                        href={buildDecisionHref({ decisionId: decision.id, collectionId })}
+                        className="flex items-center gap-3 px-4 py-3 group"
+                      >
+                        {thumbUrl ? (
+                          <img src={thumbUrl} alt="" className="w-10 h-10 rounded object-cover shrink-0" loading="lazy" />
+                        ) : (
+                          <div className="w-10 h-10 rounded bg-cream/5 shrink-0 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-cream/15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <rect x="3" y="3" width="18" height="18" rx="2" />
+                              <circle cx="8.5" cy="8.5" r="1.5" />
+                              <path d="M21 15l-5-5L5 21" />
+                            </svg>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <h4 className="text-sm font-medium text-cream truncate">{decision.title}</h4>
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium shrink-0 ${config.pillClass}`}>
+                              {config.label}
+                            </span>
+                          </div>
+                          {selectedOption ? (
+                            <p className="text-[11px] text-sandstone/70 truncate mb-0.5">
+                              Picked: {selectedOption.name}
+                              {selectedOption.price ? ` · ${selectedOption.price}` : ''}
+                            </p>
+                          ) : null}
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-cream/40">
+                            {decision.options.length > 0 && (
+                              <span>{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
+                            )}
+                            {commentCount > 0 && (
+                              <span className="inline-flex items-center gap-0.5">
+                                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                                </svg>
+                                {commentCount}
+                              </span>
+                            )}
+                            {decision.dueDate && (
+                              <span className={isOverdue ? 'text-red-400' : ''}>
+                                {isOverdue ? 'Overdue: ' : 'Due '}
+                                {new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </span>
+                            )}
+                            <span>Updated {relativeTime(decision.updatedAt)}</span>
+                          </div>
+                        </div>
+                        <svg className="w-4 h-4 text-cream/20 group-hover:text-cream/40 transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </Link>
+
+                      {(lastComment || isReplyOpen) && (
+                        <div className="px-4 pb-3 border-t border-cream/5">
+                          {lastComment && (
+                            <div className="pt-2 flex items-start gap-2">
+                              <div className="w-5 h-5 rounded-full bg-sandstone/20 text-sandstone text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                                {lastComment.authorName.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 text-[10px] text-cream/40">
+                                  <span className="font-medium text-cream/60">{lastComment.authorName}</span>
+                                  <span>{relativeTime(lastComment.createdAt)}</span>
+                                </div>
+                                <p className="text-[11px] text-cream/50 line-clamp-2 leading-relaxed">{lastComment.text}</p>
+                              </div>
+                              {!readOnly && !isReplyOpen && (
+                                <button
+                                  type="button"
+                                  onClick={() => setReplyOpenId(decision.id)}
+                                  className="text-[10px] text-sandstone/60 hover:text-sandstone transition-colors shrink-0 mt-0.5"
+                                >
+                                  Reply
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          {!readOnly && isReplyOpen && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <input
+                                type="text"
+                                autoFocus
+                                value={replyTexts[decision.id] || ''}
+                                onChange={(e) => setReplyTexts((prev) => ({ ...prev, [decision.id]: e.target.value }))}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleInlineComment(decision.id)
+                                  if (e.key === 'Escape') setReplyOpenId(null)
+                                }}
+                                placeholder="Reply..."
+                                className="flex-1 bg-basalt border border-cream/15 rounded px-2.5 py-1.5 text-[11px] text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                              />
                               <button
                                 type="button"
-                                onClick={() => setReplyOpenId(decision.id)}
-                                className="text-[10px] text-sandstone/60 hover:text-sandstone transition-colors shrink-0 mt-0.5"
+                                onClick={() => handleInlineComment(decision.id)}
+                                disabled={!(replyTexts[decision.id] || '').trim()}
+                                className="px-2.5 py-1.5 bg-sandstone text-basalt text-[11px] font-medium rounded hover:bg-sandstone-light transition-colors disabled:opacity-30"
                               >
-                                Reply
+                                Send
                               </button>
-                            )}
-                          </div>
-                        )}
-                        {!readOnly && isReplyOpen && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <input
-                              type="text"
-                              autoFocus
-                              value={replyTexts[decision.id] || ''}
-                              onChange={(e) => setReplyTexts((prev) => ({ ...prev, [decision.id]: e.target.value }))}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleInlineComment(decision.id)
-                                if (e.key === 'Escape') setReplyOpenId(null)
-                              }}
-                              placeholder="Reply..."
-                              className="flex-1 bg-basalt border border-cream/15 rounded px-2.5 py-1.5 text-[11px] text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleInlineComment(decision.id)}
-                              disabled={!(replyTexts[decision.id] || '').trim()}
-                              className="px-2.5 py-1.5 bg-sandstone text-basalt text-[11px] font-medium rounded hover:bg-sandstone-light transition-colors disabled:opacity-30"
-                            >
-                              Send
-                            </button>
-                          </div>
-                        )}
-                        {!lastComment && !readOnly && isReplyOpen && (
-                          <p className="text-[10px] text-cream/30 mt-1">Leave a comment on this selection.</p>
-                        )}
-                      </div>
-                    )}
-                    {/* Comment toggle for rows with no comments yet */}
-                    {!lastComment && !isReplyOpen && !readOnly && (
-                      <button
-                        type="button"
-                        onClick={() => setReplyOpenId(decision.id)}
-                        className="w-full px-4 py-1.5 border-t border-cream/5 text-[10px] text-cream/25 hover:text-cream/40 transition-colors text-left"
-                      >
-                        + Add comment
-                      </button>
-                    )}
-                  </div>
-                )
-              })}
+                            </div>
+                          )}
+                          {!lastComment && !readOnly && isReplyOpen && (
+                            <p className="text-[10px] text-cream/30 mt-1">Leave a comment on this selection.</p>
+                          )}
+                        </div>
+                      )}
+                      {!lastComment && !isReplyOpen && !readOnly && (
+                        <button
+                          type="button"
+                          onClick={() => setReplyOpenId(decision.id)}
+                          className="w-full px-4 py-1.5 border-t border-cream/5 text-[10px] text-cream/25 hover:text-cream/40 transition-colors text-left"
+                        >
+                          + Add comment
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+
+              </div>
 
               {/* Inline add selection */}
               {!readOnly && (
                 addInputVisible ? (
-                  <div className="flex gap-2 px-4 py-2">
+                  <div className="flex gap-2 px-4 py-2 mt-2">
                     <input
                       type="text"
                       autoFocus
@@ -623,7 +702,7 @@ export function DecisionTrackerPage({
                   <button
                     type="button"
                     onClick={() => setAddInputVisible(true)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-basalt-50/50 rounded-card border-2 border-dashed border-cream/15 hover:border-sandstone/40 transition-all cursor-pointer group"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 mt-2 bg-basalt-50/50 rounded-card border-2 border-dashed border-cream/15 hover:border-sandstone/40 transition-all cursor-pointer group"
                   >
                     <svg className="w-4 h-4 text-cream/30 group-hover:text-sandstone transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M12 5v14M5 12h14" strokeLinecap="round" />
@@ -632,8 +711,9 @@ export function DecisionTrackerPage({
                   </button>
                 )
               )}
-            </div>
+            </>
           )}
+
         </>
       )}
 
@@ -720,6 +800,7 @@ export function DecisionTrackerPage({
                     onClick={() => { setFilterSheetOpen(false); setIdeasModalOpen(true) }}
                     className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-cream/70 bg-cream/5 rounded-lg transition-colors"
                   >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                     Add from Packs
                   </button>
                 </div>

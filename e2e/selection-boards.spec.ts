@@ -1,5 +1,5 @@
 /**
- * Selection Boards (Finish Decisions) interaction e2e tests.
+ * Selection Lists (Finish Decisions) interaction e2e tests.
  * Uses the full-setup persona which has 3 seeded rooms:
  *   - Kitchen (5 decisions), Bathroom (5 decisions), Living Room (4 decisions)
  * Decision IDs follow pattern: dec-{roomId}-{index}

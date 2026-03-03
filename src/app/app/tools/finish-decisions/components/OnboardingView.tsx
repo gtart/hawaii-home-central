@@ -25,19 +25,12 @@ export function OnboardingView({
   return (
     <div className="py-8 max-w-md mx-auto">
       <h2 className="font-serif text-2xl md:text-3xl text-sandstone mb-2">
-        Start your Selection Board
+        Add your first decision to make
       </h2>
 
-      <div className="flex items-start gap-2 mb-6">
-        <svg className="w-4 h-4 text-cream/40 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
-        </svg>
-        <p className="text-sm text-cream/50 leading-relaxed">
-          Track the choices you need to make — and what you picked.
-          Create one board per area (Kitchen, Bath, Exterior, etc.).
-        </p>
-      </div>
+      <p className="text-sm text-cream/50 leading-relaxed mb-6">
+        Create a Selection List to finalize your choices and make it easier.
+      </p>
 
       {/* Add selection input */}
       <div className="bg-basalt-50 rounded-xl p-5 border border-cream/10 mb-5">

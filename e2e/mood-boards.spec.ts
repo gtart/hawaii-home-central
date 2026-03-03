@@ -136,7 +136,7 @@ test('mood boards: open idea detail modal', async ({ page }, testInfo) => {
   // Should show notes
   await expect(modal.getByText('Love this shade of blue')).toBeVisible()
 
-  // Should show "Move to Selection Boards" button
+  // Should show "Move to Selection Lists" button
   await expect(page.getByTestId('convert-to-selection-btn')).toBeVisible()
 
   await page.screenshot({
@@ -298,9 +298,9 @@ test('mood boards: idea tile shows reaction counts', async ({ page }, testInfo) 
   })
 })
 
-// ── Move to Selection Boards ──
+// ── Move to Selection Lists ──
 
-test('mood boards: move idea to selection boards', async ({ page }, testInfo) => {
+test('mood boards: move idea to selection lists', async ({ page }, testInfo) => {
   await page.goto('/app/tools/mood-boards?board=board_saved_ideas', { waitUntil: 'networkidle' })
 
   // Open idea detail
@@ -308,11 +308,11 @@ test('mood boards: move idea to selection boards', async ({ page }, testInfo) =>
   await firstTile.click()
   await expect(page.getByTestId('idea-detail-modal')).toBeVisible()
 
-  // Click "Move to Selection Boards"
+  // Click "Move to Selection Lists"
   await page.getByTestId('convert-to-selection-btn').click()
 
   // Convert sheet should open
-  await expect(page.getByText('Move to Selection Boards')).toBeVisible()
+  await expect(page.getByText('Move to Selection Lists')).toBeVisible()
   await expect(page.getByText('will copy')).toBeVisible()
 
   await page.screenshot({
@@ -325,7 +325,7 @@ test('mood boards: move idea to selection boards', async ({ page }, testInfo) =>
 
   // Should show success
   await expect(page.getByTestId('convert-success')).toBeVisible()
-  await expect(page.getByText('Added to Selection Boards')).toBeVisible()
+  await expect(page.getByText('Added to Selection Lists')).toBeVisible()
 
   await page.screenshot({
     path: screenshotPath('mood-boards-convert-success', testInfo),

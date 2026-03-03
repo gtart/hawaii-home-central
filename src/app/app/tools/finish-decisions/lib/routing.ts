@@ -1,5 +1,5 @@
 /**
- * Centralized routing helpers for Selection Boards (finish-decisions).
+ * Centralized routing helpers for Selection Lists (finish-decisions).
  * All decision links should use these helpers to ensure consistent routing.
  */
 

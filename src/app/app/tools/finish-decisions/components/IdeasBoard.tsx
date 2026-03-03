@@ -13,6 +13,7 @@ export interface IdeasBoardAddActions {
   triggerPhoto: () => void
   triggerNote: () => void
   triggerWeb: () => void
+  triggerImageUrl: () => void
   uploading: boolean
 }
 
@@ -291,12 +292,14 @@ export function AddIdeaMenu({
   onPhoto,
   onNote,
   onWeb,
+  onImageUrl,
   onPack,
   uploading,
 }: {
   onPhoto: () => void
   onNote: () => void
   onWeb: () => void
+  onImageUrl?: () => void
   onPack?: () => void
   uploading?: boolean
 }) {
@@ -371,6 +374,22 @@ export function AddIdeaMenu({
             </svg>
             Add from Save to HHC
           </button>
+          {onImageUrl && (
+            <>
+              <div className="border-t border-cream/8" />
+              <button
+                type="button"
+                onClick={() => { onImageUrl(); setOpen(false) }}
+                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+              >
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" />
+                  <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" />
+                </svg>
+                Add Image URL
+              </button>
+            </>
+          )}
           {onPack && (
             <>
               <div className="border-t border-cream/8" />
@@ -432,6 +451,7 @@ export function IdeasBoard({
   const [showCompareModal, setShowCompareModal] = useState(false)
   const [showNoteInput, setShowNoteInput] = useState(false)
   const [showWebDialog, setShowWebDialog] = useState(false)
+  const [showImageUrlModal, setShowImageUrlModal] = useState(false)
 
   const MOBILE_VISIBLE_COUNT = 3
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -444,6 +464,7 @@ export function IdeasBoard({
         triggerPhoto: () => fileInputRef.current?.click(),
         triggerNote: () => handleAddTextCard(),
         triggerWeb: () => setShowWebDialog(true),
+        triggerImageUrl: () => setShowImageUrlModal(true),
         uploading,
       }
     }
@@ -550,6 +571,27 @@ export function IdeasBoard({
       updatedAt: now,
     })
     setShowWebDialog(false)
+    setActiveCardId(id)
+  }
+
+  function handleImageUrlSubmit(url: string, title: string) {
+    const id = crypto.randomUUID()
+    const now = new Date().toISOString()
+    const imgId = crypto.randomUUID()
+    onAddOption({
+      id,
+      kind: 'image',
+      name: title || '',
+      notes: '',
+      urls: [],
+      images: [{ id: imgId, url }],
+      heroImageId: imgId,
+      imageUrl: url,
+      thumbnailUrl: url,
+      createdAt: now,
+      updatedAt: now,
+    })
+    setShowImageUrlModal(false)
     setActiveCardId(id)
   }
 
@@ -828,6 +870,14 @@ export function IdeasBoard({
         />
       )}
 
+      {/* Image URL modal */}
+      {showImageUrlModal && (
+        <ImageUrlModal
+          onSubmit={handleImageUrlSubmit}
+          onClose={() => setShowImageUrlModal(false)}
+        />
+      )}
+
       {/* Compare modal */}
       {showCompareModal && (
         <CompareModal
@@ -845,6 +895,99 @@ export function IdeasBoard({
       )}
 
       {/* Add menu moved to Options Board header in DecisionDetailContent */}
+    </div>
+  )
+}
+
+// ---- Image URL Modal ----
+
+function ImageUrlModal({
+  onSubmit,
+  onClose,
+}: {
+  onSubmit: (url: string, title: string) => void
+  onClose: () => void
+}) {
+  const [url, setUrl] = useState('')
+  const [title, setTitle] = useState('')
+  const [validating, setValidating] = useState(false)
+  const [error, setError] = useState('')
+
+  function handleSubmit() {
+    const trimmed = url.trim()
+    if (!trimmed) return
+    setError('')
+    setValidating(true)
+
+    const img = new Image()
+    const timer = setTimeout(() => {
+      img.src = ''
+      setValidating(false)
+      setError('Image took too long to load — check the URL')
+    }, 7000)
+
+    img.onload = () => {
+      clearTimeout(timer)
+      setValidating(false)
+      onSubmit(trimmed, title.trim())
+    }
+    img.onerror = () => {
+      clearTimeout(timer)
+      setValidating(false)
+      setError('Could not load image — check the URL and try again')
+    }
+    img.src = trimmed
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative bg-basalt-50 border border-cream/15 rounded-xl shadow-xl w-full max-w-md p-5">
+        <h3 className="text-lg font-medium text-cream mb-4">Add Image URL</h3>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs text-cream/50 mb-1">Image URL</label>
+            <input
+              autoFocus
+              type="url"
+              value={url}
+              onChange={(e) => { setUrl(e.target.value); setError('') }}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
+              placeholder="https://example.com/photo.jpg"
+              className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-cream/50 mb-1">Title (optional)</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
+              placeholder="e.g. Marble countertop"
+              className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+            />
+          </div>
+          {error && <p className="text-xs text-red-400">{error}</p>}
+        </div>
+        <div className="flex justify-end gap-2 mt-5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm text-cream/50 hover:text-cream transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!url.trim() || validating}
+            className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-40"
+          >
+            {validating ? 'Checking…' : 'Add'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

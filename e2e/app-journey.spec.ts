@@ -25,8 +25,8 @@ test('screenshot: settings page', async ({ page }, testInfo) => {
   })
 })
 
-// -- Selection Boards Tool --
-test('journey: selection boards tool', async ({ page }, testInfo) => {
+// -- Selection Lists Tool --
+test('journey: selection lists tool', async ({ page }, testInfo) => {
   await page.goto('/app/tools/finish-decisions', { waitUntil: 'networkidle' })
   await page.screenshot({
     path: screenshotPath('selections-boards', testInfo),
@@ -120,7 +120,7 @@ test('journey: navigate between tools', async ({ page }, testInfo) => {
   await page.goto('/app', { waitUntil: 'networkidle' })
   await page.screenshot({ path: screenshotPath('journey-start', testInfo) })
 
-  // Navigate to Selection Boards
+  // Navigate to Selection Lists
   const selectionsLink = page.locator('a[href*="/tools/finish-decisions"]').first()
   if (await selectionsLink.isVisible()) {
     await selectionsLink.click()

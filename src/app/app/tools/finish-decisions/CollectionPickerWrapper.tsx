@@ -31,7 +31,7 @@ function SelectionBoardsEmptyState({ onCreate }: { onCreate: (title: string) => 
 
   return (
     <div className="max-w-lg mx-auto text-center">
-      <h2 className="font-serif text-3xl text-sandstone mb-2">Start your Selection Boards</h2>
+      <h2 className="font-serif text-3xl text-sandstone mb-2">Start your Selection Lists</h2>
       <p className="text-cream/50 text-sm leading-relaxed mb-8">
         Create one board per area&mdash;Kitchen, Bath, Exterior. Track the choices you
         need to make and what you picked.

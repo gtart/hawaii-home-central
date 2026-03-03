@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import type { PunchlistStateAPI } from '../usePunchlistState'
 import type { PunchlistPhoto } from '../types'
@@ -25,8 +25,6 @@ export function QuickAddStrip({ api, onDone, onViewItem, onOpenForm }: Props) {
   const [savedCount, setSavedCount] = useState(0)
   const [showSaved, setShowSaved] = useState(false)
   const [lastAddedId, setLastAddedId] = useState<string | null>(null)
-  const [cameraBlocked, setCameraBlocked] = useState(false)
-
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -41,20 +39,6 @@ export function QuickAddStrip({ api, onDone, onViewItem, onOpenForm }: Props) {
     const existing = new Set(api.payload.items.map((i) => i.assigneeLabel).filter(Boolean))
     return Array.from(new Set([...ASSIGNEE_SEEDS, ...existing])).sort()
   }, [api.payload.items])
-
-  // Detect camera permission state
-  useEffect(() => {
-    if (typeof navigator === 'undefined') return
-    navigator.permissions
-      ?.query({ name: 'camera' as PermissionName })
-      .then((result) => {
-        setCameraBlocked(result.state === 'denied')
-        const onChange = () => setCameraBlocked(result.state === 'denied')
-        result.addEventListener('change', onChange)
-        return () => result.removeEventListener('change', onChange)
-      })
-      .catch(() => {})
-  }, [])
 
   function flashSaved() {
     if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
@@ -120,10 +104,6 @@ export function QuickAddStrip({ api, onDone, onViewItem, onOpenForm }: Props) {
   }
 
   function openCamera() {
-    if (cameraBlocked) {
-      setUploadError('Camera blocked — check browser or device settings')
-      return
-    }
     cameraRef.current?.click()
   }
 
@@ -283,10 +263,7 @@ export function QuickAddStrip({ api, onDone, onViewItem, onOpenForm }: Props) {
               )}
               {uploadError && <span className="text-red-400">{uploadError}</span>}
               {addError && !uploadError && <span className="text-red-400">{addError}</span>}
-              {cameraBlocked && !uploadError && !addError && !showSaved && (
-                <span className="text-amber-400/70">Camera blocked — use Photos instead</span>
-              )}
-              {savedCount > 0 && !showSaved && !uploadError && !addError && !cameraBlocked && (
+              {savedCount > 0 && !showSaved && !uploadError && !addError && (
                 <span className="text-cream/30">{savedCount} added</span>
               )}
             </div>

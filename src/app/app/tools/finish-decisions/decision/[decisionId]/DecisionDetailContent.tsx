@@ -58,7 +58,6 @@ export function DecisionDetailContent({
   const decisionId = params.decisionId as string
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState(false)
-  const [notesExpanded, setNotesExpanded] = useState(false)
   const [draftRef, setDraftRef] = useState<{ optionId: string; optionLabel: string } | null>(null)
   const [ideasPackOpen, setIdeasPackOpen] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
@@ -576,26 +575,16 @@ export function DecisionDetailContent({
             />
           </div>
           {!isSystemUncategorized && (
-            <div className="flex items-center gap-1 shrink-0">
-              {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => {
-                const isActive = foundDecision.status === key
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => !readOnly && handleStatusChange(key as StatusV3)}
-                    disabled={readOnly}
-                    className={`px-2.5 py-1 text-xs font-medium rounded-full border transition-colors ${
-                      isActive
-                        ? config.pillClass
-                        : 'bg-transparent text-cream/30 border-transparent hover:text-cream/50'
-                    } disabled:cursor-default`}
-                  >
-                    {config.label}
-                  </button>
-                )
-              })}
-            </div>
+            <select
+              value={foundDecision.status}
+              onChange={(e) => !readOnly && handleStatusChange(e.target.value as StatusV3)}
+              disabled={readOnly}
+              className={`shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${statusCfg.pillClass}`}
+            >
+              {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
+                <option key={key} value={key}>{config.label}</option>
+              ))}
+            </select>
           )}
           <input
             type="date"
@@ -627,25 +616,19 @@ export function DecisionDetailContent({
               {foundDecision.title || <span className="text-cream/30">Untitled</span>}
             </h1>
           )}
-          <div className="flex items-center gap-1 mt-2 flex-wrap">
-            {!isSystemUncategorized && Object.entries(STATUS_CONFIG_V3).map(([key, config]) => {
-              const isActive = foundDecision.status === key
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => !readOnly && handleStatusChange(key as StatusV3)}
-                  disabled={readOnly}
-                  className={`px-2.5 py-1 text-xs font-medium rounded-full border transition-colors ${
-                    isActive
-                      ? config.pillClass
-                      : 'bg-transparent text-cream/30 border-transparent hover:text-cream/50'
-                  } disabled:cursor-default`}
-                >
-                  {config.label}
-                </button>
-              )
-            })}
+          <div className="flex items-center gap-2 mt-2">
+            {!isSystemUncategorized && (
+              <select
+                value={foundDecision.status}
+                onChange={(e) => !readOnly && handleStatusChange(e.target.value as StatusV3)}
+                disabled={readOnly}
+                className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${statusCfg.pillClass}`}
+              >
+                {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
+                  <option key={key} value={key}>{config.label}</option>
+                ))}
+              </select>
+            )}
             <input
               type="date"
               value={foundDecision.dueDate || ''}
@@ -767,6 +750,7 @@ export function DecisionDetailContent({
                 onPhoto={() => addActionsRef.current?.triggerPhoto()}
                 onNote={() => addActionsRef.current?.triggerNote()}
                 onWeb={() => addActionsRef.current?.triggerWeb()}
+                onImageUrl={() => addActionsRef.current?.triggerImageUrl()}
                 onPack={availableKits.length > 0 ? () => setIdeasPackOpen(true) : undefined}
                 uploading={addActionsRef.current?.uploading}
               />
@@ -802,41 +786,6 @@ export function DecisionDetailContent({
             onMoveOption={(optId) => setMoveOptionId(optId)}
             addActionsRef={addActionsRef}
           />
-        </div>
-
-        {/* Notes — collapsed by default, secondary to Ideas */}
-        <div className="mb-4">
-          {notesExpanded ? (
-            <>
-              <textarea
-                autoFocus
-                value={foundDecision.notes}
-                onChange={(e) => updateDecision({ notes: e.target.value })}
-                readOnly={readOnly}
-                className="w-full bg-basalt-50 text-cream rounded-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone min-h-[60px] md:min-h-[60px]"
-                placeholder="Notes..."
-              />
-              <button
-                type="button"
-                onClick={() => setNotesExpanded(false)}
-                className="text-xs text-cream/40 mt-1"
-              >
-                Collapse
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setNotesExpanded(true)}
-              className="w-full text-left"
-            >
-              {foundDecision.notes ? (
-                <p className="text-sm text-cream/50 line-clamp-2">{foundDecision.notes}</p>
-              ) : (
-                <p className="text-sm text-cream/30 italic">Add notes...</p>
-              )}
-            </button>
-          )}
         </div>
 
         {/* Guidance Panel */}
