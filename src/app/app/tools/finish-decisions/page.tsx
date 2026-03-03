@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { CollectionPickerWrapper } from './CollectionPickerWrapper'
 
 export const metadata: Metadata = {
-  title: 'Decision List',
+  title: 'Selection Boards',
 }
 
 export default function FinishDecisionsToolPage() {

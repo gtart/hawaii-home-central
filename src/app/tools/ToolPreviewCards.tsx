@@ -72,7 +72,7 @@ const STAGES: StageEntry[] = [
     title: 'Decide & Order',
     subtitle: 'Finalize selections and confirm lead times.',
     tool: {
-      title: 'Decision List',
+      title: 'Selection Boards',
       description:
         'Always know what\u2019s decided, what\u2019s next, and what\u2019s blocking\u2014by organizing decisions by room instead of texts and screenshots.',
       ctaText: 'Request early access',

@@ -17,6 +17,29 @@ import { applyKitToRoom, removeKitFromRoom } from '@/lib/finish-decision-kits'
 import { OnboardingView } from './OnboardingView'
 import { IdeasPackModal } from './IdeasPackModal'
 
+function getSelectedOptionThumb(decision: DecisionV3): string | null {
+  const sel = decision.options.find((o) => o.isSelected)
+  if (!sel) return null
+  if (sel.images && sel.images.length > 0) {
+    const heroId = sel.heroImageId
+    const hero = heroId ? sel.images.find((img) => img.id === heroId) : null
+    return hero?.thumbnailUrl || hero?.url || sel.images[0].thumbnailUrl || sel.images[0].url
+  }
+  return sel.thumbnailUrl || sel.imageUrl || null
+}
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 30) return `${days}d ago`
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 const SORT_KEY = 'hhc_finish_sort_key'
 
 type SortKey = 'created' | 'updated' | 'due' | 'comments'
@@ -39,6 +62,7 @@ export function DecisionTrackerPage({
   defaultDecisions = {} as Record<RoomTypeV3, string[]>,
   emojiMap = {},
   ownedKitIds = [],
+  collectionId,
 }: {
   rooms: RoomV3[]
   onBatchAddRooms: (selections: RoomSelection[]) => void
@@ -51,6 +75,7 @@ export function DecisionTrackerPage({
   defaultDecisions?: Record<RoomTypeV3, string[]>
   emojiMap?: Record<string, string>
   ownedKitIds?: string[]
+  collectionId?: string
 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilters, setStatusFilters] = useState<StatusV3[]>([])
@@ -393,31 +418,79 @@ export function DecisionTrackerPage({
             <div className="space-y-1.5">
               {sortedDecisions.map((decision) => {
                 const config = STATUS_CONFIG_V3[decision.status]
+                const selectedOption = decision.options.find((o) => o.isSelected)
+                const thumbUrl = getSelectedOptionThumb(decision)
+                const commentCount = (decision.comments || []).length
+                const today = new Date().toISOString().slice(0, 10)
+                const isOverdue = decision.dueDate && decision.dueDate < today && decision.status !== 'done'
+
                 return (
                   <Link
                     key={decision.id}
-                    href={`/app/tools/finish-decisions/decision/${decision.id}?room=${room?.id}`}
+                    href={collectionId
+                      ? `/app/tools/finish-decisions/${collectionId}/decision/${decision.id}`
+                      : `/app/tools/finish-decisions/decision/${decision.id}?room=${room?.id}`
+                    }
                     className="flex items-center gap-3 px-4 py-3 bg-basalt-50 rounded-lg border border-cream/10 hover:border-sandstone/30 transition-colors group"
                   >
+                    {/* Thumbnail */}
+                    {thumbUrl ? (
+                      <img
+                        src={thumbUrl}
+                        alt=""
+                        className="w-10 h-10 rounded object-cover shrink-0"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded bg-cream/5 shrink-0 flex items-center justify-center">
+                        <svg className="w-4 h-4 text-cream/15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <path d="M21 15l-5-5L5 21" />
+                        </svg>
+                      </div>
+                    )}
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <h4 className="text-sm font-medium text-cream truncate">{decision.title}</h4>
-                      </div>
-                      <div className="flex items-center gap-2 text-[11px] text-cream/40">
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium ${config.pillClass}`}>
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium shrink-0 ${config.pillClass}`}>
                           {config.label}
                         </span>
+                      </div>
+
+                      {/* Selected option / snippet */}
+                      {selectedOption ? (
+                        <p className="text-[11px] text-sandstone/70 truncate mb-0.5">
+                          Picked: {selectedOption.name}
+                          {selectedOption.price ? ` · ${selectedOption.price}` : ''}
+                        </p>
+                      ) : decision.notes ? (
+                        <p className="text-[11px] text-cream/30 truncate mb-0.5">{decision.notes}</p>
+                      ) : null}
+
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-cream/40">
                         {decision.options.length > 0 && (
                           <span>{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
                         )}
-                        {(decision.comments || []).length > 0 && (
-                          <span>{(decision.comments || []).length} comment{(decision.comments || []).length !== 1 ? 's' : ''}</span>
+                        {commentCount > 0 && (
+                          <span className="inline-flex items-center gap-0.5">
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                            </svg>
+                            {commentCount}
+                          </span>
                         )}
                         {decision.dueDate && (
-                          <span>{new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                          <span className={isOverdue ? 'text-red-400' : ''}>
+                            {isOverdue ? 'Overdue: ' : 'Due '}
+                            {new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
                         )}
+                        <span className="hidden sm:inline">Updated {relativeTime(decision.updatedAt)}</span>
                       </div>
                     </div>
+
                     <svg className="w-4 h-4 text-cream/20 group-hover:text-cream/40 transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>

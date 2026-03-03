@@ -47,7 +47,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   },
 ]
 
-/** toolKey → user-facing title (e.g. "Fix List", "Decision List") */
+/** toolKey → user-facing title (e.g. "Fix List", "Selection Boards") */
 export const TOOL_LABELS: Record<string, string> = Object.fromEntries(
   TOOL_REGISTRY.map((t) => [t.toolKey, t.title]),
 )

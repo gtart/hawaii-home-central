@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { SaveFromWebContent } from './SaveFromWebContent'
 
 export const metadata: Metadata = {
-  title: 'Save to HHC — Decision List',
+  title: 'Save to HHC — Selection Boards',
 }
 
 export default function SaveFromWebPage() {

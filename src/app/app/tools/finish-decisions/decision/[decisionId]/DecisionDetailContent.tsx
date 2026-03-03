@@ -558,18 +558,15 @@ export function DecisionDetailContent({
         {/* Back link */}
         <button
           onClick={() => {
-            const roomPath = collectionId
-              ? `/app/tools/finish-decisions/${collectionId}/room/${foundRoom.id}`
+            const backPath = collectionId
+              ? `/app/tools/finish-decisions/${collectionId}`
               : `/app/tools/finish-decisions/room/${foundRoom.id}`
-            router.push(roomPath)
+            router.push(backPath)
           }}
           className="inline-flex items-center gap-1.5 text-sandstone hover:text-sandstone-light text-sm mb-4"
         >
           <span>←</span>
-          <span>Back to Room Decisions:</span>
-          <span className="inline-flex items-center gap-1 bg-cream/10 rounded-full px-2 py-0.5 text-cream/60 text-xs">
-            {ROOM_EMOJI_MAP[foundRoom.type as RoomTypeV3] || '📁'} {foundRoom.name}
-          </span>
+          <span>{collectionId ? 'Back to board' : 'Back to selections'}</span>
         </button>
 
         {/* Desktop header: title + status + due in one row */}

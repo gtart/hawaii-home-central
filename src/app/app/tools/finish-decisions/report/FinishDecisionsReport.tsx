@@ -32,7 +32,7 @@ export function FinishDecisionsReport({ collectionIdOverride }: { collectionIdOv
         <p className="text-red-600 font-medium">Missing project ID</p>
         <p className="text-gray-500 text-sm">This report requires a valid projectId parameter.</p>
         <a href="/app/tools/finish-decisions" className="text-blue-600 underline text-sm">
-          Back to Decision List
+          Back to Selection Boards
         </a>
       </div>
     )
@@ -86,7 +86,7 @@ function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProj
 
   const [settings, setSettings] = useState<ReportSettings>({
     companyName: 'HawaiiHomeCentral.com',
-    reportTitle: 'Decision List Report',
+    reportTitle: 'Selection Board Report',
     footerText: 'Created at HawaiiHomeCentral.com',
   })
 
@@ -96,7 +96,7 @@ function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProj
         const res = await fetch('/api/tools/punchlist/report-settings')
         if (res.ok) {
           const data = await res.json()
-          setSettings((prev) => ({ ...prev, ...data, reportTitle: 'Decision List Report' }))
+          setSettings((prev) => ({ ...prev, ...data, reportTitle: 'Selection Board Report' }))
         }
       } catch {
         // use defaults
@@ -170,7 +170,7 @@ function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProj
             href="/app/tools/finish-decisions"
             className="text-sm text-cream/60 hover:text-cream transition-colors"
           >
-            &larr; Back to Decision List
+            &larr; Back to Selection Boards
           </a>
           <div className="flex items-center gap-4">
             <span className="text-xs text-cream/40">
