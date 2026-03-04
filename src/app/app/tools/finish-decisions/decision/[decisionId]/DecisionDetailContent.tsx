@@ -25,6 +25,7 @@ import {
   type FinishDecisionsPayloadV3,
 } from '@/data/finish-decisions'
 import { isUncategorized, ensureUncategorizedDecision, findUncategorizedDecision, moveOption as moveOptionHelper } from '@/lib/decisionHelpers'
+import { DecisionFiles } from '../../components/DecisionFiles'
 import { MoveIdeaSheet } from '../../components/MoveIdeaSheet'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { relativeTime } from '@/lib/relativeTime'
@@ -823,6 +824,12 @@ export function DecisionDetailContent({
             addActionsRef={addActionsRef}
           />
         </div>
+
+        {/* All Files — aggregated from all options */}
+        <DecisionFiles
+          decision={foundDecision}
+          onOpenOption={(optionId) => setActiveCardId(optionId)}
+        />
 
         {/* Guidance Panel */}
         <GuidancePanel
