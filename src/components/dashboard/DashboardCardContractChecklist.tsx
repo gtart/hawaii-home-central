@@ -49,10 +49,13 @@ export function DashboardCardContractChecklist({
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
         <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Contract Checklist</p>
         <p className="text-lg font-medium text-cream/60 mb-1">Contractors selected</p>
-        <p className="text-xs text-cream/35 mb-2">
+        <p className="text-xs text-cream/35 mb-1">
           {totalSelected} contractor{totalSelected !== 1 ? 's' : ''} chosen across {checklists.length} comparison list{checklists.length !== 1 ? 's' : ''}
         </p>
         <ShareMetaLine meta={data?.toolMeta?.before_you_sign} noun="comparison list" />
+        <p className="text-[11px] text-cream/25 mb-2 truncate">
+          Last updated: {checklists[0].title} · {relativeTime(checklists[0].updatedAt)}{checklists[0].updatedByName ? ` by ${checklists[0].updatedByName.split(' ')[0]}` : ''}
+        </p>
         <Link
           href="/app/tools/before-you-sign"
           className="inline-flex items-center px-4 py-2 border border-sandstone/30 text-sandstone text-sm font-medium rounded-button hover:bg-sandstone/10 transition-colors mt-2"

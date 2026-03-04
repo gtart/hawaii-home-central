@@ -98,6 +98,19 @@ export function DashboardCardFixList({
         )}
       </div>
       <p className="text-xs text-cream/35 mb-2">{heuristic}</p>
+      {(() => {
+        const urgent = [...lists].sort((a, b) => (b.highPriorityCount + b.staleCount) - (a.highPriorityCount + a.staleCount))[0]
+        const reason = urgent.highPriorityCount > 0
+          ? `${urgent.highPriorityCount} high · ${urgent.staleCount} stale`
+          : urgent.staleCount > 0
+            ? `${urgent.staleCount} stale`
+            : `${urgent.openCount} open`
+        return (
+          <Link href={`/app/tools/punchlist/${urgent.id}`} className="block text-[11px] text-cream/35 hover:text-cream/50 transition-colors mb-1 truncate">
+            Most urgent: <span className="text-cream/50">{urgent.title}</span> <span className="text-cream/25">({reason})</span>
+          </Link>
+        )
+      })()}
       <ShareMetaLine meta={data?.toolMeta?.punchlist} />
       <p className="text-[11px] text-cream/25 mb-4 truncate">
         Last updated: {lists[0].title} · {relativeTime(lists[0].updatedAt)}{lists[0].updatedByName ? ` by ${lists[0].updatedByName.split(' ')[0]}` : ''}

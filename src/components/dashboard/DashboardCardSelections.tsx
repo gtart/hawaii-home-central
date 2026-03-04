@@ -103,6 +103,17 @@ export function DashboardCardSelections({
             )}
           </div>
           <p className="text-xs text-cream/35 mb-2">{heuristic}</p>
+          {(() => {
+            const urgent = [...lists].sort((a, b) => (b.notStartedCount + b.decidingCount) - (a.notStartedCount + a.decidingCount))[0]
+            const reason = urgent.notStartedCount > 0
+              ? `${urgent.notStartedCount} not started`
+              : `${urgent.decidingCount} deciding`
+            return (
+              <Link href={`/app/tools/finish-decisions/${urgent.id}`} className="block text-[11px] text-cream/35 hover:text-cream/50 transition-colors mb-1 truncate">
+                Most urgent: <span className="text-cream/50">{urgent.title}</span> <span className="text-cream/25">({reason})</span>
+              </Link>
+            )
+          })()}
           <ShareMetaLine meta={data?.toolMeta?.finish_decisions} />
           <p className="text-[11px] text-cream/25 mb-4 truncate">
             Last updated: {lists[0].title} · {relativeTime(lists[0].updatedAt)}{lists[0].updatedByName ? ` by ${lists[0].updatedByName.split(' ')[0]}` : ''}

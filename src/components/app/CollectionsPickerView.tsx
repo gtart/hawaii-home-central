@@ -27,6 +27,10 @@ interface PreviewData {
   statuses?: Record<string, number>
   lastComment?: { text: string; authorName: string; decisionTitle: string; createdAt: string }
   decisionCount?: number
+  lastActivity?: string
+  itemCount?: number
+  collaboratorCount?: number
+  shareLinkEnabled?: boolean
 }
 
 interface CollectionsPickerViewProps {
@@ -110,6 +114,10 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
     if (typeof window === 'undefined') return 'grid'
     return (localStorage.getItem(`hhc-picker-view-${toolKey}`) as 'grid' | 'table') || 'grid'
   })
+  const [hasExplicitPref] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem(`hhc-picker-view-${toolKey}`) !== null
+  })
   const menuRef = useRef<HTMLDivElement>(null)
 
   const toolLabel = TOOL_LABELS[toolKey] ?? toolKey
@@ -159,6 +167,10 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
               statuses: p.statuses ?? undefined,
               lastComment: p.lastComment ?? undefined,
               decisionCount: p.decisionCount ?? undefined,
+              lastActivity: p.lastActivity ?? undefined,
+              itemCount: p.itemCount ?? undefined,
+              collaboratorCount: p.collaboratorCount ?? undefined,
+              shareLinkEnabled: p.shareLinkEnabled ?? undefined,
             }
           }
           setPreviews(map)
@@ -171,6 +183,15 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
     loadPreviews()
     return () => { cancelled = true }
   }, [previewMode, currentProject?.id, toolKey, loading, collections.length])
+
+  // Smart default: table on desktop when >3 lists and no stored preference
+  useEffect(() => {
+    if (hasExplicitPref || loading || !previewMode) return
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768
+    if (isDesktop && collections.length > 3) {
+      setViewMode('table')
+    }
+  }, [hasExplicitPref, loading, previewMode, collections.length])
 
   // Click-away close for menu
   useEffect(() => {
@@ -364,7 +385,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                 <th className="pb-2 pr-3">Name</th>
                 <th className="pb-2 pr-3">Status</th>
                 <th className="pb-2 pr-3">Updated</th>
-                <th className="pb-2 pr-3 max-w-[200px]">Last Comment</th>
+                <th className="pb-2 pr-3 max-w-[200px]">{toolKey === 'punchlist' ? 'Last Activity' : 'Last Comment'}</th>
                 <th className="pb-2 w-10" />
               </tr>
             </thead>
@@ -373,8 +394,14 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                 const preview = previews[coll.id] ?? { imageUrls: [], ideaCount: 0, commentCount: 0 }
                 const hasStatusCounts = preview.statuses && Object.values(preview.statuses).some(v => v > 0)
                 const thumb = preview.imageUrls[0]
+                const isShared = (preview.collaboratorCount ?? 0) >= 2 || preview.shareLinkEnabled
                 const statusParts: string[] = []
-                if (hasStatusCounts) {
+                if (toolKey === 'punchlist' && hasStatusCounts) {
+                  if ((preview.statuses!.open ?? 0) > 0) statusParts.push(`${preview.statuses!.open} open`)
+                  if ((preview.statuses!.high ?? 0) > 0) statusParts.push(`${preview.statuses!.high} high`)
+                  if ((preview.statuses!.stale ?? 0) > 0) statusParts.push(`${preview.statuses!.stale} stale`)
+                } else if (hasStatusCounts) {
+                  if ((preview.statuses!.not_started ?? 0) > 0) statusParts.push(`${preview.statuses!.not_started} not started`)
                   if ((preview.statuses!.deciding ?? 0) > 0) statusParts.push(`${preview.statuses!.deciding} deciding`)
                   if ((preview.statuses!.selected ?? 0) > 0) statusParts.push(`${preview.statuses!.selected} selected`)
                   if ((preview.statuses!.ordered ?? 0) > 0) statusParts.push(`${preview.statuses!.ordered} ordered`)
@@ -417,14 +444,14 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                       ) : (
                         <span className="font-medium text-cream">{coll.title}</span>
                       )}
-                      {coll.members.length > 0 && (
+                      {isShared && (
                         <span className="ml-2 inline-flex items-center gap-0.5 text-[10px] text-sandstone/60 bg-sandstone/10 rounded-full px-1.5 py-0.5 align-middle">
                           <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
                             <circle cx="8.5" cy="7" r="4" />
                             <path d="M20 8v6M23 11h-6" strokeLinecap="round" />
                           </svg>
-                          Shared
+                          {(preview.collaboratorCount ?? 0) >= 2 ? `People: ${preview.collaboratorCount}` : 'Link'}
                         </span>
                       )}
                     </td>
@@ -447,6 +474,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                           {preview.lastComment.text.length > 50 ? preview.lastComment.text.slice(0, 50) + '...' : preview.lastComment.text}
                           {'"'}
                         </>
+                      ) : preview.lastActivity ? (
+                        <span>{preview.lastActivity}</span>
                       ) : (
                         <span className="text-cream/20">—</span>
                       )}
@@ -522,6 +551,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
           const preview = previews[coll.id] ?? { imageUrls: [], ideaCount: 0, commentCount: 0 }
           const hasThumbnails = previewMode === 'thumbnails' || preview.imageUrls.length > 0
           const hasStatusCounts = preview.statuses && Object.values(preview.statuses).some(v => v > 0)
+          const gridIsShared = (preview.collaboratorCount ?? 0) >= 2 || preview.shareLinkEnabled
 
           return (
             <div
@@ -532,7 +562,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
               {/* Thumbnail grid */}
               {hasThumbnails && <div className="overflow-hidden rounded-t-lg"><ThumbnailGrid imageUrls={preview.imageUrls} /></div>}
 
-              <div className="p-4">
+              <div className="px-3 py-2.5">
                 {editingId === coll.id ? (
                   <input
                     autoFocus
@@ -547,11 +577,17 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                     className="w-full bg-basalt border border-cream/20 rounded px-2 py-1 text-sm text-cream focus:outline-none focus:border-sandstone/50"
                   />
                 ) : (
-                  <h3 className="font-medium text-cream truncate">{coll.title}</h3>
+                  <h3 className="font-medium text-cream text-sm truncate">{coll.title}</h3>
                 )}
 
-                {/* Status counts or "0 selections added" fallback */}
-                {hasStatusCounts ? (
+                {/* Status counts — tool-aware */}
+                {toolKey === 'punchlist' && hasStatusCounts ? (
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-[11px] text-cream/50">
+                    {(preview.statuses!.open ?? 0) > 0 && <span>{preview.statuses!.open} open</span>}
+                    {(preview.statuses!.high ?? 0) > 0 && <span className="text-amber-400/70">{preview.statuses!.high} high</span>}
+                    {(preview.statuses!.stale ?? 0) > 0 && <span className="text-red-400/60">{preview.statuses!.stale} stale</span>}
+                  </div>
+                ) : hasStatusCounts ? (
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-[11px] text-cream/50">
                     {(preview.statuses!.deciding ?? 0) > 0 && <span>{preview.statuses!.deciding} deciding</span>}
                     {(preview.statuses!.selected ?? 0) > 0 && <span>{preview.statuses!.selected} selected</span>}
@@ -559,18 +595,17 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                     {(preview.statuses!.done ?? 0) > 0 && <span>{preview.statuses!.done} done</span>}
                   </div>
                 ) : previewMode === 'statuses' && preview.decisionCount === 0 ? (
-                  <p className="mt-1.5 text-[11px] text-cream/35 italic">0 selections added</p>
+                  <p className="mt-1.5 text-[11px] text-cream/35 italic">{toolKey === 'punchlist' ? '0 items' : '0 selections added'}</p>
                 ) : null}
 
-                {/* Last comment (selection lists) */}
-                {preview.lastComment && (
-                  <p className="mt-1.5 text-[11px] text-cream/40 italic line-clamp-2">
-                    {preview.lastComment.authorName.split(' ')[0]} on {preview.lastComment.decisionTitle}:
-                    {' "'}
-                    {preview.lastComment.text.length > 70 ? preview.lastComment.text.slice(0, 70) + '...' : preview.lastComment.text}
-                    {'"'}
+                {/* Last comment / last activity */}
+                {preview.lastComment ? (
+                  <p className="mt-1 text-[11px] text-cream/35 italic truncate">
+                    {preview.lastComment.authorName.split(' ')[0]}: &ldquo;{preview.lastComment.text.length > 50 ? preview.lastComment.text.slice(0, 50) + '...' : preview.lastComment.text}&rdquo;
                   </p>
-                )}
+                ) : preview.lastActivity ? (
+                  <p className="mt-1 text-[11px] text-cream/35 italic truncate">{preview.lastActivity}</p>
+                ) : null}
 
                 {/* Stats row (mood boards only) */}
                 {previewMode === 'thumbnails' && (preview.ideaCount > 0 || preview.commentCount > 0) && (
@@ -596,32 +631,28 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                   </div>
                 )}
 
-                {/* Created + Updated + shared */}
-                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                  <p className="text-xs text-cream/40">
-                    Created {new Date(coll.createdAt).toLocaleDateString()}
-                  </p>
-                  <span className="text-cream/15">&middot;</span>
-                  <p className="text-xs text-cream/40">
+                {/* Updated + shared */}
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <p className="text-[11px] text-cream/35">
                     Updated {new Date(coll.updatedAt).toLocaleDateString()}
                     {coll.updatedBy?.name && (
                       <span> by {coll.updatedBy.name.split(' ')[0]}</span>
                     )}
                   </p>
-                  {coll.members.length > 0 && (
+                  {gridIsShared && (
                     <span className="inline-flex items-center gap-1 text-[10px] text-sandstone/60 bg-sandstone/10 rounded-full px-1.5 py-0.5">
                       <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
                         <circle cx="8.5" cy="7" r="4" />
                         <path d="M20 8v6M23 11h-6" strokeLinecap="round" />
                       </svg>
-                      Shared
+                      {(preview.collaboratorCount ?? 0) >= 2 ? `People: ${preview.collaboratorCount}` : 'Link'}
                     </span>
                   )}
                 </div>
 
-                {coll.members.length > 0 && (
-                  <div className="flex -space-x-1 mt-3">
+                {coll.members.length >= 2 && (
+                  <div className="flex -space-x-1 mt-2">
                     {coll.members.slice(0, 4).map((m) => (
                       <div
                         key={m.userId}

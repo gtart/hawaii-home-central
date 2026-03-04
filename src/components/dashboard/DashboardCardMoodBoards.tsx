@@ -46,12 +46,18 @@ export function DashboardCardMoodBoards({
   if (totalItems === 0) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Mood Boards</p>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm uppercase tracking-wider text-cream/40">Mood Boards</p>
+          <span className="text-[10px] text-cream/30 tabular-nums">{boards.length} board{boards.length !== 1 ? 's' : ''}</span>
+        </div>
         <p className="text-sm text-cream/40 mb-1">Start collecting inspiration</p>
         <ShareMetaLine meta={data?.toolMeta?.mood_boards} noun="board" />
+        <p className="text-[11px] text-cream/25 mb-3 truncate">
+          Last updated: {boards[0].title} · {relativeTime(boards[0].updatedAt)}{boards[0].updatedByName ? ` by ${boards[0].updatedByName.split(' ')[0]}` : ''}
+        </p>
         <Link
           href="/app/tools/mood-boards"
-          className="inline-flex items-center px-4 py-2 border border-sandstone/30 text-sandstone text-sm font-medium rounded-button hover:bg-sandstone/10 transition-colors mt-3"
+          className="inline-flex items-center px-4 py-2 border border-sandstone/30 text-sandstone text-sm font-medium rounded-button hover:bg-sandstone/10 transition-colors"
         >
           Open Mood Boards
         </Link>

@@ -5,6 +5,7 @@ import { useDashboard } from '@/hooks/useDashboard'
 import { DashboardToolGrid } from './DashboardToolGrid'
 import { DashboardFeed } from './DashboardFeed'
 import { QuietBanner } from './QuietBanner'
+import { DashboardNextActions } from './DashboardNextActions'
 
 export function DashboardPage() {
   const { currentProject } = useProject()
@@ -23,7 +24,12 @@ export function DashboardPage() {
 
         {/* Quiet state */}
         {data?.noNews.isQuiet && (
-          <QuietBanner lastActivityAt={data.noNews.lastActivityAt} />
+          <QuietBanner lastActivityAt={data.noNews.lastActivityAt} data={data} />
+        )}
+
+        {/* Next actions + quick capture */}
+        {!isLoading && !data?.noNews.isQuiet && (
+          <DashboardNextActions data={data} />
         )}
 
         {/* Tool grid — active tools first, then other tools */}
