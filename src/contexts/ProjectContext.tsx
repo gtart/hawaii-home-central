@@ -80,8 +80,16 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     if (!res.ok) throw new Error('Failed to switch project')
 
     setCurrentProjectId(projectId)
-    // Force full reload so useToolState refetches for new project
-    router.refresh()
+
+    // If on a tool sub-page (collection detail, report, etc.), redirect to the
+    // tool index so stale collection data from the old project isn't shown.
+    const path = window.location.pathname
+    const toolSubPageMatch = path.match(/^(\/app\/tools\/[^/]+)\/.+/)
+    if (toolSubPageMatch) {
+      router.push(toolSubPageMatch[1])
+    } else {
+      router.refresh()
+    }
   }, [router])
 
   const createProject = useCallback(async (name: string) => {
