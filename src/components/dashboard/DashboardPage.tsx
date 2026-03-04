@@ -28,6 +28,11 @@ export function DashboardPage() {
           <DashboardCardSelections data={data} isLoading={isLoading} />
         </div>
 
+        {/* TODO: Pinned collections section (1–3 pinned items)
+         * Requires: DashboardPin model, POST/DELETE /api/dashboard/pins,
+         * pinnedCollections[] in DashboardResponse, pin/unpin in collection ⋯ menus
+         */}
+
         {/* Activity feed */}
         <div className="mb-8">
           <DashboardFeed />

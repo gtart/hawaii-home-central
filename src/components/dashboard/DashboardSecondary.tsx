@@ -22,6 +22,11 @@ export function DashboardSecondary({
       const totalIdeas = boards.reduce((s, b) => s + b.itemCount, 0)
       statLine = `${boards.length} board${boards.length !== 1 ? 's' : ''} · ${totalIdeas} idea${totalIdeas !== 1 ? 's' : ''}`
     }
+  } else if (data && toolKey === 'before_you_sign') {
+    const checklists = data.beforeYouSign
+    if (checklists.length > 0) {
+      statLine = `${checklists.length} checklist${checklists.length !== 1 ? 's' : ''}`
+    }
   }
 
   return (

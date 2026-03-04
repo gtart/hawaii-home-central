@@ -35,10 +35,17 @@ export interface MoodBoardSummary {
   thumbnailUrl?: string
 }
 
+export interface BeforeYouSignSummary {
+  id: string
+  title: string
+  updatedAt: string
+}
+
 export interface DashboardResponse {
   selectionLists: SelectionListSummary[]
   fixLists: FixListSummary[]
   moodBoards: MoodBoardSummary[]
+  beforeYouSign: BeforeYouSignSummary[]
   noNews: { isQuiet: boolean; lastActivityAt?: string }
 }
 
@@ -177,6 +184,7 @@ export async function getDashboardData(userId: string, projectId: string): Promi
   const selectionLists: SelectionListSummary[] = []
   const fixLists: FixListSummary[] = []
   const moodBoards: MoodBoardSummary[] = []
+  const beforeYouSign: BeforeYouSignSummary[] = []
 
   for (const c of collections) {
     switch (c.toolKey) {
@@ -189,21 +197,43 @@ export async function getDashboardData(userId: string, projectId: string): Promi
       case 'mood_boards':
         moodBoards.push(summarizeMoodBoard(c.id, c.title, c.updatedAt, c.payload))
         break
+      case 'before_you_sign':
+        beforeYouSign.push({ id: c.id, title: c.title, updatedAt: c.updatedAt.toISOString() })
+        break
     }
   }
 
-  // Compute noNews
-  // isQuiet = (no open fixes AND no deciding/notStarted selections AND lastActivityAt > 7 days) OR no collections
-  const lastActivityAt = collections.length > 0 ? collections[0].updatedAt.toISOString() : undefined
+  // Compute noNews — prefer ActivityEvent for lastActivityAt
+  const lastEvent = await prisma.activityEvent.findFirst({
+    where: { projectId },
+    orderBy: { createdAt: 'desc' },
+    select: { createdAt: true },
+  })
+
+  const lastActivityAt = lastEvent
+    ? lastEvent.createdAt.toISOString()
+    : collections.length > 0
+      ? collections[0].updatedAt.toISOString()
+      : undefined
+
   const totalOpenFixes = fixLists.reduce((s, l) => s + l.openCount, 0)
-  const totalActiveSelections = selectionLists.reduce((s, l) => s + l.notStartedCount + l.decidingCount, 0)
-  const activityStale = !lastActivityAt || (Date.now() - new Date(lastActivityAt).getTime() > SEVEN_DAYS_MS)
-  const isQuiet = collections.length === 0 || (totalOpenFixes === 0 && totalActiveSelections === 0 && activityStale)
+  const totalHighPriorityFixes = fixLists.reduce((s, l) => s + l.highPriorityCount, 0)
+  const totalStaleFixes = fixLists.reduce((s, l) => s + l.staleCount, 0)
+  const hasActionableFixes = totalOpenFixes > 0 || totalHighPriorityFixes > 0 || totalStaleFixes > 0
+
+  const totalNotStarted = selectionLists.reduce((s, l) => s + l.notStartedCount, 0)
+  const totalDeciding = selectionLists.reduce((s, l) => s + l.decidingCount, 0)
+  const hasActionableSelections = totalNotStarted > 0 || totalDeciding > 0
+
+  const hasRecentActivity = !!lastActivityAt && (Date.now() - new Date(lastActivityAt).getTime() <= SEVEN_DAYS_MS)
+
+  const isQuiet = !hasActionableFixes && !hasActionableSelections && !hasRecentActivity
 
   return {
     selectionLists,
     fixLists,
     moodBoards,
+    beforeYouSign,
     noNews: { isQuiet, lastActivityAt },
   }
 }
