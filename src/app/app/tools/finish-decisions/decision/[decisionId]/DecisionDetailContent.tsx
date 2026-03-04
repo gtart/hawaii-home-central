@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useRef } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Input } from '@/components/ui/Input'
@@ -101,6 +101,27 @@ export function DecisionDetailContent({
       break
     }
   }
+
+  // Redirect when decision not found — must be in useEffect, not during render
+  const shouldRedirect = isLoaded && !foundDecision
+  useEffect(() => {
+    if (shouldRedirect) {
+      const basePath = collectionId ? `/app/tools/finish-decisions/${collectionId}` : '/app/tools/finish-decisions'
+      router.replace(basePath)
+    }
+  }, [shouldRedirect, collectionId, router])
+
+  // Collect unique locations from all decisions for autocomplete
+  // NOTE: must be before early returns to keep hook order stable across renders
+  const locationSuggestions = useMemo(() => {
+    const locs = new Set<string>()
+    for (const room of v3State.rooms) {
+      for (const d of room.decisions) {
+        if (d.location?.trim()) locs.add(d.location.trim())
+      }
+    }
+    return Array.from(locs).sort()
+  }, [v3State.rooms])
 
   const updateDecision = (updates: Partial<DecisionV3>) => {
     if (!foundRoom) return
@@ -398,9 +419,7 @@ export function DecisionDetailContent({
   }
 
   if (!foundDecision || !foundRoom) {
-    // Decision doesn't exist in current project (e.g. user switched projects) — redirect home
-    const basePath = collectionId ? `/app/tools/finish-decisions/${collectionId}` : '/app/tools/finish-decisions'
-    router.replace(basePath)
+    // useEffect above handles the redirect
     return (
       <div className="pt-32 pb-24 px-6">
         <div className="max-w-3xl mx-auto text-center py-12 text-cream/50">
@@ -536,17 +555,6 @@ export function DecisionDetailContent({
   }
 
   const isSystemUncategorized = isUncategorized(foundDecision)
-
-  // Collect unique locations from all decisions for autocomplete
-  const locationSuggestions = useMemo(() => {
-    const locs = new Set<string>()
-    for (const room of v3State.rooms) {
-      for (const d of room.decisions) {
-        if (d.location?.trim()) locs.add(d.location.trim())
-      }
-    }
-    return Array.from(locs).sort()
-  }, [v3State.rooms])
 
   // Filter: only show user comments (non-empty authorEmail), not system comments
   const userComments = (foundDecision.comments || []).filter((c) => c.authorEmail !== '')
@@ -775,7 +783,7 @@ export function DecisionDetailContent({
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-3">
             <h2 className="flex items-center gap-2 text-lg font-medium text-cream">
-              Options Board
+              Options
               <span className="text-cream/30 font-normal">&middot;</span>
               <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-cream/10 text-cream/50 text-xs font-medium rounded-full">
                 {foundDecision.options.length}
@@ -1045,16 +1053,23 @@ function CommentsSection({
                 {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
+            {comment.refOptionId && comment.refOptionLabel ? (
+              <button
+                type="button"
+                onClick={() => onOpenCard?.(comment.refOptionId!)}
+                className="flex items-center gap-1.5 mb-1 text-[11px] text-sandstone/70 hover:text-sandstone transition-colors"
+              >
+                <span className="w-1 h-1 rounded-full bg-sandstone/50 shrink-0" />
+                On: {truncateLabel(comment.refOptionLabel, 40)}
+                <span className="text-sandstone/30">↗</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-1.5 mb-1 text-[11px] text-cream/25">
+                <span className="w-1 h-1 rounded-full bg-cream/20 shrink-0" />
+                General
+              </div>
+            )}
             <div className="text-sm text-cream/50 whitespace-pre-wrap">
-              {comment.refOptionId && comment.refOptionLabel && (
-                <button
-                  type="button"
-                  onClick={() => onOpenCard?.(comment.refOptionId!)}
-                  className="inline-flex items-center gap-0.5 mr-1.5 px-1.5 py-0.5 bg-sandstone/10 text-sandstone/80 hover:text-sandstone text-[11px] rounded-full transition-colors align-middle"
-                >
-                  ↗ Re: {truncateLabel(comment.refOptionLabel)}
-                </button>
-              )}
               {comment.text}
             </div>
           </div>
@@ -1117,7 +1132,7 @@ function CommentInput({
   return (
     <div>
       {/* Draft ref pill */}
-      {draftRef && (
+      {draftRef ? (
         <div className="flex items-center gap-1.5 mb-1.5">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-sandstone/15 text-sandstone text-xs rounded-full">
             Re: {draftRef.optionLabel}
@@ -1129,6 +1144,17 @@ function CommentInput({
               ×
             </button>
           </span>
+          <button
+            type="button"
+            onClick={() => onClearDraftRef?.()}
+            className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors"
+          >
+            Comment on the whole selection instead
+          </button>
+        </div>
+      ) : (
+        <div className="text-[11px] text-cream/20 mb-1">
+          General comment on this selection
         </div>
       )}
       <div className="flex gap-2">

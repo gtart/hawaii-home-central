@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import { CollectionsPickerView } from '@/components/app/CollectionsPickerView'
 
-const SUGGESTED_BOARDS = [
+const SUGGESTED_LISTS = [
   { label: 'Kitchen', emoji: '🍳' },
   { label: 'Bathroom', emoji: '🚿' },
   { label: 'Exterior', emoji: '🏡' },
+  { label: 'Flooring', emoji: '🪵' },
+  { label: 'Lighting', emoji: '💡' },
 ]
 
 export function CollectionPickerWrapper() {
@@ -18,7 +20,7 @@ export function CollectionPickerWrapper() {
           itemNoun="Selection List"
           previewMode="statuses"
           customEmptyState={(onCreate) => (
-            <SelectionBoardsEmptyState onCreate={onCreate} />
+            <SelectionListsEmptyState onCreate={onCreate} />
           )}
         />
       </div>
@@ -26,19 +28,19 @@ export function CollectionPickerWrapper() {
   )
 }
 
-function SelectionBoardsEmptyState({ onCreate }: { onCreate: (title: string) => void }) {
+function SelectionListsEmptyState({ onCreate }: { onCreate: (title: string) => void }) {
   const [customName, setCustomName] = useState('')
 
   return (
     <div className="max-w-lg mx-auto text-center">
       <h2 className="font-serif text-3xl text-sandstone mb-2">Start your Selection Lists</h2>
       <p className="text-cream/50 text-sm leading-relaxed mb-8">
-        Create one list per area&mdash;Kitchen, Bath, Exterior. Track the choices you
-        need to make and what you picked.
+        Organize your choices however makes sense&mdash;by room, by category, or by
+        trade. Track what you need to decide and what you picked.
       </p>
 
       <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
-        {SUGGESTED_BOARDS.map((b) => (
+        {SUGGESTED_LISTS.map((b) => (
           <button
             key={b.label}
             type="button"

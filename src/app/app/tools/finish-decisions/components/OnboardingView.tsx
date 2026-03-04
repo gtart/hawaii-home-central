@@ -74,7 +74,7 @@ export function OnboardingView({
           Add a Decision Pack
         </span>
         <p className="text-xs text-cream/40 mt-1 leading-relaxed">
-          Packs add common selections and curated options for your area — so you don&apos;t miss anything.
+          Packs add common selections and curated options — so you don&apos;t miss anything.
         </p>
       </button>
     </div>

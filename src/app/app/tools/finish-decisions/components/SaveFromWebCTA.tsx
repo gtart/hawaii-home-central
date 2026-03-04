@@ -62,7 +62,7 @@ export function SaveFromWebCTA({ className = '' }: { className?: string }) {
           <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
         </svg>
         <span className="flex-1 text-sm text-sandstone/80 font-medium">
-          Tip: Save images from any website to your boards
+          Tip: Save images from any website to your lists
         </span>
         <svg
           className={`w-3.5 h-3.5 text-sandstone/40 transition-transform ${expanded ? 'rotate-180' : ''}`}
@@ -80,7 +80,7 @@ export function SaveFromWebCTA({ className = '' }: { className?: string }) {
         <div className="px-4 pb-4 space-y-3 border-t border-sandstone/10">
           <p className="text-xs text-cream/50 pt-3">
             Drag the button below to your bookmarks bar. Then click it on any website to capture images
-            and save them directly to your Selection Lists or Mood Boards.
+            and save them directly to your Selection Lists.
           </p>
 
           <BookmarkletButton compact />
