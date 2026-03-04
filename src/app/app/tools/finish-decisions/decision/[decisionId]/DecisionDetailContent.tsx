@@ -740,37 +740,42 @@ export function DecisionDetailContent({
         {/* Final Decision Line */}
         <div className="mb-4">
           {finalPick ? (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] text-sandstone font-semibold">Final decision selected:</span>
-              <button
-                type="button"
-                onClick={() => setActiveCardId(finalPick.id)}
-                className="text-[11px] text-cream/70 font-medium hover:text-cream transition-colors underline decoration-cream/20 hover:decoration-cream/40"
-              >
-                {finalPick.name || 'Untitled'}
-              </button>
-              {foundDecision.finalSelection && (
-                <>
-                  <span className="text-cream/25">&middot;</span>
-                  <span className="px-1.5 py-0.5 bg-cream/10 text-cream/50 text-[10px] rounded-full">
-                    {foundDecision.finalSelection.selectedBy}
-                  </span>
-                  <span className="text-cream/25">&middot;</span>
-                  <span className="text-[10px] text-cream/35">
-                    {new Date(foundDecision.finalSelection.selectedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                  </span>
-                </>
-              )}
-              {!readOnly && (
+            <>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] text-sandstone font-semibold">Final decision selected:</span>
                 <button
                   type="button"
-                  onClick={() => selectOption(finalPick.id)}
-                  className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors ml-auto"
+                  onClick={() => setActiveCardId(finalPick.id)}
+                  className="text-[11px] text-cream/70 font-medium hover:text-cream transition-colors underline decoration-cream/20 hover:decoration-cream/40"
                 >
-                  Unselect
+                  {finalPick.name || 'Untitled'}
                 </button>
+                {foundDecision.finalSelection && (
+                  <>
+                    <span className="text-cream/25">&middot;</span>
+                    <span className="px-1.5 py-0.5 bg-cream/10 text-cream/50 text-[10px] rounded-full">
+                      {foundDecision.finalSelection.selectedBy}
+                    </span>
+                    <span className="text-cream/25">&middot;</span>
+                    <span className="text-[10px] text-cream/35">
+                      {new Date(foundDecision.finalSelection.selectedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                    </span>
+                  </>
+                )}
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={() => selectOption(finalPick.id)}
+                    className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors ml-auto"
+                  >
+                    Unselect
+                  </button>
+                )}
+              </div>
+              {finalPick.notes && (
+                <p className="text-[11px] text-cream/40 mt-1 whitespace-pre-wrap line-clamp-3">{finalPick.notes}</p>
               )}
-            </div>
+            </>
           ) : (
             <p className="text-xs text-cream/35">
               No final decision yet &mdash; pick from options below, or add one and mark it final.

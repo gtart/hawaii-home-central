@@ -609,16 +609,16 @@ export function IdeaCardModal({
             </div>
           )}
 
-          {/* ── Notes ── */}
+          {/* ── Specs ── */}
           {(!readOnly || option.notes) && (
             <div>
-              <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-1 block">Notes</label>
+              <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-1 block">Specs</label>
               <textarea
                 value={option.notes}
                 onChange={(e) => onUpdate({ notes: e.target.value })}
                 readOnly={readOnly}
                 rows={2}
-                placeholder="Notes, specs, details..."
+                placeholder="Specs, dimensions, details..."
                 className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 resize-none"
               />
             </div>

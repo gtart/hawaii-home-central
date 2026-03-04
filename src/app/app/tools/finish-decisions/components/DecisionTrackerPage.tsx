@@ -465,6 +465,7 @@ export function DecisionTrackerPage({
                     <th className="text-left font-medium pb-2">Decision</th>
                     <th className="text-left font-medium pb-2 w-28">Location</th>
                     <th className="text-left font-medium pb-2 w-24">Status</th>
+                    <th className="text-left font-medium pb-2">Specs</th>
                     <th className="text-left font-medium pb-2 w-28">Updated</th>
                     <th className="text-left font-medium pb-2">Last comment</th>
                     <th className="w-8 pb-2" />
@@ -474,6 +475,7 @@ export function DecisionTrackerPage({
                   {sortedDecisions.map((decision) => {
                     const config = STATUS_CONFIG_V3[decision.status]
                     const thumbUrl = getDecisionThumb(decision)
+                    const selectedOption = decision.options.find((o) => o.isSelected)
                     const userComments = (decision.comments || []).filter((c) => c.authorEmail !== '')
                     const lastComment = userComments.length > 0 ? userComments[userComments.length - 1] : null
 
@@ -509,6 +511,13 @@ export function DecisionTrackerPage({
                           <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium ${config.pillClass}`}>
                             {config.label}
                           </span>
+                        </td>
+                        <td className="py-2.5 pr-3 text-[11px] text-cream/40 max-w-[200px]">
+                          {selectedOption?.notes ? (
+                            <span className="line-clamp-2 whitespace-pre-wrap">{selectedOption.notes}</span>
+                          ) : (
+                            <span className="text-cream/20">—</span>
+                          )}
                         </td>
                         <td className="py-2.5 pr-3 text-[11px] text-cream/40">
                           {relativeTime(decision.updatedAt)}
@@ -579,10 +588,15 @@ export function DecisionTrackerPage({
                             <p className="text-[11px] text-cream/35 truncate">{decision.location}</p>
                           )}
                           {selectedOption ? (
-                            <p className="text-[11px] text-sandstone/70 truncate mb-0.5">
-                              Picked: {selectedOption.name}
-                              {selectedOption.price ? ` · ${selectedOption.price}` : ''}
-                            </p>
+                            <>
+                              <p className="text-[11px] text-sandstone/70 truncate mb-0.5">
+                                Picked: {selectedOption.name}
+                                {selectedOption.price ? ` · ${selectedOption.price}` : ''}
+                              </p>
+                              {selectedOption.notes && (
+                                <p className="text-[11px] text-cream/35 line-clamp-1 mb-0.5">{selectedOption.notes}</p>
+                              )}
+                            </>
                           ) : null}
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-cream/40">
                             {decision.options.length > 0 && (
