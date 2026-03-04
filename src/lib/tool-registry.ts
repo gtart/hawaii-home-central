@@ -32,7 +32,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'finish_decisions',
     href: '/app/tools/finish-decisions',
-    title: 'Selection Lists',
+    title: 'Selections',
     description:
       'Track the choices you need to make\u2014tile, countertops, hardware\u2014and what you picked.',
     stage: 'Choose Your Finishes',

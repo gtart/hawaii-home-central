@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import type { DashboardResponse } from '@/server/dashboard'
+import { relativeTime } from '@/lib/relativeTime'
 import { ShareMetaLine } from './ShareMetaLine'
 
 export function DashboardCardMoodBoards({
@@ -47,7 +48,7 @@ export function DashboardCardMoodBoards({
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
         <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Mood Boards</p>
         <p className="text-sm text-cream/40 mb-1">Start collecting inspiration</p>
-        <ShareMetaLine meta={data?.toolMeta?.mood_boards} />
+        <ShareMetaLine meta={data?.toolMeta?.mood_boards} noun="board" />
         <Link
           href="/app/tools/mood-boards"
           className="inline-flex items-center px-4 py-2 border border-sandstone/30 text-sandstone text-sm font-medium rounded-button hover:bg-sandstone/10 transition-colors mt-3"
@@ -63,15 +64,18 @@ export function DashboardCardMoodBoards({
     <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
       <div className="flex">
         <div className="flex-1 min-w-0">
-          <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Mood Boards</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm uppercase tracking-wider text-cream/40">Mood Boards</p>
+            <span className="text-[10px] text-cream/30 tabular-nums">{boards.length} board{boards.length !== 1 ? 's' : ''}</span>
+          </div>
           <div className="flex items-baseline gap-3 mb-1">
             <span className="text-2xl font-semibold text-cream tabular-nums">{totalItems}</span>
             <span className="text-sm text-cream/40">ideas saved</span>
-            <span className="text-cream/15">&middot;</span>
-            <span className="text-sm text-cream/40">{boards.length} board{boards.length !== 1 ? 's' : ''}</span>
           </div>
-          <ShareMetaLine meta={data?.toolMeta?.mood_boards} />
-          <p className="text-[11px] text-cream/25 mb-4 truncate">Most active: {boards[0].title}</p>
+          <ShareMetaLine meta={data?.toolMeta?.mood_boards} noun="board" />
+          <p className="text-[11px] text-cream/25 mb-4 truncate">
+            Last updated: {boards[0].title} · {relativeTime(boards[0].updatedAt)}{boards[0].updatedByName ? ` by ${boards[0].updatedByName.split(' ')[0]}` : ''}
+          </p>
           <Link
             href="/app/tools/mood-boards"
             className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
@@ -81,7 +85,7 @@ export function DashboardCardMoodBoards({
         </div>
         {thumbnail && (
           <div className="ml-4 shrink-0">
-            <img src={thumbnail} alt="" className="w-12 h-12 rounded-lg object-cover" />
+            <img src={`/api/image-proxy?url=${encodeURIComponent(thumbnail)}`} alt="" className="w-12 h-12 rounded-lg object-cover" />
           </div>
         )}
       </div>

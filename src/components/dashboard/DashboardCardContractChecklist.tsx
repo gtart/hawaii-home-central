@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import type { DashboardResponse } from '@/server/dashboard'
+import { relativeTime } from '@/lib/relativeTime'
 import { ShareMetaLine } from './ShareMetaLine'
 
 export function DashboardCardContractChecklist({
@@ -49,9 +50,9 @@ export function DashboardCardContractChecklist({
         <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Contract Checklist</p>
         <p className="text-lg font-medium text-cream/60 mb-1">Contractors selected</p>
         <p className="text-xs text-cream/35 mb-2">
-          {totalSelected} contractor{totalSelected !== 1 ? 's' : ''} chosen across {checklists.length} checklist{checklists.length !== 1 ? 's' : ''}
+          {totalSelected} contractor{totalSelected !== 1 ? 's' : ''} chosen across {checklists.length} comparison list{checklists.length !== 1 ? 's' : ''}
         </p>
-        <ShareMetaLine meta={data?.toolMeta?.before_you_sign} />
+        <ShareMetaLine meta={data?.toolMeta?.before_you_sign} noun="comparison list" />
         <Link
           href="/app/tools/before-you-sign"
           className="inline-flex items-center px-4 py-2 border border-sandstone/30 text-sandstone text-sm font-medium rounded-button hover:bg-sandstone/10 transition-colors mt-2"
@@ -65,17 +66,20 @@ export function DashboardCardContractChecklist({
   // Active — has contractors to compare
   const heuristic = totalContractors > 0
     ? `${totalContractors} contractor${totalContractors !== 1 ? 's' : ''} to compare`
-    : `${checklists.length} checklist${checklists.length !== 1 ? 's' : ''} in progress`
+    : `${checklists.length} comparison list${checklists.length !== 1 ? 's' : ''} in progress`
 
   return (
     <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-      <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Contract Checklist</p>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm uppercase tracking-wider text-cream/40">Contract Checklist</p>
+        <span className="text-[10px] text-cream/30 tabular-nums">{checklists.length} comparison list{checklists.length !== 1 ? 's' : ''}</span>
+      </div>
       <div className="flex items-baseline gap-3 mb-1">
         <span className="text-2xl font-semibold text-cream tabular-nums">
           {totalContractors > 0 ? totalContractors : checklists.length}
         </span>
         <span className="text-sm text-cream/40">
-          {totalContractors > 0 ? `contractor${totalContractors !== 1 ? 's' : ''}` : `checklist${checklists.length !== 1 ? 's' : ''}`}
+          {totalContractors > 0 ? `contractor${totalContractors !== 1 ? 's' : ''}` : `comparison list${checklists.length !== 1 ? 's' : ''}`}
         </span>
         {totalSelected > 0 && (
           <>
@@ -85,8 +89,10 @@ export function DashboardCardContractChecklist({
         )}
       </div>
       <p className="text-xs text-cream/35 mb-2">{heuristic}</p>
-      <ShareMetaLine meta={data?.toolMeta?.before_you_sign} />
-      <p className="text-[11px] text-cream/25 mb-4 truncate">Most active: {checklists[0].title}</p>
+      <ShareMetaLine meta={data?.toolMeta?.before_you_sign} noun="comparison list" />
+      <p className="text-[11px] text-cream/25 mb-4 truncate">
+        Last updated: {checklists[0].title} · {relativeTime(checklists[0].updatedAt)}{checklists[0].updatedByName ? ` by ${checklists[0].updatedByName.split(' ')[0]}` : ''}
+      </p>
       <Link
         href="/app/tools/before-you-sign"
         className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"

@@ -39,13 +39,13 @@ export function DashboardCardSelections({
   if (!hasItems) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Selection Lists</p>
+        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Selections</p>
         <p className="text-sm text-cream/40 mb-4">No selection lists yet.</p>
         <Link
           href="/app/tools/finish-decisions"
           className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
         >
-          Start Selection Lists
+          Start Selections
         </Link>
       </div>
     )
@@ -55,7 +55,7 @@ export function DashboardCardSelections({
   if (totalActive === 0) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Selection Lists</p>
+        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Selections</p>
         <p className="text-lg font-medium text-cream/60 mb-1">All selections made</p>
         <p className="text-xs text-cream/35 mb-1">
           All {totalDone} decision{totalDone !== 1 ? 's' : ''} finalized
@@ -88,7 +88,10 @@ export function DashboardCardSelections({
     <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
       <div className="flex">
         <div className="flex-1 min-w-0">
-          <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Selection Lists</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm uppercase tracking-wider text-cream/40">Selections</p>
+            <span className="text-[10px] text-cream/30 tabular-nums">{lists.length} list{lists.length !== 1 ? 's' : ''}</span>
+          </div>
           <div className="flex items-baseline gap-3 mb-1">
             <span className="text-2xl font-semibold text-cream tabular-nums">{totalActive}</span>
             <span className="text-sm text-cream/40">need decisions</span>
@@ -101,7 +104,9 @@ export function DashboardCardSelections({
           </div>
           <p className="text-xs text-cream/35 mb-2">{heuristic}</p>
           <ShareMetaLine meta={data?.toolMeta?.finish_decisions} />
-          <p className="text-[11px] text-cream/25 mb-4 truncate">Most active: {lists[0].title}</p>
+          <p className="text-[11px] text-cream/25 mb-4 truncate">
+            Last updated: {lists[0].title} · {relativeTime(lists[0].updatedAt)}{lists[0].updatedByName ? ` by ${lists[0].updatedByName.split(' ')[0]}` : ''}
+          </p>
           <Link
             href="/app/tools/finish-decisions"
             className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
@@ -111,7 +116,7 @@ export function DashboardCardSelections({
         </div>
         {thumbnail && (
           <div className="ml-4 shrink-0">
-            <img src={thumbnail} alt="" className="w-12 h-12 rounded-lg object-cover" />
+            <img src={`/api/image-proxy?url=${encodeURIComponent(thumbnail)}`} alt="" className="w-12 h-12 rounded-lg object-cover" />
           </div>
         )}
       </div>

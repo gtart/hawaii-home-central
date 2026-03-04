@@ -491,17 +491,17 @@ export function ToolContent({
         {!localOnly && (
           <ToolPageHeader
             toolKey="finish_decisions"
-            title="Selection List"
+            title="Selections"
             description="Track the choices you need to make—and what you picked."
             accessLevel={access}
             hasContent={v3State.rooms.length > 0}
             collectionId={collectionId}
             collectionName={collectionTitle}
-            eyebrowLabel="Selection List"
+            eyebrowLabel="Selections"
             backHref={collectionId ? '/app/tools/finish-decisions' : undefined}
-            backLabel={collectionId ? 'All Selection Lists' : undefined}
+            backLabel={collectionId ? 'All Selections' : undefined}
             headerSlot={collectionId ? <InstanceSwitcher toolKey="finish_decisions" currentCollectionId={collectionId} itemNoun="Selection List" /> : undefined}
-            toolLabel="Selection List"
+            toolLabel="Selections"
             scopes={v3State.rooms
               .filter((r) => r.systemKey !== 'global_uncategorized')
               .map((r) => ({

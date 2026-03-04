@@ -80,7 +80,7 @@ export function SaveFromWebCTA({ className = '' }: { className?: string }) {
         <div className="px-4 pb-4 space-y-3 border-t border-sandstone/10">
           <p className="text-xs text-cream/50 pt-3">
             Drag the button below to your bookmarks bar. Then click it on any website to capture images
-            and save them directly to your Selection Lists.
+            and save them directly to your Selections.
           </p>
 
           <BookmarkletButton compact />

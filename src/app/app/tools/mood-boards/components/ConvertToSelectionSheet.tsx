@@ -163,7 +163,7 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
         <div data-testid="convert-success" className="relative bg-basalt-50 border border-cream/10 rounded-xl w-full max-w-md p-6 text-center space-y-3">
           <div className="text-3xl">&#10003;</div>
           <h3 className="text-base font-medium text-cream">
-            Added to Selection Lists
+            Added to Selections
           </h3>
           <p className="text-sm text-cream/60">
             Saved to{' '}
@@ -192,10 +192,10 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
         aria-modal="true"
       >
         <h3 className="text-base font-medium text-cream">
-          Move to Selection Lists
+          Move to Selections
         </h3>
         <p className="text-sm text-cream/60">
-          This will copy &quot;{idea.name}&quot; to your Selection Lists.
+          This will copy &quot;{idea.name}&quot; to your Selections.
           The original idea will remain in your mood board.
         </p>
 
@@ -249,7 +249,7 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
         ) : (
           <div className="bg-basalt rounded-lg p-3 text-center">
             <p className="text-cream/50 text-sm">
-              No rooms yet in Selection Lists.
+              No rooms yet in Selections.
             </p>
             <p className="text-[11px] text-cream/30 mt-1">
               The idea will be saved to Unsorted.

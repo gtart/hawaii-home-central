@@ -201,7 +201,7 @@ export function SaveFromWebContent() {
   // Stable representation of room IDs
   const roomIdKey = fdRooms.map((r) => r.id).join(',')
 
-  // Pre-select from query params or last-used room (Selection Lists)
+  // Pre-select from query params or last-used room (Selections)
   useEffect(() => {
     if (!isLoaded || fdRooms.length === 0 || destination !== 'finish_decisions') return
     if (selectedRoomId && fdRooms.find((r) => r.id === selectedRoomId)) return
@@ -310,7 +310,7 @@ export function SaveFromWebContent() {
     setSaved(true)
   }
 
-  // ── Save to Selection Lists ──
+  // ── Save to Selections ──
   const handleSaveFinishSelections = () => {
     if (!capturedContent) return
 
@@ -434,7 +434,7 @@ export function SaveFromWebContent() {
     : '/app/tools/finish-decisions'
   const backLabel = fromParam === 'mood-boards'
     ? 'Back to Mood Boards'
-    : 'Back to Selection Lists'
+    : 'Back to Selections'
 
   // Loading states
   if (projectsLoading || !isLoaded) {
@@ -565,7 +565,7 @@ export function SaveFromWebContent() {
                     onClick={() => router.push('/app/tools/finish-decisions')}
                     className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
                   >
-                    Go to Selection Lists
+                    Go to Selections
                   </button>
                 )}
               </div>
@@ -624,7 +624,7 @@ export function SaveFromWebContent() {
         {!capturedContent && (
           <>
             <p className="text-cream/60 text-sm mb-6">
-              Save inspiration from any website — to your Mood Boards or Selection Lists.
+              Save inspiration from any website — to your Mood Boards or Selections.
             </p>
 
             <div data-testid="empty-state-savefromweb" className="bg-basalt-50 rounded-xl p-5 border border-cream/10">
@@ -647,7 +647,7 @@ export function SaveFromWebContent() {
                   <span className="flex-shrink-0 w-6 h-6 bg-sandstone/20 text-sandstone text-xs font-bold rounded-full flex items-center justify-center">3</span>
                   <div>
                     <p className="text-sm text-cream/80">Click &quot;Save to HHC&quot; in your bookmarks bar</p>
-                    <p className="text-xs text-cream/40 mt-0.5">Choose Mood Boards (inspiration) or Selection Lists.</p>
+                    <p className="text-xs text-cream/40 mt-0.5">Choose Mood Boards (inspiration) or Selections.</p>
                   </div>
                 </div>
               </div>
@@ -867,7 +867,7 @@ export function SaveFromWebContent() {
                   }`}
                 >
                   <p className={`text-sm font-medium ${destination === 'finish_decisions' ? 'text-sandstone' : 'text-cream'}`}>
-                    Selection Lists
+                    Selections
                   </p>
                   <p className="text-[11px] text-cream/40 mt-0.5">
                     Compare options per room
@@ -955,7 +955,7 @@ export function SaveFromWebContent() {
               </div>
             )}
 
-            {/* ── Selection Lists: Room + Selection picker ── */}
+            {/* ── Selections: Room + Selection picker ── */}
             {destination === 'finish_decisions' && (
               <>
                 {fdRooms.filter((r) => !isGlobalUnsorted(r)).length === 0 ? (

@@ -32,7 +32,7 @@ export function FinishDecisionsReport({ collectionIdOverride }: { collectionIdOv
         <p className="text-red-600 font-medium">Missing project ID</p>
         <p className="text-gray-500 text-sm">This report requires a valid projectId parameter.</p>
         <a href="/app/tools/finish-decisions" className="text-blue-600 underline text-sm">
-          Back to Selection Lists
+          Back to Selections
         </a>
       </div>
     )
@@ -170,7 +170,7 @@ function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProj
             href="/app/tools/finish-decisions"
             className="text-sm text-cream/60 hover:text-cream transition-colors"
           >
-            &larr; Back to Selection Lists
+            &larr; Back to Selections
           </a>
           <div className="flex items-center gap-4">
             <span className="text-xs text-cream/40">

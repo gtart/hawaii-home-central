@@ -33,7 +33,7 @@ function SelectionListsEmptyState({ onCreate }: { onCreate: (title: string) => v
 
   return (
     <div className="max-w-lg mx-auto text-center">
-      <h2 className="font-serif text-3xl text-sandstone mb-2">Start your Selection Lists</h2>
+      <h2 className="font-serif text-3xl text-sandstone mb-2">Start your Selections</h2>
       <p className="text-cream/50 text-sm leading-relaxed mb-8">
         Organize your choices however makes sense&mdash;by room, by category, or by
         trade. Track what you need to decide and what you picked.

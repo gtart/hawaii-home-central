@@ -11,6 +11,7 @@ export interface SelectionListSummary {
   id: string
   title: string
   updatedAt: string
+  updatedByName?: string
   notStartedCount: number
   decidingCount: number
   doneCount: number
@@ -22,6 +23,7 @@ export interface FixListSummary {
   id: string
   title: string
   updatedAt: string
+  updatedByName?: string
   openCount: number
   staleCount: number
   highPriorityCount: number
@@ -31,6 +33,7 @@ export interface MoodBoardSummary {
   id: string
   title: string
   updatedAt: string
+  updatedByName?: string
   itemCount: number
   thumbnailUrl?: string
 }
@@ -39,6 +42,7 @@ export interface BeforeYouSignSummary {
   id: string
   title: string
   updatedAt: string
+  updatedByName?: string
   contractorCount: number
   selectedContractorCount: number
 }
@@ -76,7 +80,7 @@ function getOptionThumb(option: { images?: { thumbnailUrl?: string; url: string 
   return option.thumbnailUrl || option.imageUrl || null
 }
 
-function summarizeSelectionList(id: string, title: string, updatedAt: Date, raw: unknown): SelectionListSummary {
+function summarizeSelectionList(id: string, title: string, updatedAt: Date, updatedByName: string | undefined, raw: unknown): SelectionListSummary {
   const payload = raw as FinishDecisionsPayloadV3 | null
   const rooms = payload?.rooms ?? []
   const decisions: DecisionV3[] = rooms.flatMap((r) => r.decisions ?? [])
@@ -119,6 +123,7 @@ function summarizeSelectionList(id: string, title: string, updatedAt: Date, raw:
     id,
     title,
     updatedAt: updatedAt.toISOString(),
+    updatedByName,
     notStartedCount,
     decidingCount,
     doneCount,
@@ -127,7 +132,7 @@ function summarizeSelectionList(id: string, title: string, updatedAt: Date, raw:
   }
 }
 
-function summarizeFixList(id: string, title: string, updatedAt: Date, raw: unknown): FixListSummary {
+function summarizeFixList(id: string, title: string, updatedAt: Date, updatedByName: string | undefined, raw: unknown): FixListSummary {
   const payload = raw as PunchlistPayload | null
   const items: PunchlistItem[] = payload?.items ?? []
   const now = Date.now()
@@ -144,10 +149,10 @@ function summarizeFixList(id: string, title: string, updatedAt: Date, raw: unkno
     if (item.priority === 'HIGH' && item.status !== 'DONE') highPriorityCount++
   }
 
-  return { id, title, updatedAt: updatedAt.toISOString(), openCount, staleCount, highPriorityCount }
+  return { id, title, updatedAt: updatedAt.toISOString(), updatedByName, openCount, staleCount, highPriorityCount }
 }
 
-function summarizeMoodBoard(id: string, title: string, updatedAt: Date, raw: unknown): MoodBoardSummary {
+function summarizeMoodBoard(id: string, title: string, updatedAt: Date, updatedByName: string | undefined, raw: unknown): MoodBoardSummary {
   const payload = raw as MoodBoardPayload | null
   const boards = payload?.boards ?? []
   let itemCount = 0
@@ -162,7 +167,7 @@ function summarizeMoodBoard(id: string, title: string, updatedAt: Date, raw: unk
     }
   }
 
-  return { id, title, updatedAt: updatedAt.toISOString(), itemCount, thumbnailUrl: thumbnailUrl ?? undefined }
+  return { id, title, updatedAt: updatedAt.toISOString(), updatedByName, itemCount, thumbnailUrl: thumbnailUrl ?? undefined }
 }
 
 // ---------------------------------------------------------------------------
@@ -190,6 +195,7 @@ export async function getDashboardData(userId: string, projectId: string): Promi
       title: true,
       payload: true,
       updatedAt: true,
+      updatedBy: { select: { name: true } },
     },
     orderBy: { updatedAt: 'desc' },
   })
@@ -200,21 +206,22 @@ export async function getDashboardData(userId: string, projectId: string): Promi
   const beforeYouSign: BeforeYouSignSummary[] = []
 
   for (const c of collections) {
+    const byName = c.updatedBy?.name ?? undefined
     switch (c.toolKey) {
       case 'finish_decisions':
-        selectionLists.push(summarizeSelectionList(c.id, c.title, c.updatedAt, c.payload))
+        selectionLists.push(summarizeSelectionList(c.id, c.title, c.updatedAt, byName, c.payload))
         break
       case 'punchlist':
-        fixLists.push(summarizeFixList(c.id, c.title, c.updatedAt, c.payload))
+        fixLists.push(summarizeFixList(c.id, c.title, c.updatedAt, byName, c.payload))
         break
       case 'mood_boards':
-        moodBoards.push(summarizeMoodBoard(c.id, c.title, c.updatedAt, c.payload))
+        moodBoards.push(summarizeMoodBoard(c.id, c.title, c.updatedAt, byName, c.payload))
         break
       case 'before_you_sign': {
         const bysPayload = c.payload as { contractors?: unknown[]; selectedContractorIds?: unknown[] } | null
         const contractorCount = Array.isArray(bysPayload?.contractors) ? bysPayload.contractors.length : 0
         const selectedContractorCount = Array.isArray(bysPayload?.selectedContractorIds) ? bysPayload.selectedContractorIds.length : 0
-        beforeYouSign.push({ id: c.id, title: c.title, updatedAt: c.updatedAt.toISOString(), contractorCount, selectedContractorCount })
+        beforeYouSign.push({ id: c.id, title: c.title, updatedAt: c.updatedAt.toISOString(), updatedByName: byName, contractorCount, selectedContractorCount })
         break
       }
     }

@@ -32,7 +32,7 @@ const TOOL_ITEMS = [
   },
   {
     href: '/app/tools/finish-decisions',
-    label: 'Selection Lists',
+    label: 'Selections',
     matchMode: 'prefix' as const,
     badgeKey: 'selectionsNeedDecisions' as const,
     icon: (

@@ -106,6 +106,10 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
   const [shareTarget, setShareTarget] = useState<{ collectionId: string; collectionName: string } | null>(null)
   const [previews, setPreviews] = useState<Record<string, PreviewData>>({})
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
+    if (typeof window === 'undefined') return 'grid'
+    return (localStorage.getItem(`hhc-picker-view-${toolKey}`) as 'grid' | 'table') || 'grid'
+  })
   const menuRef = useRef<HTMLDivElement>(null)
 
   const toolLabel = TOOL_LABELS[toolKey] ?? toolKey
@@ -319,8 +323,200 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
       {breadcrumb}
       <div className="flex items-center justify-between mb-6 gap-3">
         <h2 className="font-serif text-2xl text-cream">{toolLabel}</h2>
+        {previewMode && (
+          <div className="hidden md:flex items-center gap-1 bg-basalt border border-cream/10 rounded-lg p-0.5">
+            <button
+              type="button"
+              onClick={() => { setViewMode('grid'); localStorage.setItem(`hhc-picker-view-${toolKey}`, 'grid') }}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-cream/10 text-cream' : 'text-cream/30 hover:text-cream/50'}`}
+              title="Grid view"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setViewMode('table'); localStorage.setItem(`hhc-picker-view-${toolKey}`, 'table') }}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'table' ? 'bg-cream/10 text-cream' : 'text-cream/30 hover:text-cream/50'}`}
+              title="Table view"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" />
+                <line x1="3" y1="12" x2="21" y2="12" strokeLinecap="round" />
+                <line x1="3" y1="18" x2="21" y2="18" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
+      {/* Table view (desktop only) */}
+      {previewMode && viewMode === 'table' && (
+        <div className="hidden md:block mb-6">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-[11px] uppercase tracking-wider text-cream/30 border-b border-cream/10">
+                <th className="pb-2 pr-3 w-12" />
+                <th className="pb-2 pr-3">Name</th>
+                <th className="pb-2 pr-3">Status</th>
+                <th className="pb-2 pr-3">Updated</th>
+                <th className="pb-2 pr-3 max-w-[200px]">Last Comment</th>
+                <th className="pb-2 w-10" />
+              </tr>
+            </thead>
+            <tbody>
+              {collections.map((coll) => {
+                const preview = previews[coll.id] ?? { imageUrls: [], ideaCount: 0, commentCount: 0 }
+                const hasStatusCounts = preview.statuses && Object.values(preview.statuses).some(v => v > 0)
+                const thumb = preview.imageUrls[0]
+                const statusParts: string[] = []
+                if (hasStatusCounts) {
+                  if ((preview.statuses!.deciding ?? 0) > 0) statusParts.push(`${preview.statuses!.deciding} deciding`)
+                  if ((preview.statuses!.selected ?? 0) > 0) statusParts.push(`${preview.statuses!.selected} selected`)
+                  if ((preview.statuses!.ordered ?? 0) > 0) statusParts.push(`${preview.statuses!.ordered} ordered`)
+                  if ((preview.statuses!.done ?? 0) > 0) statusParts.push(`${preview.statuses!.done} done`)
+                }
+
+                return (
+                  <tr
+                    key={coll.id}
+                    onClick={() => router.push(`${toolPath}/${coll.id}`)}
+                    className="border-b border-cream/5 hover:bg-cream/[0.03] cursor-pointer transition-colors group"
+                  >
+                    <td className="py-3 pr-3">
+                      {thumb ? (
+                        <img src={`/api/image-proxy?url=${encodeURIComponent(thumb)}`} alt="" className="w-10 h-10 rounded-lg object-cover" loading="lazy" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-basalt-50 flex items-center justify-center text-cream/15">
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3 pr-3">
+                      {editingId === coll.id ? (
+                        <input
+                          autoFocus
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleRename(coll.id)
+                            if (e.key === 'Escape') { setEditingId(null); setEditTitle('') }
+                          }}
+                          onBlur={() => handleRename(coll.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="bg-basalt border border-cream/20 rounded px-2 py-1 text-sm text-cream focus:outline-none focus:border-sandstone/50"
+                        />
+                      ) : (
+                        <span className="font-medium text-cream">{coll.title}</span>
+                      )}
+                      {coll.members.length > 0 && (
+                        <span className="ml-2 inline-flex items-center gap-0.5 text-[10px] text-sandstone/60 bg-sandstone/10 rounded-full px-1.5 py-0.5 align-middle">
+                          <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="8.5" cy="7" r="4" />
+                            <path d="M20 8v6M23 11h-6" strokeLinecap="round" />
+                          </svg>
+                          Shared
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 pr-3 text-cream/50 text-xs">
+                      {statusParts.length > 0 ? statusParts.join(' · ') : (
+                        previewMode === 'thumbnails' && preview.ideaCount > 0
+                          ? `${preview.ideaCount} idea${preview.ideaCount !== 1 ? 's' : ''}`
+                          : <span className="text-cream/30 italic">—</span>
+                      )}
+                    </td>
+                    <td className="py-3 pr-3 text-cream/40 text-xs whitespace-nowrap">
+                      {new Date(coll.updatedAt).toLocaleDateString()}
+                      {coll.updatedBy?.name && <span> by {coll.updatedBy.name.split(' ')[0]}</span>}
+                    </td>
+                    <td className="py-3 pr-3 text-cream/40 text-xs max-w-[200px] truncate">
+                      {preview.lastComment ? (
+                        <>
+                          {preview.lastComment.authorName.split(' ')[0]} on {preview.lastComment.decisionTitle}:
+                          {' "'}
+                          {preview.lastComment.text.length > 50 ? preview.lastComment.text.slice(0, 50) + '...' : preview.lastComment.text}
+                          {'"'}
+                        </>
+                      ) : (
+                        <span className="text-cream/20">—</span>
+                      )}
+                    </td>
+                    <td className="py-3" onClick={(e) => e.stopPropagation()}>
+                      <div className="relative opacity-0 group-hover:opacity-100 transition-opacity" ref={menuOpenId === coll.id ? menuRef : undefined}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setMenuOpenId(menuOpenId === coll.id ? null : coll.id)
+                          }}
+                          className="p-1 text-cream/30 hover:text-cream/60 transition-colors"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="5" r="1.5" />
+                            <circle cx="12" cy="12" r="1.5" />
+                            <circle cx="12" cy="19" r="1.5" />
+                          </svg>
+                        </button>
+                        {menuOpenId === coll.id && (
+                          <div className="absolute right-0 top-full mt-1 w-40 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl z-50 overflow-hidden py-1">
+                            <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); setShareTarget({ collectionId: coll.id, collectionName: coll.title }) }} className="w-full text-left px-3 py-2 text-sm text-cream/70 hover:bg-cream/5 hover:text-cream transition-colors">Share</button>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); window.open(`${toolPath}/${coll.id}/report`, '_blank') }} className="w-full text-left px-3 py-2 text-sm text-cream/70 hover:bg-cream/5 hover:text-cream transition-colors">Export / Print</button>
+                            <div className="border-t border-cream/10 my-1" />
+                            <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); setEditingId(coll.id); setEditTitle(coll.title) }} className="w-full text-left px-3 py-2 text-sm text-cream/70 hover:bg-cream/5 hover:text-cream transition-colors">Rename</button>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); if (confirm(`Archive "${coll.title}"?`)) handleArchive(coll.id) }} className="w-full text-left px-3 py-2 text-sm text-red-400/70 hover:bg-cream/5 hover:text-red-400 transition-colors">Archive</button>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+          {/* + Add new row */}
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="mt-3 flex items-center gap-2 text-sm text-cream/30 hover:text-cream/50 transition-colors"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add a new {itemNoun}
+          </button>
+          {creating && (
+            <div className="mt-2 flex items-center gap-2 max-w-sm">
+              <input
+                autoFocus
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleCreate()
+                  if (e.key === 'Escape') { setCreating(false); setNewTitle('') }
+                }}
+                placeholder={`${itemNoun.charAt(0).toUpperCase() + itemNoun.slice(1)} name...`}
+                className="flex-1 bg-basalt border border-cream/20 rounded px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+              />
+              <button type="button" onClick={handleCreate} disabled={!newTitle.trim()} className="text-xs font-medium text-basalt bg-sandstone rounded px-3 py-1.5 hover:bg-sandstone-light transition-colors disabled:opacity-40">Create</button>
+              <button type="button" onClick={() => { setCreating(false); setNewTitle('') }} className="text-xs text-cream/40 hover:text-cream/60 transition-colors">Cancel</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Grid view (always on mobile, toggleable on desktop) */}
+      <div className={previewMode && viewMode === 'table' ? 'md:hidden' : ''}>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {collections.map((coll) => {
           const preview = previews[coll.id] ?? { imageUrls: [], ideaCount: 0, commentCount: 0 }
@@ -585,6 +781,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
             </div>
           </div>
         )}
+      </div>
       </div>
 
       {/* Archived section */}
