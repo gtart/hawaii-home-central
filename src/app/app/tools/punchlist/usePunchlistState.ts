@@ -267,11 +267,12 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
       const ts = now()
       const item = payload.items.find((i) => i.id === itemId)
       const title = item?.title || 'item'
+      const snippet = comment.text.length > 60 ? comment.text.slice(0, 60) + '…' : comment.text
       const events: ActivityEventHint[] = [{
         action: 'commented',
         entityType: 'item',
         entityId: itemId,
-        summaryText: `Commented on: "${title}"`,
+        summaryText: `${comment.authorName} commented on "${title}": "${snippet}"`,
       }]
       setState((prev) => ({
         ...prev,

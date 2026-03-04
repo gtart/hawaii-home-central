@@ -67,17 +67,24 @@ export function DashboardFeed() {
           {events.map((event) => (
             <div
               key={event.id}
-              className="flex items-center gap-2 py-2.5 border-b border-cream/5 last:border-0 -mx-2 px-2"
+              className="py-2.5 border-b border-cream/5 last:border-0 -mx-2 px-2"
             >
-              <span className="text-sm text-cream/60 flex-1 min-w-0 truncate">
-                {event.summaryText}
-              </span>
-              <span className="text-[11px] text-cream/25 shrink-0">
-                {TOOL_LABEL[event.toolKey] || event.toolKey}
-              </span>
-              <span className="text-[11px] text-cream/25 shrink-0">
-                {relativeTime(event.createdAt)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-cream/60 flex-1 min-w-0 truncate">
+                  {event.summaryText}
+                </span>
+                <span className="text-[11px] text-cream/25 shrink-0">
+                  {TOOL_LABEL[event.toolKey] || event.toolKey}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-0.5">
+                {event.actorName && (
+                  <span className="text-[11px] text-cream/30">{event.actorName}</span>
+                )}
+                <span className="text-[11px] text-cream/20">
+                  {relativeTime(event.createdAt)}
+                </span>
+              </div>
             </div>
           ))}
 
