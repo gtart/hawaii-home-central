@@ -68,6 +68,7 @@ export async function GET(request: Request) {
       toolKey: e.toolKey,
       collectionId: e.collectionId,
       entityType: e.entityType,
+      entityId: e.entityId,
       action: e.action,
       summaryText: e.summaryText,
       createdAt: e.createdAt.toISOString(),

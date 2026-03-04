@@ -8,6 +8,7 @@ export interface ActivityFeedEvent {
   toolKey: string
   collectionId: string | null
   entityType: string | null
+  entityId: string | null
   action: string
   summaryText: string
   createdAt: string

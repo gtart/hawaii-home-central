@@ -1,12 +1,32 @@
 'use client'
 
 import { useState } from 'react'
-import { useActivityFeed } from '@/hooks/useActivityFeed'
+import Link from 'next/link'
+import { useActivityFeed, type ActivityFeedEvent } from '@/hooks/useActivityFeed'
 
 const TOOL_LABEL: Record<string, string> = {
   punchlist: 'Fix List',
   finish_decisions: 'Selections',
   mood_boards: 'Mood Boards',
+}
+
+const TOOL_BASE: Record<string, string> = {
+  punchlist: '/app/tools/punchlist',
+  finish_decisions: '/app/tools/finish-decisions',
+  mood_boards: '/app/tools/mood-boards',
+  before_you_sign: '/app/tools/before-you-sign',
+}
+
+function eventHref(event: ActivityFeedEvent): string {
+  const base = TOOL_BASE[event.toolKey] || '/app'
+  if (!event.collectionId) return base
+
+  // Decision-level deep link
+  if (event.toolKey === 'finish_decisions' && event.entityType === 'decision' && event.entityId) {
+    return `${base}/${event.collectionId}/decision/${event.entityId}`
+  }
+
+  return `${base}/${event.collectionId}`
 }
 
 const FILTER_CHIPS: { key: string | undefined; label: string }[] = [
@@ -65,9 +85,10 @@ export function DashboardFeed() {
       ) : (
         <div>
           {events.map((event) => (
-            <div
+            <Link
               key={event.id}
-              className="py-2.5 border-b border-cream/5 last:border-0 -mx-2 px-2"
+              href={eventHref(event)}
+              className="block py-2.5 border-b border-cream/5 last:border-0 -mx-2 px-2 hover:bg-cream/5 rounded transition-colors"
             >
               <div className="flex items-center gap-2">
                 <span className="text-sm text-cream/60 flex-1 min-w-0 truncate">
@@ -85,7 +106,7 @@ export function DashboardFeed() {
                   {relativeTime(event.createdAt)}
                 </span>
               </div>
-            </div>
+            </Link>
           ))}
 
           {hasMore && (
