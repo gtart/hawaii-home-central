@@ -14,7 +14,7 @@ export interface SelectionListSummary {
   notStartedCount: number
   decidingCount: number
   doneCount: number
-  lastComment?: { text: string; authorName: string; createdAt: string }
+  lastComment?: { text: string; updatedAt: string; authorName?: string }
   thumbnailUrl?: string
 }
 
@@ -47,6 +47,7 @@ export interface DashboardResponse {
 // ---------------------------------------------------------------------------
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000
 
 function getOptionThumb(option: { images?: { thumbnailUrl?: string; url: string }[]; thumbnailUrl?: string; imageUrl?: string }): string | null {
   if (option.images?.length) {
@@ -89,7 +90,7 @@ function summarizeSelectionList(id: string, title: string, updatedAt: Date, raw:
       const t = new Date(c.createdAt).getTime()
       if (t > lastCommentTime) {
         lastCommentTime = t
-        lastComment = { text: c.text, authorName: c.authorName, createdAt: c.createdAt }
+        lastComment = { text: c.text, authorName: c.authorName, updatedAt: c.createdAt }
       }
     }
   }
@@ -118,7 +119,7 @@ function summarizeFixList(id: string, title: string, updatedAt: Date, raw: unkno
   for (const item of items) {
     if (item.status === 'OPEN') {
       openCount++
-      if (now - new Date(item.updatedAt).getTime() > SEVEN_DAYS_MS) staleCount++
+      if (now - new Date(item.updatedAt).getTime() > FOURTEEN_DAYS_MS) staleCount++
     }
     if (item.priority === 'HIGH' && item.status !== 'DONE') highPriorityCount++
   }
@@ -192,8 +193,12 @@ export async function getDashboardData(userId: string, projectId: string): Promi
   }
 
   // Compute noNews
+  // isQuiet = (no open fixes AND no deciding/notStarted selections AND lastActivityAt > 7 days) OR no collections
   const lastActivityAt = collections.length > 0 ? collections[0].updatedAt.toISOString() : undefined
-  const isQuiet = !lastActivityAt || (Date.now() - new Date(lastActivityAt).getTime() > SEVEN_DAYS_MS)
+  const totalOpenFixes = fixLists.reduce((s, l) => s + l.openCount, 0)
+  const totalActiveSelections = selectionLists.reduce((s, l) => s + l.notStartedCount + l.decidingCount, 0)
+  const activityStale = !lastActivityAt || (Date.now() - new Date(lastActivityAt).getTime() > SEVEN_DAYS_MS)
+  const isQuiet = collections.length === 0 || (totalOpenFixes === 0 && totalActiveSelections === 0 && activityStale)
 
   return {
     selectionLists,

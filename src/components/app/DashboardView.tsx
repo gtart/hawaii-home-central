@@ -51,12 +51,6 @@ function getSelectionListStats(lists: SelectionListSummary[]): AggregatedStats[]
 function getFixListStats(lists: FixListSummary[]): AggregatedStats[] {
   if (lists.length === 0) return []
   const open = lists.reduce((s, l) => s + l.openCount, 0)
-  const total = lists.reduce((s, l) => s + l.openCount, 0) // Only count open for "total" check
-  if (total === 0 && lists.length > 0) {
-    // All done — show 0 open
-    return [{ label: 'open issues', value: '0' }]
-  }
-  if (lists.every((l) => l.openCount === 0) && lists.length === 0) return []
   return [{ label: `open issue${open !== 1 ? 's' : ''}`, value: String(open) }]
 }
 
