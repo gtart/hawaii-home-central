@@ -2,15 +2,8 @@
 
 import Link from 'next/link'
 import type { DashboardResponse } from '@/server/dashboard'
-
-function relativeTime(dateStr: string): string {
-  const diffMs = Date.now() - new Date(dateStr).getTime()
-  const days = Math.floor(diffMs / 86_400_000)
-  if (days < 1) return 'today'
-  if (days === 1) return 'yesterday'
-  if (days < 30) return `${days}d ago`
-  return `${Math.floor(days / 30)}mo ago`
-}
+import { relativeTime } from '@/lib/relativeTime'
+import { ShareMetaLine } from './ShareMetaLine'
 
 export function DashboardCardSelections({
   data,
@@ -68,11 +61,12 @@ export function DashboardCardSelections({
           All {totalDone} decision{totalDone !== 1 ? 's' : ''} finalized
         </p>
         {lastUpdated && (
-          <p className="text-[11px] text-cream/25 mb-4">Last activity: {relativeTime(lastUpdated)}</p>
+          <p className="text-[11px] text-cream/25 mb-1">Last activity: {relativeTime(lastUpdated)}</p>
         )}
+        <ShareMetaLine meta={data?.toolMeta?.finish_decisions} />
         <Link
           href="/app/tools/finish-decisions"
-          className="inline-flex items-center px-4 py-2 border border-sandstone/30 text-sandstone text-sm font-medium rounded-button hover:bg-sandstone/10 transition-colors"
+          className="inline-flex items-center px-4 py-2 border border-sandstone/30 text-sandstone text-sm font-medium rounded-button hover:bg-sandstone/10 transition-colors mt-2"
         >
           View Selections
         </Link>
@@ -88,32 +82,39 @@ export function DashboardCardSelections({
     heuristic = `${totalDeciding} decision${totalDeciding !== 1 ? 's' : ''} still in progress`
   }
 
+  const thumbnail = lists.find((l) => l.thumbnailUrl)?.thumbnailUrl
+
   return (
     <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-      <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Selection Lists</p>
-      <div className="flex items-baseline gap-3 mb-1">
-        <span className="text-2xl font-semibold text-cream tabular-nums">{totalActive}</span>
-        <span className="text-sm text-cream/40">need decisions</span>
-        {totalDone > 0 && (
-          <>
-            <span className="text-cream/15">&middot;</span>
-            <span className="text-sm text-green-400/60">{totalDone} done</span>
-          </>
+      <div className="flex">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Selection Lists</p>
+          <div className="flex items-baseline gap-3 mb-1">
+            <span className="text-2xl font-semibold text-cream tabular-nums">{totalActive}</span>
+            <span className="text-sm text-cream/40">need decisions</span>
+            {totalDone > 0 && (
+              <>
+                <span className="text-cream/15">&middot;</span>
+                <span className="text-sm text-green-400/60">{totalDone} done</span>
+              </>
+            )}
+          </div>
+          <p className="text-xs text-cream/35 mb-2">{heuristic}</p>
+          <ShareMetaLine meta={data?.toolMeta?.finish_decisions} />
+          <p className="text-[11px] text-cream/25 mb-4 truncate">Most active: {lists[0].title}</p>
+          <Link
+            href="/app/tools/finish-decisions"
+            className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
+          >
+            Review Decisions
+          </Link>
+        </div>
+        {thumbnail && (
+          <div className="ml-4 shrink-0">
+            <img src={thumbnail} alt="" className="w-12 h-12 rounded-lg object-cover" />
+          </div>
         )}
       </div>
-      <p className="text-xs text-cream/35 mb-2">{heuristic}</p>
-      {lastComment && (
-        <p className="text-[11px] text-cream/25 mb-2 truncate">
-          Latest: &ldquo;{lastComment.text.slice(0, 60)}{lastComment.text.length > 60 ? '...' : ''}&rdquo;
-          {lastComment.authorName ? ` — ${lastComment.authorName}` : ''}
-        </p>
-      )}
-      <Link
-        href="/app/tools/finish-decisions"
-        className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors mt-2"
-      >
-        Review Decisions
-      </Link>
     </div>
   )
 }

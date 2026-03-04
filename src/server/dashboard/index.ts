@@ -43,11 +43,22 @@ export interface BeforeYouSignSummary {
   selectedContractorCount: number
 }
 
+export type ToolKey = 'punchlist' | 'finish_decisions' | 'mood_boards' | 'before_you_sign'
+
+export interface ToolShareMeta {
+  collectionCount: number
+  sharedCount: number
+  linkEnabledCount: number
+  pendingInvitesCount: number
+  lastUpdatedAt: string | null
+}
+
 export interface DashboardResponse {
   selectionLists: SelectionListSummary[]
   fixLists: FixListSummary[]
   moodBoards: MoodBoardSummary[]
   beforeYouSign: BeforeYouSignSummary[]
+  toolMeta: Record<ToolKey, ToolShareMeta>
   noNews: { isQuiet: boolean; lastActivityAt?: string }
 }
 
@@ -209,6 +220,59 @@ export async function getDashboardData(userId: string, projectId: string): Promi
     }
   }
 
+  // Compute per-tool sharing metadata
+  const collectionIds = collections.map((c) => c.id)
+  const collectionToolMap = new Map(collections.map((c) => [c.id, c.toolKey]))
+
+  const [memberCounts, tokenCounts, inviteCounts] = collectionIds.length > 0
+    ? await Promise.all([
+        prisma.toolCollectionMember.groupBy({
+          by: ['collectionId'] as const,
+          where: { collectionId: { in: collectionIds } },
+          _count: { userId: true },
+        }),
+        prisma.toolCollectionShareToken.groupBy({
+          by: ['collectionId'] as const,
+          where: {
+            collectionId: { in: collectionIds },
+            revokedAt: null,
+            OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+          },
+          _count: { id: true },
+        }),
+        prisma.toolCollectionInvite.groupBy({
+          by: ['collectionId'] as const,
+          where: { collectionId: { in: collectionIds }, status: 'PENDING' },
+          _count: { id: true },
+        }),
+      ])
+    : [[] as { collectionId: string; _count: { userId: number } }[],
+       [] as { collectionId: string; _count: { id: number } }[],
+       [] as { collectionId: string; _count: { id: number } }[]]
+
+  const sharedIds = new Set(memberCounts.filter((m) => m._count.userId >= 2).map((m) => m.collectionId))
+  const linkIds = new Set(tokenCounts.map((t) => t.collectionId))
+  const pendingMap = new Map(inviteCounts.map((i) => [i.collectionId, i._count.id]))
+
+  const collectionsByTool: Record<string, typeof collections> = {}
+  for (const c of collections) {
+    if (!collectionsByTool[c.toolKey]) collectionsByTool[c.toolKey] = []
+    collectionsByTool[c.toolKey].push(c)
+  }
+
+  const TOOL_KEYS: ToolKey[] = ['punchlist', 'finish_decisions', 'mood_boards', 'before_you_sign']
+  const toolMeta = {} as Record<ToolKey, ToolShareMeta>
+  for (const tk of TOOL_KEYS) {
+    const tc = collectionsByTool[tk] ?? []
+    toolMeta[tk] = {
+      collectionCount: tc.length,
+      sharedCount: tc.filter((c) => sharedIds.has(c.id)).length,
+      linkEnabledCount: tc.filter((c) => linkIds.has(c.id)).length,
+      pendingInvitesCount: tc.reduce((s, c) => s + (pendingMap.get(c.id) ?? 0), 0),
+      lastUpdatedAt: tc.length > 0 ? tc[0].updatedAt.toISOString() : null,
+    }
+  }
+
   // Compute noNews — prefer ActivityEvent for lastActivityAt
   const lastEvent = await prisma.activityEvent.findFirst({
     where: { projectId },
@@ -240,6 +304,7 @@ export async function getDashboardData(userId: string, projectId: string): Promi
     fixLists,
     moodBoards,
     beforeYouSign,
+    toolMeta,
     noNews: { isQuiet, lastActivityAt },
   }
 }

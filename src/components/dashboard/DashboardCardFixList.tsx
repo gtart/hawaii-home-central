@@ -2,15 +2,8 @@
 
 import Link from 'next/link'
 import type { DashboardResponse } from '@/server/dashboard'
-
-function relativeTime(dateStr: string): string {
-  const diffMs = Date.now() - new Date(dateStr).getTime()
-  const days = Math.floor(diffMs / 86_400_000)
-  if (days < 1) return 'today'
-  if (days === 1) return 'yesterday'
-  if (days < 30) return `${days}d ago`
-  return `${Math.floor(days / 30)}mo ago`
-}
+import { relativeTime } from '@/lib/relativeTime'
+import { ShareMetaLine } from './ShareMetaLine'
 
 export function DashboardCardFixList({
   data,
@@ -59,11 +52,12 @@ export function DashboardCardFixList({
         <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Fix List</p>
         <p className="text-lg font-medium text-cream/60 mb-1">All caught up</p>
         {lastUpdated && (
-          <p className="text-[11px] text-cream/25 mb-4">Last activity: {relativeTime(lastUpdated)}</p>
+          <p className="text-[11px] text-cream/25 mb-1">Last activity: {relativeTime(lastUpdated)}</p>
         )}
+        <ShareMetaLine meta={data?.toolMeta?.punchlist} />
         <Link
           href="/app/tools/punchlist"
-          className="inline-flex items-center px-4 py-2 border border-sandstone/30 text-sandstone text-sm font-medium rounded-button hover:bg-sandstone/10 transition-colors"
+          className="inline-flex items-center px-4 py-2 border border-sandstone/30 text-sandstone text-sm font-medium rounded-button hover:bg-sandstone/10 transition-colors mt-2"
         >
           View Fix List
         </Link>
@@ -100,7 +94,9 @@ export function DashboardCardFixList({
           </>
         )}
       </div>
-      <p className="text-xs text-cream/35 mb-4">{heuristic}</p>
+      <p className="text-xs text-cream/35 mb-2">{heuristic}</p>
+      <ShareMetaLine meta={data?.toolMeta?.punchlist} />
+      <p className="text-[11px] text-cream/25 mb-4 truncate">Most active: {lists[0].title}</p>
       <Link
         href="/app/tools/punchlist"
         className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"

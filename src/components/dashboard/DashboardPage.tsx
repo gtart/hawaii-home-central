@@ -2,10 +2,9 @@
 
 import { useProject } from '@/contexts/ProjectContext'
 import { useDashboard } from '@/hooks/useDashboard'
-import { DashboardCardFixList } from './DashboardCardFixList'
-import { DashboardCardSelections } from './DashboardCardSelections'
+import { DashboardToolGrid } from './DashboardToolGrid'
 import { DashboardFeed } from './DashboardFeed'
-import { DashboardSecondary } from './DashboardSecondary'
+import { QuietBanner } from './QuietBanner'
 
 export function DashboardPage() {
   const { currentProject } = useProject()
@@ -22,36 +21,17 @@ export function DashboardPage() {
           <p className="text-sm text-cream/40">Your renovation at a glance.</p>
         </div>
 
-        {/* Hero attention cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <DashboardCardFixList data={data} isLoading={isLoading} />
-          <DashboardCardSelections data={data} isLoading={isLoading} />
-        </div>
+        {/* Quiet state */}
+        {data?.noNews.isQuiet && (
+          <QuietBanner lastActivityAt={data.noNews.lastActivityAt} />
+        )}
 
-        {/* TODO: Pinned collections section (1–3 pinned items)
-         * Requires: DashboardPin model, POST/DELETE /api/dashboard/pins,
-         * pinnedCollections[] in DashboardResponse, pin/unpin in collection ⋯ menus
-         */}
+        {/* Tool grid — active tools first, then other tools */}
+        <DashboardToolGrid data={data} isLoading={isLoading} />
 
         {/* Activity feed */}
         <div className="mb-8">
           <DashboardFeed />
-        </div>
-
-        {/* Secondary widgets */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DashboardSecondary
-            title="Mood Boards"
-            href="/app/tools/mood-boards"
-            toolKey="mood_boards"
-            data={data}
-          />
-          <DashboardSecondary
-            title="Contract Checklist"
-            href="/app/tools/before-you-sign"
-            toolKey="before_you_sign"
-            data={data}
-          />
         </div>
       </div>
     </div>

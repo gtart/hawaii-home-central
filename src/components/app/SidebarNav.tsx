@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useNavBadges } from '@/hooks/useNavBadges'
 
 const NAV_ITEMS = [
   {
@@ -21,6 +22,7 @@ const TOOL_ITEMS = [
     href: '/app/tools/punchlist',
     label: 'Fix List',
     matchMode: 'prefix' as const,
+    badgeKey: 'fixListOpen' as const,
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
@@ -32,6 +34,7 @@ const TOOL_ITEMS = [
     href: '/app/tools/finish-decisions',
     label: 'Selection Lists',
     matchMode: 'prefix' as const,
+    badgeKey: 'selectionsNeedDecisions' as const,
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" strokeLinecap="round" strokeLinejoin="round" />
@@ -72,6 +75,7 @@ function isActive(pathname: string, href: string, matchMode: 'exact' | 'prefix')
 
 export function SidebarNav() {
   const pathname = usePathname()
+  const badges = useNavBadges()
 
   return (
     <nav className="hidden md:flex fixed left-0 top-0 bottom-0 w-56 pt-16 border-r border-cream/10 bg-basalt flex-col z-30">
@@ -98,6 +102,8 @@ export function SidebarNav() {
 
         {TOOL_ITEMS.map((item) => {
           const active = isActive(pathname, item.href, item.matchMode)
+          const badgeKey = 'badgeKey' in item ? item.badgeKey : undefined
+          const badgeCount = badgeKey && badges ? badges[badgeKey] : 0
           return (
             <Link
               key={item.href}
@@ -109,7 +115,12 @@ export function SidebarNav() {
               }`}
             >
               {item.icon}
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {badgeCount > 0 && (
+                <span className="ml-auto bg-cream/15 text-cream/50 text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
+                  {badgeCount}
+                </span>
+              )}
             </Link>
           )
         })}
