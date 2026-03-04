@@ -1,24 +1,10 @@
 import type { Metadata } from 'next'
-import { FadeInSection } from '@/components/effects/FadeInSection'
-import { DashboardView } from '@/components/app/DashboardView'
-import { AppPageHeader } from '@/components/app/AppPageHeader'
+import { DashboardPage } from '@/components/dashboard/DashboardPage'
 
 export const metadata: Metadata = {
   title: 'Home — Hawaii Home Central',
 }
 
 export default function AppPage() {
-  return (
-    <div className="pt-32 pb-24 px-6">
-      <div className="max-w-5xl mx-auto">
-        <FadeInSection className="relative z-10">
-          <AppPageHeader />
-        </FadeInSection>
-
-        <FadeInSection delay={100}>
-          <DashboardView />
-        </FadeInSection>
-      </div>
-    </div>
-  )
+  return <DashboardPage />
 }
