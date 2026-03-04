@@ -39,6 +39,8 @@ export interface BeforeYouSignSummary {
   id: string
   title: string
   updatedAt: string
+  contractorCount: number
+  selectedContractorCount: number
 }
 
 export interface DashboardResponse {
@@ -197,9 +199,13 @@ export async function getDashboardData(userId: string, projectId: string): Promi
       case 'mood_boards':
         moodBoards.push(summarizeMoodBoard(c.id, c.title, c.updatedAt, c.payload))
         break
-      case 'before_you_sign':
-        beforeYouSign.push({ id: c.id, title: c.title, updatedAt: c.updatedAt.toISOString() })
+      case 'before_you_sign': {
+        const bysPayload = c.payload as { contractors?: unknown[]; selectedContractorIds?: unknown[] } | null
+        const contractorCount = Array.isArray(bysPayload?.contractors) ? bysPayload.contractors.length : 0
+        const selectedContractorCount = Array.isArray(bysPayload?.selectedContractorIds) ? bysPayload.selectedContractorIds.length : 0
+        beforeYouSign.push({ id: c.id, title: c.title, updatedAt: c.updatedAt.toISOString(), contractorCount, selectedContractorCount })
         break
+      }
     }
   }
 

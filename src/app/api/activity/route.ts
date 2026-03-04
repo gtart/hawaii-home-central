@@ -7,8 +7,9 @@ import { cacheGet, cacheSet } from '@/server/cache/simpleTtlCache'
 const ACTIVITY_TTL_MS = 30_000 // 30 seconds
 
 /**
- * GET /api/activity?toolKey=punchlist&limit=20&cursor=2026-03-04T00:00:00Z
+ * GET /api/activity?toolKey=punchlist&limit=20&cursor=2026-03-04T00:00:00Z__clxyz123
  * Returns paginated activity events for the current project.
+ * Cursor format: `${createdAtISO}__${id}` (composite) or legacy `${createdAtISO}`.
  */
 export async function GET(request: Request) {
   const session = await auth()
@@ -36,13 +37,31 @@ export async function GET(request: Request) {
     return NextResponse.json(cached)
   }
 
+  // Parse composite cursor: "createdAtISO__id" or legacy "createdAtISO"
+  let cursorWhere = {}
+  if (cursor) {
+    const sepIdx = cursor.indexOf('__')
+    if (sepIdx !== -1) {
+      const cursorCreatedAt = new Date(cursor.slice(0, sepIdx))
+      const cursorId = cursor.slice(sepIdx + 2)
+      cursorWhere = {
+        OR: [
+          { createdAt: { lt: cursorCreatedAt } },
+          { createdAt: cursorCreatedAt, id: { lt: cursorId } },
+        ],
+      }
+    } else {
+      cursorWhere = { createdAt: { lt: new Date(cursor) } }
+    }
+  }
+
   const events = await prisma.activityEvent.findMany({
     where: {
       projectId,
       ...(toolKey ? { toolKey } : {}),
-      ...(cursor ? { createdAt: { lt: new Date(cursor) } } : {}),
+      ...cursorWhere,
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: limit + 1,
     select: {
       id: true,
@@ -60,7 +79,10 @@ export async function GET(request: Request) {
 
   const hasMore = events.length > limit
   const items = hasMore ? events.slice(0, limit) : events
-  const nextCursor = hasMore ? items[items.length - 1].createdAt.toISOString() : null
+  const lastItem = items[items.length - 1]
+  const nextCursor = hasMore && lastItem
+    ? `${lastItem.createdAt.toISOString()}__${lastItem.id}`
+    : null
 
   const responseBody = {
     events: items.map((e) => ({

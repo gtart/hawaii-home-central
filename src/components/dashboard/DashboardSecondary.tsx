@@ -25,7 +25,16 @@ export function DashboardSecondary({
   } else if (data && toolKey === 'before_you_sign') {
     const checklists = data.beforeYouSign
     if (checklists.length > 0) {
-      statLine = `${checklists.length} checklist${checklists.length !== 1 ? 's' : ''}`
+      const totalContractors = checklists.reduce((s, c) => s + c.contractorCount, 0)
+      const totalSelected = checklists.reduce((s, c) => s + c.selectedContractorCount, 0)
+      const parts = [`${checklists.length} checklist${checklists.length !== 1 ? 's' : ''}`]
+      if (totalContractors > 0) {
+        parts.push(`${totalContractors} contractor${totalContractors !== 1 ? 's' : ''}`)
+      }
+      if (totalSelected > 0) {
+        parts.push(`${totalSelected} selected`)
+      }
+      statLine = parts.join(' · ')
     }
   }
 

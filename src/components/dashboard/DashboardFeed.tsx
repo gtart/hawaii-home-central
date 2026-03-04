@@ -8,6 +8,7 @@ const TOOL_LABEL: Record<string, string> = {
   punchlist: 'Fix List',
   finish_decisions: 'Selections',
   mood_boards: 'Mood Boards',
+  before_you_sign: 'Contract Checklist',
 }
 
 const TOOL_BASE: Record<string, string> = {
@@ -34,6 +35,7 @@ const FILTER_CHIPS: { key: string | undefined; label: string }[] = [
   { key: 'punchlist', label: 'Fix List' },
   { key: 'finish_decisions', label: 'Selections' },
   { key: 'mood_boards', label: 'Mood Boards' },
+  { key: 'before_you_sign', label: 'Contract Checklist' },
 ]
 
 function relativeTime(dateStr: string): string {
