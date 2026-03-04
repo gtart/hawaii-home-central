@@ -5,6 +5,7 @@ import type { OptionV3, DecisionV3, SelectionComment, RoomV3 } from '@/data/fini
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { relativeTime } from '@/lib/relativeTime'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
+import { uploadDocument } from '../uploadDocument'
 import { IdeaCardModal } from './IdeaCardModal'
 import { CompareModal } from './CompareModal'
 import { SaveFromWebDialog } from './SaveFromWebDialog'
@@ -195,6 +196,11 @@ function IdeaCardTile({
               💬 {commentCount}
             </span>
           ) : null}
+          {(option.documents?.length ?? 0) > 0 && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-cream/10 text-cream/40 text-[10px] font-medium">
+              📎 {option.documents!.length}
+            </span>
+          )}
           <span className="text-[10px] text-cream/25">
             {option.origin && <span className="text-cream/30">{option.origin.kitLabel} · </span>}
             {relativeTime(lastCommentAt || option.updatedAt)}
@@ -854,10 +860,11 @@ export function IdeasBoard({
           onUpdateDecision={onUpdateDecision}
           onAddComment={onAddComment}
           onUploadPhoto={uploadIdeaFile}
+          onUploadDocument={uploadDocument}
           onClose={() => {
             // Auto-delete empty ideas (e.g. new text card closed without filling in)
             const opt = activeOption
-            if (opt && !opt.name && !opt.notes && !opt.imageUrl && (!opt.images || opt.images.length === 0) && (!opt.urls || opt.urls.length === 0)) {
+            if (opt && !opt.name && !opt.notes && !opt.imageUrl && (!opt.images || opt.images.length === 0) && (!opt.urls || opt.urls.length === 0) && (!opt.documents || opt.documents.length === 0)) {
               onDeleteOption(opt.id)
             }
             setActiveCardId(null)

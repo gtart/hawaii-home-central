@@ -198,6 +198,19 @@ export interface OptionImageV3 {
   sourceUrl?: string   // webpage the image was imported from
 }
 
+// Document attached to an option (PDF, Word, Excel, etc.)
+export interface OptionDocumentV3 {
+  id: string
+  url: string             // Vercel Blob public URL
+  title: string           // User-editable, defaults to filename
+  fileName: string        // Original filename
+  fileSize: number        // Bytes
+  mimeType: string        // e.g. "application/pdf"
+  uploadedAt: string      // ISO timestamp
+  uploadedByName: string
+  uploadedByEmail: string
+}
+
 // Option (nested in decision)
 export interface OptionV3 {
   id: string
@@ -216,6 +229,7 @@ export interface OptionV3 {
   specs?: string                     // specs text (separate from notes)
   prosText?: string                  // pros (collapsed in UI by default)
   consText?: string                  // cons (collapsed in UI by default)
+  documents?: OptionDocumentV3[]     // attached files (PDFs, docs, etc.)
   createdAt: string
   updatedAt: string
 }
@@ -338,6 +352,16 @@ export interface PublicOptionImage {
   label?: string
 }
 
+export interface PublicOptionDocument {
+  title: string
+  fileName: string
+  fileSize: number
+  mimeType: string
+  url: string
+  uploadedAt: string
+  uploadedByName: string
+}
+
 export interface PublicOptionV3 {
   id: string
   name: string
@@ -345,6 +369,7 @@ export interface PublicOptionV3 {
   isSelected?: boolean
   images?: PublicOptionImage[]
   heroImageId?: string | null
+  documents?: PublicOptionDocument[]
   // EXCLUDED: votes (has emails), urls (could be private), origin
 }
 
@@ -454,6 +479,18 @@ function toPublicOption(
       }))
     }
     pub.heroImageId = o.heroImageId ?? null
+  }
+
+  if (o.documents && o.documents.length > 0) {
+    pub.documents = o.documents.map((doc) => ({
+      title: doc.title,
+      fileName: doc.fileName,
+      fileSize: doc.fileSize,
+      mimeType: doc.mimeType,
+      url: doc.url,
+      uploadedAt: doc.uploadedAt,
+      uploadedByName: doc.uploadedByName,
+    }))
   }
 
   return pub

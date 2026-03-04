@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import type { OptionV3, OptionImageV3, DecisionV3, SelectionComment, LinkV3 } from '@/data/finish-decisions'
+import type { OptionV3, OptionImageV3, OptionDocumentV3, DecisionV3, SelectionComment, LinkV3 } from '@/data/finish-decisions'
 import { getAllImages, getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 
@@ -27,6 +27,7 @@ interface Props {
   onUpdateDecision: (updates: Partial<DecisionV3>) => void
   onAddComment: (comment: CommentPayload) => void
   onUploadPhoto: (file: File) => Promise<{ url: string; thumbnailUrl: string; id: string }>
+  onUploadDocument: (file: File) => Promise<{ url: string; id: string; fileName: string; fileSize: number; mimeType: string }>
   onClose: () => void
   onCommentOnIdea?: () => void
 }
@@ -72,6 +73,7 @@ export function IdeaCardModal({
   onUpdateDecision,
   onAddComment,
   onUploadPhoto,
+  onUploadDocument,
   onClose,
   onCommentOnIdea,
 }: Props) {
@@ -82,6 +84,11 @@ export function IdeaCardModal({
   const [uploadError, setUploadError] = useState('')
   const [photoUrlInput, setPhotoUrlInput] = useState('')
   const [showPhotoMenu, setShowPhotoMenu] = useState(false)
+  const [docUploading, setDocUploading] = useState(false)
+  const [docUploadError, setDocUploadError] = useState('')
+  const [editingDocId, setEditingDocId] = useState<string | null>(null)
+  const [editingDocTitle, setEditingDocTitle] = useState('')
+  const docInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const photoMenuRef = useRef<HTMLDivElement>(null)
@@ -197,6 +204,83 @@ export function IdeaCardModal({
       heroImageId: option.heroImageId || newImg.id,
     })
     setPhotoUrlInput('')
+  }
+
+  const MAX_DOCUMENTS = 10
+
+  async function handleDocumentFile(file: File | null) {
+    if (!file) return
+    if (file.size === 0) {
+      setDocUploadError('Empty file — please try again.')
+      return
+    }
+    const currentDocs = option.documents ?? []
+    if (currentDocs.length >= MAX_DOCUMENTS) {
+      setDocUploadError(`Maximum ${MAX_DOCUMENTS} documents per option.`)
+      return
+    }
+    setDocUploadError('')
+    setDocUploading(true)
+    try {
+      const result = await onUploadDocument(file)
+      const newDoc: OptionDocumentV3 = {
+        id: result.id,
+        url: result.url,
+        title: result.fileName.replace(/\.[^.]+$/, ''),
+        fileName: result.fileName,
+        fileSize: result.fileSize,
+        mimeType: result.mimeType,
+        uploadedAt: new Date().toISOString(),
+        uploadedByName: userName,
+        uploadedByEmail: userEmail,
+      }
+      onUpdate({ documents: [...currentDocs, newDoc] })
+    } catch (err) {
+      setDocUploadError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setDocUploading(false)
+      if (docInputRef.current) docInputRef.current.value = ''
+    }
+  }
+
+  function handleRemoveDocument(docId: string) {
+    onUpdate({ documents: (option.documents ?? []).filter((d) => d.id !== docId) })
+  }
+
+  function handleSaveDocTitle(docId: string) {
+    const title = editingDocTitle.trim()
+    if (!title) return
+    onUpdate({
+      documents: (option.documents ?? []).map((d) =>
+        d.id === docId ? { ...d, title } : d
+      ),
+    })
+    setEditingDocId(null)
+    setEditingDocTitle('')
+  }
+
+  function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  function docTypeColor(mimeType: string): string {
+    if (mimeType === 'application/pdf') return 'text-red-400'
+    if (mimeType.includes('word') || mimeType === 'application/msword') return 'text-blue-400'
+    if (mimeType.includes('sheet') || mimeType.includes('excel')) return 'text-green-400'
+    if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'text-orange-400'
+    return 'text-cream/40'
+  }
+
+  function docTypeLabel(mimeType: string): string {
+    if (mimeType === 'application/pdf') return 'PDF'
+    if (mimeType.includes('word') || mimeType === 'application/msword') return 'DOC'
+    if (mimeType.includes('sheet') || mimeType.includes('excel')) return 'XLS'
+    if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'PPT'
+    if (mimeType === 'text/plain') return 'TXT'
+    if (mimeType === 'text/csv') return 'CSV'
+    return 'FILE'
   }
 
   const isValidUrl = (url: string) => /^https?:\/\/.+/i.test(url)
@@ -712,6 +796,134 @@ export function IdeaCardModal({
               <p className="text-yellow-500 text-xs mt-1">URL should start with http:// or https://</p>
             )}
           </div>
+
+          {/* ── Documents ── */}
+          {(!readOnly || (option.documents && option.documents.length > 0)) && (
+            <div>
+              {/* Hidden file input */}
+              <input
+                ref={docInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf"
+                className="hidden"
+                onChange={(e) => handleDocumentFile(e.target.files?.[0] ?? null)}
+              />
+
+              <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-2 block">Documents</label>
+
+              {(option.documents ?? []).length > 0 && (
+                <div className="space-y-2 mb-2">
+                  {(option.documents ?? []).map((doc) => (
+                    <div key={doc.id} className="bg-basalt rounded-xl border border-cream/8 px-3 py-2.5">
+                      {editingDocId === doc.id ? (
+                        <div className="flex gap-2">
+                          <input
+                            autoFocus
+                            type="text"
+                            value={editingDocTitle}
+                            onChange={(e) => setEditingDocTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveDocTitle(doc.id)
+                              if (e.key === 'Escape') { setEditingDocId(null); setEditingDocTitle('') }
+                            }}
+                            className="flex-1 bg-basalt border border-sandstone/40 rounded-lg px-3 py-1.5 text-sm text-cream focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSaveDocTitle(doc.id)}
+                            className="px-3 py-1.5 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-start gap-2.5">
+                          {/* File type badge */}
+                          <span className={`text-[10px] font-bold uppercase mt-0.5 shrink-0 ${docTypeColor(doc.mimeType)}`}>
+                            {docTypeLabel(doc.mimeType)}
+                          </span>
+
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-cream/80 leading-snug truncate">{doc.title}</p>
+                            <p className="text-[11px] text-cream/30 mt-0.5">
+                              {formatFileSize(doc.fileSize)} · {doc.uploadedByName} · {formatDate(doc.uploadedAt)}
+                            </p>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-1 shrink-0">
+                            <a
+                              href={doc.url}
+                              download={doc.fileName}
+                              onClick={(e) => e.stopPropagation()}
+                              className="p-1.5 text-cream/40 hover:text-sandstone transition-colors"
+                              title="Download"
+                            >
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" strokeLinecap="round" />
+                                <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
+                                <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" />
+                              </svg>
+                            </a>
+                            {!readOnly && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => { setEditingDocId(doc.id); setEditingDocTitle(doc.title) }}
+                                  className="p-1.5 text-cream/40 hover:text-cream/70 transition-colors"
+                                  title="Rename"
+                                >
+                                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" />
+                                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" />
+                                  </svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveDocument(doc.id)}
+                                  className="p-1.5 text-cream/30 hover:text-red-400 transition-colors"
+                                  title="Remove"
+                                >
+                                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+                                  </svg>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => docInputRef.current?.click()}
+                  disabled={docUploading}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-cream/5 hover:bg-cream/10 rounded-lg text-sm text-cream/40 hover:text-cream/60 transition-colors disabled:opacity-50"
+                >
+                  {docUploading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-cream/20 border-t-cream/60 rounded-full animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                      </svg>
+                      Upload document
+                    </>
+                  )}
+                </button>
+              )}
+
+              {docUploadError && <p className="text-sm text-red-400 mt-2">{docUploadError}</p>}
+            </div>
+          )}
 
           {/* ── Comments on this option ── */}
           <div className="pt-2 border-t border-cream/10">
