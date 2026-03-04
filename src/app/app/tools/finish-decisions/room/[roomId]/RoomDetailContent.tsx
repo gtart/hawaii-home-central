@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useToolState } from '@/hooks/useToolState'
-import { useCollectionState } from '@/hooks/useCollectionState'
+import { useCollectionState, type ActivityEventHint } from '@/hooks/useCollectionState'
 import { useProject } from '@/contexts/ProjectContext'
 import {
   ROOM_EMOJI_MAP,
@@ -117,13 +117,13 @@ export function RoomDetailContent({
 
   // --- Room mutations ---
 
-  function updateRoom(updates: Partial<RoomV3>) {
+  function updateRoom(updates: Partial<RoomV3>, events?: ActivityEventHint[]) {
     setState((prev) => ({
       ...prev,
       rooms: (prev as FinishDecisionsPayloadV3).rooms.map((r) =>
         r.id === roomId ? { ...r, ...updates } : r
       ),
-    }))
+    }), events)
   }
 
   function deleteRoom() {
@@ -140,7 +140,11 @@ export function RoomDetailContent({
     updateRoom({
       decisions: [...room.decisions, decision],
       updatedAt: new Date().toISOString(),
-    })
+    }, [{
+      action: 'created',
+      entityType: 'decision',
+      summaryText: `Added selection: "${decision.title}"`,
+    }])
   }
 
   function handleDeleteDecision(decisionId: string) {

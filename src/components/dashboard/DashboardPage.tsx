@@ -30,7 +30,7 @@ export function DashboardPage() {
 
         {/* Activity feed */}
         <div className="mb-8">
-          <DashboardFeed data={data} isLoading={isLoading} />
+          <DashboardFeed />
         </div>
 
         {/* Secondary widgets */}

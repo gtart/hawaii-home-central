@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToolState } from '@/hooks/useToolState'
-import { useCollectionState } from '@/hooks/useCollectionState'
+import { useCollectionState, type ActivityEventHint } from '@/hooks/useCollectionState'
 import { useProject } from '@/contexts/ProjectContext'
 import { LocalModeBanner } from '@/components/guides/LocalModeBanner'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
@@ -429,6 +429,11 @@ export function ToolContent({
       createdAt: ts,
       updatedAt: ts,
     }
+    const events: ActivityEventHint[] = [{
+      action: 'created',
+      entityType: 'decision',
+      summaryText: `Added selection: "${title}"`,
+    }]
     setState((prev) => {
       const p = prev as FinishDecisionsPayloadV3
       if (p.rooms.length === 0) {
@@ -450,7 +455,7 @@ export function ToolContent({
           i === 0 ? { ...r, decisions: [...r.decisions, decision], updatedAt: ts } : r
         ),
       }
-    })
+    }, events)
   }
 
   const handleRename = useCallback(async (newTitle: string) => {

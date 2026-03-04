@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react'
 import { useToolState } from '@/hooks/useToolState'
-import { useCollectionState } from '@/hooks/useCollectionState'
+import { useCollectionState, type ActivityEventHint } from '@/hooks/useCollectionState'
 import type { MoodBoardPayload, Board, Idea, IdeaImage, MoodBoardComment, ReactionType, BoardAccess } from '@/data/mood-boards'
 import { DEFAULT_PAYLOAD, ensureDefaultBoard, genId, now } from '@/data/mood-boards'
 
@@ -459,13 +459,13 @@ export function useMoodBoardCollectionState(collectionId: string | null): MoodBo
   const payload: MoodBoardPayload = { version: 1, boards: [syntheticBoard] }
 
   // Wrap setState to map between flat collection payload and v1 boards structure
-  function updateColl(updater: (prev: MoodBoardCollectionPayload) => MoodBoardCollectionPayload) {
+  function updateColl(updater: (prev: MoodBoardCollectionPayload) => MoodBoardCollectionPayload, events?: ActivityEventHint[]) {
     setState((prev) => {
       const p = (prev && typeof prev === 'object' && 'ideas' in prev)
         ? prev as unknown as MoodBoardCollectionPayload
         : DEFAULT_COLL_PAYLOAD
       return updater(p) as unknown as MoodBoardCollectionPayload
-    })
+    }, events)
   }
 
   // Board CRUD — no-ops in collection mode (boards = collections, managed by picker)
@@ -481,7 +481,12 @@ export function useMoodBoardCollectionState(collectionId: string | null): MoodBo
       updateColl((p) => ({
         ...p,
         ideas: [...p.ideas, { ...idea, id, createdAt: t, updatedAt: t } as Idea],
-      }))
+      }), [{
+        action: 'added_item',
+        entityType: 'idea',
+        entityId: id,
+        summaryText: 'Added to mood board',
+      }])
       return id
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -506,7 +511,12 @@ export function useMoodBoardCollectionState(collectionId: string | null): MoodBo
       updateColl((p) => ({
         ...p,
         ideas: p.ideas.filter((i) => i.id !== ideaId),
-      }))
+      }), [{
+        action: 'removed_item',
+        entityType: 'idea',
+        entityId: ideaId,
+        summaryText: 'Removed from mood board',
+      }])
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [setState]

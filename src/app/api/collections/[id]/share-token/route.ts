@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { resolveCollectionAccess } from '@/lib/collection-access'
 import { generateShareToken } from '@/lib/share-tokens'
+import { writeActivityEvents } from '@/server/activity/writeActivityEvent'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -78,10 +79,10 @@ export async function POST(request: Request, { params }: Params) {
 
   const token = generateShareToken()
 
-  // Get collection toolKey for URL
+  // Get collection toolKey + projectId for URL and activity event
   const collection = await prisma.toolCollection.findUnique({
     where: { id },
-    select: { toolKey: true },
+    select: { toolKey: true, projectId: true },
   })
 
   await prisma.toolCollectionShareToken.create({
@@ -96,6 +97,19 @@ export async function POST(request: Request, { params }: Params) {
 
   const baseUrl = process.env.NEXTAUTH_URL || process.env.AUTH_URL || ''
   const url = `${baseUrl}/share/${collection?.toolKey}/${token}`
+
+  // Fire-and-forget activity event
+  if (collection?.projectId) {
+    writeActivityEvents([{
+      projectId: collection.projectId,
+      toolKey: collection.toolKey,
+      collectionId: id,
+      action: 'shared',
+      entityType: 'share_token',
+      summaryText: 'Created a share link',
+      actorUserId: session.user.id,
+    }]).catch(() => {})
+  }
 
   return NextResponse.json({ token, url }, { status: 201 })
 }

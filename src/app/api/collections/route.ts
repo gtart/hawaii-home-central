@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { canListCollections } from '@/lib/collection-access'
+import { writeActivityEvents } from '@/server/activity/writeActivityEvent'
 
 /**
  * GET /api/collections?projectId=X&toolKey=Y
@@ -128,6 +129,17 @@ export async function POST(request: Request) {
       createdByUserId: userId,
     },
   })
+
+  // Fire-and-forget activity event
+  writeActivityEvents([{
+    projectId,
+    toolKey,
+    collectionId: collection.id,
+    action: 'created',
+    entityType: 'collection',
+    summaryText: `Created "${title.trim()}"`,
+    actorUserId: userId,
+  }]).catch(() => {})
 
   return NextResponse.json({ collection }, { status: 201 })
 }

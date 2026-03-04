@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react'
 import { useToolState } from '@/hooks/useToolState'
-import { useCollectionState } from '@/hooks/useCollectionState'
+import { useCollectionState, type ActivityEventHint } from '@/hooks/useCollectionState'
 import type {
   PunchlistPayload,
   PunchlistItem,
@@ -139,6 +139,12 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
     }) => {
       const id = genId('pl')
       const ts = now()
+      const events: ActivityEventHint[] = [{
+        action: 'created',
+        entityType: 'item',
+        entityId: id,
+        summaryText: `Added fix: "${item.title}"`,
+      }]
       setState((prev) => ({
         ...prev,
         nextItemNumber: prev.nextItemNumber + 1,
@@ -160,7 +166,7 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
             updatedAt: ts,
           },
         ],
-      }))
+      }), events)
       return id
     },
     [setState]
@@ -192,6 +198,17 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
 
   const setStatus = useCallback(
     (id: string, status: PunchlistStatus) => {
+      const item = payload.items.find((i) => i.id === id)
+      const title = item?.title || 'item'
+      const oldStatus = item?.status
+
+      const events: ActivityEventHint[] = []
+      if (status === 'DONE') {
+        events.push({ action: 'done', entityType: 'item', entityId: id, summaryText: `Marked done: "${title}"` })
+      } else if (oldStatus === 'DONE' && status === 'OPEN') {
+        events.push({ action: 'reopened', entityType: 'item', entityId: id, summaryText: `Reopened: "${title}"` })
+      }
+
       setState((prev) => ({
         ...prev,
         items: prev.items.map((item) => {
@@ -203,9 +220,9 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
             completedAt: status === 'DONE' ? now() : undefined,
           }
         }),
-      }))
+      }), events.length > 0 ? events : undefined)
     },
-    [setState]
+    [setState, payload.items]
   )
 
   // ---- Photo management ----
@@ -248,6 +265,14 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
     (itemId: string, comment: { text: string; authorName: string; authorEmail: string }) => {
       const id = genId('cmt')
       const ts = now()
+      const item = payload.items.find((i) => i.id === itemId)
+      const title = item?.title || 'item'
+      const events: ActivityEventHint[] = [{
+        action: 'commented',
+        entityType: 'item',
+        entityId: itemId,
+        summaryText: `Commented on: "${title}"`,
+      }]
       setState((prev) => ({
         ...prev,
         items: prev.items.map((item) =>
@@ -262,10 +287,10 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
               }
             : item
         ),
-      }))
+      }), events)
       return id
     },
-    [setState]
+    [setState, payload.items]
   )
 
   return {

@@ -2,6 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 
+export interface ActivityEventHint {
+  entityType?: string
+  entityId?: string
+  action: string
+  summaryText: string
+}
+
 type CollectionAccessLevel = 'OWNER' | 'EDITOR' | 'VIEWER'
 
 interface UseCollectionStateOptions<T> {
@@ -13,7 +20,7 @@ interface UseCollectionStateOptions<T> {
 
 interface UseCollectionStateReturn<T> {
   state: T
-  setState: (updater: (prev: T) => T) => void
+  setState: (updater: (prev: T) => T, events?: ActivityEventHint[]) => void
   isLoaded: boolean
   isSyncing: boolean
   access: CollectionAccessLevel | null
@@ -53,6 +60,7 @@ export function useCollectionState<T>({
   const defaultRef = useRef<T>(defaultValue)
   const revisionRef = useRef<string | null>(null)
   const conflictTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingEventsRef = useRef<ActivityEventHint[]>([])
 
   const revalidate = useCallback(async () => {
     if (!collectionId) return
@@ -187,14 +195,20 @@ export function useCollectionState<T>({
 
       debounceRef.current = setTimeout(async () => {
         setIsSyncing(true)
+        const eventsToSend = pendingEventsRef.current.length > 0 ? [...pendingEventsRef.current] : undefined
         try {
           const res = await fetch(`/api/collections/${collectionId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ payload, revision: revisionRef.current }),
+            body: JSON.stringify({
+              payload,
+              revision: revisionRef.current,
+              ...(eventsToSend && { events: eventsToSend }),
+            }),
           })
 
           if (res.status === 409) {
+            pendingEventsRef.current = []
             if (conflictTimerRef.current) clearTimeout(conflictTimerRef.current)
             setConflictBanner(true)
             conflictTimerRef.current = setTimeout(() => setConflictBanner(false), 5000)
@@ -203,6 +217,7 @@ export function useCollectionState<T>({
           }
 
           if (res.ok) {
+            pendingEventsRef.current = []
             const data = await res.json()
             if (data.updatedAt) revisionRef.current = String(data.updatedAt)
           }
@@ -219,11 +234,15 @@ export function useCollectionState<T>({
   const [viewOnlyAttempt, setViewOnlyAttempt] = useState(false)
 
   const setState = useCallback(
-    (updater: (prev: T) => T) => {
+    (updater: (prev: T) => T, events?: ActivityEventHint[]) => {
       if (accessRef.current === 'VIEWER') {
         setViewOnlyAttempt(true)
         setTimeout(() => setViewOnlyAttempt(false), 3000)
         return
+      }
+
+      if (events && events.length > 0) {
+        pendingEventsRef.current = [...pendingEventsRef.current, ...events]
       }
 
       setStateInternal((prev) => {

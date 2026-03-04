@@ -134,6 +134,7 @@ model User {
   collectionMembers   ToolCollectionMember[]
   collectionShareTokens ToolCollectionShareToken[] @relation("CollectionShareTokenCreator")
   collectionInvites   ToolCollectionInvite[]     @relation("CollectionInviteSender")
+  activityEvents      ActivityEvent[]            @relation("ActivityActor")
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -208,6 +209,7 @@ model Project {
   invites         ProjectInvite[]
   shareTokens     ToolShareToken[]
   collections     ToolCollection[]
+  activityEvents  ActivityEvent[]
 
   @@index([userId])
   @@map("Property")
@@ -619,4 +621,25 @@ model StorySubmission {
   createdAt       DateTime @default(now())
 
   @@index([createdAt])
+}
+
+// ─── Activity Feed ──────────────────────────────────
+
+model ActivityEvent {
+  id            String   @id @default(cuid())
+  projectId     String
+  toolKey       String
+  collectionId  String?
+  entityType    String?
+  entityId      String?
+  action        String
+  summaryText   String
+  actorUserId   String?
+  createdAt     DateTime @default(now())
+
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actor    User?   @relation("ActivityActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, createdAt])
+  @@index([projectId, toolKey, createdAt])
 }

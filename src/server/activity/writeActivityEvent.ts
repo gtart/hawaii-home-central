@@ -1,0 +1,42 @@
+import { prisma } from '@/lib/prisma'
+
+export interface ActivityEventInput {
+  projectId: string
+  toolKey: string
+  collectionId?: string
+  entityType?: string
+  entityId?: string
+  action: string
+  summaryText: string
+  actorUserId?: string
+}
+
+const MAX_SUMMARY_LENGTH = 200
+
+function truncate(text: string, max: number): string {
+  return text.length > max ? text.slice(0, max - 1) + '…' : text
+}
+
+/**
+ * Write one or more activity events. Never throws — errors are logged
+ * but swallowed so mutations are never blocked by feed writes.
+ */
+export async function writeActivityEvents(events: ActivityEventInput[]): Promise<void> {
+  if (events.length === 0) return
+  try {
+    await prisma.activityEvent.createMany({
+      data: events.map((e) => ({
+        projectId: e.projectId,
+        toolKey: e.toolKey,
+        collectionId: e.collectionId ?? null,
+        entityType: e.entityType ?? null,
+        entityId: e.entityId ?? null,
+        action: e.action,
+        summaryText: truncate(e.summaryText, MAX_SUMMARY_LENGTH),
+        actorUserId: e.actorUserId ?? null,
+      })),
+    })
+  } catch (err) {
+    console.error('[activity] Failed to write events:', err)
+  }
+}

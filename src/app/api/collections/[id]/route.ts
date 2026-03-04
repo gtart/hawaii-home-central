@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { resolveCollectionAccess } from '@/lib/collection-access'
+import { writeActivityEvents } from '@/server/activity/writeActivityEvent'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -100,8 +101,24 @@ export async function PUT(request: Request, { params }: Params) {
       payload: body.payload,
       updatedById: userId,
     },
-    select: { updatedAt: true },
+    select: { updatedAt: true, projectId: true, toolKey: true },
   })
+
+  // Write activity events (fire-and-forget, never blocks response)
+  if (Array.isArray(body.events) && body.events.length > 0) {
+    writeActivityEvents(
+      body.events.map((e: { entityType?: string; entityId?: string; action?: string; summaryText?: string }) => ({
+        projectId: updated.projectId,
+        toolKey: updated.toolKey,
+        collectionId: id,
+        entityType: e.entityType,
+        entityId: e.entityId,
+        action: e.action || 'updated',
+        summaryText: e.summaryText || 'Updated',
+        actorUserId: userId,
+      }))
+    ).catch(() => {})
+  }
 
   return NextResponse.json({ success: true, updatedAt: updated.updatedAt })
 }

@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Input } from '@/components/ui/Input'
 import { useToolState } from '@/hooks/useToolState'
-import { useCollectionState } from '@/hooks/useCollectionState'
+import { useCollectionState, type ActivityEventHint } from '@/hooks/useCollectionState'
 import { IdeasBoard, AddIdeaMenu, type IdeasBoardAddActions } from '../../components/IdeasBoard'
 import { buildBoardHref } from '../../lib/routing'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
@@ -123,7 +123,7 @@ export function DecisionDetailContent({
     return Array.from(locs).sort()
   }, [v3State.rooms])
 
-  const updateDecision = (updates: Partial<DecisionV3>) => {
+  const updateDecision = (updates: Partial<DecisionV3>, events?: ActivityEventHint[]) => {
     if (!foundRoom) return
     setState((prev) => ({
       ...prev,
@@ -140,7 +140,7 @@ export function DecisionDetailContent({
             }
           : r
       ),
-    }))
+    }), events)
   }
 
   const addOption = () => {
@@ -213,7 +213,13 @@ export function DecisionDetailContent({
       ]
     }
 
-    updateDecision(updates)
+    const events: ActivityEventHint[] = isToggleOff ? [] : [{
+      action: 'selected',
+      entityType: 'decision',
+      entityId: decisionId,
+      summaryText: `Selected option for: "${foundDecision.title}"`,
+    }]
+    updateDecision(updates, events.length > 0 ? events : undefined)
   }
 
   const addComment = (comment: {
@@ -237,7 +243,12 @@ export function DecisionDetailContent({
           ...(comment.refOptionId ? { refOptionId: comment.refOptionId, refOptionLabel: comment.refOptionLabel } : {}),
         },
       ],
-    })
+    }, [{
+      action: 'commented',
+      entityType: 'decision',
+      entityId: decisionId,
+      summaryText: `Commented on: "${foundDecision.title}"`,
+    }])
   }
 
   const handleStatusChange = (newStatus: StatusV3) => {
@@ -249,6 +260,7 @@ export function DecisionDetailContent({
 
     const userName = session?.user?.name || 'Unknown'
     const now = new Date().toISOString()
+    const statusLabel = STATUS_CONFIG_V3[newStatus]?.label || newStatus
 
     updateDecision({
       status: newStatus,
@@ -256,7 +268,12 @@ export function DecisionDetailContent({
         ...(foundDecision.statusLog || []),
         { status: newStatus, markedBy: userName, markedAt: now },
       ],
-    })
+    }, [{
+      action: 'status_changed',
+      entityType: 'decision',
+      entityId: decisionId,
+      summaryText: `Changed "${foundDecision.title}" → ${statusLabel}`,
+    }])
   }
 
   function openGlobalCommentComposer() {
