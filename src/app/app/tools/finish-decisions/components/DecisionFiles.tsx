@@ -15,11 +15,13 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function formatDate(iso: string) {
+function formatDate(iso: string | undefined) {
+  if (!iso) return ''
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-function docTypeColor(mimeType: string): string {
+function docTypeColor(mimeType: string | undefined): string {
+  if (!mimeType) return 'text-cream/40'
   if (mimeType === 'application/pdf') return 'text-red-400'
   if (mimeType.includes('word') || mimeType === 'application/msword') return 'text-blue-400'
   if (mimeType.includes('sheet') || mimeType.includes('excel')) return 'text-green-400'
@@ -27,7 +29,8 @@ function docTypeColor(mimeType: string): string {
   return 'text-cream/40'
 }
 
-function docTypeLabel(mimeType: string): string {
+function docTypeLabel(mimeType: string | undefined): string {
+  if (!mimeType) return 'FILE'
   if (mimeType === 'application/pdf') return 'PDF'
   if (mimeType.includes('word') || mimeType === 'application/msword') return 'DOC'
   if (mimeType.includes('sheet') || mimeType.includes('excel')) return 'XLS'
@@ -48,7 +51,7 @@ export function DecisionFiles({
 
   // Gather all files from all options
   const allFiles: DecisionFileEntry[] = []
-  for (const opt of decision.options) {
+  for (const opt of (decision.options ?? [])) {
     if (opt.documents && opt.documents.length > 0) {
       for (const doc of opt.documents) {
         allFiles.push({ doc, optionName: opt.name || 'Untitled', optionId: opt.id })

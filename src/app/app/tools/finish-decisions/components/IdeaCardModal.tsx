@@ -265,7 +265,8 @@ export function IdeaCardModal({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
-  function docTypeColor(mimeType: string): string {
+  function docTypeColor(mimeType: string | undefined): string {
+    if (!mimeType) return 'text-cream/40'
     if (mimeType === 'application/pdf') return 'text-red-400'
     if (mimeType.includes('word') || mimeType === 'application/msword') return 'text-blue-400'
     if (mimeType.includes('sheet') || mimeType.includes('excel')) return 'text-green-400'
@@ -273,7 +274,8 @@ export function IdeaCardModal({
     return 'text-cream/40'
   }
 
-  function docTypeLabel(mimeType: string): string {
+  function docTypeLabel(mimeType: string | undefined): string {
+    if (!mimeType) return 'FILE'
     if (mimeType === 'application/pdf') return 'PDF'
     if (mimeType.includes('word') || mimeType === 'application/msword') return 'DOC'
     if (mimeType.includes('sheet') || mimeType.includes('excel')) return 'XLS'

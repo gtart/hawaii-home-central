@@ -552,12 +552,12 @@ export function DecisionDetailContent({
   const userComments = (foundDecision.comments || []).filter((c) => c.authorEmail !== '')
   const commentCount = userComments.length
   const lastUserComment = [...userComments].reverse()[0]
-  const statusCfg = STATUS_CONFIG_V3[foundDecision.status]
+  const statusCfg = STATUS_CONFIG_V3[foundDecision.status] ?? STATUS_CONFIG_V3.deciding
   const formattedDue = foundDecision.dueDate
     ? new Date(foundDecision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : null
-  const finalPick = foundDecision.options.find((o) => o.isSelected)
-  const optionsCount = foundDecision.options.length
+  const finalPick = (foundDecision.options ?? []).find((o) => o.isSelected)
+  const optionsCount = (foundDecision.options ?? []).length
   // Latest status log entry (for "Marked X by Y on Z" line)
   const latestStatusLog = foundDecision.statusLog?.length
     ? foundDecision.statusLog[foundDecision.statusLog.length - 1]
@@ -724,7 +724,7 @@ export function DecisionDetailContent({
         {/* Status marked-by line */}
         {latestStatusLog && foundDecision.status !== 'deciding' && (
           <p className="text-[11px] text-cream/30 mb-4">
-            Marked {STATUS_CONFIG_V3[latestStatusLog.status].label} by {latestStatusLog.markedBy} on{' '}
+            Marked {(STATUS_CONFIG_V3[latestStatusLog.status] ?? STATUS_CONFIG_V3.deciding).label} by {latestStatusLog.markedBy} on{' '}
             {new Date(latestStatusLog.markedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
           </p>
         )}
