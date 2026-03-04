@@ -403,6 +403,7 @@ export function useMoodBoardState() {
     deleteComment,
     toggleReaction,
     updateBoardAccess,
+    projectId: null as string | null,
   }
 }
 
@@ -422,6 +423,7 @@ export function useMoodBoardCollectionState(collectionId: string | null): MoodBo
     readOnly: collReadOnly,
     noAccess,
     title: collTitle,
+    projectId: collProjectId,
   } = useCollectionState<MoodBoardCollectionPayload>({
     collectionId: collectionId,
     toolKey: 'mood_boards',
@@ -602,6 +604,7 @@ export function useMoodBoardCollectionState(collectionId: string | null): MoodBo
     access,
     readOnly,
     noAccess,
+    projectId: collProjectId,
     addBoard,
     renameBoard,
     deleteBoard,

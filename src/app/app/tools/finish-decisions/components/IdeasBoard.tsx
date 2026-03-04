@@ -105,6 +105,7 @@ function IdeaCardTile({
   onVote,
   commentCount,
   lastCommentAt,
+  latestOptionComment,
 }: {
   option: OptionV3
   decision: DecisionV3
@@ -117,6 +118,7 @@ function IdeaCardTile({
   onVote?: (type: 'love' | 'up' | 'down') => void
   commentCount?: number
   lastCommentAt?: string | null
+  latestOptionComment?: { authorName: string; text: string } | null
 }) {
   const hero = getHeroImage(option)
   const heroSrc = hero?.thumbnailUrl || hero?.url
@@ -198,6 +200,14 @@ function IdeaCardTile({
             {relativeTime(lastCommentAt || option.updatedAt)}
           </span>
         </div>
+
+        {/* Latest comment preview */}
+        {latestOptionComment && (
+          <p className="text-[10px] text-cream/40 italic line-clamp-2 leading-relaxed">
+            <span className="font-medium text-cream/50 not-italic">{latestOptionComment.authorName.split(' ')[0]}:</span>{' '}
+            {latestOptionComment.text.length > 60 ? latestOptionComment.text.slice(0, 60) + '...' : latestOptionComment.text}
+          </p>
+        )}
 
         {/* Voting row */}
         {(() => {
@@ -658,7 +668,10 @@ export function IdeasBoard({
               <>
                 {/* Desktop: always show all cards */}
                 <div className="hidden md:grid md:grid-cols-3 gap-3 mb-3">
-                  {decision.options.map((opt) => (
+                  {decision.options.map((opt) => {
+                    const optComments = comments.filter((c) => c.refOptionId === opt.id)
+                    const latestCmt = optComments.length > 0 ? optComments.reduce((latest, c) => c.createdAt > latest.createdAt ? c : latest) : null
+                    return (
                     <div key={opt.id} className="relative">
                       <IdeaCardTile
                         option={opt}
@@ -675,12 +688,9 @@ export function IdeasBoard({
                           else votes[userEmail] = type
                           onUpdateOption(opt.id, { votes })
                         } : undefined}
-                        commentCount={comments.filter((c) => c.refOptionId === opt.id).length}
-                        lastCommentAt={(() => {
-                          const optComments = comments.filter((c) => c.refOptionId === opt.id)
-                          if (optComments.length === 0) return null
-                          return optComments.reduce((latest, c) => c.createdAt > latest ? c.createdAt : latest, '')
-                        })()}
+                        commentCount={optComments.length}
+                        lastCommentAt={latestCmt?.createdAt ?? null}
+                        latestOptionComment={latestCmt ? { authorName: latestCmt.authorName, text: latestCmt.text } : null}
                       />
                       {compareMode && (
                         <div className="absolute top-2 right-2 pointer-events-none">
@@ -698,12 +708,16 @@ export function IdeasBoard({
                         </div>
                       )}
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 {/* Mobile: collapsible grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 md:hidden">
-                  {mobileVisible.map((opt) => (
+                  {mobileVisible.map((opt) => {
+                    const optComments = comments.filter((c) => c.refOptionId === opt.id)
+                    const latestCmt = optComments.length > 0 ? optComments.reduce((latest, c) => c.createdAt > latest.createdAt ? c : latest) : null
+                    return (
                     <div key={opt.id} className="relative">
                       <IdeaCardTile
                         option={opt}
@@ -720,12 +734,9 @@ export function IdeasBoard({
                           else votes[userEmail] = type
                           onUpdateOption(opt.id, { votes })
                         } : undefined}
-                        commentCount={comments.filter((c) => c.refOptionId === opt.id).length}
-                        lastCommentAt={(() => {
-                          const optComments = comments.filter((c) => c.refOptionId === opt.id)
-                          if (optComments.length === 0) return null
-                          return optComments.reduce((latest, c) => c.createdAt > latest ? c.createdAt : latest, '')
-                        })()}
+                        commentCount={optComments.length}
+                        lastCommentAt={latestCmt?.createdAt ?? null}
+                        latestOptionComment={latestCmt ? { authorName: latestCmt.authorName, text: latestCmt.text } : null}
                       />
                       {/* Compare checkbox overlay */}
                       {compareMode && (
@@ -744,7 +755,8 @@ export function IdeasBoard({
                         </div>
                       )}
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
                 {/* Show more/less — mobile only */}
                 {!expanded && hiddenCount > 0 && (

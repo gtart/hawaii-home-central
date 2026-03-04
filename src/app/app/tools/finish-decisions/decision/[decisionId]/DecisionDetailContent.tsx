@@ -535,6 +535,18 @@ export function DecisionDetailContent({
   }
 
   const isSystemUncategorized = isUncategorized(foundDecision)
+
+  // Collect unique locations from all decisions for autocomplete
+  const locationSuggestions = useMemo(() => {
+    const locs = new Set<string>()
+    for (const room of v3State.rooms) {
+      for (const d of room.decisions) {
+        if (d.location?.trim()) locs.add(d.location.trim())
+      }
+    }
+    return Array.from(locs).sort()
+  }, [v3State.rooms])
+
   // Filter: only show user comments (non-empty authorEmail), not system comments
   const userComments = (foundDecision.comments || []).filter((c) => c.authorEmail !== '')
   const commentCount = userComments.length
@@ -561,7 +573,7 @@ export function DecisionDetailContent({
           className="inline-flex items-center gap-1.5 text-sandstone hover:text-sandstone-light text-sm mb-4"
         >
           <span>←</span>
-          <span>Back to board</span>
+          <span>Back to list</span>
         </button>
 
         {/* Desktop header: title + status + due in one row */}
@@ -638,6 +650,30 @@ export function DecisionDetailContent({
             />
           </div>
         </div>
+
+        {/* Location field */}
+        {!isSystemUncategorized && (
+          <div className="flex items-center gap-2 mb-2">
+            <svg className="w-3.5 h-3.5 text-cream/30 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            <input
+              type="text"
+              list="location-suggestions"
+              value={foundDecision.location || ''}
+              onChange={(e) => updateDecision({ location: e.target.value })}
+              placeholder="Add location..."
+              readOnly={readOnly}
+              className="bg-transparent text-sm text-cream/60 placeholder:text-cream/25 focus:outline-none focus:text-cream border-b border-transparent hover:border-cream/10 focus:border-sandstone/40 transition-colors max-w-[240px] disabled:opacity-50"
+            />
+            <datalist id="location-suggestions">
+              {locationSuggestions.map((loc) => (
+                <option key={loc} value={loc} />
+              ))}
+            </datalist>
+          </div>
+        )}
 
         {/* Meta row */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs mb-2">

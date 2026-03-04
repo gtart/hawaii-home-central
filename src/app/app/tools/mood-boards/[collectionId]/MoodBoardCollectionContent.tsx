@@ -1,7 +1,8 @@
 'use client'
 
-import { Suspense, useCallback } from 'react'
+import { Suspense, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useProject } from '@/contexts/ProjectContext'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
 import { useMoodBoardCollectionState } from '../useMoodBoardState'
@@ -13,8 +14,16 @@ function mapAccessForHeader(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null 
 
 function Content({ collectionId }: { collectionId: string }) {
   const api = useMoodBoardCollectionState(collectionId)
-  const { payload, isLoaded, noAccess, access, readOnly } = api
+  const { payload, isLoaded, noAccess, access, readOnly, projectId: collectionProjectId } = api
   const router = useRouter()
+  const { currentProject } = useProject()
+
+  // Redirect to picker if the loaded collection belongs to a different project
+  useEffect(() => {
+    if (isLoaded && collectionProjectId && currentProject?.id && collectionProjectId !== currentProject.id) {
+      router.replace('/app/tools/mood-boards')
+    }
+  }, [isLoaded, collectionProjectId, currentProject?.id, router])
 
   const handleRename = useCallback(async (newTitle: string) => {
     try {

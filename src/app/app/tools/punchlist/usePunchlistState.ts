@@ -276,6 +276,7 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
     readOnly,
     noAccess,
     title: collectionTitle,
+    projectId: useCollection ? collResult.projectId : null,
     addItem,
     updateItem,
     deleteItem,

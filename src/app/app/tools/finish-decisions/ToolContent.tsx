@@ -246,6 +246,13 @@ export function ToolContent({
   const result = useCollMode ? collResult : toolResult
   const { state, setState, isLoaded, isSyncing, noAccess } = result
   const collectionTitle = useCollMode ? collResult.title : undefined
+
+  // Redirect to picker if the loaded collection belongs to a different project
+  useEffect(() => {
+    if (collectionId && isLoaded && collResult.projectId && currentProject?.id && collResult.projectId !== currentProject.id) {
+      router.replace('/app/tools/finish-decisions')
+    }
+  }, [collectionId, isLoaded, collResult.projectId, currentProject?.id, router])
   function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
     if (a === 'OWNER') return 'OWNER'
     if (a === 'EDITOR' || a === 'EDIT') return 'EDIT'
@@ -459,7 +466,7 @@ export function ToolContent({
   }, [collectionId, router])
 
   const handleArchive = useCallback(async () => {
-    if (!collectionId || !confirm('Archive this board? You can restore it later.')) return
+    if (!collectionId || !confirm('Archive this list? You can restore it later.')) return
     try {
       await fetch(`/api/collections/${collectionId}`, {
         method: 'PATCH',
@@ -488,7 +495,7 @@ export function ToolContent({
             eyebrowLabel="Selection List"
             backHref={collectionId ? '/app/tools/finish-decisions' : undefined}
             backLabel={collectionId ? 'All Selection Lists' : undefined}
-            headerSlot={collectionId ? <InstanceSwitcher toolKey="finish_decisions" currentCollectionId={collectionId} itemNoun="board" /> : undefined}
+            headerSlot={collectionId ? <InstanceSwitcher toolKey="finish_decisions" currentCollectionId={collectionId} itemNoun="Selection List" /> : undefined}
             toolLabel="Selection List"
             scopes={v3State.rooms
               .filter((r) => r.systemKey !== 'global_uncategorized')

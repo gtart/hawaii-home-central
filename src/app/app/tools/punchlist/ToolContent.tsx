@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useMemo, useCallback } from 'react'
+import { Suspense, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
@@ -11,9 +11,16 @@ import { PunchlistEmptyState } from './components/PunchlistEmptyState'
 
 function PunchlistContent({ collectionId }: { collectionId?: string }) {
   const api = usePunchlistState(collectionId ? { collectionId } : undefined)
-  const { payload, isLoaded, isSyncing, access, readOnly, noAccess, title: collectionTitle } = api
+  const { payload, isLoaded, isSyncing, access, readOnly, noAccess, title: collectionTitle, projectId: collectionProjectId } = api
   const { currentProject } = useProject()
   const router = useRouter()
+
+  // Redirect to picker if the loaded collection belongs to a different project
+  useEffect(() => {
+    if (collectionId && isLoaded && collectionProjectId && currentProject?.id && collectionProjectId !== currentProject.id) {
+      router.replace('/app/tools/punchlist')
+    }
+  }, [collectionId, isLoaded, collectionProjectId, currentProject?.id, router])
 
   const handleRename = useCallback(async (newTitle: string) => {
     if (!collectionId) return

@@ -15,7 +15,7 @@ export function CollectionPickerWrapper() {
       <div className="max-w-4xl mx-auto">
         <CollectionsPickerView
           toolKey="finish_decisions"
-          itemNoun="board"
+          itemNoun="Selection List"
           previewMode="statuses"
           customEmptyState={(onCreate) => (
             <SelectionBoardsEmptyState onCreate={onCreate} />
@@ -33,7 +33,7 @@ function SelectionBoardsEmptyState({ onCreate }: { onCreate: (title: string) => 
     <div className="max-w-lg mx-auto text-center">
       <h2 className="font-serif text-3xl text-sandstone mb-2">Start your Selection Lists</h2>
       <p className="text-cream/50 text-sm leading-relaxed mb-8">
-        Create one board per area&mdash;Kitchen, Bath, Exterior. Track the choices you
+        Create one list per area&mdash;Kitchen, Bath, Exterior. Track the choices you
         need to make and what you picked.
       </p>
 
@@ -56,7 +56,7 @@ function SelectionBoardsEmptyState({ onCreate }: { onCreate: (title: string) => 
           value={customName}
           onChange={(e) => setCustomName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && customName.trim()) onCreate(customName) }}
-          placeholder="Custom board name..."
+          placeholder="Custom list name..."
           className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
         />
         <button
@@ -70,7 +70,7 @@ function SelectionBoardsEmptyState({ onCreate }: { onCreate: (title: string) => 
       </div>
 
       <p className="text-[11px] text-cream/30">
-        You can also apply a Decision Pack inside any board to add curated selections.
+        You can also apply a Decision Pack inside any list to add curated selections.
       </p>
     </div>
   )

@@ -16,6 +16,7 @@ import type { RoomTypeV3 } from '@/data/finish-decisions'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { findKitsForRoomType } from '@/lib/finish-decision-kits'
 import { applyKitToRoom, removeKitFromRoom } from '@/lib/finish-decision-kits'
+import { displayUrl } from '@/lib/finishDecisionsImages'
 import { OnboardingView } from './OnboardingView'
 import { IdeasPackModal } from './IdeasPackModal'
 import { buildDecisionHref } from '../lib/routing'
@@ -27,18 +28,19 @@ function getDecisionThumb(decision: DecisionV3): string | null {
     if (sel.images && sel.images.length > 0) {
       const hero = sel.heroImageId ? sel.images.find((img) => img.id === sel.heroImageId) : null
       const url = hero?.thumbnailUrl || hero?.url || sel.images[0].thumbnailUrl || sel.images[0].url
-      if (url) return url
+      if (url) return displayUrl(url)
     }
-    if (sel.thumbnailUrl || sel.imageUrl) return sel.thumbnailUrl || sel.imageUrl || null
+    if (sel.thumbnailUrl || sel.imageUrl) return displayUrl(sel.thumbnailUrl || sel.imageUrl || '')
   }
   // 2. Most recent option with an image (hero first)
   for (let i = decision.options.length - 1; i >= 0; i--) {
     const opt = decision.options[i]
     if (opt.images && opt.images.length > 0) {
       const hero = opt.heroImageId ? opt.images.find((img) => img.id === opt.heroImageId) : null
-      return hero?.thumbnailUrl || hero?.url || opt.images[0].thumbnailUrl || opt.images[0].url
+      const url = hero?.thumbnailUrl || hero?.url || opt.images[0].thumbnailUrl || opt.images[0].url
+      return url ? displayUrl(url) : null
     }
-    if (opt.thumbnailUrl || opt.imageUrl) return opt.thumbnailUrl || opt.imageUrl || null
+    if (opt.thumbnailUrl || opt.imageUrl) return displayUrl(opt.thumbnailUrl || opt.imageUrl || '')
   }
   return null
 }
@@ -305,7 +307,7 @@ export function DecisionTrackerPage({
       {/* Empty state for read-only */}
       {!hasDecisions && readOnly && (
         <div className="bg-basalt-50 rounded-card p-8 text-center">
-          <p className="text-cream/50">This board doesn&apos;t have any selections yet.</p>
+          <p className="text-cream/50">This list doesn&apos;t have any selections yet.</p>
         </div>
       )}
 
@@ -461,6 +463,7 @@ export function DecisionTrackerPage({
                   <tr className="text-[11px] text-cream/40 uppercase tracking-wider">
                     <th className="text-left font-medium pb-2 pl-2 w-12" />
                     <th className="text-left font-medium pb-2">Decision</th>
+                    <th className="text-left font-medium pb-2 w-28">Location</th>
                     <th className="text-left font-medium pb-2 w-24">Status</th>
                     <th className="text-left font-medium pb-2 w-28">Updated</th>
                     <th className="text-left font-medium pb-2">Last comment</th>
@@ -498,6 +501,9 @@ export function DecisionTrackerPage({
                               <span className="text-[11px] text-cream/30 ml-2">{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
                             )}
                           </Link>
+                        </td>
+                        <td className="py-2.5 pr-3 text-[11px] text-cream/40 truncate max-w-[120px]">
+                          {decision.location || '—'}
                         </td>
                         <td className="py-2.5 pr-3">
                           <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium ${config.pillClass}`}>
@@ -569,6 +575,9 @@ export function DecisionTrackerPage({
                               {config.label}
                             </span>
                           </div>
+                          {decision.location && (
+                            <p className="text-[11px] text-cream/35 truncate">{decision.location}</p>
+                          )}
                           {selectedOption ? (
                             <p className="text-[11px] text-sandstone/70 truncate mb-0.5">
                               Picked: {selectedOption.name}

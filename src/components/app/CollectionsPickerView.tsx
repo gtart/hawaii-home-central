@@ -25,15 +25,17 @@ interface PreviewData {
   ideaCount: number
   commentCount: number
   statuses?: Record<string, number>
+  lastComment?: { text: string; authorName: string; decisionTitle: string; createdAt: string }
+  decisionCount?: number
 }
 
 interface CollectionsPickerViewProps {
   toolKey: string
-  /** Noun for empty state, e.g. "decision list", "fix list", "board" */
+  /** Noun for empty state, e.g. "Selection List", "fix list", "mood board" */
   itemNoun: string
   /** When set, fetch preview data for cards ('thumbnails' for images, 'statuses' for status counts) */
   previewMode?: 'thumbnails' | 'statuses'
-  /** Custom empty state rendered instead of the default input when there are zero boards */
+  /** Custom empty state rendered instead of the default input when there are zero collections */
   customEmptyState?: (onCreate: (title: string) => void) => React.ReactNode
 }
 
@@ -151,6 +153,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
               ideaCount: p.ideaCount ?? 0,
               commentCount: p.commentCount ?? 0,
               statuses: p.statuses ?? undefined,
+              lastComment: p.lastComment ?? undefined,
+              decisionCount: p.decisionCount ?? undefined,
             }
           }
           setPreviews(map)
@@ -320,7 +324,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {collections.map((coll) => {
           const preview = previews[coll.id] ?? { imageUrls: [], ideaCount: 0, commentCount: 0 }
-          const hasThumbnails = previewMode === 'thumbnails'
+          const hasThumbnails = previewMode === 'thumbnails' || preview.imageUrls.length > 0
+          const hasStatusCounts = preview.statuses && Object.values(preview.statuses).some(v => v > 0)
 
           return (
             <div
@@ -328,7 +333,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
               className="group relative bg-basalt-50 border border-cream/10 rounded-lg hover:border-sandstone/30 transition-colors cursor-pointer"
               onClick={() => router.push(`${toolPath}/${coll.id}`)}
             >
-              {/* Thumbnail grid (mood boards only) */}
+              {/* Thumbnail grid */}
               {hasThumbnails && <div className="overflow-hidden rounded-t-lg"><ThumbnailGrid imageUrls={preview.imageUrls} /></div>}
 
               <div className="p-4">
@@ -349,18 +354,30 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                   <h3 className="font-medium text-cream truncate">{coll.title}</h3>
                 )}
 
-                {/* Status counts (selection boards) */}
-                {preview.statuses && Object.values(preview.statuses).some(v => v > 0) && (
+                {/* Status counts or "0 selections added" fallback */}
+                {hasStatusCounts ? (
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-[11px] text-cream/50">
-                    {(preview.statuses.deciding ?? 0) > 0 && <span>{preview.statuses.deciding} deciding</span>}
-                    {(preview.statuses.selected ?? 0) > 0 && <span>{preview.statuses.selected} selected</span>}
-                    {(preview.statuses.ordered ?? 0) > 0 && <span>{preview.statuses.ordered} ordered</span>}
-                    {(preview.statuses.done ?? 0) > 0 && <span>{preview.statuses.done} done</span>}
+                    {(preview.statuses!.deciding ?? 0) > 0 && <span>{preview.statuses!.deciding} deciding</span>}
+                    {(preview.statuses!.selected ?? 0) > 0 && <span>{preview.statuses!.selected} selected</span>}
+                    {(preview.statuses!.ordered ?? 0) > 0 && <span>{preview.statuses!.ordered} ordered</span>}
+                    {(preview.statuses!.done ?? 0) > 0 && <span>{preview.statuses!.done} done</span>}
                   </div>
+                ) : previewMode === 'statuses' && preview.decisionCount === 0 ? (
+                  <p className="mt-1.5 text-[11px] text-cream/35 italic">0 selections added</p>
+                ) : null}
+
+                {/* Last comment (selection lists) */}
+                {preview.lastComment && (
+                  <p className="mt-1.5 text-[11px] text-cream/40 italic line-clamp-2">
+                    {preview.lastComment.authorName.split(' ')[0]} on {preview.lastComment.decisionTitle}:
+                    {' "'}
+                    {preview.lastComment.text.length > 70 ? preview.lastComment.text.slice(0, 70) + '...' : preview.lastComment.text}
+                    {'"'}
+                  </p>
                 )}
 
                 {/* Stats row (mood boards only) */}
-                {hasThumbnails && (preview.ideaCount > 0 || preview.commentCount > 0) && (
+                {previewMode === 'thumbnails' && (preview.ideaCount > 0 || preview.commentCount > 0) && (
                   <div className="flex items-center gap-3 mt-1.5">
                     {preview.ideaCount > 0 && (
                       <span className="inline-flex items-center gap-1 text-xs text-cream/50">
@@ -383,8 +400,12 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                   </div>
                 )}
 
-                {/* Updated + shared */}
+                {/* Created + Updated + shared */}
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                  <p className="text-xs text-cream/40">
+                    Created {new Date(coll.createdAt).toLocaleDateString()}
+                  </p>
+                  <span className="text-cream/15">&middot;</span>
                   <p className="text-xs text-cream/40">
                     Updated {new Date(coll.updatedAt).toLocaleDateString()}
                     {coll.updatedBy?.name && (
@@ -519,7 +540,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
             </div>
           )
         })}
-        {/* + Add a new board tile */}
+        {/* + Add a new tile */}
         {!creating ? (
           <button
             type="button"

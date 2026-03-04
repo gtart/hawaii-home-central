@@ -110,18 +110,70 @@ export async function GET(request: Request) {
       // payload parsing failed — return zeros
     }
 
-    // For finish_decisions: extract status counts from payload.rooms[].decisions[]
+    // For finish_decisions: extract status counts, last comment, images, decision count
     let statuses: Record<string, number> | undefined
+    let lastComment: { text: string; authorName: string; decisionTitle: string; createdAt: string } | undefined
+    let decisionCount = 0
     if (toolKey === 'finish_decisions') {
       try {
         const payload = coll.payload as Record<string, unknown>
-        const rooms = payload?.rooms as Array<{ decisions?: Array<{ status?: string }> }> | undefined
+        type FDDecision = {
+          title?: string
+          status?: string
+          options?: Array<{
+            isSelected?: boolean
+            images?: Array<{ id: string; url: string; thumbnailUrl?: string }>
+            heroImageId?: string | null
+            imageUrl?: string
+            thumbnailUrl?: string
+          }>
+          comments?: Array<{ text?: string; authorName?: string; createdAt?: string }>
+        }
+        const rooms = payload?.rooms as Array<{ decisions?: FDDecision[] }> | undefined
         if (Array.isArray(rooms)) {
           const counts: Record<string, number> = {}
+          let latestCommentTime = 0
           for (const room of rooms) {
             for (const d of room.decisions ?? []) {
+              decisionCount++
               const s = d.status ?? 'deciding'
               counts[s] = (counts[s] ?? 0) + 1
+
+              // Collect images (up to 4) using the same cascade as getDecisionThumb
+              if (imageUrls.length < 4 && d.options) {
+                const sel = d.options.find((o) => o.isSelected)
+                if (sel) {
+                  const heroId = sel.heroImageId
+                  const hero = heroId && sel.images ? sel.images.find((img) => img.id === heroId) : null
+                  const url = hero?.thumbnailUrl || hero?.url || sel.images?.[0]?.thumbnailUrl || sel.images?.[0]?.url || sel.thumbnailUrl || sel.imageUrl
+                  if (url && imageUrls.length < 4) imageUrls.push(url)
+                } else {
+                  // No selected option — use most recent option with an image
+                  for (let i = (d.options.length ?? 0) - 1; i >= 0; i--) {
+                    const opt = d.options[i]
+                    const heroId = opt.heroImageId
+                    const hero = heroId && opt.images ? opt.images.find((img) => img.id === heroId) : null
+                    const url = hero?.thumbnailUrl || hero?.url || opt.images?.[0]?.thumbnailUrl || opt.images?.[0]?.url || opt.thumbnailUrl || opt.imageUrl
+                    if (url) { if (imageUrls.length < 4) imageUrls.push(url); break }
+                  }
+                }
+              }
+
+              // Track latest comment
+              if (d.comments) {
+                for (const c of d.comments) {
+                  const t = c.createdAt ? new Date(c.createdAt).getTime() : 0
+                  if (t > latestCommentTime && c.text) {
+                    latestCommentTime = t
+                    lastComment = {
+                      text: c.text,
+                      authorName: c.authorName ?? 'Someone',
+                      decisionTitle: d.title ?? 'Untitled',
+                      createdAt: c.createdAt ?? '',
+                    }
+                  }
+                }
+              }
             }
           }
           statuses = counts
@@ -131,7 +183,7 @@ export async function GET(request: Request) {
       }
     }
 
-    return { collectionId: coll.id, imageUrls, ideaCount, commentCount, statuses }
+    return { collectionId: coll.id, imageUrls, ideaCount, commentCount, statuses, lastComment, decisionCount }
   })
 
   return NextResponse.json({ previews })

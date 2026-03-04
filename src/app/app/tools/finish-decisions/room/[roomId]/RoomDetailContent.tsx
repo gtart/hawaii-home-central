@@ -222,7 +222,7 @@ export function RoomDetailContent({
     const updated = removeKitFromRoom(room, kitId)
     updateRoom(updated)
     const kit = kits.find((k) => k.id === kitId)
-    setToast({ message: `Removed "${kit?.label || 'pack'}" from this board`, kitId })
+    setToast({ message: `Removed "${kit?.label || 'pack'}" from this list`, kitId })
     setTimeout(() => setToast(null), 4000)
   }
 
@@ -533,7 +533,7 @@ export function RoomDetailContent({
         {/* Selections content */}
         {room.decisions.length === 0 ? (
           <div data-testid="empty-state-room" className="bg-basalt-50 rounded-card p-6 md:p-8 text-center border border-cream/10">
-            <h3 className="font-serif text-lg text-sandstone mb-1">This board is empty</h3>
+            <h3 className="font-serif text-lg text-sandstone mb-1">This list is empty</h3>
             <p className="text-sm text-cream/50 leading-relaxed mb-5">
               Start adding selections&mdash;or apply a Decision Pack to get started quickly.
             </p>

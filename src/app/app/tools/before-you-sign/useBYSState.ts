@@ -304,6 +304,7 @@ export function useBYSState(opts?: { collectionId?: string | null }) {
     readOnly,
     noAccess,
     title: collectionTitle,
+    projectId: useCollection ? collResult.projectId : null,
     addContractor,
     updateContractor,
     removeContractor,

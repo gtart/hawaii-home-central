@@ -178,7 +178,7 @@ export function IdeasPackModal({
     if (isDecisionMode) {
       return isApplied ? 'Re-sync options' : 'Add Options'
     }
-    return isApplied ? 'Re-sync pack' : 'Apply to this board'
+    return isApplied ? 'Re-sync pack' : 'Apply to this list'
   }
 
   const TABS: { key: ModalTab; label: string; count: number }[] = isDecisionMode
@@ -450,7 +450,7 @@ export function IdeasPackModal({
                   onClick={handleRemove}
                   className="text-xs text-red-400/60 hover:text-red-400 transition-colors ml-auto"
                 >
-                  Remove from this board
+                  Remove from this list
                 </button>
               )}
             </div>
@@ -470,7 +470,7 @@ export function IdeasPackModal({
               disabled={!selectedKit}
               className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              {selectedKit ? getApplyLabel(selectedKit) : (decisionTitle ? 'Add Options' : 'Apply to this board')}
+              {selectedKit ? getApplyLabel(selectedKit) : (decisionTitle ? 'Add Options' : 'Apply to this list')}
             </button>
           </div>
         </div>

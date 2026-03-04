@@ -263,6 +263,7 @@ export interface DecisionV3 {
   systemKey?: SystemSelectionKey // system-managed selection (e.g. 'uncategorized')
   finalSelection?: FinalSelectionMeta | null // who picked the final option + when
   statusLog?: StatusLogEntry[] // history of status changes (only latest shown in UI)
+  location?: string // e.g. "Kitchen", "Master Bath" — hand-written or autocomplete
   createdAt: string
   updatedAt: string
 }
@@ -360,6 +361,7 @@ export interface PublicDecisionV3 {
   title: string
   status: StatusV3
   notes?: string
+  location?: string
   options: PublicOptionV3[]
   dueDate?: string | null
   comments?: PublicDecisionComment[]
@@ -407,6 +409,7 @@ export function toPublicDecision(
     status: d.status,
     options: d.options.map((o) => toPublicOption(o, opts)),
     dueDate: d.dueDate ?? null,
+    location: d.location,
   }
 
   if (opts.includeNotes && d.notes) {

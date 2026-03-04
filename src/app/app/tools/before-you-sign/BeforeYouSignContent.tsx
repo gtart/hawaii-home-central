@@ -52,9 +52,17 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
     getAnswer,
     addCustomAgreeItem,
     removeCustomAgreeItem,
+    projectId: collectionProjectId,
   } = useBYSState(collectionId ? { collectionId } : undefined)
   const { currentProject } = useProject()
   const router = useRouter()
+
+  // Redirect to picker if the loaded collection belongs to a different project
+  useEffect(() => {
+    if (collectionId && isLoaded && collectionProjectId && currentProject?.id && collectionProjectId !== currentProject.id) {
+      router.replace('/app/tools/before-you-sign')
+    }
+  }, [collectionId, isLoaded, collectionProjectId, currentProject?.id, router])
 
   useEffect(() => {
     if (tabParam && TAB_PILLS.some((t) => t.key === tabParam)) {

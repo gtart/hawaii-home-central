@@ -23,6 +23,7 @@ interface UseCollectionStateReturn<T> {
   viewOnlyAttempt: boolean
   title: string
   collectionId: string | null
+  projectId: string | null
 }
 
 const POLL_INTERVAL = 20_000
@@ -45,6 +46,7 @@ export function useCollectionState<T>({
   const [noAccess, setNoAccess] = useState(false)
   const [conflictBanner, setConflictBanner] = useState(false)
   const [title, setTitle] = useState('')
+  const [projectId, setProjectId] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const stateRef = useRef<T>(defaultValue)
   const accessRef = useRef<CollectionAccessLevel | null>(null)
@@ -102,6 +104,7 @@ export function useCollectionState<T>({
           revisionRef.current = String(data.updatedAt)
         }
         if (data.title) setTitle(data.title)
+        if (data.projectId) setProjectId(data.projectId)
 
         if (data.payload && typeof data.payload === 'object' && Object.keys(data.payload).length > 0) {
           setStateInternal(data.payload as T)
@@ -238,6 +241,6 @@ export function useCollectionState<T>({
 
   return {
     state, setState, isLoaded, isSyncing, access, readOnly, noAccess,
-    conflictBanner, viewOnlyAttempt, title, collectionId,
+    conflictBanner, viewOnlyAttempt, title, collectionId, projectId,
   }
 }
