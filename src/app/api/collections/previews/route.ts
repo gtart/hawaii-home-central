@@ -4,8 +4,9 @@ import { prisma } from '@/lib/prisma'
 import { canListCollections } from '@/lib/collection-access'
 
 /**
- * GET /api/collections/previews?projectId=X&toolKey=mood_boards
- * Returns lightweight image preview URLs for mood board collections.
+ * GET /api/collections/previews?projectId=X&toolKey=mood_boards&collectionIds=a,b,c
+ * Returns lightweight image preview URLs and share metadata for collections.
+ * When collectionIds is provided, returns previews for exactly those collections.
  */
 export async function GET(request: Request) {
   const session = await auth()
@@ -32,23 +33,26 @@ export async function GET(request: Request) {
     where: { projectId_userId: { projectId, userId } },
   })
 
+  const collectionIdsParam = url.searchParams.get('collectionIds')
+  const requestedIds = collectionIdsParam ? collectionIdsParam.split(',').filter(Boolean) : null
+
   const where = {
     projectId,
     toolKey,
     archivedAt: null,
     ...(member?.role !== 'OWNER' ? { members: { some: { userId } } } : {}),
+    ...(requestedIds ? { id: { in: requestedIds } } : {}),
   }
 
   const collections = await prisma.toolCollection.findMany({
     where,
     select: { id: true, payload: true, updatedAt: true },
-    orderBy: { createdAt: 'asc' },
-    take: 20,
+    orderBy: { updatedAt: 'desc' },
   })
 
   // Batch-query share metadata for all collections
   const collIds = collections.map((c) => c.id)
-  const [memberCounts, tokenCounts] = collIds.length > 0
+  const [memberCounts, tokenCounts, inviteCounts] = collIds.length > 0
     ? await Promise.all([
         prisma.toolCollectionMember.groupBy({
           by: ['collectionId'] as const,
@@ -64,11 +68,18 @@ export async function GET(request: Request) {
           },
           _count: { id: true },
         }),
+        prisma.toolCollectionInvite.groupBy({
+          by: ['collectionId'] as const,
+          where: { collectionId: { in: collIds }, status: 'PENDING' },
+          _count: { id: true },
+        }),
       ])
     : [[] as { collectionId: string; _count: { userId: number } }[],
+       [] as { collectionId: string; _count: { id: number } }[],
        [] as { collectionId: string; _count: { id: number } }[]]
   const memberCountMap = new Map(memberCounts.map((m) => [m.collectionId, m._count.userId]))
   const tokenCountMap = new Map(tokenCounts.map((t) => [t.collectionId, t._count.id]))
+  const inviteCountMap = new Map(inviteCounts.map((i) => [i.collectionId, i._count.id]))
 
   type IdeaLike = {
     images?: Array<{ id: string; url: string; thumbnailUrl?: string }>
@@ -292,7 +303,6 @@ export async function GET(request: Request) {
 
         statuses = counts
         lastActivity = latestText || undefined
-        decisionCount = itemCount // reuse field for total item count
       } catch {
         // ignore
       }
@@ -301,11 +311,12 @@ export async function GET(request: Request) {
     // Share metadata
     const collaboratorCount = memberCountMap.get(coll.id) ?? 0
     const shareLinkEnabled = (tokenCountMap.get(coll.id) ?? 0) > 0
+    const inviteCount = inviteCountMap.get(coll.id) ?? 0
 
     return {
       collectionId: coll.id, imageUrls, ideaCount, commentCount, statuses,
       lastComment, decisionCount, lastActivity, itemCount,
-      collaboratorCount, shareLinkEnabled,
+      collaboratorCount, shareLinkEnabled, inviteCount,
     }
   })
 

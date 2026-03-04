@@ -31,6 +31,7 @@ interface PreviewData {
   itemCount?: number
   collaboratorCount?: number
   shareLinkEnabled?: boolean
+  inviteCount?: number
 }
 
 interface CollectionsPickerViewProps {
@@ -154,7 +155,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
 
     async function loadPreviews() {
       try {
-        const res = await fetch(`/api/collections/previews?projectId=${currentProject!.id}&toolKey=${toolKey}`)
+        const ids = collections.map(c => c.id).join(',')
+        const res = await fetch(`/api/collections/previews?projectId=${currentProject!.id}&toolKey=${toolKey}&collectionIds=${ids}`)
         if (!res.ok || cancelled) return
         const data = await res.json()
         if (!cancelled) {
@@ -171,6 +173,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
               itemCount: p.itemCount ?? undefined,
               collaboratorCount: p.collaboratorCount ?? undefined,
               shareLinkEnabled: p.shareLinkEnabled ?? undefined,
+              inviteCount: p.inviteCount ?? undefined,
             }
           }
           setPreviews(map)
