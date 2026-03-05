@@ -90,6 +90,7 @@ export async function GET(
   const filterLocations: string[] = Array.isArray(settings?.locations) ? (settings.locations as string[]) : []
   const filterAssignees: string[] = Array.isArray(settings?.assignees) ? (settings.assignees as string[]) : []
   const filterStatuses: string[] = Array.isArray(settings?.statuses) ? (settings.statuses as string[]) : []
+  const filterPriorities: string[] = Array.isArray(settings?.priorities) ? (settings.priorities as string[]) : []
 
   // Admin failsafe: override at render time
   const reportSettings = await getReportSettings()
@@ -154,9 +155,22 @@ export async function GET(
     const rawItems = payload.items as PunchlistItem[]
 
     const filtered = rawItems.filter((item) => {
-      if (filterStatuses.length > 0 && !filterStatuses.includes(item.status)) return false
-      if (filterLocations.length > 0 && !filterLocations.includes(item.location)) return false
-      if (filterAssignees.length > 0 && !filterAssignees.includes(item.assigneeLabel)) return false
+      if (filterStatuses.length > 0) {
+        const wantUnassigned = filterStatuses.includes('__unassigned__')
+        if (!filterStatuses.includes(item.status) && !(wantUnassigned && !item.status)) return false
+      }
+      if (filterPriorities.length > 0) {
+        const wantUnassigned = filterPriorities.includes('__unassigned__')
+        if (!filterPriorities.includes(item.priority ?? '') && !(wantUnassigned && !item.priority)) return false
+      }
+      if (filterLocations.length > 0) {
+        const wantUnassigned = filterLocations.includes('__unassigned__')
+        if (!filterLocations.includes(item.location) && !(wantUnassigned && !item.location)) return false
+      }
+      if (filterAssignees.length > 0) {
+        const wantUnassigned = filterAssignees.includes('__unassigned__')
+        if (!filterAssignees.includes(item.assigneeLabel) && !(wantUnassigned && !item.assigneeLabel)) return false
+      }
       return true
     })
 
@@ -179,6 +193,6 @@ export async function GET(
     includeSourceUrl,
     boardId,
     scope: scope ?? null,
-    filters: { locations: filterLocations, assignees: filterAssignees, statuses: filterStatuses },
+    filters: { locations: filterLocations, assignees: filterAssignees, statuses: filterStatuses, priorities: filterPriorities },
   })
 }

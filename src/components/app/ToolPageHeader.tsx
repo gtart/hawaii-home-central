@@ -70,6 +70,8 @@ interface ToolPageHeaderProps {
   renderTokenBadges?: (token: { statuses?: string[]; locations?: string[]; assignees?: string[] }) => React.ReactNode
   /** Initial scope IDs for export tab */
   initialSelectedScopeIds?: string[]
+  /** Custom link tab content for UnifiedShareModal (replaces default) */
+  customLinkTab?: React.ReactNode
   /** Callback when user renames the instance */
   onRename?: (newTitle: string) => void
   /** Callback when user archives the instance */
@@ -97,6 +99,7 @@ export function ToolPageHeader({
   extraExportControls,
   renderTokenBadges,
   initialSelectedScopeIds,
+  customLinkTab,
   onRename,
   onArchive,
 }: ToolPageHeaderProps) {
@@ -367,6 +370,7 @@ export function ToolPageHeader({
           renderTokenBadges={renderTokenBadges}
           initialTab={shareInitialTab}
           initialSelectedScopeIds={initialSelectedScopeIds}
+          customLinkTab={customLinkTab}
         />
       )}
     </>

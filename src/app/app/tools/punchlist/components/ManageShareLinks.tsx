@@ -12,6 +12,7 @@ interface ShareTokenEntry {
   locations: string[]
   assignees: string[]
   statuses: string[]
+  priorities: string[]
   createdAt: string
   expiresAt: string | null
 }
@@ -115,43 +116,55 @@ export function ManageShareLinks({ toolKey, projectId, locations, assignees, col
                   </button>
                 </div>
 
-                {/* Badges row */}
+                {/* Content & filter badges */}
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
                     t.includeNotes ? 'bg-amber-400/15 text-amber-400' : 'bg-cream/10 text-cream/40'
                   }`}>
                     Notes: {t.includeNotes ? 'Yes' : 'No'}
                   </span>
-                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded bg-cream/10 text-cream/40`}>
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-cream/10 text-cream/40">
                     Photos: {t.includePhotos ? 'Yes' : 'No'}
                   </span>
-                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded bg-cream/10 text-cream/40`}>
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-cream/10 text-cream/40">
                     Comments: {t.includeComments ? 'Yes' : 'No'}
                   </span>
-                  {t.statuses.length > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-cream/10 text-cream/40">
-                      {t.statuses.join(', ')}
-                    </span>
-                  )}
-                  {t.locations.length === 0 && t.assignees.length === 0 ? (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-cream/5 text-cream/30">
-                      All items
-                    </span>
-                  ) : (
-                    <>
+                </div>
+
+                {/* Filter scope */}
+                {(() => {
+                  const hasFilters = t.statuses.length > 0 || (t.priorities?.length ?? 0) > 0 || t.locations.length > 0 || t.assignees.length > 0
+                  const labelMap = (v: string) => v === '__unassigned__' ? 'Unassigned' : v === 'OPEN' ? 'Open' : v === 'ACCEPTED' ? 'In Progress' : v === 'DONE' ? 'Done' : v === 'HIGH' ? 'High' : v === 'MED' ? 'Medium' : v === 'LOW' ? 'Low' : v
+
+                  return hasFilters ? (
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                      {t.statuses.length > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-sandstone/10 text-sandstone/70">
+                          Status: {t.statuses.map(labelMap).join(', ')}
+                        </span>
+                      )}
+                      {(t.priorities?.length ?? 0) > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-sandstone/10 text-sandstone/70">
+                          Priority: {t.priorities.map(labelMap).join(', ')}
+                        </span>
+                      )}
                       {t.locations.length > 0 && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-cream/10 text-cream/50">
-                          Loc: {t.locations.join(', ')}
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-sandstone/10 text-sandstone/70">
+                          Location: {t.locations.map(labelMap).join(', ')}
                         </span>
                       )}
                       {t.assignees.length > 0 && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-cream/10 text-cream/50">
-                          Assigned: {t.assignees.join(', ')}
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-sandstone/10 text-sandstone/70">
+                          Assignee: {t.assignees.map(labelMap).join(', ')}
                         </span>
                       )}
-                    </>
-                  )}
-                </div>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-cream/5 text-cream/30 mt-1 inline-block">
+                      All items (no filters)
+                    </span>
+                  )
+                })()}
 
                 {/* Bottom row: timestamp + expiry + revoke */}
                 <div className="flex items-center justify-between">

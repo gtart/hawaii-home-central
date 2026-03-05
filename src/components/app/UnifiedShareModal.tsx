@@ -53,6 +53,7 @@ export interface UnifiedShareModalProps {
   renderTokenBadges?: (token: { statuses?: string[]; locations?: string[]; assignees?: string[] }) => React.ReactNode
   initialTab?: Tab
   initialSelectedScopeIds?: string[]
+  customLinkTab?: React.ReactNode
 }
 
 // ============================================================================
@@ -74,6 +75,7 @@ export function UnifiedShareModal({
   renderTokenBadges,
   initialTab,
   initialSelectedScopeIds,
+  customLinkTab,
 }: UnifiedShareModalProps) {
   const [tab, setTab] = useState<Tab>(initialTab || 'people')
 
@@ -150,15 +152,17 @@ export function UnifiedShareModal({
             />
           )}
           {tab === 'link' && (
-            <LinkTab
-              toolKey={toolKey}
-              projectId={projectId}
-              scopes={scopes}
-              scopeLabel={scopeLabel}
-              renderTokenBadges={renderTokenBadges}
-              initialSelectedScopeIds={initialSelectedScopeIds}
-              collectionId={collectionId}
-            />
+            customLinkTab || (
+              <LinkTab
+                toolKey={toolKey}
+                projectId={projectId}
+                scopes={scopes}
+                scopeLabel={scopeLabel}
+                renderTokenBadges={renderTokenBadges}
+                initialSelectedScopeIds={initialSelectedScopeIds}
+                collectionId={collectionId}
+              />
+            )
           )}
           {tab === 'export' && (
             <ExportTab

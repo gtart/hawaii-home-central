@@ -10,6 +10,7 @@ import { useProject } from '@/contexts/ProjectContext'
 import { usePunchlistState } from './usePunchlistState'
 import { PunchlistPage } from './components/PunchlistPage'
 import { PunchlistEmptyState } from './components/PunchlistEmptyState'
+import { ManageShareLinks } from './components/ManageShareLinks'
 
 function PunchlistContent({ collectionId }: { collectionId?: string }) {
   const api = usePunchlistState(collectionId ? { collectionId } : undefined)
@@ -69,6 +70,8 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
   }
 
   const uniqueLocations = [...new Set(payload.items.map((i) => i.location))].filter(Boolean).sort()
+  const uniqueAssignees = [...new Set(payload.items.map((i) => i.assigneeLabel))].filter(Boolean).sort()
+  const effectiveProjectId = collectionProjectId || currentProject?.id || ''
 
   return (
     <>
@@ -87,6 +90,15 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
         toolLabel="Fix List"
         scopes={uniqueLocations.map((loc) => ({ id: loc, name: loc }))}
         scopeLabel="Locations"
+        customLinkTab={
+          <ManageShareLinks
+            toolKey="punchlist"
+            projectId={effectiveProjectId}
+            locations={uniqueLocations}
+            assignees={uniqueAssignees}
+            collectionId={collectionId}
+          />
+        }
         buildExportUrl={({ projectId: pid, selectedScopeIds, includeNotes, includeComments, includePhotos }) => {
           const reportBase = collectionId
             ? `/app/tools/punchlist/${collectionId}/report`

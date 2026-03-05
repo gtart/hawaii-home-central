@@ -1,8 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import type { PunchlistStatus } from '../types'
-
 interface Props {
   toolKey: string
   projectId: string
@@ -13,17 +11,26 @@ interface Props {
   collectionId?: string
 }
 
-const STATUS_CHECKS: { key: PunchlistStatus; label: string }[] = [
+const STATUS_CHECKS = [
   { key: 'OPEN', label: 'Open' },
   { key: 'ACCEPTED', label: 'In Progress' },
   { key: 'DONE', label: 'Done' },
+  { key: '__unassigned__', label: 'Unassigned' },
+]
+
+const PRIORITY_CHECKS = [
+  { key: 'HIGH', label: 'High' },
+  { key: 'MED', label: 'Medium' },
+  { key: 'LOW', label: 'Low' },
+  { key: '__unassigned__', label: 'Unassigned' },
 ]
 
 export function PublishShareModal({ toolKey, projectId, locations, assignees, onClose, onCreated, collectionId }: Props) {
   const [includeNotes, setIncludeNotes] = useState(false)
   const [includeComments, setIncludeComments] = useState(false)
   const [includePhotos, setIncludePhotos] = useState(true)
-  const [includedStatuses, setIncludedStatuses] = useState<Set<PunchlistStatus>>(new Set(['OPEN', 'ACCEPTED']))
+  const [includedStatuses, setIncludedStatuses] = useState<Set<string>>(new Set())
+  const [includedPriorities, setIncludedPriorities] = useState<Set<string>>(new Set())
   const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set())
   const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set())
   const [confirmed, setConfirmed] = useState(false)
@@ -33,32 +40,11 @@ export function PublishShareModal({ toolKey, projectId, locations, assignees, on
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
 
-  function toggleLocation(loc: string) {
-    setSelectedLocations((prev) => {
+  function toggleInSet(setter: React.Dispatch<React.SetStateAction<Set<string>>>, key: string) {
+    setter((prev) => {
       const next = new Set(prev)
-      if (next.has(loc)) next.delete(loc)
-      else next.add(loc)
-      return next
-    })
-  }
-
-  function toggleAssignee(a: string) {
-    setSelectedAssignees((prev) => {
-      const next = new Set(prev)
-      if (next.has(a)) next.delete(a)
-      else next.add(a)
-      return next
-    })
-  }
-
-  function toggleStatus(s: PunchlistStatus) {
-    setIncludedStatuses((prev) => {
-      const next = new Set(prev)
-      if (next.has(s)) {
-        if (next.size > 1) next.delete(s)
-      } else {
-        next.add(s)
-      }
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
       return next
     })
   }
@@ -80,6 +66,7 @@ export function PublishShareModal({ toolKey, projectId, locations, assignees, on
         includeComments,
         includePhotos,
         statuses: Array.from(includedStatuses),
+        priorities: Array.from(includedPriorities),
         locations: Array.from(selectedLocations),
         assignees: Array.from(selectedAssignees),
       }
@@ -165,24 +152,29 @@ export function PublishShareModal({ toolKey, projectId, locations, assignees, on
                 </div>
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs bg-cream/5 text-cream/40">
                   <span className="w-2 h-2 rounded-full bg-cream/20" />
-                  Statuses: {Array.from(includedStatuses).join(', ') || 'All'}
+                  Statuses: {Array.from(includedStatuses).filter((s) => s !== '__unassigned__').join(', ') || 'All'}
                 </div>
               </div>
-              {(selectedLocations.size > 0 || selectedAssignees.size > 0) ? (
+              {(includedPriorities.size > 0 || selectedLocations.size > 0 || selectedAssignees.size > 0) ? (
                 <div className="flex flex-wrap gap-2 text-xs">
+                  {includedPriorities.size > 0 && (
+                    <span className="px-2 py-1 bg-cream/10 text-cream/50 rounded">
+                      Priority: {Array.from(includedPriorities).map((p) => p === '__unassigned__' ? 'Unassigned' : p).join(', ')}
+                    </span>
+                  )}
                   {selectedLocations.size > 0 && (
                     <span className="px-2 py-1 bg-cream/10 text-cream/50 rounded">
-                      Locations: {Array.from(selectedLocations).join(', ')}
+                      Locations: {Array.from(selectedLocations).map((l) => l === '__unassigned__' ? 'Unassigned' : l).join(', ')}
                     </span>
                   )}
                   {selectedAssignees.size > 0 && (
                     <span className="px-2 py-1 bg-cream/10 text-cream/50 rounded">
-                      Assignees: {Array.from(selectedAssignees).join(', ')}
+                      Assignees: {Array.from(selectedAssignees).map((a) => a === '__unassigned__' ? 'Unassigned' : a).join(', ')}
                     </span>
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-cream/30 text-center">All locations and assignees included</p>
+                <p className="text-xs text-cream/30 text-center">All items included (no filters)</p>
               )}
             </>
           ) : (
@@ -260,71 +252,73 @@ export function PublishShareModal({ toolKey, projectId, locations, assignees, on
                 </div>
               </label>
 
-              {/* Status scoping */}
+              {/* Filter pills — same multi-select pattern as Fix List page */}
               <div>
-                <p className="text-sm text-cream/70 mb-3">Which statuses to share?</p>
-                <div className="flex gap-2">
-                  {STATUS_CHECKS.map((s) => (
-                    <button
-                      key={s.key}
-                      type="button"
-                      onClick={() => toggleStatus(s.key)}
-                      className={chipClass(includedStatuses.has(s.key))}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                <p className="text-sm text-cream/70 mb-2">
+                  Filter what to share{' '}
+                  <span className="text-cream/30 text-xs">(none selected = all)</span>
+                </p>
 
-              {/* Location filter */}
-              {locations.length >= 2 && (
-                <div>
-                  <p className="text-sm text-cream/70 mb-1">
-                    Filter by Location{' '}
-                    <span className="text-cream/30 text-xs">(optional — none = all)</span>
-                  </p>
-                  <div className="flex flex-wrap gap-2">
+                {/* Status */}
+                <div className="mb-3">
+                  <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-1">Status</span>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {STATUS_CHECKS.map((s) => (
+                      <button key={s.key} type="button" onClick={() => toggleInSet(setIncludedStatuses, s.key)} className={chipClass(includedStatuses.has(s.key))}>
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Priority */}
+                <div className="mb-3">
+                  <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-1">Priority</span>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {PRIORITY_CHECKS.map((p) => (
+                      <button key={p.key} type="button" onClick={() => toggleInSet(setIncludedPriorities, p.key)} className={chipClass(includedPriorities.has(p.key))}>
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Location */}
+                <div className="mb-3">
+                  <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-1">Location</span>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    <button type="button" onClick={() => toggleInSet(setSelectedLocations, '__unassigned__')} className={chipClass(selectedLocations.has('__unassigned__'))}>
+                      Unassigned
+                    </button>
                     {locations.map((loc) => (
-                      <button
-                        key={loc}
-                        type="button"
-                        onClick={() => toggleLocation(loc)}
-                        className={chipClass(selectedLocations.has(loc))}
-                      >
+                      <button key={loc} type="button" onClick={() => toggleInSet(setSelectedLocations, loc)} className={chipClass(selectedLocations.has(loc))}>
                         {loc}
                       </button>
                     ))}
                   </div>
                 </div>
-              )}
 
-              {/* Assignee filter */}
-              {assignees.length >= 2 && (
+                {/* Assignee */}
                 <div>
-                  <p className="text-sm text-cream/70 mb-1">
-                    Filter by Assignee{' '}
-                    <span className="text-cream/30 text-xs">(optional — none = all)</span>
-                  </p>
-                  <div className="flex flex-wrap gap-2">
+                  <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-1">Assignee</span>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    <button type="button" onClick={() => toggleInSet(setSelectedAssignees, '__unassigned__')} className={chipClass(selectedAssignees.has('__unassigned__'))}>
+                      Unassigned
+                    </button>
                     {assignees.map((a) => (
-                      <button
-                        key={a}
-                        type="button"
-                        onClick={() => toggleAssignee(a)}
-                        className={chipClass(selectedAssignees.has(a))}
-                      >
+                      <button key={a} type="button" onClick={() => toggleInSet(setSelectedAssignees, a)} className={chipClass(selectedAssignees.has(a))}>
                         {a}
                       </button>
                     ))}
                   </div>
                 </div>
-              )}
+              </div>
 
               {/* Risky share: broad scope with sensitive data */}
               {(() => {
                 const isRisky = (includeNotes || includePhotos) &&
-                  includedStatuses.size === 3 &&
+                  includedStatuses.size === 0 &&
+                  includedPriorities.size === 0 &&
                   selectedLocations.size === 0 &&
                   selectedAssignees.size === 0
 

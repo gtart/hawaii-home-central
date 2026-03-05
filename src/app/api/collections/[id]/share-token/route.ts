@@ -47,6 +47,7 @@ export async function GET(request: Request, { params }: Params) {
         locations: Array.isArray(s.locations) ? s.locations : [],
         assignees: Array.isArray(s.assignees) ? s.assignees : [],
         statuses: Array.isArray(s.statuses) ? s.statuses : [],
+        priorities: Array.isArray(s.priorities) ? s.priorities : [],
         boardId: s.boardId ?? null,
         boardName: s.boardName ?? null,
         scope: s.scope ?? null,
