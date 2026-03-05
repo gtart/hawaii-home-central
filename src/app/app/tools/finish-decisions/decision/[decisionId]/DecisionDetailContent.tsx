@@ -132,6 +132,22 @@ export function DecisionDetailContent({
     return Array.from(locs).sort()
   }, [v3State.rooms])
 
+  // Guidance computation — must be before early returns to keep hook order stable
+  const guidanceResult = useMemo(
+    () => {
+      if (!foundDecision || !foundRoom) return { milestones: [], impacts: [], advice: [], matchedRuleIds: [] }
+      return matchDecision(
+        getHeuristicsConfig(),
+        foundDecision.title,
+        foundRoom.type,
+        foundDecision.options.find((o) => o.isSelected)?.name,
+        foundDecision.dismissedSuggestionKeys,
+      )
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [foundDecision?.title, foundRoom?.type, foundDecision?.options, foundDecision?.dismissedSuggestionKeys]
+  )
+
   const updateDecision = (updates: Partial<DecisionV3>, events?: ActivityEventHint[]) => {
     if (!foundRoom) return
     setState((prev) => ({
@@ -542,21 +558,6 @@ export function DecisionDetailContent({
 
   const isSystemUncategorized = isUncategorized(foundDecision)
 
-  // Guidance computation (for pill in meta row)
-  const guidanceResult = useMemo(
-    () => {
-      if (!foundDecision || !foundRoom) return { milestones: [], impacts: [], advice: [], matchedRuleIds: [] }
-      return matchDecision(
-        getHeuristicsConfig(),
-        foundDecision.title,
-        foundRoom.type,
-        foundDecision.options.find((o) => o.isSelected)?.name,
-        foundDecision.dismissedSuggestionKeys,
-      )
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [foundDecision?.title, foundRoom?.type, foundDecision?.options, foundDecision?.dismissedSuggestionKeys]
-  )
   const guidanceTipCount = guidanceResult.milestones.length + guidanceResult.impacts.length + guidanceResult.advice.length
 
   function handleGuidanceDismiss(key: string) {
