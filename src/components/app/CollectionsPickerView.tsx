@@ -541,7 +541,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                       )}
                     </td>
                     <td className="py-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative opacity-0 group-hover:opacity-100 transition-opacity" ref={menuOpenId === coll.id ? menuRef : undefined}>
+                      <div className={`relative transition-opacity ${menuOpenId === coll.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} ref={menuOpenId === coll.id ? menuRef : undefined}>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -757,7 +757,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
 
               {/* ⋯ action menu */}
               <div
-                className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                className={`absolute top-3 right-3 transition-opacity ${menuOpenId === coll.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                 onClick={(e) => e.stopPropagation()}
                 ref={menuOpenId === coll.id ? menuRef : undefined}
               >
