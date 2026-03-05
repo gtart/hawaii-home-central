@@ -259,35 +259,45 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
 
   const handleArchive = async (collId: string) => {
     try {
-      await fetch(`/api/collections/${collId}`, {
+      const res = await fetch(`/api/collections/${collId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ archivedAt: true }),
       })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error || 'Failed to archive')
+        return
+      }
       const archived = collections.find((c) => c.id === collId)
       setCollections((prev) => prev.filter((c) => c.id !== collId))
       if (archived) {
         setArchivedCollections((prev) => [archived, ...prev])
       }
     } catch {
-      // ignore
+      alert('Failed to archive — check your connection')
     }
   }
 
   const handleRestore = async (collId: string) => {
     try {
-      await fetch(`/api/collections/${collId}`, {
+      const res = await fetch(`/api/collections/${collId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ archivedAt: null }),
       })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error || 'Failed to restore')
+        return
+      }
       const restored = archivedCollections.find((c) => c.id === collId)
       setArchivedCollections((prev) => prev.filter((c) => c.id !== collId))
       if (restored) {
         setCollections((prev) => [...prev, restored])
       }
     } catch {
-      // ignore
+      alert('Failed to restore — check your connection')
     }
   }
 
