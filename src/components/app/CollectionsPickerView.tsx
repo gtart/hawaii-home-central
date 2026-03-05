@@ -113,8 +113,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
   const [shareTarget, setShareTarget] = useState<{ collectionId: string; collectionName: string } | null>(null)
   const [previews, setPreviews] = useState<Record<string, PreviewData>>({})
   const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
-    if (typeof window === 'undefined') return 'grid'
-    return (localStorage.getItem(`hhc-picker-view-${toolKey}`) as 'grid' | 'table') || 'grid'
+    if (typeof window === 'undefined') return 'table'
+    return (localStorage.getItem(`hhc-picker-view-${toolKey}`) as 'grid' | 'table') || 'table'
   })
   const [hasExplicitPref] = useState(() => {
     if (typeof window === 'undefined') return false
@@ -550,12 +550,13 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         <span className="text-cream/20">—</span>
                       )}
                     </td>
-                    <td className="py-3" onClick={(e) => e.stopPropagation()}>
-                      <div className={`relative transition-opacity ${menuOpenId === coll.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} ref={menuOpenId === coll.id ? menuRef : undefined}>
+                    <td className="py-3 relative" onClick={(e) => e.stopPropagation()}>
+                      <div ref={menuOpenId === coll.id ? menuRef : undefined}>
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation()
+                            e.preventDefault()
                             setMenuOpenId(menuOpenId === coll.id ? null : coll.id)
                           }}
                           className="p-1 text-cream/30 hover:text-cream/60 transition-colors"
