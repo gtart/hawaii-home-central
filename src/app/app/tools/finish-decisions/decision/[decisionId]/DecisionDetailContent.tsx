@@ -962,6 +962,7 @@ export function DecisionDetailContent({
             onImportToDecision={handleImportToDecision}
             onMoveOption={(optId) => setMoveOptionId(optId)}
             onCopyOption={collectionId && currentProject ? (optId) => setCopyOptionId(optId) : undefined}
+            copyDisabledReason={!collectionId ? 'Open this selection from a Selection List to copy options' : undefined}
             addActionsRef={addActionsRef}
           />
         </div>

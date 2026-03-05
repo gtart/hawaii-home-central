@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { useActivityFeed, type ActivityFeedEvent } from '@/hooks/useActivityFeed'
 import { relativeTime } from '@/lib/relativeTime'
-import { TOOL_LABEL, eventHref, dayLabel } from '@/lib/activityHelpers'
+import { TOOL_LABEL, eventHref, dayLabel, FILTER_CHIPS } from '@/lib/activityHelpers'
 
 // ── Action type filter groups ──
 
@@ -16,13 +16,11 @@ const ACTION_FILTERS: { key: string[] | undefined; label: string }[] = [
   { key: ['shared'], label: 'Sharing' },
 ]
 
-const TOOL_FILTERS: { key: string | null; label: string }[] = [
-  { key: null, label: 'All' },
-  { key: 'mood_boards', label: 'Mood Boards' },
-  { key: 'finish_decisions', label: 'Selections' },
-  { key: 'punchlist', label: 'Fix List' },
-  { key: 'before_you_sign', label: 'Pros' },
-]
+// Tool filter chips — reuse canonical keys/labels from activityHelpers
+const TOOL_FILTERS = FILTER_CHIPS.map((c) => ({
+  key: c.key ?? null,
+  label: c.label,
+}))
 
 // ── Component ──
 

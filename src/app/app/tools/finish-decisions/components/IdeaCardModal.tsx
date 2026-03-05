@@ -26,6 +26,7 @@ interface Props {
   onSelect?: () => void
   onMove?: () => void
   onCopy?: () => void
+  copyDisabledReason?: string
   onUpdateDecision: (updates: Partial<DecisionV3>) => void
   onAddComment: (comment: CommentPayload) => void
   onUploadPhoto: (file: File) => Promise<{ url: string; thumbnailUrl: string; id: string }>
@@ -72,6 +73,7 @@ export function IdeaCardModal({
   onSelect,
   onMove,
   onCopy,
+  copyDisabledReason,
   onUpdateDecision,
   onAddComment,
   onUploadPhoto,
@@ -380,11 +382,17 @@ export function IdeaCardModal({
                 Move
               </button>
             )}
-            {onCopy && !readOnly && (
+            {!readOnly && (onCopy || copyDisabledReason) && (
               <button
                 type="button"
                 onClick={onCopy}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-cream/10 text-cream/60 hover:bg-cream/20 transition-colors"
+                disabled={!onCopy}
+                title={copyDisabledReason}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  onCopy
+                    ? 'bg-cream/10 text-cream/60 hover:bg-cream/20'
+                    : 'bg-cream/5 text-cream/25 cursor-not-allowed'
+                }`}
               >
                 Copy to...
               </button>

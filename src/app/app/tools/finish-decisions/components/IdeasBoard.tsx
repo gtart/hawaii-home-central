@@ -49,6 +49,7 @@ interface Props {
   hideCompare?: boolean
   onMoveOption?: (optionId: string) => void
   onCopyOption?: (optionId: string) => void
+  copyDisabledReason?: string
   rooms?: RoomV3[]
   currentRoomId?: string
   currentDecisionId?: string
@@ -469,6 +470,7 @@ export function IdeasBoard({
   hideCompare,
   onMoveOption,
   onCopyOption,
+  copyDisabledReason,
   rooms,
   currentRoomId,
   currentDecisionId,
@@ -880,6 +882,7 @@ export function IdeasBoard({
           onSelect={hideFinalize ? undefined : () => onSelectOption(activeOption.id)}
           onMove={onMoveOption ? () => onMoveOption(activeOption.id) : undefined}
           onCopy={onCopyOption ? () => onCopyOption(activeOption.id) : undefined}
+          copyDisabledReason={!onCopyOption ? copyDisabledReason : undefined}
           onUpdateDecision={onUpdateDecision}
           onAddComment={onAddComment}
           onUploadPhoto={uploadIdeaFile}
