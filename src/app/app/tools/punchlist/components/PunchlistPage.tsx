@@ -13,7 +13,7 @@ import { QuickAddStrip } from './QuickAddStrip'
 
 type SortMode = 'newest' | 'oldest' | 'priority'
 type FilterStatus = 'ALL' | PunchlistStatus
-type FilterPriority = 'ALL' | 'HIGH' | 'MED' | 'LOW'
+type FilterPriority = 'ALL' | 'HIGH' | 'MED' | 'LOW' | 'NONE'
 
 const STATUS_OPTIONS: { key: FilterStatus; label: string }[] = [
   { key: 'ALL', label: 'All' },
@@ -27,6 +27,7 @@ const PRIORITY_OPTIONS: { key: FilterPriority; label: string }[] = [
   { key: 'HIGH', label: 'High' },
   { key: 'MED', label: 'Medium' },
   { key: 'LOW', label: 'Low' },
+  { key: 'NONE', label: 'Unassigned' },
 ]
 
 const PRIORITY_ORDER = { HIGH: 0, MED: 1, LOW: 2 } as const
@@ -47,7 +48,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
   })
   const [filterPriority, setFilterPriority] = useState<FilterPriority>(() => {
     const p = searchParams.get('priority')
-    return p && ['ALL', 'HIGH', 'MED', 'LOW'].includes(p) ? (p as FilterPriority) : 'ALL'
+    return p && ['ALL', 'HIGH', 'MED', 'LOW', 'NONE'].includes(p) ? (p as FilterPriority) : 'ALL'
   })
   const [filterLocations, setFilterLocations] = useState<Set<string>>(new Set())
   const [filterAssignee, setFilterAssignee] = useState<string | null>(null)
@@ -61,6 +62,8 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkMenuOpen, setBulkMenuOpen] = useState<'status' | 'assignee' | 'location' | 'priority' | null>(null)
+  const [pageSize, setPageSize] = useState(25)
+  const [currentPage, setCurrentPage] = useState(0)
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -93,12 +96,20 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
       items = items.filter((i) => i.status === filterStatus)
     }
 
-    if (filterPriority !== 'ALL') {
+    if (filterPriority === 'NONE') {
+      items = items.filter((i) => !i.priority)
+    } else if (filterPriority !== 'ALL') {
       items = items.filter((i) => (i.priority ?? 'LOW') === filterPriority)
     }
 
     if (filterLocations.size > 0) {
-      items = items.filter((i) => filterLocations.has(i.location))
+      const wantUnassigned = filterLocations.has('__unassigned__')
+      const namedLocs = new Set([...filterLocations].filter((l) => l !== '__unassigned__'))
+      items = items.filter((i) => {
+        if (wantUnassigned && !i.location) return true
+        if (namedLocs.size > 0 && namedLocs.has(i.location)) return true
+        return false
+      })
     }
 
     if (filterAssignee === '__unassigned__') {
@@ -136,6 +147,15 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
   const selectAll = useCallback(() => {
     setSelectedIds(new Set(filtered.map((i) => i.id)))
   }, [filtered])
+
+  // Reset page when filters/sort change
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const safePage = Math.min(currentPage, totalPages - 1)
+  if (safePage !== currentPage) setCurrentPage(safePage)
+  const paginatedItems = useMemo(() => {
+    const start = currentPage * pageSize
+    return filtered.slice(start, start + pageSize)
+  }, [filtered, currentPage, pageSize])
 
   const counts = useMemo(() => {
     const c = { OPEN: 0, ACCEPTED: 0, DONE: 0, total: payload.items.length }
@@ -309,7 +329,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
             <button
               key={opt.key}
               type="button"
-              onClick={() => setFilterStatus(opt.key)}
+              onClick={() => { setFilterStatus(opt.key); setCurrentPage(0) }}
               aria-label={`Filter by status: ${opt.label}`}
               aria-pressed={filterStatus === opt.key}
               className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
@@ -330,7 +350,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
             <button
               key={opt.key}
               type="button"
-              onClick={() => setFilterPriority(opt.key)}
+              onClick={() => { setFilterPriority(opt.key); setCurrentPage(0) }}
               aria-label={`Filter by priority: ${opt.label}`}
               aria-pressed={filterPriority === opt.key}
               className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
@@ -345,7 +365,8 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
         </div>
 
         {/* Divider + Location multi-select pills (collapsible) */}
-        {uniqueLocations.length > 0 && (() => {
+        {(uniqueLocations.length > 0 || payload.items.some((i) => !i.location)) && (() => {
+          const hasUnassignedLoc = payload.items.some((i) => !i.location)
           const MAX_VISIBLE = 5
           // Always show active (selected) pills + fill remaining slots from the list
           const activeLocs = uniqueLocations.filter((l) => filterLocations.has(l))
@@ -361,6 +382,29 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
               <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Location</span>
+                {hasUnassignedLoc && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterLocations((prev) => {
+                        const next = new Set(prev)
+                        if (next.has('__unassigned__')) next.delete('__unassigned__')
+                        else next.add('__unassigned__')
+                        return next
+                      })
+                      setCurrentPage(0)
+                    }}
+                    aria-label="Filter by unassigned location"
+                    aria-pressed={filterLocations.has('__unassigned__')}
+                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
+                      filterLocations.has('__unassigned__')
+                        ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
+                        : 'border-cream/15 text-cream/40 hover:border-cream/30'
+                    }`}
+                  >
+                    Unassigned
+                  </button>
+                )}
                 {visibleLocs.map((loc) => {
                   const active = filterLocations.has(loc)
                   return (
@@ -374,6 +418,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                           else next.add(loc)
                           return next
                         })
+                        setCurrentPage(0)
                       }}
                       aria-label={`Filter by location: ${loc}`}
                       aria-pressed={active}
@@ -430,7 +475,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                 {hasUnassigned && (
                   <button
                     type="button"
-                    onClick={() => setFilterAssignee(filterAssignee === '__unassigned__' ? null : '__unassigned__')}
+                    onClick={() => { setFilterAssignee(filterAssignee === '__unassigned__' ? null : '__unassigned__'); setCurrentPage(0) }}
                     aria-label="Filter by unassigned"
                     aria-pressed={filterAssignee === '__unassigned__'}
                     className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
@@ -446,7 +491,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                   <button
                     key={a}
                     type="button"
-                    onClick={() => setFilterAssignee(filterAssignee === a ? null : a)}
+                    onClick={() => { setFilterAssignee(filterAssignee === a ? null : a); setCurrentPage(0) }}
                     aria-label={`Filter by assignee: ${a}`}
                     aria-pressed={filterAssignee === a}
                     className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
@@ -487,7 +532,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
         <input
           type="text"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); setCurrentPage(0) }}
           placeholder="Search items..."
           aria-label="Search punchlist items"
           className="flex-1 min-w-[140px] bg-basalt border border-cream/20 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
@@ -495,7 +540,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
 
         <select
           value={sort}
-          onChange={(e) => setSort(e.target.value as SortMode)}
+          onChange={(e) => { setSort(e.target.value as SortMode); setCurrentPage(0) }}
           aria-label="Sort items"
           className="bg-basalt border border-cream/20 rounded-lg px-2 py-1.5 text-sm text-cream focus:outline-none focus:border-sandstone/50"
         >
@@ -526,7 +571,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
             <span className="mx-0.5 text-cream/20" aria-hidden="true">&middot;</span>
             <button
               type="button"
-              onClick={() => { setFilterStatus('ALL'); setFilterPriority('ALL'); setFilterLocations(new Set()); setFilterAssignee(null); setSearch('') }}
+              onClick={() => { setFilterStatus('ALL'); setFilterPriority('ALL'); setFilterLocations(new Set()); setFilterAssignee(null); setSearch(''); setCurrentPage(0) }}
               className="text-xs text-sandstone/70 hover:text-sandstone transition-colors"
               aria-label="Clear all filters"
             >
@@ -576,7 +621,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                 <span>Date</span>
                 <span></span>
               </div>
-              {filtered.map((item) => (
+              {paginatedItems.map((item) => (
                 <PunchlistItemRow
                   key={item.id}
                   item={item}
@@ -592,7 +637,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
 
           {/* Mobile: cards */}
           <div className="md:hidden space-y-3">
-            {filtered.map((item) => (
+            {paginatedItems.map((item) => (
               <PunchlistItemCard
                 key={item.id}
                 item={item}
@@ -604,6 +649,72 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
               />
             ))}
           </div>
+
+          {/* Pagination controls */}
+          {filtered.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 mt-4 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-cream/40 text-xs">
+                  {currentPage * pageSize + 1}–{Math.min((currentPage + 1) * pageSize, filtered.length)} of {filtered.length}
+                </span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(0) }}
+                  className="bg-basalt border border-cream/20 rounded-lg px-2 py-1 text-xs text-cream focus:outline-none focus:border-sandstone/50"
+                  aria-label="Items per page"
+                >
+                  <option value={10}>10 / page</option>
+                  <option value={25}>25 / page</option>
+                  <option value={50}>50 / page</option>
+                  <option value={100}>100 / page</option>
+                </select>
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(0)}
+                    disabled={currentPage === 0}
+                    className="px-2 py-1 text-xs text-cream/50 hover:text-cream disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    aria-label="First page"
+                  >
+                    ««
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                    disabled={currentPage === 0}
+                    className="px-2 py-1 text-xs text-cream/50 hover:text-cream disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    aria-label="Previous page"
+                  >
+                    «
+                  </button>
+                  <span className="px-3 py-1 text-xs text-cream/60">
+                    {currentPage + 1} / {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                    disabled={currentPage >= totalPages - 1}
+                    className="px-2 py-1 text-xs text-cream/50 hover:text-cream disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    aria-label="Next page"
+                  >
+                    »
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(totalPages - 1)}
+                    disabled={currentPage >= totalPages - 1}
+                    className="px-2 py-1 text-xs text-cream/50 hover:text-cream disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    aria-label="Last page"
+                  >
+                    »»
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
 
