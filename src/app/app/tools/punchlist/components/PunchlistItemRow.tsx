@@ -9,6 +9,8 @@ interface Props {
   onTap: () => void
   onStatusChange?: (itemId: string, status: PunchlistStatus) => void
   onRename?: (itemId: string, newTitle: string) => void
+  selected?: boolean
+  onToggleSelect?: (itemId: string) => void
 }
 
 function shortDate(iso: string): string {
@@ -16,7 +18,7 @@ function shortDate(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-export function PunchlistItemRow({ item, onTap, onStatusChange, onRename }: Props) {
+export function PunchlistItemRow({ item, onTap, onStatusChange, onRename, selected, onToggleSelect }: Props) {
   const statusCfg = STATUS_CONFIG[item.status]
   const priorityCfg = item.priority ? PRIORITY_CONFIG[item.priority] : null
   const [menuOpen, setMenuOpen] = useState(false)
@@ -72,20 +74,50 @@ export function PunchlistItemRow({ item, onTap, onStatusChange, onRename }: Prop
 
   return (
     <div
-      className="grid grid-cols-[2.5rem_1fr_8rem_8rem_4rem_5rem_3rem] gap-2 items-center px-4 py-2.5 border-b border-cream/5 last:border-0 cursor-pointer hover:bg-cream/3 transition-colors relative"
+      className={`grid ${onToggleSelect ? 'grid-cols-[1.5rem_2.5rem_1fr_8rem_8rem_4rem_5rem_3rem]' : 'grid-cols-[2.5rem_1fr_8rem_8rem_4rem_5rem_3rem]'} gap-2 items-center px-4 py-2.5 border-b border-cream/5 last:border-0 cursor-pointer hover:bg-cream/3 transition-colors relative ${selected ? 'bg-sandstone/5' : ''}`}
       onClick={onTap}
     >
-      {/* Status dot */}
-      {onStatusChange ? (
-        <button
-          type="button"
-          onClick={cycleStatus}
-          className={`w-2.5 h-2.5 rounded-full ${statusCfg.dot} hover:ring-2 hover:ring-offset-1 hover:ring-offset-basalt-50 hover:ring-current transition-all`}
-          title={statusCfg.label}
-        />
-      ) : (
-        <span className={`w-2.5 h-2.5 rounded-full ${statusCfg.dot}`} title={statusCfg.label} />
+      {/* Checkbox */}
+      {onToggleSelect && (
+        <label className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={!!selected}
+            onChange={() => onToggleSelect(item.id)}
+            className="w-3.5 h-3.5 rounded border-cream/30 bg-transparent text-sandstone focus:ring-sandstone/30 focus:ring-offset-0 cursor-pointer"
+          />
+        </label>
       )}
+
+      {/* Thumbnail + status dot */}
+      <div className="relative w-9 h-9 flex items-center justify-center">
+        {item.photos.length > 0 ? (
+          <img
+            src={item.photos[0].thumbnailUrl || item.photos[0].url}
+            alt=""
+            className="w-9 h-9 rounded object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-9 h-9 rounded bg-cream/5 flex items-center justify-center">
+            <svg className="w-4 h-4 text-cream/15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <path d="M21 15l-5-5L5 21" />
+            </svg>
+          </div>
+        )}
+        {onStatusChange ? (
+          <button
+            type="button"
+            onClick={cycleStatus}
+            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${statusCfg.dot} ring-2 ring-basalt-50 hover:ring-cream/20 transition-all`}
+            title={statusCfg.label}
+          />
+        ) : (
+          <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${statusCfg.dot} ring-2 ring-basalt-50`} title={statusCfg.label} />
+        )}
+      </div>
 
       {/* #N Title */}
       <div className="truncate text-sm text-cream">
@@ -111,18 +143,8 @@ export function PunchlistItemRow({ item, onTap, onStatusChange, onRename }: Prop
       {/* Date */}
       <span className="text-[11px] text-cream/30 tabular-nums">{shortDate(item.createdAt)}</span>
 
-      {/* Actions: photo indicator + kebab */}
+      {/* Actions: kebab */}
       <div className="flex items-center justify-end gap-1">
-        {item.photos.length > 0 && (
-          <span className="inline-flex items-center gap-0.5 text-[10px] text-cream/30">
-            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <polyline points="21 15 16 10 5 21" />
-            </svg>
-            {item.photos.length > 1 && item.photos.length}
-          </span>
-        )}
         {onRename && (
           <div className="relative">
             <button

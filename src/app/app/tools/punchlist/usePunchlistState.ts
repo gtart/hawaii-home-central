@@ -184,6 +184,19 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
     [setState]
   )
 
+  const bulkUpdateItems = useCallback(
+    (ids: string[], updates: Partial<Omit<PunchlistItem, 'id' | 'createdAt'>>) => {
+      const idSet = new Set(ids)
+      setState((prev) => ({
+        ...prev,
+        items: prev.items.map((item) =>
+          idSet.has(item.id) ? { ...item, ...updates, updatedAt: now() } : item
+        ),
+      }))
+    },
+    [setState]
+  )
+
   const deleteItem = useCallback(
     (id: string) => {
       setState((prev) => ({
@@ -305,6 +318,7 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
     projectId: useCollection ? collResult.projectId : null,
     addItem,
     updateItem,
+    bulkUpdateItems,
     deleteItem,
     setStatus,
     addPhoto,

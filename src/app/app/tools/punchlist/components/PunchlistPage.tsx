@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { PunchlistStateAPI } from '../usePunchlistState'
 import type { PunchlistStatus } from '../types'
@@ -59,6 +59,23 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
   const [expandedLocations, setExpandedLocations] = useState(false)
   const [expandedAssignees, setExpandedAssignees] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkMenuOpen, setBulkMenuOpen] = useState<'status' | 'assignee' | 'location' | 'priority' | null>(null)
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const deselectAll = useCallback(() => {
+    setSelectedIds(new Set())
+    setBulkMenuOpen(null)
+  }, [])
+
   const uniqueLocations = useMemo(() => {
     const locs = new Set(payload.items.map((i) => i.location).filter(Boolean))
     return Array.from(locs).sort()
@@ -84,7 +101,9 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
       items = items.filter((i) => filterLocations.has(i.location))
     }
 
-    if (filterAssignee) {
+    if (filterAssignee === '__unassigned__') {
+      items = items.filter((i) => !i.assigneeLabel)
+    } else if (filterAssignee) {
       items = items.filter((i) => i.assigneeLabel === filterAssignee)
     }
 
@@ -113,6 +132,10 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
 
     return sorted
   }, [payload.items, filterStatus, filterPriority, filterLocations, filterAssignee, search, sort])
+
+  const selectAll = useCallback(() => {
+    setSelectedIds(new Set(filtered.map((i) => i.id)))
+  }, [filtered])
 
   const counts = useMemo(() => {
     const c = { OPEN: 0, ACCEPTED: 0, DONE: 0, total: payload.items.length }
@@ -387,10 +410,11 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
           )
         })()}
 
-        {/* Divider + Assignee chips (collapsible, if more than 1 assignee) */}
-        {uniqueAssignees.length > 1 && (() => {
+        {/* Divider + Assignee chips (collapsible) */}
+        {(uniqueAssignees.length > 0 || payload.items.some((i) => !i.assigneeLabel)) && (() => {
+          const hasUnassigned = payload.items.some((i) => !i.assigneeLabel)
           const MAX_VISIBLE = 5
-          const activeAssignees = filterAssignee ? uniqueAssignees.filter((a) => a === filterAssignee) : []
+          const activeAssignees = filterAssignee && filterAssignee !== '__unassigned__' ? uniqueAssignees.filter((a) => a === filterAssignee) : []
           const inactiveAssignees = uniqueAssignees.filter((a) => a !== filterAssignee)
           const remainingSlots = Math.max(0, MAX_VISIBLE - activeAssignees.length)
           const visibleAssignees = expandedAssignees
@@ -403,6 +427,21 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
               <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Assignee</span>
+                {hasUnassigned && (
+                  <button
+                    type="button"
+                    onClick={() => setFilterAssignee(filterAssignee === '__unassigned__' ? null : '__unassigned__')}
+                    aria-label="Filter by unassigned"
+                    aria-pressed={filterAssignee === '__unassigned__'}
+                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
+                      filterAssignee === '__unassigned__'
+                        ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
+                        : 'border-cream/15 text-cream/40 hover:border-cream/30'
+                    }`}
+                  >
+                    Unassigned
+                  </button>
+                )}
                 {visibleAssignees.map((a) => (
                   <button
                     key={a}
@@ -507,7 +546,17 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
           {/* Desktop: compact table */}
           <div className="hidden md:block">
             <div className="bg-basalt-50 rounded-card border border-cream/8 overflow-hidden">
-              <div className="grid grid-cols-[2.5rem_1fr_8rem_8rem_4rem_5rem_3rem] gap-2 px-4 py-2 border-b border-cream/8 text-[10px] uppercase tracking-wider text-cream/30">
+              <div className={`grid ${!readOnly ? 'grid-cols-[1.5rem_2.5rem_1fr_8rem_8rem_4rem_5rem_3rem]' : 'grid-cols-[2.5rem_1fr_8rem_8rem_4rem_5rem_3rem]'} gap-2 px-4 py-2 border-b border-cream/8 text-[10px] uppercase tracking-wider text-cream/30`}>
+                {!readOnly && (
+                  <label className="flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                      onChange={() => selectedIds.size === filtered.length ? deselectAll() : selectAll()}
+                      className="w-3.5 h-3.5 rounded border-cream/30 bg-transparent text-sandstone focus:ring-sandstone/30 focus:ring-offset-0 cursor-pointer"
+                    />
+                  </label>
+                )}
                 <span></span>
                 <span>Title</span>
                 <span>Location</span>
@@ -523,6 +572,8 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                   onTap={() => setViewingId(item.id)}
                   onStatusChange={readOnly ? undefined : api.setStatus}
                   onRename={readOnly ? undefined : (id, title) => api.updateItem(id, { title })}
+                  selected={selectedIds.has(item.id)}
+                  onToggleSelect={readOnly ? undefined : toggleSelect}
                 />
               ))}
             </div>
@@ -537,6 +588,8 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                 onTap={() => setViewingId(item.id)}
                 onStatusChange={readOnly ? undefined : api.setStatus}
                 onRename={readOnly ? undefined : (id, title) => api.updateItem(id, { title })}
+                selected={selectedIds.has(item.id)}
+                onToggleSelect={readOnly ? undefined : toggleSelect}
               />
             ))}
           </div>
@@ -593,6 +646,165 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
           api={api}
           onClose={() => setShowBulkText(false)}
         />
+      )}
+
+      {/* Bulk Action Bar */}
+      {selectedIds.size > 0 && !readOnly && (
+        <div
+          className="fixed left-0 right-0 z-40 bg-basalt-50 border-t border-cream/15 shadow-2xl px-4 py-3"
+          style={{ bottom: 'calc(var(--bottom-nav-offset, 0rem))' }}
+        >
+          <div className="max-w-4xl mx-auto flex items-center gap-3 flex-wrap">
+            <span className="text-sm text-cream/70 font-medium shrink-0">
+              {selectedIds.size} selected
+            </span>
+
+            <div className="flex items-center gap-2 flex-wrap flex-1">
+              {/* Status */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setBulkMenuOpen(bulkMenuOpen === 'status' ? null : 'status')}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                >
+                  Status
+                </button>
+                {bulkMenuOpen === 'status' && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
+                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 py-1 min-w-[120px]">
+                      {(['OPEN', 'ACCEPTED', 'DONE'] as const).map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => {
+                            const ids = Array.from(selectedIds)
+                            ids.forEach((id) => api.setStatus(id, s))
+                            deselectAll()
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                        >
+                          {s === 'OPEN' ? 'Open' : s === 'ACCEPTED' ? 'In Progress' : 'Done'}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Assignee */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setBulkMenuOpen(bulkMenuOpen === 'assignee' ? null : 'assignee')}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                >
+                  Assignee
+                </button>
+                {bulkMenuOpen === 'assignee' && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
+                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 py-1 min-w-[140px] max-h-48 overflow-y-auto">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          api.bulkUpdateItems(Array.from(selectedIds), { assigneeLabel: '' })
+                          deselectAll()
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs text-cream/40 italic hover:bg-cream/5 transition-colors"
+                      >
+                        Unassigned
+                      </button>
+                      {uniqueAssignees.map((a) => (
+                        <button
+                          key={a}
+                          type="button"
+                          onClick={() => {
+                            api.bulkUpdateItems(Array.from(selectedIds), { assigneeLabel: a })
+                            deselectAll()
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                        >
+                          {a}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Location */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setBulkMenuOpen(bulkMenuOpen === 'location' ? null : 'location')}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                >
+                  Location
+                </button>
+                {bulkMenuOpen === 'location' && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
+                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 py-1 min-w-[140px] max-h-48 overflow-y-auto">
+                      {uniqueLocations.map((loc) => (
+                        <button
+                          key={loc}
+                          type="button"
+                          onClick={() => {
+                            api.bulkUpdateItems(Array.from(selectedIds), { location: loc })
+                            deselectAll()
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                        >
+                          {loc}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Priority */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setBulkMenuOpen(bulkMenuOpen === 'priority' ? null : 'priority')}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                >
+                  Priority
+                </button>
+                {bulkMenuOpen === 'priority' && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
+                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 py-1 min-w-[120px]">
+                      {(['HIGH', 'MED', 'LOW'] as const).map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => {
+                            api.bulkUpdateItems(Array.from(selectedIds), { priority: p })
+                            deselectAll()
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                        >
+                          {p === 'HIGH' ? 'High' : p === 'MED' ? 'Medium' : 'Low'}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={deselectAll}
+              className="text-xs text-cream/30 hover:text-cream/50 transition-colors shrink-0"
+            >
+              Deselect all
+            </button>
+          </div>
+        </div>
       )}
 
     </>

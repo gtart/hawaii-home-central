@@ -9,9 +9,11 @@ interface Props {
   onTap: () => void
   onStatusChange?: (itemId: string, status: PunchlistStatus) => void
   onRename?: (itemId: string, newTitle: string) => void
+  selected?: boolean
+  onToggleSelect?: (itemId: string) => void
 }
 
-export function PunchlistItemCard({ item, onTap, onStatusChange, onRename }: Props) {
+export function PunchlistItemCard({ item, onTap, onStatusChange, onRename, selected, onToggleSelect }: Props) {
   const statusCfg = STATUS_CONFIG[item.status]
   const priorityCfg = item.priority ? PRIORITY_CONFIG[item.priority] : null
   const [menuOpen, setMenuOpen] = useState(false)
@@ -68,9 +70,21 @@ export function PunchlistItemCard({ item, onTap, onStatusChange, onRename }: Pro
 
   return (
     <div
-      className="bg-basalt-50 rounded-card p-4 sm:p-5 cursor-pointer active:bg-basalt-50/80 transition-colors relative"
+      className={`bg-basalt-50 rounded-card p-4 sm:p-5 cursor-pointer active:bg-basalt-50/80 transition-colors relative ${selected ? 'ring-1 ring-sandstone/30 bg-sandstone/5' : ''}`}
       onClick={onTap}
     >
+      {/* Selection checkbox */}
+      {onToggleSelect && (
+        <label className="absolute top-3 left-3 z-10" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={!!selected}
+            onChange={() => onToggleSelect(item.id)}
+            className="w-4 h-4 rounded border-cream/30 bg-transparent text-sandstone focus:ring-sandstone/30 focus:ring-offset-0 cursor-pointer"
+          />
+        </label>
+      )}
+
       {/* Kebab menu */}
       {onRename && (
         <div className="absolute top-3 right-3">
