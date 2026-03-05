@@ -351,12 +351,20 @@ export function DecisionDetailContent({
         newSelectionTitle,
       )
       return { ...payload, rooms: updated }
-    }, [{
-      action: 'moved',
-      entityType: 'option',
-      entityId: optionId,
-      summaryText: `Moved "${optionName}" to ${roomName} → ${targetName}`,
-    }])
+    }, [
+      {
+        action: 'moved_out',
+        entityType: 'option',
+        entityId: optionId,
+        summaryText: `Moved "${optionName}" out of ${foundRoom!.name} → ${foundDecision!.title}`,
+      },
+      {
+        action: 'moved_in',
+        entityType: 'option',
+        entityId: optionId,
+        summaryText: `Moved "${optionName}" into ${roomName} → ${targetName}`,
+      },
+    ])
 
     setAssignToast(`Moved to ${roomName} → ${targetName}`)
     setMoveOptionId(null)

@@ -47,7 +47,7 @@ export function PublicFinishDecisionsView({
             </span>
             <h1 className="font-serif text-3xl md:text-4xl text-sandstone">{projectName}</h1>
             <p className="text-sm text-cream/50 mt-1">
-              {rooms.length} room{rooms.length !== 1 ? 's' : ''} &middot; {totalDecisions} decision{totalDecisions !== 1 ? 's' : ''}
+              {rooms.length} room{rooms.length !== 1 ? 's' : ''} &middot; {totalDecisions} selection{totalDecisions !== 1 ? 's' : ''}
             </p>
           </div>
           <Link href="/" className="text-xs text-cream/30 hover:text-cream/50 transition-colors mt-1">
@@ -134,7 +134,7 @@ function RoomSection({
         <span className="text-xl">{emoji}</span>
         <h2 className="text-lg font-medium text-cream">{room.name}</h2>
         <span className="text-xs text-cream/30 ml-1">
-          {room.decisions.length} decision{room.decisions.length !== 1 ? 's' : ''}
+          {room.decisions.length} selection{room.decisions.length !== 1 ? 's' : ''}
         </span>
       </div>
 
@@ -155,7 +155,7 @@ function RoomSection({
 
       {/* Decisions */}
       {room.decisions.length === 0 ? (
-        <p className="text-cream/30 text-xs">No decisions in this room.</p>
+        <p className="text-cream/30 text-xs">No selections in this room.</p>
       ) : (
         <div className="space-y-3">
           {room.decisions.map((d) => (

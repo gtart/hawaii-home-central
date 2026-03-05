@@ -16,6 +16,14 @@ const ACTION_FILTERS: { key: string[] | undefined; label: string }[] = [
   { key: ['shared'], label: 'Sharing' },
 ]
 
+const TOOL_FILTERS: { key: string | null; label: string }[] = [
+  { key: null, label: 'All' },
+  { key: 'mood_boards', label: 'Mood Boards' },
+  { key: 'finish_decisions', label: 'Selections' },
+  { key: 'punchlist', label: 'Fix List' },
+  { key: 'before_you_sign', label: 'Pros' },
+]
+
 // ── Component ──
 
 interface ActivityPanelProps {
@@ -29,7 +37,9 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
   const [search, setSearch] = useState('')
   const [debouncedQ, setDebouncedQ] = useState('')
   const [activeFilter, setActiveFilter] = useState<string[] | undefined>(undefined)
+  const [selectedTool, setSelectedTool] = useState<string | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
+  const isGlobal = !toolKey
 
   // Debounce search
   useEffect(() => {
@@ -38,7 +48,7 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
   }, [search])
 
   const { events, isLoading, hasMore, loadMore } = useActivityFeed({
-    toolKey,
+    toolKey: selectedTool || toolKey,
     collectionId,
     actionTypes: activeFilter,
     q: debouncedQ || undefined,
@@ -109,6 +119,26 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
             className="w-full bg-cream/5 border border-cream/10 rounded-lg pl-8 pr-3 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/40"
           />
         </div>
+
+        {/* Tool filter chips (global mode only) */}
+        {isGlobal && (
+          <div className="flex gap-1.5 overflow-x-auto pb-1.5">
+            {TOOL_FILTERS.map((f) => (
+              <button
+                key={f.label}
+                type="button"
+                onClick={() => setSelectedTool(f.key)}
+                className={`text-[11px] px-2.5 py-1 rounded-full whitespace-nowrap transition-colors ${
+                  selectedTool === f.key
+                    ? 'bg-sandstone/20 text-sandstone font-medium'
+                    : 'text-cream/40 hover:text-cream/60 bg-cream/5'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Action type filter chips */}
         <div className="flex gap-1.5 overflow-x-auto pb-0.5">

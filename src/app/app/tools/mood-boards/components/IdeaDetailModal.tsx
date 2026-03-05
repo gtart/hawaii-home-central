@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useSession } from 'next-auth/react'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -73,6 +74,8 @@ export function IdeaDetailModal({
   const { data: session } = useSession()
   const dialogRef = useRef<HTMLDivElement>(null)
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
+  const moveBtnRef = useRef<HTMLButtonElement>(null)
+  const moreBtnRef = useRef<HTMLButtonElement>(null)
   const [name, setName] = useState(idea.name)
   const [notes, setNotes] = useState(idea.notes)
   const [tagsInput, setTagsInput] = useState(idea.tags.join(', '))
@@ -83,6 +86,18 @@ export function IdeaDetailModal({
   const [showMenu, setShowMenu] = useState(false)
   const [showMoveMenu, setShowMoveMenu] = useState(false)
   const [commentText, setCommentText] = useState('')
+  const [moveMenuPos, setMoveMenuPos] = useState<{ top: number; left: number } | null>(null)
+  const [moreMenuPos, setMoreMenuPos] = useState<{ top: number; left: number } | null>(null)
+
+  // Compute fixed position for a portal dropdown anchored above a trigger button
+  const computeMenuPos = useCallback((btnRef: React.RefObject<HTMLButtonElement | null>, menuWidth: number) => {
+    const rect = btnRef.current?.getBoundingClientRect()
+    if (!rect) return { top: 0, left: 0 }
+    // Position above the button, clamped to viewport
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - menuWidth - 8))
+    const top = rect.top - 4 // 4px gap above button; menu renders upward via bottom anchor
+    return { top, left }
+  }, [])
 
   // Filter comments for this idea
   const ideaComments = boardComments
@@ -482,8 +497,12 @@ export function IdeaDetailModal({
               {/* Unified Move... dropdown */}
               <div className="relative">
                 <button
+                  ref={moveBtnRef}
                   type="button"
-                  onClick={() => setShowMoveMenu(!showMoveMenu)}
+                  onClick={() => {
+                    if (!showMoveMenu) setMoveMenuPos(computeMenuPos(moveBtnRef, 224))
+                    setShowMoveMenu(!showMoveMenu)
+                  }}
                   className="px-3 py-1.5 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors inline-flex items-center gap-1.5"
                 >
                   Move&hellip;
@@ -491,13 +510,16 @@ export function IdeaDetailModal({
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </button>
-                {showMoveMenu && (
+                {showMoveMenu && moveMenuPos && createPortal(
                   <>
                     <div
                       className="fixed inset-0 z-[65]"
                       onClick={() => setShowMoveMenu(false)}
                     />
-                    <div className="absolute left-0 bottom-full mb-1 z-[66] w-56 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl py-1">
+                    <div
+                      className="fixed z-[66] w-56 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl py-1"
+                      style={{ bottom: window.innerHeight - moveMenuPos.top, left: moveMenuPos.left }}
+                    >
                       <button
                         type="button"
                         onClick={() => {
@@ -520,15 +542,20 @@ export function IdeaDetailModal({
                         Convert to Finish Selection&hellip;
                       </button>
                     </div>
-                  </>
+                  </>,
+                  document.body
                 )}
               </div>
 
               {/* More menu */}
               <div className="relative ml-auto">
                 <button
+                  ref={moreBtnRef}
                   type="button"
-                  onClick={() => setShowMenu(!showMenu)}
+                  onClick={() => {
+                    if (!showMenu) setMoreMenuPos(computeMenuPos(moreBtnRef, 144))
+                    setShowMenu(!showMenu)
+                  }}
                   className="w-8 h-8 rounded-lg flex items-center justify-center text-cream/40 hover:text-cream/60 hover:bg-cream/5 transition-colors"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -537,13 +564,16 @@ export function IdeaDetailModal({
                     <circle cx="12" cy="19" r="2" />
                   </svg>
                 </button>
-                {showMenu && (
+                {showMenu && moreMenuPos && createPortal(
                   <>
                     <div
-                      className="fixed inset-0 z-10"
+                      className="fixed inset-0 z-[65]"
                       onClick={() => setShowMenu(false)}
                     />
-                    <div className="absolute right-0 bottom-full mb-1 z-20 w-36 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl py-1">
+                    <div
+                      className="fixed z-[66] w-36 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl py-1"
+                      style={{ bottom: window.innerHeight - moreMenuPos.top, left: moreMenuPos.left }}
+                    >
                       <button
                         type="button"
                         onClick={() => {
@@ -555,7 +585,8 @@ export function IdeaDetailModal({
                         Delete Idea
                       </button>
                     </div>
-                  </>
+                  </>,
+                  document.body
                 )}
               </div>
             </div>
