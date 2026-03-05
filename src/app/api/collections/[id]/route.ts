@@ -155,11 +155,30 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
   }
 
+  const collection = await prisma.toolCollection.findUnique({
+    where: { id },
+    select: { projectId: true, toolKey: true, title: true },
+  })
+
   const updated = await prisma.toolCollection.update({
     where: { id },
     data,
     select: { id: true, title: true, archivedAt: true, updatedAt: true },
   })
+
+  // Log activity event when archiving
+  if (body.archivedAt && collection) {
+    writeActivityEvents([{
+      projectId: collection.projectId,
+      toolKey: collection.toolKey,
+      collectionId: id,
+      entityType: 'collection',
+      entityId: id,
+      action: 'archived',
+      summaryText: `Archived "${collection.title}"`,
+      actorUserId: userId,
+    }]).catch(() => {})
+  }
 
   return NextResponse.json({ collection: updated })
 }

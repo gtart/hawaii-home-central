@@ -13,7 +13,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { DestinationPicker } from '@/components/app/DestinationPicker'
 import { useCollectionTransfer } from '@/hooks/useCollectionTransfer'
 
-type SortMode = 'newest' | 'oldest' | 'priority'
+type SortMode = 'newest' | 'oldest' | 'priority' | 'due'
 
 const STATUS_OPTIONS = [
   { key: 'OPEN', label: 'Open' },
@@ -141,11 +141,18 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
       sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     } else if (sort === 'oldest') {
       sorted.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    } else {
+    } else if (sort === 'priority') {
       sorted.sort((a, b) => {
         const pa = PRIORITY_ORDER[a.priority ?? 'LOW']
         const pb = PRIORITY_ORDER[b.priority ?? 'LOW']
         return pa - pb
+      })
+    } else if (sort === 'due') {
+      sorted.sort((a, b) => {
+        if (a.dueDate && !b.dueDate) return -1
+        if (!a.dueDate && b.dueDate) return 1
+        if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate)
+        return 0
       })
     }
 
@@ -587,6 +594,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
           <option value="newest">Newest</option>
           <option value="oldest">Oldest</option>
           <option value="priority">Priority</option>
+          <option value="due">Due date</option>
         </select>
 
         {/* Desktop Add button — hidden on mobile, visible md+ */}
@@ -658,7 +666,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                 <span>Location</span>
                 <span>Assignee</span>
                 <span>Pri</span>
-                <span>Date</span>
+                <span>Due</span>
                 <span></span>
               </div>
               {paginatedItems.map((item) => (

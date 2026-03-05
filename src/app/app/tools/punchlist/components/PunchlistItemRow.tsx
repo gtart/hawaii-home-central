@@ -140,8 +140,10 @@ export function PunchlistItemRow({ item, onTap, onStatusChange, onRename, select
         <span className="text-cream/20 text-xs text-center">—</span>
       )}
 
-      {/* Date */}
-      <span className="text-[11px] text-cream/30 tabular-nums">{shortDate(item.createdAt)}</span>
+      {/* Due */}
+      <span className={`text-[11px] tabular-nums ${item.dueDate && item.dueDate < new Date().toISOString().slice(0, 10) && item.status !== 'DONE' ? 'text-red-400' : 'text-cream/30'}`}>
+        {item.dueDate ? shortDate(item.dueDate + 'T00:00:00') : '—'}
+      </span>
 
       {/* Actions: kebab */}
       <div className="flex items-center justify-end gap-1">

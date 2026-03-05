@@ -7,9 +7,11 @@ import { useSession } from 'next-auth/react'
 import { Input } from '@/components/ui/Input'
 import {
   STATUS_CONFIG_V3,
+  SELECTION_PRIORITY_CONFIG,
   type RoomV3,
   type DecisionV3,
   type StatusV3,
+  type SelectionPriority,
   type RoomSelection,
   type SelectionComment,
 } from '@/data/finish-decisions'
@@ -120,7 +122,7 @@ export function DecisionTrackerPage({
 
   // Bulk select state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [bulkMenuOpen, setBulkMenuOpen] = useState<'status' | 'location' | null>(null)
+  const [bulkMenuOpen, setBulkMenuOpen] = useState<'status' | 'location' | 'priority' | null>(null)
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
   const [bulkMoveOpen, setBulkMoveOpen] = useState(false)
   const [bulkToast, setBulkToast] = useState<string | null>(null)
@@ -560,6 +562,7 @@ export function DecisionTrackerPage({
                     <th className="text-left font-medium pb-2">Selection</th>
                     <th className="text-left font-medium pb-2 w-28">Location</th>
                     <th className="text-left font-medium pb-2 w-24">Status</th>
+                    <th className="text-left font-medium pb-2 w-20">Priority</th>
                     <th className="text-left font-medium pb-2">Specs</th>
                     <th className="text-left font-medium pb-2 w-28">Updated</th>
                     <th className="text-left font-medium pb-2">Last comment</th>
@@ -616,6 +619,15 @@ export function DecisionTrackerPage({
                           <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium ${config.pillClass}`}>
                             {config.label}
                           </span>
+                        </td>
+                        <td className="py-2.5 pr-3">
+                          {decision.priority ? (
+                            <span className={`text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded ${SELECTION_PRIORITY_CONFIG[decision.priority].className}`}>
+                              {SELECTION_PRIORITY_CONFIG[decision.priority].label}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-cream/20">—</span>
+                          )}
                         </td>
                         <td className="py-2.5 pr-3 text-[11px] text-cream/40 max-w-[200px]">
                           {selectedOption?.notes ? (
@@ -715,6 +727,11 @@ export function DecisionTrackerPage({
                             </>
                           ) : null}
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-cream/40">
+                            {decision.priority && (
+                              <span className={`text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded ${SELECTION_PRIORITY_CONFIG[decision.priority].className}`}>
+                                {SELECTION_PRIORITY_CONFIG[decision.priority].label}
+                              </span>
+                            )}
                             {decision.options.length > 0 && (
                               <span>{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
                             )}
@@ -947,6 +964,57 @@ export function DecisionTrackerPage({
                           </button>
                         ))}
                       </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Priority */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setBulkMenuOpen(bulkMenuOpen === 'priority' ? null : 'priority')}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                >
+                  Priority
+                </button>
+                {bulkMenuOpen === 'priority' && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
+                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 py-1 min-w-[130px]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!room) return
+                          const idSet = selectedIds
+                          const updated = room.decisions.map((d) =>
+                            idSet.has(d.id) ? { ...d, priority: undefined, updatedAt: new Date().toISOString() } : d
+                          )
+                          onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+                          deselectAll()
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs text-cream/40 italic hover:bg-cream/5 transition-colors"
+                      >
+                        None
+                      </button>
+                      {(Object.entries(SELECTION_PRIORITY_CONFIG) as [SelectionPriority, { label: string; className: string }][]).map(([key, cfg]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => {
+                            if (!room) return
+                            const idSet = selectedIds
+                            const updated = room.decisions.map((d) =>
+                              idSet.has(d.id) ? { ...d, priority: key, updatedAt: new Date().toISOString() } : d
+                            )
+                            onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+                            deselectAll()
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                        >
+                          <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${cfg.className}`}>{cfg.label}</span>
+                        </button>
+                      ))}
                     </div>
                   </>
                 )}

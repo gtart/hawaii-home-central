@@ -49,10 +49,19 @@ export function DashboardPage() {
             onClick={() => setShowCapture(true)}
             className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors shadow-sm whitespace-nowrap"
           >
-            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+            <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Quick Capture
+            <svg className="w-3.5 h-3.5 shrink-0 -ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="flex flex-col items-start leading-tight">
+              <span>Quick Capture</span>
+              <span className="text-[9px] font-normal text-basalt/60 -mt-0.5">Capture now, sort later</span>
+            </span>
           </button>
           <Link
             href="/app/inbox"

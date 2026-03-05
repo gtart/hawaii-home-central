@@ -58,7 +58,7 @@ export function DashboardCardContractChecklist({
         </p>
         <Link
           href="/app/tools/before-you-sign"
-          className="inline-flex items-center px-4 py-2 border border-sandstone/30 text-sandstone text-sm font-medium rounded-button hover:bg-sandstone/10 transition-colors mt-2"
+          className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors mt-2"
         >
           View Checklists
         </Link>

@@ -57,7 +57,7 @@ export function DashboardCardMoodBoards({
         </p>
         <Link
           href="/app/tools/mood-boards"
-          className="inline-flex items-center px-4 py-2 border border-sandstone/30 text-sandstone text-sm font-medium rounded-button hover:bg-sandstone/10 transition-colors"
+          className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
         >
           Open Mood Boards
         </Link>

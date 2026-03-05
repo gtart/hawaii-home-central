@@ -25,6 +25,7 @@ export interface PunchlistItem {
   status: PunchlistStatus
   assigneeLabel: string
   priority?: PunchlistPriority
+  dueDate?: string | null
   notes?: string
   comments?: PunchlistComment[]
   photos: PunchlistPhoto[]
@@ -64,6 +65,7 @@ export interface PublicPunchlistItem {
   status: PunchlistStatus
   assigneeLabel: string
   priority?: PunchlistPriority
+  dueDate?: string | null
   notes?: string
   comments?: PublicPunchlistComment[]
   photos: PublicPunchlistPhoto[]
@@ -83,6 +85,7 @@ export function toPublicItem(
     status: item.status,
     assigneeLabel: item.assigneeLabel,
     priority: item.priority,
+    dueDate: item.dueDate,
     photos: opts.includePhotos
       ? item.photos.map((p) => ({ url: p.url, thumbnailUrl: p.thumbnailUrl }))
       : [],

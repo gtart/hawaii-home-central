@@ -14,10 +14,12 @@ import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { findKitsForDecisionTitle, applyKitToDecision } from '@/lib/finish-decision-kits'
 import {
   STATUS_CONFIG_V3,
+  SELECTION_PRIORITY_CONFIG,
   ROOM_EMOJI_MAP,
   type DecisionV3,
   type OptionV3,
   type StatusV3,
+  type SelectionPriority,
   type StatusLogEntry,
   type RoomV3,
   type RoomTypeV3,
@@ -716,6 +718,19 @@ export function DecisionDetailContent({
               ))}
             </select>
           )}
+          {!isSystemUncategorized && (
+            <select
+              value={foundDecision.priority || ''}
+              onChange={(e) => !readOnly && updateDecision({ priority: (e.target.value || undefined) as SelectionPriority | undefined })}
+              disabled={readOnly}
+              className={`shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-basalt-50 text-cream/40 border-cream/10'}`}
+            >
+              <option value="">Priority</option>
+              {Object.entries(SELECTION_PRIORITY_CONFIG).map(([key, config]) => (
+                <option key={key} value={key}>{config.label}</option>
+              ))}
+            </select>
+          )}
           <input
             type="date"
             value={foundDecision.dueDate || ''}
@@ -755,6 +770,19 @@ export function DecisionDetailContent({
                 className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${statusCfg.pillClass}`}
               >
                 {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
+                  <option key={key} value={key}>{config.label}</option>
+                ))}
+              </select>
+            )}
+            {!isSystemUncategorized && (
+              <select
+                value={foundDecision.priority || ''}
+                onChange={(e) => !readOnly && updateDecision({ priority: (e.target.value || undefined) as SelectionPriority | undefined })}
+                disabled={readOnly}
+                className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-basalt-50 text-cream/40 border-cream/10'}`}
+              >
+                <option value="">Priority</option>
+                {Object.entries(SELECTION_PRIORITY_CONFIG).map(([key, config]) => (
                   <option key={key} value={key}>{config.label}</option>
                 ))}
               </select>

@@ -146,6 +146,15 @@ export function PunchlistItemCard({ item, onTap, onStatusChange, onRename, selec
                 </span>
               </>
             )}
+            {item.dueDate && (
+              <>
+                <span className="text-cream/20">&middot;</span>
+                <span className={`text-[10px] ${item.dueDate < new Date().toISOString().slice(0, 10) && item.status !== 'DONE' ? 'text-red-400' : 'text-cream/40'}`}>
+                  {item.dueDate < new Date().toISOString().slice(0, 10) && item.status !== 'DONE' ? 'Overdue' : 'Due'}{' '}
+                  {new Date(item.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+              </>
+            )}
           </div>
 
           {item.notes && (

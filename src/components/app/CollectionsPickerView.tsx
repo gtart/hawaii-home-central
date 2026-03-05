@@ -200,7 +200,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
     }
   }, [hasExplicitPref, loading, previewMode, collections.length])
 
-  // Click-away close for menu
+  // Click-away close for menu — must use 'click' (not 'mousedown')
+  // so the menu buttons' click handlers fire before the menu is removed from the DOM
   useEffect(() => {
     if (!menuOpenId) return
     function handleClick(e: MouseEvent) {
@@ -208,8 +209,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
         setMenuOpenId(null)
       }
     }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
   }, [menuOpenId])
 
   if (loading) {

@@ -359,6 +359,18 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
               datalistOptions={assigneeOptions}
             />
 
+            {/* Due Date */}
+            <div className="flex items-center justify-between py-1.5">
+              <span className="text-xs text-cream/30 w-20 shrink-0">Due date</span>
+              <input
+                type="date"
+                value={item.dueDate || ''}
+                onChange={(e) => updateItem(item.id, { dueDate: e.target.value || null })}
+                disabled={readOnly}
+                className="bg-transparent text-sm text-cream/60 focus:outline-none focus:text-cream [color-scheme:dark] disabled:opacity-50 cursor-pointer"
+              />
+            </div>
+
             <DetailRow
               label="Created"
               value={

@@ -167,6 +167,13 @@ export const STATUS_CONFIG_V3 = {
 } as const
 
 export type StatusV3 = keyof typeof STATUS_CONFIG_V3
+export type SelectionPriority = 'low' | 'medium' | 'high'
+
+export const SELECTION_PRIORITY_CONFIG = {
+  high: { label: 'High', className: 'bg-red-400/15 text-red-400' },
+  medium: { label: 'Medium', className: 'bg-amber-400/15 text-amber-400' },
+  low: { label: 'Low', className: 'bg-cream/10 text-cream/40' },
+} as const
 
 // Link (simplified - just URL, no label)
 export interface LinkV3 {
@@ -288,6 +295,7 @@ export interface DecisionV3 {
   notes: string // Combined specs + notes
   options: OptionV3[] // Nested
   dueDate?: string | null // ISO date string or null for TBD
+  priority?: 'low' | 'medium' | 'high' // Selection priority
   dismissedSuggestionKeys?: string[] // Heuristic guidance dismissed by user
   comments?: SelectionComment[] // Selection-level comment thread
   picksByUser?: Record<string, string | null>  // email → optionId (user's "My pick")
