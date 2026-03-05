@@ -1,29 +1,29 @@
 import { NextResponse } from 'next/server'
-import { validateCollectionShareToken } from '@/lib/collection-access'
+import { resolveShareToken, buildSanitizedShareResponse } from '@/lib/public-share'
 
 type Params = { params: Promise<{ token: string }> }
 
 /**
  * GET /api/share/c/[token]
  * Public share resolution — no auth required.
- * Returns sanitized collection payload.
+ * Validates collection share token and returns sanitized payload
+ * using the same allowlist logic as /api/share/[toolKey]/[token].
  */
-export async function GET(request: Request, { params }: Params) {
+export async function GET(_request: Request, { params }: Params) {
   const { token } = await params
 
-  const record = await validateCollectionShareToken(token)
-  if (!record) {
-    return NextResponse.json({ error: 'Invalid or expired share link' }, { status: 404 })
+  // Resolve without expectedToolKey — collection tokens carry their own toolKey
+  const resolution = await resolveShareToken(token)
+
+  if ('error' in resolution) {
+    return NextResponse.json({ error: resolution.error }, { status: resolution.status })
   }
 
-  const settings = record.settings as Record<string, unknown> | null
+  const result = await buildSanitizedShareResponse(resolution)
 
-  return NextResponse.json({
-    payload: record.collection.payload,
-    toolKey: record.collection.toolKey,
-    collectionId: record.collection.id,
-    title: record.collection.title,
-    projectName: record.collection.project.name,
-    settings: settings ?? {},
-  })
+  if ('error' in result) {
+    return NextResponse.json({ error: result.error }, { status: result.status })
+  }
+
+  return NextResponse.json(result.body)
 }

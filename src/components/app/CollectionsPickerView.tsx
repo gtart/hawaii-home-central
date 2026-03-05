@@ -114,8 +114,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
   const [shareTarget, setShareTarget] = useState<{ collectionId: string; collectionName: string } | null>(null)
   const [previews, setPreviews] = useState<Record<string, PreviewData>>({})
   const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
-    if (typeof window === 'undefined') return 'table'
-    return (localStorage.getItem(`hhc-picker-view-${toolKey}`) as 'grid' | 'table') || 'table'
+    if (typeof window === 'undefined') return previewMode ? 'grid' : 'table'
+    return (localStorage.getItem(`hhc-picker-view-${toolKey}`) as 'grid' | 'table') || (previewMode ? 'grid' : 'table')
   })
   const [hasExplicitPref] = useState(() => {
     if (typeof window === 'undefined') return false
@@ -774,8 +774,9 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
 
               {/* ⋯ action menu */}
               <div
-                className={`absolute top-3 right-3 transition-opacity ${menuOpenId === coll.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                className={`absolute top-3 right-3 z-10 transition-opacity ${menuOpenId === coll.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                 onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
                 ref={menuOpenId === coll.id ? menuRef : undefined}
               >
                 <button

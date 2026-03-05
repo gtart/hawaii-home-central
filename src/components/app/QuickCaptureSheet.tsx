@@ -181,7 +181,10 @@ export function QuickCaptureSheet({
       {/* Header */}
       <div className="shrink-0 border-b border-cream/10 px-5 py-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-medium text-cream">Quick Capture</h2>
+          <div>
+            <h2 className="text-lg font-medium text-cream">Quick Capture</h2>
+            <p className="text-xs text-cream/35 mt-0.5">Capture now, sort later.</p>
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -197,20 +200,38 @@ export function QuickCaptureSheet({
         {captureState === 'input' && (
           <div className="flex gap-1.5">
             {([
-              { key: 'url' as const, label: 'URL' },
-              { key: 'photo' as const, label: 'Photo' },
-              { key: 'note' as const, label: 'Note' },
+              { key: 'url' as const, label: 'URL', icon: (
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )},
+              { key: 'photo' as const, label: 'Photo', icon: (
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+              )},
+              { key: 'note' as const, label: 'Note', icon: (
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+                  <polyline points="14 2 14 8 20 8" strokeLinecap="round" strokeLinejoin="round" />
+                  <line x1="16" y1="13" x2="8" y2="13" strokeLinecap="round" />
+                  <line x1="16" y1="17" x2="8" y2="17" strokeLinecap="round" />
+                </svg>
+              )},
             ]).map((tab) => (
               <button
                 key={tab.key}
                 type="button"
                 onClick={() => { setMode(tab.key); setError('') }}
-                className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
+                className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors ${
                   mode === tab.key
                     ? 'bg-sandstone/20 text-sandstone font-medium'
                     : 'text-cream/40 hover:text-cream/60 bg-cream/5'
                 }`}
               >
+                {tab.icon}
                 {tab.label}
               </button>
             ))}

@@ -1,13 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { validateShareToken, getReportSettings } from '@/lib/share-tokens'
-import { validateCollectionShareToken } from '@/lib/collection-access'
-import { toPublicItem } from '@/app/app/tools/punchlist/types'
-import type { PunchlistItem } from '@/app/app/tools/punchlist/types'
-import { toPublicBoard } from '@/data/mood-boards'
-import type { Board } from '@/data/mood-boards'
-import { toPublicRoom } from '@/data/finish-decisions'
-import type { RoomV3 } from '@/data/finish-decisions'
+import { resolveShareToken, buildSanitizedShareResponse } from '@/lib/public-share'
 
 export async function GET(
   _request: Request,
@@ -15,184 +7,17 @@ export async function GET(
 ) {
   const { toolKey, token } = await params
 
-  // Reject unknown tool keys
-  const SUPPORTED_TOOLS = new Set(['punchlist', 'mood_boards', 'finish_decisions'])
-  if (!SUPPORTED_TOOLS.has(toolKey)) {
-    return NextResponse.json({ error: 'Invalid tool' }, { status: 400 })
+  const resolution = await resolveShareToken(token, toolKey)
+
+  if ('error' in resolution) {
+    return NextResponse.json({ error: resolution.error }, { status: resolution.status })
   }
 
-  // Dual-lookup: check ToolCollectionShareToken first, then fall back to legacy ToolShareToken
-  const collectionToken = await validateCollectionShareToken(token)
-  let record: Awaited<ReturnType<typeof validateShareToken>> = null
-  let payloadData: unknown = null
+  const result = await buildSanitizedShareResponse(resolution)
 
-  if (collectionToken && collectionToken.collection.toolKey === toolKey) {
-    // Use collection-based data
-    payloadData = collectionToken.collection.payload
-    // Build a compat record shape for downstream code
-    record = {
-      id: collectionToken.id,
-      token: collectionToken.token,
-      projectId: collectionToken.collection.projectId,
-      toolKey: collectionToken.collection.toolKey,
-      permissions: collectionToken.permissions,
-      settings: collectionToken.settings,
-      createdBy: collectionToken.createdBy,
-      revokedAt: collectionToken.revokedAt,
-      expiresAt: collectionToken.expiresAt,
-      createdAt: collectionToken.createdAt,
-      updatedAt: collectionToken.updatedAt,
-      project: collectionToken.collection.project,
-    }
-  } else {
-    // Legacy fallback
-    record = await validateShareToken(token)
-    if (!record || record.toolKey !== toolKey) {
-      return NextResponse.json(
-        { error: 'Invalid or expired link' },
-        { status: 404 }
-      )
-    }
-
-    // Load tool data from ToolInstance
-    const instance = await prisma.toolInstance.findUnique({
-      where: {
-        projectId_toolKey: {
-          projectId: record.projectId,
-          toolKey,
-        },
-      },
-      select: { payload: true },
-    })
-
-    if (!instance) {
-      return NextResponse.json(
-        { error: 'No data found' },
-        { status: 404 }
-      )
-    }
-    payloadData = instance.payload
+  if ('error' in result) {
+    return NextResponse.json({ error: result.error }, { status: result.status })
   }
 
-  if (!record) {
-    return NextResponse.json(
-      { error: 'Invalid or expired link' },
-      { status: 404 }
-    )
-  }
-
-  // Determine settings from token
-  const settings = record.settings as Record<string, unknown>
-  let includeNotes = settings?.includeNotes === true
-  const includeComments = settings?.includeComments === true
-  const includePhotos = settings?.includePhotos === true
-  const includeSourceUrl = settings?.includeSourceUrl === true
-  const filterLocations: string[] = Array.isArray(settings?.locations) ? (settings.locations as string[]) : []
-  const filterAssignees: string[] = Array.isArray(settings?.assignees) ? (settings.assignees as string[]) : []
-  const filterStatuses: string[] = Array.isArray(settings?.statuses) ? (settings.statuses as string[]) : []
-  const filterPriorities: string[] = Array.isArray(settings?.priorities) ? (settings.priorities as string[]) : []
-
-  // Admin failsafe: override at render time
-  const reportSettings = await getReportSettings()
-  if (reportSettings.hideNotesInPublicShare) {
-    includeNotes = false
-  }
-
-  const boardId = typeof settings?.boardId === 'string' ? (settings.boardId as string) : null
-  let payload: Record<string, unknown> = payloadData as Record<string, unknown>
-
-  // Mood boards: allowlist sanitization — strip sensitive fields, respect token flags
-  if (toolKey === 'mood_boards' && Array.isArray(payload?.boards)) {
-    let boards = payload.boards as Board[]
-
-    // Apply scope: multi-board, single-board (legacy), or all
-    const mbScope = settings?.scope as { mode?: string; boardIds?: string[] } | undefined
-    if (mbScope?.mode === 'selected' && Array.isArray(mbScope.boardIds) && mbScope.boardIds.length > 0) {
-      boards = boards.filter((b) => mbScope.boardIds!.includes(b.id))
-    } else if (mbScope?.mode === 'all') {
-      // Exclude default/Uncategorized board for "All Boards" scope
-      boards = boards.filter((b) => !(b as Board & { isDefault?: boolean }).isDefault)
-    } else if (boardId) {
-      // Legacy single-board back-compat
-      const targetBoard = boards.find((b) => b.id === boardId)
-      if (!targetBoard) {
-        return NextResponse.json({ error: 'Board not found' }, { status: 404 })
-      }
-      boards = [targetBoard]
-    }
-
-    // Sanitize: map through allowlist — strips ACLs, emails, visibility, internal fields
-    payload = {
-      version: 1,
-      boards: boards.map((b) =>
-        toPublicBoard(b, { includeNotes, includeComments, includePhotos, includeSourceUrl })
-      ),
-    }
-  }
-
-  // Decision Tracker: allowlist sanitization — strip PII, respect token flags + scope
-  if (toolKey === 'finish_decisions' && Array.isArray(payload?.rooms)) {
-    let rooms = (payload.rooms as RoomV3[]).filter(
-      (r) => r.systemKey !== 'global_uncategorized'
-    )
-
-    // Apply scope from token settings
-    const scope = settings?.scope as { mode?: string; roomIds?: string[] } | undefined
-    if (scope?.mode === 'selected' && Array.isArray(scope.roomIds)) {
-      rooms = rooms.filter((r) => scope.roomIds!.includes(r.id))
-    }
-
-    payload = {
-      version: 3,
-      rooms: rooms.map((r) =>
-        toPublicRoom(r, { includeNotes, includeComments, includePhotos })
-      ),
-    }
-  }
-
-  // Punchlist: whitelist sanitization — map raw items to PublicPunchlistItem
-  if (toolKey === 'punchlist' && Array.isArray(payload?.items)) {
-    const rawItems = payload.items as PunchlistItem[]
-
-    const filtered = rawItems.filter((item) => {
-      if (filterStatuses.length > 0) {
-        const wantUnassigned = filterStatuses.includes('__unassigned__')
-        if (!filterStatuses.includes(item.status) && !(wantUnassigned && !item.status)) return false
-      }
-      if (filterPriorities.length > 0) {
-        const wantUnassigned = filterPriorities.includes('__unassigned__')
-        if (!filterPriorities.includes(item.priority ?? '') && !(wantUnassigned && !item.priority)) return false
-      }
-      if (filterLocations.length > 0) {
-        const wantUnassigned = filterLocations.includes('__unassigned__')
-        if (!filterLocations.includes(item.location) && !(wantUnassigned && !item.location)) return false
-      }
-      if (filterAssignees.length > 0) {
-        const wantUnassigned = filterAssignees.includes('__unassigned__')
-        if (!filterAssignees.includes(item.assigneeLabel) && !(wantUnassigned && !item.assigneeLabel)) return false
-      }
-      return true
-    })
-
-    payload = {
-      items: filtered.map((item) =>
-        toPublicItem(item, { includeNotes, includeComments, includePhotos })
-      ),
-    }
-  }
-
-  const scope = settings?.scope as Record<string, unknown> | undefined
-
-  return NextResponse.json({
-    payload,
-    projectName: record.project.name,
-    toolKey,
-    includeNotes,
-    includePhotos,
-    includeComments,
-    includeSourceUrl,
-    boardId,
-    scope: scope ?? null,
-    filters: { locations: filterLocations, assignees: filterAssignees, statuses: filterStatuses, priorities: filterPriorities },
-  })
+  return NextResponse.json(result.body)
 }

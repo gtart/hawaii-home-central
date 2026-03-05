@@ -203,7 +203,7 @@ function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProj
             <div className="flex items-center justify-between">
               <p className="text-base font-medium text-gray-600">{settings.reportTitle}</p>
               <p className="text-sm text-gray-400">
-                {new Date().toLocaleDateString()} &middot; {totalDecisions} decision{totalDecisions !== 1 ? 's' : ''} in {rooms.length} room{rooms.length !== 1 ? 's' : ''}
+                {new Date().toLocaleDateString()} &middot; {totalDecisions} selection{totalDecisions !== 1 ? 's' : ''} in {rooms.length} room{rooms.length !== 1 ? 's' : ''}
               </p>
             </div>
 
@@ -273,7 +273,7 @@ function RoomReportSection({
   return (
     <div className="mb-8">
       <h2 className="text-lg font-semibold text-gray-800 mb-3 pb-1 border-b border-gray-200">
-        {emoji} {room.name} ({room.decisions.length} decision{room.decisions.length !== 1 ? 's' : ''})
+        {emoji} {room.name} ({room.decisions.length} selection{room.decisions.length !== 1 ? 's' : ''})
       </h2>
 
       {STATUS_ORDER.map((status) => {

@@ -961,7 +961,7 @@ export function DecisionDetailContent({
             currentDecisionId={foundDecision.id}
             onImportToDecision={handleImportToDecision}
             onMoveOption={(optId) => setMoveOptionId(optId)}
-            onCopyOption={collectionId && currentProject ? (optId) => setCopyOptionId(optId) : undefined}
+            onCopyOption={collectionId ? (optId) => setCopyOptionId(optId) : undefined}
             copyDisabledReason={!collectionId ? 'Open this selection from a Selection List to copy options' : undefined}
             addActionsRef={addActionsRef}
           />
@@ -1197,11 +1197,11 @@ export function DecisionDetailContent({
       )}
 
       {/* Copy option to another list (supports copy-to-multiple) */}
-      {copyOptionId && collectionId && currentProject && foundRoom && (
+      {copyOptionId && collectionId && (collResult.projectId || currentProject?.id) && foundRoom && (
         <DestinationPicker
           key={copyResetKey}
           toolKey="finish_decisions"
-          projectId={currentProject.id}
+          projectId={(collResult.projectId || currentProject?.id)!}
           excludeCollectionId={collectionId}
           requireRoom
           requireDecision

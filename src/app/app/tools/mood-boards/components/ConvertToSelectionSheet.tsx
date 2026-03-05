@@ -263,7 +263,7 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
             .length > 0 && (
             <div>
               <label className="block text-xs text-cream/50 mb-2">
-                Decision{' '}
+                Selection{' '}
                 <span className="text-cream/30">(optional)</span>
               </label>
               <div className="grid grid-cols-2 gap-2">

@@ -63,7 +63,7 @@ export interface Board {
   name: string
   ideas: Idea[]
   comments?: MoodBoardComment[]
-  isDefault?: boolean // true only for "Saved Ideas" (default landing board)
+  isDefault?: boolean // true only for "Unsorted Ideas" (default landing board)
   createdBy?: string // email of board creator
   visibility?: 'everyone' | 'invite-only' // default: 'everyone'
   access?: BoardAccess[] // only used when visibility === 'invite-only'
@@ -85,12 +85,19 @@ export const DEFAULT_PAYLOAD: MoodBoardPayload = { version: 1, boards: [] }
 const DEFAULT_BOARD_ID = 'board_saved_ideas'
 
 export function ensureDefaultBoard(boards: Board[]): Board[] {
-  if (boards.some((b) => b.isDefault)) return boards
+  const existing = boards.find((b) => b.isDefault)
+  if (existing) {
+    // Migrate legacy name
+    if (existing.name === 'Saved Ideas') {
+      return boards.map((b) => b.isDefault ? { ...b, name: 'Unsorted Ideas' } : b)
+    }
+    return boards
+  }
   const ts = new Date().toISOString()
   return [
     {
       id: DEFAULT_BOARD_ID,
-      name: 'Saved Ideas',
+      name: 'Unsorted Ideas',
       ideas: [],
       isDefault: true,
       createdAt: ts,
