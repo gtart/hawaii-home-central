@@ -66,7 +66,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
-      <body className="bg-basalt text-cream font-sans antialiased min-h-screen flex flex-col">
+      <body className="bg-basalt text-cream font-sans antialiased min-h-screen flex flex-col overflow-x-hidden">
         <AuthProvider>
           <ProjectProvider>
             <Navigation />

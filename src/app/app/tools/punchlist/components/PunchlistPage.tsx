@@ -503,7 +503,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
         <button
           type="button"
           onClick={() => setQuickAddOpen(true)}
-          className="md:hidden fixed bottom-8 right-8 w-14 h-14 bg-sandstone text-basalt rounded-full shadow-lg hover:bg-sandstone-light transition-all flex items-center justify-center z-40"
+          className="md:hidden fixed bottom-20 right-6 w-14 h-14 bg-sandstone text-basalt rounded-full shadow-lg hover:bg-sandstone-light transition-all flex items-center justify-center z-40"
           aria-label="Add Fix"
         >
           <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

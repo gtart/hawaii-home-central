@@ -26,6 +26,8 @@ export function QuickAddStrip({ api, onDone, onViewItem, onBulkPhotos, onBulkTex
   const [savedCount, setSavedCount] = useState(0)
   const [showSaved, setShowSaved] = useState(false)
   const [lastAddedId, setLastAddedId] = useState<string | null>(null)
+  const [recentItems, setRecentItems] = useState<Array<{ id: string; title: string }>>([])
+  const [recentExpanded, setRecentExpanded] = useState(false)
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -44,7 +46,7 @@ export function QuickAddStrip({ api, onDone, onViewItem, onBulkPhotos, onBulkTex
   function flashSaved() {
     if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
     setShowSaved(true)
-    savedTimerRef.current = setTimeout(() => setShowSaved(false), 5000)
+    // No timeout — persists until user starts typing the next item
   }
 
   const commit = useCallback(
@@ -72,6 +74,8 @@ export function QuickAddStrip({ api, onDone, onViewItem, onBulkPhotos, onBulkTex
       setLastAddedId(newId)
       setAddError('')
       setSavedCount((c) => c + 1)
+      setRecentItems((prev) => [{ id: newId, title: t || 'Photo item' }, ...prev].slice(0, 3))
+      setRecentExpanded(false)
       flashSaved()
       setTimeout(() => inputRef.current?.focus(), 50)
       return true
@@ -196,7 +200,7 @@ export function QuickAddStrip({ api, onDone, onViewItem, onBulkPhotos, onBulkTex
               ref={inputRef}
               type="text"
               value={title}
-              onChange={(e) => { setTitle(e.target.value); setAddError('') }}
+              onChange={(e) => { setTitle(e.target.value); setAddError(''); setShowSaved(false) }}
               onKeyDown={handleKeyDown}
               placeholder="Describe the issue…"
               autoFocus
@@ -267,7 +271,16 @@ export function QuickAddStrip({ api, onDone, onViewItem, onBulkPhotos, onBulkTex
               {uploadError && <span className="text-red-400">{uploadError}</span>}
               {addError && !uploadError && <span className="text-red-400">{addError}</span>}
               {savedCount > 0 && !showSaved && !uploadError && !addError && (
-                <span className="text-cream/30">{savedCount} added</span>
+                <button
+                  type="button"
+                  onClick={() => setRecentExpanded(!recentExpanded)}
+                  className="text-cream/30 hover:text-cream/50 transition-colors flex items-center gap-1"
+                >
+                  {savedCount} added
+                  <svg className={`w-3 h-3 transition-transform ${recentExpanded ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
               )}
             </div>
             <button
@@ -278,6 +291,24 @@ export function QuickAddStrip({ api, onDone, onViewItem, onBulkPhotos, onBulkTex
               Done
             </button>
           </div>
+
+          {/* Recently added mini-list */}
+          {recentExpanded && recentItems.length > 0 && !showSaved && (
+            <div className="mt-1.5 pt-1.5 border-t border-cream/8 space-y-1">
+              <span className="text-[10px] uppercase tracking-wider text-cream/25">Recently added</span>
+              {recentItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onViewItem?.(item.id)}
+                  className="w-full flex items-center gap-2 py-1 text-left group"
+                >
+                  <span className="text-xs text-cream/40 group-hover:text-cream/60 truncate transition-colors">{item.title}</span>
+                  <span className="text-[10px] text-sandstone/50 group-hover:text-sandstone/80 shrink-0 transition-colors">View</span>
+                </button>
+              ))}
+            </div>
+          )}
           {/* Bulk options */}
           {(onBulkPhotos || onBulkText) && (
             <div className="flex items-center gap-3 mt-1.5 pt-1.5 border-t border-cream/8">
@@ -321,7 +352,7 @@ export function QuickAddStrip({ api, onDone, onViewItem, onBulkPhotos, onBulkTex
           <input
             type="text"
             value={title}
-            onChange={(e) => { setTitle(e.target.value); setAddError('') }}
+            onChange={(e) => { setTitle(e.target.value); setAddError(''); setShowSaved(false) }}
             onKeyDown={handleKeyDown}
             placeholder="Describe the issue…"
             autoFocus
@@ -389,7 +420,16 @@ export function QuickAddStrip({ api, onDone, onViewItem, onBulkPhotos, onBulkTex
             {uploadError && <span className="text-red-400">{uploadError}</span>}
             {addError && !uploadError && <span className="text-red-400">{addError}</span>}
             {savedCount > 0 && !showSaved && !uploadError && !addError && (
-              <span className="text-cream/30">{savedCount} added</span>
+              <button
+                type="button"
+                onClick={() => setRecentExpanded(!recentExpanded)}
+                className="text-cream/30 hover:text-cream/50 transition-colors flex items-center gap-1"
+              >
+                {savedCount} added
+                <svg className={`w-3 h-3 transition-transform ${recentExpanded ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             )}
           </div>
           <div className="flex items-center gap-3">
@@ -417,6 +457,24 @@ export function QuickAddStrip({ api, onDone, onViewItem, onBulkPhotos, onBulkTex
             </button>
           </div>
         </div>
+
+        {/* Recently added mini-list — desktop */}
+        {recentExpanded && recentItems.length > 0 && !showSaved && (
+          <div className="mt-2 pt-2 border-t border-cream/8 pl-14 space-y-1">
+            <span className="text-[10px] uppercase tracking-wider text-cream/25">Recently added</span>
+            {recentItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onViewItem?.(item.id)}
+                className="w-full flex items-center gap-2 py-1 text-left group"
+              >
+                <span className="text-xs text-cream/40 group-hover:text-cream/60 truncate transition-colors">{item.title}</span>
+                <span className="text-[10px] text-sandstone/50 group-hover:text-sandstone/80 shrink-0 transition-colors">View</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </>
   )
