@@ -57,7 +57,7 @@ export function IdeaPackList() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         packId,
-        label: 'New Decision Pack',
+        label: 'New Selection Pack',
         description: '',
         decisions: [],
         roomTypes: [],
@@ -175,7 +175,7 @@ export function IdeaPackList() {
               <th className="px-3 py-2 text-left text-xs font-medium text-cream/50 uppercase">Author</th>
               <th className="px-3 py-2 text-left text-xs font-medium text-cream/50 uppercase">Room Types</th>
               <th className="px-3 py-2 text-center text-xs font-medium text-cream/50 uppercase">Status</th>
-              <th className="px-3 py-2 text-center text-xs font-medium text-cream/50 uppercase">Decisions</th>
+              <th className="px-3 py-2 text-center text-xs font-medium text-cream/50 uppercase">Selections</th>
               <th className="px-3 py-2 text-center text-xs font-medium text-cream/50 uppercase">Options</th>
               <th className="px-3 py-2 text-right text-xs font-medium text-cream/50 uppercase">Updated</th>
               <th className="px-3 py-2 w-10"></th>
@@ -236,7 +236,7 @@ export function IdeaPackList() {
       {showImport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowImport(false)}>
           <div className="bg-basalt-50 rounded-xl border border-cream/15 p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-medium text-cream mb-4">Import Decision Pack JSON</h2>
+            <h2 className="text-lg font-medium text-cream mb-4">Import Selection Pack JSON</h2>
             <textarea
               value={importJson}
               onChange={(e) => { setImportJson(e.target.value); setImportResult(null); setImportError('') }}

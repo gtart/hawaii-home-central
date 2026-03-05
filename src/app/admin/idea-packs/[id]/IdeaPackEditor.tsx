@@ -283,19 +283,19 @@ export function IdeaPackEditor({ packId }: { packId: string }) {
 
       {/* Stats */}
       <div className="flex items-center gap-4 text-xs text-cream/40 mb-4">
-        <span>{pack.decisions.length} decisions</span>
+        <span>{pack.decisions.length} selections</span>
         <span>{totalOptions} total options</span>
       </div>
 
       {/* Decisions */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium text-cream/70">Decisions &amp; Options</h2>
+          <h2 className="text-sm font-medium text-cream/70">Selections &amp; Options</h2>
           <button
             onClick={addDecision}
             className="text-xs text-sandstone hover:text-sandstone-light transition-colors"
           >
-            + Add Decision
+            + Add Selection
           </button>
         </div>
 
@@ -305,7 +305,7 @@ export function IdeaPackEditor({ packId }: { packId: string }) {
               <input
                 value={decision.title}
                 onChange={(e) => updateDecisionTitle(dIdx, e.target.value)}
-                placeholder="Decision title (e.g., Countertop)"
+                placeholder="Selection title (e.g., Countertop)"
                 className="flex-1 bg-transparent text-sm text-cream font-medium focus:outline-none placeholder:text-cream/25"
               />
               <span className="text-[10px] text-cream/30">{decision.options.length} opt</span>
