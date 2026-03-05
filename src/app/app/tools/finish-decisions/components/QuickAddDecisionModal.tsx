@@ -47,7 +47,7 @@ export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose
   function handleAdd() {
     const t = title.trim()
     if (!t) {
-      setError('Enter a title for the decision')
+      setError('Enter a title for the selection')
       return
     }
     if (!selectedRoomId) {
@@ -119,7 +119,7 @@ export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
-          <h2 className="text-lg font-medium text-cream">Add Decision</h2>
+          <h2 className="text-lg font-medium text-cream">Add Selection</h2>
           <button
             type="button"
             onClick={handleClose}
@@ -184,7 +184,7 @@ export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose
 
           {/* Title input */}
           <div>
-            <label className="block text-sm text-cream/70 mb-1.5">Decision name</label>
+            <label className="block text-sm text-cream/70 mb-1.5">Selection name</label>
             <input
               ref={inputRef}
               type="text"

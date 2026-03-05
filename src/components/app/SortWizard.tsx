@@ -33,7 +33,7 @@ interface SortWizardProps {
 }
 
 const TOOL_OPTIONS: { key: ToolKey; label: string; description: string }[] = [
-  { key: 'finish_decisions', label: 'Selections', description: 'Add as an option to a decision' },
+  { key: 'finish_decisions', label: 'Selections', description: 'Add as an option to a selection' },
   { key: 'punchlist', label: 'Fix List', description: 'Add as a fix item' },
   { key: 'mood_boards', label: 'Mood Boards', description: 'Add as an inspiration idea' },
 ]
@@ -119,7 +119,7 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
         setLoading(false)
       })
       .catch(() => {
-        setError('Failed to load decisions')
+        setError('Failed to load selections')
         setLoading(false)
       })
   }, [toolKey, collectionId])
@@ -235,7 +235,7 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
               </button>
             )}
             <h2 className="text-lg font-medium text-cream">
-              {sortSuccess ? 'Sorted' : step === 'tool' ? 'Sort to...' : step === 'collection' ? `Choose ${toolLabel} list` : step === 'decision' ? 'Choose decision' : 'Confirm'}
+              {sortSuccess ? 'Sorted' : step === 'tool' ? 'Sort to...' : step === 'collection' ? `Choose ${toolLabel} list` : step === 'decision' ? 'Choose selection' : 'Confirm'}
             </h2>
           </div>
           <button
@@ -346,7 +346,7 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
           <div className="space-y-2">
             {decisions.length === 0 && !error && (
               <p className="text-sm text-cream/40 text-center py-4">
-                No decisions found in this list.
+                No selections found in this list.
               </p>
             )}
             {decisions.map((dec) => (

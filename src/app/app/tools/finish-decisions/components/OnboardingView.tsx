@@ -25,7 +25,7 @@ export function OnboardingView({
   return (
     <div className="py-8 max-w-md mx-auto">
       <h2 className="font-serif text-2xl md:text-3xl text-sandstone mb-2">
-        Add your first decision to make
+        Add your first selection to make
       </h2>
 
       <p className="text-sm text-cream/50 leading-relaxed mb-6">
@@ -71,7 +71,7 @@ export function OnboardingView({
         className="w-full text-left px-5 py-4 bg-basalt-50 rounded-xl border border-cream/10 hover:border-sandstone/30 transition-colors group"
       >
         <span className="text-sm font-medium text-cream group-hover:text-sandstone transition-colors">
-          Add a Decision Pack
+          Add a Selection Pack
         </span>
         <p className="text-xs text-cream/40 mt-1 leading-relaxed">
           Packs add common selections and curated options — so you don&apos;t miss anything.

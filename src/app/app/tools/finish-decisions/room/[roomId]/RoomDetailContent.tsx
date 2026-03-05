@@ -188,7 +188,7 @@ export function RoomDetailContent({
     const missing = standardTitles.filter((t) => !existingTitles.has(t.toLowerCase().trim()))
 
     if (missing.length === 0) {
-      setPopulateBanner('All standard decisions are already included.')
+      setPopulateBanner('All standard selections are already included.')
       setTimeout(() => setPopulateBanner(null), 4000)
       return
     }
@@ -209,7 +209,7 @@ export function RoomDetailContent({
       updatedAt: now,
     })
 
-    setPopulateBanner(`Added ${missing.length} decision${missing.length !== 1 ? 's' : ''}.`)
+    setPopulateBanner(`Added ${missing.length} selection${missing.length !== 1 ? 's' : ''}.`)
     setTimeout(() => setPopulateBanner(null), 4000)
   }
 
@@ -222,7 +222,7 @@ export function RoomDetailContent({
     acquireKit(kit.id)
     const msg = isResync
       ? `Re-synced "${kit.label}" (+${result.addedOptionCount} options)`
-      : `Applied "${kit.label}" — +${result.addedDecisionCount} decisions, +${result.addedOptionCount} options`
+      : `Applied "${kit.label}" — +${result.addedDecisionCount} selections, +${result.addedOptionCount} options`
     setToast({ message: msg, kitId: kit.id })
     setTimeout(() => setToast(null), 8000)
   }
@@ -353,7 +353,7 @@ export function RoomDetailContent({
               <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-cream/50 mt-1">
                 {stats.total - stats.done > 0 && (
                   <span className="text-cream/70 font-medium">
-                    {stats.total - stats.done} Decision{stats.total - stats.done !== 1 ? 's' : ''} Needed
+                    {stats.total - stats.done} Selection{stats.total - stats.done !== 1 ? 's' : ''} Needed
                   </span>
                 )}
                 {stats.deciding > 0 && <span>{stats.deciding} Deciding</span>}
@@ -381,7 +381,7 @@ export function RoomDetailContent({
                 onClick={() => setIdeasModalOpen(true)}
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-purple-300/70 hover:text-purple-300 bg-purple-400/5 hover:bg-purple-400/10 rounded-lg transition-all"
               >
-                <span>✨</span> Decision Packs ({availableKitsCount})
+                <span>✨</span> Selection Packs ({availableKitsCount})
               </button>
             )}
 
@@ -519,7 +519,7 @@ export function RoomDetailContent({
 
         {undoDecision && (
           <div className="flex items-center justify-between px-4 py-2 mb-4 bg-cream/5 border border-cream/10 rounded-lg text-xs">
-            <span className="text-cream/50">Decision deleted.</span>
+            <span className="text-cream/50">Selection deleted.</span>
             <button
               type="button"
               onClick={handleUndo}
@@ -544,7 +544,7 @@ export function RoomDetailContent({
                   onClick={() => setIdeasModalOpen(true)}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-sandstone text-basalt font-medium text-sm rounded-lg hover:bg-sandstone-light transition-colors"
                 >
-                  <span>✨</span> Apply a Decision Pack
+                  <span>✨</span> Apply a Selection Pack
                 </button>
               )}
               <button
@@ -574,7 +574,7 @@ export function RoomDetailContent({
               onClick={() => setIdeasModalOpen(true)}
               className="text-xs text-sandstone font-medium hover:text-sandstone-light transition-colors"
             >
-              Apply a Decision Pack
+              Apply a Selection Pack
             </button>
           </div>
         )}
@@ -584,7 +584,7 @@ export function RoomDetailContent({
           <div data-testid="empty-state-room" className="bg-basalt-50 rounded-card p-6 md:p-8 text-center border border-cream/10">
             <h3 className="font-serif text-lg text-sandstone mb-1">This list is empty</h3>
             <p className="text-sm text-cream/50 leading-relaxed mb-5">
-              Start adding selections&mdash;or apply a Decision Pack to get started quickly.
+              Start adding selections&mdash;or apply a Selection Pack to get started quickly.
             </p>
             {!readOnly && (
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -594,7 +594,7 @@ export function RoomDetailContent({
                     onClick={() => setIdeasModalOpen(true)}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-sandstone text-basalt font-medium text-sm rounded-lg hover:bg-sandstone-light transition-colors"
                   >
-                    <span>&#10024;</span> Add a Decision Pack
+                    <span>&#10024;</span> Add a Selection Pack
                   </button>
                 )}
                 <button
@@ -658,7 +658,7 @@ export function RoomDetailContent({
       {deleteStep === 'confirm' && (
         <ConfirmDialog
           title="Delete area?"
-          message={`"${room.name}" and all its decisions and options will be permanently deleted. This cannot be undone.`}
+          message={`"${room.name}" and all its selections and options will be permanently deleted. This cannot be undone.`}
           onConfirm={() => setDeleteStep('type')}
           onCancel={() => setDeleteStep('none')}
         />
@@ -678,8 +678,8 @@ export function RoomDetailContent({
       {/* Confirm delete decision dialog */}
       {confirmDeleteDecisionId && (
         <ConfirmDialog
-          title="Delete decision"
-          message="This decision and all its options will be permanently deleted."
+          title="Delete selection"
+          message="This selection and all its options will be permanently deleted."
           onConfirm={() => handleDeleteDecision(confirmDeleteDecisionId)}
           onCancel={() => setConfirmDeleteDecisionId(null)}
         />

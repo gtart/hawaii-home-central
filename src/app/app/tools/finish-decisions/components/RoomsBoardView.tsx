@@ -224,11 +224,11 @@ export function RoomsBoardView({
                   const remaining = stats.total - stats.ordered - stats.done
                   return (
                     <div className="flex flex-wrap gap-x-2 text-[11px] text-cream/40 mb-2">
-                      {remaining > 0 && <span>{remaining} decision{remaining !== 1 ? 's' : ''} remain</span>}
+                      {remaining > 0 && <span>{remaining} selection{remaining !== 1 ? 's' : ''} remain</span>}
                       {stats.ordered > 0 && <span>{stats.ordered} ordered</span>}
                       {stats.done > 0 && <span>{stats.done} done</span>}
                       {remaining === 0 && stats.ordered === 0 && stats.done === 0 && (
-                        <span>No decisions yet</span>
+                        <span>No selections yet</span>
                       )}
                     </div>
                   )

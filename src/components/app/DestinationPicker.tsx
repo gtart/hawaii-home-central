@@ -151,7 +151,7 @@ export function DestinationPicker({
           setLoading(false)
         })
         .catch(() => {
-          setError('Failed to load decisions')
+          setError('Failed to load selections')
           setLoading(false)
         })
     } else {
@@ -187,7 +187,7 @@ export function DestinationPicker({
   const stepTitle =
     step === 'collection' ? title
     : step === 'room' ? `${actionLabel} to room in ${selectedCollection?.title}`
-    : `Choose decision`
+    : `Choose selection`
 
   const content = (
     <div className="flex flex-col">
@@ -282,7 +282,7 @@ export function DestinationPicker({
           <div className="space-y-2">
             {decisions.length === 0 && !error && (
               <p className="text-sm text-cream/40 text-center py-4">
-                No decisions found in this room.
+                No selections found in this room.
               </p>
             )}
             {decisions.map((dec) => (

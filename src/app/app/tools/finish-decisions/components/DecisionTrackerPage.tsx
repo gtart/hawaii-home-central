@@ -462,7 +462,7 @@ export function DecisionTrackerPage({
                 <thead>
                   <tr className="text-[11px] text-cream/40 uppercase tracking-wider">
                     <th className="text-left font-medium pb-2 pl-2 w-12" />
-                    <th className="text-left font-medium pb-2">Decision</th>
+                    <th className="text-left font-medium pb-2">Selection</th>
                     <th className="text-left font-medium pb-2 w-28">Location</th>
                     <th className="text-left font-medium pb-2 w-24">Status</th>
                     <th className="text-left font-medium pb-2">Specs</th>

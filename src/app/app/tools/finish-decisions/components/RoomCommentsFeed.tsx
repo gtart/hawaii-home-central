@@ -121,7 +121,7 @@ export function RoomCommentsFeed({
               className={`px-2 py-1 text-[10px] rounded-lg transition-colors ${
                 showDecisionPicker ? 'bg-sandstone/20 text-sandstone' : 'text-cream/30 hover:text-cream/50 bg-cream/5'
               }`}
-              title="Tag a decision"
+              title="Tag a selection"
             >
               📋
             </button>
@@ -132,7 +132,7 @@ export function RoomCommentsFeed({
       {/* Decision picker dropdown */}
       {showDecisionPicker && (
         <div className="bg-basalt border border-cream/10 rounded-lg p-2 max-h-32 overflow-y-auto space-y-0.5">
-          <p className="text-[10px] text-cream/30 px-1 mb-1">Tag a decision:</p>
+          <p className="text-[10px] text-cream/30 px-1 mb-1">Tag a selection:</p>
           {pickableDecisions.map((d) => (
             <button
               key={d.id}

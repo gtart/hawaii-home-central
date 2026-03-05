@@ -434,7 +434,7 @@ export function AddIdeaMenu({
                   <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
                   <path d="M12 11v6M9 14h6" strokeLinecap="round" />
                 </svg>
-                Add from Decision Pack
+                Add from Selection Pack
               </button>
             </>
           )}

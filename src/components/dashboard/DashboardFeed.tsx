@@ -4,15 +4,16 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useActivityFeed } from '@/hooks/useActivityFeed'
 import { relativeTime } from '@/lib/relativeTime'
-import { TOOL_LABEL, FILTER_CHIPS, eventHref } from '@/lib/activityHelpers'
+import { TOOL_LABEL, eventHref } from '@/lib/activityHelpers'
 import { ActivityPanel } from '@/components/app/ActivityPanel'
 
+const EXCERPT_LIMIT = 5
+
 export function DashboardFeed() {
-  const [activeFilter, setActiveFilter] = useState<string | undefined>(undefined)
-  const { events, isLoading, hasMore, loadMore } = useActivityFeed(
-    activeFilter ? { toolKey: activeFilter } : undefined
-  )
+  const { events, isLoading } = useActivityFeed()
   const [showPanel, setShowPanel] = useState(false)
+
+  const excerptEvents = events.slice(0, EXCERPT_LIMIT)
 
   return (
     <div>
@@ -21,28 +22,15 @@ export function DashboardFeed() {
         <button
           type="button"
           onClick={() => setShowPanel(true)}
-          className="text-xs text-cream/30 hover:text-cream/50 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-cream/30 hover:text-cream/50 transition-colors"
+          title="View all activity"
         >
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
           View all
         </button>
-      </div>
-
-      {/* Filter chips */}
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-        {FILTER_CHIPS.map((chip) => (
-          <button
-            key={chip.label}
-            type="button"
-            onClick={() => setActiveFilter(chip.key)}
-            className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${
-              activeFilter === chip.key
-                ? 'bg-sandstone/20 text-sandstone'
-                : 'bg-cream/5 text-cream/40 hover:bg-cream/10 hover:text-cream/60'
-            }`}
-          >
-            {chip.label}
-          </button>
-        ))}
       </div>
 
       {isLoading ? (
@@ -51,11 +39,11 @@ export function DashboardFeed() {
             <div key={i} className="h-4 bg-cream/5 rounded w-3/4" />
           ))}
         </div>
-      ) : events.length === 0 ? (
+      ) : excerptEvents.length === 0 ? (
         <p className="text-xs text-cream/20">No recent activity.</p>
       ) : (
         <div>
-          {events.map((event) => (
+          {excerptEvents.map((event) => (
             <Link
               key={event.id}
               href={eventHref(event)}
@@ -79,16 +67,6 @@ export function DashboardFeed() {
               </div>
             </Link>
           ))}
-
-          {hasMore && (
-            <button
-              type="button"
-              onClick={loadMore}
-              className="mt-3 text-xs text-cream/30 hover:text-cream/50 transition-colors"
-            >
-              Load more
-            </button>
-          )}
         </div>
       )}
 

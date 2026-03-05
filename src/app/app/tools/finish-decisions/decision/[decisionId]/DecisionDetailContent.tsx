@@ -903,7 +903,7 @@ export function DecisionDetailContent({
               onClick={() => setDeleteConfirmOpen(true)}
               className="text-xs text-red-400/50 hover:text-red-400 transition-colors"
             >
-              Delete Decision
+              Delete Selection
             </button>
           </div>
         )}
@@ -1058,9 +1058,9 @@ export function DecisionDetailContent({
       {/* Delete selection confirm */}
       {deleteConfirmOpen && (
         <ConfirmDialog
-          title="Delete this decision?"
-          message="All options, comments, and images in this decision will be permanently lost. This cannot be undone."
-          confirmLabel="Delete Decision"
+          title="Delete this selection?"
+          message="All options, comments, and images in this selection will be permanently lost. This cannot be undone."
+          confirmLabel="Delete Selection"
           confirmVariant="danger"
           onConfirm={() => {
             setDeleteConfirmOpen(false)
@@ -1160,12 +1160,24 @@ function CommentsSection({
   onOpenCard?: (optionId: string) => void
 }) {
   const [page, setPage] = useState(0)
-  const allComments = [...comments].reverse()
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Chronological order (oldest first for chat-thread feel)
+  const allComments = [...comments]
   const totalPages = Math.max(1, Math.ceil(allComments.length / COMMENTS_PER_PAGE))
-  const pageComments = allComments.slice(page * COMMENTS_PER_PAGE, (page + 1) * COMMENTS_PER_PAGE)
+  // Show the LAST page by default (most recent comments)
+  const effectivePage = page === 0 && totalPages > 1 ? totalPages - 1 : page
+  const pageComments = allComments.slice(effectivePage * COMMENTS_PER_PAGE, (effectivePage + 1) * COMMENTS_PER_PAGE)
+
+  // Scroll to bottom when comments change
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [comments.length])
 
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <h3 className="text-xs uppercase tracking-wider text-cream/30 mb-1">
         Comments {allComments.length > 0 && `(${allComments.length})`}
       </h3>
@@ -1173,69 +1185,78 @@ function CommentsSection({
         Comments are shared with collaborators who can access this tool.
       </p>
 
-      <CommentInput onAddComment={onAddComment} inputRef={commentInputRef} draftRef={draftRef} onClearDraftRef={onClearDraftRef} />
+      {/* Scrollable comment thread */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 mb-3">
+        {allComments.length === 0 && (
+          <p className="text-xs text-cream/20 mt-3">No comments yet.</p>
+        )}
 
-      {allComments.length === 0 && (
-        <p className="text-xs text-cream/20 mt-3">No comments yet.</p>
-      )}
-
-      <div className="space-y-3 mt-3">
-        {pageComments.map((comment) => (
-          <div key={comment.id} className="pb-3 border-b border-cream/5 last:border-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-medium text-cream/70">{comment.authorName}</span>
-              <span className="text-cream/20">&middot;</span>
-              <span className="text-[11px] text-cream/30">
-                {new Date(comment.createdAt).toLocaleDateString()}{' '}
-                {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
-            {comment.refOptionId && comment.refOptionLabel ? (
-              <button
-                type="button"
-                onClick={() => onOpenCard?.(comment.refOptionId!)}
-                className="flex items-center gap-1.5 mb-1 text-[11px] text-sandstone/70 hover:text-sandstone transition-colors"
-              >
-                <span className="w-1 h-1 rounded-full bg-sandstone/50 shrink-0" />
-                On: {truncateLabel(comment.refOptionLabel, 40)}
-                <span className="text-sandstone/30">↗</span>
-              </button>
-            ) : (
-              <div className="flex items-center gap-1.5 mb-1 text-[11px] text-cream/25">
-                <span className="w-1 h-1 rounded-full bg-cream/20 shrink-0" />
-                General
-              </div>
-            )}
-            <div className="text-sm text-cream/50 whitespace-pre-wrap">
-              {comment.text}
-            </div>
+        {totalPages > 1 && effectivePage > 0 && (
+          <div className="flex justify-center mb-3">
+            <button
+              type="button"
+              onClick={() => setPage(effectivePage - 1)}
+              className="text-xs text-cream/30 hover:text-cream/50 transition-colors"
+            >
+              Load older comments
+            </button>
           </div>
-        ))}
+        )}
+
+        <div className="space-y-2.5">
+          {pageComments.map((comment) => (
+            <div key={comment.id} className="bg-basalt/50 border border-cream/8 rounded-lg p-3">
+              <div className="flex items-start gap-2.5">
+                {/* Avatar initial */}
+                <span className="w-6 h-6 rounded-full bg-sandstone/20 text-sandstone text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  {comment.authorName.charAt(0).toUpperCase()}
+                </span>
+                <div className="flex-1 min-w-0">
+                  {/* Author + time */}
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-xs font-medium text-cream/70">{comment.authorName}</span>
+                    <span className="text-[10px] text-cream/25">
+                      {relativeTime(comment.createdAt)}
+                    </span>
+                  </div>
+                  {/* Reference chip */}
+                  {comment.refOptionId && comment.refOptionLabel ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpenCard?.(comment.refOptionId!)}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 mb-1 rounded-full text-[10px] bg-sandstone/10 text-sandstone/70 hover:bg-sandstone/20 hover:text-sandstone transition-colors"
+                    >
+                      Re: {truncateLabel(comment.refOptionLabel, 30)}
+                      <span className="text-sandstone/30">↗</span>
+                    </button>
+                  ) : null}
+                  {/* Comment text */}
+                  <p className="text-sm text-cream/60 whitespace-pre-wrap leading-relaxed">
+                    {comment.text}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {totalPages > 1 && effectivePage < totalPages - 1 && (
+          <div className="flex justify-center mt-3">
+            <button
+              type="button"
+              onClick={() => setPage(effectivePage + 1)}
+              className="text-xs text-cream/30 hover:text-cream/50 transition-colors"
+            >
+              Load newer comments
+            </button>
+          </div>
+        )}
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 mt-4 pt-3 border-t border-cream/5">
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={page === 0}
-            className="text-xs text-cream/40 hover:text-cream disabled:opacity-30 transition-colors"
-          >
-            Newer
-          </button>
-          <span className="text-[11px] text-cream/30">
-            {page + 1} / {totalPages}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-            disabled={page === totalPages - 1}
-            className="text-xs text-cream/40 hover:text-cream disabled:opacity-30 transition-colors"
-          >
-            Older
-          </button>
-        </div>
-      )}
+      {/* Pinned composer */}
+      <div className="border-t border-cream/10 pt-3 shrink-0">
+        <CommentInput onAddComment={onAddComment} inputRef={commentInputRef} draftRef={draftRef} onClearDraftRef={onClearDraftRef} />
+      </div>
     </div>
   )
 }

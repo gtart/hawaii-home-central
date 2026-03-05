@@ -161,7 +161,7 @@ export function RoomSection({
     const missing = standardTitles.filter((t) => !existingTitles.has(t.toLowerCase().trim()))
 
     if (missing.length === 0) {
-      setPopulateBanner('All standard decisions are already included.')
+      setPopulateBanner('All standard selections are already included.')
       setTimeout(() => setPopulateBanner(null), 4000)
       return
     }
@@ -182,7 +182,7 @@ export function RoomSection({
       updatedAt: now,
     })
 
-    setPopulateBanner(`Added ${missing.length} decision${missing.length !== 1 ? 's' : ''}.`)
+    setPopulateBanner(`Added ${missing.length} selection${missing.length !== 1 ? 's' : ''}.`)
     setTimeout(() => setPopulateBanner(null), 4000)
   }
 
@@ -211,7 +211,7 @@ export function RoomSection({
                 {stats.ordered > 0 && <span>{stats.ordered} ordered</span>}
                 {stats.done > 0 && <span>{stats.done} done</span>}
                 {remaining === 0 && stats.ordered === 0 && stats.done === 0 && stats.total === 0 && (
-                  <span>No decisions</span>
+                  <span>No selections</span>
                 )}
                 {recentComment && (
                   <span className="text-cream/30">💬 {relativeTime(recentComment.createdAt)} by {recentComment.authorName.split(' ')[0]}</span>
@@ -225,7 +225,7 @@ export function RoomSection({
               {stats.ordered > 0 && <span>{stats.ordered} ordered</span>}
               {stats.done > 0 && <span>{stats.done} done</span>}
               {remaining === 0 && stats.ordered === 0 && stats.done === 0 && stats.total === 0 && (
-                <span>No decisions</span>
+                <span>No selections</span>
               )}
               {recentComment && (
                 <span className="text-cream/30">💬 {relativeTime(recentComment.createdAt)} by {recentComment.authorName.split(' ')[0]}</span>
@@ -239,7 +239,7 @@ export function RoomSection({
       {/* Undo banner */}
       {undoDecision && (
         <div className="flex items-center justify-between px-4 py-2 bg-cream/5 border-t border-cream/10 text-xs">
-          <span className="text-cream/50">Decision deleted.</span>
+          <span className="text-cream/50">Selection deleted.</span>
           <button
             type="button"
             onClick={handleUndo}
@@ -275,7 +275,7 @@ export function RoomSection({
             onClick={onAddIdeasPack}
             className="text-xs text-sandstone font-medium hover:text-sandstone-light transition-colors"
           >
-            Apply a Decision Pack
+            Apply a Selection Pack
           </button>
         </div>
       )}
@@ -288,7 +288,7 @@ export function RoomSection({
             <div className="flex items-center gap-2 text-xs text-cream/50 flex-1 min-w-0">
               <span className="font-medium text-cream/70">{room.name}</span>
               <span className="text-cream/20">&middot;</span>
-              <span>{stats.total} decision{stats.total !== 1 ? 's' : ''}</span>
+              <span>{stats.total} selection{stats.total !== 1 ? 's' : ''}</span>
               <span className="text-cream/20">&middot;</span>
               <span>Updated {relativeTime(lastUpdated)}</span>
             </div>
@@ -307,7 +307,7 @@ export function RoomSection({
                 onClick={onAddIdeasPack}
                 className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-purple-300/70 hover:text-purple-300 bg-purple-400/5 hover:bg-purple-400/10 rounded-lg transition-all"
               >
-                <span>✨</span> Import Decision Pack
+                <span>✨</span> Import Selection Pack
               </button>
             )}
             {showCommonDecisions && (
@@ -349,7 +349,7 @@ export function RoomSection({
             <div className="flex items-center gap-2 text-xs text-cream/50">
               <span className="font-medium text-cream/70">{room.name}</span>
               <span className="text-cream/20">&middot;</span>
-              <span>{stats.total} decision{stats.total !== 1 ? 's' : ''}</span>
+              <span>{stats.total} selection{stats.total !== 1 ? 's' : ''}</span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               {!readOnly && (
@@ -367,7 +367,7 @@ export function RoomSection({
                   onClick={onAddIdeasPack}
                   className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-purple-300/70 hover:text-purple-300 bg-purple-400/5 hover:bg-purple-400/10 rounded-lg transition-all"
                 >
-                  <span>✨</span> Import Decision Pack
+                  <span>✨</span> Import Selection Pack
                 </button>
               )}
               {showCommonDecisions && (
@@ -451,7 +451,7 @@ export function RoomSection({
       {deleteStep === 'confirm' && (
         <ConfirmDialog
           title="Delete area?"
-          message={`"${room.name}" and all its decisions and options will be permanently deleted. This cannot be undone.`}
+          message={`"${room.name}" and all its selections and options will be permanently deleted. This cannot be undone.`}
           onConfirm={() => setDeleteStep('type')}
           onCancel={() => setDeleteStep('none')}
         />
@@ -471,7 +471,7 @@ export function RoomSection({
       {/* Confirm delete selection dialog */}
       {confirmDeleteDecisionId && (
         <ConfirmDialog
-          title="Delete decision"
+          title="Delete selection"
           message="This will also delete all its options."
           onConfirm={() => executeDeleteDecision(confirmDeleteDecisionId)}
           onCancel={() => setConfirmDeleteDecisionId(null)}

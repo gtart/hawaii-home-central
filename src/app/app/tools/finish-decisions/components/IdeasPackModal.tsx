@@ -213,7 +213,7 @@ export function IdeasPackModal({
         <div className="px-5 pt-5 pb-3 border-b border-cream/10">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium text-cream">
-              {decisionTitle ? `Options for \u201c${decisionTitle}\u201d` : 'Decision Packs'}
+              {decisionTitle ? `Options for \u201c${decisionTitle}\u201d` : 'Selection Packs'}
             </h2>
             <button
               type="button"
@@ -227,8 +227,8 @@ export function IdeasPackModal({
           </div>
           <p className="text-xs text-cream/40 mt-1">
             {decisionTitle
-              ? 'Adds curated options to this decision so you have more to compare.'
-              : 'Decision Packs add curated options to your decisions\u2014so you can compare and choose faster.'}
+              ? 'Adds curated options to this selection so you have more to compare.'
+              : 'Selection Packs add curated options to your selections\u2014so you can compare and choose faster.'}
           </p>
 
           {/* Destination line */}
@@ -288,8 +288,8 @@ export function IdeasPackModal({
             <div className="py-8 text-center">
               <p className="text-cream/40 text-sm">
                 {activeTab === 'my-packs'
-                  ? "You don\u2019t own any Decision Packs yet."
-                  : `No Decision Packs available for this ${decisionTitle ? 'decision' : 'room type'}.`}
+                  ? "You don\u2019t own any Selection Packs yet."
+                  : `No Selection Packs available for this ${decisionTitle ? 'selection' : 'room type'}.`}
               </p>
               {activeTab === 'my-packs' && (
                 <div className="flex flex-col items-center gap-2 mt-3">
@@ -352,7 +352,7 @@ export function IdeasPackModal({
                   </div>
                   <p className="text-xs text-cream/50 leading-relaxed">{kit.description}</p>
                   <p className="text-[11px] text-cream/30 mt-1.5">
-                    {kit.decisions.length} decision{kit.decisions.length !== 1 ? 's' : ''},{' '}
+                    {kit.decisions.length} selection{kit.decisions.length !== 1 ? 's' : ''},{' '}
                     {kit.decisions.reduce((s, d) => s + d.options.length, 0)} option
                     {kit.decisions.reduce((s, d) => s + d.options.length, 0) !== 1 ? 's' : ''}
                   </p>
@@ -390,7 +390,7 @@ export function IdeasPackModal({
                                 {dec.title}
                                 {isMatchingDec && (
                                   <span className="ml-1.5 text-[10px] text-sandstone/60 font-normal">
-                                    — matches your decision
+                                    — matches your selection
                                   </span>
                                 )}
                               </span>
