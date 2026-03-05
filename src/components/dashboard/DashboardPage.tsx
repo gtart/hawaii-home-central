@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useProject } from '@/contexts/ProjectContext'
 import { useDashboard } from '@/hooks/useDashboard'
 import { useInboxCount } from '@/hooks/useInboxCount'
+import { useUnseenActivityCount } from '@/hooks/useUnseenActivityCount'
 import { DashboardToolGrid } from './DashboardToolGrid'
 import { QuietBanner } from './QuietBanner'
 import { DashboardNextActions } from './DashboardNextActions'
@@ -28,6 +29,7 @@ export function DashboardPage() {
   const [showCapture, setShowCapture] = useState(false)
   const [sortItem, setSortItem] = useState<CapturedResult | null>(null)
   const [showActivity, setShowActivity] = useState(false)
+  const { count: unseenCount, markSeen: markActivitySeen } = useUnseenActivityCount()
 
   return (
     <div className="pt-32 pb-24 px-6">
@@ -65,7 +67,7 @@ export function DashboardPage() {
           </Link>
           <button
             type="button"
-            onClick={() => setShowActivity(true)}
+            onClick={() => { setShowActivity(true); markActivitySeen() }}
             className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-cream/5 border border-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/10 hover:text-cream/80 transition-colors whitespace-nowrap"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -73,6 +75,11 @@ export function DashboardPage() {
               <polyline points="12 6 12 12 16 14" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Activity
+            {unseenCount > 0 && (
+              <span className="bg-sandstone/20 text-sandstone text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
+                {unseenCount > 98 ? '99+' : unseenCount}
+              </span>
+            )}
           </button>
         </div>
 

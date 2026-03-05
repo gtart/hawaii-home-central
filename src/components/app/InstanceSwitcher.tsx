@@ -91,28 +91,9 @@ export function InstanceSwitcher({ toolKey, currentCollectionId, itemNoun }: Ins
     }
   }
 
-  // With 0 or 1 collections: show just "+ New" button (no dropdown needed)
+  // With 0 or 1 collections: no need for a switcher dropdown
   if (collections.length <= 1) {
-    return (
-      <button
-        type="button"
-        onClick={() => {
-          if (collections.length === 0) {
-            // No collections to show, just go to picker which has empty state
-            router.push(toolPath)
-          } else {
-            // 1 collection — show inline create
-            setOpen(true)
-          }
-        }}
-        className="inline-flex items-center gap-1 text-sandstone/50 hover:text-sandstone transition-colors text-sm"
-      >
-        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 5v14m-7-7h14" strokeLinecap="round" />
-        </svg>
-        <span className="hidden sm:inline">New {itemNoun}</span>
-      </button>
-    )
+    return null
   }
 
   // 2+ collections: full dropdown

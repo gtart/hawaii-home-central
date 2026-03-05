@@ -112,12 +112,17 @@ export function DashboardCardSelections({
       })()}
       <ShareMetaLine meta={data?.toolMeta?.finish_decisions} />
       {data?.recentActivity?.finish_decisions && data.recentActivity.finish_decisions.length > 0 ? (
-        <div className="mb-4">
+        <div className="mb-4 space-y-1">
           {data.recentActivity.finish_decisions.slice(0, 2).map((evt, i) => (
-            <p key={i} className="text-[11px] text-cream/25 truncate">
-              {evt.actorName ? `${evt.actorName.split(' ')[0]}: ` : ''}{evt.summaryText}
-              <span className="text-cream/15 ml-1">{relativeTime(evt.createdAt)}</span>
-            </p>
+            <div key={i} className="flex items-center gap-1.5 text-[11px]">
+              {evt.actorName && (
+                <span className="shrink-0 w-4 h-4 rounded-full bg-sandstone/15 text-sandstone/70 flex items-center justify-center text-[8px] font-semibold" title={evt.actorName}>
+                  {evt.actorName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                </span>
+              )}
+              <span className="text-cream/30 truncate">{evt.summaryText}</span>
+              <span className="text-cream/15 shrink-0">{relativeTime(evt.createdAt)}</span>
+            </div>
           ))}
         </div>
       ) : (

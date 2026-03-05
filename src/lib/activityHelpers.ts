@@ -18,12 +18,24 @@ export function eventHref(event: ActivityFeedEvent): string {
   const base = TOOL_BASE[event.toolKey] || '/app'
   if (!event.collectionId) return base
 
+  const collUrl = `${base}/${event.collectionId}`
+
   // Decision-level deep link
   if (event.toolKey === 'finish_decisions' && event.entityType === 'decision' && event.entityId) {
-    return `${base}/${event.collectionId}/decision/${event.entityId}`
+    return `${collUrl}/decision/${event.entityId}`
   }
 
-  return `${base}/${event.collectionId}`
+  // Punchlist item deep link — scroll to item
+  if (event.toolKey === 'punchlist' && event.entityType === 'item' && event.entityId) {
+    return `${collUrl}?highlight=${event.entityId}`
+  }
+
+  // Share token actions — open share modal
+  if (event.entityType === 'share_token') {
+    return `${collUrl}?openShare=1`
+  }
+
+  return collUrl
 }
 
 export const FILTER_CHIPS: { key: string | undefined; label: string }[] = [

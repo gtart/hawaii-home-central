@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { useProject } from '@/contexts/ProjectContext'
 import { UnifiedShareModal, type ScopeOption } from './UnifiedShareModal'
 import { HeaderMoreMenu } from './HeaderMoreMenu'
@@ -104,6 +105,7 @@ export function ToolPageHeader({
   onArchive,
 }: ToolPageHeaderProps) {
   const { currentProject } = useProject()
+  const searchParams = useSearchParams()
   const [showShare, setShowShare] = useState(false)
   const [shareInitialTab, setShareInitialTab] = useState<'people' | 'link' | 'export'>('people')
   const [collaborators, setCollaborators] = useState<Collaborator[]>([])
@@ -112,6 +114,14 @@ export function ToolPageHeader({
   const [renameValue, setRenameValue] = useState('')
 
   const isOwner = accessLevel === 'OWNER' || currentProject?.role === 'OWNER'
+
+  // Auto-open share modal from ?openShare=1 deep link
+  useEffect(() => {
+    if (searchParams.get('openShare') === '1' && isOwner && !showShare) {
+      setShareInitialTab('link')
+      setShowShare(true)
+    }
+  }, [searchParams, isOwner]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadCollaborators = useCallback(async () => {
     if (!isOwner) return

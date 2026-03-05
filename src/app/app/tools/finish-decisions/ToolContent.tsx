@@ -9,6 +9,7 @@ import { LocalModeBanner } from '@/components/guides/LocalModeBanner'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
 import { ActivityPanel } from '@/components/app/ActivityPanel'
+import { useUnseenActivityCount } from '@/hooks/useUnseenActivityCount'
 import { UnsortedBanner } from '@/components/app/UnsortedBanner'
 import { DecisionTrackerPage } from './components/DecisionTrackerPage'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
@@ -249,6 +250,9 @@ export function ToolContent({
   const { state, setState, isLoaded, isSyncing, noAccess } = result
   const collectionTitle = useCollMode ? collResult.title : undefined
   const [activityOpen, setActivityOpen] = useState(false)
+  const { count: unseenActivity, markSeen: markActivitySeen } = useUnseenActivityCount(
+    collectionId ? { toolKey: 'finish_decisions', collectionId } : undefined
+  )
 
   // Redirect to picker if the loaded collection belongs to a different project
   useEffect(() => {
@@ -529,13 +533,18 @@ export function ToolContent({
             actions={collectionId ? (
               <button
                 type="button"
-                onClick={() => setActivityOpen(true)}
+                onClick={() => { setActivityOpen(true); markActivitySeen() }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 Activity
+                {unseenActivity > 0 && (
+                  <span className="bg-sandstone/20 text-sandstone text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
+                    {unseenActivity > 98 ? '99+' : unseenActivity}
+                  </span>
+                )}
               </button>
             ) : undefined}
           />

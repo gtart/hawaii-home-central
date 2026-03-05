@@ -52,7 +52,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
   const [sort, setSort] = useState<SortMode>('newest')
   const [showBulkPhotos, setShowBulkPhotos] = useState(false)
   const [showBulkText, setShowBulkText] = useState(false)
-  const [viewingId, setViewingId] = useState<string | null>(null)
+  const [viewingId, setViewingId] = useState<string | null>(() => searchParams.get('highlight'))
   const [expandedLocations, setExpandedLocations] = useState(false)
   const [expandedAssignees, setExpandedAssignees] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)

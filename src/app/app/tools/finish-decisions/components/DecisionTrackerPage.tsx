@@ -360,7 +360,46 @@ export function DecisionTrackerPage({
                 {filteredDecisions.length} match{filteredDecisions.length !== 1 ? 'es' : ''}
               </span>
             )}
+            {/* Desktop Add Selection button */}
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => setAddInputVisible(true)}
+                className="hidden md:inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors ml-auto shrink-0"
+              >
+                + Add Selection
+              </button>
+            )}
           </div>
+
+          {/* Inline add selection — shown at top when triggered */}
+          {!readOnly && addInputVisible && (
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                autoFocus
+                value={addInputValue}
+                onChange={(e) => setAddInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleInlineAdd()
+                  if (e.key === 'Escape') { setAddInputVisible(false); setAddInputValue('') }
+                }}
+                onBlur={() => {
+                  if (!addInputValue.trim()) { setAddInputVisible(false) }
+                }}
+                placeholder="e.g. Countertop, Faucet, Cabinet color"
+                className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+              />
+              <button
+                type="button"
+                onClick={handleInlineAdd}
+                disabled={!addInputValue.trim()}
+                className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+              >
+                Add
+              </button>
+            </div>
+          )}
 
           {/* Summary strip */}
           {decisions.length > 0 && (
@@ -700,46 +739,18 @@ export function DecisionTrackerPage({
 
               </div>
 
-              {/* Inline add selection */}
-              {!readOnly && (
-                addInputVisible ? (
-                  <div className="flex gap-2 px-4 py-2 mt-2">
-                    <input
-                      type="text"
-                      autoFocus
-                      value={addInputValue}
-                      onChange={(e) => setAddInputValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleInlineAdd()
-                        if (e.key === 'Escape') { setAddInputVisible(false); setAddInputValue('') }
-                      }}
-                      onBlur={() => {
-                        if (!addInputValue.trim()) { setAddInputVisible(false) }
-                      }}
-                      placeholder="e.g. Countertop, Faucet, Cabinet color"
-                      className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleInlineAdd}
-                      disabled={!addInputValue.trim()}
-                      className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-                    >
-                      Add
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setAddInputVisible(true)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 mt-2 bg-basalt-50/50 rounded-card border-2 border-dashed border-cream/15 hover:border-sandstone/40 transition-all cursor-pointer group"
-                  >
-                    <svg className="w-4 h-4 text-cream/30 group-hover:text-sandstone transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                    </svg>
-                    <span className="text-sm font-medium text-cream/40 group-hover:text-sandstone transition-colors">Add a Selection</span>
-                  </button>
-                )
+              {/* Bottom add selection — shown only when input is not open at top */}
+              {!readOnly && !addInputVisible && (
+                <button
+                  type="button"
+                  onClick={() => { setAddInputVisible(true); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 mt-2 bg-basalt-50/50 rounded-card border-2 border-dashed border-cream/15 hover:border-sandstone/40 transition-all cursor-pointer group"
+                >
+                  <svg className="w-4 h-4 text-cream/30 group-hover:text-sandstone transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                  </svg>
+                  <span className="text-sm font-medium text-cream/40 group-hover:text-sandstone transition-colors">Add a Selection</span>
+                </button>
               )}
             </>
           )}
