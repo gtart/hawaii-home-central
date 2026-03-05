@@ -109,7 +109,7 @@ export function PunchlistItemCard({ item, onTap, onStatusChange, onRename, selec
       )}
 
       {/* Top row: photo thumb + info */}
-      <div className="flex gap-4">
+      <div className={`flex gap-4 ${onToggleSelect ? 'pl-6' : ''}`}>
         {/* Photo thumbnail */}
         {item.photos.length > 0 && (
           <div className="shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden relative">
