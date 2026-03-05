@@ -333,6 +333,7 @@ export async function GET(request: Request) {
     // Share metadata
     const collaboratorCount = memberCountMap.get(coll.id) ?? 0
     const shareLinkEnabled = (tokenCountMap.get(coll.id) ?? 0) > 0
+    const shareLinkCount = tokenCountMap.get(coll.id) ?? 0
     const inviteCount = inviteCountMap.get(coll.id) ?? 0
 
     // Latest activity event
@@ -347,7 +348,7 @@ export async function GET(request: Request) {
     return {
       collectionId: coll.id, imageUrls, ideaCount, commentCount, statuses,
       lastComment, decisionCount, lastActivity, itemCount,
-      collaboratorCount, shareLinkEnabled, inviteCount, lastEvent,
+      collaboratorCount, shareLinkEnabled, shareLinkCount, inviteCount, lastEvent,
     }
   })
 

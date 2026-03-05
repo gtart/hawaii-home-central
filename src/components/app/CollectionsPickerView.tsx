@@ -31,6 +31,7 @@ interface PreviewData {
   itemCount?: number
   collaboratorCount?: number
   shareLinkEnabled?: boolean
+  shareLinkCount?: number
   inviteCount?: number
   lastEvent?: { summaryText: string; actorName: string | null; createdAt: string; action: string }
 }
@@ -174,6 +175,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
               itemCount: p.itemCount ?? undefined,
               collaboratorCount: p.collaboratorCount ?? undefined,
               shareLinkEnabled: p.shareLinkEnabled ?? undefined,
+              shareLinkCount: p.shareLinkCount ?? undefined,
               inviteCount: p.inviteCount ?? undefined,
               lastEvent: p.lastEvent ?? undefined,
             }
@@ -410,7 +412,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                 const preview = previews[coll.id] ?? { imageUrls: [], ideaCount: 0, commentCount: 0 }
                 const hasStatusCounts = preview.statuses && Object.values(preview.statuses).some(v => v > 0)
                 const thumb = preview.imageUrls[0]
-                const hasLink = !!preview.shareLinkEnabled
+                const linkCount = preview.shareLinkCount ?? 0
+                const hasLink = linkCount > 0
                 const pendingInvites = preview.inviteCount ?? 0
 
                 // Compact status: Decided X/Y, Done Z/Y (for finish_decisions)
@@ -497,7 +500,9 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                           </div>
                         )}
                         {hasLink && (
-                          <span className="text-[10px] text-sandstone/60 bg-sandstone/10 rounded-full px-1.5 py-0.5">Link</span>
+                          <span className="text-[10px] text-sandstone/60 bg-sandstone/10 rounded-full px-1.5 py-0.5">
+                            {linkCount === 1 ? '1 link' : `${linkCount} links`}
+                          </span>
                         )}
                         {pendingInvites > 0 && (
                           <span className="text-[10px] text-amber-400/70 bg-amber-400/10 rounded-full px-1.5 py-0.5">{pendingInvites} pending</span>
@@ -624,7 +629,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
           const hasStatusCounts = preview.statuses && Object.values(preview.statuses).some(v => v > 0)
           // Owner is NOT in toolCollectionMember, so collaboratorCount is already just collaborators
           const gridCollabCount = preview.collaboratorCount ?? 0
-          const gridHasLink = !!preview.shareLinkEnabled
+          const gridLinkCount = preview.shareLinkCount ?? 0
+          const gridHasLink = gridLinkCount > 0
           const gridPendingInvites = preview.inviteCount ?? 0
 
           return (
@@ -729,7 +735,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round" />
                         <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      Link
+                      {gridLinkCount === 1 ? '1 link' : `${gridLinkCount} links`}
                     </span>
                   )}
                   {gridPendingInvites > 0 && (
