@@ -3,7 +3,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { PunchlistStateAPI } from '../usePunchlistState'
-import type { PunchlistStatus } from '../types'
 import { PunchlistItemCard } from './PunchlistItemCard'
 import { PunchlistItemDetail } from './PunchlistItemDetail'
 import { PunchlistItemRow } from './PunchlistItemRow'
@@ -12,22 +11,19 @@ import { BulkTextEntry } from './BulkTextEntry'
 import { QuickAddStrip } from './QuickAddStrip'
 
 type SortMode = 'newest' | 'oldest' | 'priority'
-type FilterStatus = 'ALL' | PunchlistStatus
-type FilterPriority = 'ALL' | 'HIGH' | 'MED' | 'LOW' | 'NONE'
 
-const STATUS_OPTIONS: { key: FilterStatus; label: string }[] = [
-  { key: 'ALL', label: 'All' },
+const STATUS_OPTIONS = [
   { key: 'OPEN', label: 'Open' },
   { key: 'ACCEPTED', label: 'In Progress' },
   { key: 'DONE', label: 'Done' },
+  { key: '__unassigned__', label: 'Unassigned' },
 ]
 
-const PRIORITY_OPTIONS: { key: FilterPriority; label: string }[] = [
-  { key: 'ALL', label: 'Any' },
+const PRIORITY_OPTIONS = [
   { key: 'HIGH', label: 'High' },
   { key: 'MED', label: 'Medium' },
   { key: 'LOW', label: 'Low' },
-  { key: 'NONE', label: 'Unassigned' },
+  { key: '__unassigned__', label: 'Unassigned' },
 ]
 
 const PRIORITY_ORDER = { HIGH: 0, MED: 1, LOW: 2 } as const
@@ -42,16 +38,16 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
   const { payload, readOnly } = api
   const searchParams = useSearchParams()
 
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>(() => {
+  const [filterStatuses, setFilterStatuses] = useState<Set<string>>(() => {
     const p = searchParams.get('status')
-    return p && ['ALL', 'OPEN', 'ACCEPTED', 'DONE'].includes(p) ? (p as FilterStatus) : 'ALL'
+    return p && ['OPEN', 'ACCEPTED', 'DONE'].includes(p) ? new Set([p]) : new Set()
   })
-  const [filterPriority, setFilterPriority] = useState<FilterPriority>(() => {
+  const [filterPriorities, setFilterPriorities] = useState<Set<string>>(() => {
     const p = searchParams.get('priority')
-    return p && ['ALL', 'HIGH', 'MED', 'LOW', 'NONE'].includes(p) ? (p as FilterPriority) : 'ALL'
+    return p && ['HIGH', 'MED', 'LOW'].includes(p) ? new Set([p]) : new Set()
   })
   const [filterLocations, setFilterLocations] = useState<Set<string>>(new Set())
-  const [filterAssignee, setFilterAssignee] = useState<string | null>(null)
+  const [filterAssignees, setFilterAssignees] = useState<Set<string>>(new Set())
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortMode>('newest')
   const [showBulkPhotos, setShowBulkPhotos] = useState(false)
@@ -92,14 +88,17 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
   const filtered = useMemo(() => {
     let items = payload.items
 
-    if (filterStatus !== 'ALL') {
-      items = items.filter((i) => i.status === filterStatus)
+    if (filterStatuses.size > 0) {
+      const wantUnassigned = filterStatuses.has('__unassigned__')
+      items = items.filter((i) => filterStatuses.has(i.status) || (wantUnassigned && !i.status))
     }
 
-    if (filterPriority === 'NONE') {
-      items = items.filter((i) => !i.priority)
-    } else if (filterPriority !== 'ALL') {
-      items = items.filter((i) => (i.priority ?? 'LOW') === filterPriority)
+    if (filterPriorities.size > 0) {
+      const wantUnassigned = filterPriorities.has('__unassigned__')
+      items = items.filter((i) => {
+        if (wantUnassigned && !i.priority) return true
+        return filterPriorities.has(i.priority ?? '')
+      })
     }
 
     if (filterLocations.size > 0) {
@@ -112,10 +111,12 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
       })
     }
 
-    if (filterAssignee === '__unassigned__') {
-      items = items.filter((i) => !i.assigneeLabel)
-    } else if (filterAssignee) {
-      items = items.filter((i) => i.assigneeLabel === filterAssignee)
+    if (filterAssignees.size > 0) {
+      const wantUnassigned = filterAssignees.has('__unassigned__')
+      items = items.filter((i) => {
+        if (wantUnassigned && !i.assigneeLabel) return true
+        return filterAssignees.has(i.assigneeLabel)
+      })
     }
 
     if (search.trim()) {
@@ -142,7 +143,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
     }
 
     return sorted
-  }, [payload.items, filterStatus, filterPriority, filterLocations, filterAssignee, search, sort])
+  }, [payload.items, filterStatuses, filterPriorities, filterLocations, filterAssignees, search, sort])
 
   const selectAll = useCallback(() => {
     setSelectedIds(new Set(filtered.map((i) => i.id)))
@@ -321,54 +322,77 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
         </div>
       )}
 
-      {/* Row 2: Status filter pills + Location pills + Assignee chips */}
+      {/* Row 2: Filter pills — all multi-select toggle with Unassigned */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
-        {/* Status filter pills */}
-        <div className="flex gap-1.5">
-          {STATUS_OPTIONS.map((opt) => (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={() => { setFilterStatus(opt.key); setCurrentPage(0) }}
-              aria-label={`Filter by status: ${opt.label}`}
-              aria-pressed={filterStatus === opt.key}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
-                filterStatus === opt.key
-                  ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
-                  : 'border-cream/20 text-cream/50 hover:border-cream/40'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+        {/* Status pills */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Status</span>
+          {STATUS_OPTIONS.map((opt) => {
+            const active = filterStatuses.has(opt.key)
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => {
+                  setFilterStatuses((prev) => {
+                    const next = new Set(prev)
+                    if (next.has(opt.key)) next.delete(opt.key)
+                    else next.add(opt.key)
+                    return next
+                  })
+                  setCurrentPage(0)
+                }}
+                aria-label={`Filter by status: ${opt.label}`}
+                aria-pressed={active}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
+                  active
+                    ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
+                    : 'border-cream/20 text-cream/50 hover:border-cream/40'
+                }`}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
         </div>
 
-        {/* Priority filter pills */}
+        {/* Priority pills */}
         <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
-        <div className="flex gap-1.5">
-          {PRIORITY_OPTIONS.map((opt) => (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={() => { setFilterPriority(opt.key); setCurrentPage(0) }}
-              aria-label={`Filter by priority: ${opt.label}`}
-              aria-pressed={filterPriority === opt.key}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
-                filterPriority === opt.key
-                  ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
-                  : 'border-cream/20 text-cream/50 hover:border-cream/40'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Priority</span>
+          {PRIORITY_OPTIONS.map((opt) => {
+            const active = filterPriorities.has(opt.key)
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => {
+                  setFilterPriorities((prev) => {
+                    const next = new Set(prev)
+                    if (next.has(opt.key)) next.delete(opt.key)
+                    else next.add(opt.key)
+                    return next
+                  })
+                  setCurrentPage(0)
+                }}
+                aria-label={`Filter by priority: ${opt.label}`}
+                aria-pressed={active}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
+                  active
+                    ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
+                    : 'border-cream/20 text-cream/50 hover:border-cream/40'
+                }`}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
         </div>
 
-        {/* Divider + Location multi-select pills (collapsible) */}
-        {(uniqueLocations.length > 0 || payload.items.some((i) => !i.location)) && (() => {
-          const hasUnassignedLoc = payload.items.some((i) => !i.location)
+        {/* Location pills (collapsible) */}
+        <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
+        {(() => {
           const MAX_VISIBLE = 5
-          // Always show active (selected) pills + fill remaining slots from the list
           const activeLocs = uniqueLocations.filter((l) => filterLocations.has(l))
           const inactiveLocs = uniqueLocations.filter((l) => !filterLocations.has(l))
           const remainingSlots = Math.max(0, MAX_VISIBLE - activeLocs.length)
@@ -378,89 +402,84 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
           const hiddenCount = uniqueLocations.length - visibleLocs.length
 
           return (
-            <>
-              <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Location</span>
-                {hasUnassignedLoc && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Location</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterLocations((prev) => {
+                    const next = new Set(prev)
+                    if (next.has('__unassigned__')) next.delete('__unassigned__')
+                    else next.add('__unassigned__')
+                    return next
+                  })
+                  setCurrentPage(0)
+                }}
+                aria-label="Filter by unassigned location"
+                aria-pressed={filterLocations.has('__unassigned__')}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
+                  filterLocations.has('__unassigned__')
+                    ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
+                    : 'border-cream/15 text-cream/40 hover:border-cream/30'
+                }`}
+              >
+                Unassigned
+              </button>
+              {visibleLocs.map((loc) => {
+                const active = filterLocations.has(loc)
+                return (
                   <button
+                    key={loc}
                     type="button"
                     onClick={() => {
                       setFilterLocations((prev) => {
                         const next = new Set(prev)
-                        if (next.has('__unassigned__')) next.delete('__unassigned__')
-                        else next.add('__unassigned__')
+                        if (next.has(loc)) next.delete(loc)
+                        else next.add(loc)
                         return next
                       })
                       setCurrentPage(0)
                     }}
-                    aria-label="Filter by unassigned location"
-                    aria-pressed={filterLocations.has('__unassigned__')}
+                    aria-label={`Filter by location: ${loc}`}
+                    aria-pressed={active}
                     className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
-                      filterLocations.has('__unassigned__')
+                      active
                         ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
                         : 'border-cream/15 text-cream/40 hover:border-cream/30'
                     }`}
                   >
-                    Unassigned
+                    {loc}
                   </button>
-                )}
-                {visibleLocs.map((loc) => {
-                  const active = filterLocations.has(loc)
-                  return (
-                    <button
-                      key={loc}
-                      type="button"
-                      onClick={() => {
-                        setFilterLocations((prev) => {
-                          const next = new Set(prev)
-                          if (next.has(loc)) next.delete(loc)
-                          else next.add(loc)
-                          return next
-                        })
-                        setCurrentPage(0)
-                      }}
-                      aria-label={`Filter by location: ${loc}`}
-                      aria-pressed={active}
-                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
-                        active
-                          ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
-                          : 'border-cream/15 text-cream/40 hover:border-cream/30'
-                      }`}
-                    >
-                      {loc}
-                    </button>
-                  )
-                })}
-                {hiddenCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setExpandedLocations(true)}
-                    className="text-xs px-2.5 py-1 rounded-full border border-cream/15 text-cream/40 hover:border-cream/30 hover:text-cream/60 transition-colors cursor-pointer"
-                  >
-                    +{hiddenCount} more
-                  </button>
-                )}
-                {expandedLocations && uniqueLocations.length > MAX_VISIBLE && (
-                  <button
-                    type="button"
-                    onClick={() => setExpandedLocations(false)}
-                    className="text-xs px-2.5 py-1 text-cream/30 hover:text-cream/50 transition-colors cursor-pointer"
-                  >
-                    Show less
-                  </button>
-                )}
-              </div>
-            </>
+                )
+              })}
+              {hiddenCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setExpandedLocations(true)}
+                  className="text-xs px-2.5 py-1 rounded-full border border-cream/15 text-cream/40 hover:border-cream/30 hover:text-cream/60 transition-colors cursor-pointer"
+                >
+                  +{hiddenCount} more
+                </button>
+              )}
+              {expandedLocations && uniqueLocations.length > MAX_VISIBLE && (
+                <button
+                  type="button"
+                  onClick={() => setExpandedLocations(false)}
+                  className="text-xs px-2.5 py-1 text-cream/30 hover:text-cream/50 transition-colors cursor-pointer"
+                >
+                  Show less
+                </button>
+              )}
+            </div>
           )
         })()}
 
-        {/* Divider + Assignee chips (collapsible) */}
-        {(uniqueAssignees.length > 0 || payload.items.some((i) => !i.assigneeLabel)) && (() => {
-          const hasUnassigned = payload.items.some((i) => !i.assigneeLabel)
+        {/* Assignee pills (collapsible) */}
+        <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
+        {(() => {
           const MAX_VISIBLE = 5
-          const activeAssignees = filterAssignee && filterAssignee !== '__unassigned__' ? uniqueAssignees.filter((a) => a === filterAssignee) : []
-          const inactiveAssignees = uniqueAssignees.filter((a) => a !== filterAssignee)
+          const activeAssignees = uniqueAssignees.filter((a) => filterAssignees.has(a))
+          const inactiveAssignees = uniqueAssignees.filter((a) => !filterAssignees.has(a))
           const remainingSlots = Math.max(0, MAX_VISIBLE - activeAssignees.length)
           const visibleAssignees = expandedAssignees
             ? uniqueAssignees
@@ -468,61 +487,75 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
           const hiddenCount = uniqueAssignees.length - visibleAssignees.length
 
           return (
-            <>
-              <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Assignee</span>
-                {hasUnassigned && (
-                  <button
-                    type="button"
-                    onClick={() => { setFilterAssignee(filterAssignee === '__unassigned__' ? null : '__unassigned__'); setCurrentPage(0) }}
-                    aria-label="Filter by unassigned"
-                    aria-pressed={filterAssignee === '__unassigned__'}
-                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
-                      filterAssignee === '__unassigned__'
-                        ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
-                        : 'border-cream/15 text-cream/40 hover:border-cream/30'
-                    }`}
-                  >
-                    Unassigned
-                  </button>
-                )}
-                {visibleAssignees.map((a) => (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Assignee</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterAssignees((prev) => {
+                    const next = new Set(prev)
+                    if (next.has('__unassigned__')) next.delete('__unassigned__')
+                    else next.add('__unassigned__')
+                    return next
+                  })
+                  setCurrentPage(0)
+                }}
+                aria-label="Filter by unassigned assignee"
+                aria-pressed={filterAssignees.has('__unassigned__')}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
+                  filterAssignees.has('__unassigned__')
+                    ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
+                    : 'border-cream/15 text-cream/40 hover:border-cream/30'
+                }`}
+              >
+                Unassigned
+              </button>
+              {visibleAssignees.map((a) => {
+                const active = filterAssignees.has(a)
+                return (
                   <button
                     key={a}
                     type="button"
-                    onClick={() => { setFilterAssignee(filterAssignee === a ? null : a); setCurrentPage(0) }}
+                    onClick={() => {
+                      setFilterAssignees((prev) => {
+                        const next = new Set(prev)
+                        if (next.has(a)) next.delete(a)
+                        else next.add(a)
+                        return next
+                      })
+                      setCurrentPage(0)
+                    }}
                     aria-label={`Filter by assignee: ${a}`}
-                    aria-pressed={filterAssignee === a}
+                    aria-pressed={active}
                     className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
-                      filterAssignee === a
+                      active
                         ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
                         : 'border-cream/15 text-cream/40 hover:border-cream/30'
                     }`}
                   >
                     {a}
                   </button>
-                ))}
-                {hiddenCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setExpandedAssignees(true)}
-                    className="text-xs px-2.5 py-1 rounded-full border border-cream/15 text-cream/40 hover:border-cream/30 hover:text-cream/60 transition-colors cursor-pointer"
-                  >
-                    +{hiddenCount} more
-                  </button>
-                )}
-                {expandedAssignees && uniqueAssignees.length > MAX_VISIBLE && (
-                  <button
-                    type="button"
-                    onClick={() => setExpandedAssignees(false)}
-                    className="text-xs px-2.5 py-1 text-cream/30 hover:text-cream/50 transition-colors cursor-pointer"
-                  >
-                    Show less
-                  </button>
-                )}
-              </div>
-            </>
+                )
+              })}
+              {hiddenCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setExpandedAssignees(true)}
+                  className="text-xs px-2.5 py-1 rounded-full border border-cream/15 text-cream/40 hover:border-cream/30 hover:text-cream/60 transition-colors cursor-pointer"
+                >
+                  +{hiddenCount} more
+                </button>
+              )}
+              {expandedAssignees && uniqueAssignees.length > MAX_VISIBLE && (
+                <button
+                  type="button"
+                  onClick={() => setExpandedAssignees(false)}
+                  className="text-xs px-2.5 py-1 text-cream/30 hover:text-cream/50 transition-colors cursor-pointer"
+                >
+                  Show less
+                </button>
+              )}
+            </div>
           )
         })()}
       </div>
@@ -563,7 +596,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
 
       {/* Row 4: Active filter summary */}
       <div className="flex flex-wrap items-center gap-2 mb-6">
-        {(filterStatus !== 'ALL' || filterPriority !== 'ALL' || filterLocations.size > 0 || filterAssignee || search.trim()) && (
+        {(filterStatuses.size > 0 || filterPriorities.size > 0 || filterLocations.size > 0 || filterAssignees.size > 0 || search.trim()) && (
           <>
             <span className="text-xs text-cream/40">
               Showing {filtered.length} of {payload.items.length}
@@ -571,7 +604,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
             <span className="mx-0.5 text-cream/20" aria-hidden="true">&middot;</span>
             <button
               type="button"
-              onClick={() => { setFilterStatus('ALL'); setFilterPriority('ALL'); setFilterLocations(new Set()); setFilterAssignee(null); setSearch(''); setCurrentPage(0) }}
+              onClick={() => { setFilterStatuses(new Set()); setFilterPriorities(new Set()); setFilterLocations(new Set()); setFilterAssignees(new Set()); setSearch(''); setCurrentPage(0) }}
               className="text-xs text-sandstone/70 hover:text-sandstone transition-colors"
               aria-label="Clear all filters"
             >
