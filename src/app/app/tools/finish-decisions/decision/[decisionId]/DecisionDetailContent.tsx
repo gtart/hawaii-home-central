@@ -72,6 +72,8 @@ export function DecisionDetailContent({
   const [guidanceOpen, setGuidanceOpen] = useState(false)
   const [moveDecisionOpen, setMoveDecisionOpen] = useState(false)
   const [copyOptionId, setCopyOptionId] = useState<string | null>(null)
+  const [copyResetKey, setCopyResetKey] = useState(0)
+  const [copyCount, setCopyCount] = useState(0)
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
   const addActionsRef = useRef<IdeasBoardAddActions | null>(null)
   const { currentProject } = useProject()
@@ -330,6 +332,13 @@ export function DecisionDetailContent({
   ) {
     if (!foundRoom || !foundDecision) return
 
+    const optionName = foundDecision.options.find((o) => o.id === optionId)?.name || 'option'
+    const targetRoom = v3State.rooms.find((r) => r.id === targetRoomId)
+    const targetName = newSelectionTitle
+      || targetRoom?.decisions.find((d) => d.id === targetDecisionId)?.title
+      || 'Uncategorized'
+    const roomName = targetRoom?.name || 'Room'
+
     setState((prev) => {
       const payload = prev as FinishDecisionsPayloadV3
       const updated = moveOptionHelper(
@@ -342,16 +351,94 @@ export function DecisionDetailContent({
         newSelectionTitle,
       )
       return { ...payload, rooms: updated }
-    })
+    }, [{
+      action: 'moved',
+      entityType: 'option',
+      entityId: optionId,
+      summaryText: `Moved "${optionName}" to ${roomName} → ${targetName}`,
+    }])
+
+    setAssignToast(`Moved to ${roomName} → ${targetName}`)
+    setMoveOptionId(null)
+    setActiveCardId(null)
+    setTimeout(() => setAssignToast(null), 3000)
+  }
+
+  function copyOptionWithinCollection(
+    optionId: string,
+    targetRoomId: string,
+    targetDecisionId: string | null,
+    newSelectionTitle?: string,
+  ) {
+    if (!foundRoom || !foundDecision) return
+    const option = foundDecision.options.find((o) => o.id === optionId)
+    if (!option) return
+
+    const now = new Date().toISOString()
+    const clone: OptionV3 = {
+      ...option,
+      id: crypto.randomUUID(),
+      isSelected: false,
+      votes: undefined,
+      createdAt: now,
+      updatedAt: now,
+    }
 
     const targetRoom = v3State.rooms.find((r) => r.id === targetRoomId)
     const targetName = newSelectionTitle
       || targetRoom?.decisions.find((d) => d.id === targetDecisionId)?.title
       || 'Uncategorized'
     const roomName = targetRoom?.name || 'Room'
-    setAssignToast(`Moved to ${roomName} → ${targetName}`)
-    setMoveOptionId(null)
-    setActiveCardId(null)
+
+    setState((prev) => {
+      const payload = prev as FinishDecisionsPayloadV3
+      let resolvedTargetDecisionId = targetDecisionId
+
+      const newRooms = payload.rooms.map((room) => {
+        if (room.id !== targetRoomId) return room
+
+        let updatedRoom = { ...room }
+
+        if (newSelectionTitle && !resolvedTargetDecisionId) {
+          const newDec: DecisionV3 = {
+            id: crypto.randomUUID(),
+            title: newSelectionTitle,
+            status: 'deciding' as StatusV3,
+            notes: '',
+            options: [],
+            createdAt: now,
+            updatedAt: now,
+          }
+          updatedRoom = { ...updatedRoom, decisions: [...updatedRoom.decisions, newDec] }
+          resolvedTargetDecisionId = newDec.id
+        }
+
+        if (!resolvedTargetDecisionId) {
+          updatedRoom = ensureUncategorizedDecision(updatedRoom)
+          const uncat = findUncategorizedDecision(updatedRoom)!
+          resolvedTargetDecisionId = uncat.id
+        }
+
+        return {
+          ...updatedRoom,
+          decisions: updatedRoom.decisions.map((d) =>
+            d.id === resolvedTargetDecisionId
+              ? { ...d, options: [...d.options, clone], updatedAt: now }
+              : d
+          ),
+          updatedAt: now,
+        }
+      })
+
+      return { ...payload, rooms: newRooms }
+    }, [{
+      action: 'copied',
+      entityType: 'option',
+      entityId: optionId,
+      summaryText: `Copied "${option.name || 'option'}" to ${roomName} → ${targetName}`,
+    }])
+
+    setAssignToast(`Copied to ${roomName} → ${targetName}`)
     setTimeout(() => setAssignToast(null), 3000)
   }
 
@@ -1050,6 +1137,9 @@ export function DecisionDetailContent({
             onMove={(targetRoomId, targetDecisionId, newTitle) => {
               moveOptionCrossRoom(moveOptionId, targetRoomId, targetDecisionId, newTitle)
             }}
+            onCopy={(targetRoomId, targetDecisionId, newTitle) => {
+              copyOptionWithinCollection(moveOptionId, targetRoomId, targetDecisionId, newTitle)
+            }}
             onClose={() => setMoveOptionId(null)}
           />
         ) : null
@@ -1097,17 +1187,18 @@ export function DecisionDetailContent({
         />
       )}
 
-      {/* Copy option to another list */}
+      {/* Copy option to another list (supports copy-to-multiple) */}
       {copyOptionId && collectionId && currentProject && foundRoom && (
         <DestinationPicker
+          key={copyResetKey}
           toolKey="finish_decisions"
           projectId={currentProject.id}
           excludeCollectionId={collectionId}
           requireRoom
           requireDecision
-          actionLabel="Copy"
-          title="Copy option to..."
-          onClose={() => setCopyOptionId(null)}
+          actionLabel={copyCount > 0 ? 'Copy again' : 'Copy'}
+          title={copyCount > 0 ? `Copied ${copyCount} — pick another or close` : 'Copy option to...'}
+          onClose={() => { setCopyOptionId(null); setCopyCount(0) }}
           onConfirm={async (dest) => {
             const result = await transfer({
               sourceCollectionId: collectionId,
@@ -1119,10 +1210,15 @@ export function DecisionDetailContent({
               destinationRoomId: dest.roomId,
               destinationDecisionId: dest.decisionId,
             })
-            setCopyOptionId(null)
             if (result.success) {
+              const n = copyCount + 1
+              setCopyCount(n)
+              setCopyResetKey((k) => k + 1)
               setAssignToast(`Copied to ${result.destinationCollectionTitle || 'destination'}`)
               setTimeout(() => setAssignToast(null), 3000)
+            } else {
+              setCopyOptionId(null)
+              setCopyCount(0)
             }
           }}
         />

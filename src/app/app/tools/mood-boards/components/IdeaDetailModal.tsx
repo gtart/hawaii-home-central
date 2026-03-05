@@ -494,10 +494,10 @@ export function IdeaDetailModal({
                 {showMoveMenu && (
                   <>
                     <div
-                      className="fixed inset-0 z-10"
+                      className="fixed inset-0 z-[65]"
                       onClick={() => setShowMoveMenu(false)}
                     />
-                    <div className="absolute left-0 top-full mt-1 z-20 w-56 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl py-1">
+                    <div className="absolute left-0 bottom-full mb-1 z-[66] w-56 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl py-1">
                       <button
                         type="button"
                         onClick={() => {

@@ -13,6 +13,7 @@ export function MoveIdeaSheet({
   sourceDecisionId,
   rooms,
   onMove,
+  onCopy,
   onClose,
 }: {
   options: OptionV3[]
@@ -20,12 +21,15 @@ export function MoveIdeaSheet({
   sourceDecisionId: string
   rooms: RoomV3[]
   onMove: (targetRoomId: string, targetDecisionId: string | null, newTitle?: string) => void
+  onCopy?: (targetRoomId: string, targetDecisionId: string | null, newTitle?: string) => void
   onClose: () => void
 }) {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(null)
   const [newTitle, setNewTitle] = useState('')
-  const [mode, setMode] = useState<'existing' | 'new'>('existing')
+  const [selectionMode, setSelectionMode] = useState<'existing' | 'new'>('existing')
+  const [action, setAction] = useState<'move' | 'copy'>('move')
+  const [copyCount, setCopyCount] = useState(0)
 
   const isBulk = options.length > 1
   const firstOption = options[0]
@@ -47,16 +51,32 @@ export function MoveIdeaSheet({
     ? selectedRoom.decisions.filter((d) => !isUncategorized(d) && !(selectedRoomId === sourceRoomId && d.id === sourceDecisionId))
     : []
 
-  const canMove = !!selectedRoomId && (mode === 'new' ? !!newTitle.trim() : true)
+  const canAct = !!selectedRoomId && (selectionMode === 'new' ? !!newTitle.trim() : true)
 
-  function handleMove() {
+  function handleAction() {
     if (!selectedRoomId) return
-    if (mode === 'new' && newTitle.trim()) {
-      onMove(selectedRoomId, null, newTitle.trim())
+    const targetDecision = selectionMode === 'new' ? null : selectedDecisionId
+    const title = selectionMode === 'new' && newTitle.trim() ? newTitle.trim() : undefined
+
+    if (action === 'copy' && onCopy) {
+      onCopy(selectedRoomId, targetDecision, title)
+      const n = copyCount + 1
+      setCopyCount(n)
+      // Reset picker for copy-to-multiple
+      setSelectedRoomId(null)
+      setSelectedDecisionId(null)
+      setNewTitle('')
+      setSelectionMode('existing')
     } else {
-      onMove(selectedRoomId, selectedDecisionId)
+      onMove(selectedRoomId, targetDecision, title)
     }
   }
+
+  const headerTitle = copyCount > 0
+    ? `Copied ${copyCount} — pick another or close`
+    : isBulk
+      ? `${action === 'copy' ? 'Copy' : 'Move'} ${options.length} options`
+      : `${action === 'copy' ? 'Copy' : 'Move'} option`
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
@@ -73,9 +93,7 @@ export function MoveIdeaSheet({
         <div className="px-5 pt-3 pb-5 space-y-4">
           {/* Header */}
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium text-cream">
-              {isBulk ? `Move ${options.length} options` : 'Move option'}
-            </h2>
+            <h2 className="text-lg font-medium text-cream">{headerTitle}</h2>
             <button
               type="button"
               onClick={onClose}
@@ -87,8 +105,32 @@ export function MoveIdeaSheet({
             </button>
           </div>
 
+          {/* Move / Copy toggle */}
+          {onCopy && (
+            <div className="flex bg-cream/5 rounded-lg p-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => { setAction('move'); setCopyCount(0) }}
+                className={`flex-1 px-3 py-1.5 rounded-md font-medium transition-colors ${
+                  action === 'move' ? 'bg-sandstone/20 text-sandstone' : 'text-cream/40 hover:text-cream/60'
+                }`}
+              >
+                Move
+              </button>
+              <button
+                type="button"
+                onClick={() => setAction('copy')}
+                className={`flex-1 px-3 py-1.5 rounded-md font-medium transition-colors ${
+                  action === 'copy' ? 'bg-sandstone/20 text-sandstone' : 'text-cream/40 hover:text-cream/60'
+                }`}
+              >
+                Copy to…
+              </button>
+            </div>
+          )}
+
           {/* Idea preview (single mode only) */}
-          {!isBulk && firstOption && (
+          {!isBulk && firstOption && copyCount === 0 && (
             <div className="flex items-center gap-3 bg-cream/5 rounded-lg p-2.5">
               {hero && (
                 <ImageWithFallback
@@ -108,7 +150,7 @@ export function MoveIdeaSheet({
           )}
 
           {/* Bulk preview */}
-          {isBulk && (
+          {isBulk && copyCount === 0 && (
             <div className="bg-cream/5 rounded-lg p-2.5">
               <p className="text-sm text-cream">{options.length} options selected</p>
               <p className="text-[10px] text-cream/30 mt-0.5">
@@ -118,9 +160,9 @@ export function MoveIdeaSheet({
             </div>
           )}
 
-          {/* Step 1: Pick room */}
+          {/* Step 1: Pick selection list (room) */}
           <div>
-            <label className="block text-xs text-cream/50 mb-2">Move to room</label>
+            <label className="block text-xs text-cream/50 mb-2">Selection list</label>
             <div className="grid grid-cols-2 gap-2">
               {availableRooms.map((room) => {
                 const emoji = ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️'
@@ -132,7 +174,7 @@ export function MoveIdeaSheet({
                     onClick={() => {
                       setSelectedRoomId(room.id)
                       setSelectedDecisionId(null)
-                      setMode('existing')
+                      setSelectionMode('existing')
                       setNewTitle('')
                     }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-left transition-all ${
@@ -151,7 +193,7 @@ export function MoveIdeaSheet({
             </div>
           </div>
 
-          {/* Step 2: Pick selection (shown when room selected) */}
+          {/* Step 2: Pick selection (shown when list selected) */}
           {selectedRoom && (
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -159,18 +201,18 @@ export function MoveIdeaSheet({
                 <div className="flex bg-cream/5 rounded p-0.5 text-[10px]">
                   <button
                     type="button"
-                    onClick={() => { setMode('existing'); setNewTitle('') }}
+                    onClick={() => { setSelectionMode('existing'); setNewTitle('') }}
                     className={`px-2 py-0.5 rounded transition-colors ${
-                      mode === 'existing' ? 'bg-sandstone/20 text-sandstone' : 'text-cream/40'
+                      selectionMode === 'existing' ? 'bg-sandstone/20 text-sandstone' : 'text-cream/40'
                     }`}
                   >
                     Existing
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setMode('new'); setSelectedDecisionId(null) }}
+                    onClick={() => { setSelectionMode('new'); setSelectedDecisionId(null) }}
                     className={`px-2 py-0.5 rounded transition-colors ${
-                      mode === 'new' ? 'bg-sandstone/20 text-sandstone' : 'text-cream/40'
+                      selectionMode === 'new' ? 'bg-sandstone/20 text-sandstone' : 'text-cream/40'
                     }`}
                   >
                     + New
@@ -178,7 +220,7 @@ export function MoveIdeaSheet({
                 </div>
               </div>
 
-              {mode === 'existing' ? (
+              {selectionMode === 'existing' ? (
                 <>
                   {availableDecisions.length > 0 ? (
                     <div className="grid grid-cols-2 gap-2">
@@ -204,11 +246,11 @@ export function MoveIdeaSheet({
                       })}
                     </div>
                   ) : (
-                    <p className="text-[11px] text-cream/30">No selections in this room yet.</p>
+                    <p className="text-[11px] text-cream/30">No selections in this list yet.</p>
                   )}
                   {!selectedDecisionId && (
                     <p className="text-[11px] text-cream/30 mt-1.5">
-                      No selection? Option will go to Unsorted in this room.
+                      No selection chosen? Option will go to Unsorted in this list.
                     </p>
                   )}
                 </>
@@ -232,15 +274,18 @@ export function MoveIdeaSheet({
               onClick={onClose}
               className="px-4 py-2 text-sm text-cream/60 hover:text-cream transition-colors"
             >
-              Cancel
+              {copyCount > 0 ? 'Done' : 'Cancel'}
             </button>
             <button
               type="button"
-              onClick={handleMove}
-              disabled={!canMove}
+              onClick={handleAction}
+              disabled={!canAct}
               className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              {isBulk ? `Move ${options.length} options` : 'Move'}
+              {action === 'copy'
+                ? (copyCount > 0 ? 'Copy again' : (isBulk ? `Copy ${options.length}` : 'Copy'))
+                : (isBulk ? `Move ${options.length}` : 'Move')
+              }
             </button>
           </div>
         </div>
