@@ -172,33 +172,37 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
             {grouped.map((group) => (
               <div key={group.label} className="mb-4">
                 <p className="text-[10px] uppercase tracking-wider text-cream/25 mb-2">{group.label}</p>
-                {group.events.map((evt) => (
-                  <Link
-                    key={evt.id}
-                    href={eventHref(evt)}
-                    onClick={onClose}
-                    className="block py-2 -mx-2 px-2 hover:bg-cream/5 rounded transition-colors"
-                  >
-                    <div className="flex items-start gap-2">
+                {group.events.map((evt) => {
+                  const initials = evt.actorName
+                    ? evt.actorName.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2)
+                    : null
+
+                  return (
+                    <Link
+                      key={evt.id}
+                      href={eventHref(evt)}
+                      onClick={onClose}
+                      className="flex items-start gap-2 py-2 -mx-2 px-2 hover:bg-cream/5 rounded transition-colors"
+                    >
+                      {initials ? (
+                        <span className="w-6 h-6 rounded-full bg-sandstone/15 text-sandstone text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                          {initials}
+                        </span>
+                      ) : (
+                        <span className="w-6 h-6 shrink-0" />
+                      )}
                       <span className="text-sm text-cream/60 flex-1 min-w-0 leading-snug">
                         {evt.summaryText}
                       </span>
-                      {!toolKey && (
-                        <span className="text-[10px] text-cream/20 shrink-0 mt-0.5">
-                          {TOOL_LABEL[evt.toolKey] || evt.toolKey}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {evt.actorName && (
-                        <span className="text-[11px] text-cream/30">{evt.actorName.split(' ')[0]}</span>
-                      )}
-                      <span className="text-[11px] text-cream/20">
+                      <span className="text-[10px] text-cream/20 shrink-0 mt-0.5 whitespace-nowrap">
                         {relativeTime(evt.createdAt)}
+                        {!toolKey && (
+                          <span className="ml-1.5 text-cream/15">{TOOL_LABEL[evt.toolKey] || evt.toolKey}</span>
+                        )}
                       </span>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  )
+                })}
               </div>
             ))}
 

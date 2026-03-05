@@ -478,6 +478,7 @@ export function useMoodBoardCollectionState(collectionId: string | null): MoodBo
     (_boardId: string, idea: Omit<Idea, 'id' | 'createdAt' | 'updatedAt'>) => {
       const id = genId('idea')
       const t = now()
+      const label = idea.name || idea.sourceTitle || 'image'
       updateColl((p) => ({
         ...p,
         ideas: [...p.ideas, { ...idea, id, createdAt: t, updatedAt: t } as Idea],
@@ -485,7 +486,7 @@ export function useMoodBoardCollectionState(collectionId: string | null): MoodBo
         action: 'added_item',
         entityType: 'idea',
         entityId: id,
-        summaryText: 'Added to mood board',
+        summaryText: `Added "${label}" to board`,
       }])
       return id
     },
@@ -508,6 +509,8 @@ export function useMoodBoardCollectionState(collectionId: string | null): MoodBo
 
   const deleteIdea = useCallback(
     (_boardId: string, ideaId: string) => {
+      const found = payload.boards[0]?.ideas.find((i) => i.id === ideaId)
+      const label = found?.name || found?.sourceTitle || 'image'
       updateColl((p) => ({
         ...p,
         ideas: p.ideas.filter((i) => i.id !== ideaId),
@@ -515,7 +518,7 @@ export function useMoodBoardCollectionState(collectionId: string | null): MoodBo
         action: 'removed_item',
         entityType: 'idea',
         entityId: ideaId,
-        summaryText: 'Removed from mood board',
+        summaryText: `Removed "${label}" from board`,
       }])
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

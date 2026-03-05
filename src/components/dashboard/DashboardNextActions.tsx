@@ -18,20 +18,22 @@ function deriveActions(data: DashboardResponse): ActionItem[] {
   const totalOpen = fixLists.reduce((s, l) => s + l.openCount, 0)
   if (totalHigh > 0) {
     const urgentList = fixLists.find((l) => l.highPriorityCount > 0)
+    const base = urgentList ? `/app/tools/punchlist/${urgentList.id}` : '/app/tools/punchlist'
     actions.push({
       label: `Review ${totalHigh} high-priority fix${totalHigh !== 1 ? 'es' : ''}`,
-      href: urgentList ? `/app/tools/punchlist/${urgentList.id}` : '/app/tools/punchlist',
+      href: `${base}?priority=HIGH`,
     })
   } else if (totalStale > 0) {
     const staleList = fixLists.find((l) => l.staleCount > 0)
+    const base = staleList ? `/app/tools/punchlist/${staleList.id}` : '/app/tools/punchlist'
     actions.push({
       label: `${totalStale} stale fix${totalStale !== 1 ? 'es' : ''} need attention`,
-      href: staleList ? `/app/tools/punchlist/${staleList.id}` : '/app/tools/punchlist',
+      href: `${base}?status=OPEN`,
     })
   } else if (totalOpen > 0) {
     actions.push({
       label: `${totalOpen} open fix${totalOpen !== 1 ? 'es' : ''} to work through`,
-      href: '/app/tools/punchlist',
+      href: '/app/tools/punchlist?status=OPEN',
     })
   }
 
@@ -41,14 +43,15 @@ function deriveActions(data: DashboardResponse): ActionItem[] {
   const totalDeciding = selLists.reduce((s, l) => s + l.decidingCount, 0)
   if (totalNotStarted > 0) {
     const urgentList = selLists.find((l) => l.notStartedCount > 0)
+    const base = urgentList ? `/app/tools/finish-decisions/${urgentList.id}` : '/app/tools/finish-decisions'
     actions.push({
       label: `Start ${totalNotStarted} selection${totalNotStarted !== 1 ? 's' : ''} (no options yet)`,
-      href: urgentList ? `/app/tools/finish-decisions/${urgentList.id}` : '/app/tools/finish-decisions',
+      href: `${base}?status=deciding`,
     })
   } else if (totalDeciding > 0) {
     actions.push({
       label: `${totalDeciding} selection${totalDeciding !== 1 ? 's' : ''} still deciding`,
-      href: '/app/tools/finish-decisions',
+      href: '/app/tools/finish-decisions?status=deciding',
     })
   }
 
@@ -64,18 +67,6 @@ function deriveActions(data: DashboardResponse): ActionItem[] {
     })
   }
 
-  // Shared links
-  const meta = data.toolMeta
-  const totalLinks = (meta?.punchlist?.linkEnabledCount ?? 0)
-    + (meta?.finish_decisions?.linkEnabledCount ?? 0)
-    + (meta?.mood_boards?.linkEnabledCount ?? 0)
-    + (meta?.before_you_sign?.linkEnabledCount ?? 0)
-  if (totalLinks > 0 && actions.length < 3) {
-    actions.push({
-      label: `${totalLinks} list${totalLinks !== 1 ? 's' : ''} shared by link`,
-      href: '/app',
-    })
-  }
 
   return actions.slice(0, 4)
 }

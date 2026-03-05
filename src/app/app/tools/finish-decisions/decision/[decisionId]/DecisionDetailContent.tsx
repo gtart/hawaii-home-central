@@ -274,7 +274,7 @@ export function DecisionDetailContent({
       action: 'commented',
       entityType: 'decision',
       entityId: decisionId,
-      summaryText: `${comment.authorName} commented on "${foundDecision.title}": "${comment.text.length > 60 ? comment.text.slice(0, 60) + '…' : comment.text}"`,
+      summaryText: `Commented on "${foundDecision.title}": "${comment.text.length > 60 ? comment.text.slice(0, 60) + '…' : comment.text}"`,
     }])
   }
 

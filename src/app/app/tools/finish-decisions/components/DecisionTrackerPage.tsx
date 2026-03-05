@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { Input } from '@/components/ui/Input'
@@ -95,8 +96,14 @@ export function DecisionTrackerPage({
   collectionId?: string
 }) {
   const { data: session } = useSession()
+  const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilters, setStatusFilters] = useState<StatusV3[]>([])
+  const [statusFilters, setStatusFilters] = useState<StatusV3[]>(() => {
+    const p = searchParams.get('status')
+    if (!p) return []
+    const valid: StatusV3[] = ['deciding', 'selected', 'ordered', 'done']
+    return p.split(',').filter((s): s is StatusV3 => valid.includes(s as StatusV3))
+  })
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [ideasModalOpen, setIdeasModalOpen] = useState(false)
   const [toast, setToast] = useState<{ message: string; kitId: string; roomId: string } | null>(null)

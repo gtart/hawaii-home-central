@@ -77,15 +77,14 @@ export async function PATCH(
     data,
   })
 
-  // Emit activity event for status changes
-  if (body.status && body.status !== item.status) {
-    const action = body.status === 'SORTED' ? 'sorted' : body.status === 'DISMISSED' ? 'dismissed' : 'updated'
+  // Emit activity event for status changes (skip dismissed — low-value noise)
+  if (body.status && body.status !== item.status && body.status !== 'DISMISSED') {
     const label = item.title || item.sourceUrl || 'item'
     writeActivityEvents([{
       projectId,
       toolKey: 'inbox',
-      action,
-      summaryText: `${action === 'sorted' ? 'Sorted' : action === 'dismissed' ? 'Dismissed' : 'Updated'} inbox ${item.type.toLowerCase()}: ${label}`,
+      action: body.status === 'SORTED' ? 'sorted' : 'updated',
+      summaryText: `${body.status === 'SORTED' ? 'Sorted' : 'Updated'} ${item.type.toLowerCase()}: "${label}"`,
       actorUserId: userId,
     }]).catch(() => {})
   }

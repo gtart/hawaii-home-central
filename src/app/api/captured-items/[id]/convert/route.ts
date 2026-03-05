@@ -116,7 +116,7 @@ export async function POST(
       projectId,
       toolKey: 'inbox',
       action: 'sorted',
-      summaryText: `Sorted ${item.type.toLowerCase()} to ${toolLabel}: ${collTitle}`,
+      summaryText: `Sorted ${item.type.toLowerCase()} to ${collTitle}`,
       actorUserId: userId,
     },
     {

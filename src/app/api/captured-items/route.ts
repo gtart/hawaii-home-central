@@ -80,7 +80,7 @@ export async function POST(request: Request) {
       projectId,
       toolKey: 'inbox',
       action: 'captured',
-      summaryText: `Added note to inbox`,
+      summaryText: `Captured note: "${note.slice(0, 40).trim()}${note.length > 40 ? '…' : ''}"`,
       actorUserId: userId,
     }]).catch(() => {})
 

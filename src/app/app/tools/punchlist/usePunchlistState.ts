@@ -272,7 +272,7 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
         action: 'commented',
         entityType: 'item',
         entityId: itemId,
-        summaryText: `${comment.authorName} commented on "${title}": "${snippet}"`,
+        summaryText: `Commented on "${title}": "${snippet}"`,
       }]
       setState((prev) => ({
         ...prev,

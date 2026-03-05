@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import type { PunchlistStateAPI } from '../usePunchlistState'
 import type { PunchlistStatus } from '../types'
 import { PunchlistItemCard } from './PunchlistItemCard'
@@ -12,12 +13,20 @@ import { QuickAddStrip } from './QuickAddStrip'
 
 type SortMode = 'newest' | 'oldest' | 'priority'
 type FilterStatus = 'ALL' | PunchlistStatus
+type FilterPriority = 'ALL' | 'HIGH' | 'MED' | 'LOW'
 
 const STATUS_OPTIONS: { key: FilterStatus; label: string }[] = [
   { key: 'ALL', label: 'All' },
   { key: 'OPEN', label: 'Open' },
   { key: 'ACCEPTED', label: 'In Progress' },
   { key: 'DONE', label: 'Done' },
+]
+
+const PRIORITY_OPTIONS: { key: FilterPriority; label: string }[] = [
+  { key: 'ALL', label: 'Any' },
+  { key: 'HIGH', label: 'High' },
+  { key: 'MED', label: 'Medium' },
+  { key: 'LOW', label: 'Low' },
 ]
 
 const PRIORITY_ORDER = { HIGH: 0, MED: 1, LOW: 2 } as const
@@ -30,7 +39,16 @@ interface Props {
 
 export function PunchlistPage({ api, collectionId, projectId }: Props) {
   const { payload, readOnly } = api
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('ALL')
+  const searchParams = useSearchParams()
+
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>(() => {
+    const p = searchParams.get('status')
+    return p && ['ALL', 'OPEN', 'ACCEPTED', 'DONE'].includes(p) ? (p as FilterStatus) : 'ALL'
+  })
+  const [filterPriority, setFilterPriority] = useState<FilterPriority>(() => {
+    const p = searchParams.get('priority')
+    return p && ['ALL', 'HIGH', 'MED', 'LOW'].includes(p) ? (p as FilterPriority) : 'ALL'
+  })
   const [filterLocations, setFilterLocations] = useState<Set<string>>(new Set())
   const [filterAssignee, setFilterAssignee] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -56,6 +74,10 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
 
     if (filterStatus !== 'ALL') {
       items = items.filter((i) => i.status === filterStatus)
+    }
+
+    if (filterPriority !== 'ALL') {
+      items = items.filter((i) => (i.priority ?? 'LOW') === filterPriority)
     }
 
     if (filterLocations.size > 0) {
@@ -90,7 +112,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
     }
 
     return sorted
-  }, [payload.items, filterStatus, filterLocations, filterAssignee, search, sort])
+  }, [payload.items, filterStatus, filterPriority, filterLocations, filterAssignee, search, sort])
 
   const counts = useMemo(() => {
     const c = { OPEN: 0, ACCEPTED: 0, DONE: 0, total: payload.items.length }
@@ -278,6 +300,27 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
           ))}
         </div>
 
+        {/* Priority filter pills */}
+        <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
+        <div className="flex gap-1.5">
+          {PRIORITY_OPTIONS.map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => setFilterPriority(opt.key)}
+              aria-label={`Filter by priority: ${opt.label}`}
+              aria-pressed={filterPriority === opt.key}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
+                filterPriority === opt.key
+                  ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
+                  : 'border-cream/20 text-cream/50 hover:border-cream/40'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
         {/* Divider + Location multi-select pills (collapsible) */}
         {uniqueLocations.length > 0 && (() => {
           const MAX_VISIBLE = 5
@@ -436,7 +479,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
 
       {/* Row 4: Active filter summary */}
       <div className="flex flex-wrap items-center gap-2 mb-6">
-        {(filterStatus !== 'ALL' || filterLocations.size > 0 || filterAssignee || search.trim()) && (
+        {(filterStatus !== 'ALL' || filterPriority !== 'ALL' || filterLocations.size > 0 || filterAssignee || search.trim()) && (
           <>
             <span className="text-xs text-cream/40">
               Showing {filtered.length} of {payload.items.length}
@@ -444,7 +487,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
             <span className="mx-0.5 text-cream/20" aria-hidden="true">&middot;</span>
             <button
               type="button"
-              onClick={() => { setFilterStatus('ALL'); setFilterLocations(new Set()); setFilterAssignee(null); setSearch('') }}
+              onClick={() => { setFilterStatus('ALL'); setFilterPriority('ALL'); setFilterLocations(new Set()); setFilterAssignee(null); setSearch('') }}
               className="text-xs text-sandstone/70 hover:text-sandstone transition-colors"
               aria-label="Clear all filters"
             >
