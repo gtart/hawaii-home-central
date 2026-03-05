@@ -9,6 +9,9 @@ import { PunchlistItemRow } from './PunchlistItemRow'
 import { BulkPhotoUpload } from './BulkPhotoUpload'
 import { BulkTextEntry } from './BulkTextEntry'
 import { QuickAddStrip } from './QuickAddStrip'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { DestinationPicker } from '@/components/app/DestinationPicker'
+import { useCollectionTransfer } from '@/hooks/useCollectionTransfer'
 
 type SortMode = 'newest' | 'oldest' | 'priority'
 
@@ -58,6 +61,10 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkMenuOpen, setBulkMenuOpen] = useState<'status' | 'assignee' | 'location' | 'priority' | null>(null)
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
+  const [bulkMoveOpen, setBulkMoveOpen] = useState(false)
+  const { transfer, isTransferring } = useCollectionTransfer()
+  const [bulkToast, setBulkToast] = useState<string | null>(null)
   const [pageSize, setPageSize] = useState(25)
   const [currentPage, setCurrentPage] = useState(0)
 
@@ -849,30 +856,45 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                 {bulkMenuOpen === 'assignee' && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
-                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 py-1 min-w-[140px] max-h-48 overflow-y-auto">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          api.bulkUpdateItems(Array.from(selectedIds), { assigneeLabel: '' })
-                          deselectAll()
-                        }}
-                        className="w-full text-left px-3 py-2 text-xs text-cream/40 italic hover:bg-cream/5 transition-colors"
-                      >
-                        Unassigned
-                      </button>
-                      {uniqueAssignees.map((a) => (
+                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 min-w-[180px] max-h-56 overflow-y-auto">
+                      <div className="p-2 border-b border-cream/10">
+                        <input
+                          autoFocus
+                          placeholder="Type name..."
+                          className="w-full bg-basalt border border-cream/20 rounded px-2 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                              api.bulkUpdateItems(Array.from(selectedIds), { assigneeLabel: e.currentTarget.value.trim() })
+                              deselectAll()
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="py-1">
                         <button
-                          key={a}
                           type="button"
                           onClick={() => {
-                            api.bulkUpdateItems(Array.from(selectedIds), { assigneeLabel: a })
+                            api.bulkUpdateItems(Array.from(selectedIds), { assigneeLabel: '' })
                             deselectAll()
                           }}
-                          className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                          className="w-full text-left px-3 py-2 text-xs text-cream/40 italic hover:bg-cream/5 transition-colors"
                         >
-                          {a}
+                          Unassigned
                         </button>
-                      ))}
+                        {uniqueAssignees.map((a) => (
+                          <button
+                            key={a}
+                            type="button"
+                            onClick={() => {
+                              api.bulkUpdateItems(Array.from(selectedIds), { assigneeLabel: a })
+                              deselectAll()
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                          >
+                            {a}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </>
                 )}
@@ -890,20 +912,45 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                 {bulkMenuOpen === 'location' && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
-                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 py-1 min-w-[140px] max-h-48 overflow-y-auto">
-                      {uniqueLocations.map((loc) => (
+                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 min-w-[180px] max-h-56 overflow-y-auto">
+                      <div className="p-2 border-b border-cream/10">
+                        <input
+                          autoFocus
+                          placeholder="Type location..."
+                          className="w-full bg-basalt border border-cream/20 rounded px-2 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                              api.bulkUpdateItems(Array.from(selectedIds), { location: e.currentTarget.value.trim() })
+                              deselectAll()
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="py-1">
                         <button
-                          key={loc}
                           type="button"
                           onClick={() => {
-                            api.bulkUpdateItems(Array.from(selectedIds), { location: loc })
+                            api.bulkUpdateItems(Array.from(selectedIds), { location: '' })
                             deselectAll()
                           }}
-                          className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                          className="w-full text-left px-3 py-2 text-xs text-cream/40 italic hover:bg-cream/5 transition-colors"
                         >
-                          {loc}
+                          Unassigned
                         </button>
-                      ))}
+                        {uniqueLocations.map((loc) => (
+                          <button
+                            key={loc}
+                            type="button"
+                            onClick={() => {
+                              api.bulkUpdateItems(Array.from(selectedIds), { location: loc })
+                              deselectAll()
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                          >
+                            {loc}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </>
                 )}
@@ -938,6 +985,26 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                     </div>
                   </>
                 )}
+              {/* Delete */}
+              <button
+                type="button"
+                onClick={() => setBulkDeleteConfirm(true)}
+                className="text-xs px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400/70 hover:bg-red-500/20 hover:text-red-400 transition-colors"
+              >
+                Delete
+              </button>
+
+              {/* Move to */}
+              {collectionId && projectId && (
+                <button
+                  type="button"
+                  onClick={() => setBulkMoveOpen(true)}
+                  disabled={isTransferring}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors disabled:opacity-50"
+                >
+                  {isTransferring ? 'Moving...' : 'Move to...'}
+                </button>
+              )}
               </div>
             </div>
 
@@ -949,6 +1016,64 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
               Deselect all
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Bulk delete confirm */}
+      {bulkDeleteConfirm && (
+        <ConfirmDialog
+          title={`Delete ${selectedIds.size} item${selectedIds.size !== 1 ? 's' : ''}?`}
+          message="This cannot be undone."
+          confirmLabel="Delete"
+          confirmVariant="danger"
+          onConfirm={() => {
+            Array.from(selectedIds).forEach((id) => api.deleteItem(id))
+            deselectAll()
+            setBulkDeleteConfirm(false)
+          }}
+          onCancel={() => setBulkDeleteConfirm(false)}
+        />
+      )}
+
+      {/* Bulk move destination picker */}
+      {bulkMoveOpen && collectionId && projectId && (
+        <DestinationPicker
+          toolKey="punchlist"
+          projectId={projectId}
+          excludeCollectionId={collectionId}
+          actionLabel={`Move ${selectedIds.size} item${selectedIds.size !== 1 ? 's' : ''}`}
+          title="Move items to..."
+          onClose={() => setBulkMoveOpen(false)}
+          onConfirm={async (dest) => {
+            const ids = Array.from(selectedIds)
+            let moved = 0
+            for (const id of ids) {
+              const result = await transfer({
+                sourceCollectionId: collectionId,
+                destinationCollectionId: dest.collectionId,
+                operation: 'move',
+                entityType: 'punchlist_item',
+                entityId: id,
+              })
+              if (result.success) {
+                api.deleteItem(id)
+                moved++
+              }
+            }
+            deselectAll()
+            setBulkMoveOpen(false)
+            if (moved > 0) {
+              setBulkToast(`Moved ${moved} item${moved !== 1 ? 's' : ''} to ${dest.collectionTitle}`)
+              setTimeout(() => setBulkToast(null), 4000)
+            }
+          }}
+        />
+      )}
+
+      {/* Bulk toast */}
+      {bulkToast && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-basalt-50 border border-cream/15 rounded-lg px-4 py-2.5 text-sm text-cream shadow-xl">
+          {bulkToast}
         </div>
       )}
 

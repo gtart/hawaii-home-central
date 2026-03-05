@@ -21,6 +21,9 @@ import { displayUrl } from '@/lib/finishDecisionsImages'
 import { OnboardingView } from './OnboardingView'
 import { IdeasPackModal } from './IdeasPackModal'
 import { buildDecisionHref } from '../lib/routing'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { DestinationPicker } from '@/components/app/DestinationPicker'
+import { useCollectionTransfer } from '@/hooks/useCollectionTransfer'
 
 function getDecisionThumb(decision: DecisionV3): string | null {
   // 1. Final/selected option hero image
@@ -81,6 +84,7 @@ export function DecisionTrackerPage({
   emojiMap = {},
   ownedKitIds = [],
   collectionId,
+  projectId,
 }: {
   rooms: RoomV3[]
   onBatchAddRooms: (selections: RoomSelection[]) => void
@@ -94,6 +98,7 @@ export function DecisionTrackerPage({
   emojiMap?: Record<string, string>
   ownedKitIds?: string[]
   collectionId?: string
+  projectId?: string
 }) {
   const { data: session } = useSession()
   const searchParams = useSearchParams()
@@ -112,6 +117,14 @@ export function DecisionTrackerPage({
   const [addInputVisible, setAddInputVisible] = useState(false)
   const [replyTexts, setReplyTexts] = useState<Record<string, string>>({})
   const [replyOpenId, setReplyOpenId] = useState<string | null>(null)
+
+  // Bulk select state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkMenuOpen, setBulkMenuOpen] = useState<'status' | 'location' | null>(null)
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
+  const [bulkMoveOpen, setBulkMoveOpen] = useState(false)
+  const [bulkToast, setBulkToast] = useState<string | null>(null)
+  const { transfer, isTransferring } = useCollectionTransfer()
 
   const [sortKey, setSortKey] = useState<SortKey>(() => {
     try {
@@ -191,6 +204,26 @@ export function DecisionTrackerPage({
       }
     })
   }, [filteredDecisions, sortKey])
+
+  // Bulk select helpers
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const deselectAll = useCallback(() => {
+    setSelectedIds(new Set())
+    setBulkMenuOpen(null)
+  }, [])
+
+  const uniqueLocations = useMemo(() => {
+    const locs = new Set(decisions.map((d) => d.location).filter(Boolean) as string[])
+    return Array.from(locs).sort()
+  }, [decisions])
 
   // Total stats
   const isFiltering = searchQuery.trim() !== '' || statusFilters.length > 0
@@ -507,6 +540,22 @@ export function DecisionTrackerPage({
               <table className="hidden md:table w-full border-collapse">
                 <thead>
                   <tr className="text-[11px] text-cream/40 uppercase tracking-wider">
+                    {!readOnly && (
+                      <th className="w-8 pb-2 pl-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.size > 0 && selectedIds.size === sortedDecisions.length}
+                          onChange={() => {
+                            if (selectedIds.size === sortedDecisions.length) {
+                              deselectAll()
+                            } else {
+                              setSelectedIds(new Set(sortedDecisions.map((d) => d.id)))
+                            }
+                          }}
+                          className="accent-sandstone w-3.5 h-3.5 cursor-pointer"
+                        />
+                      </th>
+                    )}
                     <th className="text-left font-medium pb-2 pl-2 w-12" />
                     <th className="text-left font-medium pb-2">Selection</th>
                     <th className="text-left font-medium pb-2 w-28">Location</th>
@@ -527,6 +576,16 @@ export function DecisionTrackerPage({
 
                     return (
                       <tr key={decision.id} className="group border-t border-cream/5 first:border-t-0 hover:bg-cream/[0.02] transition-colors">
+                        {!readOnly && (
+                          <td className="py-2.5 pl-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(decision.id)}
+                              onChange={() => toggleSelect(decision.id)}
+                              className="accent-sandstone w-3.5 h-3.5 cursor-pointer"
+                            />
+                          </td>
+                        )}
                         <td className="py-2.5 pl-2">
                           <Link href={buildDecisionHref({ decisionId: decision.id, collectionId })}>
                             {thumbUrl ? (
@@ -608,9 +667,20 @@ export function DecisionTrackerPage({
 
                   return (
                     <div key={decision.id} className="bg-basalt-50 rounded-lg border border-cream/10 hover:border-sandstone/30 transition-colors">
+                      <div className="flex items-center gap-0">
+                        {!readOnly && (
+                          <div className="pl-3 py-3 shrink-0">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(decision.id)}
+                              onChange={() => toggleSelect(decision.id)}
+                              className="accent-sandstone w-4 h-4 cursor-pointer"
+                            />
+                          </div>
+                        )}
                       <Link
                         href={buildDecisionHref({ decisionId: decision.id, collectionId })}
-                        className="flex items-center gap-3 px-4 py-3 group"
+                        className="flex items-center gap-3 px-4 py-3 group flex-1 min-w-0"
                       >
                         {thumbUrl ? (
                           <img src={thumbUrl} alt="" className="w-10 h-10 rounded object-cover shrink-0" loading="lazy" />
@@ -669,6 +739,7 @@ export function DecisionTrackerPage({
                           <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </Link>
+                      </div>
 
                       {(lastComment || isReplyOpen) && (
                         <div className="px-4 pb-3 border-t border-cream/5">
@@ -756,6 +827,226 @@ export function DecisionTrackerPage({
           )}
 
         </>
+      )}
+
+      {/* Bulk Action Bar */}
+      {selectedIds.size > 0 && !readOnly && (
+        <div
+          className="fixed left-0 right-0 z-40 bg-basalt-50 border-t border-cream/15 shadow-2xl px-4 py-3"
+          style={{ bottom: 'calc(var(--bottom-nav-offset, 0rem))' }}
+        >
+          <div className="max-w-4xl mx-auto flex items-center gap-3 flex-wrap">
+            <span className="text-sm text-cream/70 font-medium shrink-0">
+              {selectedIds.size} selected
+            </span>
+
+            <div className="flex items-center gap-2 flex-wrap flex-1">
+              {/* Status */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setBulkMenuOpen(bulkMenuOpen === 'status' ? null : 'status')}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                >
+                  Status
+                </button>
+                {bulkMenuOpen === 'status' && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
+                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 py-1 min-w-[130px]">
+                      {(['deciding', 'selected', 'ordered', 'done'] as StatusV3[]).map((s) => {
+                        const cfg = STATUS_CONFIG_V3[s]
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => {
+                              if (!room) return
+                              const idSet = selectedIds
+                              const updated = room.decisions.map((d) =>
+                                idSet.has(d.id) ? { ...d, status: s, updatedAt: new Date().toISOString() } : d
+                              )
+                              onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+                              deselectAll()
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                          >
+                            {cfg.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Location */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setBulkMenuOpen(bulkMenuOpen === 'location' ? null : 'location')}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                >
+                  Location
+                </button>
+                {bulkMenuOpen === 'location' && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
+                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 min-w-[180px] max-h-56 overflow-y-auto">
+                      <div className="p-2 border-b border-cream/10">
+                        <input
+                          autoFocus
+                          placeholder="Type location..."
+                          className="w-full bg-basalt border border-cream/20 rounded px-2 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                              if (!room) return
+                              const val = e.currentTarget.value.trim()
+                              const idSet = selectedIds
+                              const updated = room.decisions.map((d) =>
+                                idSet.has(d.id) ? { ...d, location: val, updatedAt: new Date().toISOString() } : d
+                              )
+                              onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+                              deselectAll()
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="py-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!room) return
+                            const idSet = selectedIds
+                            const updated = room.decisions.map((d) =>
+                              idSet.has(d.id) ? { ...d, location: '', updatedAt: new Date().toISOString() } : d
+                            )
+                            onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+                            deselectAll()
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs text-cream/40 italic hover:bg-cream/5 transition-colors"
+                        >
+                          Unassigned
+                        </button>
+                        {uniqueLocations.map((loc) => (
+                          <button
+                            key={loc}
+                            type="button"
+                            onClick={() => {
+                              if (!room) return
+                              const idSet = selectedIds
+                              const updated = room.decisions.map((d) =>
+                                idSet.has(d.id) ? { ...d, location: loc, updatedAt: new Date().toISOString() } : d
+                              )
+                              onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+                              deselectAll()
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                          >
+                            {loc}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Delete */}
+              <button
+                type="button"
+                onClick={() => setBulkDeleteConfirm(true)}
+                className="text-xs px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400/70 hover:bg-red-500/20 hover:text-red-400 transition-colors"
+              >
+                Delete
+              </button>
+
+              {/* Move to */}
+              {collectionId && projectId && (
+                <button
+                  type="button"
+                  onClick={() => setBulkMoveOpen(true)}
+                  disabled={isTransferring}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors disabled:opacity-50"
+                >
+                  {isTransferring ? 'Moving...' : 'Move to...'}
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={deselectAll}
+              className="text-xs text-cream/30 hover:text-cream/50 transition-colors shrink-0"
+            >
+              Deselect all
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk delete confirm */}
+      {bulkDeleteConfirm && (
+        <ConfirmDialog
+          title={`Delete ${selectedIds.size} selection${selectedIds.size !== 1 ? 's' : ''}?`}
+          message="This cannot be undone. All options and comments will be permanently deleted."
+          confirmLabel="Delete"
+          confirmVariant="danger"
+          onConfirm={() => {
+            if (!room) return
+            const idSet = selectedIds
+            const updated = room.decisions.filter((d) => !idSet.has(d.id))
+            onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+            deselectAll()
+            setBulkDeleteConfirm(false)
+          }}
+          onCancel={() => setBulkDeleteConfirm(false)}
+        />
+      )}
+
+      {/* Bulk move destination picker */}
+      {bulkMoveOpen && collectionId && projectId && (
+        <DestinationPicker
+          toolKey="finish_decisions"
+          projectId={projectId}
+          excludeCollectionId={collectionId}
+          actionLabel={`Move ${selectedIds.size} selection${selectedIds.size !== 1 ? 's' : ''}`}
+          title="Move selections to..."
+          onClose={() => setBulkMoveOpen(false)}
+          onConfirm={async (dest) => {
+            const ids = Array.from(selectedIds)
+            let moved = 0
+            for (const id of ids) {
+              const result = await transfer({
+                sourceCollectionId: collectionId,
+                destinationCollectionId: dest.collectionId,
+                operation: 'move',
+                entityType: 'decision',
+                entityId: id,
+              })
+              if (result.success) moved++
+            }
+            // Remove moved items from local state
+            if (room && moved > 0) {
+              const movedSet = new Set(ids.slice(0, moved))
+              const updated = room.decisions.filter((d) => !movedSet.has(d.id))
+              onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+            }
+            deselectAll()
+            setBulkMoveOpen(false)
+            if (moved > 0) {
+              setBulkToast(`Moved ${moved} selection${moved !== 1 ? 's' : ''} to ${dest.collectionTitle}`)
+              setTimeout(() => setBulkToast(null), 4000)
+            }
+          }}
+        />
+      )}
+
+      {/* Bulk toast */}
+      {bulkToast && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-basalt-50 border border-cream/15 rounded-lg px-4 py-2.5 text-sm text-cream shadow-xl">
+          {bulkToast}
+        </div>
       )}
 
       {/* Mobile FAB — Add Selection */}

@@ -577,6 +577,7 @@ export function ToolContent({
             emojiMap={emojiMap}
             ownedKitIds={v3State.ownedKitIds || []}
             collectionId={collectionId}
+            projectId={collResult.projectId || currentProject?.id}
           />
         ) : !isLoaded ? (
           <div className="text-center py-12 text-cream/50">
