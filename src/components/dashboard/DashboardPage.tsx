@@ -41,20 +41,20 @@ export function DashboardPage() {
         </div>
 
         {/* Quick Capture + Inbox + Activity row */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-2 sm:gap-3 mb-6">
           <button
             type="button"
             onClick={() => setShowCapture(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors shadow-sm"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors shadow-sm whitespace-nowrap"
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
             </svg>
             Quick Capture
           </button>
           <Link
             href="/app/inbox"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-cream/5 border border-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/10 hover:text-cream/80 transition-colors"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-cream/5 border border-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/10 hover:text-cream/80 transition-colors whitespace-nowrap"
           >
             Inbox
             {inboxCount > 0 && (
@@ -66,9 +66,9 @@ export function DashboardPage() {
           <button
             type="button"
             onClick={() => setShowActivity(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-cream/5 border border-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/10 hover:text-cream/80 transition-colors"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-cream/5 border border-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/10 hover:text-cream/80 transition-colors whitespace-nowrap"
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
