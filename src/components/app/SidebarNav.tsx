@@ -210,7 +210,7 @@ export function SidebarNav() {
         })}
 
         <p className="px-4 pt-4 pb-1 text-[10px] uppercase tracking-wider text-cream/20">
-          Finding Pros
+          Working with Pros
         </p>
         {FINDING_PROS_ITEMS.map((item) => {
           const active = isActive(pathname, item.href, item.matchMode)
@@ -229,6 +229,16 @@ export function SidebarNav() {
             </Link>
           )
         })}
+        {/* Pro Directory — coming soon */}
+        <span className="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm text-cream/20 cursor-default">
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="9" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="flex-1">Pro Directory</span>
+          <span className="text-[9px] text-cream/15">Soon</span>
+        </span>
       </div>
     </nav>
     </>

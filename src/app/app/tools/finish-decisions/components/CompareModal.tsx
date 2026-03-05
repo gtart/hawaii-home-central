@@ -67,7 +67,7 @@ export function CompareModal({
                       <>
                         <ImageWithFallback
                           src={displayUrl(heroSrc)}
-                          alt={opt.name || 'Decision'}
+                          alt={opt.name || 'Selection'}
                           className="w-full h-full object-cover"
                           fallback={
                             <div className="w-full h-full flex items-center justify-center bg-basalt-50">
@@ -84,7 +84,7 @@ export function CompareModal({
                     ) : linkPreview ? (
                       <ImageWithFallback
                         src={displayUrl(linkPreview)}
-                        alt={opt.name || 'Decision'}
+                        alt={opt.name || 'Selection'}
                         className="w-full h-full object-cover"
                         fallback={
                           <div className="w-full h-full flex items-center justify-center bg-basalt-50">

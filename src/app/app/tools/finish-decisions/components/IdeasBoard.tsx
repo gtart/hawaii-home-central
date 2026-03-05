@@ -143,7 +143,7 @@ function IdeaCardTile({
         <div className="relative w-full aspect-[4/3]">
           <ImageWithFallback
             src={displayUrl(heroSrc || linkPreview || '')}
-            alt={option.name || 'Decision'}
+            alt={option.name || 'Selection'}
             className="w-full h-full object-cover"
             fallback={
               <div className="w-full h-full flex items-center justify-center bg-basalt">

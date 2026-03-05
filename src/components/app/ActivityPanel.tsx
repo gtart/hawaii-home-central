@@ -191,9 +191,9 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — transparent so the page stays visible */}
       <div
-        className="fixed inset-0 z-[55] bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-[55]"
         onClick={onClose}
       />
 

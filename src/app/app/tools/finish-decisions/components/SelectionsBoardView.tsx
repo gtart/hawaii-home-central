@@ -137,7 +137,7 @@ export function SelectionsBoardView({
             {/* Title row — above image */}
             <div className="px-3 pt-2.5 pb-1 flex items-center gap-1.5">
               <h3 className="text-sm font-medium text-cream truncate leading-tight flex-1">
-                {decision.title || 'Untitled Decision'}
+                {decision.title || 'Untitled Selection'}
               </h3>
               {/* Delete button (hover) */}
               {!readOnly && decision.systemKey !== 'uncategorized' && (

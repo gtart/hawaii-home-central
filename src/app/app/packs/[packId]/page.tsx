@@ -3,7 +3,7 @@ import { getPublishedIdeaPacks } from '@/lib/idea-packs-db'
 import { PackDetail } from './PackDetail'
 
 export const metadata: Metadata = {
-  title: 'Decision Pack Detail',
+  title: 'Selection Pack Detail',
 }
 
 export default async function PackDetailPage({

@@ -40,9 +40,9 @@ export function DashboardToolGrid({
         <DashboardCardFixList data={data} isLoading={false} />
       </div>
 
-      {/* Finding Pros */}
+      {/* Working with Pros */}
       <h2 className="text-xs uppercase tracking-wider text-cream/20 mb-1">
-        Finding Pros
+        Working with Pros
       </h2>
       <p className="text-xs text-cream/30 mb-3">Compare contractors and find the right team.</p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">

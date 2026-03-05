@@ -1012,7 +1012,7 @@ export function SaveFromWebContent() {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <label className="block text-xs text-cream/50">
-                            Decision <span className="text-cream/30">(optional)</span>
+                            Selection <span className="text-cream/30">(optional)</span>
                           </label>
                           {selectedDecisionId && (
                             <button

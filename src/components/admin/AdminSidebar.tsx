@@ -18,7 +18,7 @@ const ADMIN_LINKS = [
   { href: '/admin/import', label: 'Import / Export' },
   { href: '/admin/access', label: 'Access' },
   { href: '/admin/punchlist', label: 'Fix List' },
-  { href: '/admin/idea-packs', label: 'Decision Packs' },
+  { href: '/admin/idea-packs', label: 'Selection Packs' },
   { href: '/admin/default-selections', label: 'Selections Config' },
 ]
 

@@ -6,11 +6,11 @@ import { useProject } from '@/contexts/ProjectContext'
 import { useDashboard } from '@/hooks/useDashboard'
 import { useInboxCount } from '@/hooks/useInboxCount'
 import { DashboardToolGrid } from './DashboardToolGrid'
-import { DashboardFeed } from './DashboardFeed'
 import { QuietBanner } from './QuietBanner'
 import { DashboardNextActions } from './DashboardNextActions'
 import { QuickCaptureSheet } from '@/components/app/QuickCaptureSheet'
 import { SortWizard } from '@/components/app/SortWizard'
+import { ActivityPanel } from '@/components/app/ActivityPanel'
 
 interface CapturedResult {
   id: string
@@ -27,6 +27,7 @@ export function DashboardPage() {
   const { total: inboxCount, refetch: refetchInbox } = useInboxCount()
   const [showCapture, setShowCapture] = useState(false)
   const [sortItem, setSortItem] = useState<CapturedResult | null>(null)
+  const [showActivity, setShowActivity] = useState(false)
 
   return (
     <div className="pt-32 pb-24 px-6">
@@ -39,7 +40,7 @@ export function DashboardPage() {
           <p className="text-sm text-cream/40">Your renovation at a glance.</p>
         </div>
 
-        {/* Quick Capture + Inbox row */}
+        {/* Quick Capture + Inbox + Activity row */}
         <div className="flex items-center gap-3 mb-6">
           <button
             type="button"
@@ -62,6 +63,17 @@ export function DashboardPage() {
               </span>
             )}
           </Link>
+          <button
+            type="button"
+            onClick={() => setShowActivity(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-cream/5 border border-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/10 hover:text-cream/80 transition-colors"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Activity
+          </button>
         </div>
 
         {/* Quiet state */}
@@ -77,10 +89,6 @@ export function DashboardPage() {
         {/* Tool grid — active tools first, then other tools */}
         <DashboardToolGrid data={data} isLoading={isLoading} />
 
-        {/* Activity feed */}
-        <div className="mb-8">
-          <DashboardFeed />
-        </div>
       </div>
 
       {/* Quick Capture Sheet */}
@@ -105,6 +113,9 @@ export function DashboardPage() {
           }}
         />
       )}
+
+      {/* Activity Panel */}
+      {showActivity && <ActivityPanel onClose={() => setShowActivity(false)} />}
     </div>
   )
 }
