@@ -19,8 +19,8 @@ export function CollectionPickerWrapper() {
 
   return (
     <div className="pt-32 pb-24 px-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-end mb-4">
+      <div className="max-w-4xl mx-auto relative">
+        <div className="absolute right-0 top-0 z-10">
           <button
             type="button"
             onClick={() => { setActivityOpen(true); markActivitySeen() }}
