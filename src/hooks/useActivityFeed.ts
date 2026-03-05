@@ -15,12 +15,26 @@ export interface ActivityFeedEvent {
   actorName: string | null
 }
 
-export function useActivityFeed(toolKey?: string) {
+export interface ActivityFeedOptions {
+  toolKey?: string
+  collectionId?: string
+  actionTypes?: string[]
+  q?: string
+  limit?: number
+}
+
+export function useActivityFeed(opts?: ActivityFeedOptions) {
   const { currentProject } = useProject()
   const [events, setEvents] = useState<ActivityFeedEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
+
+  const toolKey = opts?.toolKey
+  const collectionId = opts?.collectionId
+  const actionTypes = opts?.actionTypes
+  const q = opts?.q
+  const limit = opts?.limit ?? 20
 
   const fetchEvents = useCallback(
     async (cursor?: string) => {
@@ -28,7 +42,10 @@ export function useActivityFeed(toolKey?: string) {
 
       const params = new URLSearchParams()
       if (toolKey) params.set('toolKey', toolKey)
-      params.set('limit', '20')
+      if (collectionId) params.set('collectionId', collectionId)
+      if (actionTypes && actionTypes.length > 0) params.set('actionTypes', actionTypes.join(','))
+      if (q) params.set('q', q)
+      params.set('limit', String(limit))
       if (cursor) params.set('cursor', cursor)
 
       try {
@@ -49,7 +66,7 @@ export function useActivityFeed(toolKey?: string) {
         setIsLoading(false)
       }
     },
-    [currentProject?.id, toolKey]
+    [currentProject?.id, toolKey, collectionId, actionTypes?.join(','), q, limit]
   )
 
   useEffect(() => {

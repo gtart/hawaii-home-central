@@ -52,6 +52,7 @@ function coerceDecision(raw: unknown): Record<string, unknown> | null {
     notes: isString(raw.notes) ? raw.notes : '',
     options,
     comments: Array.isArray(raw.comments) ? raw.comments : [],
+    files: Array.isArray(raw.files) ? raw.files : [],
     createdAt: isString(raw.createdAt) ? raw.createdAt : new Date().toISOString(),
     updatedAt: isString(raw.updatedAt) ? raw.updatedAt : new Date().toISOString(),
   }

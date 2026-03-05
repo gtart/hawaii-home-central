@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from 'react'
 import type { OptionV3, OptionImageV3, OptionDocumentV3, DecisionV3, SelectionComment, LinkV3 } from '@/data/finish-decisions'
 import { getAllImages, getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
+import { relativeTime } from '@/lib/relativeTime'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 
 interface CommentPayload {
@@ -24,12 +25,12 @@ interface Props {
   onDelete: () => void
   onSelect?: () => void
   onMove?: () => void
+  onCopy?: () => void
   onUpdateDecision: (updates: Partial<DecisionV3>) => void
   onAddComment: (comment: CommentPayload) => void
   onUploadPhoto: (file: File) => Promise<{ url: string; thumbnailUrl: string; id: string }>
   onUploadDocument: (file: File) => Promise<{ url: string; id: string; fileName: string; fileSize: number; mimeType: string }>
   onClose: () => void
-  onCommentOnIdea?: () => void
 }
 
 function formatDate(iso: string) {
@@ -70,13 +71,14 @@ export function IdeaCardModal({
   onDelete,
   onSelect,
   onMove,
+  onCopy,
   onUpdateDecision,
   onAddComment,
   onUploadPhoto,
   onUploadDocument,
   onClose,
-  onCommentOnIdea,
 }: Props) {
+  const [inlineCommentText, setInlineCommentText] = useState('')
   const [newUrl, setNewUrl] = useState('')
   const [editingUrlId, setEditingUrlId] = useState<string | null>(null)
   const [editingUrlValue, setEditingUrlValue] = useState('')
@@ -150,6 +152,18 @@ export function IdeaCardModal({
     }
   }
 
+  function handleInlineComment() {
+    if (!inlineCommentText.trim()) return
+    onAddComment({
+      text: inlineCommentText.trim().slice(0, 400),
+      authorName: userName,
+      authorEmail: userEmail,
+      refOptionId: option.id,
+      refOptionLabel: option.name || 'Untitled',
+    })
+    setInlineCommentText('')
+  }
+
   const MAX_IMAGES = 5
 
   async function handlePhotoFile(file: File | null) {
@@ -208,6 +222,12 @@ export function IdeaCardModal({
 
   const MAX_DOCUMENTS = 10
 
+  function isImageMime(file: File): boolean {
+    if (file.type?.startsWith('image/')) return true
+    const ext = file.name.toLowerCase().match(/\.[^.]+$/)?.[0]
+    return !!ext && ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'].includes(ext)
+  }
+
   async function handleDocumentFile(file: File | null) {
     if (!file) return
     if (file.size === 0) {
@@ -216,25 +236,42 @@ export function IdeaCardModal({
     }
     const currentDocs = option.documents ?? []
     if (currentDocs.length >= MAX_DOCUMENTS) {
-      setDocUploadError(`Maximum ${MAX_DOCUMENTS} documents per option.`)
+      setDocUploadError(`Maximum ${MAX_DOCUMENTS} files per option.`)
       return
     }
     setDocUploadError('')
     setDocUploading(true)
     try {
-      const result = await onUploadDocument(file)
-      const newDoc: OptionDocumentV3 = {
-        id: result.id,
-        url: result.url,
-        title: result.fileName.replace(/\.[^.]+$/, ''),
-        fileName: result.fileName,
-        fileSize: result.fileSize,
-        mimeType: result.mimeType,
-        uploadedAt: new Date().toISOString(),
-        uploadedByName: userName,
-        uploadedByEmail: userEmail,
+      if (isImageMime(file)) {
+        const result = await onUploadPhoto(file)
+        const newDoc: OptionDocumentV3 = {
+          id: result.id,
+          url: result.url,
+          thumbnailUrl: result.thumbnailUrl,
+          title: file.name.replace(/\.[^.]+$/, ''),
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type || 'image/jpeg',
+          uploadedAt: new Date().toISOString(),
+          uploadedByName: userName,
+          uploadedByEmail: userEmail,
+        }
+        onUpdate({ documents: [...currentDocs, newDoc] })
+      } else {
+        const result = await onUploadDocument(file)
+        const newDoc: OptionDocumentV3 = {
+          id: result.id,
+          url: result.url,
+          title: result.fileName.replace(/\.[^.]+$/, ''),
+          fileName: result.fileName,
+          fileSize: result.fileSize,
+          mimeType: result.mimeType,
+          uploadedAt: new Date().toISOString(),
+          uploadedByName: userName,
+          uploadedByEmail: userEmail,
+        }
+        onUpdate({ documents: [...currentDocs, newDoc] })
       }
-      onUpdate({ documents: [...currentDocs, newDoc] })
     } catch (err) {
       setDocUploadError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
@@ -267,6 +304,7 @@ export function IdeaCardModal({
 
   function docTypeColor(mimeType: string | undefined): string {
     if (!mimeType) return 'text-cream/40'
+    if (mimeType.startsWith('image/')) return 'text-purple-400'
     if (mimeType === 'application/pdf') return 'text-red-400'
     if (mimeType.includes('word') || mimeType === 'application/msword') return 'text-blue-400'
     if (mimeType.includes('sheet') || mimeType.includes('excel')) return 'text-green-400'
@@ -276,6 +314,7 @@ export function IdeaCardModal({
 
   function docTypeLabel(mimeType: string | undefined): string {
     if (!mimeType) return 'FILE'
+    if (mimeType.startsWith('image/')) return 'IMG'
     if (mimeType === 'application/pdf') return 'PDF'
     if (mimeType.includes('word') || mimeType === 'application/msword') return 'DOC'
     if (mimeType.includes('sheet') || mimeType.includes('excel')) return 'XLS'
@@ -339,6 +378,15 @@ export function IdeaCardModal({
                 className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-cream/10 text-cream/60 hover:bg-cream/20 transition-colors"
               >
                 Move
+              </button>
+            )}
+            {onCopy && !readOnly && (
+              <button
+                type="button"
+                onClick={onCopy}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-cream/10 text-cream/60 hover:bg-cream/20 transition-colors"
+              >
+                Copy to...
               </button>
             )}
             {onSelect && !readOnly ? (
@@ -624,39 +672,6 @@ export function IdeaCardModal({
             </div>
           )}
 
-          {/* ── Pros / Cons (collapsed by default) ── */}
-          {(!readOnly || option.prosText || option.consText) && (
-            <details className="group">
-              <summary className="text-[11px] text-cream/30 uppercase tracking-wider cursor-pointer hover:text-cream/50 transition-colors select-none">
-                Pros / Cons {(option.prosText || option.consText) && <span className="text-cream/15 ml-1">has content</span>}
-              </summary>
-              <div className="mt-2 space-y-2">
-                <div>
-                  <label className="text-[10px] text-green-400/50 uppercase tracking-wider mb-0.5 block">Pros</label>
-                  <textarea
-                    value={option.prosText || ''}
-                    onChange={(e) => onUpdate({ prosText: e.target.value })}
-                    readOnly={readOnly}
-                    rows={2}
-                    placeholder="What's good about this option..."
-                    className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 resize-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-red-400/50 uppercase tracking-wider mb-0.5 block">Cons</label>
-                  <textarea
-                    value={option.consText || ''}
-                    onChange={(e) => onUpdate({ consText: e.target.value })}
-                    readOnly={readOnly}
-                    rows={2}
-                    placeholder="Drawbacks or concerns..."
-                    className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 resize-none"
-                  />
-                </div>
-              </div>
-            </details>
-          )}
-
           {/* ── Links ── */}
           <div>
             {/* Existing links */}
@@ -799,19 +814,19 @@ export function IdeaCardModal({
             )}
           </div>
 
-          {/* ── Documents ── */}
+          {/* ── Files ── */}
           {(!readOnly || (option.documents && option.documents.length > 0)) && (
             <div>
               {/* Hidden file input */}
               <input
                 ref={docInputRef}
                 type="file"
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.jpg,.jpeg,.png,.webp,.heic,.heif"
                 className="hidden"
                 onChange={(e) => handleDocumentFile(e.target.files?.[0] ?? null)}
               />
 
-              <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-2 block">Documents</label>
+              <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-2 block">Files</label>
 
               {(option.documents ?? []).length > 0 && (
                 <div className="space-y-2 mb-2">
@@ -917,7 +932,7 @@ export function IdeaCardModal({
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                       </svg>
-                      Upload document
+                      Upload file
                     </>
                   )}
                 </button>
@@ -939,32 +954,56 @@ export function IdeaCardModal({
             </div>
 
             {ideaComments.length > 0 && (
-              <div className="space-y-2 mb-3">
+              <div className="space-y-3 mb-3">
                 {ideaComments.map((c) => (
-                  <div key={c.id} className="bg-basalt rounded-lg px-3 py-2">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-xs font-medium text-cream/70">{c.authorName}</span>
-                      <span className="text-[10px] text-cream/30">
-                        {new Date(c.createdAt).toLocaleDateString()}
-                      </span>
+                  <div key={c.id} className="flex items-start gap-2">
+                    <div className="w-6 h-6 rounded-full bg-sandstone/20 text-sandstone text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                      {c.authorName.charAt(0).toUpperCase()}
                     </div>
-                    <p className="text-sm text-cream/60">{c.text}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2 mb-0.5">
+                        <span className="text-xs font-medium text-cream/70">{c.authorName}</span>
+                        <span className="text-[10px] text-cream/25">{relativeTime(c.createdAt)}</span>
+                      </div>
+                      <p className="text-sm text-cream/60 whitespace-pre-wrap">{c.text}</p>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {!readOnly && onCommentOnIdea && (
-              <button
-                type="button"
-                onClick={onCommentOnIdea}
-                className="w-full flex items-center justify-center gap-2 py-2.5 bg-cream/5 hover:bg-cream/10 rounded-lg text-sm text-cream/40 hover:text-cream/60 transition-colors"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                </svg>
-                Add a comment
-              </button>
+            {!readOnly && (
+              <>
+                <div className="flex gap-2">
+                  <textarea
+                    rows={1}
+                    value={inlineCommentText}
+                    onChange={(e) => setInlineCommentText(e.target.value.slice(0, 400))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        handleInlineComment()
+                      }
+                    }}
+                    placeholder="Add a comment..."
+                    maxLength={400}
+                    className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40 resize-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleInlineComment}
+                    disabled={!inlineCommentText.trim()}
+                    className="px-3 py-2 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors disabled:opacity-30 self-end"
+                  >
+                    Post
+                  </button>
+                </div>
+                {inlineCommentText.length > 0 && (
+                  <p className={`text-[10px] mt-1 text-right ${inlineCommentText.length >= 400 ? 'text-red-400' : 'text-cream/25'}`}>
+                    {inlineCommentText.length}/400
+                  </p>
+                )}
+              </>
             )}
           </div>
 
@@ -983,7 +1022,7 @@ export function IdeaCardModal({
                 onClick={onClose}
                 className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
               >
-                Save
+                Done
               </button>
             </div>
           )}

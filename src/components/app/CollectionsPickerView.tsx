@@ -32,6 +32,7 @@ interface PreviewData {
   collaboratorCount?: number
   shareLinkEnabled?: boolean
   inviteCount?: number
+  lastEvent?: { summaryText: string; actorName: string | null; createdAt: string; action: string }
 }
 
 interface CollectionsPickerViewProps {
@@ -174,6 +175,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
               collaboratorCount: p.collaboratorCount ?? undefined,
               shareLinkEnabled: p.shareLinkEnabled ?? undefined,
               inviteCount: p.inviteCount ?? undefined,
+              lastEvent: p.lastEvent ?? undefined,
             }
           }
           setPreviews(map)
@@ -386,9 +388,10 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
               <tr className="text-left text-[11px] uppercase tracking-wider text-cream/30 border-b border-cream/10">
                 <th className="pb-2 pr-3 w-12" />
                 <th className="pb-2 pr-3">Name</th>
+                <th className="pb-2 pr-3 w-28">Shared</th>
                 <th className="pb-2 pr-3">Status</th>
                 <th className="pb-2 pr-3">Updated</th>
-                <th className="pb-2 pr-3 max-w-[200px]">{toolKey === 'punchlist' ? 'Last Activity' : 'Last Comment'}</th>
+                <th className="pb-2 pr-3 max-w-[200px]">Recent Activity</th>
                 <th className="pb-2 w-10" />
               </tr>
             </thead>
@@ -397,7 +400,11 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                 const preview = previews[coll.id] ?? { imageUrls: [], ideaCount: 0, commentCount: 0 }
                 const hasStatusCounts = preview.statuses && Object.values(preview.statuses).some(v => v > 0)
                 const thumb = preview.imageUrls[0]
-                const isShared = (preview.collaboratorCount ?? 0) >= 2 || preview.shareLinkEnabled
+                const hasLink = !!preview.shareLinkEnabled
+                const pendingInvites = preview.inviteCount ?? 0
+
+                // Compact status: Decided X/Y, Done Z/Y (for finish_decisions)
+                // Punchlist keeps original breakdown
                 const statusParts: string[] = []
                 if (toolKey === 'punchlist' && hasStatusCounts) {
                   if ((preview.statuses!.open ?? 0) > 0) statusParts.push(`${preview.statuses!.open} open`)
@@ -410,6 +417,11 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                   if ((preview.statuses!.ordered ?? 0) > 0) statusParts.push(`${preview.statuses!.ordered} ordered`)
                   if ((preview.statuses!.done ?? 0) > 0) statusParts.push(`${preview.statuses!.done} done`)
                 }
+                const totalDecisions = hasStatusCounts
+                  ? Object.values(preview.statuses!).reduce((s, v) => s + v, 0)
+                  : 0
+                const decided = (preview.statuses?.selected ?? 0) + (preview.statuses?.ordered ?? 0) + (preview.statuses?.done ?? 0)
+                const doneCount = preview.statuses?.done ?? 0
 
                 return (
                   <tr
@@ -430,6 +442,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         </div>
                       )}
                     </td>
+                    {/* Name — clean, no inline sharing badges */}
                     <td className="py-3 pr-3">
                       {editingId === coll.id ? (
                         <input
@@ -447,30 +460,74 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                       ) : (
                         <span className="font-medium text-cream">{coll.title}</span>
                       )}
-                      {isShared && (
-                        <span className="ml-2 inline-flex items-center gap-0.5 text-[10px] text-sandstone/60 bg-sandstone/10 rounded-full px-1.5 py-0.5 align-middle">
-                          <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
-                            <circle cx="8.5" cy="7" r="4" />
-                            <path d="M20 8v6M23 11h-6" strokeLinecap="round" />
-                          </svg>
-                          {(preview.collaboratorCount ?? 0) >= 2 ? `People: ${preview.collaboratorCount}` : 'Link'}
-                        </span>
-                      )}
                     </td>
-                    <td className="py-3 pr-3 text-cream/50 text-xs">
-                      {statusParts.length > 0 ? statusParts.join(' · ') : (
-                        previewMode === 'thumbnails' && preview.ideaCount > 0
-                          ? `${preview.ideaCount} idea${preview.ideaCount !== 1 ? 's' : ''}`
-                          : <span className="text-cream/30 italic">—</span>
+                    {/* Shared — avatar stack + Link badge + pending invites */}
+                    <td className="py-3 pr-3">
+                      <div className="flex items-center gap-1.5">
+                        {coll.members.length > 0 && (
+                          <div className="flex -space-x-1.5">
+                            {coll.members.slice(0, 3).map((m) => (
+                              <div
+                                key={m.userId}
+                                className="w-6 h-6 rounded-full bg-sandstone/20 border border-basalt flex items-center justify-center text-[10px] text-cream/60"
+                                title={m.user.name || 'Collaborator'}
+                              >
+                                {m.user.image ? (
+                                  <img src={m.user.image} alt="" className="w-full h-full rounded-full object-cover" />
+                                ) : (
+                                  (m.user.name || '?')[0]?.toUpperCase()
+                                )}
+                              </div>
+                            ))}
+                            {coll.members.length > 3 && (
+                              <div className="w-6 h-6 rounded-full bg-cream/10 border border-basalt flex items-center justify-center text-[10px] text-cream/40">
+                                +{coll.members.length - 3}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {hasLink && (
+                          <span className="text-[10px] text-sandstone/60 bg-sandstone/10 rounded-full px-1.5 py-0.5">Link</span>
+                        )}
+                        {pendingInvites > 0 && (
+                          <span className="text-[10px] text-amber-400/70 bg-amber-400/10 rounded-full px-1.5 py-0.5">{pendingInvites} pending</span>
+                        )}
+                        {coll.members.length === 0 && !hasLink && pendingInvites === 0 && (
+                          <span className="text-cream/20 text-xs">—</span>
+                        )}
+                      </div>
+                    </td>
+                    {/* Status — compact Decided/Done for Selections, original for punchlist */}
+                    <td className="py-3 pr-3 text-xs whitespace-nowrap" title={statusParts.join(', ')}>
+                      {toolKey === 'punchlist' ? (
+                        statusParts.length > 0 ? (
+                          <span className="text-cream/50">{statusParts.join(' · ')}</span>
+                        ) : (
+                          <span className="text-cream/20 italic">—</span>
+                        )
+                      ) : totalDecisions > 0 ? (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-cream/50">Decided {decided}/{totalDecisions}</span>
+                          <span className="text-cream/30">Done {doneCount}/{totalDecisions}</span>
+                        </div>
+                      ) : previewMode === 'thumbnails' && preview.ideaCount > 0 ? (
+                        <span className="text-cream/50">{preview.ideaCount} idea{preview.ideaCount !== 1 ? 's' : ''}</span>
+                      ) : (
+                        <span className="text-cream/20 italic">—</span>
                       )}
                     </td>
                     <td className="py-3 pr-3 text-cream/40 text-xs whitespace-nowrap">
                       {new Date(coll.updatedAt).toLocaleDateString()}
                       {coll.updatedBy?.name && <span> by {coll.updatedBy.name.split(' ')[0]}</span>}
                     </td>
+                    {/* Recent Activity — prefer ActivityEvent, fallback to lastComment/lastActivity */}
                     <td className="py-3 pr-3 text-cream/40 text-xs max-w-[200px] truncate">
-                      {preview.lastComment ? (
+                      {preview.lastEvent ? (
+                        <>
+                          {preview.lastEvent.actorName ? `${preview.lastEvent.actorName.split(' ')[0]}: ` : ''}
+                          {preview.lastEvent.summaryText}
+                        </>
+                      ) : preview.lastComment ? (
                         <>
                           {preview.lastComment.authorName.split(' ')[0]} on {preview.lastComment.decisionTitle}:
                           {' "'}
@@ -554,7 +611,10 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
           const preview = previews[coll.id] ?? { imageUrls: [], ideaCount: 0, commentCount: 0 }
           const hasThumbnails = previewMode === 'thumbnails' || preview.imageUrls.length > 0
           const hasStatusCounts = preview.statuses && Object.values(preview.statuses).some(v => v > 0)
-          const gridIsShared = (preview.collaboratorCount ?? 0) >= 2 || preview.shareLinkEnabled
+          // Owner is NOT in toolCollectionMember, so collaboratorCount is already just collaborators
+          const gridCollabCount = preview.collaboratorCount ?? 0
+          const gridHasLink = !!preview.shareLinkEnabled
+          const gridPendingInvites = preview.inviteCount ?? 0
 
           return (
             <div
@@ -591,18 +651,19 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                     {(preview.statuses!.stale ?? 0) > 0 && <span className="text-red-400/60">{preview.statuses!.stale} stale</span>}
                   </div>
                 ) : hasStatusCounts ? (
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-[11px] text-cream/50">
-                    {(preview.statuses!.deciding ?? 0) > 0 && <span>{preview.statuses!.deciding} deciding</span>}
-                    {(preview.statuses!.selected ?? 0) > 0 && <span>{preview.statuses!.selected} selected</span>}
-                    {(preview.statuses!.ordered ?? 0) > 0 && <span>{preview.statuses!.ordered} ordered</span>}
-                    {(preview.statuses!.done ?? 0) > 0 && <span>{preview.statuses!.done} done</span>}
+                  <div className="mt-1.5 text-[11px] text-cream/50">
+                    Decided {(preview.statuses!.selected ?? 0) + (preview.statuses!.ordered ?? 0) + (preview.statuses!.done ?? 0)}/{preview.decisionCount ?? Object.values(preview.statuses!).reduce((s, v) => s + v, 0)} · Done {preview.statuses!.done ?? 0}/{preview.decisionCount ?? Object.values(preview.statuses!).reduce((s, v) => s + v, 0)}
                   </div>
                 ) : previewMode === 'statuses' && preview.decisionCount === 0 ? (
                   <p className="mt-1.5 text-[11px] text-cream/35 italic">{toolKey === 'punchlist' ? '0 items' : '0 selections added'}</p>
                 ) : null}
 
-                {/* Last comment / last activity */}
-                {preview.lastComment ? (
+                {/* Recent activity — prefer ActivityEvent */}
+                {preview.lastEvent ? (
+                  <p className="mt-1 text-[11px] text-cream/35 italic truncate">
+                    {preview.lastEvent.actorName ? `${preview.lastEvent.actorName.split(' ')[0]}: ` : ''}{preview.lastEvent.summaryText}
+                  </p>
+                ) : preview.lastComment ? (
                   <p className="mt-1 text-[11px] text-cream/35 italic truncate">
                     {preview.lastComment.authorName.split(' ')[0]}: &ldquo;{preview.lastComment.text.length > 50 ? preview.lastComment.text.slice(0, 50) + '...' : preview.lastComment.text}&rdquo;
                   </p>
@@ -642,14 +703,30 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                       <span> by {coll.updatedBy.name.split(' ')[0]}</span>
                     )}
                   </p>
-                  {gridIsShared && (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-sandstone/60 bg-sandstone/10 rounded-full px-1.5 py-0.5">
+                  {gridCollabCount > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] text-sandstone/60 bg-sandstone/10 rounded-full px-1.5 py-0.5">
                       <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
                         <circle cx="8.5" cy="7" r="4" />
-                        <path d="M20 8v6M23 11h-6" strokeLinecap="round" />
                       </svg>
-                      {(preview.collaboratorCount ?? 0) >= 2 ? `People: ${preview.collaboratorCount}` : 'Link'}
+                      People: {gridCollabCount}
+                    </span>
+                  )}
+                  {gridHasLink && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] text-sandstone/60 bg-sandstone/10 rounded-full px-1.5 py-0.5">
+                      <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      Link
+                    </span>
+                  )}
+                  {gridPendingInvites > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-400/70 bg-amber-400/10 rounded-full px-1.5 py-0.5">
+                      <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      Invites: {gridPendingInvites}
                     </span>
                   )}
                 </div>

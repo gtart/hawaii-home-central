@@ -57,6 +57,12 @@ export interface ToolShareMeta {
   lastUpdatedAt: string | null
 }
 
+export interface RecentActivityExcerpt {
+  summaryText: string
+  actorName: string | null
+  createdAt: string
+}
+
 export interface DashboardResponse {
   selectionLists: SelectionListSummary[]
   fixLists: FixListSummary[]
@@ -64,6 +70,7 @@ export interface DashboardResponse {
   beforeYouSign: BeforeYouSignSummary[]
   toolMeta: Record<ToolKey, ToolShareMeta>
   noNews: { isQuiet: boolean; lastActivityAt?: string }
+  recentActivity: Partial<Record<ToolKey, RecentActivityExcerpt[]>>
 }
 
 // ---------------------------------------------------------------------------
@@ -306,6 +313,27 @@ export async function getDashboardData(userId: string, projectId: string): Promi
 
   const isQuiet = !hasActionableFixes && !hasActionableSelections && !hasRecentActivity
 
+  // Batch-fetch recent activity events per tool (2 per tool)
+  const recentEvents = await prisma.activityEvent.findMany({
+    where: { projectId, toolKey: { in: TOOL_KEYS } },
+    orderBy: { createdAt: 'desc' },
+    take: 20,
+    select: { toolKey: true, summaryText: true, createdAt: true, actor: { select: { name: true } } },
+  })
+
+  const recentActivity: Partial<Record<ToolKey, RecentActivityExcerpt[]>> = {}
+  for (const e of recentEvents) {
+    const tk = e.toolKey as ToolKey
+    if (!recentActivity[tk]) recentActivity[tk] = []
+    if (recentActivity[tk]!.length < 2) {
+      recentActivity[tk]!.push({
+        summaryText: e.summaryText,
+        actorName: e.actor?.name ?? null,
+        createdAt: e.createdAt.toISOString(),
+      })
+    }
+  }
+
   return {
     selectionLists,
     fixLists,
@@ -313,5 +341,6 @@ export async function getDashboardData(userId: string, projectId: string): Promi
     beforeYouSign,
     toolMeta,
     noNews: { isQuiet, lastActivityAt },
+    recentActivity,
   }
 }

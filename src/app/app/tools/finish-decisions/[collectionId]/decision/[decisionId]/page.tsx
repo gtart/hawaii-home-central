@@ -4,7 +4,7 @@ import { getPublishedIdeaPacks } from '@/lib/idea-packs-db'
 import { getSelectionEmojiMap } from '@/lib/default-selections-db'
 
 export const metadata: Metadata = {
-  title: 'Decision Detail',
+  title: 'Selection Detail',
 }
 
 export default async function CollectionDecisionDetailPage({

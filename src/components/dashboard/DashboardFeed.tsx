@@ -2,61 +2,30 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useActivityFeed, type ActivityFeedEvent } from '@/hooks/useActivityFeed'
-
-const TOOL_LABEL: Record<string, string> = {
-  punchlist: 'Fix List',
-  finish_decisions: 'Selections',
-  mood_boards: 'Mood Boards',
-  before_you_sign: 'Contract Checklist',
-}
-
-const TOOL_BASE: Record<string, string> = {
-  punchlist: '/app/tools/punchlist',
-  finish_decisions: '/app/tools/finish-decisions',
-  mood_boards: '/app/tools/mood-boards',
-  before_you_sign: '/app/tools/before-you-sign',
-}
-
-function eventHref(event: ActivityFeedEvent): string {
-  const base = TOOL_BASE[event.toolKey] || '/app'
-  if (!event.collectionId) return base
-
-  // Decision-level deep link
-  if (event.toolKey === 'finish_decisions' && event.entityType === 'decision' && event.entityId) {
-    return `${base}/${event.collectionId}/decision/${event.entityId}`
-  }
-
-  return `${base}/${event.collectionId}`
-}
-
-const FILTER_CHIPS: { key: string | undefined; label: string }[] = [
-  { key: undefined, label: 'All' },
-  { key: 'punchlist', label: 'Fix List' },
-  { key: 'finish_decisions', label: 'Selections' },
-  { key: 'mood_boards', label: 'Mood Boards' },
-  { key: 'before_you_sign', label: 'Contract Checklist' },
-]
-
-function relativeTime(dateStr: string): string {
-  const diffMs = Date.now() - new Date(dateStr).getTime()
-  const mins = Math.floor(diffMs / 60_000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}d ago`
-  return `${Math.floor(days / 30)}mo ago`
-}
+import { useActivityFeed } from '@/hooks/useActivityFeed'
+import { relativeTime } from '@/lib/relativeTime'
+import { TOOL_LABEL, FILTER_CHIPS, eventHref } from '@/lib/activityHelpers'
+import { ActivityPanel } from '@/components/app/ActivityPanel'
 
 export function DashboardFeed() {
   const [activeFilter, setActiveFilter] = useState<string | undefined>(undefined)
-  const { events, isLoading, hasMore, loadMore } = useActivityFeed(activeFilter)
+  const { events, isLoading, hasMore, loadMore } = useActivityFeed(
+    activeFilter ? { toolKey: activeFilter } : undefined
+  )
+  const [showPanel, setShowPanel] = useState(false)
 
   return (
     <div>
-      <h2 className="text-xs uppercase tracking-wider text-cream/30 mb-3">Recent Activity</h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xs uppercase tracking-wider text-cream/30">Recent Activity</h2>
+        <button
+          type="button"
+          onClick={() => setShowPanel(true)}
+          className="text-xs text-cream/30 hover:text-cream/50 transition-colors"
+        >
+          View all
+        </button>
+      </div>
 
       {/* Filter chips */}
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
@@ -122,6 +91,8 @@ export function DashboardFeed() {
           )}
         </div>
       )}
+
+      {showPanel && <ActivityPanel onClose={() => setShowPanel(false)} />}
     </div>
   )
 }

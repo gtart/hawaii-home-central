@@ -40,6 +40,7 @@ export function DecisionsTable({
   decisions,
   roomType,
   onDeleteDecision,
+  onMoveDecision,
   readOnly = false,
   emojiMap = {},
   collectionId,
@@ -47,6 +48,7 @@ export function DecisionsTable({
   decisions: DecisionV3[]
   roomType: string
   onDeleteDecision: (decisionId: string) => void
+  onMoveDecision?: (decisionId: string) => void
   readOnly?: boolean
   emojiMap?: Record<string, string>
   collectionId?: string
@@ -122,6 +124,7 @@ export function DecisionsTable({
             decision={decision}
             thumbnail={getDecisionThumbnail(decision)}
             onDelete={() => onDeleteDecision(decision.id)}
+            onMove={onMoveDecision ? () => onMoveDecision(decision.id) : undefined}
             readOnly={readOnly}
             collectionId={collectionId}
           />

@@ -42,12 +42,12 @@ function deriveActions(data: DashboardResponse): ActionItem[] {
   if (totalNotStarted > 0) {
     const urgentList = selLists.find((l) => l.notStartedCount > 0)
     actions.push({
-      label: `Start ${totalNotStarted} decision${totalNotStarted !== 1 ? 's' : ''} (no options yet)`,
+      label: `Start ${totalNotStarted} selection${totalNotStarted !== 1 ? 's' : ''} (no options yet)`,
       href: urgentList ? `/app/tools/finish-decisions/${urgentList.id}` : '/app/tools/finish-decisions',
     })
   } else if (totalDeciding > 0) {
     actions.push({
-      label: `${totalDeciding} decision${totalDeciding !== 1 ? 's' : ''} still deciding`,
+      label: `${totalDeciding} selection${totalDeciding !== 1 ? 's' : ''} still deciding`,
       href: '/app/tools/finish-decisions',
     })
   }
@@ -86,37 +86,9 @@ export function DashboardNextActions({ data }: { data: DashboardResponse | null 
   const actions = deriveActions(data)
   if (actions.length === 0) return null
 
-  // Determine quick-add destinations
-  const lastFixList = data.fixLists?.[0]
-  const lastSelList = data.selectionLists?.[0]
-  const addFixHref = lastFixList ? `/app/tools/punchlist/${lastFixList.id}` : '/app/tools/punchlist'
-  const addDecisionHref = lastSelList ? `/app/tools/finish-decisions/${lastSelList.id}` : '/app/tools/finish-decisions'
-
   return (
     <div className="mb-6">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-xs uppercase tracking-wider text-cream/30">Next up</h2>
-        <div className="flex items-center gap-2">
-          <Link
-            href={addFixHref}
-            className="inline-flex items-center gap-1 text-[11px] text-cream/40 hover:text-sandstone transition-colors px-2 py-1 rounded border border-cream/10 hover:border-sandstone/30"
-          >
-            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Add Fix
-          </Link>
-          <Link
-            href={addDecisionHref}
-            className="inline-flex items-center gap-1 text-[11px] text-cream/40 hover:text-sandstone transition-colors px-2 py-1 rounded border border-cream/10 hover:border-sandstone/30"
-          >
-            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Add Decision
-          </Link>
-        </div>
-      </div>
+      <h2 className="text-xs uppercase tracking-wider text-cream/30 mb-2">Next up</h2>
       <ul className="space-y-1">
         {actions.map((a, i) => (
           <li key={i}>

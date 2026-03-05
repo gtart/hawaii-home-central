@@ -1,10 +1,12 @@
 'use client'
 
-import { Suspense, useCallback, useEffect } from 'react'
+import { Suspense, useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useProject } from '@/contexts/ProjectContext'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
+import { ActivityPanel } from '@/components/app/ActivityPanel'
+import { UnsortedBanner } from '@/components/app/UnsortedBanner'
 import { useMoodBoardCollectionState } from '../useMoodBoardState'
 import { BoardDetailView } from '../components/BoardDetailView'
 
@@ -17,6 +19,7 @@ function Content({ collectionId }: { collectionId: string }) {
   const { payload, isLoaded, noAccess, access, readOnly, projectId: collectionProjectId } = api
   const router = useRouter()
   const { currentProject } = useProject()
+  const [activityOpen, setActivityOpen] = useState(false)
 
   // Redirect to picker if the loaded collection belongs to a different project
   useEffect(() => {
@@ -92,7 +95,29 @@ function Content({ collectionId }: { collectionId: string }) {
         }}
         onRename={handleRename}
         onArchive={handleArchive}
+        actions={(
+          <button
+            type="button"
+            onClick={() => setActivityOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Activity
+          </button>
+        )}
       />
+      {activityOpen && (
+        <ActivityPanel
+          onClose={() => setActivityOpen(false)}
+          toolKey="mood_boards"
+          collectionId={collectionId}
+          collectionTitle={board?.name}
+        />
+      )}
+
+      <UnsortedBanner toolKey="mood_boards" />
 
       <BoardDetailView
         board={board}

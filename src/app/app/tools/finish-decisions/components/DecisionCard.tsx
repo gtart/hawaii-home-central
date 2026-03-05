@@ -10,12 +10,14 @@ export function DecisionCard({
   decision,
   thumbnail,
   onDelete,
+  onMove,
   readOnly = false,
   collectionId,
 }: {
   decision: DecisionV3
   thumbnail?: string | null
   onDelete: () => void
+  onMove?: () => void
   readOnly?: boolean
   collectionId?: string
 }) {
@@ -97,7 +99,20 @@ export function DecisionCard({
                 </svg>
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-full mt-1 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg py-1 min-w-[120px]">
+                <div className="absolute right-0 top-full mt-1 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg py-1 min-w-[140px]">
+                  {onMove && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setMenuOpen(false)
+                        onMove()
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-cream/70 hover:bg-cream/5 transition-colors"
+                    >
+                      Move to...
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={(e) => {

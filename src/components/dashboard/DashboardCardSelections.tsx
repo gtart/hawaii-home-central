@@ -58,7 +58,7 @@ export function DashboardCardSelections({
         <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Selections</p>
         <p className="text-lg font-medium text-cream/60 mb-1">All selections made</p>
         <p className="text-xs text-cream/35 mb-1">
-          All {totalDone} decision{totalDone !== 1 ? 's' : ''} finalized
+          All {totalDone} selection{totalDone !== 1 ? 's' : ''} finalized
         </p>
         {lastUpdated && (
           <p className="text-[11px] text-cream/25 mb-1">Last activity: {relativeTime(lastUpdated)}</p>
@@ -77,9 +77,9 @@ export function DashboardCardSelections({
   // Has active items
   let heuristic: string
   if (totalNotStarted > 0) {
-    heuristic = `${totalNotStarted} decision${totalNotStarted !== 1 ? 's' : ''} haven't been started`
+    heuristic = `${totalNotStarted} selection${totalNotStarted !== 1 ? 's' : ''} haven't been started`
   } else {
-    heuristic = `${totalDeciding} decision${totalDeciding !== 1 ? 's' : ''} still in progress`
+    heuristic = `${totalDeciding} selection${totalDeciding !== 1 ? 's' : ''} still in progress`
   }
 
   const thumbnail = lists.find((l) => l.thumbnailUrl)?.thumbnailUrl
@@ -94,7 +94,7 @@ export function DashboardCardSelections({
           </div>
           <div className="flex items-baseline gap-3 mb-1">
             <span className="text-2xl font-semibold text-cream tabular-nums">{totalActive}</span>
-            <span className="text-sm text-cream/40">need decisions</span>
+            <span className="text-sm text-cream/40">need selections</span>
             {totalDone > 0 && (
               <>
                 <span className="text-cream/15">&middot;</span>
@@ -110,14 +110,25 @@ export function DashboardCardSelections({
               : `${urgent.decidingCount} deciding`
             return (
               <Link href={`/app/tools/finish-decisions/${urgent.id}`} className="block text-[11px] text-cream/35 hover:text-cream/50 transition-colors mb-1 truncate">
-                Most urgent: <span className="text-cream/50">{urgent.title}</span> <span className="text-cream/25">({reason})</span>
+                Needs review: <span className="text-cream/50">{urgent.title}</span> <span className="text-cream/25">({reason})</span>
               </Link>
             )
           })()}
           <ShareMetaLine meta={data?.toolMeta?.finish_decisions} />
-          <p className="text-[11px] text-cream/25 mb-4 truncate">
-            Last updated: {lists[0].title} · {relativeTime(lists[0].updatedAt)}{lists[0].updatedByName ? ` by ${lists[0].updatedByName.split(' ')[0]}` : ''}
-          </p>
+          {data?.recentActivity?.finish_decisions && data.recentActivity.finish_decisions.length > 0 ? (
+            <div className="mb-4">
+              {data.recentActivity.finish_decisions.slice(0, 2).map((evt, i) => (
+                <p key={i} className="text-[11px] text-cream/25 truncate">
+                  {evt.actorName ? `${evt.actorName.split(' ')[0]}: ` : ''}{evt.summaryText}
+                  <span className="text-cream/15 ml-1">{relativeTime(evt.createdAt)}</span>
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[11px] text-cream/25 mb-4 truncate">
+              Last updated: {lists[0].title} · {relativeTime(lists[0].updatedAt)}{lists[0].updatedByName ? ` by ${lists[0].updatedByName.split(' ')[0]}` : ''}
+            </p>
+          )}
           <Link
             href="/app/tools/finish-decisions"
             className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"

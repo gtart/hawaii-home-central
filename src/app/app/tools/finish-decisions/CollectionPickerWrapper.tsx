@@ -72,7 +72,7 @@ function SelectionListsEmptyState({ onCreate }: { onCreate: (title: string) => v
       </div>
 
       <p className="text-[11px] text-cream/30">
-        You can also apply a Decision Pack inside any list to add curated selections.
+        You can also apply a Selection Pack inside any list to add curated selections.
       </p>
     </div>
   )

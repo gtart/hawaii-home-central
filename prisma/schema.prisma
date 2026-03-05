@@ -94,6 +94,18 @@ enum CollectionRole {
   VIEWER
 }
 
+enum CapturedItemType {
+  IMAGE
+  PAGE
+  NOTE
+}
+
+enum CapturedItemStatus {
+  UNSORTED
+  SORTED
+  DISMISSED
+}
+
 // ─── Auth (existing) ──────────────────────────────────
 
 model User {
@@ -135,6 +147,7 @@ model User {
   collectionShareTokens ToolCollectionShareToken[] @relation("CollectionShareTokenCreator")
   collectionInvites   ToolCollectionInvite[]     @relation("CollectionInviteSender")
   activityEvents      ActivityEvent[]            @relation("ActivityActor")
+  capturedItems       CapturedItem[]             @relation("CapturedItems")
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -210,6 +223,7 @@ model Project {
   shareTokens     ToolShareToken[]
   collections     ToolCollection[]
   activityEvents  ActivityEvent[]
+  capturedItems   CapturedItem[]
 
   @@index([userId])
   @@map("Property")
@@ -642,4 +656,42 @@ model ActivityEvent {
 
   @@index([projectId, createdAt])
   @@index([projectId, toolKey, createdAt])
+  @@index([collectionId, createdAt])
+}
+
+// ─── Captured Items (Inbox) ─────────────────────────
+
+model CapturedItem {
+  id                    String              @id @default(cuid())
+  projectId             String
+  type                  CapturedItemType
+  status                CapturedItemStatus  @default(UNSORTED)
+
+  sourceUrl             String?
+  title                 String?
+  description           String?
+  siteName              String?
+
+  imageUrl              String?
+  thumbnailUrl          String?
+  originalImageUrl      String?
+
+  note                  String?
+
+  suggestedToolKey      String?
+  suggestedCollectionId String?
+
+  sortedToToolKey       String?
+  sortedToCollectionId  String?
+  sortedToEntityId      String?
+
+  capturedByUserId      String
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  capturedBy User    @relation("CapturedItems", fields: [capturedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, status, createdAt])
+  @@index([capturedByUserId])
 }

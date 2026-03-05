@@ -107,14 +107,25 @@ export function DashboardCardFixList({
             : `${urgent.openCount} open`
         return (
           <Link href={`/app/tools/punchlist/${urgent.id}`} className="block text-[11px] text-cream/35 hover:text-cream/50 transition-colors mb-1 truncate">
-            Most urgent: <span className="text-cream/50">{urgent.title}</span> <span className="text-cream/25">({reason})</span>
+            Needs review: <span className="text-cream/50">{urgent.title}</span> <span className="text-cream/25">({reason})</span>
           </Link>
         )
       })()}
       <ShareMetaLine meta={data?.toolMeta?.punchlist} />
-      <p className="text-[11px] text-cream/25 mb-4 truncate">
-        Last updated: {lists[0].title} · {relativeTime(lists[0].updatedAt)}{lists[0].updatedByName ? ` by ${lists[0].updatedByName.split(' ')[0]}` : ''}
-      </p>
+      {data?.recentActivity?.punchlist && data.recentActivity.punchlist.length > 0 ? (
+        <div className="mb-4">
+          {data.recentActivity.punchlist.slice(0, 2).map((evt, i) => (
+            <p key={i} className="text-[11px] text-cream/25 truncate">
+              {evt.actorName ? `${evt.actorName.split(' ')[0]}: ` : ''}{evt.summaryText}
+              <span className="text-cream/15 ml-1">{relativeTime(evt.createdAt)}</span>
+            </p>
+          ))}
+        </div>
+      ) : (
+        <p className="text-[11px] text-cream/25 mb-4 truncate">
+          Last updated: {lists[0].title} · {relativeTime(lists[0].updatedAt)}{lists[0].updatedByName ? ` by ${lists[0].updatedByName.split(' ')[0]}` : ''}
+        </p>
+      )}
       <Link
         href="/app/tools/punchlist"
         className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"

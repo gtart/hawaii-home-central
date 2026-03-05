@@ -26,9 +26,13 @@ import {
 } from '@/data/finish-decisions'
 import { isUncategorized, ensureUncategorizedDecision, findUncategorizedDecision, moveOption as moveOptionHelper } from '@/lib/decisionHelpers'
 import { DecisionFiles } from '../../components/DecisionFiles'
+import { uploadFile as uploadFileForDecision } from '../../uploadFile'
 import { MoveIdeaSheet } from '../../components/MoveIdeaSheet'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { relativeTime } from '@/lib/relativeTime'
+import { useProject } from '@/contexts/ProjectContext'
+import { DestinationPicker } from '@/components/app/DestinationPicker'
+import { useCollectionTransfer } from '@/hooks/useCollectionTransfer'
 
 const COMMENTS_PER_PAGE = 10
 const MAX_COMMENT_LENGTH = 400
@@ -65,8 +69,13 @@ export function DecisionDetailContent({
   const [moveOptionId, setMoveOptionId] = useState<string | null>(null)
   const [assignToast, setAssignToast] = useState<string | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [guidanceOpen, setGuidanceOpen] = useState(false)
+  const [moveDecisionOpen, setMoveDecisionOpen] = useState(false)
+  const [copyOptionId, setCopyOptionId] = useState<string | null>(null)
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
   const addActionsRef = useRef<IdeasBoardAddActions | null>(null)
+  const { currentProject } = useProject()
+  const { transfer, isTransferring } = useCollectionTransfer()
 
   const collResult = useCollectionState<FinishDecisionsPayloadV3>({
     collectionId: collectionId ?? null,
@@ -446,125 +455,85 @@ export function DecisionDetailContent({
     )
   }
 
+  // Guidance content — used in the guidance modal
   // eslint-disable-next-line react/no-unstable-nested-components -- colocated for clarity
-  function GuidancePanel({
-    decision,
-    roomType,
+  function GuidancePanelContent({
+    result,
     onDismiss,
   }: {
-    decision: DecisionV3
-    roomType: string
+    result: ReturnType<typeof matchDecision>
     onDismiss: (key: string) => void
   }) {
-    const [collapsed, setCollapsed] = useState(true)
-    const config = getHeuristicsConfig()
-    const selectedOption = decision.options.find((opt) => opt.isSelected)
-
-    const result = useMemo(
-      () =>
-        matchDecision(
-          config,
-          decision.title,
-          roomType,
-          selectedOption?.name,
-          decision.dismissedSuggestionKeys
-        ),
-      [config, decision.title, roomType, selectedOption?.name, decision.dismissedSuggestionKeys]
-    )
-
-    const tipCount =
-      result.milestones.length + result.impacts.length + result.advice.length
-    const hasContent = tipCount > 0
-
-    if (!hasContent) return null
-
     return (
-      <div className="mb-8 bg-basalt-50 rounded-card border border-sandstone/10 overflow-hidden">
-        {/* Clickable header — always visible */}
-        <button
-          type="button"
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-between p-4 text-left hover:bg-basalt-50/80 transition-colors"
-        >
-          <h3 className="text-sm font-medium text-sandstone">
-            Guidance{collapsed ? ` — ${tipCount} tip${tipCount !== 1 ? 's' : ''}` : ''}
-          </h3>
-          <span className="text-cream/30 text-xs">{collapsed ? '▶' : '▼'}</span>
-        </button>
-
-        {/* Expandable content */}
-        {!collapsed && (
-          <div className="px-4 pb-4 space-y-3">
-            {/* Timing / Milestones */}
-            {result.milestones.length > 0 && (
-              <div>
-                <span className="text-xs text-cream/50 uppercase tracking-wide">Timing</span>
-                <div className="flex flex-wrap gap-2 mt-1.5">
-                  {result.milestones.map((m) => (
-                    <span
-                      key={m.id}
-                      className="inline-flex items-center gap-1.5 bg-sandstone/15 text-sandstone text-xs px-2.5 py-1 rounded-full"
-                    >
-                      {m.label}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onDismiss(`m:${m.id}`) }}
-                        className="text-sandstone/30 hover:text-sandstone/60 ml-0.5"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Coordination Impacts */}
-            {result.impacts.length > 0 && (
-              <div>
-                <span className="text-xs text-cream/50 uppercase tracking-wide">
-                  Coordination watchouts
+      <div className="space-y-4">
+        {/* Timing / Milestones */}
+        {result.milestones.length > 0 && (
+          <div>
+            <span className="text-xs text-cream/50 uppercase tracking-wide">Timing</span>
+            <div className="flex flex-wrap gap-2 mt-1.5">
+              {result.milestones.map((m) => (
+                <span
+                  key={m.id}
+                  className="inline-flex items-center gap-1.5 bg-sandstone/15 text-sandstone text-xs px-2.5 py-1 rounded-full"
+                >
+                  {m.label}
+                  <button
+                    onClick={() => onDismiss(`m:${m.id}`)}
+                    className="text-sandstone/30 hover:text-sandstone/60 ml-0.5"
+                  >
+                    ×
+                  </button>
                 </span>
-                <ul className="mt-1.5 space-y-1">
-                  {result.impacts.map((i) => (
-                    <li
-                      key={i.id}
-                      className="flex items-center justify-between text-sm text-cream/70"
-                    >
-                      <span>• {i.label}</span>
-                      <button
-                        onClick={() => onDismiss(`i:${i.id}`)}
-                        className="text-cream/20 hover:text-cream/50 text-xs ml-2 shrink-0"
-                      >
-                        ×
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+              ))}
+            </div>
+          </div>
+        )}
 
-            {/* Advice */}
-            {result.advice.length > 0 && (
-              <div>
-                <span className="text-xs text-cream/50 uppercase tracking-wide">Advice</span>
-                <ul className="mt-1.5 space-y-1.5">
-                  {result.advice.map((a) => (
-                    <li
-                      key={a.key}
-                      className="flex items-start justify-between text-sm text-cream/60"
-                    >
-                      <span className="leading-relaxed">{a.text}</span>
-                      <button
-                        onClick={() => onDismiss(a.key)}
-                        className="text-cream/20 hover:text-cream/50 text-xs ml-2 shrink-0 mt-0.5"
-                      >
-                        ×
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+        {/* Coordination Impacts */}
+        {result.impacts.length > 0 && (
+          <div>
+            <span className="text-xs text-cream/50 uppercase tracking-wide">
+              Coordination watchouts
+            </span>
+            <ul className="mt-1.5 space-y-1">
+              {result.impacts.map((i) => (
+                <li
+                  key={i.id}
+                  className="flex items-center justify-between text-sm text-cream/70"
+                >
+                  <span>• {i.label}</span>
+                  <button
+                    onClick={() => onDismiss(`i:${i.id}`)}
+                    className="text-cream/20 hover:text-cream/50 text-xs ml-2 shrink-0"
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Advice */}
+        {result.advice.length > 0 && (
+          <div>
+            <span className="text-xs text-cream/50 uppercase tracking-wide">Advice</span>
+            <ul className="mt-1.5 space-y-1.5">
+              {result.advice.map((a) => (
+                <li
+                  key={a.key}
+                  className="flex items-start justify-between text-sm text-cream/60"
+                >
+                  <span className="leading-relaxed">{a.text}</span>
+                  <button
+                    onClick={() => onDismiss(a.key)}
+                    className="text-cream/20 hover:text-cream/50 text-xs ml-2 shrink-0 mt-0.5"
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>
@@ -572,6 +541,33 @@ export function DecisionDetailContent({
   }
 
   const isSystemUncategorized = isUncategorized(foundDecision)
+
+  // Guidance computation (for pill in meta row)
+  const guidanceResult = useMemo(
+    () => {
+      if (!foundDecision || !foundRoom) return { milestones: [], impacts: [], advice: [], matchedRuleIds: [] }
+      return matchDecision(
+        getHeuristicsConfig(),
+        foundDecision.title,
+        foundRoom.type,
+        foundDecision.options.find((o) => o.isSelected)?.name,
+        foundDecision.dismissedSuggestionKeys,
+      )
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [foundDecision?.title, foundRoom?.type, foundDecision?.options, foundDecision?.dismissedSuggestionKeys]
+  )
+  const guidanceTipCount = guidanceResult.milestones.length + guidanceResult.impacts.length + guidanceResult.advice.length
+
+  function handleGuidanceDismiss(key: string) {
+    if (!foundDecision) return
+    updateDecision({
+      dismissedSuggestionKeys: [
+        ...(foundDecision.dismissedSuggestionKeys || []),
+        key,
+      ],
+    })
+  }
 
   // Filter: only show user comments (non-empty authorEmail), not system comments
   const userComments = (foundDecision.comments || []).filter((c) => c.authorEmail !== '')
@@ -734,6 +730,24 @@ export function DecisionDetailContent({
               <span className="text-cream/40">Comments</span>
             )}
           </button>
+          {guidanceTipCount > 0 && (
+            <>
+              <span className="text-cream/20">·</span>
+              <button
+                type="button"
+                onClick={() => setGuidanceOpen(true)}
+                className="inline-flex items-center gap-1.5 bg-sandstone/10 hover:bg-sandstone/15 border border-sandstone/15 rounded-full px-2.5 py-1 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5 text-sandstone/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
+                </svg>
+                <span className="text-xs text-sandstone font-medium">
+                  {guidanceTipCount} tip{guidanceTipCount !== 1 ? 's' : ''}
+                </span>
+              </button>
+            </>
+          )}
           {doneWithoutFinal && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/10 text-red-400 text-[10px] font-medium rounded-full border border-red-400/20">
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -851,33 +865,38 @@ export function DecisionDetailContent({
             currentDecisionId={foundDecision.id}
             onImportToDecision={handleImportToDecision}
             onMoveOption={(optId) => setMoveOptionId(optId)}
+            onCopyOption={collectionId && currentProject ? (optId) => setCopyOptionId(optId) : undefined}
             addActionsRef={addActionsRef}
           />
         </div>
 
-        {/* All Files — aggregated from all options */}
+        {/* All Files — aggregated from all options + decision-level files */}
         <DecisionFiles
           decision={foundDecision}
+          readOnly={readOnly}
+          userName={session?.user?.name || 'Unknown'}
+          userEmail={session?.user?.email || ''}
           onOpenOption={(optionId) => setActiveCardId(optionId)}
+          onUpdateDecision={(patch) => updateDecision(patch)}
+          onUploadFile={uploadFileForDecision}
         />
 
-        {/* Guidance Panel */}
-        <GuidancePanel
-          decision={foundDecision}
-          roomType={foundRoom.type}
-          onDismiss={(key) => {
-            updateDecision({
-              dismissedSuggestionKeys: [
-                ...(foundDecision.dismissedSuggestionKeys || []),
-                key,
-              ],
-            })
-          }}
-        />
-
-        {/* Delete selection */}
+        {/* Actions */}
         {!readOnly && !isSystemUncategorized && (
-          <div className="mt-8 pt-4 border-t border-cream/10">
+          <div className="mt-8 pt-4 border-t border-cream/10 space-y-3">
+            {collectionId && currentProject && (
+              <button
+                type="button"
+                onClick={() => setMoveDecisionOpen(true)}
+                disabled={isTransferring}
+                className="flex items-center gap-2 text-xs text-cream/40 hover:text-cream/60 disabled:opacity-50 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {isTransferring ? 'Moving...' : 'Move to another list...'}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setDeleteConfirmOpen(true)}
@@ -897,7 +916,7 @@ export function DecisionDetailContent({
             <div className="absolute inset-0 bg-black/30" onClick={() => setCommentsOpen(false)} />
             <div className="absolute inset-y-0 right-0 w-96 bg-basalt-50 border-l border-cream/10 shadow-xl overflow-y-auto">
               <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 flex items-center justify-between px-5 py-4 z-10">
-                <h2 className="text-lg font-medium text-cream">Comments</h2>
+                <h2 className="text-lg font-medium text-cream">All Comments</h2>
                 <button
                   type="button"
                   onClick={() => setCommentsOpen(false)}
@@ -931,7 +950,7 @@ export function DecisionDetailContent({
             <div className="absolute inset-0 bg-black/60" onClick={() => setCommentsOpen(false)} />
             <div className="relative bg-basalt-50 border-t border-cream/10 rounded-t-xl w-full max-h-[80vh] overflow-y-auto">
               <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 flex items-center justify-between px-5 py-3 z-10 rounded-t-xl">
-                <h2 className="text-lg font-medium text-cream">Comments</h2>
+                <h2 className="text-lg font-medium text-cream">All Comments</h2>
                 <button
                   type="button"
                   onClick={() => setCommentsOpen(false)}
@@ -956,6 +975,43 @@ export function DecisionDetailContent({
                     setCommentsOpen(false)
                   }}
                 />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Guidance Modal */}
+      {guidanceOpen && guidanceTipCount > 0 && (
+        <>
+          {/* Desktop: centered modal */}
+          <div className="hidden md:flex fixed inset-0 z-50 items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setGuidanceOpen(false)} />
+            <div className="relative bg-basalt-50 border border-cream/15 rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-y-auto">
+              <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 flex items-center justify-between px-5 py-4 z-10 rounded-t-xl">
+                <h2 className="text-lg font-medium text-sandstone">Guidance</h2>
+                <button type="button" onClick={() => setGuidanceOpen(false)} className="text-cream/40 hover:text-cream transition-colors">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" /></svg>
+                </button>
+              </div>
+              <div className="p-5">
+                <GuidancePanelContent result={guidanceResult} onDismiss={handleGuidanceDismiss} />
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile: bottom sheet */}
+          <div className="md:hidden fixed inset-0 z-50 flex items-end">
+            <div className="absolute inset-0 bg-black/60" onClick={() => setGuidanceOpen(false)} />
+            <div className="relative bg-basalt-50 border-t border-cream/10 rounded-t-xl w-full max-h-[80vh] overflow-y-auto">
+              <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 flex items-center justify-between px-5 py-3 z-10 rounded-t-xl">
+                <h2 className="text-lg font-medium text-sandstone">Guidance</h2>
+                <button type="button" onClick={() => setGuidanceOpen(false)} className="text-cream/40 hover:text-cream transition-colors">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" /></svg>
+                </button>
+              </div>
+              <div className="p-5">
+                <GuidancePanelContent result={guidanceResult} onDismiss={handleGuidanceDismiss} />
               </div>
             </div>
           </div>
@@ -1010,6 +1066,64 @@ export function DecisionDetailContent({
             deleteDecision()
           }}
           onCancel={() => setDeleteConfirmOpen(false)}
+        />
+      )}
+
+      {/* Move decision to another list */}
+      {moveDecisionOpen && collectionId && currentProject && (
+        <DestinationPicker
+          toolKey="finish_decisions"
+          projectId={currentProject.id}
+          excludeCollectionId={collectionId}
+          actionLabel="Move"
+          title="Move selection to..."
+          onClose={() => setMoveDecisionOpen(false)}
+          onConfirm={async (dest) => {
+            const result = await transfer({
+              sourceCollectionId: collectionId,
+              destinationCollectionId: dest.collectionId,
+              operation: 'move',
+              entityType: 'decision',
+              entityId: decisionId,
+              destinationRoomId: dest.roomId,
+            })
+            setMoveDecisionOpen(false)
+            if (result.success) {
+              const basePath = collectionId ? `/app/tools/finish-decisions/${collectionId}` : '/app/tools/finish-decisions'
+              router.push(basePath)
+            }
+          }}
+        />
+      )}
+
+      {/* Copy option to another list */}
+      {copyOptionId && collectionId && currentProject && foundRoom && (
+        <DestinationPicker
+          toolKey="finish_decisions"
+          projectId={currentProject.id}
+          excludeCollectionId={collectionId}
+          requireRoom
+          requireDecision
+          actionLabel="Copy"
+          title="Copy option to..."
+          onClose={() => setCopyOptionId(null)}
+          onConfirm={async (dest) => {
+            const result = await transfer({
+              sourceCollectionId: collectionId,
+              destinationCollectionId: dest.collectionId,
+              operation: 'copy',
+              entityType: 'option',
+              entityId: copyOptionId,
+              sourceDecisionId: decisionId,
+              destinationRoomId: dest.roomId,
+              destinationDecisionId: dest.decisionId,
+            })
+            setCopyOptionId(null)
+            if (result.success) {
+              setAssignToast(`Copied to ${result.destinationCollectionTitle || 'destination'}`)
+              setTimeout(() => setAssignToast(null), 3000)
+            }
+          }}
         />
       )}
 

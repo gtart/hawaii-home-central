@@ -24,9 +24,12 @@ import { DecisionsTable } from '../../components/DecisionsTable'
 import { QuickAddDecisionModal } from '../../components/QuickAddDecisionModal'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
 import { RoomCommentsFeed } from '../../components/RoomCommentsFeed'
+import { RoomFilesPanel } from '../../components/RoomFilesPanel'
 import { ShareExportModal } from '@/components/app/ShareExportModal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { TextConfirmDialog } from '@/components/ui/TextConfirmDialog'
+import { DestinationPicker } from '@/components/app/DestinationPicker'
+import { useCollectionTransfer } from '@/hooks/useCollectionTransfer'
 
 const DEFAULT_PAYLOAD: FinishDecisionsPayloadV3 = { version: 3, rooms: [] }
 const SEL_VIEW_KEY = 'hhc_finish_selection_view_mode_v2'
@@ -77,9 +80,12 @@ export function RoomDetailContent({
   const [deleteStep, setDeleteStep] = useState<'none' | 'confirm' | 'type'>('none')
   const [confirmDeleteDecisionId, setConfirmDeleteDecisionId] = useState<string | null>(null)
   const [undoDecision, setUndoDecision] = useState<{ decision: DecisionV3; timer: ReturnType<typeof setTimeout> } | null>(null)
+  const [moveDecisionId, setMoveDecisionId] = useState<string | null>(null)
+  const { transfer, isTransferring } = useCollectionTransfer()
   const [populateBanner, setPopulateBanner] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; kitId: string } | null>(null)
   const [commentsFeedOpen, setCommentsFeedOpen] = useState(false)
+  const [filesOpen, setFilesOpen] = useState(false)
   const [showShareExport, setShowShareExport] = useState(false)
   const [selViewMode, setSelViewMode] = useState<'table' | 'tile'>(() => {
     try {
@@ -314,6 +320,11 @@ export function RoomDetailContent({
     0
   )
   const roomCommentCount = (room.comments || []).length
+  const totalFileCount = room.decisions.reduce((sum, d) => {
+    let count = (d.files ?? []).length
+    for (const o of d.options) count += (o.documents ?? []).length
+    return sum + count
+  }, 0)
 
   return (
     <div className="pt-32 pb-24 px-6">
@@ -408,6 +419,23 @@ export function RoomDetailContent({
               {roomCommentCount > 0 ? roomCommentCount : 'Comments'}
             </button>
 
+            {/* Room files */}
+            <button
+              type="button"
+              onClick={() => setFilesOpen(true)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                totalFileCount > 0
+                  ? 'text-sandstone bg-sandstone/10 hover:bg-sandstone/20 font-medium'
+                  : 'text-cream/40 hover:text-cream/60 bg-cream/5 hover:bg-cream/10'
+              }`}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              {totalFileCount > 0 ? totalFileCount : 'Files'}
+            </button>
+
             {/* View mode selector */}
             <select
               value={selViewMode}
@@ -445,6 +473,23 @@ export function RoomDetailContent({
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
               </svg>
               {roomCommentCount > 0 ? roomCommentCount : 'Comments'}
+            </button>
+
+            {/* Room files */}
+            <button
+              type="button"
+              onClick={() => setFilesOpen(true)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                totalFileCount > 0
+                  ? 'text-sandstone bg-sandstone/10 hover:bg-sandstone/20 font-medium'
+                  : 'text-cream/40 hover:text-cream/60 bg-cream/5 hover:bg-cream/10'
+              }`}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              {totalFileCount > 0 ? totalFileCount : 'Files'}
             </button>
 
             <select
@@ -576,8 +621,10 @@ export function RoomDetailContent({
             decisions={room.decisions}
             roomType={room.type}
             onDeleteDecision={(id) => setConfirmDeleteDecisionId(id)}
+            onMoveDecision={!readOnly && collectionId ? (id) => setMoveDecisionId(id) : undefined}
             readOnly={readOnly}
             emojiMap={emojiMap}
+            collectionId={collectionId}
           />
         )}
       </div>
@@ -696,6 +743,52 @@ export function RoomDetailContent({
           onNavigateToDecision={(decisionId) => {
             setCommentsFeedOpen(false)
             router.push(buildDecisionHref({ decisionId, collectionId }))
+          }}
+        />
+      )}
+
+      {/* Room files panel */}
+      {filesOpen && room && (
+        <RoomFilesPanel
+          room={room}
+          onClose={() => setFilesOpen(false)}
+          onNavigateToDecision={(decisionId) => {
+            setFilesOpen(false)
+            router.push(buildDecisionHref({ decisionId, collectionId }))
+          }}
+        />
+      )}
+
+      {/* Move decision to another list */}
+      {moveDecisionId && collectionId && currentProject && (
+        <DestinationPicker
+          toolKey="finish_decisions"
+          projectId={currentProject.id}
+          excludeCollectionId={collectionId}
+          actionLabel="Move"
+          title="Move selection to..."
+          onClose={() => setMoveDecisionId(null)}
+          onConfirm={async (dest) => {
+            const result = await transfer({
+              sourceCollectionId: collectionId,
+              destinationCollectionId: dest.collectionId,
+              operation: 'move',
+              entityType: 'decision',
+              entityId: moveDecisionId,
+              destinationRoomId: dest.roomId,
+            })
+            if (result.success) {
+              // Remove from local state
+              setState((prev) => ({
+                ...prev,
+                rooms: (prev as FinishDecisionsPayloadV3).rooms.map((r) =>
+                  r.id === roomId
+                    ? { ...r, decisions: r.decisions.filter((d) => d.id !== moveDecisionId), updatedAt: new Date().toISOString() }
+                    : r
+                ),
+              }))
+            }
+            setMoveDecisionId(null)
           }}
         />
       )}

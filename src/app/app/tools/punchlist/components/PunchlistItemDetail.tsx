@@ -8,12 +8,16 @@ import { STATUS_CONFIG, STATUS_CYCLE, PRIORITY_CONFIG } from '../constants'
 import { LOCATION_SEEDS, ASSIGNEE_SEEDS } from '../utils'
 import { PhotoLightbox } from './PhotoLightbox'
 import { uploadFile } from '../utils'
+import { DestinationPicker } from '@/components/app/DestinationPicker'
+import { useCollectionTransfer } from '@/hooks/useCollectionTransfer'
 
 type EditingField = 'title' | 'location' | 'assignee' | 'priority' | 'notes' | null
 
 interface Props {
   item: PunchlistItem
   api: PunchlistStateAPI
+  collectionId?: string
+  projectId?: string
   onClose: () => void
 }
 
@@ -34,10 +38,12 @@ function PencilButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-export function PunchlistItemDetail({ item, api, onClose }: Props) {
+export function PunchlistItemDetail({ item, api, collectionId, projectId, onClose }: Props) {
   const { readOnly, updateItem, setStatus, deleteItem, addPhoto, payload } = api
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [moveOpen, setMoveOpen] = useState(false)
+  const { transfer, isTransferring } = useCollectionTransfer()
   const [photoUploading, setPhotoUploading] = useState(false)
   const [photoError, setPhotoError] = useState('')
   const [photoSaved, setPhotoSaved] = useState(false)
@@ -413,9 +419,22 @@ export function PunchlistItemDetail({ item, api, onClose }: Props) {
           {/* Comments section */}
           <CommentsSection item={item} api={api} readOnly={readOnly} />
 
-          {/* Delete button */}
+          {/* Actions */}
           {!readOnly && (
-            <div className="pt-3 border-t border-cream/5">
+            <div className="pt-3 border-t border-cream/5 space-y-3">
+              {collectionId && projectId && (
+                <button
+                  type="button"
+                  onClick={() => setMoveOpen(true)}
+                  disabled={isTransferring}
+                  className="flex items-center gap-2 text-xs text-cream/40 hover:text-cream/60 disabled:opacity-50 transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {isTransferring ? 'Moving...' : 'Move to another list...'}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleDelete}
@@ -438,6 +457,32 @@ export function PunchlistItemDetail({ item, api, onClose }: Props) {
           photos={item.photos}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
+        />
+      )}
+
+      {/* Destination picker for move */}
+      {moveOpen && collectionId && projectId && (
+        <DestinationPicker
+          toolKey="punchlist"
+          projectId={projectId}
+          excludeCollectionId={collectionId}
+          actionLabel="Move"
+          title="Move fix to..."
+          onClose={() => setMoveOpen(false)}
+          onConfirm={async (dest) => {
+            const result = await transfer({
+              sourceCollectionId: collectionId,
+              destinationCollectionId: dest.collectionId,
+              operation: 'move',
+              entityType: 'punchlist_item',
+              entityId: item.id,
+            })
+            if (result.success) {
+              deleteItem(item.id)
+              onClose()
+            }
+            setMoveOpen(false)
+          }}
         />
       )}
     </div>

@@ -813,6 +813,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
                         </svg>
                         Text note
                       </button>
+                      {/* Desktop: functional link */}
                       <Link
                         href={`/app/save-from-web?from=mood-boards&boardId=${board.id}`}
                         onClick={() => setAddTileMode('closed')}
@@ -825,6 +826,21 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
                         </svg>
                         Save from web
                       </Link>
+                      {/* Mobile: desktop-only note */}
+                      <div className="sm:hidden px-3 py-2.5">
+                        <div className="flex items-center gap-2.5 text-sm text-cream/35">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cream/25 shrink-0">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="2" y1="12" x2="22" y2="12" />
+                            <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+                          </svg>
+                          Save from web
+                        </div>
+                        <p className="text-[11px] text-cream/25 mt-1 ml-[27px]">
+                          Web import is available on desktop via the bookmarklet.{' '}
+                          <a href="/app/save-from-web" className="text-sandstone/60 hover:text-sandstone underline">Learn how</a>
+                        </p>
+                      </div>
                       <button
                         type="button"
                         onClick={() => setAddTileMode('closed')}

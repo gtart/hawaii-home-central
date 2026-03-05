@@ -21,7 +21,7 @@ function deriveSuggestion(data: DashboardResponse): { label: string; href: strin
   if (totalNotStarted > 0) {
     const list = selLists.find((l) => l.notStartedCount > 0)
     return {
-      label: `Start ${totalNotStarted} decision${totalNotStarted !== 1 ? 's' : ''} with no options yet`,
+      label: `Start ${totalNotStarted} selection${totalNotStarted !== 1 ? 's' : ''} with no options yet`,
       href: list ? `/app/tools/finish-decisions/${list.id}` : '/app/tools/finish-decisions',
     }
   }

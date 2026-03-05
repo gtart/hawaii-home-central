@@ -81,6 +81,25 @@ export async function GET(request: Request) {
   const tokenCountMap = new Map(tokenCounts.map((t) => [t.collectionId, t._count.id]))
   const inviteCountMap = new Map(inviteCounts.map((i) => [i.collectionId, i._count.id]))
 
+  // Batch-fetch latest activity event per collection
+  const recentEvents = collIds.length > 0
+    ? await prisma.activityEvent.findMany({
+        where: { collectionId: { in: collIds } },
+        orderBy: { createdAt: 'desc' },
+        take: Math.max(collIds.length * 3, 50),
+        select: {
+          collectionId: true, summaryText: true, action: true,
+          createdAt: true, actor: { select: { name: true } },
+        },
+      })
+    : []
+  const latestEventMap = new Map<string, (typeof recentEvents)[0]>()
+  for (const e of recentEvents) {
+    if (e.collectionId && !latestEventMap.has(e.collectionId)) {
+      latestEventMap.set(e.collectionId, e)
+    }
+  }
+
   type IdeaLike = {
     images?: Array<{ id: string; url: string; thumbnailUrl?: string }>
     heroImageId?: string | null
@@ -170,8 +189,6 @@ export async function GET(request: Request) {
         if (Array.isArray(rooms)) {
           const counts: Record<string, number> = {}
           let latestCommentTime = 0
-          let latestActivityTime = 0
-          let latestActivityText = ''
           for (const room of rooms) {
             for (const d of room.decisions ?? []) {
               decisionCount++
@@ -219,31 +236,36 @@ export async function GET(request: Request) {
                 }
               }
 
-              // Track latest decision activity for fallback
-              const dTitle = d.title ?? 'Untitled'
-              if (d.options && d.options.length > 0) {
-                const sel = d.options.find((o) => o.isSelected)
-                if (sel && d.status && d.status !== 'deciding') {
-                  // Use collection updatedAt as proxy since we don't have per-decision timestamps
-                  const t = coll.updatedAt.getTime()
-                  if (t > latestActivityTime) {
-                    latestActivityTime = t
-                    latestActivityText = `Marked ${d.status}: ${dTitle}`
-                  }
-                } else {
-                  const t = coll.updatedAt.getTime()
-                  if (t > latestActivityTime) {
-                    latestActivityTime = t
-                    latestActivityText = `Updated: ${dTitle}`
-                  }
-                }
-              }
             }
           }
           statuses = counts
           // Set lastActivity fallback when no comments exist
-          if (!lastComment && latestActivityText) {
-            lastActivity = latestActivityText
+          // Use deterministic urgency-based decision instead of iteration order
+          if (!lastComment && decisionCount > 0) {
+            // Collect all decisions flat for urgency ranking
+            const allDecisions: FDDecision[] = []
+            for (const room of rooms) {
+              for (const d of room.decisions ?? []) {
+                allDecisions.push(d)
+              }
+            }
+            // Priority: not_started > deciding > other
+            const notStarted = allDecisions.find((d) => {
+              const s = d.status ?? 'deciding'
+              return s === 'deciding' && (!d.options || d.options.length === 0)
+            })
+            const deciding = allDecisions.find((d) => {
+              const s = d.status ?? 'deciding'
+              return s === 'deciding' && d.options && d.options.length > 0
+            })
+            if (notStarted) {
+              lastActivity = `Needs review: ${notStarted.title ?? 'Untitled'} (no options yet)`
+            } else if (deciding) {
+              lastActivity = `Still deciding: ${deciding.title ?? 'Untitled'}`
+            } else {
+              const any = allDecisions[0]
+              if (any) lastActivity = `Updated: ${any.title ?? 'Untitled'}`
+            }
           }
         }
       } catch {
@@ -313,10 +335,19 @@ export async function GET(request: Request) {
     const shareLinkEnabled = (tokenCountMap.get(coll.id) ?? 0) > 0
     const inviteCount = inviteCountMap.get(coll.id) ?? 0
 
+    // Latest activity event
+    const latestEvt = latestEventMap.get(coll.id)
+    const lastEvent = latestEvt ? {
+      summaryText: latestEvt.summaryText,
+      actorName: latestEvt.actor?.name ?? null,
+      createdAt: latestEvt.createdAt.toISOString(),
+      action: latestEvt.action,
+    } : undefined
+
     return {
       collectionId: coll.id, imageUrls, ideaCount, commentCount, statuses,
       lastComment, decisionCount, lastActivity, itemCount,
-      collaboratorCount, shareLinkEnabled, inviteCount,
+      collaboratorCount, shareLinkEnabled, inviteCount, lastEvent,
     }
   })
 

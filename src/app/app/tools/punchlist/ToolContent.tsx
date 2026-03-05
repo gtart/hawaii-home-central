@@ -1,9 +1,11 @@
 'use client'
 
-import { Suspense, useMemo, useCallback, useEffect } from 'react'
+import { Suspense, useState, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
+import { ActivityPanel } from '@/components/app/ActivityPanel'
+import { UnsortedBanner } from '@/components/app/UnsortedBanner'
 import { useProject } from '@/contexts/ProjectContext'
 import { usePunchlistState } from './usePunchlistState'
 import { PunchlistPage } from './components/PunchlistPage'
@@ -14,6 +16,7 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
   const { payload, isLoaded, isSyncing, access, readOnly, noAccess, title: collectionTitle, projectId: collectionProjectId } = api
   const { currentProject } = useProject()
   const router = useRouter()
+  const [activityOpen, setActivityOpen] = useState(false)
 
   // Redirect to picker if the loaded collection belongs to a different project
   useEffect(() => {
@@ -97,7 +100,29 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
         }}
         onRename={collectionId ? handleRename : undefined}
         onArchive={collectionId ? handleArchive : undefined}
+        actions={collectionId ? (
+          <button
+            type="button"
+            onClick={() => setActivityOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Activity
+          </button>
+        ) : undefined}
       />
+      {activityOpen && collectionId && (
+        <ActivityPanel
+          onClose={() => setActivityOpen(false)}
+          toolKey="punchlist"
+          collectionId={collectionId}
+          collectionTitle={collectionTitle || undefined}
+        />
+      )}
+
+      <UnsortedBanner toolKey="punchlist" />
 
       {isSyncing && (
         <div className="flex items-center gap-2 text-xs text-cream/30 mb-4">
@@ -109,7 +134,7 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
       {payload.items.length === 0 ? (
         <PunchlistEmptyState readOnly={readOnly} api={api} />
       ) : (
-        <PunchlistPage api={api} />
+        <PunchlistPage api={api} collectionId={collectionId} projectId={collectionProjectId || currentProject?.id} />
       )}
     </>
   )

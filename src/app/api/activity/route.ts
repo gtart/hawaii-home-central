@@ -7,9 +7,20 @@ import { cacheGet, cacheSet } from '@/server/cache/simpleTtlCache'
 const ACTIVITY_TTL_MS = 30_000 // 30 seconds
 
 /**
- * GET /api/activity?toolKey=punchlist&limit=20&cursor=2026-03-04T00:00:00Z__clxyz123
+ * GET /api/activity
  * Returns paginated activity events for the current project.
- * Cursor format: `${createdAtISO}__${id}` (composite) or legacy `${createdAtISO}`.
+ *
+ * Query params:
+ *   toolKey        — filter by tool (e.g. "punchlist", "finish_decisions")
+ *   collectionId   — filter by collection
+ *   entityId       — filter by specific entity
+ *   actorUserId    — filter by actor
+ *   actionTypes    — comma-separated action types (e.g. "commented,selected,done")
+ *   q              — text search on summaryText (case-insensitive)
+ *   start          — ISO date, events >= this time
+ *   end            — ISO date, events <= this time
+ *   limit          — results per page (1-50, default 20)
+ *   cursor         — pagination cursor: `${createdAtISO}__${id}` or legacy `${createdAtISO}`
  */
 export async function GET(request: Request) {
   const session = await auth()
@@ -27,11 +38,19 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url)
   const toolKey = url.searchParams.get('toolKey')
+  const collectionId = url.searchParams.get('collectionId')
+  const entityId = url.searchParams.get('entityId')
+  const actorUserId = url.searchParams.get('actorUserId')
+  const actionTypesRaw = url.searchParams.get('actionTypes')
+  const actionTypes = actionTypesRaw ? actionTypesRaw.split(',').filter(Boolean) : []
+  const q = url.searchParams.get('q')
+  const start = url.searchParams.get('start')
+  const end = url.searchParams.get('end')
   const limitParam = parseInt(url.searchParams.get('limit') || '20', 10)
   const limit = Math.min(Math.max(limitParam, 1), 50)
   const cursor = url.searchParams.get('cursor')
 
-  const cacheKey = `activity:${userId}:${projectId}:${toolKey || 'all'}:${cursor || 'first'}:${limit}`
+  const cacheKey = `activity:${userId}:${projectId}:${toolKey || 'all'}:${collectionId || '-'}:${actionTypes.join('+') || '-'}:${q || '-'}:${start || '-'}:${end || '-'}:${cursor || 'first'}:${limit}`
   const cached = cacheGet<object>(cacheKey)
   if (cached) {
     return NextResponse.json(cached)
@@ -55,10 +74,21 @@ export async function GET(request: Request) {
     }
   }
 
+  // Build time-range filter (merged with cursor's createdAt if both exist)
+  const timeFilter: Record<string, Date> = {}
+  if (start) timeFilter.gte = new Date(start)
+  if (end) timeFilter.lte = new Date(end)
+
   const events = await prisma.activityEvent.findMany({
     where: {
       projectId,
       ...(toolKey ? { toolKey } : {}),
+      ...(collectionId ? { collectionId } : {}),
+      ...(entityId ? { entityId } : {}),
+      ...(actorUserId ? { actorUserId } : {}),
+      ...(actionTypes.length > 0 ? { action: { in: actionTypes } } : {}),
+      ...(q ? { summaryText: { contains: q, mode: 'insensitive' as const } } : {}),
+      ...(Object.keys(timeFilter).length > 0 ? { createdAt: timeFilter } : {}),
       ...cursorWhere,
     },
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],

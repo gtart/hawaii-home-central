@@ -36,12 +36,12 @@ const STAGES: StageEntry[] = [
       steps: [
         'Save ideas from any website with the Save to HHC bookmarklet or paste a link',
         'Organize into boards\u2014by room, style, or however you like',
-        'Turn your favorites into finish decisions when you\u2019re ready',
+        'Turn your favorites into selections when you\u2019re ready',
       ],
       features: [
         'Visual boards with images and source links',
         'One-click save from any product or inspiration page',
-        'Convert ideas to Finish Decisions when you\u2019re ready to decide',
+        'Convert ideas to Selections when you\u2019re ready to decide',
       ],
     },
   },

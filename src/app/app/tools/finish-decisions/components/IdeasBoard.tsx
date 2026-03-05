@@ -48,6 +48,7 @@ interface Props {
   hideFinalize?: boolean
   hideCompare?: boolean
   onMoveOption?: (optionId: string) => void
+  onCopyOption?: (optionId: string) => void
   rooms?: RoomV3[]
   currentRoomId?: string
   currentDecisionId?: string
@@ -380,16 +381,30 @@ export function AddIdeaMenu({
             Add as Text
           </button>
           <div className="border-t border-cream/8" />
+          {/* Desktop: functional import button */}
           <button
             type="button"
             onClick={() => { onWeb(); setOpen(false) }}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+            className="hidden sm:flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Add from Save to HHC
           </button>
+          {/* Mobile: desktop-only note */}
+          <div className="sm:hidden px-4 py-3">
+            <div className="flex items-center gap-3 text-sm text-cream/35">
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Save to HHC
+            </div>
+            <p className="text-[11px] text-cream/25 mt-1 ml-7">
+              Web import is available on desktop via the bookmarklet.{' '}
+              <a href="/app/save-from-web" className="text-sandstone/60 hover:text-sandstone underline">Learn how</a>
+            </p>
+          </div>
           {onImageUrl && (
             <>
               <div className="border-t border-cream/8" />
@@ -453,6 +468,7 @@ export function IdeasBoard({
   hideFinalize,
   hideCompare,
   onMoveOption,
+  onCopyOption,
   rooms,
   currentRoomId,
   currentDecisionId,
@@ -825,14 +841,20 @@ export function IdeasBoard({
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" /></svg>
                     Add as Text
                   </button>
+                  {/* Desktop: opens SaveFromWebDialog */}
                   <button
                     type="button"
                     onClick={() => setShowWebDialog(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80 rounded-full text-xs transition-colors"
+                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80 rounded-full text-xs transition-colors"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     Save to HHC
                   </button>
+                  {/* Mobile: desktop-only note */}
+                  <span className="sm:hidden inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/5 text-cream/30 rounded-full text-xs">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    Desktop only · <a href="/app/save-from-web" className="text-sandstone/60 underline">Learn how</a>
+                  </span>
                 </div>
               )}
             </div>
@@ -857,6 +879,7 @@ export function IdeasBoard({
           onDelete={() => onDeleteOption(activeOption.id)}
           onSelect={hideFinalize ? undefined : () => onSelectOption(activeOption.id)}
           onMove={onMoveOption ? () => onMoveOption(activeOption.id) : undefined}
+          onCopy={onCopyOption ? () => onCopyOption(activeOption.id) : undefined}
           onUpdateDecision={onUpdateDecision}
           onAddComment={onAddComment}
           onUploadPhoto={uploadIdeaFile}
@@ -869,11 +892,6 @@ export function IdeasBoard({
             }
             setActiveCardId(null)
           }}
-          onCommentOnIdea={onCommentOnOption ? () => {
-            const opt = activeOption
-            setActiveCardId(null)
-            onCommentOnOption(opt.id, opt.name || 'Untitled')
-          } : undefined}
         />
       )}
 

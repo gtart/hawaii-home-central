@@ -8,6 +8,8 @@ import { useProject } from '@/contexts/ProjectContext'
 import { LocalModeBanner } from '@/components/guides/LocalModeBanner'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
+import { ActivityPanel } from '@/components/app/ActivityPanel'
+import { UnsortedBanner } from '@/components/app/UnsortedBanner'
 import { DecisionTrackerPage } from './components/DecisionTrackerPage'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import {
@@ -246,6 +248,7 @@ export function ToolContent({
   const result = useCollMode ? collResult : toolResult
   const { state, setState, isLoaded, isSyncing, noAccess } = result
   const collectionTitle = useCollMode ? collResult.title : undefined
+  const [activityOpen, setActivityOpen] = useState(false)
 
   // Redirect to picker if the loaded collection belongs to a different project
   useEffect(() => {
@@ -523,8 +526,29 @@ export function ToolContent({
             }}
             onRename={collectionId ? handleRename : undefined}
             onArchive={collectionId ? handleArchive : undefined}
+            actions={collectionId ? (
+              <button
+                type="button"
+                onClick={() => setActivityOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Activity
+              </button>
+            ) : undefined}
           />
         )}
+        {activityOpen && collectionId && (
+          <ActivityPanel
+            onClose={() => setActivityOpen(false)}
+            toolKey="finish_decisions"
+            collectionId={collectionId}
+            collectionTitle={collectionTitle}
+          />
+        )}
+        <UnsortedBanner toolKey="finish_decisions" />
         {noAccess ? (
           <div className="bg-basalt-50 rounded-card p-8 text-center">
             <p className="text-cream/50 mb-2">You don&apos;t have access to this tool for the current home.</p>

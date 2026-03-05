@@ -202,11 +202,29 @@ export interface OptionImageV3 {
 export interface OptionDocumentV3 {
   id: string
   url: string             // Vercel Blob public URL
+  thumbnailUrl?: string   // populated when file is an image
   title: string           // User-editable, defaults to filename
   fileName: string        // Original filename
   fileSize: number        // Bytes
   mimeType: string        // e.g. "application/pdf"
   uploadedAt: string      // ISO timestamp
+  uploadedByName: string
+  uploadedByEmail: string
+}
+
+// Unified file entity at the decision level (attached or unattached)
+export interface DecisionFileV3 {
+  id: string
+  url: string
+  thumbnailUrl?: string       // populated for image files
+  title: string               // user-editable, defaults to filename
+  fileName: string
+  fileSize: number
+  mimeType: string
+  fileType: 'image' | 'document'
+  optionId?: string           // undefined = unattached (decision-scoped)
+  optionLabel?: string        // denormalized for display when attached
+  uploadedAt: string
   uploadedByName: string
   uploadedByEmail: string
 }
@@ -277,6 +295,7 @@ export interface DecisionV3 {
   systemKey?: SystemSelectionKey // system-managed selection (e.g. 'uncategorized')
   finalSelection?: FinalSelectionMeta | null // who picked the final option + when
   statusLog?: StatusLogEntry[] // history of status changes (only latest shown in UI)
+  files?: DecisionFileV3[]  // decision-level files (attached + unattached)
   location?: string // e.g. "Kitchen", "Master Bath" — hand-written or autocomplete
   createdAt: string
   updatedAt: string
@@ -381,6 +400,20 @@ export interface PublicDecisionComment {
   // EXCLUDED: authorName, authorEmail, id
 }
 
+export interface PublicDecisionFile {
+  title: string
+  fileName: string
+  fileSize: number
+  mimeType: string
+  fileType: 'image' | 'document'
+  url: string
+  thumbnailUrl?: string
+  optionId?: string
+  optionLabel?: string
+  uploadedAt: string
+  uploadedByName: string
+}
+
 export interface PublicDecisionV3 {
   id: string
   title: string
@@ -390,6 +423,7 @@ export interface PublicDecisionV3 {
   options: PublicOptionV3[]
   dueDate?: string | null
   comments?: PublicDecisionComment[]
+  files?: PublicDecisionFile[]
   // EXCLUDED: picksByUser, dismissedSuggestionKeys, systemKey, originKitId
 }
 
@@ -447,6 +481,22 @@ export function toPublicDecision(
       createdAt: c.createdAt,
       refOptionId: c.refOptionId,
       refOptionLabel: c.refOptionLabel,
+    }))
+  }
+
+  if (opts.includePhotos && d.files && d.files.length > 0) {
+    pub.files = d.files.map((f) => ({
+      title: f.title,
+      fileName: f.fileName,
+      fileSize: f.fileSize,
+      mimeType: f.mimeType,
+      fileType: f.fileType,
+      url: f.url,
+      thumbnailUrl: f.thumbnailUrl,
+      optionId: f.optionId,
+      optionLabel: f.optionLabel,
+      uploadedAt: f.uploadedAt,
+      uploadedByName: f.uploadedByName,
     }))
   }
 

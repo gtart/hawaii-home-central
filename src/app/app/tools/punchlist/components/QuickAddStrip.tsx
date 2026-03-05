@@ -10,10 +10,11 @@ interface Props {
   api: PunchlistStateAPI
   onDone: () => void
   onViewItem?: (id: string) => void
-  onOpenForm?: () => void
+  onBulkPhotos?: () => void
+  onBulkText?: () => void
 }
 
-export function QuickAddStrip({ api, onDone, onViewItem, onOpenForm }: Props) {
+export function QuickAddStrip({ api, onDone, onViewItem, onBulkPhotos, onBulkText }: Props) {
   const { data: session } = useSession()
   const [title, setTitle] = useState('')
   const [location, setLocation] = useState('')
@@ -154,7 +155,7 @@ export function QuickAddStrip({ api, onDone, onViewItem, onOpenForm }: Props) {
       </datalist>
 
       {/* ── Mobile: sticky bottom bar ── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-basalt-50 border-t border-cream/15 z-30">
+      <div className="md:hidden fixed bottom-14 left-0 right-0 bg-basalt-50 border-t border-cream/15 z-30">
         <div className="px-4 pt-3 pb-4">
           <div className="flex items-center gap-2 mb-2">
             {/* Camera button */}
@@ -254,11 +255,13 @@ export function QuickAddStrip({ api, onDone, onViewItem, onOpenForm }: Props) {
                 </span>
               )}
               {showSaved && (
-                <span className="text-emerald-400">
-                  Saved
+                <span className="flex items-center gap-2 text-emerald-400">
+                  Saved ✓
                   {onViewItem && lastAddedId && (
-                    <> — <button type="button" onClick={() => onViewItem(lastAddedId)} className="underline hover:text-emerald-300 transition-colors">View / Edit</button></>
+                    <button type="button" onClick={() => onViewItem(lastAddedId)} className="text-sandstone/70 hover:text-sandstone transition-colors no-underline">Add details</button>
                   )}
+                  <span className="text-cream/20">·</span>
+                  <span className="text-cream/30">Type to add another</span>
                 </span>
               )}
               {uploadError && <span className="text-red-400">{uploadError}</span>}
@@ -267,25 +270,29 @@ export function QuickAddStrip({ api, onDone, onViewItem, onOpenForm }: Props) {
                 <span className="text-cream/30">{savedCount} added</span>
               )}
             </div>
-            <div className="flex items-center gap-3">
-              {onOpenForm && (
-                <button
-                  type="button"
-                  onClick={onOpenForm}
-                  className="text-xs text-sandstone/60 hover:text-sandstone transition-colors"
-                >
-                  Full form
+            <button
+              type="button"
+              onClick={onDone}
+              className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
+            >
+              Done
+            </button>
+          </div>
+          {/* Bulk options */}
+          {(onBulkPhotos || onBulkText) && (
+            <div className="flex items-center gap-3 mt-1.5 pt-1.5 border-t border-cream/8">
+              {onBulkPhotos && (
+                <button type="button" onClick={onBulkPhotos} className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors">
+                  Upload photos
                 </button>
               )}
-              <button
-                type="button"
-                onClick={onDone}
-                className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
-              >
-                Done
-              </button>
+              {onBulkText && (
+                <button type="button" onClick={onBulkText} className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors">
+                  Add in bulk
+                </button>
+              )}
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -369,7 +376,16 @@ export function QuickAddStrip({ api, onDone, onViewItem, onOpenForm }: Props) {
                 {[location.trim(), assignee.trim()].filter(Boolean).join(' · ')}
               </span>
             )}
-            {showSaved && <span className="text-emerald-400">Saved ✓</span>}
+            {showSaved && (
+              <span className="flex items-center gap-2 text-emerald-400">
+                Saved ✓
+                {onViewItem && lastAddedId && (
+                  <button type="button" onClick={() => onViewItem(lastAddedId)} className="text-sandstone/70 hover:text-sandstone transition-colors">Add details</button>
+                )}
+                <span className="text-cream/20">·</span>
+                <span className="text-cream/30">Type to add another</span>
+              </span>
+            )}
             {uploadError && <span className="text-red-400">{uploadError}</span>}
             {addError && !uploadError && <span className="text-red-400">{addError}</span>}
             {savedCount > 0 && !showSaved && !uploadError && !addError && (
@@ -377,14 +393,20 @@ export function QuickAddStrip({ api, onDone, onViewItem, onOpenForm }: Props) {
             )}
           </div>
           <div className="flex items-center gap-3">
-            {onOpenForm && (
-              <button
-                type="button"
-                onClick={onOpenForm}
-                className="text-xs text-sandstone/60 hover:text-sandstone transition-colors"
-              >
-                Full form
-              </button>
+            {(onBulkPhotos || onBulkText) && (
+              <>
+                {onBulkPhotos && (
+                  <button type="button" onClick={onBulkPhotos} className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors">
+                    Upload photos
+                  </button>
+                )}
+                {onBulkText && (
+                  <button type="button" onClick={onBulkText} className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors">
+                    Add in bulk
+                  </button>
+                )}
+                <span className="text-cream/10">|</span>
+              </>
             )}
             <button
               type="button"

@@ -45,7 +45,7 @@ function getSelectionListStats(lists: SelectionListSummary[]): AggregatedStats[]
   const done = lists.reduce((s, l) => s + l.doneCount, 0)
   const total = deciding + done
   if (total === 0) return []
-  return [{ label: `decision${deciding !== 1 ? 's' : ''} remain`, value: String(deciding) }]
+  return [{ label: `selection${deciding !== 1 ? 's' : ''} remain`, value: String(deciding) }]
 }
 
 function getFixListStats(lists: FixListSummary[]): AggregatedStats[] {

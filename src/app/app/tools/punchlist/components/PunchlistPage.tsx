@@ -5,7 +5,7 @@ import type { PunchlistStateAPI } from '../usePunchlistState'
 import type { PunchlistStatus } from '../types'
 import { PunchlistItemCard } from './PunchlistItemCard'
 import { PunchlistItemDetail } from './PunchlistItemDetail'
-import { PunchlistItemForm } from './PunchlistItemForm'
+import { PunchlistItemRow } from './PunchlistItemRow'
 import { BulkPhotoUpload } from './BulkPhotoUpload'
 import { BulkTextEntry } from './BulkTextEntry'
 import { QuickAddStrip } from './QuickAddStrip'
@@ -24,16 +24,17 @@ const PRIORITY_ORDER = { HIGH: 0, MED: 1, LOW: 2 } as const
 
 interface Props {
   api: PunchlistStateAPI
+  collectionId?: string
+  projectId?: string
 }
 
-export function PunchlistPage({ api }: Props) {
+export function PunchlistPage({ api, collectionId, projectId }: Props) {
   const { payload, readOnly } = api
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('ALL')
   const [filterLocations, setFilterLocations] = useState<Set<string>>(new Set())
   const [filterAssignee, setFilterAssignee] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortMode>('newest')
-  const [showForm, setShowForm] = useState(false)
   const [showBulkPhotos, setShowBulkPhotos] = useState(false)
   const [showBulkText, setShowBulkText] = useState(false)
   const [viewingId, setViewingId] = useState<string | null>(null)
@@ -421,24 +422,15 @@ export function PunchlistPage({ api }: Props) {
           <option value="priority">Priority</option>
         </select>
 
-        {/* Desktop Add buttons — hidden on mobile, visible md+ */}
+        {/* Desktop Add button — hidden on mobile, visible md+ */}
         {!readOnly && (
-          <div className="hidden md:flex items-center gap-2 ml-auto">
-            <button
-              type="button"
-              onClick={() => setQuickAddOpen(true)}
-              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors"
-            >
-              + Quick Add
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 border border-cream/20 text-cream/60 font-medium rounded-lg hover:border-cream/40 hover:text-cream transition-colors"
-            >
-              Full Form
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setQuickAddOpen(true)}
+            className="hidden md:inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors ml-auto"
+          >
+            + Add Fix
+          </button>
         )}
       </div>
 
@@ -468,16 +460,42 @@ export function PunchlistPage({ api }: Props) {
           No items match your filters.
         </p>
       ) : (
-        <div className="space-y-4">
-          {filtered.map((item) => (
-            <PunchlistItemCard
-              key={item.id}
-              item={item}
-              onTap={() => setViewingId(item.id)}
-              onStatusChange={readOnly ? undefined : api.setStatus}
-            />
-          ))}
-        </div>
+        <>
+          {/* Desktop: compact table */}
+          <div className="hidden md:block">
+            <div className="bg-basalt-50 rounded-card border border-cream/8 overflow-hidden">
+              <div className="grid grid-cols-[2.5rem_1fr_8rem_8rem_4rem_5rem_3rem] gap-2 px-4 py-2 border-b border-cream/8 text-[10px] uppercase tracking-wider text-cream/30">
+                <span></span>
+                <span>Title</span>
+                <span>Location</span>
+                <span>Assignee</span>
+                <span>Pri</span>
+                <span>Date</span>
+                <span></span>
+              </div>
+              {filtered.map((item) => (
+                <PunchlistItemRow
+                  key={item.id}
+                  item={item}
+                  onTap={() => setViewingId(item.id)}
+                  onStatusChange={readOnly ? undefined : api.setStatus}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile: cards */}
+          <div className="md:hidden space-y-3">
+            {filtered.map((item) => (
+              <PunchlistItemCard
+                key={item.id}
+                item={item}
+                onTap={() => setViewingId(item.id)}
+                onStatusChange={readOnly ? undefined : api.setStatus}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       {/* Mobile FAB — opens QuickAddStrip */}
@@ -486,7 +504,7 @@ export function PunchlistPage({ api }: Props) {
           type="button"
           onClick={() => setQuickAddOpen(true)}
           className="md:hidden fixed bottom-8 right-8 w-14 h-14 bg-sandstone text-basalt rounded-full shadow-lg hover:bg-sandstone-light transition-all flex items-center justify-center z-40"
-          aria-label="Quick add"
+          aria-label="Add Fix"
         >
           <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M12 5v14M5 12h14" strokeLinecap="round" />
@@ -500,17 +518,8 @@ export function PunchlistPage({ api }: Props) {
           api={api}
           onDone={() => setQuickAddOpen(false)}
           onViewItem={(id) => { setQuickAddOpen(false); setViewingId(id) }}
-          onOpenForm={() => { setQuickAddOpen(false); setShowForm(true) }}
-        />
-      )}
-
-      {/* Add Item form modal */}
-      {showForm && (
-        <PunchlistItemForm
-          api={api}
-          onClose={() => setShowForm(false)}
-          onBulkPhotos={() => { setShowForm(false); setShowBulkPhotos(true) }}
-          onBulkText={() => { setShowForm(false); setShowBulkText(true) }}
+          onBulkPhotos={() => { setQuickAddOpen(false); setShowBulkPhotos(true) }}
+          onBulkText={() => { setQuickAddOpen(false); setShowBulkText(true) }}
         />
       )}
       {/* Detail view modal (inline editing built in) */}
@@ -518,6 +527,8 @@ export function PunchlistPage({ api }: Props) {
         <PunchlistItemDetail
           item={viewingItem}
           api={api}
+          collectionId={collectionId}
+          projectId={projectId}
           onClose={() => setViewingId(null)}
         />
       )}
