@@ -479,6 +479,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                   item={item}
                   onTap={() => setViewingId(item.id)}
                   onStatusChange={readOnly ? undefined : api.setStatus}
+                  onRename={readOnly ? undefined : (id, title) => api.updateItem(id, { title })}
                 />
               ))}
             </div>
@@ -492,6 +493,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                 item={item}
                 onTap={() => setViewingId(item.id)}
                 onStatusChange={readOnly ? undefined : api.setStatus}
+                onRename={readOnly ? undefined : (id, title) => api.updateItem(id, { title })}
               />
             ))}
           </div>
@@ -503,7 +505,8 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
         <button
           type="button"
           onClick={() => setQuickAddOpen(true)}
-          className="md:hidden fixed bottom-20 right-6 w-14 h-14 bg-sandstone text-basalt rounded-full shadow-lg hover:bg-sandstone-light transition-all flex items-center justify-center z-40"
+          className="md:hidden fixed right-6 w-14 h-14 bg-sandstone text-basalt rounded-full shadow-lg hover:bg-sandstone-light transition-all flex items-center justify-center z-40"
+          style={{ bottom: 'calc(var(--bottom-nav-offset, 3.5rem) + 1rem)' }}
           aria-label="Add Fix"
         >
           <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

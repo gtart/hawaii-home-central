@@ -87,10 +87,15 @@
   --radius-card: 20px;
   --radius-button: 12px;
   --radius-input: 10px;
+
+  /* Bottom nav layout — single source of truth for mobile nav clearance */
+  --bottom-nav-h: 3.5rem;          /* 56px — nav content height (py-2 + icon + label) */
+  --bottom-nav-offset: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
 }
 
 /* Base body styles */
-body {
+html, body {
+  overflow-x: hidden;       /* Item 2: hard guardrail — no horizontal scroll */
   background-color: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-inter), system-ui, sans-serif;

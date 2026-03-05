@@ -745,7 +745,8 @@ export function DecisionTrackerPage({
         <button
           type="button"
           onClick={() => setAddInputVisible(true)}
-          className="md:hidden fixed bottom-8 right-8 w-14 h-14 bg-sandstone rounded-full shadow-lg z-40 flex items-center justify-center active:scale-95 transition-transform"
+          className="md:hidden fixed right-6 w-14 h-14 bg-sandstone rounded-full shadow-lg z-40 flex items-center justify-center active:scale-95 transition-transform"
+          style={{ bottom: 'calc(var(--bottom-nav-offset, 3.5rem) + 1rem)' }}
           aria-label="Add a selection"
         >
           <svg className="w-7 h-7 text-basalt" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

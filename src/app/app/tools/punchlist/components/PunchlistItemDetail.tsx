@@ -219,7 +219,7 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
         <div className="px-5 py-5 space-y-5">
           {/* Photo gallery — horizontal scroll */}
           {item.photos.length > 0 && (
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory">
+            <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory max-w-full">
               {item.photos.map((photo, i) => (
                 <button
                   key={photo.id}

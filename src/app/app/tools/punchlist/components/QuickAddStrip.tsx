@@ -159,7 +159,7 @@ export function QuickAddStrip({ api, onDone, onViewItem, onBulkPhotos, onBulkTex
       </datalist>
 
       {/* ── Mobile: sticky bottom bar ── */}
-      <div className="md:hidden fixed bottom-14 left-0 right-0 bg-basalt-50 border-t border-cream/15 z-30">
+      <div className="md:hidden fixed left-0 right-0 bg-basalt-50 border-t border-cream/15 z-[35]" style={{ bottom: 'var(--bottom-nav-offset, 3.5rem)' }}>
         <div className="px-4 pt-3 pb-4">
           <div className="flex items-center gap-2 mb-2">
             {/* Camera button */}
@@ -262,7 +262,7 @@ export function QuickAddStrip({ api, onDone, onViewItem, onBulkPhotos, onBulkTex
                 <span className="flex items-center gap-2 text-emerald-400">
                   Saved ✓
                   {onViewItem && lastAddedId && (
-                    <button type="button" onClick={() => onViewItem(lastAddedId)} className="text-sandstone/70 hover:text-sandstone transition-colors no-underline">Add details</button>
+                    <button type="button" onClick={() => onViewItem(lastAddedId)} className="text-sandstone/70 hover:text-sandstone transition-colors no-underline px-1 py-0.5 -my-0.5">Add details</button>
                   )}
                   <span className="text-cream/20">·</span>
                   <span className="text-cream/30">Type to add another</span>
@@ -276,7 +276,7 @@ export function QuickAddStrip({ api, onDone, onViewItem, onBulkPhotos, onBulkTex
                   onClick={() => setRecentExpanded(!recentExpanded)}
                   className="text-cream/30 hover:text-cream/50 transition-colors flex items-center gap-1"
                 >
-                  {savedCount} added
+                  Recently added ({savedCount})
                   <svg className={`w-3 h-3 transition-transform ${recentExpanded ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -411,7 +411,7 @@ export function QuickAddStrip({ api, onDone, onViewItem, onBulkPhotos, onBulkTex
               <span className="flex items-center gap-2 text-emerald-400">
                 Saved ✓
                 {onViewItem && lastAddedId && (
-                  <button type="button" onClick={() => onViewItem(lastAddedId)} className="text-sandstone/70 hover:text-sandstone transition-colors">Add details</button>
+                  <button type="button" onClick={() => onViewItem(lastAddedId)} className="text-sandstone/70 hover:text-sandstone transition-colors px-1 py-0.5 -my-0.5">Add details</button>
                 )}
                 <span className="text-cream/20">·</span>
                 <span className="text-cream/30">Type to add another</span>

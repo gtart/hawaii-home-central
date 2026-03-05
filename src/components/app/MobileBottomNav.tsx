@@ -48,7 +48,7 @@ export function MobileBottomNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-basalt border-t border-cream/10 z-40 md:hidden pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 bg-basalt border-t border-cream/10 z-30 md:hidden pb-[env(safe-area-inset-bottom)]">
       <div className="flex items-center">
         {TABS.map((tab) => {
           const active = isActive(pathname, tab.href, tab.matchMode)

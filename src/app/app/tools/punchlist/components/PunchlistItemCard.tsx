@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import type { PunchlistItem, PunchlistStatus } from '../types'
 import { STATUS_CONFIG, STATUS_CYCLE, PRIORITY_CONFIG } from '../constants'
 
@@ -7,11 +8,15 @@ interface Props {
   item: PunchlistItem
   onTap: () => void
   onStatusChange?: (itemId: string, status: PunchlistStatus) => void
+  onRename?: (itemId: string, newTitle: string) => void
 }
 
-export function PunchlistItemCard({ item, onTap, onStatusChange }: Props) {
+export function PunchlistItemCard({ item, onTap, onStatusChange, onRename }: Props) {
   const statusCfg = STATUS_CONFIG[item.status]
   const priorityCfg = item.priority ? PRIORITY_CONFIG[item.priority] : null
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [renaming, setRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState('')
 
   function cycleStatus(e: React.MouseEvent) {
     e.stopPropagation()
@@ -21,11 +26,74 @@ export function PunchlistItemCard({ item, onTap, onStatusChange }: Props) {
     onStatusChange(item.id, next)
   }
 
+  function handleMenuToggle(e: React.MouseEvent) {
+    e.stopPropagation()
+    setMenuOpen(!menuOpen)
+  }
+
+  function startRename(e: React.MouseEvent) {
+    e.stopPropagation()
+    setMenuOpen(false)
+    setRenameValue(item.title)
+    setRenaming(true)
+  }
+
+  function submitRename() {
+    const trimmed = renameValue.trim()
+    if (trimmed && trimmed !== item.title && onRename) {
+      onRename(item.id, trimmed)
+    }
+    setRenaming(false)
+  }
+
+  if (renaming) {
+    return (
+      <div className="bg-basalt-50 rounded-card p-4 sm:p-5" onClick={(e) => e.stopPropagation()}>
+        <label className="text-[10px] uppercase tracking-wider text-cream/30 mb-1.5 block">Rename item</label>
+        <input
+          type="text"
+          value={renameValue}
+          onChange={(e) => setRenameValue(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') submitRename(); if (e.key === 'Escape') setRenaming(false) }}
+          autoFocus
+          className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50 mb-2"
+        />
+        <div className="flex gap-2 justify-end">
+          <button type="button" onClick={() => setRenaming(false)} className="text-xs text-cream/40 hover:text-cream/60 px-3 py-1.5 transition-colors">Cancel</button>
+          <button type="button" onClick={submitRename} className="text-xs bg-sandstone text-basalt font-medium px-3 py-1.5 rounded-lg hover:bg-sandstone-light transition-colors">Save</button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
-      className="bg-basalt-50 rounded-card p-4 sm:p-5 cursor-pointer active:bg-basalt-50/80 transition-colors"
+      className="bg-basalt-50 rounded-card p-4 sm:p-5 cursor-pointer active:bg-basalt-50/80 transition-colors relative"
       onClick={onTap}
     >
+      {/* Kebab menu */}
+      {onRename && (
+        <div className="absolute top-3 right-3">
+          <button
+            type="button"
+            onClick={handleMenuToggle}
+            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-cream/10 transition-colors text-cream/30 hover:text-cream/50"
+            aria-label="Item actions"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" /></svg>
+          </button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); setMenuOpen(false) }} />
+              <div className="absolute right-0 top-8 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 py-1 min-w-[140px]">
+                <button type="button" onClick={startRename} className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors">Rename</button>
+                <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onTap() }} className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors">Edit details</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Top row: photo thumb + info */}
       <div className="flex gap-4">
         {/* Photo thumbnail */}
@@ -46,7 +114,7 @@ export function PunchlistItemCard({ item, onTap, onStatusChange }: Props) {
         )}
 
         {/* Info */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pr-6">
           <h3 className="text-cream font-medium text-sm sm:text-base truncate">
             <span className="text-cream/30 font-normal">#{item.itemNumber}</span>{' '}
             {item.title || <span className="text-cream/40 italic font-normal">Untitled</span>}
