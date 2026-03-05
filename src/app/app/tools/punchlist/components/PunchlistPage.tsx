@@ -536,6 +536,17 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
         )}
       </div>
 
+      {/* Quick Add Strip — rendered above item list so it's visible on desktop */}
+      {quickAddOpen && (
+        <QuickAddStrip
+          api={api}
+          onDone={() => setQuickAddOpen(false)}
+          onViewItem={(id) => { setQuickAddOpen(false); setViewingId(id) }}
+          onBulkPhotos={() => { setQuickAddOpen(false); setShowBulkPhotos(true) }}
+          onBulkText={() => { setQuickAddOpen(false); setShowBulkText(true) }}
+        />
+      )}
+
       {/* Item list */}
       {filtered.length === 0 ? (
         <p className="text-cream/40 text-sm text-center py-8">
@@ -611,16 +622,6 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
         </button>
       )}
 
-      {/* Quick Add Strip */}
-      {quickAddOpen && (
-        <QuickAddStrip
-          api={api}
-          onDone={() => setQuickAddOpen(false)}
-          onViewItem={(id) => { setQuickAddOpen(false); setViewingId(id) }}
-          onBulkPhotos={() => { setQuickAddOpen(false); setShowBulkPhotos(true) }}
-          onBulkText={() => { setQuickAddOpen(false); setShowBulkText(true) }}
-        />
-      )}
       {/* Detail view modal (inline editing built in) */}
       {viewingItem && (
         <PunchlistItemDetail
