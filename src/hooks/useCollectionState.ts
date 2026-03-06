@@ -7,6 +7,8 @@ export interface ActivityEventHint {
   entityId?: string
   action: string
   summaryText: string
+  entityLabel?: string
+  detailText?: string
 }
 
 type CollectionAccessLevel = 'OWNER' | 'EDITOR' | 'VIEWER'

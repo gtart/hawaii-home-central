@@ -59,6 +59,9 @@ export interface ToolShareMeta {
 
 export interface RecentActivityExcerpt {
   summaryText: string
+  entityLabel: string | null
+  detailText: string | null
+  action: string
   actorName: string | null
   createdAt: string
 }
@@ -318,7 +321,7 @@ export async function getDashboardData(userId: string, projectId: string): Promi
     where: { projectId, toolKey: { in: TOOL_KEYS } },
     orderBy: { createdAt: 'desc' },
     take: 20,
-    select: { toolKey: true, summaryText: true, createdAt: true, actor: { select: { name: true } } },
+    select: { toolKey: true, action: true, summaryText: true, entityLabel: true, detailText: true, createdAt: true, actor: { select: { name: true } } },
   })
 
   const recentActivity: Partial<Record<ToolKey, RecentActivityExcerpt[]>> = {}
@@ -328,6 +331,9 @@ export async function getDashboardData(userId: string, projectId: string): Promi
     if (recentActivity[tk]!.length < 2) {
       recentActivity[tk]!.push({
         summaryText: e.summaryText,
+        entityLabel: e.entityLabel ?? null,
+        detailText: e.detailText ?? null,
+        action: e.action,
         actorName: e.actor?.name ?? null,
         createdAt: e.createdAt.toISOString(),
       })

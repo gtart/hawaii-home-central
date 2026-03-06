@@ -122,6 +122,7 @@ export async function POST(request: Request) {
       toolKey: 'inbox',
       action: 'captured',
       summaryText: `Captured photo: ${file.name}`,
+      entityLabel: file.name,
       actorUserId: userId,
     }]).catch(() => {})
 

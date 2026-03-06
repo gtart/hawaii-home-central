@@ -440,6 +440,7 @@ export function ToolContent({
       action: 'created',
       entityType: 'decision',
       summaryText: `Added selection: "${title}"`,
+      entityLabel: title,
     }]
     setState((prev) => {
       const p = prev as FinishDecisionsPayloadV3

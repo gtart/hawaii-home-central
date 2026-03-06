@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useActivityFeed, type ActivityFeedEvent } from '@/hooks/useActivityFeed'
 import { relativeTime } from '@/lib/relativeTime'
 import { TOOL_LABEL, eventHref, dayLabel, FILTER_CHIPS } from '@/lib/activityHelpers'
+import { ActivityEventRow } from '@/components/app/ActivityEventRow'
 
 // ── Action type filter groups ──
 
@@ -191,8 +192,8 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
                       ) : (
                         <span className="w-6 h-6 shrink-0" />
                       )}
-                      <span className="text-sm text-cream/60 flex-1 min-w-0 leading-snug">
-                        {evt.summaryText}
+                      <span className="flex-1 min-w-0">
+                        <ActivityEventRow event={evt} variant="full" />
                       </span>
                       <span className="text-[10px] text-cream/20 shrink-0 mt-0.5 whitespace-nowrap">
                         {relativeTime(evt.createdAt)}

@@ -117,6 +117,7 @@ export async function POST(
       toolKey: 'inbox',
       action: 'sorted',
       summaryText: `Sorted ${item.type.toLowerCase()} to ${collTitle}`,
+      entityLabel: collTitle,
       actorUserId: userId,
     },
     {
@@ -127,6 +128,7 @@ export async function POST(
       entityId,
       action: 'added',
       summaryText: `Added "${entityName}" from inbox`,
+      entityLabel: entityName,
       actorUserId: userId,
     },
   ]).catch(() => {})

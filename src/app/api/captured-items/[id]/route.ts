@@ -85,6 +85,7 @@ export async function PATCH(
       toolKey: 'inbox',
       action: body.status === 'SORTED' ? 'sorted' : 'updated',
       summaryText: `${body.status === 'SORTED' ? 'Sorted' : 'Updated'} ${item.type.toLowerCase()}: "${label}"`,
+      entityLabel: label,
       actorUserId: userId,
     }]).catch(() => {})
   }

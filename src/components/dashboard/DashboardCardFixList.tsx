@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { DashboardResponse } from '@/server/dashboard'
 import { relativeTime } from '@/lib/relativeTime'
 import { ShareMetaLine } from './ShareMetaLine'
+import { ActivityEventRow } from '@/components/app/ActivityEventRow'
 
 export function DashboardCardFixList({
   data,
@@ -121,7 +122,7 @@ export function DashboardCardFixList({
                   {evt.actorName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                 </span>
               )}
-              <span className="text-cream/30 truncate">{evt.summaryText}</span>
+              <ActivityEventRow event={evt} variant="compact" />
               <span className="text-cream/15 shrink-0">{relativeTime(evt.createdAt)}</span>
             </div>
           ))}

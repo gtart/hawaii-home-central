@@ -77,7 +77,7 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   const body = await request.json()
-  const { targetType, targetId, text, refEntityType, refEntityId, refEntityLabel } = body
+  const { targetType, targetId, text, refEntityType, refEntityId, refEntityLabel, entityTitle } = body
 
   if (!targetType || !targetId || !text) {
     return NextResponse.json({ error: 'Missing required fields: targetType, targetId, text' }, { status: 400 })
@@ -140,6 +140,8 @@ export async function POST(request: Request, { params }: Params) {
     entityId: targetId,
     action: 'commented',
     summaryText: `Commented: "${snippet}"`,
+    entityLabel: typeof entityTitle === 'string' ? entityTitle : undefined,
+    detailText: snippet,
     actorUserId: userId,
   }]).catch(() => {})
 

@@ -693,6 +693,8 @@ model ActivityEvent {
   entityId      String?
   action        String
   summaryText   String
+  entityLabel   String?
+  detailText    String?
   actorUserId   String?
   createdAt     DateTime @default(now())
 

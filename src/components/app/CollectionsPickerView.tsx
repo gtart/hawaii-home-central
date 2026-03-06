@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useProject } from '@/contexts/ProjectContext'
 import { TOOL_LABELS, TOOL_PATHS } from '@/lib/tool-registry'
 import { ShareToolModal } from '@/components/app/ShareToolModal'
+import { ActivityEventRow } from '@/components/app/ActivityEventRow'
 
 interface CollectionSummary {
   id: string
@@ -33,7 +34,7 @@ interface PreviewData {
   shareLinkEnabled?: boolean
   shareLinkCount?: number
   inviteCount?: number
-  lastEvent?: { summaryText: string; actorName: string | null; createdAt: string; action: string }
+  lastEvent?: { summaryText: string; entityLabel: string | null; detailText: string | null; actorName: string | null; createdAt: string; action: string }
 }
 
 interface CollectionsPickerViewProps {
@@ -539,10 +540,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                     {/* Recent Activity — prefer ActivityEvent, fallback to lastComment/lastActivity */}
                     <td className="py-3 pr-3 text-cream/40 text-xs max-w-[200px] truncate">
                       {preview.lastEvent ? (
-                        <>
-                          {preview.lastEvent.actorName ? `${preview.lastEvent.actorName.split(' ')[0]}: ` : ''}
-                          {preview.lastEvent.summaryText}
-                        </>
+                        <ActivityEventRow event={preview.lastEvent} variant="inline" />
                       ) : preview.lastComment ? (
                         <>
                           {preview.lastComment.authorName.split(' ')[0]} on {preview.lastComment.decisionTitle}:
@@ -679,7 +677,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                 {/* Recent activity — prefer ActivityEvent */}
                 {preview.lastEvent ? (
                   <p className="mt-1 text-[11px] text-cream/35 italic truncate">
-                    {preview.lastEvent.actorName ? `${preview.lastEvent.actorName.split(' ')[0]}: ` : ''}{preview.lastEvent.summaryText}
+                    <ActivityEventRow event={preview.lastEvent} variant="inline" />
                   </p>
                 ) : preview.lastComment ? (
                   <p className="mt-1 text-[11px] text-cream/35 italic truncate">

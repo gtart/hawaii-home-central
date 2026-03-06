@@ -11,6 +11,8 @@ export interface ActivityFeedEvent {
   entityId: string | null
   action: string
   summaryText: string
+  entityLabel: string | null
+  detailText: string | null
   createdAt: string
   actorName: string | null
 }

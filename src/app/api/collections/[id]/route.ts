@@ -148,7 +148,7 @@ export async function PUT(request: Request, { params }: Params) {
   // Write activity events (fire-and-forget, never blocks response)
   if (Array.isArray(body.events) && body.events.length > 0) {
     writeActivityEvents(
-      body.events.map((e: { entityType?: string; entityId?: string; action?: string; summaryText?: string }) => ({
+      body.events.map((e: { entityType?: string; entityId?: string; action?: string; summaryText?: string; entityLabel?: string; detailText?: string }) => ({
         projectId: updated.projectId,
         toolKey: updated.toolKey,
         collectionId: id,
@@ -156,6 +156,8 @@ export async function PUT(request: Request, { params }: Params) {
         entityId: e.entityId,
         action: e.action || 'updated',
         summaryText: e.summaryText || 'Updated',
+        entityLabel: e.entityLabel,
+        detailText: e.detailText,
         actorUserId: userId,
       }))
     ).catch(() => {})
@@ -217,6 +219,7 @@ export async function PATCH(request: Request, { params }: Params) {
       entityId: id,
       action: 'archived',
       summaryText: `Archived "${collection.title}"`,
+      entityLabel: collection.title,
       actorUserId: userId,
     }]).catch(() => {})
   }

@@ -8,6 +8,8 @@ export interface ActivityEventInput {
   entityId?: string
   action: string
   summaryText: string
+  entityLabel?: string
+  detailText?: string
   actorUserId?: string
 }
 
@@ -33,6 +35,8 @@ export async function writeActivityEvents(events: ActivityEventInput[]): Promise
         entityId: e.entityId ?? null,
         action: e.action,
         summaryText: truncate(e.summaryText, MAX_SUMMARY_LENGTH),
+        entityLabel: e.entityLabel ? truncate(e.entityLabel, MAX_SUMMARY_LENGTH) : null,
+        detailText: e.detailText ? truncate(e.detailText, MAX_SUMMARY_LENGTH) : null,
         actorUserId: e.actorUserId ?? null,
       })),
     })

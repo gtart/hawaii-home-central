@@ -157,6 +157,7 @@ export function RoomDetailContent({
       action: 'created',
       entityType: 'decision',
       summaryText: `Added selection: "${decision.title}"`,
+      entityLabel: decision.title,
     }])
   }
 

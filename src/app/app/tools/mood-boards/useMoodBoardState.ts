@@ -428,6 +428,7 @@ export function useMoodBoardCollectionState(collectionId: string | null): MoodBo
         entityType: 'idea',
         entityId: id,
         summaryText: `Added "${label}" to board`,
+        entityLabel: label,
       }])
       return id
     },
@@ -460,6 +461,7 @@ export function useMoodBoardCollectionState(collectionId: string | null): MoodBo
         entityType: 'idea',
         entityId: ideaId,
         summaryText: `Removed "${label}" from board`,
+        entityLabel: label,
       }])
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

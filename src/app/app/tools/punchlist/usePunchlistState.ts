@@ -144,6 +144,7 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
         entityType: 'item',
         entityId: id,
         summaryText: `Added fix: "${item.title}"`,
+        entityLabel: item.title,
       }]
       setState((prev) => ({
         ...prev,
@@ -217,9 +218,9 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
 
       const events: ActivityEventHint[] = []
       if (status === 'DONE') {
-        events.push({ action: 'done', entityType: 'item', entityId: id, summaryText: `Marked done: "${title}"` })
+        events.push({ action: 'done', entityType: 'item', entityId: id, summaryText: `Marked done: "${title}"`, entityLabel: title })
       } else if (oldStatus === 'DONE' && status === 'OPEN') {
-        events.push({ action: 'reopened', entityType: 'item', entityId: id, summaryText: `Reopened: "${title}"` })
+        events.push({ action: 'reopened', entityType: 'item', entityId: id, summaryText: `Reopened: "${title}"`, entityLabel: title })
       }
 
       setState((prev) => ({

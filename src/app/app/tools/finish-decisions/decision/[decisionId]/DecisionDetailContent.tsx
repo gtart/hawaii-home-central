@@ -260,6 +260,7 @@ export function DecisionDetailContent({
       entityType: 'decision',
       entityId: decisionId,
       summaryText: `Selected option for: "${foundDecision.title}"`,
+      entityLabel: foundDecision.title,
     }]
     updateDecision(updates, events.length > 0 ? events : undefined)
   }
@@ -306,6 +307,8 @@ export function DecisionDetailContent({
       entityType: 'decision',
       entityId: decisionId,
       summaryText: `Changed "${foundDecision.title}" → ${statusLabel}`,
+      entityLabel: foundDecision.title,
+      detailText: statusLabel,
     }])
   }
 
@@ -363,12 +366,16 @@ export function DecisionDetailContent({
         entityType: 'option',
         entityId: optionId,
         summaryText: `Moved "${optionName}" out of ${foundRoom!.name} → ${foundDecision!.title}`,
+        entityLabel: optionName,
+        detailText: `from ${foundRoom!.name}`,
       },
       {
         action: 'moved_in',
         entityType: 'option',
         entityId: optionId,
         summaryText: `Moved "${optionName}" into ${roomName} → ${targetName}`,
+        entityLabel: optionName,
+        detailText: `to ${roomName} › ${targetName}`,
       },
     ])
 
@@ -450,6 +457,8 @@ export function DecisionDetailContent({
       entityType: 'option',
       entityId: optionId,
       summaryText: `Copied "${option.name || 'option'}" to ${roomName} → ${targetName}`,
+      entityLabel: option.name || 'option',
+      detailText: `to ${roomName} › ${targetName}`,
     }])
 
     setAssignToast(`Copied to ${roomName} → ${targetName}`)
@@ -836,28 +845,6 @@ export function DecisionDetailContent({
           <span className="text-cream/40">
             {optionsCount} option{optionsCount !== 1 ? 's' : ''}
           </span>
-          <span className="text-cream/20">·</span>
-          <button
-            type="button"
-            onClick={openGlobalCommentComposer}
-            className="inline-flex items-center gap-1.5 bg-cream/10 hover:bg-cream/15 rounded-full px-2.5 py-1 transition-colors"
-          >
-            <svg className="w-3.5 h-3.5 text-cream/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            {commentCount > 0 ? (
-              <>
-                <span className="text-cream/60 font-medium">{commentCount}</span>
-                {lastUserComment && (
-                  <span className="hidden md:inline text-cream/35">
-                    · {lastUserComment.authorName.split(' ')[0]} {relativeTime(lastUserComment.createdAt)}
-                  </span>
-                )}
-              </>
-            ) : (
-              <span className="text-cream/40">Comments</span>
-            )}
-          </button>
           {guidanceTipCount > 0 && (
             <>
               <span className="text-cream/20">·</span>
@@ -953,6 +940,20 @@ export function DecisionDetailContent({
                 {foundDecision.options.length}
               </span>
             </h2>
+            <button
+              type="button"
+              onClick={() => setCommentsOpen(true)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                commentCount > 0
+                  ? 'bg-sandstone/20 text-sandstone hover:bg-sandstone/30'
+                  : 'bg-cream/10 text-cream/50 hover:bg-cream/15 hover:text-cream/70'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {commentCount > 0 ? `${commentCount} Comment${commentCount !== 1 ? 's' : ''}` : 'Comments'}
+            </button>
             <div className="flex-1" />
             {!readOnly && (
               <AddIdeaMenu

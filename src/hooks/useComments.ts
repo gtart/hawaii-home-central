@@ -32,6 +32,7 @@ interface UseCommentsReturn {
     refEntityType?: string
     refEntityId?: string
     refEntityLabel?: string
+    entityTitle?: string
   }) => Promise<void>
   deleteComment: (commentId: string) => Promise<void>
 }
@@ -129,6 +130,7 @@ export function useComments({
       refEntityType?: string
       refEntityId?: string
       refEntityLabel?: string
+      entityTitle?: string
     }) => {
       if (!collectionId || !targetId) return
 
@@ -162,6 +164,7 @@ export function useComments({
             refEntityType: params.refEntityType,
             refEntityId: params.refEntityId,
             refEntityLabel: params.refEntityLabel,
+            entityTitle: params.entityTitle,
           }),
         })
 

@@ -169,6 +169,8 @@ export async function POST(request: Request) {
       entityId: resultEntityId,
       action: operation === 'move' ? 'moved_in' : 'copied_in',
       summaryText: `${actionVerb} ${entityLabel} "${entityName}" from ${srcColl.title}`,
+      entityLabel: entityName,
+      detailText: `from ${srcColl.title}`,
       actorUserId: userId,
     },
   ]
@@ -180,6 +182,8 @@ export async function POST(request: Request) {
       entityId,
       action: 'moved_out',
       summaryText: `${actionVerb} ${entityLabel} "${entityName}" to ${destColl.title}`,
+      entityLabel: entityName,
+      detailText: `to ${destColl.title}`,
       actorUserId: userId,
     })
   }

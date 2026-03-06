@@ -6,6 +6,7 @@ import { useActivityFeed } from '@/hooks/useActivityFeed'
 import { relativeTime } from '@/lib/relativeTime'
 import { TOOL_LABEL, eventHref } from '@/lib/activityHelpers'
 import { ActivityPanel } from '@/components/app/ActivityPanel'
+import { ActivityEventRow } from '@/components/app/ActivityEventRow'
 
 const EXCERPT_LIMIT = 5
 
@@ -50,8 +51,8 @@ export function DashboardFeed() {
               className="block py-2.5 border-b border-cream/5 last:border-0 -mx-2 px-2 hover:bg-cream/5 rounded transition-colors"
             >
               <div className="flex items-center gap-2">
-                <span className="text-sm text-cream/60 flex-1 min-w-0 truncate">
-                  {event.summaryText}
+                <span className="flex-1 min-w-0">
+                  <ActivityEventRow event={event} variant="full" />
                 </span>
                 <span className="text-[11px] text-cream/25 shrink-0">
                   {TOOL_LABEL[event.toolKey] || event.toolKey}

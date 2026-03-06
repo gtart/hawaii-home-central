@@ -138,6 +138,7 @@ export async function POST(request: Request) {
     action: 'created',
     entityType: 'collection',
     summaryText: `Created "${title.trim()}"`,
+    entityLabel: title.trim(),
     actorUserId: userId,
   }]).catch(() => {})
 

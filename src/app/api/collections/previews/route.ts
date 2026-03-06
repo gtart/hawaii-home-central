@@ -88,7 +88,7 @@ export async function GET(request: Request) {
         orderBy: { createdAt: 'desc' },
         take: Math.max(collIds.length * 3, 50),
         select: {
-          collectionId: true, summaryText: true, action: true,
+          collectionId: true, summaryText: true, entityLabel: true, detailText: true, action: true,
           createdAt: true, actor: { select: { name: true } },
         },
       })
@@ -340,6 +340,8 @@ export async function GET(request: Request) {
     const latestEvt = latestEventMap.get(coll.id)
     const lastEvent = latestEvt ? {
       summaryText: latestEvt.summaryText,
+      entityLabel: latestEvt.entityLabel ?? null,
+      detailText: latestEvt.detailText ?? null,
       actorName: latestEvt.actor?.name ?? null,
       createdAt: latestEvt.createdAt.toISOString(),
       action: latestEvt.action,

@@ -81,6 +81,7 @@ export async function POST(request: Request) {
       toolKey: 'inbox',
       action: 'captured',
       summaryText: `Captured note: "${note.slice(0, 40).trim()}${note.length > 40 ? '…' : ''}"`,
+      entityLabel: note.slice(0, 60).trim(),
       actorUserId: userId,
     }]).catch(() => {})
 
@@ -284,6 +285,7 @@ async function handleImageCapture(opts: {
       toolKey: 'inbox',
       action: 'captured',
       summaryText: `Captured image from ${hostnameFromUrl(opts.url)}`,
+      entityLabel: hostnameFromUrl(opts.url),
       actorUserId: opts.userId,
     }]).catch(() => {})
 
@@ -330,6 +332,7 @@ async function handlePageCapture(opts: {
     toolKey: 'inbox',
     action: 'captured',
     summaryText: `Captured page: ${summaryTitle}`,
+    entityLabel: summaryTitle,
     actorUserId: opts.userId,
   }]).catch(() => {})
 
