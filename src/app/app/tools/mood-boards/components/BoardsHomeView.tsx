@@ -7,9 +7,8 @@ import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { FadeInSection } from '@/components/effects/FadeInSection'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { isDefaultBoard, resolveBoardAccess } from '@/data/mood-boards'
-import type { Board, MoodBoardComment } from '@/data/mood-boards'
+import type { Board } from '@/data/mood-boards'
 import type { MoodBoardStateAPI } from '../useMoodBoardState'
-import { CommentsPanel } from './CommentsPanel'
 
 interface Props {
   api: MoodBoardStateAPI
@@ -50,11 +49,10 @@ export function BoardsHomeView({ api, readOnly, toolAccess }: Props) {
     [payload.boards, userEmail, toolAccess]
   )
 
-  // Aggregate all comments across visible boards
-  const allComments: MoodBoardComment[] = visibleBoards.flatMap(
-    (b) => (b.comments || []).map((c) => ({ ...c }))
+  // Comment count from legacy payload (will be replaced by DB query in Phase 3)
+  const commentCount = visibleBoards.reduce(
+    (sum, b) => sum + (b.comments || []).length, 0
   )
-  const commentCount = allComments.length
 
   const handleCreate = () => {
     const trimmed = newBoardName.trim()
@@ -293,16 +291,6 @@ export function BoardsHomeView({ api, readOnly, toolAccess }: Props) {
             {commentCount} comment{commentCount !== 1 ? 's' : ''}
           </button>
         </div>
-      )}
-
-      {/* Comments panel */}
-      {commentsOpen && (
-        <CommentsPanel
-          comments={allComments}
-          onAddComment={() => {}}
-          readOnly={true}
-          onClose={() => setCommentsOpen(false)}
-        />
       )}
 
       {deletingBoard && (

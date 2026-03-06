@@ -148,6 +148,7 @@ model User {
   collectionInvites   ToolCollectionInvite[]     @relation("CollectionInviteSender")
   activityEvents      ActivityEvent[]            @relation("ActivityActor")
   capturedItems       CapturedItem[]             @relation("CapturedItems")
+  comments            Comment[]                  @relation("CommentAuthor")
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -343,6 +344,7 @@ model ToolCollection {
   members     ToolCollectionMember[]
   shareTokens ToolCollectionShareToken[]
   invites     ToolCollectionInvite[]
+  comments    Comment[]
 
   @@index([projectId, toolKey])
   @@index([createdByUserId])
@@ -398,6 +400,49 @@ model ToolCollectionInvite {
 
   @@index([collectionId])
   @@index([email, status])
+}
+
+// ─── Comments ─────────────────────────────────────────
+
+model Comment {
+  id              String    @id @default(cuid())
+  collectionId    String
+  toolKey         String
+
+  // Polymorphic target (which entity this comment belongs to)
+  targetType      String    // 'decision' | 'room' | 'board' | 'item'
+  targetId        String    // entity ID within the payload
+
+  text            String
+
+  // Author
+  authorUserId    String?   // authenticated users (nullable for future guests)
+  authorName      String    // snapshot at time of comment
+  authorEmail     String    // snapshot at time of comment
+
+  // Optional reference to a sub-entity (option, idea, decision-within-room)
+  refEntityType   String?   // 'option' | 'idea' | 'decision'
+  refEntityId     String?
+  refEntityLabel  String?
+
+  // Future threading
+  parentCommentId String?
+  parentComment   Comment?  @relation("CommentThread", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies         Comment[] @relation("CommentThread")
+
+  // Migration tracking
+  legacyId        String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  collection      ToolCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  author          User?          @relation("CommentAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  @@index([collectionId, targetType, targetId, createdAt])
+  @@index([collectionId, createdAt])
+  @@index([authorUserId])
+  @@index([parentCommentId])
 }
 
 // ─── Rate Limiting ────────────────────────────────────

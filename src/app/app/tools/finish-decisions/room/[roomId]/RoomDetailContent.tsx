@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
 import { useToolState } from '@/hooks/useToolState'
 import { useCollectionState, type ActivityEventHint } from '@/hooks/useCollectionState'
 import { useProject } from '@/contexts/ProjectContext'
@@ -13,7 +12,6 @@ import {
   type RoomTypeV3,
   type DecisionV3,
   type StatusV3,
-  type RoomComment,
 } from '@/data/finish-decisions'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { findKitsForRoomType, applyKitToRoom, removeKitFromRoom } from '@/lib/finish-decision-kits'
@@ -23,7 +21,8 @@ import { SelectionsBoardView } from '../../components/SelectionsBoardView'
 import { DecisionsTable } from '../../components/DecisionsTable'
 import { QuickAddDecisionModal } from '../../components/QuickAddDecisionModal'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
-import { RoomCommentsFeed } from '../../components/RoomCommentsFeed'
+import { useComments } from '@/hooks/useComments'
+import { CommentThread } from '@/components/app/CommentThread'
 import { RoomFilesPanel } from '../../components/RoomFilesPanel'
 import { ShareExportModal } from '@/components/app/ShareExportModal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -54,7 +53,6 @@ export function RoomDetailContent({
 }) {
   const params = useParams()
   const router = useRouter()
-  const { data: session } = useSession()
   const { currentProject } = useProject()
   const roomId = params.roomId as string
 
@@ -87,6 +85,15 @@ export function RoomDetailContent({
   const [commentsFeedOpen, setCommentsFeedOpen] = useState(false)
   const [filesOpen, setFilesOpen] = useState(false)
   const [showShareExport, setShowShareExport] = useState(false)
+
+  // DB-backed comments for this room
+  const roomComments = useComments({
+    collectionId: collectionId ?? null,
+    targetType: 'room',
+    targetId: roomId,
+    enabled: !!collectionId,
+  })
+
   const [selViewMode, setSelViewMode] = useState<'table' | 'tile'>(() => {
     try {
       const stored = typeof window !== 'undefined' ? localStorage.getItem(SEL_VIEW_KEY) : null
@@ -252,27 +259,6 @@ export function RoomDetailContent({
     setToast(null)
   }
 
-  function addRoomComment(text: string, refDecisionId?: string) {
-    if (!room) return
-    const userName = session?.user?.name || 'Unknown'
-    const userEmail = session?.user?.email || ''
-    const refDecision = refDecisionId ? room.decisions.find((d) => d.id === refDecisionId) : undefined
-    const comment: RoomComment = {
-      id: `rcmt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      text,
-      authorName: userName,
-      authorEmail: userEmail,
-      createdAt: new Date().toISOString(),
-      ...(refDecisionId ? { refDecisionId, refDecisionTitle: refDecision?.title } : {}),
-    }
-    updateRoom({ comments: [...(room.comments || []), comment] })
-  }
-
-  function deleteRoomComment(commentId: string) {
-    if (!room) return
-    updateRoom({ comments: (room.comments || []).filter((c) => c.id !== commentId) })
-  }
-
   // --- Loading / not found ---
 
   if (!isLoaded) {
@@ -319,7 +305,7 @@ export function RoomDetailContent({
     (sum, d) => sum + (d.comments || []).filter((c) => c.authorEmail !== '').length,
     0
   )
-  const roomCommentCount = (room.comments || []).length
+  const roomCommentCount = roomComments.comments.length
   const totalFileCount = room.decisions.reduce((sum, d) => {
     let count = (d.files ?? []).length
     for (const o of d.options) count += (o.documents ?? []).length
@@ -732,17 +718,22 @@ export function RoomDetailContent({
 
       {/* Room comment feed panel */}
       {commentsFeedOpen && room && (
-        <RoomCommentsFeed
-          comments={room.comments || []}
-          decisions={room.decisions}
-          roomType={room.type}
+        <CommentThread
+          title={`${room.name} Comments`}
+          comments={roomComments.comments}
+          isLoading={roomComments.isLoading}
           readOnly={readOnly}
           onClose={() => setCommentsFeedOpen(false)}
-          onAddComment={addRoomComment}
-          onDeleteComment={deleteRoomComment}
-          onNavigateToDecision={(decisionId) => {
+          onAddComment={roomComments.addComment}
+          onDeleteComment={roomComments.deleteComment}
+          refEntities={room.decisions
+            .filter((d) => d.systemKey !== 'uncategorized')
+            .map((d) => ({ id: d.id, label: d.title }))}
+          refEntityType="decision"
+          refPickerLabel="Tag a selection"
+          onNavigateToRef={(refEntityId) => {
             setCommentsFeedOpen(false)
-            router.push(buildDecisionHref({ decisionId, collectionId }))
+            router.push(buildDecisionHref({ decisionId: refEntityId, collectionId }))
           }}
         />
       )}

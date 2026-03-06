@@ -29,6 +29,7 @@ interface ShareResolution {
   record: ResolvedToken
   payloadData: unknown
   toolKey: string
+  collectionId?: string
 }
 
 /**
@@ -72,6 +73,7 @@ export async function resolveShareToken(
       record,
       payloadData: collectionToken.collection.payload,
       toolKey,
+      collectionId: collectionToken.collectionId,
     }
   }
 
@@ -115,7 +117,7 @@ export async function resolveShareToken(
  * sanitization and return the public-safe response body.
  */
 export async function buildSanitizedShareResponse(resolution: ShareResolution) {
-  const { record, payloadData, toolKey } = resolution
+  const { record, payloadData, toolKey, collectionId } = resolution
   const settings = record.settings as Record<string, unknown>
 
   let includeNotes = settings?.includeNotes === true
@@ -135,6 +137,98 @@ export async function buildSanitizedShareResponse(resolution: ShareResolution) {
 
   const boardId = typeof settings?.boardId === 'string' ? (settings.boardId as string) : null
   let payload: Record<string, unknown> = payloadData as Record<string, unknown>
+
+  // Inject DB comments into payload entities so toPublicXxx functions pick them up
+  if (includeComments && collectionId) {
+    const dbComments = await prisma.comment.findMany({
+      where: { collectionId },
+      select: {
+        targetType: true,
+        targetId: true,
+        text: true,
+        authorName: true,
+        authorEmail: true,
+        createdAt: true,
+        refEntityType: true,
+        refEntityId: true,
+        refEntityLabel: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    })
+
+    if (dbComments.length > 0) {
+      // Group by targetType:targetId
+      const grouped = new Map<string, typeof dbComments>()
+      for (const c of dbComments) {
+        const key = `${c.targetType}:${c.targetId}`
+        if (!grouped.has(key)) grouped.set(key, [])
+        grouped.get(key)!.push(c)
+      }
+
+      // Inject into finish_decisions rooms and decisions
+      if (toolKey === 'finish_decisions' && Array.isArray(payload?.rooms)) {
+        for (const room of payload.rooms as RoomV3[]) {
+          const roomComments = grouped.get(`room:${room.id}`)
+          if (roomComments) {
+            room.comments = roomComments.map((c) => ({
+              id: '',
+              text: c.text,
+              authorName: c.authorName,
+              authorEmail: c.authorEmail,
+              createdAt: c.createdAt.toISOString(),
+              ...(c.refEntityId ? { refDecisionId: c.refEntityId, refDecisionTitle: c.refEntityLabel ?? undefined } : {}),
+            }))
+          }
+          for (const d of room.decisions || []) {
+            const dComments = grouped.get(`decision:${d.id}`)
+            if (dComments) {
+              d.comments = dComments.map((c) => ({
+                id: '',
+                text: c.text,
+                authorName: c.authorName,
+                authorEmail: c.authorEmail,
+                createdAt: c.createdAt.toISOString(),
+                ...(c.refEntityId ? { refOptionId: c.refEntityId, refOptionLabel: c.refEntityLabel ?? undefined } : {}),
+              }))
+            }
+          }
+        }
+      }
+
+      // Inject into mood_boards boards
+      if (toolKey === 'mood_boards' && Array.isArray(payload?.boards)) {
+        for (const board of payload.boards as Board[]) {
+          const boardComments = grouped.get(`board:${board.id}`)
+          if (boardComments) {
+            board.comments = boardComments.map((c) => ({
+              id: '',
+              text: c.text,
+              authorName: c.authorName,
+              authorEmail: c.authorEmail,
+              createdAt: c.createdAt.toISOString(),
+              ...(c.refEntityId ? { refIdeaId: c.refEntityId, refIdeaLabel: c.refEntityLabel ?? undefined } : {}),
+            }))
+          }
+        }
+      }
+
+      // Inject into punchlist items
+      if (toolKey === 'punchlist' && Array.isArray(payload?.items)) {
+        for (const item of payload.items as PunchlistItem[]) {
+          const itemComments = grouped.get(`item:${item.id}`)
+          if (itemComments) {
+            item.comments = itemComments.map((c) => ({
+              id: '',
+              text: c.text,
+              authorName: c.authorName,
+              authorEmail: c.authorEmail,
+              createdAt: c.createdAt.toISOString(),
+            }))
+          }
+        }
+      }
+    }
+  }
 
   // Mood boards: allowlist sanitization — strip sensitive fields, respect token flags
   if (toolKey === 'mood_boards' && Array.isArray(payload?.boards)) {

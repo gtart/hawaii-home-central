@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useRef, useMemo } from 'react'
-import { useSession } from 'next-auth/react'
 import type { PunchlistItem, PunchlistPhoto, PunchlistPriority } from '../types'
+import { useComments } from '@/hooks/useComments'
 import type { PunchlistStateAPI } from '../usePunchlistState'
 import { STATUS_CONFIG, STATUS_CYCLE, PRIORITY_CONFIG } from '../constants'
 import { LOCATION_SEEDS, ASSIGNEE_SEEDS } from '../utils'
@@ -429,7 +429,7 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
           </div>
 
           {/* Comments section */}
-          <CommentsSection item={item} api={api} readOnly={readOnly} />
+          <DBCommentsSection itemId={item.id} collectionId={collectionId} readOnly={readOnly} />
 
           {/* Actions */}
           {!readOnly && (
@@ -583,35 +583,105 @@ function EditableDetailRow({
 const COMMENTS_PER_PAGE = 10
 const MAX_COMMENT_LENGTH = 400
 
-function CommentsSection({ item, api, readOnly }: { item: PunchlistItem; api: PunchlistStateAPI; readOnly: boolean }) {
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60_000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days}d ago`
+  return new Date(iso).toLocaleDateString()
+}
+
+function DBCommentsSection({ itemId, collectionId, readOnly }: { itemId: string; collectionId?: string; readOnly: boolean }) {
+  const { comments, isLoading, addComment, deleteComment } = useComments({
+    collectionId: collectionId || null,
+    targetType: 'item',
+    targetId: itemId,
+  })
   const [page, setPage] = useState(0)
-  const allComments = [...(item.comments || [])].reverse()
-  const totalPages = Math.max(1, Math.ceil(allComments.length / COMMENTS_PER_PAGE))
-  const pageComments = allComments.slice(page * COMMENTS_PER_PAGE, (page + 1) * COMMENTS_PER_PAGE)
+  const [text, setText] = useState('')
+
+  const sorted = [...comments].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )
+  const totalPages = Math.max(1, Math.ceil(sorted.length / COMMENTS_PER_PAGE))
+  const pageComments = sorted.slice(page * COMMENTS_PER_PAGE, (page + 1) * COMMENTS_PER_PAGE)
+
+  function handleSubmit() {
+    if (!text.trim()) return
+    addComment({ text: text.trim().slice(0, MAX_COMMENT_LENGTH) })
+    setText('')
+    setPage(0)
+  }
 
   return (
     <div>
       <h3 className="text-xs uppercase tracking-wider text-cream/30 mb-3">
-        Comments {allComments.length > 0 && `(${allComments.length})`}
+        Comments {sorted.length > 0 && `(${sorted.length})`}
       </h3>
 
       {/* Comment input — editors/owners only, at top */}
-      {!readOnly && <CommentInput itemId={item.id} api={api} />}
+      {!readOnly && (
+        <div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={text}
+              onChange={(e) => setText(e.target.value.slice(0, MAX_COMMENT_LENGTH))}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
+              placeholder="Add a comment..."
+              maxLength={MAX_COMMENT_LENGTH}
+              className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+            />
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!text.trim()}
+              className="px-3 py-2 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors disabled:opacity-30"
+            >
+              Post
+            </button>
+          </div>
+          {text.length > 0 && (
+            <p className={`text-[10px] mt-1 text-right ${text.length >= MAX_COMMENT_LENGTH ? 'text-red-400' : 'text-cream/25'}`}>
+              {text.length}/{MAX_COMMENT_LENGTH}
+            </p>
+          )}
+        </div>
+      )}
 
-      {allComments.length === 0 && (
+      {isLoading && (
+        <p className="text-xs text-cream/20 mt-3">Loading comments...</p>
+      )}
+
+      {!isLoading && sorted.length === 0 && (
         <p className="text-xs text-cream/20 mt-3">No comments yet.</p>
       )}
 
       <div className="space-y-3 mt-3">
         {pageComments.map((comment) => (
-          <div key={comment.id} className="pb-3 border-b border-cream/5 last:border-0">
+          <div key={comment.id} className="pb-3 border-b border-cream/5 last:border-0 group">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-medium text-cream/70">{comment.authorName}</span>
+              <span className="text-xs font-medium text-cream/70">{comment.authorName || 'Unknown'}</span>
               <span className="text-cream/20">&middot;</span>
               <span className="text-[11px] text-cream/30">
-                {new Date(comment.createdAt).toLocaleDateString()}{' '}
-                {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {relativeTime(comment.createdAt)}
               </span>
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => deleteComment(comment.id)}
+                  className="ml-auto text-cream/15 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                  title="Delete"
+                >
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+                  </svg>
+                </button>
+              )}
             </div>
             <p className="text-sm text-cream/50 whitespace-pre-wrap">{comment.text}</p>
           </div>
@@ -641,50 +711,6 @@ function CommentsSection({ item, api, readOnly }: { item: PunchlistItem; api: Pu
             Older
           </button>
         </div>
-      )}
-    </div>
-  )
-}
-
-function CommentInput({ itemId, api }: { itemId: string; api: PunchlistStateAPI }) {
-  const { data: session } = useSession()
-  const [text, setText] = useState('')
-
-  function handleSubmit() {
-    if (!text.trim() || !session?.user) return
-    api.addComment(itemId, {
-      text: text.trim().slice(0, MAX_COMMENT_LENGTH),
-      authorName: session.user.name || 'Unknown',
-      authorEmail: session.user.email || '',
-    })
-    setText('')
-  }
-
-  return (
-    <div>
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value.slice(0, MAX_COMMENT_LENGTH))}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
-          placeholder="Add a comment..."
-          maxLength={MAX_COMMENT_LENGTH}
-          className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
-        />
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={!text.trim()}
-          className="px-3 py-2 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors disabled:opacity-30"
-        >
-          Post
-        </button>
-      </div>
-      {text.length > 0 && (
-        <p className={`text-[10px] mt-1 text-right ${text.length >= MAX_COMMENT_LENGTH ? 'text-red-400' : 'text-cream/25'}`}>
-          {text.length}/{MAX_COMMENT_LENGTH}
-        </p>
       )}
     </div>
   )

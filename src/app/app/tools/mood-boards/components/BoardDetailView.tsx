@@ -11,7 +11,8 @@ import type { MoodBoardStateAPI } from '../useMoodBoardState'
 import { uploadMoodBoardFile } from '../uploadMoodBoardFile'
 import { IdeaTile } from './IdeaTile'
 import { IdeaDetailModal } from './IdeaDetailModal'
-import { CommentsPanel } from './CommentsPanel'
+import { CommentThread, type RefEntity } from '@/components/app/CommentThread'
+import { useComments } from '@/hooks/useComments'
 import { BoardSettingsSheet } from './BoardSettingsSheet'
 import { ShareExportModal } from '@/components/app/ShareExportModal'
 
@@ -75,6 +76,17 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
   const [textIdeaName, setTextIdeaName] = useState('')
   const [textIdeaNotes, setTextIdeaNotes] = useState('')
 
+  // DB-backed comments
+  const boardComments = useComments({
+    collectionId: collectionId || null,
+    targetType: 'board',
+    targetId: board.id,
+  })
+  const ideaRefEntities: RefEntity[] = useMemo(
+    () => board.ideas.map((idea) => ({ id: idea.id, label: idea.name || 'Untitled' })),
+    [board.ideas]
+  )
+
   // Quick URL add state
   const [quickUrl, setQuickUrl] = useState('')
   const [quickUrlError, setQuickUrlError] = useState('')
@@ -86,7 +98,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
     ? board.ideas.find((i) => i.id === selectedIdeaId) ?? null
     : null
 
-  const commentCount = (board.comments || []).length
+  const commentCount = boardComments.comments.length
   const userEmail = session?.user?.email || ''
   const userName = session?.user?.name || ''
 
@@ -139,22 +151,22 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
 
   // Comments are visible inline — mark as seen on page load
   useEffect(() => {
-    const comments = board.comments || []
-    if (comments.length === 0) {
+    const dbComments = boardComments.comments
+    if (dbComments.length === 0) {
       setHasUnread(false)
       setLastActivity(null)
       return
     }
-    const latest = comments.reduce(
+    const latest = dbComments.reduce(
       (max, c) => (c.createdAt > max ? c.createdAt : max),
-      comments[0].createdAt
+      dbComments[0].createdAt
     )
     setLastActivity(latest)
     setHasUnread(false)
     try {
       localStorage.setItem(`hhc_mb_seen_${board.id}`, latest)
     } catch {}
-  }, [board.comments, board.id])
+  }, [boardComments.comments, board.id])
 
   // Cleanup undo timer on unmount
   useEffect(() => {
@@ -207,7 +219,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
     }
     if (activeFilters.has('has-comments')) {
       ideas = ideas.filter((i) =>
-        (board.comments || []).some((c) => c.refIdeaId === i.id)
+        boardComments.comments.some((c) => c.refEntityId === i.id)
       )
     }
     for (const f of activeFilters) {
@@ -216,16 +228,15 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
       }
     }
     return ideas
-  }, [board.ideas, board.comments, searchQuery, activeFilters])
+  }, [board.ideas, boardComments.comments, searchQuery, activeFilters])
 
   const isFiltering = searchQuery.trim() !== '' || activeFilters.size > 0
 
   const recentComments = useMemo(() => {
-    const comments = board.comments || []
-    return [...comments]
+    return [...boardComments.comments]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 2)
-  }, [board.comments])
+  }, [boardComments.comments])
 
   const getIdeaThumbnail = useCallback((ideaId: string): string | null => {
     const idea = board.ideas.find((i) => i.id === ideaId)
@@ -344,12 +355,8 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
 
   const handleInlineComment = () => {
     const trimmed = inlineCommentText.trim()
-    if (!trimmed || !session?.user) return
-    api.addComment(board.id, {
-      text: trimmed,
-      authorName: session.user.name || 'Anonymous',
-      authorEmail: session.user.email || '',
-    })
+    if (!trimmed) return
+    boardComments.addComment({ text: trimmed })
     setInlineCommentText('')
   }
 
@@ -734,8 +741,8 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
                   idea={idea}
                   onClick={() => setSelectedIdeaId(idea.id)}
                   commentCount={
-                    (board.comments || []).filter(
-                      (c) => c.refIdeaId === idea.id
+                    boardComments.comments.filter(
+                      (c) => c.refEntityId === idea.id
                     ).length
                   }
                   reactions={idea.reactions}
@@ -1134,7 +1141,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
           {recentComments.length > 0 ? (
             <div className="space-y-3 mb-4">
               {recentComments.map((comment) => {
-                const thumbUrl = comment.refIdeaId ? getIdeaThumbnail(comment.refIdeaId) : null
+                const thumbUrl = comment.refEntityId ? getIdeaThumbnail(comment.refEntityId) : null
                 return (
                   <div key={comment.id} className="flex gap-3">
                     <span className="w-7 h-7 rounded-full bg-sandstone/20 text-sandstone text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
@@ -1146,10 +1153,10 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
                         <span className="text-cream/20">&middot;</span>
                         <span className="text-[11px] text-cream/30">{relativeTime(comment.createdAt)}</span>
                       </div>
-                      {comment.refIdeaId && comment.refIdeaLabel && (
+                      {comment.refEntityId && comment.refEntityLabel && (
                         <button
                           type="button"
-                          onClick={() => setSelectedIdeaId(comment.refIdeaId!)}
+                          onClick={() => setSelectedIdeaId(comment.refEntityId!)}
                           className="mt-1 flex items-center gap-2 px-2 py-1 rounded-md bg-sandstone/10 hover:bg-sandstone/20 transition-colors"
                         >
                           {thumbUrl && (
@@ -1161,9 +1168,9 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
                             />
                           )}
                           <span className="text-[11px] text-sandstone/80 truncate">
-                            Re: {comment.refIdeaLabel.length > 40
-                              ? comment.refIdeaLabel.slice(0, 40).trimEnd() + '...'
-                              : comment.refIdeaLabel}
+                            Re: {comment.refEntityLabel.length > 40
+                              ? comment.refEntityLabel.slice(0, 40).trimEnd() + '...'
+                              : comment.refEntityLabel}
                           </span>
                         </button>
                       )}
@@ -1233,27 +1240,32 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
             api.toggleReaction(board.id, ideaId, userEmail, userName, reaction)
           }
           onCommentOnIdea={handleCommentOnIdea}
-          onAddComment={(comment) => api.addComment(board.id, comment)}
-          boardComments={board.comments || []}
+          onAddComment={boardComments.addComment}
+          boardComments={boardComments.comments}
           currentUserEmail={userEmail}
         />
       )}
 
       {/* Comments panel */}
       {commentsOpen && (
-        <CommentsPanel
-          comments={board.comments || []}
-          onAddComment={(comment) => api.addComment(board.id, comment)}
+        <CommentThread
+          title="Comments"
+          comments={boardComments.comments}
+          isLoading={boardComments.isLoading}
           readOnly={readOnly}
           onClose={() => {
             setCommentsOpen(false)
             setDraftRef(null)
           }}
-          onOpenIdea={(ideaId) => {
-            setSelectedIdeaId(ideaId)
-          }}
-          draftRef={draftRef}
-          onClearDraftRef={() => setDraftRef(null)}
+          onAddComment={boardComments.addComment}
+          onDeleteComment={boardComments.deleteComment}
+          refEntities={ideaRefEntities}
+          refEntityType="idea"
+          refPickerLabel="Tag an idea"
+          initialRef={draftRef ? { id: draftRef.ideaId, label: draftRef.ideaLabel } : null}
+          onClearInitialRef={() => setDraftRef(null)}
+          onNavigateToRef={(ideaId) => setSelectedIdeaId(ideaId)}
+          pageSize={10}
         />
       )}
 

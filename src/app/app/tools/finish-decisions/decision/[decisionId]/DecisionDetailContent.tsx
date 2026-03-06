@@ -32,6 +32,8 @@ import { uploadFile as uploadFileForDecision } from '../../uploadFile'
 import { MoveIdeaSheet } from '../../components/MoveIdeaSheet'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { relativeTime } from '@/lib/relativeTime'
+import { useComments, type CommentRow } from '@/hooks/useComments'
+import { CommentThread, type RefEntity } from '@/components/app/CommentThread'
 import { useProject } from '@/contexts/ProjectContext'
 import { DestinationPicker } from '@/components/app/DestinationPicker'
 import { useCollectionTransfer } from '@/hooks/useCollectionTransfer'
@@ -123,6 +125,17 @@ export function DecisionDetailContent({
       router.replace(basePath)
     }
   }, [shouldRedirect, collectionId, router])
+
+  // DB-backed comments for this decision
+  const decisionComments = useComments({
+    collectionId: collectionId ?? null,
+    targetType: 'decision',
+    targetId: decisionId,
+  })
+  const optionRefEntities: RefEntity[] = useMemo(
+    () => (foundDecision?.options || []).map((opt) => ({ id: opt.id, label: opt.name || 'Untitled' })),
+    [foundDecision?.options]
+  )
 
   // Collect unique locations from all decisions for autocomplete
   // NOTE: must be before early returns to keep hook order stable across renders
@@ -251,6 +264,7 @@ export function DecisionDetailContent({
     updateDecision(updates, events.length > 0 ? events : undefined)
   }
 
+  // Bridge: matches old addComment signature but delegates to DB-backed hook
   const addComment = (comment: {
     text: string
     authorName: string
@@ -258,26 +272,16 @@ export function DecisionDetailContent({
     refOptionId?: string
     refOptionLabel?: string
   }) => {
-    if (!foundDecision) return
-    const id = `cmt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-    updateDecision({
-      comments: [
-        ...(foundDecision.comments || []),
-        {
-          id,
-          text: comment.text,
-          authorName: comment.authorName,
-          authorEmail: comment.authorEmail,
-          createdAt: new Date().toISOString(),
-          ...(comment.refOptionId ? { refOptionId: comment.refOptionId, refOptionLabel: comment.refOptionLabel } : {}),
-        },
-      ],
-    }, [{
-      action: 'commented',
-      entityType: 'decision',
-      entityId: decisionId,
-      summaryText: `Commented on "${foundDecision.title}": "${comment.text.length > 60 ? comment.text.slice(0, 60) + '…' : comment.text}"`,
-    }])
+    decisionComments.addComment({
+      text: comment.text,
+      ...(comment.refOptionId
+        ? {
+            refEntityType: 'option',
+            refEntityId: comment.refOptionId,
+            refEntityLabel: comment.refOptionLabel,
+          }
+        : {}),
+    })
   }
 
   const handleStatusChange = (newStatus: StatusV3) => {
@@ -668,7 +672,7 @@ export function DecisionDetailContent({
   }
 
   // Filter: only show user comments (non-empty authorEmail), not system comments
-  const userComments = (foundDecision.comments || []).filter((c) => c.authorEmail !== '')
+  const userComments = decisionComments.comments
   const commentCount = userComments.length
   const lastUserComment = [...userComments].reverse()[0]
   const statusCfg = STATUS_CONFIG_V3[foundDecision.status] ?? STATUS_CONFIG_V3.deciding
@@ -981,7 +985,7 @@ export function DecisionDetailContent({
             onAddComment={addComment}
             onCommentOnOption={handleCommentOnOption}
             onOpenGlobalComment={openGlobalCommentComposer}
-            comments={foundDecision.comments || []}
+            comments={decisionComments.comments}
             hasKits={availableKits.length > 0}
             onOpenPack={() => setIdeasPackOpen(true)}
             rooms={v3State.rooms}
@@ -1284,7 +1288,7 @@ function CommentsSection({
   onClearDraftRef,
   onOpenCard,
 }: {
-  comments: SelectionComment[]
+  comments: CommentRow[]
   onAddComment: (comment: { text: string; authorName: string; authorEmail: string; refOptionId?: string; refOptionLabel?: string }) => void
   readOnly: boolean
   commentInputRef?: React.RefObject<HTMLTextAreaElement | null>
@@ -1296,7 +1300,9 @@ function CommentsSection({
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Chronological order (oldest first for chat-thread feel)
-  const allComments = [...comments]
+  const allComments = [...comments].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  )
   const totalPages = Math.max(1, Math.ceil(allComments.length / COMMENTS_PER_PAGE))
   // Show the LAST page by default (most recent comments)
   const effectivePage = page === 0 && totalPages > 1 ? totalPages - 1 : page
@@ -1353,13 +1359,13 @@ function CommentsSection({
                     </span>
                   </div>
                   {/* Reference chip */}
-                  {comment.refOptionId && comment.refOptionLabel ? (
+                  {comment.refEntityId && comment.refEntityLabel ? (
                     <button
                       type="button"
-                      onClick={() => onOpenCard?.(comment.refOptionId!)}
+                      onClick={() => onOpenCard?.(comment.refEntityId!)}
                       className="inline-flex items-center gap-1 px-2 py-0.5 mb-1 rounded-full text-[10px] bg-sandstone/10 text-sandstone/70 hover:bg-sandstone/20 hover:text-sandstone transition-colors"
                     >
-                      Re: {truncateLabel(comment.refOptionLabel, 30)}
+                      Re: {truncateLabel(comment.refEntityLabel, 30)}
                       <span className="text-sandstone/30">↗</span>
                     </button>
                   ) : null}

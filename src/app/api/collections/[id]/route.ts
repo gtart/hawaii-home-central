@@ -6,6 +6,44 @@ import { writeActivityEvents } from '@/server/activity/writeActivityEvent'
 
 type Params = { params: Promise<{ id: string }> }
 
+/** Strip embedded comment arrays from payload (now stored in Comment table). */
+function stripPayloadComments(payload: Record<string, unknown>): Record<string, unknown> {
+  const p = { ...payload }
+
+  // finish_decisions: rooms[].comments, rooms[].decisions[].comments
+  if (Array.isArray(p.rooms)) {
+    p.rooms = (p.rooms as Record<string, unknown>[]).map((room) => {
+      const r = { ...room }
+      delete r.comments
+      if (Array.isArray(r.decisions)) {
+        r.decisions = (r.decisions as Record<string, unknown>[]).map((d) => {
+          const { comments: _, ...rest } = d
+          return rest
+        })
+      }
+      return r
+    })
+  }
+
+  // mood_boards: boards[].comments
+  if (Array.isArray(p.boards)) {
+    p.boards = (p.boards as Record<string, unknown>[]).map((board) => {
+      const { comments: _, ...rest } = board
+      return rest
+    })
+  }
+
+  // punchlist: items[].comments
+  if (Array.isArray(p.items)) {
+    p.items = (p.items as Record<string, unknown>[]).map((item) => {
+      const { comments: _, ...rest } = item
+      return rest
+    })
+  }
+
+  return p
+}
+
 /**
  * GET /api/collections/[id]
  * Get collection payload + metadata. Requires VIEWER+.
@@ -95,10 +133,13 @@ export async function PUT(request: Request, { params }: Params) {
     }
   }
 
+  // Strip embedded comments from payload (now stored in Comment table)
+  const cleanPayload = stripPayloadComments(body.payload) as typeof body.payload
+
   const updated = await prisma.toolCollection.update({
     where: { id },
     data: {
-      payload: body.payload,
+      payload: cleanPayload,
       updatedById: userId,
     },
     select: { updatedAt: true, projectId: true, toolKey: true },

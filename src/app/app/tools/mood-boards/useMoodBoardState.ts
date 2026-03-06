@@ -235,63 +235,6 @@ export function useMoodBoardState() {
     [setState]
   )
 
-  // ---- Comments ----
-
-  const addComment = useCallback(
-    (
-      boardId: string,
-      comment: {
-        text: string
-        authorName: string
-        authorEmail: string
-        refIdeaId?: string
-        refIdeaLabel?: string
-      }
-    ) => {
-      const id = `cmt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-      setState((prev) => {
-        const p = ensureShape(prev)
-        return {
-          ...p,
-          boards: p.boards.map((b) =>
-            b.id === boardId
-              ? {
-                  ...b,
-                  comments: [
-                    ...(b.comments || []),
-                    { id, ...comment, createdAt: now() },
-                  ],
-                  updatedAt: now(),
-                }
-              : b
-          ),
-        }
-      })
-    },
-    [setState]
-  )
-
-  const deleteComment = useCallback(
-    (boardId: string, commentId: string) => {
-      setState((prev) => {
-        const p = ensureShape(prev)
-        return {
-          ...p,
-          boards: p.boards.map((b) =>
-            b.id === boardId
-              ? {
-                  ...b,
-                  comments: (b.comments || []).filter((c) => c.id !== commentId),
-                  updatedAt: now(),
-                }
-              : b
-          ),
-        }
-      })
-    },
-    [setState]
-  )
-
   // ---- Reactions ----
 
   const toggleReaction = useCallback(
@@ -399,8 +342,6 @@ export function useMoodBoardState() {
     restoreIdea,
     moveIdea,
     copyIdea,
-    addComment,
-    deleteComment,
     toggleReaction,
     updateBoardAccess,
     projectId: null as string | null,
@@ -540,39 +481,6 @@ export function useMoodBoardCollectionState(collectionId: string | null): MoodBo
   const moveIdea = useCallback((_from: string, _to: string, _id: string) => {}, [])
   const copyIdea = useCallback((_from: string, _to: string, _id: string) => '', [])
 
-  // Comments
-  const addComment = useCallback(
-    (
-      _boardId: string,
-      comment: {
-        text: string
-        authorName: string
-        authorEmail: string
-        refIdeaId?: string
-        refIdeaLabel?: string
-      }
-    ) => {
-      const id = `cmt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-      updateColl((p) => ({
-        ...p,
-        comments: [...(p.comments || []), { id, ...comment, createdAt: now() }],
-      }))
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [setState]
-  )
-
-  const deleteComment = useCallback(
-    (_boardId: string, commentId: string) => {
-      updateColl((p) => ({
-        ...p,
-        comments: (p.comments || []).filter((c) => c.id !== commentId),
-      }))
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [setState]
-  )
-
   // Reactions
   const toggleReaction = useCallback(
     (
@@ -627,8 +535,6 @@ export function useMoodBoardCollectionState(collectionId: string | null): MoodBo
     restoreIdea,
     moveIdea,
     copyIdea,
-    addComment,
-    deleteComment,
     toggleReaction,
     updateBoardAccess,
   }

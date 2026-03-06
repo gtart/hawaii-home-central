@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom'
 import { useSession } from 'next-auth/react'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import type { Idea, Board, ReactionType, MoodBoardComment } from '@/data/mood-boards'
+import type { Idea, Board, ReactionType } from '@/data/mood-boards'
+import type { CommentRow } from '@/hooks/useComments'
 import { REACTION_CONFIG } from '@/data/mood-boards'
 import { MoveToBoardSheet } from './MoveToBoardSheet'
 import { ConvertToSelectionSheet } from './ConvertToSelectionSheet'
@@ -36,14 +37,13 @@ interface Props {
   onCopyIdea: (toBoardId: string, ideaId: string) => void
   onToggleReaction: (ideaId: string, reaction: ReactionType) => void
   onCommentOnIdea: (ideaId: string, ideaName: string) => void
-  onAddComment: (comment: {
+  onAddComment: (params: {
     text: string
-    authorName: string
-    authorEmail: string
-    refIdeaId?: string
-    refIdeaLabel?: string
-  }) => void
-  boardComments: MoodBoardComment[]
+    refEntityType?: string
+    refEntityId?: string
+    refEntityLabel?: string
+  }) => Promise<void>
+  boardComments: CommentRow[]
   currentUserEmail: string
 }
 
@@ -101,18 +101,17 @@ export function IdeaDetailModal({
 
   // Filter comments for this idea
   const ideaComments = boardComments
-    .filter((c) => c.refIdeaId === idea.id)
+    .filter((c) => c.refEntityId === idea.id)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   const handlePostComment = () => {
     const trimmed = commentText.trim()
-    if (!trimmed || !session?.user) return
+    if (!trimmed) return
     onAddComment({
       text: trimmed,
-      authorName: session.user.name || 'Anonymous',
-      authorEmail: session.user.email || '',
-      refIdeaId: idea.id,
-      refIdeaLabel: idea.name,
+      refEntityType: 'idea',
+      refEntityId: idea.id,
+      refEntityLabel: idea.name,
     })
     setCommentText('')
   }

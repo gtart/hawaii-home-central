@@ -272,41 +272,6 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
     [setState]
   )
 
-  // ---- Comment management ----
-
-  const addComment = useCallback(
-    (itemId: string, comment: { text: string; authorName: string; authorEmail: string }) => {
-      const id = genId('cmt')
-      const ts = now()
-      const item = payload.items.find((i) => i.id === itemId)
-      const title = item?.title || 'item'
-      const snippet = comment.text.length > 60 ? comment.text.slice(0, 60) + '…' : comment.text
-      const events: ActivityEventHint[] = [{
-        action: 'commented',
-        entityType: 'item',
-        entityId: itemId,
-        summaryText: `Commented on "${title}": "${snippet}"`,
-      }]
-      setState((prev) => ({
-        ...prev,
-        items: prev.items.map((item) =>
-          item.id === itemId
-            ? {
-                ...item,
-                comments: [
-                  ...(item.comments || []),
-                  { id, text: comment.text, authorName: comment.authorName, authorEmail: comment.authorEmail, createdAt: ts },
-                ],
-                updatedAt: ts,
-              }
-            : item
-        ),
-      }), events)
-      return id
-    },
-    [setState, payload.items]
-  )
-
   return {
     payload,
     isLoaded,
@@ -323,7 +288,6 @@ export function usePunchlistState(opts?: { projectIdOverride?: string | null; co
     setStatus,
     addPhoto,
     removePhoto,
-    addComment,
   }
 }
 
