@@ -50,7 +50,7 @@ export default function DirectoryPage() {
             Be first to know when the directory is ready.
           </p>
           <Link href="/waitlist">
-            <Button size="lg">Request Early Access</Button>
+            <Button size="lg" data-umami-event="directory-request-access">Request Early Access</Button>
           </Link>
         </FadeInSection>
       </div>

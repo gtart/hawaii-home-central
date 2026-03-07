@@ -85,7 +85,7 @@ export function EmailGate({ children, previewContent }: EmailGateProps) {
             error={error}
             required
           />
-          <Button type="submit" size="lg" className="w-full">
+          <Button type="submit" size="lg" className="w-full" data-umami-event="email-gate-unlock">
             Unlock Resources
           </Button>
         </form>

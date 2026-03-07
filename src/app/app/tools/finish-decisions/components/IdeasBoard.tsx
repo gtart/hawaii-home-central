@@ -10,6 +10,14 @@ import { IdeaCardModal } from './IdeaCardModal'
 import { CompareModal } from './CompareModal'
 import { SaveFromWebDialog } from './SaveFromWebDialog'
 
+function displayPrice(raw: string | undefined): string {
+  if (!raw) return ''
+  const trimmed = raw.trim()
+  if (/^\$/.test(trimmed)) return trimmed
+  if (/^[\d,]+(\.\d{1,2})?$/.test(trimmed)) return `$${trimmed}`
+  return trimmed
+}
+
 export interface IdeasBoardAddActions {
   triggerPhoto: () => void
   triggerNote: () => void
@@ -183,7 +191,7 @@ function IdeaCardTile({
 
         {/* Price */}
         {option.price && (
-          <p className="text-xs text-sandstone font-medium">{option.price}</p>
+          <p className="text-xs text-sandstone font-medium">{displayPrice(option.price)}</p>
         )}
 
         {/* Notes/Specs preview */}

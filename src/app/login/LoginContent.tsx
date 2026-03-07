@@ -113,7 +113,7 @@ export function LoginContent() {
               Request early access and we&apos;ll invite you when the next wave opens.
             </p>
             <Link href="/waitlist">
-              <Button variant="primary" size="lg" className="w-full">
+              <Button variant="primary" size="lg" className="w-full" data-umami-event="login-denied-request-access">
                 Request Early Access
               </Button>
             </Link>
@@ -142,6 +142,7 @@ export function LoginContent() {
             variant="secondary"
             size="lg"
             className="w-full flex items-center justify-center gap-3"
+            data-umami-event="login-error-retry-google"
           >
             <GoogleIcon />
             Try Again with Google
@@ -226,6 +227,7 @@ export function LoginContent() {
               disabled={submitting || !email.trim()}
               size="lg"
               className="w-full"
+              data-umami-event="login-request-access"
             >
               {submitting ? 'Submitting...' : 'Request Access'}
             </Button>
@@ -243,6 +245,7 @@ export function LoginContent() {
               type="button"
               onClick={() => signIn('google', { callbackUrl })}
               className="text-sandstone hover:text-sandstone-light transition-colors font-medium"
+              data-umami-event="login-invited-google-signin"
             >
               Sign in with Google
             </button>
@@ -271,6 +274,7 @@ export function LoginContent() {
             variant="secondary"
             size="lg"
             className="w-full flex items-center justify-center gap-3"
+            data-umami-event="login-continue-google"
           >
             <GoogleIcon />
             Continue with Google

@@ -31,11 +31,11 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com https://umami-analytics-silk-seven.vercel.app",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://www.googletagmanager.com https://lh3.googleusercontent.com",
               "font-src 'self'",
-              "connect-src 'self' https://www.google-analytics.com https://*.analytics.google.com https://*.google-analytics.com https://vitals.vercel-insights.com https://va.vercel-scripts.com",
+              "connect-src 'self' https://www.google-analytics.com https://*.analytics.google.com https://*.google-analytics.com https://vitals.vercel-insights.com https://va.vercel-scripts.com https://umami-analytics-silk-seven.vercel.app",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

@@ -29,6 +29,7 @@ export function UserMenu() {
       <Link
         href="/login"
         className="text-cream/70 hover:text-sandstone transition-colors text-sm font-medium"
+        data-umami-event="nav-sign-in"
       >
         Sign In
       </Link>
@@ -78,6 +79,7 @@ export function UserMenu() {
             href="/app"
             onClick={() => setIsOpen(false)}
             className="block px-4 py-2 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+            data-umami-event="nav-my-tools"
           >
             My Tools
           </Link>
@@ -94,6 +96,7 @@ export function UserMenu() {
               signOut({ callbackUrl: '/' })
             }}
             className="block w-full text-left px-4 py-2 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+            data-umami-event="nav-sign-out"
           >
             Sign Out
           </button>

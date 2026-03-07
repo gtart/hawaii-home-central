@@ -75,7 +75,7 @@ export function StorySubmissionForm() {
           prepared. You can stay anonymous&mdash;we just need to verify your
           story is authentic.
         </p>
-        <Button variant="secondary" size="lg" onClick={() => setOpen(true)}>
+        <Button variant="secondary" size="lg" onClick={() => setOpen(true)} data-umami-event="story-share-open">
           Share Your Story
         </Button>
       </div>
@@ -130,7 +130,7 @@ export function StorySubmissionForm() {
         )}
 
         <div className="flex items-center gap-4">
-          <Button type="submit" disabled={submitting || !summary.trim()}>
+          <Button type="submit" disabled={submitting || !summary.trim()} data-umami-event="story-submit">
             {submitting ? 'Submitting...' : 'Submit Story'}
           </Button>
           <button

@@ -990,6 +990,17 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                           {p === 'HIGH' ? 'High' : p === 'MED' ? 'Medium' : 'Low'}
                         </button>
                       ))}
+                      <div className="my-1 border-t border-cream/10" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          api.bulkUpdateItems(Array.from(selectedIds), { priority: undefined })
+                          deselectAll()
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs text-cream/40 hover:bg-cream/5 hover:text-cream/60 transition-colors"
+                      >
+                        No Priority
+                      </button>
                     </div>
                   </>
                 )}

@@ -63,13 +63,13 @@ export default async function ToolsMarketingPage() {
             <div className="mt-8 text-center space-y-3">
               <p className="text-cream/50 text-sm">
                 New to renovating? Read{' '}
-                <Link href="/resources/renovation-stages" className="text-sandstone hover:text-sandstone-light transition-colors">
+                <Link href="/resources/renovation-stages" className="text-sandstone hover:text-sandstone-light transition-colors" data-umami-event="tools-plan-renovation-link">
                   Plan Your Renovation &rarr;
                 </Link>
               </p>
               <p className="text-cream/50 text-sm">
                 Looking for in-depth guides?{' '}
-                <Link href="/hawaii-home-renovation" className="text-sandstone hover:text-sandstone-light transition-colors">
+                <Link href="/hawaii-home-renovation" className="text-sandstone hover:text-sandstone-light transition-colors" data-umami-event="tools-renovation-guides-link">
                   Visit Renovation Guides
                 </Link>
               </p>

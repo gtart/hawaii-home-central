@@ -154,7 +154,7 @@ export function ToolPreviewCards() {
                     <div className="mt-4 space-y-2">
                       <div className="flex gap-3">
                         <Link href="/waitlist" className="flex-1">
-                          <Button variant="primary" size="md" className="w-full">
+                          <Button variant="primary" size="md" className="w-full" data-umami-event={`tool-request-access-${stage.tool!.title.toLowerCase().replace(/\s+/g, '-')}`}>
                             Request Early Access
                           </Button>
                         </Link>
@@ -163,6 +163,7 @@ export function ToolPreviewCards() {
                           onClick={() =>
                             setPreviewOpen(isOpen ? null : stage.tool!.title)
                           }
+                          data-umami-event={`tool-preview-${stage.tool!.title.toLowerCase().replace(/\s+/g, '-')}`}
                           className={cn(
                             'flex-1 py-2.5 rounded-button text-sm font-medium transition-colors border',
                             isOpen
@@ -176,6 +177,7 @@ export function ToolPreviewCards() {
                       <Link
                         href={stage.tool!.ctaHref}
                         className="block text-center text-xs text-cream/40 hover:text-cream/60 transition-colors pt-1"
+                        data-umami-event={`tool-sign-in-${stage.tool!.title.toLowerCase().replace(/\s+/g, '-')}`}
                       >
                         Have access? Sign in &rarr;
                       </Link>
@@ -212,13 +214,14 @@ export function ToolPreviewCards() {
 
                         <div className="space-y-2">
                           <Link href="/waitlist">
-                            <Button variant="primary" size="sm" className="w-full">
+                            <Button variant="primary" size="sm" className="w-full" data-umami-event={`tool-preview-request-access-${stage.tool!.title.toLowerCase().replace(/\s+/g, '-')}`}>
                               Request Early Access
                             </Button>
                           </Link>
                           <Link
                             href={stage.tool!.ctaHref}
                             className="block text-center text-xs text-cream/40 hover:text-cream/60 transition-colors pt-1"
+                            data-umami-event={`tool-preview-sign-in-${stage.tool!.title.toLowerCase().replace(/\s+/g, '-')}`}
                           >
                             Have access? Sign in &rarr;
                           </Link>

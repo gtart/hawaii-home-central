@@ -19,6 +19,7 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
   const { currentProject } = useProject()
   const router = useRouter()
   const [activityOpen, setActivityOpen] = useState(false)
+  const [titleOverride, setTitleOverride] = useState<string | null>(null)
   const { count: unseenActivity, markSeen: markActivitySeen } = useUnseenActivityCount(
     collectionId ? { toolKey: 'punchlist', collectionId } : undefined
   )
@@ -32,15 +33,15 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
 
   const handleRename = useCallback(async (newTitle: string) => {
     if (!collectionId) return
+    setTitleOverride(newTitle)
     try {
       await fetch(`/api/collections/${collectionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTitle }),
       })
-      router.refresh()
     } catch { /* ignore */ }
-  }, [collectionId, router])
+  }, [collectionId])
 
   const handleArchive = useCallback(async () => {
     if (!collectionId || !confirm('Archive this fix list? You can restore it later.')) return
@@ -86,7 +87,7 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
         accessLevel={access}
         hasContent={payload.items.length > 0}
         collectionId={collectionId}
-        collectionName={collectionTitle || undefined}
+        collectionName={titleOverride || collectionTitle || undefined}
         eyebrowLabel="Fix List"
         backHref={collectionId ? '/app/tools/punchlist' : undefined}
         backLabel={collectionId ? 'All Fix Lists' : undefined}
@@ -139,7 +140,7 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
           onClose={() => setActivityOpen(false)}
           toolKey="punchlist"
           collectionId={collectionId}
-          collectionTitle={collectionTitle || undefined}
+          collectionTitle={titleOverride || collectionTitle || undefined}
         />
       )}
 

@@ -82,12 +82,12 @@ export function HeroSection() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
           <Link href="/waitlist">
-            <Button variant="primary" size="lg">
+            <Button variant="primary" size="lg" data-umami-event="hero-request-access">
               Request Early Access
             </Button>
           </Link>
           <Link href="/tools">
-            <Button variant="secondary" size="lg">
+            <Button variant="secondary" size="lg" data-umami-event="hero-see-tools">
               See the Tools
             </Button>
           </Link>

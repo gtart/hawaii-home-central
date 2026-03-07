@@ -250,6 +250,7 @@ export function ToolContent({
   const { state, setState, isLoaded, isSyncing, noAccess } = result
   const collectionTitle = useCollMode ? collResult.title : undefined
   const [activityOpen, setActivityOpen] = useState(false)
+  const [titleOverride, setTitleOverride] = useState<string | null>(null)
   const { count: unseenActivity, markSeen: markActivitySeen } = useUnseenActivityCount(
     collectionId ? { toolKey: 'finish_decisions', collectionId } : undefined
   )
@@ -468,15 +469,15 @@ export function ToolContent({
 
   const handleRename = useCallback(async (newTitle: string) => {
     if (!collectionId) return
+    setTitleOverride(newTitle)
     try {
       await fetch(`/api/collections/${collectionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTitle }),
       })
-      router.refresh()
     } catch { /* ignore */ }
-  }, [collectionId, router])
+  }, [collectionId])
 
   const handleArchive = useCallback(async () => {
     if (!collectionId || !confirm('Archive this list? You can restore it later.')) return
@@ -504,7 +505,7 @@ export function ToolContent({
             accessLevel={access}
             hasContent={v3State.rooms.length > 0}
             collectionId={collectionId}
-            collectionName={collectionTitle}
+            collectionName={titleOverride || collectionTitle}
             eyebrowLabel="Selections"
             backHref={collectionId ? '/app/tools/finish-decisions' : undefined}
             backLabel={collectionId ? 'All Selections' : undefined}
@@ -555,7 +556,7 @@ export function ToolContent({
             onClose={() => setActivityOpen(false)}
             toolKey="finish_decisions"
             collectionId={collectionId}
-            collectionTitle={collectionTitle}
+            collectionTitle={titleOverride || collectionTitle}
           />
         )}
         <UnsortedBanner toolKey="finish_decisions" />

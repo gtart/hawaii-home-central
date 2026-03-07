@@ -239,6 +239,12 @@ export function ToolPageHeader({
                 {collectionName || title}
               </h1>
             )}
+            {isOwner && (onRename || onArchive) && (
+              <HeaderMoreMenu
+                onRename={onRename ? handleRenameStart : undefined}
+                onArchive={onArchive}
+              />
+            )}
             {headerSlot}
           </div>
         </div>
@@ -279,13 +285,6 @@ export function ToolPageHeader({
               </svg>
               Share
             </button>
-          )}
-          {isOwner && (
-            <HeaderMoreMenu
-              onExport={buildExportUrl ? () => { setShareInitialTab('export'); setShowShare(true) } : undefined}
-              onRename={onRename ? handleRenameStart : undefined}
-              onArchive={onArchive}
-            />
           )}
           {actions}
         </div>

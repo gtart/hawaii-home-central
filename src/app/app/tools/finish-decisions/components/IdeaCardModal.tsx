@@ -61,6 +61,54 @@ async function fetchLinkPreview(url: string): Promise<{ linkTitle?: string; link
   }
 }
 
+/** If the price looks like a bare number (with optional commas/decimals), prepend $ */
+function displayPrice(raw: string | undefined): string {
+  if (!raw) return ''
+  const trimmed = raw.trim()
+  if (/^\$/.test(trimmed)) return trimmed
+  if (/^[\d,]+(\.\d{1,2})?$/.test(trimmed)) return `$${trimmed}`
+  return trimmed
+}
+
+function ExpandableSpecs({ value, readOnly, onChange }: { value: string; readOnly: boolean; onChange: (val: string) => void }) {
+  const [expanded, setExpanded] = useState(false)
+  const isLong = value.length > 120 || value.split('\n').length > 3
+
+  if (!readOnly) {
+    return (
+      <div>
+        <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-1 block">Specs</label>
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={expanded || !isLong ? 4 : 2}
+          placeholder="Specs, dimensions, details..."
+          className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 resize-y"
+        />
+        {isLong && !expanded && (
+          <button type="button" onClick={() => setExpanded(true)} className="text-[11px] text-sandstone/60 hover:text-sandstone transition-colors mt-0.5">
+            Show more
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-1 block">Specs</label>
+      <p className={`text-sm text-cream whitespace-pre-wrap ${!expanded && isLong ? 'line-clamp-3' : ''}`}>
+        {value}
+      </p>
+      {isLong && (
+        <button type="button" onClick={() => setExpanded(!expanded)} className="text-[11px] text-sandstone/60 hover:text-sandstone transition-colors mt-0.5">
+          {expanded ? 'Show less' : 'Show more'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 export function IdeaCardModal({
   option,
   decision,
@@ -655,29 +703,26 @@ export function IdeaCardModal({
           {(!readOnly || option.price) && (
             <div>
               <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-1 block">Price</label>
-              <input
-                value={option.price || ''}
-                onChange={(e) => onUpdate({ price: e.target.value })}
-                readOnly={readOnly}
-                placeholder="e.g. $1,200"
-                className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50"
-              />
+              {readOnly ? (
+                <p className="text-sm text-cream">{displayPrice(option.price)}</p>
+              ) : (
+                <input
+                  value={option.price || ''}
+                  onChange={(e) => onUpdate({ price: e.target.value })}
+                  placeholder="e.g. $1,200"
+                  className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50"
+                />
+              )}
             </div>
           )}
 
           {/* ── Specs ── */}
           {(!readOnly || option.notes) && (
-            <div>
-              <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-1 block">Specs</label>
-              <textarea
-                value={option.notes}
-                onChange={(e) => onUpdate({ notes: e.target.value })}
-                readOnly={readOnly}
-                rows={2}
-                placeholder="Specs, dimensions, details..."
-                className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 resize-none"
-              />
-            </div>
+            <ExpandableSpecs
+              value={option.notes}
+              readOnly={readOnly}
+              onChange={(val) => onUpdate({ notes: val })}
+            />
           )}
 
           {/* ── Links ── */}
