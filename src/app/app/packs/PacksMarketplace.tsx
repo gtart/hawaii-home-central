@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useToolState } from '@/hooks/useToolState'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
-import { applyKitToRoom } from '@/lib/finish-decision-kits'
-import type { FinishDecisionsPayloadV3, RoomTypeV3, RoomV3 } from '@/data/finish-decisions'
+import { applyKitToWorkspace } from '@/lib/finish-decision-kits'
+import type { FinishDecisionsPayloadV4, RoomTypeV3 } from '@/data/finish-decisions'
 import { ROOM_EMOJI_MAP, ROOM_TYPE_OPTIONS_V3 } from '@/data/finish-decisions'
 import { cn } from '@/lib/utils'
 
@@ -62,95 +62,63 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Context params — where user came from
   const returnTo = searchParams.get('returnTo')
-  const contextRoomId = searchParams.get('roomId')
-  const contextRoomName = searchParams.get('roomName')
 
-  const { state, setState, isLoaded } = useToolState<FinishDecisionsPayloadV3 | any>({
+  const { state, setState, isLoaded } = useToolState<FinishDecisionsPayloadV4 | any>({
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2',
-    defaultValue: { version: 3, rooms: [] },
+    defaultValue: { version: 4, selections: [] },
   })
 
   const [roomTypeFilter, setRoomTypeFilter] = useState<RoomTypeV3 | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [toast, setToast] = useState<{ text: string; kitId: string } | null>(null)
-  const [applyNowModal, setApplyNowModal] = useState<{ kitId: string; kitLabel: string } | null>(null)
-  const [applyNowRoomId, setApplyNowRoomId] = useState<string>('')
+  const [confirmModal, setConfirmModal] = useState<{ kitId: string; kitLabel: string } | null>(null)
 
-  const v3State = isLoaded && state.version === 3 ? (state as FinishDecisionsPayloadV3) : { version: 3 as const, rooms: [] as RoomV3[], ownedKitIds: [] as string[] }
-  const rooms = v3State.rooms || []
+  const v4State = isLoaded && state.version >= 4
+    ? (state as FinishDecisionsPayloadV4)
+    : { version: 4 as const, selections: [], ownedKitIds: [] as string[], appliedKitIds: [] as string[] }
 
-  const ownedKitIds: string[] = v3State.ownedKitIds || []
-  const canApplyContext = !!contextRoomId && isLoaded && rooms.length > 0
+  const ownedKitIds: string[] = v4State.ownedKitIds || []
 
   function doAcquire(kitId: string) {
     setState((prev: any) => {
-      const p = prev as FinishDecisionsPayloadV3
-      const existing = p.ownedKitIds || []
+      const existing = prev.ownedKitIds || []
       if (existing.includes(kitId)) return prev
-      return { ...p, ownedKitIds: [...existing, kitId] }
+      return { ...prev, ownedKitIds: [...existing, kitId] }
     })
   }
 
-  function applyKitToRoomById(kitId: string, roomId: string): { ok: boolean; reason?: string; message?: string } {
+  function applyKit(kitId: string): { ok: boolean; reason?: string; message?: string } {
     if (!isLoaded) return { ok: false, reason: 'Tool state is still loading. Try again in a moment.' }
     const kit = kits.find((k) => k.id === kitId)
     if (!kit) return { ok: false, reason: 'Pack not found.' }
-    const targetRoom = rooms.find((r) => r.id === roomId)
-    if (!targetRoom) return { ok: false, reason: `Room not found. It may have been deleted.` }
 
-    const result = applyKitToRoom(targetRoom, kit)
+    const result = applyKitToWorkspace(
+      v4State.selections || [],
+      v4State.appliedKitIds || [],
+      kit
+    )
+
     setState((prev: any) => ({
       ...prev,
-      rooms: (prev as FinishDecisionsPayloadV3).rooms.map((r: RoomV3) =>
-        r.id === roomId ? result.room : r
-      ),
+      selections: result.selections,
+      appliedKitIds: result.appliedKitIds,
     }))
 
-    const msg = `Applied "${kit.label}" to ${targetRoom.name} — +${result.addedDecisionCount} decisions, +${result.addedOptionCount} options`
+    const msg = `Applied "${kit.label}" — +${result.addedSelectionCount} selections, +${result.addedOptionCount} options`
     return { ok: true, message: msg }
   }
 
   function acquireKit(kitId: string) {
     doAcquire(kitId)
     const kit = kits.find((k) => k.id === kitId)
-
-    if (contextRoomId) {
-      // Context mode: auto-apply and navigate back
-      const result = applyKitToRoomById(kitId, contextRoomId)
-      if (!result.ok) {
-        setToast({ text: result.reason || 'Could not apply pack.', kitId })
-        setTimeout(() => setToast(null), 6000)
-        return
-      }
-      // Store flash message for room page to pick up
-      try { sessionStorage.setItem('hhc_pack_flash', result.message || '') } catch { /* ignore */ }
-      router.push(`/app/tools/finish-decisions/room/${contextRoomId}`)
-    } else {
-      // General mode: show apply-now modal
-      setApplyNowRoomId(rooms[0]?.id || '')
-      setApplyNowModal({ kitId, kitLabel: kit?.label || 'Pack' })
-    }
+    setConfirmModal({ kitId, kitLabel: kit?.label || 'Pack' })
   }
 
   function handleApplyToBoard(kitId: string) {
-    if (contextRoomId) {
-      const result = applyKitToRoomById(kitId, contextRoomId)
-      if (!result.ok) {
-        setToast({ text: result.reason || 'Could not apply pack.', kitId })
-        setTimeout(() => setToast(null), 6000)
-        return
-      }
-      try { sessionStorage.setItem('hhc_pack_flash', result.message || '') } catch { /* ignore */ }
-      router.push(`/app/tools/finish-decisions/room/${contextRoomId}`)
-    } else {
-      // General mode: show apply-now modal for owned packs too
-      const kit = kits.find((k) => k.id === kitId)
-      setApplyNowRoomId(rooms[0]?.id || '')
-      setApplyNowModal({ kitId, kitLabel: kit?.label || 'Pack' })
-    }
+    const kit = kits.find((k) => k.id === kitId)
+    setConfirmModal({ kitId, kitLabel: kit?.label || 'Pack' })
   }
 
   const filteredKits = useMemo(() => {
@@ -208,7 +176,7 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
           />
         </div>
 
-        {/* Room type filter chips */}
+        {/* Category filter chips */}
         <div className="flex flex-wrap items-center gap-2 mb-6">
           <button
             type="button"
@@ -259,7 +227,7 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
                   key={kit.id}
                   className="bg-basalt-50 rounded-card border border-cream/10 overflow-hidden flex flex-col"
                 >
-                  <Link href={`/app/packs/${kit.id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}&roomId=${contextRoomId || ''}&roomName=${encodeURIComponent(contextRoomName || '')}` : ''}`} className="p-5 flex-1">
+                  <Link href={`/app/packs/${kit.id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`} className="p-5 flex-1">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <h3 className="text-cream font-medium">{kit.label}</h3>
                       <DisclosureBadge author={kit.author} />
@@ -282,7 +250,7 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
                       </div>
                     )}
                     <p className="text-[11px] text-cream/30">
-                      {kit.decisions.length} decision{kit.decisions.length !== 1 ? 's' : ''} &middot; {totalOptions} option{totalOptions !== 1 ? 's' : ''}
+                      {kit.decisions.length} selection{kit.decisions.length !== 1 ? 's' : ''} &middot; {totalOptions} option{totalOptions !== 1 ? 's' : ''}
                     </p>
                   </Link>
 
@@ -300,10 +268,9 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
                       <button
                         type="button"
                         onClick={() => acquireKit(kit.id)}
-                        disabled={!!contextRoomId && !canApplyContext}
                         className="px-4 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {!!contextRoomId && !canApplyContext ? 'Loading…' : 'Get pack'}
+                        Get pack
                       </button>
                     )}
                   </div>
@@ -331,74 +298,40 @@ export function PacksMarketplace({ kits }: { kits: FinishDecisionKit[] }) {
         </div>
       )}
 
-      {/* Apply Now modal — general mode (no contextRoomId) */}
-      {applyNowModal && (
+      {/* Apply confirmation modal */}
+      {confirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setApplyNowModal(null)} />
+          <div className="absolute inset-0 bg-black/50" onClick={() => setConfirmModal(null)} />
           <div className="relative bg-basalt-50 border border-cream/15 rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
-            <h3 className="text-lg font-medium text-cream mb-1">Apply this pack now?</h3>
+            <h3 className="text-lg font-medium text-cream mb-1">Apply this pack?</h3>
             <p className="text-sm text-cream/50 mb-4">
-              Choose a room to add &ldquo;{applyNowModal.kitLabel}&rdquo; decisions and options.
+              &ldquo;{confirmModal.kitLabel}&rdquo; will add selections and options to your board.
             </p>
-            {rooms.length > 0 ? (
-              <>
-                <select
-                  value={applyNowRoomId}
-                  onChange={(e) => setApplyNowRoomId(e.target.value)}
-                  className="w-full bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream focus:outline-none focus:border-sandstone/50 mb-4"
-                >
-                  {rooms.filter((r) => r.systemKey !== 'global_uncategorized').map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {ROOM_EMOJI_MAP[r.type as RoomTypeV3] || ''} {r.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="flex items-center gap-2 justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setApplyNowModal(null)}
-                    className="px-4 py-1.5 text-sm text-cream/50 hover:text-cream/70 transition-colors"
-                  >
-                    Skip
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (applyNowRoomId) {
-                        const result = applyKitToRoomById(applyNowModal.kitId, applyNowRoomId)
-                        setApplyNowModal(null)
-                        if (!result.ok) {
-                          setToast({ text: result.reason || 'Could not apply pack.', kitId: applyNowModal.kitId })
-                          setTimeout(() => setToast(null), 6000)
-                          return
-                        }
-                        try { sessionStorage.setItem('hhc_pack_flash', result.message || '') } catch { /* ignore */ }
-                        router.push(`/app/tools/finish-decisions/room/${applyNowRoomId}`)
-                      }
-                    }}
-                    disabled={!applyNowRoomId}
-                    className="px-4 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-50"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="text-sm text-cream/40 mb-4">
-                No rooms yet. Create a board in Selections first.
-              </div>
-            )}
-            {rooms.length === 0 && (
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setApplyNowModal(null)}
-                  className="px-4 py-1.5 text-sm text-cream/50 hover:text-cream/70 transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            )}
+            <div className="flex items-center gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="px-4 py-1.5 text-sm text-cream/50 hover:text-cream/70 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const result = applyKit(confirmModal.kitId)
+                  setConfirmModal(null)
+                  if (!result.ok) {
+                    setToast({ text: result.reason || 'Could not apply pack.', kitId: confirmModal.kitId })
+                  } else {
+                    setToast({ text: result.message || 'Pack applied!', kitId: confirmModal.kitId })
+                  }
+                  setTimeout(() => setToast(null), 6000)
+                }}
+                className="px-4 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+              >
+                Apply
+              </button>
+            </div>
           </div>
         </div>
       )}

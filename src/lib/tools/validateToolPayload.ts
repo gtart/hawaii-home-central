@@ -74,20 +74,49 @@ function coerceRoom(raw: unknown): Record<string, unknown> | null {
   }
 }
 
+function coerceSelection(raw: unknown): Record<string, unknown> | null {
+  if (!isObject(raw)) return null
+  const options = Array.isArray(raw.options)
+    ? (raw.options as unknown[]).map(coerceOption).filter(Boolean)
+    : []
+  const status = isString(raw.status) && VALID_STATUSES.includes(raw.status)
+    ? raw.status
+    : 'deciding'
+  return {
+    ...raw,
+    id: isString(raw.id) ? raw.id : crypto.randomUUID(),
+    title: isString(raw.title) ? raw.title : 'Untitled',
+    status,
+    notes: isString(raw.notes) ? raw.notes : '',
+    options,
+    tags: Array.isArray(raw.tags) ? raw.tags : [],
+    createdAt: isString(raw.createdAt) ? raw.createdAt : new Date().toISOString(),
+    updatedAt: isString(raw.updatedAt) ? raw.updatedAt : new Date().toISOString(),
+  }
+}
+
 function validateFinishDecisions(payload: Record<string, unknown>): ValidationResult {
-  // Accept v3 payloads; coerce as needed
   const version = typeof payload.version === 'number' ? payload.version : 3
+
+  // V4: flat selections array
+  if (version >= 4) {
+    const selections = Array.isArray(payload.selections)
+      ? (payload.selections as unknown[]).map(coerceSelection).filter(Boolean)
+      : []
+    const ownedKitIds = Array.isArray(payload.ownedKitIds) ? payload.ownedKitIds : []
+    const appliedKitIds = Array.isArray(payload.appliedKitIds) ? payload.appliedKitIds : []
+    return { valid: true, payload: { ...payload, version: 4, selections, ownedKitIds, appliedKitIds } }
+  }
+
+  // v1/v2 payloads need client-side migration
   if (version < 3) {
-    // v1/v2 payloads need client-side migration, not server-side.
-    // Allow them through — the client ensureShape will handle it.
     return { valid: true, payload }
   }
 
+  // V3: rooms-based (legacy, will be migrated client-side)
   const rooms = Array.isArray(payload.rooms)
     ? (payload.rooms as unknown[]).map(coerceRoom).filter(Boolean)
     : []
-
-  // Coerce ownedKitIds (project-level pack ownership)
   const ownedKitIds = Array.isArray(payload.ownedKitIds) ? payload.ownedKitIds : []
 
   return { valid: true, payload: { ...payload, version: 3, rooms, ownedKitIds } }

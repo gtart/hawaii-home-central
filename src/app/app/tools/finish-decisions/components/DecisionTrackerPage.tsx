@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
@@ -8,17 +8,14 @@ import { Input } from '@/components/ui/Input'
 import {
   STATUS_CONFIG_V3,
   SELECTION_PRIORITY_CONFIG,
-  type RoomV3,
-  type DecisionV3,
+  type SelectionV4,
   type StatusV3,
   type SelectionPriority,
-  type RoomSelection,
   type SelectionComment,
 } from '@/data/finish-decisions'
-import type { RoomTypeV3 } from '@/data/finish-decisions'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
-import { findKitsForRoomType } from '@/lib/finish-decision-kits'
-import { applyKitToRoom, removeKitFromRoom } from '@/lib/finish-decision-kits'
+import { applyKitToWorkspace, removeKitFromWorkspace } from '@/lib/finish-decision-kits'
+import { getUniqueTags } from '@/lib/decisionHelpers'
 import { displayUrl } from '@/lib/finishDecisionsImages'
 import { OnboardingView } from './OnboardingView'
 import { IdeasPackModal } from './IdeasPackModal'
@@ -27,7 +24,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { DestinationPicker } from '@/components/app/DestinationPicker'
 import { useCollectionTransfer } from '@/hooks/useCollectionTransfer'
 
-function getDecisionThumb(decision: DecisionV3): string | null {
+function getDecisionThumb(decision: SelectionV4): string | null {
   // 1. Final/selected option hero image
   const sel = decision.options.find((o) => o.isSelected)
   if (sel) {
@@ -74,31 +71,29 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 ]
 
 export function DecisionTrackerPage({
-  rooms,
-  onBatchAddRooms,
-  onUpdateRoom,
-  onDeleteRoom,
+  selections,
+  onUpdateSelections,
   onAcquireKit,
   onAddSelection,
   readOnly = false,
   kits = [],
-  defaultDecisions = {} as Record<RoomTypeV3, string[]>,
   emojiMap = {},
   ownedKitIds = [],
+  appliedKitIds = [],
+  onUpdateAppliedKitIds,
   collectionId,
   projectId,
 }: {
-  rooms: RoomV3[]
-  onBatchAddRooms: (selections: RoomSelection[]) => void
-  onUpdateRoom: (roomId: string, updates: Partial<RoomV3>) => void
-  onDeleteRoom: (roomId: string) => void
+  selections: SelectionV4[]
+  onUpdateSelections: (selections: SelectionV4[]) => void
   onAcquireKit?: (kitId: string) => void
   onAddSelection: (title: string) => void
   readOnly?: boolean
   kits?: FinishDecisionKit[]
-  defaultDecisions?: Record<RoomTypeV3, string[]>
   emojiMap?: Record<string, string>
   ownedKitIds?: string[]
+  appliedKitIds?: string[]
+  onUpdateAppliedKitIds?: (ids: string[]) => void
   collectionId?: string
   projectId?: string
 }) {
@@ -111,9 +106,11 @@ export function DecisionTrackerPage({
     const valid: StatusV3[] = ['deciding', 'selected', 'ordered', 'done']
     return p.split(',').filter((s): s is StatusV3 => valid.includes(s as StatusV3))
   })
+  const [tagFilters, setTagFilters] = useState<string[]>([])
+  const [groupBy, setGroupBy] = useState<'none' | 'tag' | 'status' | 'priority'>('none')
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [ideasModalOpen, setIdeasModalOpen] = useState(false)
-  const [toast, setToast] = useState<{ message: string; kitId: string; roomId: string } | null>(null)
+  const [toast, setToast] = useState<{ message: string; kitId: string } | null>(null)
   const [simpleToast, setSimpleToast] = useState<string | null>(null)
   const [addInputValue, setAddInputValue] = useState('')
   const [addInputVisible, setAddInputVisible] = useState(false)
@@ -139,10 +136,8 @@ export function DecisionTrackerPage({
     try { localStorage.setItem(SORT_KEY, sortKey) } catch { /* ignore */ }
   }, [sortKey])
 
-  // The single room (board = area model)
-  const room = rooms[0] ?? null
-  const decisions = room?.decisions ?? []
-  const hasDecisions = decisions.length > 0
+  // Flat selections (V4 — no room wrapper)
+  const hasDecisions = selections.length > 0
 
   // Toggle a status filter chip
   const toggleStatusFilter = (status: StatusV3) => {
@@ -153,12 +148,18 @@ export function DecisionTrackerPage({
     )
   }
 
-  // Filter decisions by search query and status
+  // Filter selections by search query and status
   const filteredDecisions = useMemo(() => {
-    let result = decisions.filter((d) => d.systemKey !== 'uncategorized')
+    let result = [...selections]
 
     if (statusFilters.length > 0) {
       result = result.filter((d) => statusFilters.includes(d.status))
+    }
+
+    if (tagFilters.length > 0) {
+      result = result.filter((d) =>
+        tagFilters.some((tag) => d.tags.includes(tag))
+      )
     }
 
     if (searchQuery.trim()) {
@@ -167,6 +168,7 @@ export function DecisionTrackerPage({
         const searchable = [
           decision.title,
           decision.notes,
+          ...decision.tags,
           ...decision.options.flatMap((opt) => [
             opt.name,
             opt.notes,
@@ -180,7 +182,7 @@ export function DecisionTrackerPage({
     }
 
     return result
-  }, [decisions, searchQuery, statusFilters])
+  }, [selections, searchQuery, statusFilters, tagFilters])
 
   // Sort decisions
   const sortedDecisions = useMemo(() => {
@@ -223,15 +225,15 @@ export function DecisionTrackerPage({
   }, [])
 
   const uniqueLocations = useMemo(() => {
-    const locs = new Set(decisions.map((d) => d.location).filter(Boolean) as string[])
+    const locs = new Set(selections.map((d) => d.location).filter(Boolean) as string[])
     return Array.from(locs).sort()
-  }, [decisions])
+  }, [selections])
 
   // Total stats
-  const isFiltering = searchQuery.trim() !== '' || statusFilters.length > 0
+  const isFiltering = searchQuery.trim() !== '' || statusFilters.length > 0 || tagFilters.length > 0
 
   const summaryStats = useMemo(() => {
-    const source = isFiltering ? filteredDecisions : decisions
+    const source = isFiltering ? filteredDecisions : selections
     const deciding = source.filter((d) => d.status === 'deciding').length
     const selected = source.filter((d) => d.status === 'selected').length
     const ordered = source.filter((d) => d.status === 'ordered').length
@@ -249,61 +251,111 @@ export function DecisionTrackerPage({
     const nextDue = futureDueDates[0] || null
 
     return { deciding, selected, ordered, done, overdue, nextDue }
-  }, [decisions, filteredDecisions, isFiltering])
+  }, [selections, filteredDecisions, isFiltering])
 
   // Status counts for filter chips (from all decisions, not filtered)
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     for (const [status] of Object.entries(STATUS_CONFIG_V3)) {
-      counts[status] = decisions.filter((d) => d.status === status).length
+      counts[status] = selections.filter((d) => d.status === status).length
     }
     return counts
-  }, [decisions])
+  }, [selections])
 
-  const activeFilterCount = statusFilters.length
+  // All unique tags across selections (for filter chips)
+  const allTags = useMemo(() => getUniqueTags(selections), [selections])
+
+  // Tag counts for filter chips
+  const tagCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const d of selections) {
+      for (const tag of d.tags) {
+        counts[tag] = (counts[tag] || 0) + 1
+      }
+    }
+    return counts
+  }, [selections])
+
+  const toggleTagFilter = (tag: string) => {
+    setTagFilters((prev) =>
+      prev.includes(tag)
+        ? prev.filter((t) => t !== tag)
+        : [...prev, tag]
+    )
+  }
+
+  const activeFilterCount = statusFilters.length + tagFilters.length
+
+  // Group-by computation
+  const groupedSections = useMemo(() => {
+    if (groupBy === 'none') return null
+
+    const groups = new Map<string, SelectionV4[]>()
+
+    for (const d of sortedDecisions) {
+      if (groupBy === 'tag') {
+        if (d.tags.length === 0) {
+          const key = 'Untagged'
+          if (!groups.has(key)) groups.set(key, [])
+          groups.get(key)!.push(d)
+        } else {
+          for (const tag of d.tags) {
+            if (!groups.has(tag)) groups.set(tag, [])
+            groups.get(tag)!.push(d)
+          }
+        }
+      } else if (groupBy === 'status') {
+        const label = STATUS_CONFIG_V3[d.status]?.label || d.status
+        if (!groups.has(label)) groups.set(label, [])
+        groups.get(label)!.push(d)
+      } else if (groupBy === 'priority') {
+        const label = d.priority
+          ? SELECTION_PRIORITY_CONFIG[d.priority]?.label || d.priority
+          : 'No priority'
+        if (!groups.has(label)) groups.set(label, [])
+        groups.get(label)!.push(d)
+      }
+    }
+
+    return Array.from(groups.entries())
+  }, [sortedDecisions, groupBy])
 
   // Pack handlers
   function handleApplyKit(kit: FinishDecisionKit) {
-    if (!room) return
-    const isResync = (room.appliedKitIds || []).includes(kit.id)
-    const result = applyKitToRoom(room, kit)
-    onUpdateRoom(room.id, result.room)
+    const isResync = appliedKitIds.includes(kit.id)
+    const result = applyKitToWorkspace(selections, appliedKitIds, kit)
+    onUpdateSelections(result.selections)
+    onUpdateAppliedKitIds?.(result.appliedKitIds)
     if (onAcquireKit && !ownedKitIds.includes(kit.id)) {
       onAcquireKit(kit.id)
     }
     const toastMsg = isResync
       ? `Re-synced "${kit.label}" (+${result.addedOptionCount} options)`
-      : `Applied "${kit.label}" (+${result.addedDecisionCount} selections, +${result.addedOptionCount} options)`
-    setToast({ message: toastMsg, kitId: kit.id, roomId: room.id })
+      : `Applied "${kit.label}" (+${result.addedSelectionCount} selections, +${result.addedOptionCount} options)`
+    setToast({ message: toastMsg, kitId: kit.id })
     setTimeout(() => setToast(null), 8000)
   }
 
   function handleRemoveKit(kitId: string) {
-    if (!room) return
-    const updated = removeKitFromRoom(room, kitId)
-    onUpdateRoom(room.id, updated)
+    const result = removeKitFromWorkspace(selections, appliedKitIds, kitId)
+    onUpdateSelections(result.selections)
+    onUpdateAppliedKitIds?.(result.appliedKitIds)
     const kit = kits.find((k) => k.id === kitId)
     setSimpleToast(`Removed "${kit?.label || 'pack'}"`)
     setTimeout(() => setSimpleToast(null), 4000)
   }
 
   function handleUndoKit() {
-    if (!toast || !room) return
-    const updated = removeKitFromRoom(room, toast.kitId)
-    onUpdateRoom(room.id, updated)
+    if (!toast) return
+    const result = removeKitFromWorkspace(selections, appliedKitIds, toast.kitId)
+    onUpdateSelections(result.selections)
+    onUpdateAppliedKitIds?.(result.appliedKitIds)
     setToast(null)
     setSimpleToast('Removed pack')
     setTimeout(() => setSimpleToast(null), 3000)
   }
 
   function handleOpenPackChooser() {
-    if (!room) {
-      // If no room yet, add a placeholder selection first to create the room, then open packs
-      onAddSelection('(placeholder)')
-      // Small delay to let room be created
-      setTimeout(() => setIdeasModalOpen(true), 100)
-      return
-    }
     setIdeasModalOpen(true)
   }
 
@@ -318,7 +370,7 @@ export function DecisionTrackerPage({
 
   function handleInlineComment(decisionId: string) {
     const text = (replyTexts[decisionId] || '').trim()
-    if (!text || !room) return
+    if (!text) return
     const comment: SelectionComment = {
       id: `cmt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       text,
@@ -326,12 +378,12 @@ export function DecisionTrackerPage({
       authorEmail: session?.user?.email || '',
       createdAt: new Date().toISOString(),
     }
-    const updated = room.decisions.map((d) =>
+    const updated = selections.map((d) =>
       d.id === decisionId
         ? { ...d, comments: [...(d.comments || []), comment] }
         : d
     )
-    onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+    onUpdateSelections(updated)
     setReplyTexts((prev) => ({ ...prev, [decisionId]: '' }))
     setReplyOpenId(null)
   }
@@ -365,18 +417,33 @@ export function DecisionTrackerPage({
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            {/* Sort dropdown (desktop) */}
-            <div className="hidden md:flex items-center gap-1.5 shrink-0">
-              <span className="text-[11px] text-cream/30">Sort</span>
-              <select
-                value={sortKey}
-                onChange={(e) => setSortKey(e.target.value as SortKey)}
-                className="bg-basalt-50 text-cream/60 text-[11px] rounded-lg border border-cream/10 px-2 py-1 focus:outline-none focus:border-sandstone/40"
-              >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.key} value={opt.key}>{opt.label}</option>
-                ))}
-              </select>
+            {/* Sort + Group dropdowns (desktop) */}
+            <div className="hidden md:flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-cream/30">Sort</span>
+                <select
+                  value={sortKey}
+                  onChange={(e) => setSortKey(e.target.value as SortKey)}
+                  className="bg-basalt-50 text-cream/60 text-[11px] rounded-lg border border-cream/10 px-2 py-1 focus:outline-none focus:border-sandstone/40"
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.key} value={opt.key}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-cream/30">Group</span>
+                <select
+                  value={groupBy}
+                  onChange={(e) => setGroupBy(e.target.value as typeof groupBy)}
+                  className="bg-basalt-50 text-cream/60 text-[11px] rounded-lg border border-cream/10 px-2 py-1 focus:outline-none focus:border-sandstone/40"
+                >
+                  <option value="none">None</option>
+                  <option value="tag">By Tag</option>
+                  <option value="status">By Status</option>
+                  <option value="priority">By Priority</option>
+                </select>
+              </div>
             </div>
             {/* Packs chip (desktop) */}
             {!readOnly && kits.length > 0 && (
@@ -437,7 +504,7 @@ export function DecisionTrackerPage({
           )}
 
           {/* Summary strip */}
-          {decisions.length > 0 && (
+          {selections.length > 0 && (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-cream/50 mb-3">
               {isFiltering && <span className="text-cream/30 italic">Filtered:</span>}
               {summaryStats.deciding + summaryStats.selected + summaryStats.ordered > 0 && (
@@ -483,7 +550,7 @@ export function DecisionTrackerPage({
             <div className="flex-1" />
             {isFiltering && (
               <span className="text-[11px] text-cream/50">
-                {filteredDecisions.length}/{decisions.length}
+                {filteredDecisions.length}/{selections.length}
               </span>
             )}
           </div>
@@ -515,10 +582,42 @@ export function DecisionTrackerPage({
             )}
             {isFiltering && (
               <span className="text-[11px] text-cream/50 ml-auto">
-                {filteredDecisions.length}/{decisions.length}
+                {filteredDecisions.length}/{selections.length}
               </span>
             )}
           </div>
+
+          {/* Desktop tag filter row */}
+          {allTags.length > 0 && (
+            <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
+              <span className="text-[11px] text-cream/30 mr-1">Tags</span>
+              {allTags.map((tag) => {
+                const isActive = tagFilters.includes(tag)
+                return (
+                  <button
+                    key={tag}
+                    onClick={() => toggleTagFilter(tag)}
+                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                      isActive
+                        ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                        : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                    }`}
+                  >
+                    {tag}
+                    <span className="text-[10px] opacity-70">{tagCounts[tag] || 0}</span>
+                  </button>
+                )
+              })}
+              {tagFilters.length > 0 && (
+                <button
+                  onClick={() => setTagFilters([])}
+                  className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors ml-1"
+                >
+                  Clear tags
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Decision list */}
           {sortedDecisions.length === 0 ? (
@@ -530,6 +629,7 @@ export function DecisionTrackerPage({
                 onClick={() => {
                   setSearchQuery('')
                   setStatusFilters([])
+                  setTagFilters([])
                 }}
                 className="text-sandstone text-sm mt-2 hover:text-sandstone-light"
               >
@@ -570,7 +670,21 @@ export function DecisionTrackerPage({
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedDecisions.map((decision) => {
+                  {(groupedSections || [['', sortedDecisions] as [string, SelectionV4[]]]).map(([groupLabel, groupItems]) => {
+                    const items = groupedSections ? groupItems : sortedDecisions
+                    return (
+                      <React.Fragment key={groupLabel || '__ungrouped'}>
+                        {groupedSections && (
+                          <tr>
+                            <td colSpan={100} className="pt-4 pb-1">
+                              <div className="flex items-center gap-2 border-b border-cream/10 pb-1">
+                                <span className="text-xs font-medium text-cream/60">{groupLabel}</span>
+                                <span className="text-[10px] text-cream/30">{items.length}</span>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                        {items.map((decision) => {
                     const config = STATUS_CONFIG_V3[decision.status]
                     const thumbUrl = getDecisionThumb(decision)
                     const selectedOption = decision.options.find((o) => o.isSelected)
@@ -609,6 +723,14 @@ export function DecisionTrackerPage({
                             <span className="text-sm font-medium text-cream group-hover:text-sandstone transition-colors">{decision.title}</span>
                             {decision.options.length > 0 && (
                               <span className="text-[11px] text-cream/30 ml-2">{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
+                            )}
+                            {decision.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-0.5">
+                                {decision.tags.slice(0, 3).map((tag) => (
+                                  <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-cream/8 text-cream/35">{tag}</span>
+                                ))}
+                                {decision.tags.length > 3 && <span className="text-[9px] text-cream/25">+{decision.tags.length - 3}</span>}
+                              </div>
                             )}
                           </Link>
                         </td>
@@ -661,12 +783,25 @@ export function DecisionTrackerPage({
                       </tr>
                     )
                   })}
+                      </React.Fragment>
+                    )
+                  })}
                 </tbody>
               </table>
 
               {/* ── Mobile: card layout ── */}
               <div className="md:hidden space-y-1.5">
-                {sortedDecisions.map((decision) => {
+                {(groupedSections || [['', sortedDecisions] as [string, SelectionV4[]]]).map(([groupLabel, groupItems]) => {
+                  const mobileItems = groupedSections ? groupItems : sortedDecisions
+                  return (
+                    <React.Fragment key={groupLabel || '__ungrouped_mobile'}>
+                      {groupedSections && (
+                        <div className="flex items-center gap-2 pt-3 pb-1 border-b border-cream/10 mb-1.5">
+                          <span className="text-xs font-medium text-cream/60">{groupLabel}</span>
+                          <span className="text-[10px] text-cream/30">{mobileItems.length}</span>
+                        </div>
+                      )}
+                {mobileItems.map((decision) => {
                   const config = STATUS_CONFIG_V3[decision.status]
                   const selectedOption = decision.options.find((o) => o.isSelected)
                   const thumbUrl = getDecisionThumb(decision)
@@ -714,6 +849,14 @@ export function DecisionTrackerPage({
                           </div>
                           {decision.location && (
                             <p className="text-[11px] text-cream/35 truncate">{decision.location}</p>
+                          )}
+                          {decision.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-0.5">
+                              {decision.tags.slice(0, 3).map((tag) => (
+                                <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-cream/8 text-cream/35">{tag}</span>
+                              ))}
+                              {decision.tags.length > 3 && <span className="text-[9px] text-cream/25">+{decision.tags.length - 3}</span>}
+                            </div>
                           )}
                           {selectedOption ? (
                             <>
@@ -824,7 +967,9 @@ export function DecisionTrackerPage({
                     </div>
                   )
                 })}
-
+                    </React.Fragment>
+                  )
+                })}
               </div>
 
               {/* Bottom add selection — shown only when input is not open at top */}
@@ -878,12 +1023,11 @@ export function DecisionTrackerPage({
                             key={s}
                             type="button"
                             onClick={() => {
-                              if (!room) return
                               const idSet = selectedIds
-                              const updated = room.decisions.map((d) =>
+                              const updated = selections.map((d) =>
                                 idSet.has(d.id) ? { ...d, status: s, updatedAt: new Date().toISOString() } : d
                               )
-                              onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+                              onUpdateSelections(updated)
                               deselectAll()
                             }}
                             className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
@@ -917,13 +1061,12 @@ export function DecisionTrackerPage({
                           className="w-full bg-basalt border border-cream/20 rounded px-2 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                              if (!room) return
                               const val = e.currentTarget.value.trim()
                               const idSet = selectedIds
-                              const updated = room.decisions.map((d) =>
+                              const updated = selections.map((d) =>
                                 idSet.has(d.id) ? { ...d, location: val, updatedAt: new Date().toISOString() } : d
                               )
-                              onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+                              onUpdateSelections(updated)
                               deselectAll()
                             }
                           }}
@@ -933,12 +1076,11 @@ export function DecisionTrackerPage({
                         <button
                           type="button"
                           onClick={() => {
-                            if (!room) return
                             const idSet = selectedIds
-                            const updated = room.decisions.map((d) =>
+                            const updated = selections.map((d) =>
                               idSet.has(d.id) ? { ...d, location: '', updatedAt: new Date().toISOString() } : d
                             )
-                            onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+                            onUpdateSelections(updated)
                             deselectAll()
                           }}
                           className="w-full text-left px-3 py-2 text-xs text-cream/40 italic hover:bg-cream/5 transition-colors"
@@ -950,12 +1092,11 @@ export function DecisionTrackerPage({
                             key={loc}
                             type="button"
                             onClick={() => {
-                              if (!room) return
                               const idSet = selectedIds
-                              const updated = room.decisions.map((d) =>
+                              const updated = selections.map((d) =>
                                 idSet.has(d.id) ? { ...d, location: loc, updatedAt: new Date().toISOString() } : d
                               )
-                              onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+                              onUpdateSelections(updated)
                               deselectAll()
                             }}
                             className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
@@ -985,12 +1126,11 @@ export function DecisionTrackerPage({
                       <button
                         type="button"
                         onClick={() => {
-                          if (!room) return
                           const idSet = selectedIds
-                          const updated = room.decisions.map((d) =>
+                          const updated = selections.map((d) =>
                             idSet.has(d.id) ? { ...d, priority: undefined, updatedAt: new Date().toISOString() } : d
                           )
-                          onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+                          onUpdateSelections(updated)
                           deselectAll()
                         }}
                         className="w-full text-left px-3 py-2 text-xs text-cream/40 italic hover:bg-cream/5 transition-colors"
@@ -1002,12 +1142,11 @@ export function DecisionTrackerPage({
                           key={key}
                           type="button"
                           onClick={() => {
-                            if (!room) return
                             const idSet = selectedIds
-                            const updated = room.decisions.map((d) =>
+                            const updated = selections.map((d) =>
                               idSet.has(d.id) ? { ...d, priority: key, updatedAt: new Date().toISOString() } : d
                             )
-                            onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+                            onUpdateSelections(updated)
                             deselectAll()
                           }}
                           className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
@@ -1061,10 +1200,9 @@ export function DecisionTrackerPage({
           confirmLabel="Delete"
           confirmVariant="danger"
           onConfirm={() => {
-            if (!room) return
             const idSet = selectedIds
-            const updated = room.decisions.filter((d) => !idSet.has(d.id))
-            onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+            const updated = selections.filter((d) => !idSet.has(d.id))
+            onUpdateSelections(updated)
             deselectAll()
             setBulkDeleteConfirm(false)
           }}
@@ -1095,10 +1233,10 @@ export function DecisionTrackerPage({
               if (result.success) moved++
             }
             // Remove moved items from local state
-            if (room && moved > 0) {
+            if (moved > 0) {
               const movedSet = new Set(ids.slice(0, moved))
-              const updated = room.decisions.filter((d) => !movedSet.has(d.id))
-              onUpdateRoom(room.id, { decisions: updated, updatedAt: new Date().toISOString() })
+              const updated = selections.filter((d) => !movedSet.has(d.id))
+              onUpdateSelections(updated)
             }
             deselectAll()
             setBulkMoveOpen(false)
@@ -1141,7 +1279,7 @@ export function DecisionTrackerPage({
               <h2 className="text-lg font-medium text-cream">Filters</h2>
               {activeFilterCount > 0 && (
                 <button
-                  onClick={() => setStatusFilters([])}
+                  onClick={() => { setStatusFilters([]); setTagFilters([]) }}
                   className="text-xs text-sandstone hover:text-sandstone-light transition-colors"
                 >
                   Clear all
@@ -1179,6 +1317,32 @@ export function DecisionTrackerPage({
                 </div>
               </div>
 
+              {/* Tags */}
+              {allTags.length > 0 && (
+                <div>
+                  <label className="block text-sm text-cream/70 mb-2">Tags</label>
+                  <div className="flex flex-wrap gap-2">
+                    {allTags.map((tag) => {
+                      const isActive = tagFilters.includes(tag)
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => toggleTagFilter(tag)}
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                            isActive
+                              ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                              : 'bg-cream/10 text-cream/60'
+                          }`}
+                        >
+                          {tag}
+                          <span className="text-[10px] opacity-70">{tagCounts[tag] || 0}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Sort */}
               <div>
                 <label className="block text-sm text-cream/70 mb-2">Sort by</label>
@@ -1190,6 +1354,21 @@ export function DecisionTrackerPage({
                   {SORT_OPTIONS.map((opt) => (
                     <option key={opt.key} value={opt.key}>{opt.label}</option>
                   ))}
+                </select>
+              </div>
+
+              {/* Group by */}
+              <div>
+                <label className="block text-sm text-cream/70 mb-2">Group by</label>
+                <select
+                  value={groupBy}
+                  onChange={(e) => setGroupBy(e.target.value as typeof groupBy)}
+                  className="w-full bg-basalt text-cream/60 text-sm rounded-lg border border-cream/10 px-3 py-2 focus:outline-none focus:border-sandstone/40"
+                >
+                  <option value="none">None</option>
+                  <option value="tag">By Tag</option>
+                  <option value="status">By Status</option>
+                  <option value="priority">By Priority</option>
                 </select>
               </div>
 
@@ -1220,11 +1399,9 @@ export function DecisionTrackerPage({
       )}
 
       {/* Ideas Pack Modal */}
-      {ideasModalOpen && room && (
+      {ideasModalOpen && (
         <IdeasPackModal
-          roomType={room.type as RoomTypeV3}
-          roomName={room.name}
-          appliedKitIds={room.appliedKitIds || []}
+          appliedKitIds={appliedKitIds}
           ownedKitIds={ownedKitIds}
           onApply={handleApplyKit}
           onAcquireKit={onAcquireKit}

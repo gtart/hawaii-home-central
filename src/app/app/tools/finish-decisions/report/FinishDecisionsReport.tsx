@@ -5,13 +5,11 @@ import { useSearchParams } from 'next/navigation'
 import { useToolState } from '@/hooks/useToolState'
 import { useCollectionState } from '@/hooks/useCollectionState'
 import type {
-  FinishDecisionsPayloadV3,
-  RoomV3,
-  DecisionV3,
+  FinishDecisionsPayloadV4,
+  SelectionV4,
   StatusV3,
-  RoomTypeV3,
 } from '@/data/finish-decisions'
-import { STATUS_CONFIG_V3, ROOM_EMOJI_MAP } from '@/data/finish-decisions'
+import { STATUS_CONFIG_V3 } from '@/data/finish-decisions'
 
 const STATUS_ORDER: StatusV3[] = ['deciding', 'selected', 'ordered', 'done']
 
@@ -46,22 +44,17 @@ function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProj
   const includeNotes = searchParams.get('includeNotes') === 'true'
   const includeComments = searchParams.get('includeComments') === 'true'
   const includePhotos = searchParams.get('includePhotos') === 'true'
-  const roomIdsParam = searchParams.get('roomIds') || ''
-  const filterRoomIds = useMemo(
-    () => (roomIdsParam ? roomIdsParam.split(',').filter(Boolean) : []),
-    [roomIdsParam]
-  )
 
-  const collResult = useCollectionState<FinishDecisionsPayloadV3>({
+  const collResult = useCollectionState<FinishDecisionsPayloadV4>({
     collectionId: collectionIdOverride ?? null,
     toolKey: 'finish_decisions',
     localStorageKey: `hhc_finish_decisions_coll_${collectionIdOverride}`,
-    defaultValue: { version: 3, rooms: [] },
+    defaultValue: { version: 4, selections: [] },
   })
-  const toolResult = useToolState<FinishDecisionsPayloadV3>({
+  const toolResult = useToolState<FinishDecisionsPayloadV4>({
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2',
-    defaultValue: { version: 3, rooms: [] },
+    defaultValue: { version: 4, selections: [] },
     projectIdOverride: requiredProjectId || undefined,
   })
   const useCollection = !!collectionIdOverride
@@ -105,27 +98,27 @@ function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProj
     load()
   }, [])
 
-  const rooms = useMemo(() => {
-    if (!state?.rooms) return []
-    let result = state.rooms.filter((r) => r.systemKey !== 'global_uncategorized')
-    if (filterRoomIds.length > 0) {
-      result = result.filter((r) => filterRoomIds.includes(r.id))
-    }
-    return result
-  }, [state?.rooms, filterRoomIds])
+  const selections = useMemo(() => {
+    return state?.selections || []
+  }, [state?.selections])
 
-  const totalDecisions = useMemo(
-    () => rooms.reduce((sum, r) => sum + r.decisions.length, 0),
-    [rooms]
-  )
+  // Group selections by status
+  const byStatus = useMemo(() => {
+    const map = new Map<StatusV3, SelectionV4[]>()
+    for (const s of selections) {
+      if (!map.has(s.status)) map.set(s.status, [])
+      map.get(s.status)!.push(s)
+    }
+    return map
+  }, [selections])
 
   // Auto-trigger print when loaded
   useEffect(() => {
-    if (isLoaded && rooms.length > 0) {
+    if (isLoaded && selections.length > 0) {
       const timeout = setTimeout(() => window.print(), 500)
       return () => clearTimeout(timeout)
     }
-  }, [isLoaded, rooms.length])
+  }, [isLoaded, selections.length])
 
   if (!isLoaded) {
     return (
@@ -203,33 +196,41 @@ function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProj
             <div className="flex items-center justify-between">
               <p className="text-base font-medium text-gray-600">{settings.reportTitle}</p>
               <p className="text-sm text-gray-400">
-                {new Date().toLocaleDateString()} &middot; {totalDecisions} selection{totalDecisions !== 1 ? 's' : ''} in {rooms.length} room{rooms.length !== 1 ? 's' : ''}
+                {new Date().toLocaleDateString()} &middot; {selections.length} selection{selections.length !== 1 ? 's' : ''}
               </p>
             </div>
-
-            {filterRoomIds.length > 0 && (
-              <p className="text-xs text-gray-500 mt-2">
-                Showing selected rooms only ({rooms.length} of {state.rooms?.length || 0})
-              </p>
-            )}
           </div>
 
-          {/* Room sections */}
-          {rooms.length === 0 && (
+          {/* Selections grouped by status */}
+          {selections.length === 0 && (
             <p className="text-gray-500 text-center py-12">
-              No rooms to display.
+              No selections to display.
             </p>
           )}
 
-          {rooms.map((room) => (
-            <RoomReportSection
-              key={room.id}
-              room={room}
-              includeNotes={includeNotes}
-              includeComments={includeComments}
-              includePhotos={includePhotos}
-            />
-          ))}
+          {STATUS_ORDER.map((status) => {
+            const items = byStatus.get(status)
+            if (!items || items.length === 0) return null
+            const cfg = STATUS_CONFIG_V3[status]
+            return (
+              <div key={status} className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-800 mb-3 pb-1 border-b border-gray-200">
+                  {cfg.label} ({items.length})
+                </h2>
+                <div className="space-y-3">
+                  {items.map((sel) => (
+                    <SelectionReportCard
+                      key={sel.id}
+                      selection={sel}
+                      includeNotes={includeNotes}
+                      includeComments={includeComments}
+                      includePhotos={includePhotos}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
+          })}
 
           {/* In-flow footer */}
           <div className="mt-12 pt-4 border-t border-gray-200 text-center no-print">
@@ -247,79 +248,22 @@ function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProj
 }
 
 // ---------------------------------------------------------------------------
-// Room Section
+// Selection Card
 // ---------------------------------------------------------------------------
 
-function RoomReportSection({
-  room,
+function SelectionReportCard({
+  selection,
   includeNotes,
   includeComments,
   includePhotos,
 }: {
-  room: RoomV3
+  selection: SelectionV4
   includeNotes: boolean
   includeComments: boolean
   includePhotos: boolean
 }) {
-  const emoji = ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '🏠'
-
-  // Group decisions by status
-  const byStatus = new Map<StatusV3, DecisionV3[]>()
-  for (const d of room.decisions) {
-    if (!byStatus.has(d.status)) byStatus.set(d.status, [])
-    byStatus.get(d.status)!.push(d)
-  }
-
-  return (
-    <div className="mb-8">
-      <h2 className="text-lg font-semibold text-gray-800 mb-3 pb-1 border-b border-gray-200">
-        {emoji} {room.name} ({room.decisions.length} selection{room.decisions.length !== 1 ? 's' : ''})
-      </h2>
-
-      {STATUS_ORDER.map((status) => {
-        const decisions = byStatus.get(status)
-        if (!decisions || decisions.length === 0) return null
-        const cfg = STATUS_CONFIG_V3[status]
-        return (
-          <div key={status} className="mb-4">
-            <h3 className="text-sm font-medium text-gray-500 mb-2 ml-1">
-              {cfg.label} ({decisions.length})
-            </h3>
-            <div className="space-y-3">
-              {decisions.map((d) => (
-                <DecisionReportCard
-                  key={d.id}
-                  decision={d}
-                  includeNotes={includeNotes}
-                  includeComments={includeComments}
-                  includePhotos={includePhotos}
-                />
-              ))}
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Decision Card
-// ---------------------------------------------------------------------------
-
-function DecisionReportCard({
-  decision,
-  includeNotes,
-  includeComments,
-  includePhotos,
-}: {
-  decision: DecisionV3
-  includeNotes: boolean
-  includeComments: boolean
-  includePhotos: boolean
-}) {
-  const cfg = STATUS_CONFIG_V3[decision.status]
-  const selectedOption = decision.options.find((o) => o.isSelected)
+  const cfg = STATUS_CONFIG_V3[selection.status]
+  const selectedOption = selection.options.find((o) => o.isSelected)
 
   return (
     <div className="page-break-avoid border border-gray-200 rounded-lg p-4">
@@ -335,29 +279,32 @@ function DecisionReportCard({
         )}
 
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-gray-900">{decision.title}</h3>
+          <h3 className="font-medium text-gray-900">{selection.title}</h3>
           <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
             <span>Status: {cfg.label}</span>
             {selectedOption && <span>Selected: {selectedOption.name}</span>}
-            <span>{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
-            {decision.dueDate && (
-              <span>Due: {new Date(decision.dueDate).toLocaleDateString()}</span>
+            <span>{selection.options.length} option{selection.options.length !== 1 ? 's' : ''}</span>
+            {selection.dueDate && (
+              <span>Due: {new Date(selection.dueDate).toLocaleDateString()}</span>
+            )}
+            {selection.tags.length > 0 && (
+              <span>Tags: {selection.tags.join(', ')}</span>
             )}
           </div>
 
-          {includeNotes && decision.notes && (
+          {includeNotes && selection.notes && (
             <div className="mt-2">
               <p className="text-xs text-gray-500 font-medium mb-0.5">Notes</p>
-              <p className="text-sm text-gray-600 italic whitespace-pre-wrap">{decision.notes}</p>
+              <p className="text-sm text-gray-600 italic whitespace-pre-wrap">{selection.notes}</p>
             </div>
           )}
 
           {/* Options list (brief) */}
-          {decision.options.length > 0 && (
+          {selection.options.length > 0 && (
             <div className="mt-2 pt-2 border-t border-gray-100">
               <p className="text-xs text-gray-500 font-medium mb-1">Options</p>
               <div className="space-y-1">
-                {decision.options.map((opt) => (
+                {selection.options.map((opt) => (
                   <div key={opt.id} className="flex items-center gap-2 text-sm">
                     <span className={`inline-block w-3 h-3 rounded-sm border shrink-0 ${
                       opt.isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
@@ -376,12 +323,12 @@ function DecisionReportCard({
             </div>
           )}
 
-          {includeComments && decision.comments && decision.comments.length > 0 && (
+          {includeComments && selection.comments && selection.comments.length > 0 && (
             <div className="mt-2 pt-2 border-t border-gray-100">
               <p className="text-xs text-gray-500 font-medium mb-1">
-                Comments ({decision.comments.length})
+                Comments ({selection.comments.length})
               </p>
-              {decision.comments.map((c) => (
+              {selection.comments.map((c) => (
                 <p key={c.id} className="text-xs text-gray-500 mb-0.5">
                   <span className="font-medium">{c.authorName}</span>
                   {' '}({new Date(c.createdAt).toLocaleDateString()}): {c.text}

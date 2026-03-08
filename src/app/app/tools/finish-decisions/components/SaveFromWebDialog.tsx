@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react'
 import { ImportFromUrlPanel } from './ImportFromUrlPanel'
 import { BookmarkletButton } from './BookmarkletButton'
-import type { OptionImageV3, RoomV3, RoomTypeV3 } from '@/data/finish-decisions'
-import { ROOM_EMOJI_MAP } from '@/data/finish-decisions'
+import type { OptionImageV3, SelectionV4 } from '@/data/finish-decisions'
 
 interface ImportResult {
   name: string
@@ -18,18 +17,16 @@ type DialogStep = 'choose-method' | 'url-capture' | 'placement'
 export function SaveFromWebDialog({
   onImport,
   onClose,
-  rooms,
-  currentRoomId,
-  currentDecisionId,
+  selections,
+  currentSelectionId,
   onImportToDecision,
 }: {
-  /** Legacy: direct import into current decision (used when no rooms context) */
+  /** Legacy: direct import into current decision (used when no selections context) */
   onImport: (result: ImportResult) => void
   onClose: () => void
-  rooms?: RoomV3[]
-  currentRoomId?: string
-  currentDecisionId?: string
-  onImportToDecision?: (targetRoomId: string, targetDecisionId: string | null, newTitle: string | undefined, result: ImportResult) => void
+  selections?: SelectionV4[]
+  currentSelectionId?: string
+  onImportToDecision?: (targetSelectionId: string | null, newTitle: string | undefined, result: ImportResult) => void
 }) {
   const [step, setStep] = useState<DialogStep>('choose-method')
   const [urlSectionOpen, setUrlSectionOpen] = useState(false)
@@ -37,8 +34,7 @@ export function SaveFromWebDialog({
   const [capturedResult, setCapturedResult] = useState<ImportResult | null>(null)
 
   // Placement state
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(currentRoomId || null)
-  const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(currentDecisionId || null)
+  const [selectedSelectionId, setSelectedSelectionId] = useState<string | null>(currentSelectionId || null)
   const [newSelectionTitle, setNewSelectionTitle] = useState('')
   const [placementMode, setPlacementMode] = useState<'existing' | 'new'>('existing')
   const [changingDestination, setChangingDestination] = useState(false)
@@ -56,8 +52,7 @@ export function SaveFromWebDialog({
     return () => { document.body.style.overflow = '' }
   }, [])
 
-  const hasPlacement = rooms && rooms.length > 0 && onImportToDecision
-  const selectedRoom = rooms?.find((r) => r.id === selectedRoomId)
+  const hasPlacement = selections && selections.length > 0 && onImportToDecision
 
   // When URL capture completes
   function handleUrlCapture(result: ImportResult) {
@@ -65,33 +60,30 @@ export function SaveFromWebDialog({
       setCapturedResult(result)
       setStep('placement')
     } else {
-      // Legacy fallback: no rooms context, import directly
+      // Legacy fallback: no selections context, import directly
       onImport(result)
     }
   }
 
   // Final save with placement
   function handleSave() {
-    if (!capturedResult || !selectedRoomId || !onImportToDecision) return
+    if (!capturedResult || !onImportToDecision) return
 
     if (placementMode === 'new' && newSelectionTitle.trim()) {
-      onImportToDecision(selectedRoomId, null, newSelectionTitle.trim(), capturedResult)
-    } else if (placementMode === 'existing' && selectedDecisionId) {
-      onImportToDecision(selectedRoomId, selectedDecisionId, undefined, capturedResult)
+      onImportToDecision(null, newSelectionTitle.trim(), capturedResult)
+    } else if (placementMode === 'existing' && selectedSelectionId) {
+      onImportToDecision(selectedSelectionId, undefined, capturedResult)
     } else {
-      // No selection chosen → uncategorized
-      onImportToDecision(selectedRoomId, null, undefined, capturedResult)
+      // No selection chosen → save to current selection
+      onImportToDecision(currentSelectionId || null, undefined, capturedResult)
     }
     onClose()
   }
 
-  const hasDefaultDestination = currentRoomId && currentDecisionId && !changingDestination
-  const defaultRoom = rooms?.find((r) => r.id === currentRoomId)
-  const defaultDecision = defaultRoom?.decisions.find((d) => d.id === currentDecisionId)
+  const hasDefaultDestination = currentSelectionId && !changingDestination
+  const defaultSelection = selections?.find((s) => s.id === currentSelectionId)
 
-  const canSave = !!selectedRoomId && (
-    placementMode === 'new' ? !!newSelectionTitle.trim() : true
-  )
+  const canSave = placementMode === 'new' ? !!newSelectionTitle.trim() : true
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -194,14 +186,14 @@ export function SaveFromWebDialog({
           {/* ── Step: Placement ── */}
           {step === 'placement' && hasPlacement && (
             <div className="space-y-4">
-              {/* Default destination summary (when invoked from a decision page) */}
-              {hasDefaultDestination && defaultRoom && defaultDecision && (
+              {/* Default destination summary (when invoked from a selection page) */}
+              {hasDefaultDestination && defaultSelection && (
                 <div className="bg-basalt rounded-lg p-3 border border-cream/10">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs text-cream/40">Destination</p>
                       <p className="text-sm text-cream/80 mt-0.5">
-                        {defaultRoom.name} → {defaultDecision.title}
+                        {defaultSelection.title}
                       </p>
                     </div>
                     <button
@@ -215,54 +207,15 @@ export function SaveFromWebDialog({
                 </div>
               )}
 
-              {/* Room + Selection pickers (shown when no default or changing) */}
-              {(!hasDefaultDestination || changingDestination) && rooms && (
+              {/* Selection picker (shown when no default or changing) */}
+              {(!hasDefaultDestination || changingDestination) && selections && (
                 <div className="space-y-4">
-                  {/* Room picker */}
                   <div>
-                    <label className="block text-xs text-cream/50 mb-2">
-                      Room <span className="text-cream/30">(required)</span>
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {rooms.map((room) => {
-                        const emoji = ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️'
-                        const isActive = selectedRoomId === room.id
-                        return (
-                          <button
-                            key={room.id}
-                            type="button"
-                            onClick={() => {
-                              setSelectedRoomId(room.id)
-                              setSelectedDecisionId(null)
-                              setPlacementMode('existing')
-                            }}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-left transition-all ${
-                              isActive
-                                ? 'border-sandstone bg-sandstone/10'
-                                : 'border-cream/10 hover:border-cream/25 bg-basalt'
-                            }`}
-                          >
-                            <span className="text-sm">{emoji}</span>
-                            <div className="min-w-0">
-                              <p className={`text-xs font-medium truncate ${isActive ? 'text-sandstone' : 'text-cream'}`}>
-                                {room.name}
-                              </p>
-                            </div>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Selection picker */}
-                  {selectedRoom && (
-                    <div>
-                      <label className="block text-xs text-cream/50 mb-2">
-                        Decision
+                    <div className="flex items-center gap-2 mb-2">
+                      <label className="block text-xs text-cream/50">
+                        Selection
                       </label>
-
-                      {/* Mode toggle */}
-                      <div className="flex gap-2 mb-2">
+                      <div className="flex gap-2">
                         <button
                           type="button"
                           onClick={() => setPlacementMode('existing')}
@@ -276,7 +229,7 @@ export function SaveFromWebDialog({
                         </button>
                         <button
                           type="button"
-                          onClick={() => { setPlacementMode('new'); setSelectedDecisionId(null) }}
+                          onClick={() => { setPlacementMode('new'); setSelectedSelectionId(null) }}
                           className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
                             placementMode === 'new'
                               ? 'bg-sandstone/20 text-sandstone'
@@ -286,50 +239,42 @@ export function SaveFromWebDialog({
                           + New
                         </button>
                       </div>
-
-                      {placementMode === 'existing' ? (
-                        <>
-                          <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto">
-                            {selectedRoom.decisions
-                              .filter((d) => d.systemKey !== 'uncategorized')
-                              .map((decision) => {
-                                const isActive = selectedDecisionId === decision.id
-                                return (
-                                  <button
-                                    key={decision.id}
-                                    type="button"
-                                    onClick={() => setSelectedDecisionId(isActive ? null : decision.id)}
-                                    className={`px-3 py-2 rounded-lg border-2 text-left transition-all ${
-                                      isActive
-                                        ? 'border-sandstone bg-sandstone/10'
-                                        : 'border-cream/10 hover:border-cream/25 bg-basalt'
-                                    }`}
-                                  >
-                                    <p className={`text-xs font-medium truncate ${isActive ? 'text-sandstone' : 'text-cream'}`}>
-                                      {decision.title}
-                                    </p>
-                                  </button>
-                                )
-                              })}
-                          </div>
-                          {!selectedDecisionId && (
-                            <p className="text-[11px] text-cream/30 mt-1.5">
-                              No decision? Idea will go to Uncategorized.
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <input
-                          type="text"
-                          value={newSelectionTitle}
-                          onChange={(e) => setNewSelectionTitle(e.target.value)}
-                          placeholder="e.g. Vanity, Backsplash..."
-                          autoFocus
-                          className="w-full px-3 py-2 bg-basalt border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone"
-                        />
-                      )}
                     </div>
-                  )}
+
+                    {placementMode === 'existing' ? (
+                      <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto">
+                        {selections.map((s) => {
+                          const isActive = selectedSelectionId === s.id
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => setSelectedSelectionId(isActive ? null : s.id)}
+                              className={`px-3 py-2 rounded-lg border-2 text-left transition-all ${
+                                isActive
+                                  ? 'border-sandstone bg-sandstone/10'
+                                  : 'border-cream/10 hover:border-cream/25 bg-basalt'
+                              }`}
+                            >
+                              <p className={`text-xs font-medium truncate ${isActive ? 'text-sandstone' : 'text-cream'}`}>
+                                {s.title}
+                              </p>
+                              <p className="text-[10px] text-cream/30">{s.options.length} options</p>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        value={newSelectionTitle}
+                        onChange={(e) => setNewSelectionTitle(e.target.value)}
+                        placeholder="e.g. Vanity, Backsplash..."
+                        autoFocus
+                        className="w-full px-3 py-2 bg-basalt border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone"
+                      />
+                    )}
+                  </div>
                 </div>
               )}
 

@@ -256,11 +256,27 @@ function transferDecision(
   destRoomId: string | undefined,
   ts: string,
 ) {
+  // V4: flat selections
+  if (Array.isArray(srcPayload.selections)) {
+    const srcSelections = srcPayload.selections as DecisionV3Like[]
+    const found = srcSelections.find((s) => s.id === decisionId)
+    if (!found) throw new Error('Selection not found in source')
+
+    const updatedSrc = srcSelections.filter((s) => s.id !== decisionId)
+    const destSelections = (destPayload.selections || []) as DecisionV3Like[]
+
+    return {
+      srcPayload: { ...srcPayload, selections: updatedSrc },
+      destPayload: { ...destPayload, selections: [...destSelections, { ...found, updatedAt: ts }] },
+      entityName: found.title || 'Untitled selection',
+    }
+  }
+
+  // V3: rooms-based (legacy)
   const srcRooms = (srcPayload.rooms || []) as RoomV3Like[]
   let foundDecision: DecisionV3Like | null = null
   let foundRoomId: string | null = null
 
-  // Find and remove decision from source
   const updatedSrcRooms = srcRooms.map((room) => {
     const dec = room.decisions.find((d) => d.id === decisionId)
     if (dec) {
@@ -280,7 +296,6 @@ function transferDecision(
   }
   const decision: DecisionV3Like = foundDecision
 
-  // Find destination room
   const destRooms = (destPayload.rooms || []) as RoomV3Like[]
   let targetRoom: RoomV3Like | undefined
 
@@ -288,11 +303,9 @@ function transferDecision(
     targetRoom = destRooms.find((r) => r.id === destRoomId)
   }
   if (!targetRoom) {
-    // Use first non-system room, or first room
     targetRoom = destRooms.find((r) => !r.systemKey) || destRooms[0]
   }
   if (!targetRoom) {
-    // Create a default room
     const newRoom: RoomV3Like = {
       id: crypto.randomUUID(),
       name: 'General',
@@ -337,16 +350,28 @@ function copyOption(
   destDecisionId: string,
   ts: string,
 ) {
-  // Find option in source
-  const srcRooms = (srcPayload.rooms || []) as RoomV3Like[]
   let foundOption: OptionV3Like | null = null
 
-  for (const room of srcRooms) {
-    for (const dec of room.decisions) {
-      if (dec.id === sourceDecisionId) {
-        const options = (dec.options || []) as OptionV3Like[]
+  // V4: flat selections
+  if (Array.isArray(srcPayload.selections)) {
+    const srcSelections = srcPayload.selections as DecisionV3Like[]
+    for (const sel of srcSelections) {
+      if (sel.id === sourceDecisionId) {
+        const options = (sel.options || []) as OptionV3Like[]
         const opt = options.find((o) => o.id === optionId)
         if (opt) foundOption = opt
+      }
+    }
+  } else {
+    // V3: rooms-based
+    const srcRooms = (srcPayload.rooms || []) as RoomV3Like[]
+    for (const room of srcRooms) {
+      for (const dec of room.decisions) {
+        if (dec.id === sourceDecisionId) {
+          const options = (dec.options || []) as OptionV3Like[]
+          const opt = options.find((o) => o.id === optionId)
+          if (opt) foundOption = opt
+        }
       }
     }
   }
@@ -361,14 +386,32 @@ function copyOption(
     id: newOptionId,
     createdAt: ts,
     updatedAt: ts,
-    isSelected: undefined, // don't copy selection state
-    votes: undefined,      // don't copy votes
+    isSelected: undefined,
+    votes: undefined,
   }
-  // Clean undefined fields
   if (cloned.isSelected === undefined) delete cloned.isSelected
   if (cloned.votes === undefined) delete cloned.votes
 
   // Insert into destination
+  if (Array.isArray(destPayload.selections)) {
+    // V4 destination
+    const destSelections = destPayload.selections as DecisionV3Like[]
+    let found = false
+    const updatedDest = destSelections.map((sel) => {
+      if (sel.id !== destDecisionId) return sel
+      found = true
+      const options = (sel.options || []) as OptionV3Like[]
+      return { ...sel, options: [...options, cloned], updatedAt: ts }
+    })
+    if (!found) throw new Error('Destination selection not found')
+    return {
+      destPayload: { ...destPayload, selections: updatedDest },
+      newOptionId,
+      entityName: option.name || 'Untitled option',
+    }
+  }
+
+  // V3 destination
   const destRooms = (destPayload.rooms || []) as RoomV3Like[]
   let found = false
 

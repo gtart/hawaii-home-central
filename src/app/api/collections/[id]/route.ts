@@ -10,7 +10,15 @@ type Params = { params: Promise<{ id: string }> }
 function stripPayloadComments(payload: Record<string, unknown>): Record<string, unknown> {
   const p = { ...payload }
 
-  // finish_decisions: rooms[].comments, rooms[].decisions[].comments
+  // finish_decisions V4: selections[].comments
+  if (Array.isArray(p.selections)) {
+    p.selections = (p.selections as Record<string, unknown>[]).map((s) => {
+      const { comments: _, ...rest } = s
+      return rest
+    })
+  }
+
+  // finish_decisions V3 (legacy): rooms[].comments, rooms[].decisions[].comments
   if (Array.isArray(p.rooms)) {
     p.rooms = (p.rooms as Record<string, unknown>[]).map((room) => {
       const r = { ...room }

@@ -1,34 +1,19 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import {
-  ROOM_EMOJI_MAP,
-  type RoomV3,
-  type DecisionV3,
-  type RoomTypeV3,
-} from '@/data/finish-decisions'
-
-const LS_KEY = 'hhc_finish_quick_add_last_room'
+import type { SelectionV4, StatusV3 } from '@/data/finish-decisions'
+import { TagInput } from './TagInput'
 
 interface Props {
-  rooms: RoomV3[]
-  preselectedRoomId?: string | null
-  onAdd: (roomId: string, decision: DecisionV3) => void
+  onAdd: (selection: SelectionV4) => void
   onClose: () => void
   triggerRef?: React.RefObject<HTMLElement | null>
+  allTags?: string[]
 }
 
-export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose, triggerRef }: Props) {
+export function QuickAddDecisionModal({ onAdd, onClose, triggerRef, allTags }: Props) {
   const [title, setTitle] = useState('')
-  const [selectedRoomId, setSelectedRoomId] = useState<string>(() => {
-    if (preselectedRoomId) return preselectedRoomId
-    try {
-      const saved = localStorage.getItem(LS_KEY)
-      if (saved && rooms.some((r) => r.id === saved)) return saved
-    } catch {}
-    return rooms[0]?.id ?? ''
-  })
-  const [roomPickerOpen, setRoomPickerOpen] = useState(!preselectedRoomId)
+  const [tags, setTags] = useState<string[]>([])
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const modalRef = useRef<HTMLDivElement>(null)
@@ -39,6 +24,7 @@ export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose
   }, [])
 
   function handleClose() {
+    setTags([])
     onClose()
     // Return focus to trigger element
     setTimeout(() => triggerRef?.current?.focus(), 0)
@@ -50,26 +36,20 @@ export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose
       setError('Enter a title for the selection')
       return
     }
-    if (!selectedRoomId) {
-      setError('Pick a room')
-      return
-    }
 
-    const decision: DecisionV3 = {
+    const now = new Date().toISOString()
+    const selection: SelectionV4 = {
       id: crypto.randomUUID(),
       title: t,
-      status: 'deciding',
+      status: 'deciding' as StatusV3,
       notes: '',
       options: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      tags,
+      createdAt: now,
+      updatedAt: now,
     }
 
-    try {
-      localStorage.setItem(LS_KEY, selectedRoomId)
-    } catch {}
-
-    onAdd(selectedRoomId, decision)
+    onAdd(selection)
     handleClose()
   }
 
@@ -83,7 +63,7 @@ export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose
     }
   }
 
-  // Focus trap (FS-UI-008)
+  // Focus trap
   function handleModalKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Tab') {
       const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
@@ -132,56 +112,6 @@ export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose
         </div>
 
         <div className="px-5 pb-5 space-y-4">
-          {/* Room picker — collapsed when preselected, expandable */}
-          <div>
-            {selectedRoomId && !roomPickerOpen ? (
-              <div className="flex items-center gap-2 px-3 py-2 bg-cream/5 rounded-lg">
-                <span className="text-xs leading-none">
-                  {ROOM_EMOJI_MAP[(rooms.find((r) => r.id === selectedRoomId)?.type || '') as RoomTypeV3] || '✏️'}
-                </span>
-                <span className="text-sm text-cream/80 font-medium">
-                  Adding to {rooms.find((r) => r.id === selectedRoomId)?.name || 'room'}
-                </span>
-                {rooms.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => setRoomPickerOpen(true)}
-                    className="text-[11px] text-sandstone hover:text-sandstone-light transition-colors ml-auto"
-                  >
-                    Change room
-                  </button>
-                )}
-              </div>
-            ) : (
-              <>
-                <label className="block text-sm text-cream/70 mb-2">Room</label>
-                <div className="flex flex-wrap gap-2">
-                  {rooms.map((room) => {
-                    const emoji = ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️'
-                    const isActive = selectedRoomId === room.id
-                    return (
-                      <button
-                        key={room.id}
-                        type="button"
-                        onClick={() => { setSelectedRoomId(room.id); setError(''); if (preselectedRoomId) setRoomPickerOpen(false) }}
-                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                          isActive
-                            ? 'bg-sandstone/20 text-sandstone ring-1 ring-sandstone/40'
-                            : 'bg-cream/10 text-cream/60 hover:text-cream/80'
-                        }`}
-                      >
-                        <span className="w-4 h-4 inline-flex items-center justify-center text-xs leading-none">
-                          {emoji}
-                        </span>
-                        {room.name}
-                      </button>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-          </div>
-
           {/* Title input */}
           <div>
             <label className="block text-sm text-cream/70 mb-1.5">Selection name</label>
@@ -193,6 +123,17 @@ export function QuickAddDecisionModal({ rooms, preselectedRoomId, onAdd, onClose
               onKeyDown={handleKeyDown}
               placeholder="e.g. Countertop, Faucet, Tile..."
               className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+            />
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label className="block text-sm text-cream/70 mb-1.5">Tags</label>
+            <TagInput
+              tags={tags}
+              onChange={setTags}
+              allTags={allTags ?? []}
+              compact
             />
           </div>
 

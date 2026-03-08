@@ -1,31 +1,26 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { OptionV3, RoomV3, RoomTypeV3 } from '@/data/finish-decisions'
-import { ROOM_EMOJI_MAP } from '@/data/finish-decisions'
+import type { OptionV3, SelectionV4 } from '@/data/finish-decisions'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
-import { isGlobalUnsorted, isUncategorized } from '@/lib/decisionHelpers'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 
 export function MoveIdeaSheet({
   options,
-  sourceRoomId,
-  sourceDecisionId,
-  rooms,
+  sourceSelectionId,
+  selections,
   onMove,
   onCopy,
   onClose,
 }: {
   options: OptionV3[]
-  sourceRoomId: string
-  sourceDecisionId: string
-  rooms: RoomV3[]
-  onMove: (targetRoomId: string, targetDecisionId: string | null, newTitle?: string) => void
-  onCopy?: (targetRoomId: string, targetDecisionId: string | null, newTitle?: string) => void
+  sourceSelectionId: string
+  selections: SelectionV4[]
+  onMove: (targetSelectionId: string | null, newTitle?: string) => void
+  onCopy?: (targetSelectionId: string | null, newTitle?: string) => void
   onClose: () => void
 }) {
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
-  const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(null)
+  const [selectedSelectionId, setSelectedSelectionId] = useState<string | null>(null)
   const [newTitle, setNewTitle] = useState('')
   const [selectionMode, setSelectionMode] = useState<'existing' | 'new'>('existing')
   const [action, setAction] = useState<'move' | 'copy'>('move')
@@ -44,31 +39,25 @@ export function MoveIdeaSheet({
     return () => document.removeEventListener('keydown', handleKey)
   }, [onClose])
 
-  // Filter out Global Unsorted from room picker, and exclude source room's source decision
-  const availableRooms = rooms.filter((r) => !isGlobalUnsorted(r))
-  const selectedRoom = availableRooms.find((r) => r.id === selectedRoomId)
-  const availableDecisions = selectedRoom
-    ? selectedRoom.decisions.filter((d) => !isUncategorized(d) && !(selectedRoomId === sourceRoomId && d.id === sourceDecisionId))
-    : []
+  // Exclude the source selection from the picker
+  const availableSelections = selections.filter((s) => s.id !== sourceSelectionId)
 
-  const canAct = !!selectedRoomId && (selectionMode === 'new' ? !!newTitle.trim() : true)
+  const canAct = selectionMode === 'new' ? !!newTitle.trim() : !!selectedSelectionId
 
   function handleAction() {
-    if (!selectedRoomId) return
-    const targetDecision = selectionMode === 'new' ? null : selectedDecisionId
+    const targetId = selectionMode === 'new' ? null : selectedSelectionId
     const title = selectionMode === 'new' && newTitle.trim() ? newTitle.trim() : undefined
 
     if (action === 'copy' && onCopy) {
-      onCopy(selectedRoomId, targetDecision, title)
+      onCopy(targetId, title)
       const n = copyCount + 1
       setCopyCount(n)
       // Reset picker for copy-to-multiple
-      setSelectedRoomId(null)
-      setSelectedDecisionId(null)
+      setSelectedSelectionId(null)
       setNewTitle('')
       setSelectionMode('existing')
     } else {
-      onMove(selectedRoomId, targetDecision, title)
+      onMove(targetId, title)
     }
   }
 
@@ -160,112 +149,72 @@ export function MoveIdeaSheet({
             </div>
           )}
 
-          {/* Step 1: Pick selection list (room) */}
+          {/* Destination picker */}
           <div>
-            <label className="block text-xs text-cream/50 mb-2">Selection list</label>
-            <div className="grid grid-cols-2 gap-2">
-              {availableRooms.map((room) => {
-                const emoji = ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '✏️'
-                const isActive = selectedRoomId === room.id
-                return (
-                  <button
-                    key={room.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedRoomId(room.id)
-                      setSelectedDecisionId(null)
-                      setSelectionMode('existing')
-                      setNewTitle('')
-                    }}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-left transition-all ${
-                      isActive
-                        ? 'border-sandstone bg-sandstone/10'
-                        : 'border-cream/10 hover:border-cream/25 bg-basalt'
-                    }`}
-                  >
-                    <span className="text-sm">{emoji}</span>
-                    <span className={`text-sm truncate ${isActive ? 'text-sandstone font-medium' : 'text-cream'}`}>
-                      {room.name}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Step 2: Pick selection (shown when list selected) */}
-          {selectedRoom && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <label className="block text-xs text-cream/50">Selection</label>
-                <div className="flex bg-cream/5 rounded p-0.5 text-[10px]">
-                  <button
-                    type="button"
-                    onClick={() => { setSelectionMode('existing'); setNewTitle('') }}
-                    className={`px-2 py-0.5 rounded transition-colors ${
-                      selectionMode === 'existing' ? 'bg-sandstone/20 text-sandstone' : 'text-cream/40'
-                    }`}
-                  >
-                    Existing
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setSelectionMode('new'); setSelectedDecisionId(null) }}
-                    className={`px-2 py-0.5 rounded transition-colors ${
-                      selectionMode === 'new' ? 'bg-sandstone/20 text-sandstone' : 'text-cream/40'
-                    }`}
-                  >
-                    + New
-                  </button>
-                </div>
+            <div className="flex items-center gap-2 mb-2">
+              <label className="block text-xs text-cream/50">Destination selection</label>
+              <div className="flex bg-cream/5 rounded p-0.5 text-[10px]">
+                <button
+                  type="button"
+                  onClick={() => { setSelectionMode('existing'); setNewTitle('') }}
+                  className={`px-2 py-0.5 rounded transition-colors ${
+                    selectionMode === 'existing' ? 'bg-sandstone/20 text-sandstone' : 'text-cream/40'
+                  }`}
+                >
+                  Existing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSelectionMode('new'); setSelectedSelectionId(null) }}
+                  className={`px-2 py-0.5 rounded transition-colors ${
+                    selectionMode === 'new' ? 'bg-sandstone/20 text-sandstone' : 'text-cream/40'
+                  }`}
+                >
+                  + New
+                </button>
               </div>
-
-              {selectionMode === 'existing' ? (
-                <>
-                  {availableDecisions.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      {availableDecisions.map((d) => {
-                        const isActive = selectedDecisionId === d.id
-                        return (
-                          <button
-                            key={d.id}
-                            type="button"
-                            onClick={() => setSelectedDecisionId(isActive ? null : d.id)}
-                            className={`px-3 py-2 rounded-lg border-2 text-left transition-all ${
-                              isActive
-                                ? 'border-sandstone bg-sandstone/10'
-                                : 'border-cream/10 hover:border-cream/25 bg-basalt'
-                            }`}
-                          >
-                            <p className={`text-sm truncate ${isActive ? 'text-sandstone font-medium' : 'text-cream'}`}>
-                              {d.title}
-                            </p>
-                            <p className="text-[10px] text-cream/30">{d.options.length} options</p>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-[11px] text-cream/30">No selections in this list yet.</p>
-                  )}
-                  {!selectedDecisionId && (
-                    <p className="text-[11px] text-cream/30 mt-1.5">
-                      No selection chosen? Option will go to Unsorted in this list.
-                    </p>
-                  )}
-                </>
-              ) : (
-                <input
-                  type="text"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="New selection name..."
-                  className="w-full px-3 py-2 bg-basalt border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone"
-                  autoFocus
-                />
-              )}
             </div>
-          )}
+
+            {selectionMode === 'existing' ? (
+              <>
+                {availableSelections.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {availableSelections.map((s) => {
+                      const isActive = selectedSelectionId === s.id
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => setSelectedSelectionId(isActive ? null : s.id)}
+                          className={`px-3 py-2 rounded-lg border-2 text-left transition-all ${
+                            isActive
+                              ? 'border-sandstone bg-sandstone/10'
+                              : 'border-cream/10 hover:border-cream/25 bg-basalt'
+                          }`}
+                        >
+                          <p className={`text-sm truncate ${isActive ? 'text-sandstone font-medium' : 'text-cream'}`}>
+                            {s.title}
+                          </p>
+                          <p className="text-[10px] text-cream/30">{s.options.length} options</p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-cream/30">No other selections available.</p>
+                )}
+              </>
+            ) : (
+              <input
+                type="text"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="New selection name..."
+                className="w-full px-3 py-2 bg-basalt border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone"
+                autoFocus
+              />
+            )}
+          </div>
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-2">

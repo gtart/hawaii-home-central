@@ -349,6 +349,104 @@ export interface FinishDecisionsPayloadV3 {
 }
 
 // ============================================================================
+// V4 TYPES (CURRENT — flat selections + tags, no rooms)
+// ============================================================================
+
+// Idea (was OptionV3) — a competing choice within a selection
+export type IdeaV4 = OptionV3
+
+// Selection (was DecisionV3) — a decision to be made, contains ideas
+export interface SelectionV4 {
+  id: string
+  title: string // "Countertop", "Backsplash"
+  status: StatusV3
+  notes: string
+  options: IdeaV4[] // kept as "options" in data for minimal churn; UI says "Ideas"
+  tags: string[] // e.g. ["Kitchen", "Phase 1"] — replaces rooms
+  dueDate?: string | null
+  priority?: SelectionPriority
+  dismissedSuggestionKeys?: string[]
+  comments?: SelectionComment[]
+  picksByUser?: Record<string, string | null>
+  originKitId?: string
+  finalSelection?: FinalSelectionMeta | null
+  statusLog?: StatusLogEntry[]
+  files?: DecisionFileV3[]
+  location?: string
+  createdAt: string
+  updatedAt: string
+}
+
+// V4 Payload (flat — no rooms wrapper)
+export interface FinishDecisionsPayloadV4 {
+  version: 4
+  selections: SelectionV4[]
+  ownedKitIds?: string[]
+  appliedKitIds?: string[] // workspace-level (was per-room)
+}
+
+// Public types for V4 share links
+export interface PublicSelectionV4 {
+  id: string
+  title: string
+  status: StatusV3
+  tags: string[]
+  notes?: string
+  location?: string
+  options: PublicOptionV3[]
+  dueDate?: string | null
+  comments?: PublicDecisionComment[]
+  files?: PublicDecisionFile[]
+}
+
+/** Allowlist-map a SelectionV4 to a safe public shape. */
+export function toPublicSelection(
+  s: SelectionV4,
+  opts: FinishDecisionsSanitizeOpts
+): PublicSelectionV4 {
+  const pub: PublicSelectionV4 = {
+    id: s.id,
+    title: s.title,
+    status: s.status,
+    tags: s.tags,
+    options: s.options.map((o) => toPublicOption(o, opts)),
+    dueDate: s.dueDate ?? null,
+    location: s.location,
+  }
+
+  if (opts.includeNotes && s.notes) {
+    pub.notes = s.notes
+  }
+
+  if (opts.includeComments && s.comments && s.comments.length > 0) {
+    pub.comments = s.comments.map((c) => ({
+      text: c.text,
+      createdAt: c.createdAt,
+      refOptionId: c.refOptionId,
+      refOptionLabel: c.refOptionLabel,
+    }))
+  }
+
+  if (opts.includePhotos && s.files && s.files.length > 0) {
+    pub.files = s.files.map((f) => ({
+      title: f.title,
+      fileName: f.fileName,
+      fileSize: f.fileSize,
+      mimeType: f.mimeType,
+      fileType: f.fileType,
+      url: f.url,
+      thumbnailUrl: f.thumbnailUrl,
+      optionId: f.optionId,
+      optionLabel: f.optionLabel,
+      uploadedAt: f.uploadedAt,
+      uploadedByName: f.uploadedByName,
+    }))
+  }
+
+  return pub
+}
+
+// ============================================================================
 // DEFAULT DECISIONS BY ROOM TYPE
 // ============================================================================
 
@@ -512,7 +610,7 @@ export function toPublicDecision(
 }
 
 /** Allowlist-map a full OptionV3 to a safe public shape. */
-function toPublicOption(
+export function toPublicOption(
   o: OptionV3,
   opts: FinishDecisionsSanitizeOpts
 ): PublicOptionV3 {

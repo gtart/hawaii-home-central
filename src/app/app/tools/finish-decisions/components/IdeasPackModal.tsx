@@ -2,9 +2,8 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import type { RoomTypeV3, RoomV3 } from '@/data/finish-decisions'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
-import { findKitsForRoomType, findKitsForDecisionTitle } from '@/lib/finish-decision-kits'
+import { findKitsForDecisionTitle } from '@/lib/finish-decision-kits'
 import { cn } from '@/lib/utils'
 
 // ── Disclosure badges ──
@@ -58,8 +57,6 @@ function DisclosureBadge({ author }: { author: string }) {
 type ModalTab = 'recommended' | 'my-packs' | 'browse'
 
 export function IdeasPackModal({
-  roomType,
-  roomName,
   decisionTitle,
   appliedKitIds,
   decisionAppliedKitIds,
@@ -69,29 +66,16 @@ export function IdeasPackModal({
   onRemoveKit,
   onClose,
   kits = [],
-  // Destination picker props
-  rooms,
-  selectedRoomId,
-  onSelectRoomId,
-  showDestinationPicker = false,
 }: {
-  roomType: RoomTypeV3
-  roomName: string
   decisionTitle?: string
   appliedKitIds: string[]
-  /** In decision mode, kit IDs that already have options in this decision (from option.origin.kitId) */
   decisionAppliedKitIds?: string[]
   ownedKitIds?: string[]
-  onApply: (kit: FinishDecisionKit, targetRoomId?: string) => void
+  onApply: (kit: FinishDecisionKit) => void
   onAcquireKit?: (kitId: string) => void
   onRemoveKit?: (kitId: string) => void
   onClose: () => void
   kits?: FinishDecisionKit[]
-  // Destination picker
-  rooms?: RoomV3[]
-  selectedRoomId?: string
-  onSelectRoomId?: (id: string) => void
-  showDestinationPicker?: boolean
 }) {
   const [selectedKitId, setSelectedKitId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ModalTab>('recommended')
@@ -100,35 +84,10 @@ export function IdeasPackModal({
   // Decision-level mode: only show kits matching this title
   const isDecisionMode = !!decisionTitle
 
-  // Active room type for filtering (may change with destination picker)
-  const activeRoomType = useMemo(() => {
-    if (showDestinationPicker && rooms && selectedRoomId) {
-      const r = rooms.find((r) => r.id === selectedRoomId)
-      return (r?.type as RoomTypeV3) || roomType
-    }
-    return roomType
-  }, [showDestinationPicker, rooms, selectedRoomId, roomType])
-
-  const activeRoomName = useMemo(() => {
-    if (showDestinationPicker && rooms && selectedRoomId) {
-      const r = rooms.find((r) => r.id === selectedRoomId)
-      return r?.name || roomName
-    }
-    return roomName
-  }, [showDestinationPicker, rooms, selectedRoomId, roomName])
-
-  const activeAppliedKitIds = useMemo(() => {
-    if (showDestinationPicker && rooms && selectedRoomId) {
-      const r = rooms.find((r) => r.id === selectedRoomId)
-      return r?.appliedKitIds || []
-    }
-    return appliedKitIds
-  }, [showDestinationPicker, rooms, selectedRoomId, appliedKitIds])
-
-  // Compute kit lists per tab
+  // In workspace mode, all kits are "fitting" (no room type filter)
   const fittingKits = isDecisionMode
-    ? findKitsForDecisionTitle(kits, decisionTitle!, activeRoomType)
-    : findKitsForRoomType(kits, activeRoomType)
+    ? findKitsForDecisionTitle(kits, decisionTitle!, 'other')
+    : kits
 
   const ownedKits = kits.filter((k) => ownedKitIds.includes(k.id))
   const allKits = kits
@@ -151,8 +110,7 @@ export function IdeasPackModal({
 
   function handleApply() {
     if (!selectedKit) return
-    const targetId = showDestinationPicker ? selectedRoomId : undefined
-    onApply(selectedKit, targetId)
+    onApply(selectedKit)
     onClose()
   }
 
@@ -170,7 +128,7 @@ export function IdeasPackModal({
   // In decision mode, use decision-level applied state (from option.origin.kitId)
   const effectiveAppliedKitIds = isDecisionMode && decisionAppliedKitIds
     ? decisionAppliedKitIds
-    : activeAppliedKitIds
+    : appliedKitIds
 
   // CTA text depends on state
   function getApplyLabel(kit: FinishDecisionKit): string {
@@ -184,23 +142,9 @@ export function IdeasPackModal({
   const TABS: { key: ModalTab; label: string; count: number }[] = isDecisionMode
     ? [{ key: 'recommended', label: 'Matching', count: fittingKits.length }]
     : [
-        { key: 'recommended', label: 'Recommended', count: fittingKits.length },
+        { key: 'recommended', label: 'All Packs', count: fittingKits.length },
         { key: 'my-packs', label: 'My Packs', count: ownedKits.length },
-        { key: 'browse', label: 'Browse all', count: allKits.length },
       ]
-
-  // Smart-sorted rooms for destination picker
-  const sortedRooms = useMemo(() => {
-    if (!rooms || !selectedKit) return rooms || []
-    const kitRoomTypes = selectedKit.roomTypes
-    return [...rooms].sort((a, b) => {
-      const aFits = kitRoomTypes.length === 0 || kitRoomTypes.includes(a.type as RoomTypeV3)
-      const bFits = kitRoomTypes.length === 0 || kitRoomTypes.includes(b.type as RoomTypeV3)
-      if (aFits && !bFits) return -1
-      if (!aFits && bFits) return 1
-      return a.name.localeCompare(b.name)
-    })
-  }, [rooms, selectedKit])
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -230,33 +174,9 @@ export function IdeasPackModal({
               ? 'Adds curated options to this selection so you have more to compare.'
               : 'Selection Packs add curated options to your selections\u2014so you can compare and choose faster.'}
           </p>
-
-          {/* Destination line */}
-          {!isDecisionMode && (
-            <div className="mt-2">
-              {showDestinationPicker && rooms && onSelectRoomId ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-cream/40">Apply to:</span>
-                  <select
-                    value={selectedRoomId || ''}
-                    onChange={(e) => onSelectRoomId(e.target.value)}
-                    className="bg-basalt-50 border border-cream/20 rounded-lg px-2.5 py-1 text-xs text-cream focus:outline-none focus:border-sandstone/50 max-w-[200px]"
-                  >
-                    {(selectedKit ? sortedRooms : rooms).map((r) => (
-                      <option key={r.id} value={r.id}>{r.name}</option>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <p className="text-[11px] text-cream/30">
-                  Applying to: <span className="text-cream/50 font-medium">{activeRoomName}</span>
-                </p>
-              )}
-            </div>
-          )}
         </div>
 
-        {/* Tabs (only in room mode with multiple tabs) */}
+        {/* Tabs */}
         {TABS.length > 1 && (
           <div className="px-5 pt-2 flex gap-1 border-b border-cream/10">
             {TABS.map((tab) => (
@@ -289,21 +209,19 @@ export function IdeasPackModal({
               <p className="text-cream/40 text-sm">
                 {activeTab === 'my-packs'
                   ? "You don\u2019t own any Selection Packs yet."
-                  : `No Selection Packs available for this ${decisionTitle ? 'selection' : 'room type'}.`}
+                  : `No Selection Packs available${decisionTitle ? ' for this selection' : ''}.`}
               </p>
               {activeTab === 'my-packs' && (
                 <div className="flex flex-col items-center gap-2 mt-3">
                   <button
                     type="button"
-                    onClick={() => setActiveTab('browse')}
+                    onClick={() => setActiveTab('recommended')}
                     className="text-xs text-sandstone hover:text-sandstone-light transition-colors"
                   >
                     Browse available packs
                   </button>
                   <Link
-                    href={selectedRoomId
-                      ? `/app/packs?returnTo=${encodeURIComponent('/app/tools/finish-decisions')}&roomId=${selectedRoomId}&roomName=${encodeURIComponent(activeRoomName)}`
-                      : '/app/packs'}
+                    href="/app/packs"
                     onClick={onClose}
                     className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
                   >
@@ -317,7 +235,6 @@ export function IdeasPackModal({
               const isApplied = effectiveAppliedKitIds.includes(kit.id)
               const isOwned = ownedKitIds.includes(kit.id)
               const isSelected = selectedKitId === kit.id
-              const fits = fittingKits.some((k) => k.id === kit.id)
 
               return (
                 <button
@@ -344,11 +261,6 @@ export function IdeasPackModal({
                         Owned
                       </span>
                     )}
-                    {!fits && activeTab !== 'recommended' && (
-                      <span className="px-1.5 py-0.5 bg-cream/5 rounded text-[10px] text-cream/30">
-                        Other rooms
-                      </span>
-                    )}
                   </div>
                   <p className="text-xs text-cream/50 leading-relaxed">{kit.description}</p>
                   <p className="text-[11px] text-cream/30 mt-1.5">
@@ -359,9 +271,7 @@ export function IdeasPackModal({
 
                   {/* Expanded preview when selected */}
                   {isSelected && (() => {
-                    // In decision mode, highlight the matching decision within the pack
                     const matchTitle = decisionTitle?.toLowerCase().trim()
-                    // Sort: matching decision first when in decision mode
                     const sortedDecs = isDecisionMode && matchTitle
                       ? [...kit.decisions].sort((a, b) => {
                           const aMatch = a.title.toLowerCase().trim() === matchTitle
@@ -444,7 +354,7 @@ export function IdeasPackModal({
                   Get pack
                 </button>
               )}
-              {onRemoveKit && activeAppliedKitIds.includes(selectedKit.id) && (
+              {onRemoveKit && appliedKitIds.includes(selectedKit.id) && (
                 <button
                   type="button"
                   onClick={handleRemove}

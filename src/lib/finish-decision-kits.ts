@@ -4,6 +4,7 @@ import type {
   OptionV3,
   RoomTypeV3,
   OptionOriginV3,
+  SelectionV4,
 } from '@/data/finish-decisions'
 import { type FinishDecisionKit } from '@/data/finish-decision-kits'
 
@@ -268,4 +269,136 @@ export function removeKitFromRoom(room: RoomV3, kitId: string): RoomV3 {
   const appliedKitIds = (room.appliedKitIds || []).filter((id) => id !== kitId)
 
   return { ...room, decisions, appliedKitIds, updatedAt: now }
+}
+
+// ============================================================================
+// V4 Workspace-level kit operations (flat selections, no room wrapper)
+// ============================================================================
+
+export interface ApplyKitToWorkspaceResult {
+  selections: SelectionV4[]
+  appliedKitIds: string[]
+  addedSelectionCount: number
+  addedOptionCount: number
+}
+
+/**
+ * Apply an ideas pack to a flat selections array (V4 workspace-level).
+ */
+export function applyKitToWorkspace(
+  selections: SelectionV4[],
+  appliedKitIds: string[],
+  kit: FinishDecisionKit
+): ApplyKitToWorkspaceResult {
+  const now = new Date().toISOString()
+  let addedSelectionCount = 0
+  let addedOptionCount = 0
+
+  const updated = selections.map((s) => ({ ...s }))
+
+  for (const kitDec of kit.decisions) {
+    const titleLower = kitDec.title.toLowerCase()
+    const existingIdx = updated.findIndex(
+      (s) => s.title.toLowerCase() === titleLower
+    )
+
+    const existingKeys = new Set<string>()
+    if (existingIdx >= 0) {
+      for (const opt of updated[existingIdx].options) {
+        if (opt.origin?.kitId === kit.id && opt.origin?.optionKey) {
+          existingKeys.add(opt.origin.optionKey)
+        }
+      }
+    }
+
+    const newOptions: OptionV3[] = []
+    for (const ko of kitDec.options) {
+      const optionKey = generateOptionKey(kit.id, kitDec.title, ko.name)
+      if (existingKeys.has(optionKey)) continue
+
+      const origin: OptionOriginV3 = {
+        kitId: kit.id,
+        kitLabel: kit.label,
+        author: kit.author,
+        optionKey,
+      }
+
+      newOptions.push({
+        id: crypto.randomUUID(),
+        name: ko.name,
+        notes: ko.notes,
+        urls: [],
+        origin,
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
+
+    addedOptionCount += newOptions.length
+
+    if (existingIdx >= 0) {
+      if (newOptions.length > 0) {
+        updated[existingIdx] = {
+          ...updated[existingIdx],
+          options: [...updated[existingIdx].options, ...newOptions],
+          updatedAt: now,
+        }
+      }
+    } else {
+      if (newOptions.length > 0) {
+        addedSelectionCount++
+        const newSelection: SelectionV4 = {
+          id: crypto.randomUUID(),
+          title: kitDec.title,
+          status: 'deciding',
+          notes: '',
+          options: newOptions,
+          tags: [],
+          originKitId: kit.id,
+          createdAt: now,
+          updatedAt: now,
+        }
+        updated.push(newSelection)
+      }
+    }
+  }
+
+  const newAppliedKitIds = appliedKitIds.includes(kit.id)
+    ? appliedKitIds
+    : [...appliedKitIds, kit.id]
+
+  return {
+    selections: updated,
+    appliedKitIds: newAppliedKitIds,
+    addedSelectionCount,
+    addedOptionCount,
+  }
+}
+
+/**
+ * Remove all options/selections added by a specific kit (V4 workspace-level).
+ */
+export function removeKitFromWorkspace(
+  selections: SelectionV4[],
+  appliedKitIds: string[],
+  kitId: string
+): { selections: SelectionV4[]; appliedKitIds: string[] } {
+  const now = new Date().toISOString()
+
+  const filtered = selections
+    .map((s) => {
+      const remainingOptions = s.options.filter(
+        (o) => o.origin?.kitId !== kitId
+      )
+      if (s.originKitId === kitId && remainingOptions.length === 0) {
+        return null
+      }
+      return { ...s, options: remainingOptions, updatedAt: now }
+    })
+    .filter((s): s is SelectionV4 => s !== null)
+
+  return {
+    selections: filtered,
+    appliedKitIds: appliedKitIds.filter((id) => id !== kitId),
+  }
 }

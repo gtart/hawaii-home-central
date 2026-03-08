@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect, useImperativeHandle } from 'react'
-import type { OptionV3, DecisionV3, SelectionComment, RoomV3 } from '@/data/finish-decisions'
+import type { OptionV3, DecisionV3, SelectionComment, SelectionV4 } from '@/data/finish-decisions'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { relativeTime } from '@/lib/relativeTime'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
@@ -58,10 +58,9 @@ interface Props {
   onMoveOption?: (optionId: string) => void
   onCopyOption?: (optionId: string) => void
   copyDisabledReason?: string
-  rooms?: RoomV3[]
-  currentRoomId?: string
-  currentDecisionId?: string
-  onImportToDecision?: (targetRoomId: string, targetDecisionId: string | null, newTitle: string | undefined, result: { name: string; notes: string; sourceUrl: string; selectedImages: import('@/data/finish-decisions').OptionImageV3[] }) => void
+  selections?: SelectionV4[]
+  currentSelectionId?: string
+  onImportToDecision?: (targetSelectionId: string | null, newTitle: string | undefined, result: { name: string; notes: string; sourceUrl: string; selectedImages: import('@/data/finish-decisions').OptionImageV3[] }) => void
   addActionsRef?: React.MutableRefObject<IdeasBoardAddActions | null>
 }
 
@@ -479,9 +478,8 @@ export function IdeasBoard({
   onMoveOption,
   onCopyOption,
   copyDisabledReason,
-  rooms,
-  currentRoomId,
-  currentDecisionId,
+  selections,
+  currentSelectionId,
   onImportToDecision,
   addActionsRef,
 }: Props) {
@@ -911,9 +909,8 @@ export function IdeasBoard({
         <SaveFromWebDialog
           onImport={handleWebImport}
           onClose={() => setShowWebDialog(false)}
-          rooms={rooms}
-          currentRoomId={currentRoomId}
-          currentDecisionId={currentDecisionId}
+          selections={selections}
+          currentSelectionId={currentSelectionId}
           onImportToDecision={onImportToDecision}
         />
       )}

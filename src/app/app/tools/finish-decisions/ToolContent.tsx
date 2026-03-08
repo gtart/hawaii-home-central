@@ -15,12 +15,13 @@ import { DecisionTrackerPage } from './components/DecisionTrackerPage'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import {
   DEFAULT_DECISIONS_BY_ROOM_TYPE,
-  ROOM_EMOJI_MAP,
   type RoomV3,
   type DecisionV3,
   type StatusV3,
   type RoomTypeV3,
   type FinishDecisionsPayloadV3,
+  type FinishDecisionsPayloadV4,
+  type SelectionV4,
   type V1FinishDecisionsPayload,
   type V1DecisionItem,
   type V2FinishDecisionsPayload,
@@ -194,16 +195,75 @@ function migrateV2toV3(v2: V2FinishDecisionsPayload): FinishDecisionsPayloadV3 {
   }
 }
 
-function migrateToV3(payload: any): FinishDecisionsPayloadV3 {
-  if (payload.version === 3) {
-    return payload as FinishDecisionsPayloadV3
-  } else if (payload.version === 2) {
-    return migrateV2toV3(payload as V2FinishDecisionsPayload)
-  } else if (payload.version === 1) {
-    return migrateV1toV3(payload as V1FinishDecisionsPayload)
-  } else {
-    return migrateV1toV3(payload as V1FinishDecisionsPayload)
+function migrateV3toV4(v3: FinishDecisionsPayloadV3): FinishDecisionsPayloadV4 {
+  const selections: SelectionV4[] = []
+  const allAppliedKitIds: string[] = []
+
+  for (const room of v3.rooms) {
+    // Collect applied kit IDs from rooms
+    if (room.appliedKitIds) {
+      for (const id of room.appliedKitIds) {
+        if (!allAppliedKitIds.includes(id)) allAppliedKitIds.push(id)
+      }
+    }
+
+    // Convert room name to a tag (skip system rooms)
+    const roomTag = room.systemKey === 'global_uncategorized' ? 'Unsorted' : room.name
+
+    for (const decision of room.decisions) {
+      // Skip system uncategorized decisions that have no options
+      if (decision.systemKey === 'uncategorized' && decision.options.length === 0) continue
+
+      const tags: string[] = roomTag ? [roomTag] : []
+
+      const selection: SelectionV4 = {
+        id: decision.id,
+        title: decision.systemKey === 'uncategorized' ? 'Unsorted' : decision.title,
+        status: decision.status,
+        notes: decision.notes,
+        options: decision.options,
+        tags,
+        dueDate: decision.dueDate,
+        priority: decision.priority,
+        dismissedSuggestionKeys: decision.dismissedSuggestionKeys,
+        comments: decision.comments,
+        picksByUser: decision.picksByUser,
+        originKitId: decision.originKitId,
+        finalSelection: decision.finalSelection,
+        statusLog: decision.statusLog,
+        files: decision.files,
+        location: decision.location,
+        createdAt: decision.createdAt,
+        updatedAt: decision.updatedAt,
+      }
+
+      selections.push(selection)
+    }
   }
+
+  return {
+    version: 4,
+    selections,
+    ownedKitIds: v3.ownedKitIds,
+    appliedKitIds: allAppliedKitIds.length > 0 ? allAppliedKitIds : undefined,
+  }
+}
+
+function migrateToV4(payload: any): FinishDecisionsPayloadV4 {
+  if (payload.version === 4) {
+    return payload as FinishDecisionsPayloadV4
+  }
+  // First migrate to V3 if needed
+  let v3: FinishDecisionsPayloadV3
+  if (payload.version === 3) {
+    v3 = payload as FinishDecisionsPayloadV3
+  } else if (payload.version === 2) {
+    v3 = migrateV2toV3(payload as V2FinishDecisionsPayload)
+  } else {
+    v3 = migrateV1toV3(payload as V1FinishDecisionsPayload)
+  }
+  // Then migrate V3 → V4
+  return migrateV3toV4(v3)
 }
 
 // ============================================================================
@@ -214,7 +274,6 @@ interface ToolContentProps {
   localOnly?: boolean
   collectionId?: string
   kits?: FinishDecisionKit[]
-  defaultDecisions?: Record<RoomTypeV3, string[]>
   emojiMap?: Record<string, string>
 }
 
@@ -222,26 +281,24 @@ export function ToolContent({
   localOnly = false,
   collectionId,
   kits = [],
-  defaultDecisions,
   emojiMap = {},
 }: ToolContentProps) {
-  const resolvedDefaults = defaultDecisions || DEFAULT_DECISIONS_BY_ROOM_TYPE
   const { projects, currentProject } = useProject()
   const router = useRouter()
 
   // Collection mode: use collection-based state
-  const collResult = useCollectionState<FinishDecisionsPayloadV3 | any>({
+  const collResult = useCollectionState<FinishDecisionsPayloadV4 | any>({
     collectionId: collectionId ?? null,
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2',
-    defaultValue: { version: 3, rooms: [] },
+    defaultValue: { version: 4, selections: [] },
   })
 
   // Legacy mode: use tool-based state
-  const toolResult = useToolState<FinishDecisionsPayloadV3 | any>({
+  const toolResult = useToolState<FinishDecisionsPayloadV4 | any>({
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2',
-    defaultValue: { version: 3, rooms: [] },
+    defaultValue: { version: 4, selections: [] },
     localOnly,
   })
 
@@ -270,40 +327,21 @@ export function ToolContent({
   const access = mapAccess(result.access)
   const readOnly = access === 'VIEW'
 
-  // Auto-migrate on load
+  // Auto-migrate on load (V1/V2/V3 → V4)
   useEffect(() => {
-    if (isLoaded && state.version !== 3) {
-      const migrated = migrateToV3(state)
+    if (isLoaded && state.version !== 4) {
+      const migrated = migrateToV4(state)
       setState(() => migrated)
     }
   }, [isLoaded, state, setState])
 
-  // Flatten multi-room collections into single room (board = area model)
-  useEffect(() => {
-    if (!isLoaded || state.version !== 3) return
-    const v3 = state as FinishDecisionsPayloadV3
-    if (v3.rooms.length <= 1) return // already flat or empty
-    const allDecisions = v3.rooms.flatMap((r) => r.decisions)
-    const primary = v3.rooms[0]
-    setState(() => ({
-      ...v3,
-      rooms: [{
-        ...primary,
-        decisions: allDecisions,
-        appliedKitIds: v3.rooms.flatMap((r) => r.appliedKitIds ?? []),
-      }],
-    }))
-  }, [isLoaded, state, setState])
-
   // One-time import: migrate pre-account localStorage data into the user's FIRST project only.
-  // Never runs when the user has multiple projects — empty projects should stay empty.
   useEffect(() => {
     if (!isLoaded || localOnly) return
-    // Only import for users with a single project (initial signup migration)
     if (projects.filter((p) => p.status === 'ACTIVE').length > 1) return
 
-    const v3 = state.version === 3 ? (state as FinishDecisionsPayloadV3) : null
-    if (!v3 || v3.rooms.length > 0) return // Already has account data
+    const v4 = state.version === 4 ? (state as FinishDecisionsPayloadV4) : null
+    if (!v4 || v4.selections.length > 0) return
 
     try {
       const LEGACY_KEY = 'hhc_finish_decisions_v2'
@@ -311,129 +349,42 @@ export function ToolContent({
       if (!stored) return
 
       const local = JSON.parse(stored)
-      const localV3 = local.version === 3 ? (local as FinishDecisionsPayloadV3) : migrateToV3(local)
-      if (localV3.rooms.length === 0) return
+      const localV4 = migrateToV4(local)
+      if (localV4.selections.length === 0) return
 
-      setState(() => localV3)
+      setState(() => localV4)
       localStorage.removeItem(LEGACY_KEY)
     } catch {
       // ignore
     }
   }, [isLoaded, localOnly, state, setState, projects])
 
-  // Ensure we're working with V3 data
-  const v3State =
-    state.version === 3
-      ? (state as FinishDecisionsPayloadV3)
-      : { version: 3 as const, rooms: [] }
+  // Ensure we're working with V4 data
+  const v4State =
+    state.version === 4
+      ? (state as FinishDecisionsPayloadV4)
+      : { version: 4 as const, selections: [] as SelectionV4[] }
 
-  // Add room
-  const handleAddRoom = (type: RoomTypeV3, name: string, useDefaults: boolean) => {
-    const room: RoomV3 = {
-      id: crypto.randomUUID(),
-      type,
-      name,
-      decisions: useDefaults
-        ? (resolvedDefaults[type] || []).map((title) => ({
-            id: crypto.randomUUID(),
-            title,
-            status: 'deciding' as StatusV3,
-            notes: '',
-            options: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }))
-        : [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
-    setState((prev) => ({
-      ...prev,
-      rooms: [...(prev as FinishDecisionsPayloadV3).rooms, room],
-    }))
-  }
-
-  // Batch add rooms (from onboarding)
-  const handleBatchAddRooms = (selections: RoomSelection[]) => {
-    const now = new Date().toISOString()
-    const existingNames = v3State.rooms.map((r) => r.name.toLowerCase())
-
-    const newRooms: RoomV3[] = selections.map((sel) => {
-      let name = sel.name
-      if (existingNames.includes(name.toLowerCase())) {
-        let counter = 2
-        while (existingNames.includes(`${sel.name} #${counter}`.toLowerCase())) {
-          counter++
-        }
-        name = `${sel.name} #${counter}`
-      }
-      existingNames.push(name.toLowerCase())
-
-      return {
-        id: crypto.randomUUID(),
-        type: sel.type,
-        name,
-        decisions:
-          sel.template === 'standard'
-            ? (resolvedDefaults[sel.type] || []).map((title) => ({
-                id: crypto.randomUUID(),
-                title,
-                status: 'deciding' as StatusV3,
-                notes: '',
-                options: [],
-                createdAt: now,
-                updatedAt: now,
-              }))
-            : [],
-        createdAt: now,
-        updatedAt: now,
-      }
-    })
-
-    setState((prev) => ({
-      ...prev,
-      rooms: [...(prev as FinishDecisionsPayloadV3).rooms, ...newRooms],
-    }))
-  }
-
-  // Update room
-  const handleUpdateRoom = (roomId: string, updates: Partial<RoomV3>) => {
-    setState((prev) => ({
-      ...prev,
-      rooms: (prev as FinishDecisionsPayloadV3).rooms.map((r) =>
-        r.id === roomId ? { ...r, ...updates } : r
-      ),
-    }))
-  }
-
-  // Delete room (confirmation handled by RoomSection's TextConfirmDialog)
-  const handleDeleteRoom = (roomId: string) => {
-    setState((prev) => ({
-      ...prev,
-      rooms: (prev as FinishDecisionsPayloadV3).rooms.filter((r) => r.id !== roomId),
-    }))
-  }
-
-  // Acquire (own) a pack — adds to ownedKitIds immediately
+  // Acquire (own) a pack
   const handleAcquireKit = (kitId: string) => {
     setState((prev) => {
-      const p = prev as FinishDecisionsPayloadV3
+      const p = prev as FinishDecisionsPayloadV4
       const existing = p.ownedKitIds || []
       if (existing.includes(kitId)) return prev
       return { ...p, ownedKitIds: [...existing, kitId] }
     })
   }
 
-  // Add a single selection to the board (auto-creates the room if needed)
+  // Add a single selection to the board
   const handleAddSelection = (title: string) => {
     const ts = new Date().toISOString()
-    const decision: DecisionV3 = {
+    const selection: SelectionV4 = {
       id: crypto.randomUUID(),
       title,
       status: 'deciding' as StatusV3,
       notes: '',
       options: [],
+      tags: [],
       createdAt: ts,
       updatedAt: ts,
     }
@@ -444,27 +395,25 @@ export function ToolContent({
       entityLabel: title,
     }]
     setState((prev) => {
-      const p = prev as FinishDecisionsPayloadV3
-      if (p.rooms.length === 0) {
-        // Auto-create a single room for this board
-        const room: RoomV3 = {
-          id: crypto.randomUUID(),
-          type: 'other' as RoomTypeV3,
-          name: collectionTitle || 'Selections',
-          decisions: [decision],
-          createdAt: ts,
-          updatedAt: ts,
-        }
-        return { ...p, rooms: [room] }
-      }
-      // Add to the first (only) room
-      return {
-        ...p,
-        rooms: p.rooms.map((r, i) =>
-          i === 0 ? { ...r, decisions: [...r.decisions, decision], updatedAt: ts } : r
-        ),
-      }
+      const p = prev as FinishDecisionsPayloadV4
+      return { ...p, selections: [...p.selections, selection] }
     }, events)
+  }
+
+  // Update selections array
+  const handleUpdateSelections = (selections: SelectionV4[]) => {
+    setState((prev) => ({
+      ...prev,
+      selections,
+    }))
+  }
+
+  // Update applied kit IDs at workspace level
+  const handleUpdateAppliedKitIds = (appliedKitIds: string[]) => {
+    setState((prev) => ({
+      ...prev,
+      appliedKitIds,
+    }))
   }
 
   const handleRename = useCallback(async (newTitle: string) => {
@@ -491,6 +440,13 @@ export function ToolContent({
     } catch { /* ignore */ }
   }, [collectionId, router])
 
+  // Collect unique tags for export scoping
+  const tagScopes = Array.from(new Set(v4State.selections.flatMap((s) => s.tags))).sort().map((tag) => ({
+    id: tag,
+    name: tag,
+    emoji: '🏷️',
+  }))
+
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-4xl mx-auto">
@@ -503,7 +459,7 @@ export function ToolContent({
             title="Selections"
             description="Track the choices you need to make—and what you picked."
             accessLevel={access}
-            hasContent={v3State.rooms.length > 0}
+            hasContent={v4State.selections.length > 0}
             collectionId={collectionId}
             collectionName={titleOverride || collectionTitle}
             eyebrowLabel="Selections"
@@ -511,14 +467,8 @@ export function ToolContent({
             backLabel={collectionId ? 'All Selections' : undefined}
             headerSlot={collectionId ? <InstanceSwitcher toolKey="finish_decisions" currentCollectionId={collectionId} itemNoun="Selection List" /> : undefined}
             toolLabel="Selections"
-            scopes={v3State.rooms
-              .filter((r) => r.systemKey !== 'global_uncategorized')
-              .map((r) => ({
-                id: r.id,
-                name: r.name,
-                emoji: ROOM_EMOJI_MAP[r.type] || '🏠',
-              }))}
-            scopeLabel="Areas"
+            scopes={tagScopes}
+            scopeLabel="Tags"
             buildExportUrl={({ projectId: pid, selectedScopeIds, scopeMode, includeNotes, includeComments, includePhotos }) => {
               const reportBase = collectionId
                 ? `/app/tools/finish-decisions/${collectionId}/report`
@@ -526,7 +476,7 @@ export function ToolContent({
               const sep = reportBase.includes('?') ? '&' : '?'
               let url = `${reportBase}${sep}includeNotes=${includeNotes}&includeComments=${includeComments}&includePhotos=${includePhotos}`
               if (scopeMode === 'selected' && selectedScopeIds.length > 0) {
-                url += `&roomIds=${encodeURIComponent(selectedScopeIds.join(','))}`
+                url += `&tags=${encodeURIComponent(selectedScopeIds.join(','))}`
               }
               return url
             }}
@@ -565,19 +515,18 @@ export function ToolContent({
             <p className="text-cream/50 mb-2">You don&apos;t have access to this tool for the current home.</p>
             <a href="/app" className="text-sandstone hover:text-sandstone-light text-sm">Back to Tools</a>
           </div>
-        ) : isLoaded && state.version === 3 ? (
+        ) : isLoaded && state.version === 4 ? (
           <DecisionTrackerPage
-            rooms={v3State.rooms}
-            onBatchAddRooms={handleBatchAddRooms}
-            onUpdateRoom={handleUpdateRoom}
-            onDeleteRoom={handleDeleteRoom}
+            selections={v4State.selections}
+            onUpdateSelections={handleUpdateSelections}
             onAcquireKit={handleAcquireKit}
             onAddSelection={handleAddSelection}
             readOnly={readOnly}
             kits={kits}
-            defaultDecisions={resolvedDefaults}
             emojiMap={emojiMap}
-            ownedKitIds={v3State.ownedKitIds || []}
+            ownedKitIds={v4State.ownedKitIds || []}
+            appliedKitIds={v4State.appliedKitIds || []}
+            onUpdateAppliedKitIds={handleUpdateAppliedKitIds}
             collectionId={collectionId}
             projectId={collResult.projectId || currentProject?.id}
           />

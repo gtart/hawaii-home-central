@@ -1,6 +1,6 @@
 import { ToolContent } from '../ToolContent'
 import { getPublishedIdeaPacks } from '@/lib/idea-packs-db'
-import { getDefaultDecisionsByRoomType, getSelectionEmojiMap } from '@/lib/default-selections-db'
+import { getSelectionEmojiMap } from '@/lib/default-selections-db'
 
 export default async function DecisionTrackerCollectionPage({
   params,
@@ -8,9 +8,8 @@ export default async function DecisionTrackerCollectionPage({
   params: Promise<{ collectionId: string }>
 }) {
   const { collectionId } = await params
-  const [kits, defaultDecisions, emojiMap] = await Promise.all([
+  const [kits, emojiMap] = await Promise.all([
     getPublishedIdeaPacks(),
-    getDefaultDecisionsByRoomType(),
     getSelectionEmojiMap(),
   ])
 
@@ -18,7 +17,6 @@ export default async function DecisionTrackerCollectionPage({
     <ToolContent
       collectionId={collectionId}
       kits={kits}
-      defaultDecisions={defaultDecisions}
       emojiMap={emojiMap}
     />
   )

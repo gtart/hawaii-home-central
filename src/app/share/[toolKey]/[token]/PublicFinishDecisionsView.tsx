@@ -5,6 +5,7 @@ import Link from 'next/link'
 import type {
   PublicRoomV3,
   PublicDecisionV3,
+  PublicSelectionV4,
   PublicOptionV3,
   PublicDecisionComment,
   PublicOptionImage,
@@ -30,11 +31,15 @@ export function PublicFinishDecisionsView({
   includePhotos,
   scope,
 }: Props) {
-  const rooms = ((payload?.rooms as PublicRoomV3[]) || [])
+  // V4: flat selections
+  const selections = (payload?.selections as PublicSelectionV4[]) || []
+  // V3 legacy: rooms
+  const rooms = (payload?.rooms as PublicRoomV3[]) || []
+  const isV4 = selections.length > 0 || (payload?.version === 4)
 
-  const totalDecisions = rooms.reduce((sum, r) => sum + r.decisions.length, 0)
-  const scopeLabels = scope?.roomLabels as string[] | undefined
-  const isScoped = scope?.mode === 'selected' && scopeLabels && scopeLabels.length > 0
+  const totalSelections = isV4
+    ? selections.length
+    : rooms.reduce((sum, r) => sum + r.decisions.length, 0)
 
   return (
     <div className="min-h-screen bg-basalt text-cream">
@@ -47,7 +52,7 @@ export function PublicFinishDecisionsView({
             </span>
             <h1 className="font-serif text-3xl md:text-4xl text-sandstone">{projectName}</h1>
             <p className="text-sm text-cream/50 mt-1">
-              {rooms.length} room{rooms.length !== 1 ? 's' : ''} &middot; {totalDecisions} selection{totalDecisions !== 1 ? 's' : ''}
+              {totalSelections} selection{totalSelections !== 1 ? 's' : ''}
             </p>
           </div>
           <Link href="/" className="text-xs text-cream/30 hover:text-cream/50 transition-colors mt-1">
@@ -65,30 +70,44 @@ export function PublicFinishDecisionsView({
           </div>
         )}
 
-        {isScoped && (
-          <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs mb-4 bg-sandstone/10 text-sandstone/80">
-            <span className="w-2 h-2 rounded-full bg-sandstone/60 shrink-0" />
-            Showing selected rooms: {scopeLabels!.join(', ')}
-          </div>
-        )}
-
-        {/* Room sections */}
-        {rooms.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-cream/30 text-sm">No rooms to display.</p>
-          </div>
+        {/* V4: flat selections list */}
+        {isV4 ? (
+          selections.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-cream/30 text-sm">No selections to display.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {selections.map((s) => (
+                <DecisionCard
+                  key={s.id}
+                  decision={s as unknown as PublicDecisionV3}
+                  includeNotes={includeNotes}
+                  includeComments={includeComments}
+                  includePhotos={includePhotos}
+                />
+              ))}
+            </div>
+          )
         ) : (
-          <div className="space-y-8">
-            {rooms.map((room) => (
-              <RoomSection
-                key={room.id}
-                room={room}
-                includeNotes={includeNotes}
-                includeComments={includeComments}
-                includePhotos={includePhotos}
-              />
-            ))}
-          </div>
+          /* V3 legacy: room sections */
+          rooms.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-cream/30 text-sm">No selections to display.</p>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {rooms.map((room) => (
+                <RoomSection
+                  key={room.id}
+                  room={room}
+                  includeNotes={includeNotes}
+                  includeComments={includeComments}
+                  includePhotos={includePhotos}
+                />
+              ))}
+            </div>
+          )
         )}
 
         {/* Footer */}

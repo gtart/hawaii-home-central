@@ -15,18 +15,16 @@ import { findKitsForDecisionTitle, applyKitToDecision } from '@/lib/finish-decis
 import {
   STATUS_CONFIG_V3,
   SELECTION_PRIORITY_CONFIG,
-  ROOM_EMOJI_MAP,
-  type DecisionV3,
   type OptionV3,
   type StatusV3,
   type SelectionPriority,
   type StatusLogEntry,
-  type RoomV3,
-  type RoomTypeV3,
+  type SelectionV4,
   type SelectionComment,
-  type FinishDecisionsPayloadV3,
+  type FinishDecisionsPayloadV4,
 } from '@/data/finish-decisions'
-import { isUncategorized, ensureUncategorizedDecision, findUncategorizedDecision, moveOption as moveOptionHelper } from '@/lib/decisionHelpers'
+import { moveIdea, getUniqueTags } from '@/lib/decisionHelpers'
+import { TagInput } from '../../components/TagInput'
 import { DecisionFiles } from '../../components/DecisionFiles'
 import { uploadFile as uploadFileForDecision } from '../../uploadFile'
 import { MoveIdeaSheet } from '../../components/MoveIdeaSheet'
@@ -66,6 +64,9 @@ export function DecisionDetailContent({
   const decisionId = params.decisionId as string
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [shareLink, setShareLink] = useState<string | null>(null)
+  const [shareCreating, setShareCreating] = useState(false)
   const [draftRef, setDraftRef] = useState<{ optionId: string; optionLabel: string } | null>(null)
   const [ideasPackOpen, setIdeasPackOpen] = useState(false)
   const [mobileCommentsOpen, setMobileCommentsOpen] = useState(false)
@@ -82,39 +83,29 @@ export function DecisionDetailContent({
   const { currentProject } = useProject()
   const { transfer, isTransferring } = useCollectionTransfer()
 
-  const collResult = useCollectionState<FinishDecisionsPayloadV3>({
+  const collResult = useCollectionState<FinishDecisionsPayloadV4 | any>({
     collectionId: collectionId ?? null,
     toolKey: 'finish_decisions',
     localStorageKey: `hhc_finish_decisions_coll_${collectionId}`,
-    defaultValue: { version: 3, rooms: [] },
+    defaultValue: { version: 4, selections: [] },
   })
-  const toolResult = useToolState<FinishDecisionsPayloadV3 | any>({
+  const toolResult = useToolState<FinishDecisionsPayloadV4 | any>({
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2',
-    defaultValue: { version: 3, rooms: [] },
+    defaultValue: { version: 4, selections: [] },
   })
   const useCollectionMode = !!collectionId
   const result = useCollectionMode ? collResult : toolResult
   const { state, setState, isLoaded } = result
   const readOnly = useCollectionMode ? collResult.readOnly : toolResult.readOnly
 
-  const v3State =
-    state.version === 3
-      ? (state as FinishDecisionsPayloadV3)
-      : { version: 3 as const, rooms: [] }
+  const v4State =
+    state.version === 4
+      ? (state as FinishDecisionsPayloadV4)
+      : { version: 4 as const, selections: [] as SelectionV4[] }
 
-  // Find the room and decision
-  let foundRoom: RoomV3 | undefined
-  let foundDecision: DecisionV3 | undefined
-
-  for (const room of v3State.rooms) {
-    const decision = room.decisions.find((d) => d.id === decisionId)
-    if (decision) {
-      foundRoom = room
-      foundDecision = decision
-      break
-    }
-  }
+  // Find the selection (was "decision")
+  const foundDecision = v4State.selections.find((s) => s.id === decisionId)
 
   // Redirect when decision not found — must be in useEffect, not during render
   const shouldRedirect = isLoaded && !foundDecision
@@ -135,46 +126,39 @@ export function DecisionDetailContent({
   // NOTE: must be before early returns to keep hook order stable across renders
   const locationSuggestions = useMemo(() => {
     const locs = new Set<string>()
-    for (const room of v3State.rooms) {
-      for (const d of room.decisions) {
-        if (d.location?.trim()) locs.add(d.location.trim())
-      }
+    for (const d of v4State.selections) {
+      if (d.location?.trim()) locs.add(d.location.trim())
     }
     return Array.from(locs).sort()
-  }, [v3State.rooms])
+  }, [v4State.selections])
+
+  const allTags = useMemo(() => getUniqueTags(v4State.selections), [v4State.selections])
 
   // Guidance computation — must be before early returns to keep hook order stable
   const guidanceResult = useMemo(
     () => {
-      if (!foundDecision || !foundRoom) return { milestones: [], impacts: [], advice: [], matchedRuleIds: [] }
+      if (!foundDecision) return { milestones: [], impacts: [], advice: [], matchedRuleIds: [] }
+      // Use the first tag as a rough "room type" hint for heuristics, default to 'other'
+      const hintType = (foundDecision.tags[0]?.toLowerCase().replace(/\s+/g, '_') || 'other') as any
       return matchDecision(
         getHeuristicsConfig(),
         foundDecision.title,
-        foundRoom.type,
+        hintType,
         foundDecision.options.find((o) => o.isSelected)?.name,
         foundDecision.dismissedSuggestionKeys,
       )
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [foundDecision?.title, foundRoom?.type, foundDecision?.options, foundDecision?.dismissedSuggestionKeys]
+    [foundDecision?.title, foundDecision?.tags, foundDecision?.options, foundDecision?.dismissedSuggestionKeys]
   )
 
-  const updateDecision = (updates: Partial<DecisionV3>, events?: ActivityEventHint[]) => {
-    if (!foundRoom) return
+  const updateDecision = (updates: Partial<SelectionV4>, events?: ActivityEventHint[]) => {
     setState((prev) => ({
       ...prev,
-      rooms: (prev as FinishDecisionsPayloadV3).rooms.map((r) =>
-        r.id === foundRoom!.id
-          ? {
-              ...r,
-              decisions: r.decisions.map((d) =>
-                d.id === decisionId
-                  ? { ...d, ...updates, updatedAt: new Date().toISOString() }
-                  : d
-              ),
-              updatedAt: new Date().toISOString(),
-            }
-          : r
+      selections: (prev as FinishDecisionsPayloadV4).selections.map((s) =>
+        s.id === decisionId
+          ? { ...s, ...updates, updatedAt: new Date().toISOString() }
+          : s
       ),
     }), events)
   }
@@ -218,15 +202,12 @@ export function DecisionDetailContent({
 
   const selectOption = (optionId: string) => {
     if (!foundDecision) return
-    // Uncategorized selections cannot have a "Final" pick
-    if (isUncategorized(foundDecision)) return
-
     const alreadySelected = foundDecision.options.find((o) => o.id === optionId)?.isSelected
     const isToggleOff = !!alreadySelected
     const userName = session?.user?.name || 'Unknown'
     const now = new Date().toISOString()
 
-    const updates: Partial<DecisionV3> = {
+    const updates: Partial<SelectionV4> = {
       options: foundDecision.options.map((opt) => ({
         ...opt,
         isSelected: isToggleOff ? false : opt.id === optionId,
@@ -281,8 +262,6 @@ export function DecisionDetailContent({
 
   const handleStatusChange = (newStatus: StatusV3) => {
     if (!foundDecision) return
-    // Uncategorized selections stay in "deciding" status
-    if (isUncategorized(foundDecision)) return
     const oldStatus = foundDecision.status
     if (oldStatus === newStatus) return
 
@@ -318,75 +297,69 @@ export function DecisionDetailContent({
     setTimeout(() => commentInputRef.current?.focus(), 300)
   }
 
-  const availableKits = foundRoom && foundDecision
-    ? findKitsForDecisionTitle(kits, foundDecision.title, foundRoom.type as RoomTypeV3)
+  const availableKits = foundDecision
+    ? findKitsForDecisionTitle(kits, foundDecision.title, 'other')
     : []
 
-  function handleApplyKitToDecision(kit: import('@/data/finish-decision-kits').FinishDecisionKit, _targetRoomId?: string) {
+  function handleApplyKitToDecision(kit: import('@/data/finish-decision-kits').FinishDecisionKit) {
     if (!foundDecision) return
     const result = applyKitToDecision(foundDecision, kit)
     updateDecision({ options: result.decision.options })
   }
 
-  function moveOptionCrossRoom(
+  function moveOptionToSelection(
     optionId: string,
-    targetRoomId: string,
-    targetDecisionId: string | null,
+    targetSelectionId: string | null,
     newSelectionTitle?: string,
   ) {
-    if (!foundRoom || !foundDecision) return
+    if (!foundDecision) return
 
     const optionName = foundDecision.options.find((o) => o.id === optionId)?.name || 'option'
-    const targetRoom = v3State.rooms.find((r) => r.id === targetRoomId)
     const targetName = newSelectionTitle
-      || targetRoom?.decisions.find((d) => d.id === targetDecisionId)?.title
-      || 'Uncategorized'
-    const roomName = targetRoom?.name || 'Room'
+      || v4State.selections.find((s) => s.id === targetSelectionId)?.title
+      || 'New Selection'
 
     setState((prev) => {
-      const payload = prev as FinishDecisionsPayloadV3
-      const updated = moveOptionHelper(
-        payload.rooms,
-        foundRoom!.id,
+      const payload = prev as FinishDecisionsPayloadV4
+      const updated = moveIdea(
+        payload.selections,
         foundDecision!.id,
         optionId,
-        targetRoomId,
-        targetDecisionId,
+        targetSelectionId,
         newSelectionTitle,
       )
-      return { ...payload, rooms: updated }
+      return { ...payload, selections: updated }
     }, [
       {
         action: 'moved_out',
         entityType: 'option',
         entityId: optionId,
-        summaryText: `Moved "${optionName}" out of ${foundRoom!.name} → ${foundDecision!.title}`,
+        summaryText: `Moved "${optionName}" out of "${foundDecision!.title}"`,
         entityLabel: optionName,
-        detailText: `from ${foundRoom!.name}`,
+        detailText: `from ${foundDecision!.title}`,
       },
       {
         action: 'moved_in',
         entityType: 'option',
         entityId: optionId,
-        summaryText: `Moved "${optionName}" into ${roomName} → ${targetName}`,
+        summaryText: `Moved "${optionName}" into "${targetName}"`,
         entityLabel: optionName,
-        detailText: `to ${roomName} › ${targetName}`,
+        detailText: `to ${targetName}`,
       },
     ])
 
-    setAssignToast(`Moved to ${roomName} → ${targetName}`)
+    setAssignToast(`Moved to ${targetName}`)
     setMoveOptionId(null)
     setActiveCardId(null)
     setTimeout(() => setAssignToast(null), 3000)
   }
 
-  function copyOptionWithinCollection(
+  function copyOptionToSelection(
     optionId: string,
-    targetRoomId: string,
-    targetDecisionId: string | null,
+    targetSelectionId: string | null,
     newSelectionTitle?: string,
   ) {
-    if (!foundRoom || !foundDecision) return
+    if (!foundDecision) return
     const option = foundDecision.options.find((o) => o.id === optionId)
     if (!option) return
 
@@ -400,69 +373,56 @@ export function DecisionDetailContent({
       updatedAt: now,
     }
 
-    const targetRoom = v3State.rooms.find((r) => r.id === targetRoomId)
     const targetName = newSelectionTitle
-      || targetRoom?.decisions.find((d) => d.id === targetDecisionId)?.title
-      || 'Uncategorized'
-    const roomName = targetRoom?.name || 'Room'
+      || v4State.selections.find((s) => s.id === targetSelectionId)?.title
+      || 'New Selection'
 
     setState((prev) => {
-      const payload = prev as FinishDecisionsPayloadV3
-      let resolvedTargetDecisionId = targetDecisionId
+      const payload = prev as FinishDecisionsPayloadV4
+      let resolvedTargetId = targetSelectionId
+      let selections = [...payload.selections]
 
-      const newRooms = payload.rooms.map((room) => {
-        if (room.id !== targetRoomId) return room
-
-        let updatedRoom = { ...room }
-
-        if (newSelectionTitle && !resolvedTargetDecisionId) {
-          const newDec: DecisionV3 = {
-            id: crypto.randomUUID(),
-            title: newSelectionTitle,
-            status: 'deciding' as StatusV3,
-            notes: '',
-            options: [],
-            createdAt: now,
-            updatedAt: now,
-          }
-          updatedRoom = { ...updatedRoom, decisions: [...updatedRoom.decisions, newDec] }
-          resolvedTargetDecisionId = newDec.id
-        }
-
-        if (!resolvedTargetDecisionId) {
-          updatedRoom = ensureUncategorizedDecision(updatedRoom)
-          const uncat = findUncategorizedDecision(updatedRoom)!
-          resolvedTargetDecisionId = uncat.id
-        }
-
-        return {
-          ...updatedRoom,
-          decisions: updatedRoom.decisions.map((d) =>
-            d.id === resolvedTargetDecisionId
-              ? { ...d, options: [...d.options, clone], updatedAt: now }
-              : d
-          ),
+      // Create new selection if title provided and no target
+      if (newSelectionTitle && !resolvedTargetId) {
+        const newSelection: SelectionV4 = {
+          id: crypto.randomUUID(),
+          title: newSelectionTitle,
+          status: 'deciding' as StatusV3,
+          notes: '',
+          options: [],
+          tags: foundDecision?.tags ?? [],
+          createdAt: now,
           updatedAt: now,
         }
-      })
+        selections = [...selections, newSelection]
+        resolvedTargetId = newSelection.id
+      }
 
-      return { ...payload, rooms: newRooms }
+      if (!resolvedTargetId) return prev
+
+      return {
+        ...payload,
+        selections: selections.map((s) =>
+          s.id === resolvedTargetId
+            ? { ...s, options: [...s.options, clone], updatedAt: now }
+            : s
+        ),
+      }
     }, [{
       action: 'copied',
       entityType: 'option',
       entityId: optionId,
-      summaryText: `Copied "${option.name || 'option'}" to ${roomName} → ${targetName}`,
+      summaryText: `Copied "${option.name || 'option'}" to "${targetName}"`,
       entityLabel: option.name || 'option',
-      detailText: `to ${roomName} › ${targetName}`,
+      detailText: `to ${targetName}`,
     }])
 
-    setAssignToast(`Copied to ${roomName} → ${targetName}`)
+    setAssignToast(`Copied to ${targetName}`)
     setTimeout(() => setAssignToast(null), 3000)
   }
 
   function handleImportToDecision(
-    targetRoomId: string,
-    targetDecisionId: string | null,
+    targetSelectionId: string | null,
     newTitle: string | undefined,
     result: { name: string; notes: string; sourceUrl: string; selectedImages: import('@/data/finish-decisions').OptionImageV3[] }
   ) {
@@ -483,76 +443,58 @@ export function DecisionDetailContent({
     }
 
     setState((prev) => {
-      const payload = prev as FinishDecisionsPayloadV3
-      let finalDecisionId = targetDecisionId
+      const payload = prev as FinishDecisionsPayloadV4
+      let resolvedTargetId = targetSelectionId
+      let selections = [...payload.selections]
 
-      const newRooms = payload.rooms.map((r) => {
-        if (r.id !== targetRoomId) return r
-
-        let decisions = r.decisions
-        // If creating a new selection
-        if (!finalDecisionId && newTitle) {
-          const newDecision: DecisionV3 = {
-            id: crypto.randomUUID(),
-            title: newTitle,
-            status: 'deciding' as StatusV3,
-            notes: '',
-            options: [],
-            createdAt: now,
-            updatedAt: now,
-          }
-          finalDecisionId = newDecision.id
-          decisions = [...decisions, newDecision]
-        }
-
-        // If still no target, fall back to uncategorized
-        if (!finalDecisionId) {
-          const roomWithUncat = ensureUncategorizedDecision({ ...r, decisions })
-          decisions = roomWithUncat.decisions
-          const uncat = findUncategorizedDecision(roomWithUncat)
-          finalDecisionId = uncat?.id || null
-        }
-
-        return {
-          ...r,
-          decisions: decisions.map((d) =>
-            d.id === finalDecisionId
-              ? { ...d, options: [...d.options, newOption], updatedAt: now }
-              : d
-          ),
+      // If creating a new selection
+      if (!resolvedTargetId && newTitle) {
+        const newSelection: SelectionV4 = {
+          id: crypto.randomUUID(),
+          title: newTitle,
+          status: 'deciding' as StatusV3,
+          notes: '',
+          options: [],
+          tags: foundDecision?.tags ?? [],
+          createdAt: now,
           updatedAt: now,
         }
-      })
+        resolvedTargetId = newSelection.id
+        selections = [...selections, newSelection]
+      }
 
-      return { ...payload, rooms: newRooms }
+      // Default to current selection if no target
+      if (!resolvedTargetId) {
+        resolvedTargetId = foundDecision?.id ?? null
+      }
+
+      if (!resolvedTargetId) return prev
+
+      return {
+        ...payload,
+        selections: selections.map((s) =>
+          s.id === resolvedTargetId
+            ? { ...s, options: [...s.options, newOption], updatedAt: now }
+            : s
+        ),
+      }
     })
 
-    // Show toast
-    const targetRoom = v3State.rooms.find((r) => r.id === targetRoomId)
-    const roomName = targetRoom?.name || 'Room'
-    const selectionName = newTitle || targetRoom?.decisions.find((d) => d.id === targetDecisionId)?.title || 'Uncategorized'
-    setAssignToast(`Saved to ${roomName} → ${selectionName}`)
+    const selectionName = newTitle || v4State.selections.find((s) => s.id === targetSelectionId)?.title || foundDecision?.title || 'Selection'
+    setAssignToast(`Saved to ${selectionName}`)
     setTimeout(() => setAssignToast(null), 4000)
   }
 
   const deleteDecision = () => {
-    if (!foundRoom || !foundDecision) return
-    if (confirm(`Delete "${foundDecision.title}"? This decision and all its options will be permanently deleted.`)) {
-      setState((prev) => ({
-        ...prev,
-        rooms: (prev as FinishDecisionsPayloadV3).rooms.map((r) =>
-          r.id === foundRoom!.id
-            ? {
-                ...r,
-                decisions: r.decisions.filter((d) => d.id !== decisionId),
-                updatedAt: new Date().toISOString(),
-              }
-            : r
-        ),
-      }))
-      const basePath = collectionId ? `/app/tools/finish-decisions/${collectionId}` : '/app/tools/finish-decisions'
-      router.push(basePath)
-    }
+    if (!foundDecision) return
+    setState((prev) => ({
+      ...prev,
+      selections: (prev as FinishDecisionsPayloadV4).selections.filter(
+        (s) => s.id !== decisionId
+      ),
+    }))
+    const basePath = collectionId ? `/app/tools/finish-decisions/${collectionId}` : '/app/tools/finish-decisions'
+    router.push(basePath)
   }
 
   if (!isLoaded) {
@@ -565,7 +507,7 @@ export function DecisionDetailContent({
     )
   }
 
-  if (!foundDecision || !foundRoom) {
+  if (!foundDecision) {
     // useEffect above handles the redirect
     return (
       <div className="pt-32 pb-24 px-6">
@@ -661,8 +603,6 @@ export function DecisionDetailContent({
     )
   }
 
-  const isSystemUncategorized = isUncategorized(foundDecision)
-
   const guidanceTipCount = guidanceResult.milestones.length + guidanceResult.impacts.length + guidanceResult.advice.length
 
   function handleGuidanceDismiss(key: string) {
@@ -712,34 +652,30 @@ export function DecisionDetailContent({
               value={foundDecision.title}
               onChange={(e) => updateDecision({ title: e.target.value })}
               className="text-2xl font-serif"
-              readOnly={readOnly || isSystemUncategorized}
+              readOnly={readOnly}
             />
           </div>
-          {!isSystemUncategorized && (
-            <select
-              value={foundDecision.status}
-              onChange={(e) => !readOnly && handleStatusChange(e.target.value as StatusV3)}
-              disabled={readOnly}
-              className={`shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${statusCfg.pillClass}`}
-            >
-              {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
-                <option key={key} value={key}>{config.label}</option>
-              ))}
-            </select>
-          )}
-          {!isSystemUncategorized && (
-            <select
-              value={foundDecision.priority || ''}
-              onChange={(e) => !readOnly && updateDecision({ priority: (e.target.value || undefined) as SelectionPriority | undefined })}
-              disabled={readOnly}
-              className={`shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-basalt-50 text-cream/40 border-cream/10'}`}
-            >
-              <option value="">Priority</option>
-              {Object.entries(SELECTION_PRIORITY_CONFIG).map(([key, config]) => (
-                <option key={key} value={key}>{config.label}</option>
-              ))}
-            </select>
-          )}
+          <select
+            value={foundDecision.status}
+            onChange={(e) => !readOnly && handleStatusChange(e.target.value as StatusV3)}
+            disabled={readOnly}
+            className={`shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${statusCfg.pillClass}`}
+          >
+            {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
+              <option key={key} value={key}>{config.label}</option>
+            ))}
+          </select>
+          <select
+            value={foundDecision.priority || ''}
+            onChange={(e) => !readOnly && updateDecision({ priority: (e.target.value || undefined) as SelectionPriority | undefined })}
+            disabled={readOnly}
+            className={`shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-basalt-50 text-cream/40 border-cream/10'}`}
+          >
+            <option value="">Priority</option>
+            {Object.entries(SELECTION_PRIORITY_CONFIG).map(([key, config]) => (
+              <option key={key} value={key}>{config.label}</option>
+            ))}
+          </select>
           <input
             type="date"
             value={foundDecision.dueDate || ''}
@@ -747,13 +683,26 @@ export function DecisionDetailContent({
             disabled={readOnly}
             className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50 shrink-0"
           />
+          {collectionId && !readOnly && (
+            <button
+              type="button"
+              onClick={() => setShareOpen(true)}
+              className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
+              title="Share this selection"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
+                <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
+                <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
+              </svg>
+              Share
+            </button>
+          )}
         </div>
 
         {/* Mobile header: title + controls */}
         <div className="md:hidden mb-2">
-          {isSystemUncategorized ? (
-            <h1 className="text-2xl font-serif text-cream">Uncategorized</h1>
-          ) : editingTitle ? (
+          {editingTitle ? (
             <Input
               autoFocus
               value={foundDecision.title}
@@ -771,31 +720,27 @@ export function DecisionDetailContent({
             </h1>
           )}
           <div className="flex items-center gap-2 mt-2">
-            {!isSystemUncategorized && (
-              <select
-                value={foundDecision.status}
-                onChange={(e) => !readOnly && handleStatusChange(e.target.value as StatusV3)}
-                disabled={readOnly}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${statusCfg.pillClass}`}
-              >
-                {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
-                  <option key={key} value={key}>{config.label}</option>
-                ))}
-              </select>
-            )}
-            {!isSystemUncategorized && (
-              <select
-                value={foundDecision.priority || ''}
-                onChange={(e) => !readOnly && updateDecision({ priority: (e.target.value || undefined) as SelectionPriority | undefined })}
-                disabled={readOnly}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-basalt-50 text-cream/40 border-cream/10'}`}
-              >
-                <option value="">Priority</option>
-                {Object.entries(SELECTION_PRIORITY_CONFIG).map(([key, config]) => (
-                  <option key={key} value={key}>{config.label}</option>
-                ))}
-              </select>
-            )}
+            <select
+              value={foundDecision.status}
+              onChange={(e) => !readOnly && handleStatusChange(e.target.value as StatusV3)}
+              disabled={readOnly}
+              className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${statusCfg.pillClass}`}
+            >
+              {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
+                <option key={key} value={key}>{config.label}</option>
+              ))}
+            </select>
+            <select
+              value={foundDecision.priority || ''}
+              onChange={(e) => !readOnly && updateDecision({ priority: (e.target.value || undefined) as SelectionPriority | undefined })}
+              disabled={readOnly}
+              className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-basalt-50 text-cream/40 border-cream/10'}`}
+            >
+              <option value="">Priority</option>
+              {Object.entries(SELECTION_PRIORITY_CONFIG).map(([key, config]) => (
+                <option key={key} value={key}>{config.label}</option>
+              ))}
+            </select>
             <input
               type="date"
               value={foundDecision.dueDate || ''}
@@ -807,28 +752,36 @@ export function DecisionDetailContent({
         </div>
 
         {/* Location field */}
-        {!isSystemUncategorized && (
-          <div className="flex items-center gap-2 mb-2">
-            <svg className="w-3.5 h-3.5 text-cream/30 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-            <input
-              type="text"
-              list="location-suggestions"
-              value={foundDecision.location || ''}
-              onChange={(e) => updateDecision({ location: e.target.value })}
-              placeholder="Add location..."
-              readOnly={readOnly}
-              className="bg-transparent text-sm text-cream/60 placeholder:text-cream/25 focus:outline-none focus:text-cream border-b border-transparent hover:border-cream/10 focus:border-sandstone/40 transition-colors max-w-[240px] disabled:opacity-50"
-            />
-            <datalist id="location-suggestions">
-              {locationSuggestions.map((loc) => (
-                <option key={loc} value={loc} />
-              ))}
-            </datalist>
-          </div>
-        )}
+        <div className="flex items-center gap-2 mb-2">
+          <svg className="w-3.5 h-3.5 text-cream/30 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+          <input
+            type="text"
+            list="location-suggestions"
+            value={foundDecision.location || ''}
+            onChange={(e) => updateDecision({ location: e.target.value })}
+            placeholder="Add location..."
+            readOnly={readOnly}
+            className="bg-transparent text-sm text-cream/60 placeholder:text-cream/25 focus:outline-none focus:text-cream border-b border-transparent hover:border-cream/10 focus:border-sandstone/40 transition-colors max-w-[240px] disabled:opacity-50"
+          />
+          <datalist id="location-suggestions">
+            {locationSuggestions.map((loc) => (
+              <option key={loc} value={loc} />
+            ))}
+          </datalist>
+        </div>
+
+        {/* Tags */}
+        <div className="mb-2">
+          <TagInput
+            tags={foundDecision.tags || []}
+            allTags={allTags}
+            onChange={(newTags) => updateDecision({ tags: newTags })}
+            readOnly={readOnly}
+          />
+        </div>
 
         {/* Meta row */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs mb-2">
@@ -976,7 +929,7 @@ export function DecisionDetailContent({
               updateDecision({ options: foundDecision.options.filter((o) => o.id !== id) })
             }}
             onSelectOption={selectOption}
-            hideFinalize={isSystemUncategorized}
+            hideFinalize={false}
             hideCompare
             onUpdateDecision={updateDecision}
             onAddComment={addComment}
@@ -985,9 +938,8 @@ export function DecisionDetailContent({
             comments={decisionComments.comments}
             hasKits={availableKits.length > 0}
             onOpenPack={() => setIdeasPackOpen(true)}
-            rooms={v3State.rooms}
-            currentRoomId={foundRoom.id}
-            currentDecisionId={foundDecision.id}
+            selections={v4State.selections}
+            currentSelectionId={foundDecision.id}
             onImportToDecision={handleImportToDecision}
             onMoveOption={(optId) => setMoveOptionId(optId)}
             onCopyOption={collectionId ? (optId) => setCopyOptionId(optId) : undefined}
@@ -1008,7 +960,7 @@ export function DecisionDetailContent({
         />
 
         {/* Actions */}
-        {!readOnly && !isSystemUncategorized && (
+        {!readOnly && (
           <div className="mt-8 pt-4 border-t border-cream/10 space-y-3">
             {collectionId && currentProject && (
               <button
@@ -1165,18 +1117,16 @@ export function DecisionDetailContent({
       )}
 
       {/* Ideas Pack Modal (decision-level) */}
-      {ideasPackOpen && foundRoom && (
+      {ideasPackOpen && (
         <IdeasPackModal
-          roomType={foundRoom.type as RoomTypeV3}
-          roomName={foundRoom.name}
           decisionTitle={foundDecision.title}
-          appliedKitIds={foundRoom.appliedKitIds || []}
+          appliedKitIds={v4State.appliedKitIds || []}
           decisionAppliedKitIds={[...new Set(
             foundDecision.options
               .filter((o) => o.origin?.kitId)
               .map((o) => o.origin!.kitId)
           )]}
-          ownedKitIds={(state as FinishDecisionsPayloadV3).ownedKitIds || []}
+          ownedKitIds={v4State.ownedKitIds || []}
           onApply={handleApplyKitToDecision}
           onClose={() => setIdeasPackOpen(false)}
           kits={kits}
@@ -1184,19 +1134,18 @@ export function DecisionDetailContent({
       )}
 
       {/* Move Idea Sheet */}
-      {moveOptionId && foundRoom && foundDecision && (() => {
+      {moveOptionId && foundDecision && (() => {
         const opt = foundDecision.options.find((o) => o.id === moveOptionId)
         return opt ? (
           <MoveIdeaSheet
             options={[opt]}
-            sourceRoomId={foundRoom.id}
-            sourceDecisionId={foundDecision.id}
-            rooms={v3State.rooms}
-            onMove={(targetRoomId, targetDecisionId, newTitle) => {
-              moveOptionCrossRoom(moveOptionId, targetRoomId, targetDecisionId, newTitle)
+            sourceSelectionId={foundDecision.id}
+            selections={v4State.selections}
+            onMove={(targetSelectionId, newTitle) => {
+              moveOptionToSelection(moveOptionId, targetSelectionId, newTitle)
             }}
-            onCopy={(targetRoomId, targetDecisionId, newTitle) => {
-              copyOptionWithinCollection(moveOptionId, targetRoomId, targetDecisionId, newTitle)
+            onCopy={(targetSelectionId, newTitle) => {
+              copyOptionToSelection(moveOptionId, targetSelectionId, newTitle)
             }}
             onClose={() => setMoveOptionId(null)}
           />
@@ -1246,7 +1195,7 @@ export function DecisionDetailContent({
       )}
 
       {/* Copy option to another list (supports copy-to-multiple) */}
-      {copyOptionId && collectionId && (collResult.projectId || currentProject?.id) && foundRoom && (
+      {copyOptionId && collectionId && (collResult.projectId || currentProject?.id) && (
         <DestinationPicker
           key={copyResetKey}
           toolKey="finish_decisions"
@@ -1286,6 +1235,88 @@ export function DecisionDetailContent({
       {assignToast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl text-sm text-cream/80">
           {assignToast}
+        </div>
+      )}
+
+      {/* Per-selection share dialog */}
+      {shareOpen && collectionId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => { setShareOpen(false); setShareLink(null) }} />
+          <div className="relative bg-basalt-50 border border-cream/15 rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
+            <h3 className="text-lg font-medium text-cream mb-1">Share this selection</h3>
+            <p className="text-sm text-cream/50 mb-4">
+              Create a read-only link for &ldquo;{foundDecision.title}&rdquo;
+            </p>
+
+            {shareLink ? (
+              <div className="space-y-3">
+                <div className="bg-basalt border border-cream/15 rounded-lg p-3">
+                  <p className="text-xs text-cream/40 mb-1">Share link</p>
+                  <p className="text-sm text-cream/80 break-all font-mono">{shareLink}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { navigator.clipboard.writeText(shareLink); }}
+                  className="w-full py-2.5 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors text-sm"
+                >
+                  Copy link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShareOpen(false); setShareLink(null) }}
+                  className="w-full py-2 text-sm text-cream/50 hover:text-cream/70 transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => { setShareOpen(false); setShareLink(null) }}
+                  className="px-4 py-1.5 text-sm text-cream/50 hover:text-cream/70 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={shareCreating}
+                  onClick={async () => {
+                    setShareCreating(true)
+                    try {
+                      const res = await fetch(`/api/collections/${collectionId}/share-token`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          settings: {
+                            includeNotes: false,
+                            includeComments: true,
+                            includePhotos: true,
+                            scope: {
+                              mode: 'selected',
+                              selectionIds: [foundDecision.id],
+                              selectionLabels: [foundDecision.title],
+                            },
+                          },
+                        }),
+                      })
+                      if (res.ok) {
+                        const data = await res.json()
+                        const token = data.token || data.shareToken?.token
+                        if (token) {
+                          setShareLink(`${window.location.origin}/share/finish_decisions/${token}`)
+                        }
+                      }
+                    } catch { /* silent */ }
+                    finally { setShareCreating(false) }
+                  }}
+                  className="px-4 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-50"
+                >
+                  {shareCreating ? 'Creating...' : 'Create link'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

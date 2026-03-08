@@ -3,23 +3,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { useToolState } from '@/hooks/useToolState'
 import type {
-  FinishDecisionsPayloadV3,
-  RoomV3,
-  DecisionV3,
+  FinishDecisionsPayloadV4,
+  SelectionV4,
   OptionV3,
-  RoomTypeV3,
 } from '@/data/finish-decisions'
-import { ROOM_EMOJI_MAP } from '@/data/finish-decisions'
-import {
-  ensureGlobalUnsortedRoom,
-  findGlobalUnsortedRoom,
-  ensureUncategorizedDecision,
-  findUncategorizedDecision,
-  isGlobalUnsorted,
-} from '@/lib/decisionHelpers'
 import type { Idea } from '@/data/mood-boards'
 
-const DEFAULT_FD_PAYLOAD: FinishDecisionsPayloadV3 = { version: 3, rooms: [] }
+const DEFAULT_FD_PAYLOAD: FinishDecisionsPayloadV4 = { version: 4, selections: [] }
 
 interface Props {
   idea: Idea
@@ -28,20 +18,17 @@ interface Props {
 
 export function ConvertToSelectionSheet({ idea, onClose }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null)
-  const { state, setState, isLoaded } = useToolState<FinishDecisionsPayloadV3>({
+  const { state, setState, isLoaded } = useToolState<FinishDecisionsPayloadV4>({
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2',
     defaultValue: DEFAULT_FD_PAYLOAD,
   })
 
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
-  const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(null)
+  const [selectedSelectionId, setSelectedSelectionId] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const [targetRoomName, setTargetRoomName] = useState('')
-  const [targetDecisionName, setTargetDecisionName] = useState('')
+  const [targetSelectionName, setTargetSelectionName] = useState('')
 
-  const rooms = (state as FinishDecisionsPayloadV3).rooms || []
-  const selectedRoom = rooms.find((r) => r.id === selectedRoomId)
+  const selections = (state as FinishDecisionsPayloadV4).selections || []
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -77,71 +64,52 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
       updatedAt: new Date().toISOString(),
     }
 
-    let resolvedRoomId = selectedRoomId
-    let resolvedDecisionId = selectedDecisionId
-    let resolvedRoomName = ''
-    let resolvedDecisionName = ''
+    if (selectedSelectionId) {
+      // Add option to existing selection
+      const target = selections.find((s) => s.id === selectedSelectionId)
+      const selName = target?.title || 'Unknown'
 
-    const currentRooms = (state as FinishDecisionsPayloadV3).rooms
-
-    if (!resolvedRoomId) {
-      const ensured = ensureGlobalUnsortedRoom(currentRooms)
-      const globalRoom = findGlobalUnsortedRoom(ensured)!
-      resolvedRoomId = globalRoom.id
-      resolvedRoomName = 'Unsorted'
-      const uncat = findUncategorizedDecision(globalRoom)!
-      resolvedDecisionId = uncat.id
-      resolvedDecisionName = 'Uncategorized'
-    } else {
-      const targetRoom = currentRooms.find((r) => r.id === resolvedRoomId)
-      resolvedRoomName = targetRoom?.name || 'Unknown'
-      if (!resolvedDecisionId && targetRoom) {
-        const withUncat = ensureUncategorizedDecision(targetRoom)
-        const uncat = findUncategorizedDecision(withUncat)!
-        resolvedDecisionId = uncat.id
-        resolvedDecisionName = 'Uncategorized'
-      } else if (resolvedDecisionId && targetRoom) {
-        const dec = targetRoom.decisions.find(
-          (d) => d.id === resolvedDecisionId
-        )
-        resolvedDecisionName = dec?.title || ''
-      }
-    }
-
-    setState((prev) => {
-      const payload = prev as FinishDecisionsPayloadV3
-      let updatedRooms = payload.rooms
-
-      if (!selectedRoomId) {
-        updatedRooms = ensureGlobalUnsortedRoom(updatedRooms)
-      }
-
-      const newRooms = updatedRooms.map((r) => {
-        if (r.id !== resolvedRoomId) return r
-        let room = r
-        if (!selectedDecisionId) {
-          room = ensureUncategorizedDecision(room)
-        }
+      setState((prev) => {
+        const payload = prev as FinishDecisionsPayloadV4
         return {
-          ...room,
-          decisions: room.decisions.map((d) =>
-            d.id === resolvedDecisionId
+          ...payload,
+          selections: payload.selections.map((s) =>
+            s.id === selectedSelectionId
               ? {
-                  ...d,
-                  options: [...d.options, newOption],
+                  ...s,
+                  options: [...s.options, newOption],
                   updatedAt: new Date().toISOString(),
                 }
-              : d
+              : s
           ),
-          updatedAt: new Date().toISOString(),
         }
       })
 
-      return { ...payload, rooms: newRooms }
-    })
+      setTargetSelectionName(selName)
+    } else {
+      // Create a new selection with the idea's name
+      const newSelection: SelectionV4 = {
+        id: crypto.randomUUID(),
+        title: idea.name,
+        status: 'deciding',
+        tags: [],
+        notes: '',
+        options: [newOption],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
 
-    setTargetRoomName(resolvedRoomName)
-    setTargetDecisionName(resolvedDecisionName)
+      setState((prev) => {
+        const payload = prev as FinishDecisionsPayloadV4
+        return {
+          ...payload,
+          selections: [...payload.selections, newSelection],
+        }
+      })
+
+      setTargetSelectionName(idea.name)
+    }
+
     setSuccess(true)
   }
 
@@ -167,8 +135,7 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
           </h3>
           <p className="text-sm text-cream/60">
             Saved to{' '}
-            <span className="text-cream/80">{targetDecisionName}</span> in{' '}
-            <span className="text-cream/80">{targetRoomName}</span>
+            <span className="text-cream/80">{targetSelectionName}</span>
           </p>
           <button
             type="button"
@@ -199,106 +166,55 @@ export function ConvertToSelectionSheet({ idea, onClose }: Props) {
           The original idea will remain in your mood board.
         </p>
 
-        {/* Room picker */}
-        {rooms.filter((r) => !isGlobalUnsorted(r)).length > 0 ? (
+        {/* Selection picker */}
+        {selections.length > 0 ? (
           <div>
             <label className="block text-xs text-cream/50 mb-2">
-              Room{' '}
+              Selection{' '}
               <span className="text-cream/30">
-                (optional — skipping saves to Unsorted)
+                (optional — skipping creates a new selection)
               </span>
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {rooms
-                .filter((r) => !isGlobalUnsorted(r))
-                .map((room) => {
-                  const emoji =
-                    ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '\u270F\uFE0F'
-                  const isActive = selectedRoomId === room.id
-                  return (
-                    <button
-                      key={room.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedRoomId(
-                          isActive ? null : room.id
-                        )
-                        setSelectedDecisionId(null)
-                      }}
-                      className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
-                        isActive
-                          ? 'border-sandstone bg-sandstone/10'
-                          : 'border-cream/10 hover:border-cream/25 bg-basalt-50'
+              {selections.map((selection) => {
+                const isActive = selectedSelectionId === selection.id
+                return (
+                  <button
+                    key={selection.id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedSelectionId(
+                        isActive ? null : selection.id
+                      )
+                    }
+                    className={`px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
+                      isActive
+                        ? 'border-sandstone bg-sandstone/10'
+                        : 'border-cream/10 hover:border-cream/25 bg-basalt-50'
+                    }`}
+                  >
+                    <p
+                      className={`text-sm font-medium truncate ${
+                        isActive ? 'text-sandstone' : 'text-cream'
                       }`}
                     >
-                      <span className="text-base">{emoji}</span>
-                      <div className="min-w-0">
-                        <p
-                          className={`text-sm font-medium truncate ${
-                            isActive ? 'text-sandstone' : 'text-cream'
-                          }`}
-                        >
-                          {room.name}
-                        </p>
-                      </div>
-                    </button>
-                  )
-                })}
+                      {selection.title}
+                    </p>
+                  </button>
+                )
+              })}
             </div>
           </div>
         ) : (
           <div className="bg-basalt rounded-lg p-3 text-center">
             <p className="text-cream/50 text-sm">
-              No rooms yet in Selections.
+              No selections yet.
             </p>
             <p className="text-[11px] text-cream/30 mt-1">
-              The idea will be saved to Unsorted.
+              A new selection will be created with this idea.
             </p>
           </div>
         )}
-
-        {/* Decision picker */}
-        {selectedRoom &&
-          selectedRoom.decisions.filter((d) => d.systemKey !== 'uncategorized')
-            .length > 0 && (
-            <div>
-              <label className="block text-xs text-cream/50 mb-2">
-                Selection{' '}
-                <span className="text-cream/30">(optional)</span>
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {selectedRoom.decisions
-                  .filter((d) => d.systemKey !== 'uncategorized')
-                  .map((decision) => {
-                    const isActive = selectedDecisionId === decision.id
-                    return (
-                      <button
-                        key={decision.id}
-                        type="button"
-                        onClick={() =>
-                          setSelectedDecisionId(
-                            isActive ? null : decision.id
-                          )
-                        }
-                        className={`px-3 py-2 rounded-lg border-2 text-left transition-all ${
-                          isActive
-                            ? 'border-sandstone bg-sandstone/10'
-                            : 'border-cream/10 hover:border-cream/25 bg-basalt-50'
-                        }`}
-                      >
-                        <p
-                          className={`text-sm font-medium truncate ${
-                            isActive ? 'text-sandstone' : 'text-cream'
-                          }`}
-                        >
-                          {decision.title}
-                        </p>
-                      </button>
-                    )
-                  })}
-              </div>
-            </div>
-          )}
 
         {/* Actions */}
         <div className="flex items-center gap-3 justify-end pt-2">

@@ -4,15 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useProject } from '@/contexts/ProjectContext'
 import { useToolState } from '@/hooks/useToolState'
-import type { FinishDecisionsPayloadV3, RoomV3 } from '@/data/finish-decisions'
-import { ROOM_EMOJI_MAP, type RoomTypeV3 } from '@/data/finish-decisions'
-import {
-  ensureUncategorizedDecision,
-  findUncategorizedDecision,
-  ensureGlobalUnsortedRoom,
-  findGlobalUnsortedRoom,
-  isGlobalUnsorted,
-} from '@/lib/decisionHelpers'
+import type { FinishDecisionsPayloadV4, SelectionV4 } from '@/data/finish-decisions'
 import type { MoodBoardPayload } from '@/data/mood-boards'
 import { DEFAULT_PAYLOAD as DEFAULT_MB_PAYLOAD, ensureDefaultBoard, findDefaultBoard, genId } from '@/data/mood-boards'
 import { BookmarkletButton } from '@/app/app/tools/finish-decisions/components/BookmarkletButton'
@@ -28,9 +20,8 @@ import {
 } from '@/lib/capture/decodeBookmarklet'
 import { capturedToMoodBoardIdea, capturedToSelectionOption } from '@/lib/capture/normalizeCapturedContent'
 
-const DEFAULT_FD_PAYLOAD: FinishDecisionsPayloadV3 = { version: 3, rooms: [] }
-const LAST_ROOM_KEY = 'hhc_save_last_room'
-const LAST_DECISION_KEY = 'hhc_save_last_decision'
+const DEFAULT_FD_PAYLOAD: FinishDecisionsPayloadV4 = { version: 4, selections: [] }
+const LAST_SELECTION_KEY = 'hhc_save_last_selection'
 const LAST_DEST_KEY = 'hhc_save_last_destination'
 const LAST_PROJECT_KEY = 'hhc_save_last_project'
 const LAST_BOARD_KEY = 'hhc_save_last_board'
@@ -80,7 +71,7 @@ export function SaveFromWebContent() {
 
   // Finish Decisions state
   const { state: fdState, setState: setFdState, isLoaded: fdLoaded, readOnly: fdReadOnly } =
-    useToolState<FinishDecisionsPayloadV3>({
+    useToolState<FinishDecisionsPayloadV4>({
       toolKey: 'finish_decisions',
       localStorageKey: 'hhc_finish_decisions_v2',
       defaultValue: DEFAULT_FD_PAYLOAD,
@@ -110,12 +101,11 @@ export function SaveFromWebContent() {
     setDestinationRaw(d)
     if (d) saveLastDestination(d)
   }
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
-  const [selectedDecisionId, setSelectedDecisionIdRaw] = useState<string | null>(null)
-  const setSelectedDecisionId = (id: string | null) => {
-    setSelectedDecisionIdRaw(id)
+  const [selectedSelectionId, setSelectedSelectionIdRaw] = useState<string | null>(null)
+  const setSelectedSelectionId = (id: string | null) => {
+    setSelectedSelectionIdRaw(id)
     if (id) {
-      try { localStorage.setItem(LAST_DECISION_KEY, id) } catch { /* ignore */ }
+      try { localStorage.setItem(LAST_SELECTION_KEY, id) } catch { /* ignore */ }
     }
   }
   const [selectedBoardId, setSelectedBoardIdRaw] = useState<string | null>(() => {
@@ -134,10 +124,8 @@ export function SaveFromWebContent() {
   }
   const [saved, setSaved] = useState(false)
   const [savedDestination, setSavedDestination] = useState<Destination>('mood_boards')
-  const [savedTargetRoom, setSavedTargetRoom] = useState<string>('')
-  const [savedTargetRoomId, setSavedTargetRoomId] = useState<string>('')
-  const [savedTargetDecision, setSavedTargetDecision] = useState<string>('')
-  const [savedDecisionId, setSavedDecisionId] = useState<string>('')
+  const [savedSelectionName, setSavedSelectionName] = useState<string>('')
+  const [savedSelectionId, setSavedSelectionId] = useState<string>('')
   const [savedBoardName, setSavedBoardName] = useState<string>('')
   const [savedBoardId, setSavedBoardId] = useState<string>('')
   const [capturedContent, setCapturedContent] = useState<CapturedContent | null>(null)
@@ -148,6 +136,8 @@ export function SaveFromWebContent() {
   const [urlImportOpen, setUrlImportOpen] = useState(false)
   const [newBoardName, setNewBoardName] = useState('')
   const [isCreatingBoard, setIsCreatingBoard] = useState(false)
+  const [newSelectionName, setNewSelectionName] = useState('')
+  const [isCreatingSelection, setIsCreatingSelection] = useState(false)
 
   // Handle URL import from the paste-a-link panel
   const handleUrlImport = (result: { name: string; notes: string; sourceUrl: string; selectedImages: OptionImageV3[] }) => {
@@ -191,61 +181,38 @@ export function SaveFromWebContent() {
     }
   }, [])
 
-  const fdRooms = (fdState as FinishDecisionsPayloadV3).rooms || []
-  const selectedRoom = fdRooms.find((r) => r.id === selectedRoomId)
+  const fdSelections = (fdState as FinishDecisionsPayloadV4).selections || []
 
   const mbBoards = ensureDefaultBoard(
     (mbState as MoodBoardPayload).boards || []
   )
 
-  // Stable representation of room IDs
-  const roomIdKey = fdRooms.map((r) => r.id).join(',')
+  // Stable representation of selection IDs
+  const selectionIdKey = fdSelections.map((s) => s.id).join(',')
 
-  // Pre-select from query params or last-used room (Selections)
+  // Pre-select from query params or last-used selection
   useEffect(() => {
-    if (!isLoaded || fdRooms.length === 0 || destination !== 'finish_decisions') return
-    if (selectedRoomId && fdRooms.find((r) => r.id === selectedRoomId)) return
+    if (!isLoaded || fdSelections.length === 0 || destination !== 'finish_decisions') return
+    if (selectedSelectionId && fdSelections.find((s) => s.id === selectedSelectionId)) return
 
-    const qRoom = searchParams.get('roomId')
-    const qDecision = searchParams.get('decisionId')
-    if (qRoom && fdRooms.find((r) => r.id === qRoom)) {
-      setSelectedRoomId(qRoom)
-      if (qDecision) {
-        const room = fdRooms.find((r) => r.id === qRoom)
-        if (room?.decisions.find((d) => d.id === qDecision)) {
-          setSelectedDecisionId(qDecision)
-        }
-      }
+    const qSelection = searchParams.get('selectionId') || searchParams.get('decisionId')
+    if (qSelection && fdSelections.find((s) => s.id === qSelection)) {
+      setSelectedSelectionId(qSelection)
       return
     }
 
     try {
-      const lastRoom = localStorage.getItem(LAST_ROOM_KEY)
-      if (lastRoom && fdRooms.find((r) => r.id === lastRoom)) {
-        setSelectedRoomId(lastRoom)
-        // Also restore last decision if it still exists in this room
-        const lastDec = localStorage.getItem(LAST_DECISION_KEY)
-        if (lastDec) {
-          const room = fdRooms.find((r) => r.id === lastRoom)
-          if (room?.decisions.find((d) => d.id === lastDec)) {
-            setSelectedDecisionId(lastDec)
-          }
-        }
+      const lastSelection = localStorage.getItem(LAST_SELECTION_KEY)
+      if (lastSelection && fdSelections.find((s) => s.id === lastSelection)) {
+        setSelectedSelectionId(lastSelection)
         return
       }
     } catch { /* ignore */ }
 
-    if (fdRooms.length === 1) {
-      setSelectedRoomId(fdRooms[0].id)
+    if (fdSelections.length === 1) {
+      setSelectedSelectionId(fdSelections[0].id)
     }
-  }, [isLoaded, roomIdKey, searchParams, selectedRoomId, fdRooms, destination])
-
-  // Persist last-used room
-  useEffect(() => {
-    if (selectedRoomId) {
-      try { localStorage.setItem(LAST_ROOM_KEY, selectedRoomId) } catch { /* ignore */ }
-    }
-  }, [selectedRoomId])
+  }, [isLoaded, selectionIdKey, searchParams, selectedSelectionId, fdSelections, destination])
 
   const proxyUrl = (imgUrl: string) =>
     `/api/image-proxy?url=${encodeURIComponent(imgUrl)}`
@@ -316,87 +283,61 @@ export function SaveFromWebContent() {
 
     const newOption = capturedToSelectionOption(capturedContent, selectedUrls, { name, notes })
 
-    let resolvedRoomId = selectedRoomId
-    let resolvedDecisionId = selectedDecisionId
-    let resolvedRoomName = ''
-    let resolvedDecisionName = ''
+    const currentSelections = (fdState as FinishDecisionsPayloadV4).selections || []
+    let resolvedSelectionId = selectedSelectionId
+    let resolvedSelectionName = ''
 
-    const currentRooms = (fdState as FinishDecisionsPayloadV3).rooms
-
-    if (resolvedRoomId && !currentRooms.find((r) => r.id === resolvedRoomId)) {
-      resolvedRoomId = null
-      resolvedDecisionId = null
+    // Validate selection still exists
+    if (resolvedSelectionId && !currentSelections.find((s) => s.id === resolvedSelectionId)) {
+      resolvedSelectionId = null
     }
 
-    if (resolvedRoomId && resolvedDecisionId) {
-      const targetRoom = currentRooms.find((r) => r.id === resolvedRoomId)
-      if (!targetRoom?.decisions.find((d) => d.id === resolvedDecisionId)) {
-        resolvedDecisionId = null
-      }
-    }
+    if (resolvedSelectionId) {
+      // Add option to existing selection
+      const target = currentSelections.find((s) => s.id === resolvedSelectionId)
+      resolvedSelectionName = target?.title || 'Selection'
 
-    if (!resolvedRoomId) {
-      const ensured = ensureGlobalUnsortedRoom(currentRooms)
-      const globalRoom = findGlobalUnsortedRoom(ensured)!
-      resolvedRoomId = globalRoom.id
-      resolvedRoomName = 'Unsorted'
-      const uncat = findUncategorizedDecision(globalRoom)!
-      resolvedDecisionId = uncat.id
-      resolvedDecisionName = 'Uncategorized'
-    } else {
-      const targetRoom = currentRooms.find((r) => r.id === resolvedRoomId)
-      resolvedRoomName = targetRoom?.name || 'Unknown'
-      if (!resolvedDecisionId && targetRoom) {
-        const withUncat = ensureUncategorizedDecision(targetRoom)
-        const uncat = findUncategorizedDecision(withUncat)!
-        resolvedDecisionId = uncat.id
-        resolvedDecisionName = 'Uncategorized'
-      } else if (resolvedDecisionId && targetRoom) {
-        const dec = targetRoom.decisions.find((d) => d.id === resolvedDecisionId)
-        resolvedDecisionName = dec?.title || ''
-      }
-    }
-
-    setFdState((prev) => {
-      const payload = prev as FinishDecisionsPayloadV3
-      let updatedRooms = payload.rooms
-
-      if (!selectedRoomId) {
-        updatedRooms = ensureGlobalUnsortedRoom(updatedRooms)
-      }
-
-      const newRooms = updatedRooms.map((r) => {
-        if (r.id !== resolvedRoomId) return r
-        let room = r
-        if (!selectedDecisionId) {
-          room = ensureUncategorizedDecision(room)
-        }
-        return {
-          ...room,
-          decisions: room.decisions.map((d) =>
-            d.id === resolvedDecisionId
-              ? { ...d, options: [...d.options, newOption], updatedAt: new Date().toISOString() }
-              : d
-          ),
-          updatedAt: new Date().toISOString(),
-        }
+      setFdState((prev) => {
+        const payload = prev as FinishDecisionsPayloadV4
+        const newSelections = payload.selections.map((s) =>
+          s.id === resolvedSelectionId
+            ? { ...s, options: [...s.options, newOption], updatedAt: new Date().toISOString() }
+            : s
+        )
+        return { ...payload, selections: newSelections }
       })
-      return { ...payload, rooms: newRooms }
-    })
+    } else {
+      // Create a new selection with the captured content's name
+      const ts = new Date().toISOString()
+      const newSelId = genId('sel')
+      resolvedSelectionId = newSelId
+      resolvedSelectionName = name.trim() || capturedContent.title || 'New Selection'
 
-    // Persist the resolved room + decision for next visit
-    if (resolvedRoomId) {
-      try { localStorage.setItem(LAST_ROOM_KEY, resolvedRoomId) } catch { /* ignore */ }
+      const newSelection: SelectionV4 = {
+        id: newSelId,
+        title: resolvedSelectionName,
+        status: 'deciding',
+        notes: '',
+        options: [newOption],
+        tags: [],
+        createdAt: ts,
+        updatedAt: ts,
+      }
+
+      setFdState((prev) => {
+        const payload = prev as FinishDecisionsPayloadV4
+        return { ...payload, selections: [...payload.selections, newSelection] }
+      })
     }
-    if (resolvedDecisionId) {
-      try { localStorage.setItem(LAST_DECISION_KEY, resolvedDecisionId) } catch { /* ignore */ }
+
+    // Persist the resolved selection for next visit
+    if (resolvedSelectionId) {
+      try { localStorage.setItem(LAST_SELECTION_KEY, resolvedSelectionId) } catch { /* ignore */ }
     }
 
     setSavedDestination('finish_decisions')
-    setSavedTargetRoom(resolvedRoomName)
-    setSavedTargetRoomId(resolvedRoomId || '')
-    setSavedTargetDecision(resolvedDecisionName)
-    setSavedDecisionId(resolvedDecisionId || '')
+    setSavedSelectionName(resolvedSelectionName)
+    setSavedSelectionId(resolvedSelectionId || '')
     setSaved(true)
   }
 
@@ -421,6 +362,30 @@ export function SaveFromWebContent() {
     setSelectedBoardId(id)
     setNewBoardName('')
     setIsCreatingBoard(false)
+  }
+
+  const handleCreateSelection = () => {
+    const trimmed = newSelectionName.trim()
+    if (!trimmed) return
+    const ts = new Date().toISOString()
+    const id = genId('sel')
+    const newSelection: SelectionV4 = {
+      id,
+      title: trimmed,
+      status: 'deciding',
+      notes: '',
+      options: [],
+      tags: [],
+      createdAt: ts,
+      updatedAt: ts,
+    }
+    setFdState((prev) => {
+      const payload = prev as FinishDecisionsPayloadV4
+      return { ...payload, selections: [...payload.selections, newSelection] }
+    })
+    setSelectedSelectionId(id)
+    setNewSelectionName('')
+    setIsCreatingSelection(false)
   }
 
   // Extract hostname for display
@@ -522,7 +487,7 @@ export function SaveFromWebContent() {
           ) : (
             <>
               <p className="text-cream/60 text-sm mb-6">
-                Added to <span className="text-cream/80">{savedTargetDecision}</span> in <span className="text-cream/80">{savedTargetRoom}</span>
+                Saved to <span className="text-cream/80">{savedSelectionName}</span>
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <button
@@ -539,27 +504,16 @@ export function SaveFromWebContent() {
                 >
                   Save another
                 </button>
-                {savedTargetRoomId && (
-                  <button
-                    type="button"
-                    data-testid="savefromweb-success-open-room"
-                    onClick={() => router.push(`/app/tools/finish-decisions/room/${savedTargetRoomId}`)}
-                    className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
-                  >
-                    View in {savedTargetRoom}
-                  </button>
-                )}
-                {savedDecisionId && (
+                {savedSelectionId ? (
                   <button
                     type="button"
                     data-testid="savefromweb-success-open-selection"
-                    onClick={() => router.push(`/app/tools/finish-decisions/decision/${savedDecisionId}`)}
-                    className="px-4 py-2 text-sm text-sandstone hover:text-sandstone-light border border-sandstone/30 rounded-lg transition-colors"
+                    onClick={() => router.push(`/app/tools/finish-decisions/decision/${savedSelectionId}`)}
+                    className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
                   >
-                    View decision
+                    View Selection
                   </button>
-                )}
-                {!savedTargetRoomId && !savedDecisionId && (
+                ) : (
                   <button
                     type="button"
                     onClick={() => router.push('/app/tools/finish-decisions')}
@@ -814,10 +768,9 @@ export function SaveFromWebContent() {
                   value={projectIdOverride || ''}
                   onChange={(e) => {
                     setSelectedProjectId(e.target.value)
-                    // Reset board/room selection when switching projects
+                    // Reset board/selection when switching projects
                     setSelectedBoardId(null)
-                    setSelectedRoomId(null)
-                    setSelectedDecisionId(null)
+                    setSelectedSelectionId(null)
                   }}
                   className="w-full px-3 py-2.5 bg-basalt-50 border border-cream/20 text-cream text-sm rounded-lg focus:outline-none focus:border-sandstone"
                 >
@@ -838,8 +791,7 @@ export function SaveFromWebContent() {
                   type="button"
                   onClick={() => {
                     setDestination('mood_boards')
-                    setSelectedRoomId(null)
-                    setSelectedDecisionId(null)
+                    setSelectedSelectionId(null)
                   }}
                   className={`p-4 rounded-lg border-2 text-left transition-all ${
                     destination === 'mood_boards'
@@ -870,7 +822,7 @@ export function SaveFromWebContent() {
                     Selections
                   </p>
                   <p className="text-[11px] text-cream/40 mt-0.5">
-                    Compare options per room
+                    Compare options for a decision
                   </p>
                 </button>
               </div>
@@ -955,117 +907,113 @@ export function SaveFromWebContent() {
               </div>
             )}
 
-            {/* ── Selections: Room + Selection picker ── */}
+            {/* ── Selections: flat selection picker ── */}
             {destination === 'finish_decisions' && (
-              <>
-                {fdRooms.filter((r) => !isGlobalUnsorted(r)).length === 0 ? (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs text-cream/50">
+                    Selection <span className="text-cream/30">(optional — skipping creates a new one)</span>
+                  </label>
+                  {selectedSelectionId && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSelectionId(null)}
+                      className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                {fdSelections.length === 0 && !isCreatingSelection ? (
                   <div className="bg-basalt-50 rounded-lg p-4 text-center">
                     <p className="text-cream/50 text-sm mb-1">
-                      No rooms yet? No problem.
+                      No selections yet? No problem.
                     </p>
-                    <p className="text-[11px] text-cream/30">
-                      This idea will go to your Unsorted bucket. You can move it to a room later.
+                    <p className="text-[11px] text-cream/30 mb-3">
+                      A new selection will be created automatically, or you can create one now.
                     </p>
+                    <button
+                      type="button"
+                      onClick={() => setIsCreatingSelection(true)}
+                      className="text-xs text-sandstone hover:text-sandstone-light transition-colors"
+                    >
+                      + Create a selection
+                    </button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {/* Room tiles */}
-                    <div>
-                      <label className="block text-xs text-cream/50 mb-2">
-                        Room <span className="text-cream/30">(optional — skipping saves to Unsorted)</span>
-                      </label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {fdRooms.filter((r) => !isGlobalUnsorted(r)).map((room) => {
-                          const emoji = ROOM_EMOJI_MAP[room.type as RoomTypeV3] || '\u270F\uFE0F'
-                          const isActive = selectedRoomId === room.id
-                          return (
-                            <button
-                              key={room.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedRoomId(room.id)
-                                setSelectedDecisionId(null)
-                              }}
-                              className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
-                                isActive
-                                  ? 'border-sandstone bg-sandstone/10'
-                                  : 'border-cream/10 hover:border-cream/25 bg-basalt-50'
-                              }`}
-                            >
-                              <span className="text-base">{emoji}</span>
-                              <div className="min-w-0">
-                                <p className={`text-sm font-medium truncate ${isActive ? 'text-sandstone' : 'text-cream'}`}>
-                                  {room.name}
-                                </p>
-                                <p className="text-[10px] text-cream/30">
-                                  {room.decisions.filter((d) => d.systemKey !== 'uncategorized').length} decisions
-                                </p>
-                              </div>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Selection tiles */}
-                    {selectedRoom && selectedRoom.decisions.filter((d) => d.systemKey !== 'uncategorized').length > 0 && (
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <label className="block text-xs text-cream/50">
-                            Selection <span className="text-cream/30">(optional)</span>
-                          </label>
-                          {selectedDecisionId && (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedDecisionId(null)}
-                              className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
-                            >
-                              Clear
-                            </button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                          {selectedRoom.decisions
-                            .filter((d) => d.systemKey !== 'uncategorized')
-                            .map((decision) => {
-                              const isActive = selectedDecisionId === decision.id
-                              return (
-                                <button
-                                  key={decision.id}
-                                  type="button"
-                                  onClick={() => setSelectedDecisionId(isActive ? null : decision.id)}
-                                  className={`px-3 py-2 rounded-lg border-2 text-left transition-all ${
-                                    isActive
-                                      ? 'border-sandstone bg-sandstone/10'
-                                      : 'border-cream/10 hover:border-cream/25 bg-basalt-50'
-                                  }`}
-                                >
-                                  <p className={`text-sm font-medium truncate ${isActive ? 'text-sandstone' : 'text-cream'}`}>
-                                    {decision.title}
-                                  </p>
-                                  <p className="text-[10px] text-cream/30">
-                                    {decision.options.length} ideas
-                                  </p>
-                                </button>
-                              )
-                            })}
-                        </div>
-                        {!selectedDecisionId && (
-                          <p className="text-[11px] text-cream/30 mt-1.5">
-                            No decision? Idea will go to Unsorted in this room. You can sort it later.
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {fdSelections.map((selection) => {
+                      const isActive = selectedSelectionId === selection.id
+                      return (
+                        <button
+                          key={selection.id}
+                          type="button"
+                          onClick={() => setSelectedSelectionId(isActive ? null : selection.id)}
+                          className={`px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
+                            isActive
+                              ? 'border-sandstone bg-sandstone/10'
+                              : 'border-cream/10 hover:border-cream/25 bg-basalt-50'
+                          }`}
+                        >
+                          <p className={`text-sm font-medium truncate ${isActive ? 'text-sandstone' : 'text-cream'}`}>
+                            {selection.title}
                           </p>
-                        )}
-                      </div>
-                    )}
+                          <p className="text-[10px] text-cream/30">
+                            {selection.options.length} idea{selection.options.length !== 1 ? 's' : ''}
+                            {selection.tags.length > 0 && ` · ${selection.tags[0]}`}
+                          </p>
+                        </button>
+                      )
+                    })}
 
-                    {selectedRoom && selectedRoom.decisions.filter((d) => d.systemKey !== 'uncategorized').length === 0 && (
-                      <p className="text-[11px] text-cream/30">
-                        This room has no decisions yet. Idea will go to Uncategorized.
-                      </p>
+                    {/* New Selection */}
+                    {isCreatingSelection ? (
+                      <div className="px-3 py-2.5 rounded-lg border-2 border-sandstone/30 bg-basalt-50">
+                        <input
+                          type="text"
+                          value={newSelectionName}
+                          onChange={(e) => setNewSelectionName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleCreateSelection()
+                            if (e.key === 'Escape') {
+                              setIsCreatingSelection(false)
+                              setNewSelectionName('')
+                            }
+                          }}
+                          placeholder="Selection name..."
+                          autoFocus
+                          className="w-full px-2 py-1 bg-basalt border border-cream/20 text-cream text-sm rounded focus:outline-none focus:border-sandstone mb-1"
+                        />
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            onClick={handleCreateSelection}
+                            disabled={!newSelectionName.trim()}
+                            className="flex-1 text-[11px] px-2 py-1 bg-sandstone text-basalt rounded font-medium disabled:opacity-30"
+                          >
+                            Create
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setIsCreatingSelection(false); setNewSelectionName('') }}
+                            className="text-[11px] px-2 py-1 text-cream/50"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsCreatingSelection(true)}
+                        className="px-3 py-2.5 rounded-lg border-2 border-dashed border-cream/15 hover:border-sandstone/30 text-left transition-colors"
+                      >
+                        <p className="text-sm text-cream/50">+ New Selection</p>
+                      </button>
                     )}
                   </div>
                 )}
-              </>
+              </div>
             )}
 
             {/* Action buttons */}
@@ -1077,7 +1025,7 @@ export function SaveFromWebContent() {
                   setSelectedUrls(new Set())
                   setName('')
                   setNotes('')
-                  setSelectedDecisionId(null)
+                  setSelectedSelectionId(null)
                   setDestination(fromParam === 'mood-boards' ? 'mood_boards' : null)
                 }}
                 className="px-4 py-2 text-sm text-cream/60 hover:text-cream transition-colors"

@@ -5,8 +5,8 @@ import { toPublicItem } from '@/app/app/tools/punchlist/types'
 import type { PunchlistItem } from '@/app/app/tools/punchlist/types'
 import { toPublicBoard } from '@/data/mood-boards'
 import type { Board } from '@/data/mood-boards'
-import { toPublicRoom } from '@/data/finish-decisions'
-import type { RoomV3 } from '@/data/finish-decisions'
+import { toPublicRoom, toPublicSelection } from '@/data/finish-decisions'
+import type { RoomV3, SelectionV4 } from '@/data/finish-decisions'
 
 const SUPPORTED_TOOLS = new Set(['punchlist', 'mood_boards', 'finish_decisions'])
 
@@ -165,7 +165,24 @@ export async function buildSanitizedShareResponse(resolution: ShareResolution) {
         grouped.get(key)!.push(c)
       }
 
-      // Inject into finish_decisions rooms and decisions
+      // Inject into finish_decisions V4 selections
+      if (toolKey === 'finish_decisions' && Array.isArray(payload?.selections)) {
+        for (const s of payload.selections as SelectionV4[]) {
+          const sComments = grouped.get(`decision:${s.id}`)
+          if (sComments) {
+            (s as any).comments = sComments.map((c) => ({
+              id: '',
+              text: c.text,
+              authorName: c.authorName,
+              authorEmail: c.authorEmail,
+              createdAt: c.createdAt.toISOString(),
+              ...(c.refEntityId ? { refOptionId: c.refEntityId, refOptionLabel: c.refEntityLabel ?? undefined } : {}),
+            }))
+          }
+        }
+      }
+
+      // Inject into finish_decisions V3 rooms and decisions (legacy)
       if (toolKey === 'finish_decisions' && Array.isArray(payload?.rooms)) {
         for (const room of payload.rooms as RoomV3[]) {
           const roomComments = grouped.get(`room:${room.id}`)
@@ -256,7 +273,23 @@ export async function buildSanitizedShareResponse(resolution: ShareResolution) {
   }
 
   // Decision Tracker: allowlist sanitization — strip PII, respect token flags + scope
-  if (toolKey === 'finish_decisions' && Array.isArray(payload?.rooms)) {
+  if (toolKey === 'finish_decisions' && Array.isArray(payload?.selections)) {
+    // V4: flat selections
+    let selections = (payload.selections as SelectionV4[])
+
+    const fdScope = settings?.scope as { mode?: string; selectionIds?: string[]; roomIds?: string[] } | undefined
+    if (fdScope?.mode === 'selected' && Array.isArray(fdScope.selectionIds) && fdScope.selectionIds.length > 0) {
+      selections = selections.filter((s) => fdScope.selectionIds!.includes(s.id))
+    }
+
+    payload = {
+      version: 4,
+      selections: selections.map((s) =>
+        toPublicSelection(s, { includeNotes, includeComments, includePhotos })
+      ),
+    }
+  } else if (toolKey === 'finish_decisions' && Array.isArray(payload?.rooms)) {
+    // V3 legacy: rooms-based
     let rooms = (payload.rooms as RoomV3[]).filter(
       (r) => r.systemKey !== 'global_uncategorized'
     )

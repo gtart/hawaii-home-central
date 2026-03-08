@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useToolState } from '@/hooks/useToolState'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
-import type { FinishDecisionsPayloadV3, RoomTypeV3 } from '@/data/finish-decisions'
+import type { FinishDecisionsPayloadV4, RoomTypeV3 } from '@/data/finish-decisions'
 import { ROOM_EMOJI_MAP, ROOM_TYPE_OPTIONS_V3 } from '@/data/finish-decisions'
 import { cn } from '@/lib/utils'
 
@@ -52,22 +52,19 @@ export function PackDetail({
   const searchParams = useSearchParams()
   const kit = kits.find((k) => k.id === packId)
 
-  // Context params — where user came from
   const returnTo = searchParams.get('returnTo')
-  const contextRoomId = searchParams.get('roomId')
-  const contextRoomName = searchParams.get('roomName')
 
-  const { state, setState, isLoaded } = useToolState<FinishDecisionsPayloadV3 | any>({
+  const { state, setState, isLoaded } = useToolState<FinishDecisionsPayloadV4 | any>({
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2',
-    defaultValue: { version: 3, rooms: [] },
+    defaultValue: { version: 4, selections: [] },
   })
 
   const [toast, setToast] = useState<{ text: string } | null>(null)
   const [expandedDecision, setExpandedDecision] = useState<string | null>(null)
 
-  const ownedKitIds: string[] = isLoaded && state.version === 3
-    ? (state as FinishDecisionsPayloadV3).ownedKitIds || []
+  const ownedKitIds: string[] = isLoaded && state.version >= 4
+    ? (state as FinishDecisionsPayloadV4).ownedKitIds || []
     : []
 
   const isOwned = kit ? ownedKitIds.includes(kit.id) : false
@@ -75,10 +72,9 @@ export function PackDetail({
   function acquireKit() {
     if (!kit) return
     setState((prev: any) => {
-      const p = prev as FinishDecisionsPayloadV3
-      const existing = p.ownedKitIds || []
+      const existing = prev.ownedKitIds || []
       if (existing.includes(kit.id)) return prev
-      return { ...p, ownedKitIds: [...existing, kit.id] }
+      return { ...prev, ownedKitIds: [...existing, kit.id] }
     })
     setToast({ text: `"${kit.label}" added to My Packs!` })
     setTimeout(() => setToast(null), 6000)
@@ -86,11 +82,7 @@ export function PackDetail({
 
   function handleApplyToBoard() {
     if (!kit) return
-    if (returnTo && contextRoomId) {
-      router.push(`${returnTo}?openPacks=1&roomId=${contextRoomId}&highlightPackId=${kit.id}`)
-    } else {
-      router.push('/app/tools/finish-decisions?openPacks=1' + (kit ? `&highlightPackId=${kit.id}` : ''))
-    }
+    router.push('/app/tools/finish-decisions?openPacks=1' + `&highlightPackId=${kit.id}`)
   }
 
   if (!kit) {
@@ -117,7 +109,7 @@ export function PackDetail({
       <div className="max-w-3xl mx-auto">
         {/* Breadcrumb */}
         <Link
-          href={returnTo ? `/app/packs?returnTo=${encodeURIComponent(returnTo)}&roomId=${contextRoomId || ''}&roomName=${encodeURIComponent(contextRoomName || '')}` : '/app/packs'}
+          href={returnTo ? `/app/packs?returnTo=${encodeURIComponent(returnTo)}` : '/app/packs'}
           className="text-sm text-cream/40 hover:text-cream/60 transition-colors mb-6 inline-block"
         >
           &larr; All Decision Packs
@@ -153,7 +145,7 @@ export function PackDetail({
                 </p>
               )}
 
-              {/* Room type tags */}
+              {/* Category tags */}
               {kit.roomTypes.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   <span className="text-[11px] text-cream/30 self-center mr-1">
@@ -177,7 +169,7 @@ export function PackDetail({
                     {kit.decisions.length}
                   </span>
                   <span className="text-cream/40 ml-1">
-                    decision{kit.decisions.length !== 1 ? 's' : ''}
+                    selection{kit.decisions.length !== 1 ? 's' : ''}
                   </span>
                 </div>
                 <div>
@@ -198,7 +190,7 @@ export function PackDetail({
                     onClick={handleApplyToBoard}
                     className="px-6 py-2.5 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors text-sm text-center"
                   >
-                    {contextRoomName ? `Apply to ${contextRoomName}` : 'Apply to a board'}
+                    Apply to board
                   </button>
                   <span className="inline-flex items-center gap-1 text-[11px] text-green-400/70">
                     <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -288,7 +280,7 @@ export function PackDetail({
               onClick={handleApplyToBoard}
               className="inline-flex items-center gap-2 px-6 py-3 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors"
             >
-              {contextRoomName ? `Apply to ${contextRoomName}` : 'Apply to your boards'}
+              Apply to your board
               <svg
                 className="w-4 h-4"
                 viewBox="0 0 24 24"
@@ -315,7 +307,7 @@ export function PackDetail({
         </div>
       </div>
 
-      {/* Toast with contextual CTA */}
+      {/* Toast */}
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg px-4 py-3 flex items-center gap-3 max-w-sm">
           <svg className="w-4 h-4 text-green-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -330,7 +322,7 @@ export function PackDetail({
             }}
             className="text-xs text-sandstone font-medium hover:text-sandstone-light transition-colors shrink-0"
           >
-            {contextRoomName ? `Apply to ${contextRoomName}` : 'Apply'}
+            Apply
           </button>
         </div>
       )}

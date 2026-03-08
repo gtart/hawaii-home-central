@@ -6,19 +6,16 @@ import { Badge } from '@/components/ui/Badge'
 import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
 import {
   STATUS_CONFIG_V3,
-  type RoomV3,
-  type DecisionV3,
+  type SelectionV4,
 } from '@/data/finish-decisions'
 import Link from 'next/link'
 import { buildDecisionHref } from '../lib/routing'
 
-interface DecisionWithRoom extends DecisionV3 {
-  roomId: string
-  roomName: string
-  roomType: string
+interface SelectionWithTags extends SelectionV4 {
+  primaryTag: string
 }
 
-export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
+export function MilestoneView({ selections }: { selections: SelectionV4[] }) {
   const router = useRouter()
   const config = getHeuristicsConfig()
   const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(
@@ -37,23 +34,19 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
     })
   }
 
-  // Flatten all decisions with room context
-  const allDecisions: DecisionWithRoom[] = useMemo(
+  // Add tag context to selections
+  const allSelections: SelectionWithTags[] = useMemo(
     () =>
-      rooms.flatMap((room) =>
-        room.decisions.map((d) => ({
-          ...d,
-          roomId: room.id,
-          roomName: room.name,
-          roomType: room.type,
-        }))
-      ),
-    [rooms]
+      selections.map((s) => ({
+        ...s,
+        primaryTag: s.tags[0] || '',
+      })),
+    [selections]
   )
 
-  // Group decisions by milestone
+  // Group selections by milestone
   const milestoneGroups = useMemo(() => {
-    const groups = new Map<string, DecisionWithRoom[]>()
+    const groups = new Map<string, SelectionWithTags[]>()
 
     // Initialize groups for each milestone
     for (const milestone of config.milestones) {
@@ -61,32 +54,33 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
     }
     groups.set('other', [])
 
-    for (const decision of allDecisions) {
-      const selectedOption = decision.options.find((opt) => opt.isSelected)
+    for (const selection of allSelections) {
+      const selectedOption = selection.options.find((opt) => opt.isSelected)
+      const hintType = (selection.tags[0]?.toLowerCase().replace(/\s+/g, '_') || 'other') as any
       const result = matchDecision(
         config,
-        decision.title,
-        decision.roomType,
+        selection.title,
+        hintType,
         selectedOption?.name
       )
 
       if (result.milestones.length === 0) {
-        groups.get('other')!.push(decision)
+        groups.get('other')!.push(selection)
       } else {
         // Add to the first matched milestone (primary timing)
         const primaryMilestone = result.milestones[0]
-        groups.get(primaryMilestone.id)!.push(decision)
+        groups.get(primaryMilestone.id)!.push(selection)
       }
     }
 
     return groups
-  }, [allDecisions, config])
+  }, [allSelections, config])
 
   return (
     <div className="space-y-3">
       {config.milestones.map((milestone) => {
-        const decisions = milestoneGroups.get(milestone.id) || []
-        if (decisions.length === 0) return null
+        const milestoneSelections = milestoneGroups.get(milestone.id) || []
+        if (milestoneSelections.length === 0) return null
 
         const isExpanded = expandedMilestones.has(milestone.id)
 
@@ -101,7 +95,7 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
               </span>
               <h3 className="text-cream font-medium flex-1">{milestone.label}</h3>
               <span className="text-xs text-cream/50">
-                {decisions.length} decision{decisions.length !== 1 ? 's' : ''}
+                {milestoneSelections.length} selection{milestoneSelections.length !== 1 ? 's' : ''}
               </span>
             </div>
 
@@ -114,7 +108,7 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
                         Selection
                       </th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide">
-                        Room
+                        Tags
                       </th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide">
                         Status
@@ -125,23 +119,25 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {decisions.map((d) => {
-                      const selectedOption = d.options.find((opt) => opt.isSelected)
+                    {milestoneSelections.map((s) => {
+                      const selectedOption = s.options.find((opt) => opt.isSelected)
                       return (
                         <tr
-                          key={`${d.roomId}-${d.id}`}
+                          key={s.id}
                           className="border-b border-cream/5 hover:bg-basalt/50 cursor-pointer transition-colors"
                           onClick={() =>
-                            router.push(buildDecisionHref({ decisionId: d.id }))
+                            router.push(buildDecisionHref({ decisionId: s.id }))
                           }
                         >
                           <td className="px-4 py-2.5 text-sm text-cream font-medium">
-                            {d.title}
+                            {s.title}
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-cream/60">{d.roomName}</td>
+                          <td className="px-4 py-2.5 text-sm text-cream/60">
+                            {s.tags.length > 0 ? s.tags.join(', ') : '—'}
+                          </td>
                           <td className="px-4 py-2.5">
-                            <Badge variant={STATUS_CONFIG_V3[d.status].variant}>
-                              {STATUS_CONFIG_V3[d.status].label}
+                            <Badge variant={STATUS_CONFIG_V3[s.status].variant}>
+                              {STATUS_CONFIG_V3[s.status].label}
                             </Badge>
                           </td>
                           <td className="px-4 py-2.5 hidden md:table-cell">
@@ -164,10 +160,10 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
         )
       })}
 
-      {/* Other decisions (no milestone match) */}
+      {/* Other selections (no milestone match) */}
       {(() => {
-        const otherDecisions = milestoneGroups.get('other') || []
-        if (otherDecisions.length === 0) return null
+        const otherSelections = milestoneGroups.get('other') || []
+        if (otherSelections.length === 0) return null
 
         const isExpanded = expandedMilestones.has('other')
 
@@ -182,7 +178,7 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
               </span>
               <h3 className="text-cream/60 font-medium flex-1">Other</h3>
               <span className="text-xs text-cream/40">
-                {otherDecisions.length} selection{otherDecisions.length !== 1 ? 's' : ''}
+                {otherSelections.length} selection{otherSelections.length !== 1 ? 's' : ''}
               </span>
             </div>
 
@@ -195,7 +191,7 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
                         Selection
                       </th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide">
-                        Room
+                        Tags
                       </th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide">
                         Status
@@ -206,23 +202,25 @@ export function MilestoneView({ rooms }: { rooms: RoomV3[] }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {otherDecisions.map((d) => {
-                      const selectedOption = d.options.find((opt) => opt.isSelected)
+                    {otherSelections.map((s) => {
+                      const selectedOption = s.options.find((opt) => opt.isSelected)
                       return (
                         <tr
-                          key={`${d.roomId}-${d.id}`}
+                          key={s.id}
                           className="border-b border-cream/5 hover:bg-basalt/50 cursor-pointer transition-colors"
                           onClick={() =>
-                            router.push(buildDecisionHref({ decisionId: d.id }))
+                            router.push(buildDecisionHref({ decisionId: s.id }))
                           }
                         >
                           <td className="px-4 py-2.5 text-sm text-cream font-medium">
-                            {d.title}
+                            {s.title}
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-cream/60">{d.roomName}</td>
+                          <td className="px-4 py-2.5 text-sm text-cream/60">
+                            {s.tags.length > 0 ? s.tags.join(', ') : '—'}
+                          </td>
                           <td className="px-4 py-2.5">
-                            <Badge variant={STATUS_CONFIG_V3[d.status].variant}>
-                              {STATUS_CONFIG_V3[d.status].label}
+                            <Badge variant={STATUS_CONFIG_V3[s.status].variant}>
+                              {STATUS_CONFIG_V3[s.status].label}
                             </Badge>
                           </td>
                           <td className="px-4 py-2.5 hidden md:table-cell">

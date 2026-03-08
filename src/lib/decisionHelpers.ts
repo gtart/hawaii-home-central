@@ -1,237 +1,114 @@
-import type { DecisionV3, OptionV3, RoomV3, StatusV3 } from '@/data/finish-decisions'
+import type { SelectionV4 } from '@/data/finish-decisions'
 
 // ============================================================================
-// Room-level Uncategorized (per-room unsorted ideas)
+// Tag helpers (V4 — flat selections with tags)
 // ============================================================================
 
-/**
- * Find the Uncategorized system selection in a room, if it exists.
- */
-export function findUncategorizedDecision(room: RoomV3): DecisionV3 | undefined {
-  return room.decisions.find((d) => d.systemKey === 'uncategorized')
+/** Add a tag to a selection (no-op if already present). */
+export function addTag(selection: SelectionV4, tag: string): SelectionV4 {
+  if (selection.tags.includes(tag)) return selection
+  return { ...selection, tags: [...selection.tags, tag], updatedAt: new Date().toISOString() }
 }
 
-/**
- * Returns true if this decision is a system-managed "Uncategorized" selection.
- */
-export function isUncategorized(decision: DecisionV3): boolean {
-  return decision.systemKey === 'uncategorized'
+/** Remove a tag from a selection. */
+export function removeTag(selection: SelectionV4, tag: string): SelectionV4 {
+  if (!selection.tags.includes(tag)) return selection
+  return { ...selection, tags: selection.tags.filter((t) => t !== tag), updatedAt: new Date().toISOString() }
 }
 
-/**
- * Create a new Uncategorized decision object (does NOT insert it into a room).
- */
-export function createUncategorizedDecision(): DecisionV3 {
-  const now = new Date().toISOString()
-  return {
-    id: crypto.randomUUID(),
-    title: 'Uncategorized',
-    status: 'deciding' as StatusV3,
-    notes: '',
-    options: [],
-    systemKey: 'uncategorized',
-    createdAt: now,
-    updatedAt: now,
+/** Get all unique tags across selections. */
+export function getUniqueTags(selections: SelectionV4[]): string[] {
+  const tags = new Set<string>()
+  for (const s of selections) {
+    for (const t of s.tags) tags.add(t)
   }
+  return Array.from(tags).sort()
 }
 
-/**
- * Ensure a room has an Uncategorized decision. Returns the room unchanged if
- * it already has one, or a new room object with Uncategorized prepended.
- */
-export function ensureUncategorizedDecision(room: RoomV3): RoomV3 {
-  const existing = findUncategorizedDecision(room)
-  if (existing) return room
-  return {
-    ...room,
-    decisions: [createUncategorizedDecision(), ...room.decisions],
-    updatedAt: new Date().toISOString(),
+/** Filter selections by tag (returns all selections that have the tag). */
+export function filterByTag(selections: SelectionV4[], tag: string): SelectionV4[] {
+  return selections.filter((s) => s.tags.includes(tag))
+}
+
+/** Filter selections by multiple tags (returns selections that have ANY of the tags). */
+export function filterByTags(selections: SelectionV4[], tags: string[]): SelectionV4[] {
+  if (tags.length === 0) return selections
+  return selections.filter((s) => tags.some((t) => s.tags.includes(t)))
+}
+
+/** Group selections by a specific tag dimension. Returns a Map of tag → selections. */
+export function groupByTag(selections: SelectionV4[]): Map<string, SelectionV4[]> {
+  const groups = new Map<string, SelectionV4[]>()
+  const untagged: SelectionV4[] = []
+
+  for (const s of selections) {
+    if (s.tags.length === 0) {
+      untagged.push(s)
+    } else {
+      for (const t of s.tags) {
+        if (!groups.has(t)) groups.set(t, [])
+        groups.get(t)!.push(s)
+      }
+    }
   }
-}
 
-// ============================================================================
-// Global Unsorted Room (cross-room dump bucket)
-// ============================================================================
-
-/**
- * Find the Global Unsorted room in the rooms array.
- */
-export function findGlobalUnsortedRoom(rooms: RoomV3[]): RoomV3 | undefined {
-  return rooms.find((r) => r.systemKey === 'global_uncategorized')
-}
-
-/**
- * Returns true if this room is the global unsorted bucket.
- */
-export function isGlobalUnsorted(room: RoomV3): boolean {
-  return room.systemKey === 'global_uncategorized'
-}
-
-/**
- * Create a new Global Unsorted room with an empty Uncategorized decision inside.
- */
-export function createGlobalUnsortedRoom(): RoomV3 {
-  const now = new Date().toISOString()
-  return {
-    id: crypto.randomUUID(),
-    type: 'other',
-    name: 'Unsorted',
-    systemKey: 'global_uncategorized',
-    decisions: [createUncategorizedDecision()],
-    createdAt: now,
-    updatedAt: now,
+  if (untagged.length > 0) {
+    groups.set('Untagged', untagged)
   }
-}
 
-/**
- * Ensure the rooms array contains a Global Unsorted room.
- * Returns the array unchanged if one already exists, otherwise prepends it.
- */
-export function ensureGlobalUnsortedRoom(rooms: RoomV3[]): RoomV3[] {
-  if (findGlobalUnsortedRoom(rooms)) return rooms
-  return [createGlobalUnsortedRoom(), ...rooms]
-}
-
-/**
- * Get the total number of unsorted ideas in the Global Unsorted room.
- */
-export function getGlobalUnsortedCount(rooms: RoomV3[]): number {
-  const room = findGlobalUnsortedRoom(rooms)
-  if (!room) return 0
-  const uncat = findUncategorizedDecision(room)
-  return uncat ? uncat.options.length : 0
+  return groups
 }
 
 // ============================================================================
-// Cross-room move helper
+// Move helper (V4 — move an idea between selections)
 // ============================================================================
 
 /**
- * Move an option from one room/decision to another room/decision.
- * Pure function — returns a new rooms array.
- *
- * If targetDecisionId is null, the option goes to the target room's Uncategorized
- * decision (created if needed).
- *
- * If newSelectionTitle is provided and targetDecisionId is null, a new decision
- * with that title is created in the target room instead.
+ * Move an idea from one selection to another.
+ * If targetSelectionId is null and newSelectionTitle is provided, creates a new selection.
  */
-export function moveOption(
-  rooms: RoomV3[],
-  sourceRoomId: string,
-  sourceDecisionId: string,
+export function moveIdea(
+  selections: SelectionV4[],
+  sourceSelectionId: string,
   optionId: string,
-  targetRoomId: string,
-  targetDecisionId: string | null,
+  targetSelectionId: string | null,
   newSelectionTitle?: string,
-): RoomV3[] {
+): SelectionV4[] {
   const now = new Date().toISOString()
 
   // Find the option to move
-  const sourceRoom = rooms.find((r) => r.id === sourceRoomId)
-  const sourceDecision = sourceRoom?.decisions.find((d) => d.id === sourceDecisionId)
-  const option = sourceDecision?.options.find((o) => o.id === optionId)
-  if (!option) return rooms
+  const sourceSelection = selections.find((s) => s.id === sourceSelectionId)
+  const option = sourceSelection?.options.find((o) => o.id === optionId)
+  if (!option) return selections
 
-  // Determine actual target decision ID
-  let resolvedTargetDecisionId = targetDecisionId
+  let resolvedTargetId = targetSelectionId
+  let result = [...selections]
 
-  return rooms.map((room) => {
-    // Handle source room: remove the option
-    if (room.id === sourceRoomId && room.id !== targetRoomId) {
-      return {
-        ...room,
-        decisions: room.decisions.map((d) =>
-          d.id === sourceDecisionId
-            ? { ...d, options: d.options.filter((o) => o.id !== optionId), updatedAt: now }
-            : d
-        ),
-        updatedAt: now,
-      }
+  // Create new selection if title provided and no target
+  if (newSelectionTitle && !resolvedTargetId) {
+    const newSelection: SelectionV4 = {
+      id: crypto.randomUUID(),
+      title: newSelectionTitle,
+      status: 'deciding',
+      notes: '',
+      options: [],
+      tags: sourceSelection?.tags ?? [],
+      createdAt: now,
+      updatedAt: now,
     }
+    result = [...result, newSelection]
+    resolvedTargetId = newSelection.id
+  }
 
-    // Handle target room: add the option
-    if (room.id === targetRoomId && room.id !== sourceRoomId) {
-      let updatedRoom = { ...room }
+  if (!resolvedTargetId || resolvedTargetId === sourceSelectionId) return selections
 
-      // Create new selection if title provided
-      if (newSelectionTitle && !resolvedTargetDecisionId) {
-        const newDecision: DecisionV3 = {
-          id: crypto.randomUUID(),
-          title: newSelectionTitle,
-          status: 'deciding' as StatusV3,
-          notes: '',
-          options: [],
-          createdAt: now,
-          updatedAt: now,
-        }
-        updatedRoom = { ...updatedRoom, decisions: [...updatedRoom.decisions, newDecision] }
-        resolvedTargetDecisionId = newDecision.id
-      }
-
-      // Fall back to uncategorized if no target decision
-      if (!resolvedTargetDecisionId) {
-        updatedRoom = ensureUncategorizedDecision(updatedRoom)
-        const uncat = findUncategorizedDecision(updatedRoom)!
-        resolvedTargetDecisionId = uncat.id
-      }
-
-      return {
-        ...updatedRoom,
-        decisions: updatedRoom.decisions.map((d) =>
-          d.id === resolvedTargetDecisionId
-            ? { ...d, options: [...d.options, { ...option, updatedAt: now }], updatedAt: now }
-            : d
-        ),
-        updatedAt: now,
-      }
+  return result.map((s) => {
+    if (s.id === sourceSelectionId) {
+      return { ...s, options: s.options.filter((o) => o.id !== optionId), updatedAt: now }
     }
-
-    // Handle same-room move (source === target)
-    if (room.id === sourceRoomId && room.id === targetRoomId) {
-      let updatedRoom = { ...room }
-
-      // Create new selection if title provided
-      if (newSelectionTitle && !resolvedTargetDecisionId) {
-        const newDecision: DecisionV3 = {
-          id: crypto.randomUUID(),
-          title: newSelectionTitle,
-          status: 'deciding' as StatusV3,
-          notes: '',
-          options: [],
-          createdAt: now,
-          updatedAt: now,
-        }
-        updatedRoom = { ...updatedRoom, decisions: [...updatedRoom.decisions, newDecision] }
-        resolvedTargetDecisionId = newDecision.id
-      }
-
-      // Fall back to uncategorized if no target decision
-      if (!resolvedTargetDecisionId) {
-        updatedRoom = ensureUncategorizedDecision(updatedRoom)
-        const uncat = findUncategorizedDecision(updatedRoom)!
-        resolvedTargetDecisionId = uncat.id
-      }
-
-      return {
-        ...updatedRoom,
-        decisions: updatedRoom.decisions.map((d) => {
-          if (d.id === sourceDecisionId && d.id === resolvedTargetDecisionId) {
-            // Same decision — no-op
-            return d
-          }
-          if (d.id === sourceDecisionId) {
-            return { ...d, options: d.options.filter((o) => o.id !== optionId), updatedAt: now }
-          }
-          if (d.id === resolvedTargetDecisionId) {
-            return { ...d, options: [...d.options, { ...option, updatedAt: now }], updatedAt: now }
-          }
-          return d
-        }),
-        updatedAt: now,
-      }
+    if (s.id === resolvedTargetId) {
+      return { ...s, options: [...s.options, { ...option, updatedAt: now }], updatedAt: now }
     }
-
-    return room
+    return s
   })
 }

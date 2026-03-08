@@ -691,6 +691,8 @@ function CreateShareLinkForm({
             roomLabels: scopes.filter((s) => selectedScopeIds.has(s.id)).map((s) => s.name),
             boardIds: Array.from(selectedScopeIds),
             boardLabels: scopes.filter((s) => selectedScopeIds.has(s.id)).map((s) => s.name),
+            selectionIds: Array.from(selectedScopeIds),
+            selectionLabels: scopes.filter((s) => selectedScopeIds.has(s.id)).map((s) => s.name),
           }
         : { mode: 'all' }
 
