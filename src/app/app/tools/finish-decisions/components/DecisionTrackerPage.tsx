@@ -17,6 +17,7 @@ import { getUniqueTags } from '@/lib/decisionHelpers'
 import { displayUrl } from '@/lib/finishDecisionsImages'
 import { OnboardingView } from './OnboardingView'
 import { IdeasPackModal } from './IdeasPackModal'
+import { TAG_SUGGESTIONS } from './TagInput'
 import { buildDecisionHref } from '../lib/routing'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
@@ -111,7 +112,8 @@ export function DecisionTrackerPage({
 
   // Bulk select state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [bulkMenuOpen, setBulkMenuOpen] = useState<'status' | 'location' | 'priority' | null>(null)
+  const [bulkMenuOpen, setBulkMenuOpen] = useState<'status' | 'location' | 'tags' | 'priority' | null>(null)
+  const [bulkTagInput, setBulkTagInput] = useState('')
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
   const [bulkToast, setBulkToast] = useState<string | null>(null)
 
@@ -978,6 +980,130 @@ export function DecisionTrackerPage({
                             {loc}
                           </button>
                         ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Tags */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => { setBulkMenuOpen(bulkMenuOpen === 'tags' ? null : 'tags'); setBulkTagInput('') }}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                >
+                  Tags
+                </button>
+                {bulkMenuOpen === 'tags' && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
+                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 min-w-[200px] max-h-64 flex flex-col">
+                      <div className="p-2 border-b border-cream/10">
+                        <input
+                          autoFocus
+                          placeholder="Type to add tag..."
+                          value={bulkTagInput}
+                          onChange={(e) => setBulkTagInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && bulkTagInput.trim()) {
+                              const tag = bulkTagInput.trim()
+                              const idSet = selectedIds
+                              const updated = selections.map((d) => {
+                                if (!idSet.has(d.id)) return d
+                                if (d.tags.includes(tag)) return d
+                                return { ...d, tags: [...d.tags, tag], updatedAt: new Date().toISOString() }
+                              })
+                              onUpdateSelections(updated)
+                              setBulkTagInput('')
+                            }
+                          }}
+                          className="w-full bg-basalt border border-cream/20 rounded px-2 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                        />
+                      </div>
+                      <div className="py-1 overflow-y-auto">
+                        {(() => {
+                          // Compute which tags are shared by ALL selected, SOME selected, or NONE
+                          const selectedSelections = selections.filter((d) => selectedIds.has(d.id))
+                          const tagCounts = new Map<string, number>()
+                          for (const s of selectedSelections) {
+                            for (const t of s.tags) {
+                              tagCounts.set(t, (tagCounts.get(t) || 0) + 1)
+                            }
+                          }
+                          const totalSelected = selectedSelections.length
+                          // Show all existing tags + suggestions, filtered by input
+                          const allAvailable = Array.from(new Set([...allTags, ...TAG_SUGGESTIONS]))
+                          const filtered = bulkTagInput.trim()
+                            ? allAvailable.filter((t) => t.toLowerCase().includes(bulkTagInput.toLowerCase()))
+                            : allAvailable
+                          const showCreate = bulkTagInput.trim().length > 0 && !filtered.some((t) => t.toLowerCase() === bulkTagInput.trim().toLowerCase())
+
+                          return (
+                            <>
+                              {filtered.slice(0, 15).map((tag) => {
+                                const count = tagCounts.get(tag) || 0
+                                const isAll = count === totalSelected
+                                const isSome = count > 0 && count < totalSelected
+                                return (
+                                  <button
+                                    key={tag}
+                                    type="button"
+                                    onClick={() => {
+                                      const idSet = selectedIds
+                                      if (isAll) {
+                                        // Remove from all selected
+                                        const updated = selections.map((d) => {
+                                          if (!idSet.has(d.id)) return d
+                                          return { ...d, tags: d.tags.filter((t) => t !== tag), updatedAt: new Date().toISOString() }
+                                        })
+                                        onUpdateSelections(updated)
+                                      } else {
+                                        // Add to all selected that don't have it
+                                        const updated = selections.map((d) => {
+                                          if (!idSet.has(d.id)) return d
+                                          if (d.tags.includes(tag)) return d
+                                          return { ...d, tags: [...d.tags, tag], updatedAt: new Date().toISOString() }
+                                        })
+                                        onUpdateSelections(updated)
+                                      }
+                                    }}
+                                    className="w-full text-left px-3 py-1.5 text-xs text-cream/70 hover:bg-cream/5 transition-colors flex items-center gap-2"
+                                  >
+                                    <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center text-[9px] shrink-0 ${
+                                      isAll ? 'bg-sandstone/80 border-sandstone text-basalt' : isSome ? 'border-sandstone/50 bg-sandstone/20 text-sandstone' : 'border-cream/20'
+                                    }`}>
+                                      {isAll ? '✓' : isSome ? '–' : ''}
+                                    </span>
+                                    {tag}
+                                  </button>
+                                )
+                              })}
+                              {showCreate && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const tag = bulkTagInput.trim()
+                                    const idSet = selectedIds
+                                    const updated = selections.map((d) => {
+                                      if (!idSet.has(d.id)) return d
+                                      if (d.tags.includes(tag)) return d
+                                      return { ...d, tags: [...d.tags, tag], updatedAt: new Date().toISOString() }
+                                    })
+                                    onUpdateSelections(updated)
+                                    setBulkTagInput('')
+                                  }}
+                                  className="w-full text-left px-3 py-1.5 text-xs text-cream/50 hover:bg-cream/5 transition-colors border-t border-cream/10"
+                                >
+                                  Create &ldquo;{bulkTagInput.trim()}&rdquo;
+                                </button>
+                              )}
+                              {filtered.length === 0 && !showCreate && (
+                                <div className="px-3 py-2 text-xs text-cream/30 italic">No tags</div>
+                              )}
+                            </>
+                          )
+                        })()}
                       </div>
                     </div>
                   </>
