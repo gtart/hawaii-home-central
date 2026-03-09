@@ -1,9 +1,8 @@
 'use client'
 
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
 import { Input } from '@/components/ui/Input'
 import {
   STATUS_CONFIG_V3,
@@ -11,7 +10,6 @@ import {
   type SelectionV4,
   type StatusV3,
   type SelectionPriority,
-  type SelectionComment,
 } from '@/data/finish-decisions'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { applyKitToWorkspace, removeKitFromWorkspace } from '@/lib/finish-decision-kits'
@@ -21,8 +19,6 @@ import { OnboardingView } from './OnboardingView'
 import { IdeasPackModal } from './IdeasPackModal'
 import { buildDecisionHref } from '../lib/routing'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { DestinationPicker } from '@/components/app/DestinationPicker'
-import { useCollectionTransfer } from '@/hooks/useCollectionTransfer'
 
 function getDecisionThumb(decision: SelectionV4): string | null {
   // 1. Final/selected option hero image
@@ -62,12 +58,11 @@ function relativeTime(iso: string): string {
 
 const SORT_KEY = 'hhc_finish_sort_key'
 
-type SortKey = 'created' | 'updated' | 'due' | 'comments'
+type SortKey = 'created' | 'updated' | 'due'
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'created', label: 'Date added' },
   { key: 'updated', label: 'Recently updated' },
   { key: 'due', label: 'Next due date' },
-  { key: 'comments', label: 'Most comments' },
 ]
 
 export function DecisionTrackerPage({
@@ -97,7 +92,6 @@ export function DecisionTrackerPage({
   collectionId?: string
   projectId?: string
 }) {
-  const { data: session } = useSession()
   const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilters, setStatusFilters] = useState<StatusV3[]>(() => {
@@ -114,16 +108,12 @@ export function DecisionTrackerPage({
   const [simpleToast, setSimpleToast] = useState<string | null>(null)
   const [addInputValue, setAddInputValue] = useState('')
   const [addInputVisible, setAddInputVisible] = useState(false)
-  const [replyTexts, setReplyTexts] = useState<Record<string, string>>({})
-  const [replyOpenId, setReplyOpenId] = useState<string | null>(null)
 
   // Bulk select state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkMenuOpen, setBulkMenuOpen] = useState<'status' | 'location' | 'priority' | null>(null)
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
-  const [bulkMoveOpen, setBulkMoveOpen] = useState(false)
   const [bulkToast, setBulkToast] = useState<string | null>(null)
-  const { transfer, isTransferring } = useCollectionTransfer()
 
   const [sortKey, setSortKey] = useState<SortKey>(() => {
     try {
@@ -197,11 +187,6 @@ export function DecisionTrackerPage({
           if (!a.dueDate && b.dueDate) return 1
           if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate)
           return 0
-        }
-        case 'comments': {
-          const ac = (a.comments || []).length
-          const bc = (b.comments || []).length
-          return bc - ac
         }
         default:
           return 0
@@ -366,26 +351,6 @@ export function DecisionTrackerPage({
     setAddInputValue('')
     setSimpleToast(`"${title}" added`)
     setTimeout(() => setSimpleToast(null), 3000)
-  }
-
-  function handleInlineComment(decisionId: string) {
-    const text = (replyTexts[decisionId] || '').trim()
-    if (!text) return
-    const comment: SelectionComment = {
-      id: `cmt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      text,
-      authorName: session?.user?.name || 'Unknown',
-      authorEmail: session?.user?.email || '',
-      createdAt: new Date().toISOString(),
-    }
-    const updated = selections.map((d) =>
-      d.id === decisionId
-        ? { ...d, comments: [...(d.comments || []), comment] }
-        : d
-    )
-    onUpdateSelections(updated)
-    setReplyTexts((prev) => ({ ...prev, [decisionId]: '' }))
-    setReplyOpenId(null)
   }
 
   return (
@@ -665,7 +630,6 @@ export function DecisionTrackerPage({
                     <th className="text-left font-medium pb-2 w-20">Priority</th>
                     <th className="text-left font-medium pb-2">Specs</th>
                     <th className="text-left font-medium pb-2 w-28">Updated</th>
-                    <th className="text-left font-medium pb-2">Last comment</th>
                     <th className="w-8 pb-2" />
                   </tr>
                 </thead>
@@ -688,8 +652,6 @@ export function DecisionTrackerPage({
                     const config = STATUS_CONFIG_V3[decision.status]
                     const thumbUrl = getDecisionThumb(decision)
                     const selectedOption = decision.options.find((o) => o.isSelected)
-                    const userComments = (decision.comments || []).filter((c) => c.authorEmail !== '')
-                    const lastComment = userComments.length > 0 ? userComments[userComments.length - 1] : null
 
                     return (
                       <tr key={decision.id} className="group border-t border-cream/5 first:border-t-0 hover:bg-cream/[0.02] transition-colors">
@@ -761,18 +723,6 @@ export function DecisionTrackerPage({
                         <td className="py-2.5 pr-3 text-[11px] text-cream/40">
                           {relativeTime(decision.updatedAt)}
                         </td>
-                        <td className="py-2.5 pr-3">
-                          {lastComment ? (
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <div className="w-4 h-4 rounded-full bg-sandstone/20 text-sandstone text-[9px] font-bold flex items-center justify-center shrink-0">
-                                {lastComment.authorName.charAt(0).toUpperCase()}
-                              </div>
-                              <span className="text-[11px] text-cream/50 truncate max-w-[200px]">{lastComment.text}</span>
-                            </div>
-                          ) : (
-                            <span className="text-[11px] text-cream/20">—</span>
-                          )}
-                        </td>
                         <td className="py-2.5 pr-2">
                           <Link href={buildDecisionHref({ decisionId: decision.id, collectionId })}>
                             <svg className="w-4 h-4 text-cream/15 group-hover:text-cream/40 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -805,12 +755,8 @@ export function DecisionTrackerPage({
                   const config = STATUS_CONFIG_V3[decision.status]
                   const selectedOption = decision.options.find((o) => o.isSelected)
                   const thumbUrl = getDecisionThumb(decision)
-                  const comments = (decision.comments || []).filter((c) => c.authorEmail !== '')
-                  const commentCount = comments.length
-                  const lastComment = commentCount > 0 ? comments[comments.length - 1] : null
                   const today = new Date().toISOString().slice(0, 10)
                   const isOverdue = decision.dueDate && decision.dueDate < today && decision.status !== 'done'
-                  const isReplyOpen = replyOpenId === decision.id
 
                   return (
                     <div key={decision.id} className="bg-basalt-50 rounded-lg border border-cream/10 hover:border-sandstone/30 transition-colors">
@@ -878,14 +824,6 @@ export function DecisionTrackerPage({
                             {decision.options.length > 0 && (
                               <span>{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
                             )}
-                            {commentCount > 0 && (
-                              <span className="inline-flex items-center gap-0.5">
-                                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                                </svg>
-                                {commentCount}
-                              </span>
-                            )}
                             {decision.dueDate && (
                               <span className={isOverdue ? 'text-red-400' : ''}>
                                 {isOverdue ? 'Overdue: ' : 'Due '}
@@ -900,70 +838,6 @@ export function DecisionTrackerPage({
                         </svg>
                       </Link>
                       </div>
-
-                      {(lastComment || isReplyOpen) && (
-                        <div className="px-4 pb-3 border-t border-cream/5">
-                          {lastComment && (
-                            <div className="pt-2 flex items-start gap-2">
-                              <div className="w-5 h-5 rounded-full bg-sandstone/20 text-sandstone text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
-                                {lastComment.authorName.charAt(0).toUpperCase()}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5 text-[10px] text-cream/40">
-                                  <span className="font-medium text-cream/60">{lastComment.authorName}</span>
-                                  <span>{relativeTime(lastComment.createdAt)}</span>
-                                </div>
-                                <p className="text-[11px] text-cream/50 line-clamp-2 leading-relaxed">{lastComment.text}</p>
-                              </div>
-                              {!readOnly && !isReplyOpen && (
-                                <button
-                                  type="button"
-                                  onClick={() => setReplyOpenId(decision.id)}
-                                  className="text-[10px] text-sandstone/60 hover:text-sandstone transition-colors shrink-0 mt-0.5"
-                                >
-                                  Reply
-                                </button>
-                              )}
-                            </div>
-                          )}
-                          {!readOnly && isReplyOpen && (
-                            <div className="flex items-center gap-2 mt-2">
-                              <input
-                                type="text"
-                                autoFocus
-                                value={replyTexts[decision.id] || ''}
-                                onChange={(e) => setReplyTexts((prev) => ({ ...prev, [decision.id]: e.target.value }))}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleInlineComment(decision.id)
-                                  if (e.key === 'Escape') setReplyOpenId(null)
-                                }}
-                                placeholder="Reply..."
-                                className="flex-1 bg-basalt border border-cream/15 rounded px-2.5 py-1.5 text-[11px] text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleInlineComment(decision.id)}
-                                disabled={!(replyTexts[decision.id] || '').trim()}
-                                className="px-2.5 py-1.5 bg-sandstone text-basalt text-[11px] font-medium rounded hover:bg-sandstone-light transition-colors disabled:opacity-30"
-                              >
-                                Send
-                              </button>
-                            </div>
-                          )}
-                          {!lastComment && !readOnly && isReplyOpen && (
-                            <p className="text-[10px] text-cream/30 mt-1">Leave a comment on this selection.</p>
-                          )}
-                        </div>
-                      )}
-                      {!lastComment && !isReplyOpen && !readOnly && (
-                        <button
-                          type="button"
-                          onClick={() => setReplyOpenId(decision.id)}
-                          className="w-full px-4 py-1.5 border-t border-cream/5 text-[10px] text-cream/25 hover:text-cream/40 transition-colors text-left"
-                        >
-                          + Add comment
-                        </button>
-                      )}
                     </div>
                   )
                 })}
@@ -1167,18 +1041,6 @@ export function DecisionTrackerPage({
               >
                 Delete
               </button>
-
-              {/* Move to */}
-              {collectionId && projectId && (
-                <button
-                  type="button"
-                  onClick={() => setBulkMoveOpen(true)}
-                  disabled={isTransferring}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors disabled:opacity-50"
-                >
-                  {isTransferring ? 'Moving...' : 'Move to...'}
-                </button>
-              )}
             </div>
 
             <button
@@ -1207,44 +1069,6 @@ export function DecisionTrackerPage({
             setBulkDeleteConfirm(false)
           }}
           onCancel={() => setBulkDeleteConfirm(false)}
-        />
-      )}
-
-      {/* Bulk move destination picker */}
-      {bulkMoveOpen && collectionId && projectId && (
-        <DestinationPicker
-          toolKey="finish_decisions"
-          projectId={projectId}
-          excludeCollectionId={collectionId}
-          actionLabel={`Move ${selectedIds.size} selection${selectedIds.size !== 1 ? 's' : ''}`}
-          title="Move selections to..."
-          onClose={() => setBulkMoveOpen(false)}
-          onConfirm={async (dest) => {
-            const ids = Array.from(selectedIds)
-            let moved = 0
-            for (const id of ids) {
-              const result = await transfer({
-                sourceCollectionId: collectionId,
-                destinationCollectionId: dest.collectionId,
-                operation: 'move',
-                entityType: 'decision',
-                entityId: id,
-              })
-              if (result.success) moved++
-            }
-            // Remove moved items from local state
-            if (moved > 0) {
-              const movedSet = new Set(ids.slice(0, moved))
-              const updated = selections.filter((d) => !movedSet.has(d.id))
-              onUpdateSelections(updated)
-            }
-            deselectAll()
-            setBulkMoveOpen(false)
-            if (moved > 0) {
-              setBulkToast(`Moved ${moved} selection${moved !== 1 ? 's' : ''} to ${dest.collectionTitle}`)
-              setTimeout(() => setBulkToast(null), 4000)
-            }
-          }}
         />
       )}
 

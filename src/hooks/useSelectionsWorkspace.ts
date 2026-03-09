@@ -26,9 +26,8 @@ export interface UseSelectionsWorkspaceReturn {
   projectId: string | null
   /**
    * The underlying collection ID used as the workspace anchor.
-   * Exposed only for boundary adapters (comments, share tokens) that
-   * still need a collectionId internally. New Selections UI code
-   * should not use this.
+   * Exposed only for boundary adapters (comments, share tokens, activity)
+   * that still need a collectionId internally.
    */
   _anchorCollectionId: string
 }
@@ -43,8 +42,11 @@ export interface UseSelectionsWorkspaceReturn {
 export function useSelectionsWorkspace({
   workspaceId,
 }: UseSelectionsWorkspaceOptions): UseSelectionsWorkspaceReturn {
+  // When workspaceId is a sentinel value, pass null to disable fetching
+  const effectiveId = workspaceId === '__disabled__' ? null : workspaceId
+
   const result = useCollectionState<FinishDecisionsPayloadV4 | any>({
-    collectionId: workspaceId,
+    collectionId: effectiveId,
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2',
     defaultValue: { version: 4, selections: [] },
@@ -62,6 +64,6 @@ export function useSelectionsWorkspace({
     viewOnlyAttempt: result.viewOnlyAttempt,
     title: result.title,
     projectId: result.projectId,
-    _anchorCollectionId: workspaceId,
+    _anchorCollectionId: effectiveId || '',
   }
 }

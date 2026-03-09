@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToolState } from '@/hooks/useToolState'
-import { useCollectionState, type ActivityEventHint } from '@/hooks/useCollectionState'
+import { useSelectionsWorkspace, type ActivityEventHint } from '@/hooks/useSelectionsWorkspace'
 import { useProject } from '@/contexts/ProjectContext'
 import { LocalModeBanner } from '@/components/guides/LocalModeBanner'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
@@ -15,7 +15,6 @@ import { MultiCollectionBanner } from './components/MultiCollectionBanner'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import type { SelectionsWorkspaceInfo } from '@/lib/selections-workspace'
 import {
-  DEFAULT_DECISIONS_BY_ROOM_TYPE,
   type RoomV3,
   type DecisionV3,
   type StatusV3,
@@ -26,11 +25,7 @@ import {
   type V1FinishDecisionsPayload,
   type V1DecisionItem,
   type V2FinishDecisionsPayload,
-  type V2Room,
-  type V2Decision,
-  type V2DecisionOption,
   type OptionV3,
-  type RoomSelection,
 } from '@/data/finish-decisions'
 
 // ============================================================================
@@ -38,232 +33,117 @@ import {
 // ============================================================================
 
 function migrateV1toV3(v1: V1FinishDecisionsPayload): FinishDecisionsPayloadV3 {
-  // Group items by room name
   const roomsMap = new Map<string, V1DecisionItem[]>()
-
   v1.items.forEach((item) => {
     const roomName = item.room || 'Other'
-    if (!roomsMap.has(roomName)) {
-      roomsMap.set(roomName, [])
-    }
+    if (!roomsMap.has(roomName)) roomsMap.set(roomName, [])
     roomsMap.get(roomName)!.push(item)
   })
 
   const rooms: RoomV3[] = []
-
   roomsMap.forEach((items, roomName) => {
-    // Group items by category within this room
     const categoriesMap = new Map<string, V1DecisionItem[]>()
-
     items.forEach((item) => {
-      if (!categoriesMap.has(item.category)) {
-        categoriesMap.set(item.category, [])
-      }
+      if (!categoriesMap.has(item.category)) categoriesMap.set(item.category, [])
       categoriesMap.get(item.category)!.push(item)
     })
 
     const decisions: DecisionV3[] = []
-
     categoriesMap.forEach((categoryItems, category) => {
       const options: OptionV3[] = categoryItems.map((item) => {
-        // Combine specs, notes, and where into single notes field
         const noteParts = [item.specs, item.notes, item.where ? `Where: ${item.where}` : '']
-          .filter(Boolean)
-          .join('\n\n')
-
+          .filter(Boolean).join('\n\n')
         return {
           id: crypto.randomUUID(),
           name: item.name,
           notes: noteParts.trim(),
-          urls: item.links.map((link) => ({
-            id: link.id,
-            url: link.url,
-          })),
+          urls: item.links.map((link) => ({ id: link.id, url: link.url })),
           createdAt: item.createdAt || new Date().toISOString(),
           updatedAt: item.updatedAt || new Date().toISOString(),
         }
       })
-
-      // Map V1 status to V3
       const v1Status = categoryItems[0].status
       let v3Status: StatusV3 = 'deciding'
-      if (v1Status === 'deciding') v3Status = 'deciding'
-      else if (v1Status === 'awaiting_approval') v3Status = 'deciding'
-      else if (v1Status === 'final') v3Status = 'selected'
+      if (v1Status === 'final') v3Status = 'selected'
       else if (v1Status === 'complete') v3Status = 'done'
-
       decisions.push({
-        id: crypto.randomUUID(),
-        title: category,
-        status: v3Status,
-        notes: '', // V1 didn't have decision-level notes
-        options,
+        id: crypto.randomUUID(), title: category, status: v3Status, notes: '', options,
         createdAt: categoryItems[0].createdAt || new Date().toISOString(),
         updatedAt: categoryItems[0].updatedAt || new Date().toISOString(),
       })
     })
-
     rooms.push({
-      id: crypto.randomUUID(),
-      type: 'other', // V1 didn't have room types
-      name: roomName,
-      decisions,
+      id: crypto.randomUUID(), type: 'other' as RoomTypeV3, name: roomName, decisions,
       createdAt: items[0].createdAt || new Date().toISOString(),
       updatedAt: items[0].updatedAt || new Date().toISOString(),
     })
   })
-
-  return {
-    version: 3,
-    rooms,
-  }
+  return { version: 3, rooms }
 }
 
 function migrateV2toV3(v2: V2FinishDecisionsPayload): FinishDecisionsPayloadV3 {
   const rooms: RoomV3[] = v2.rooms.map((room) => {
-    // Map V2 room type to V3
     let v3Type: RoomTypeV3 = 'other'
     if (room.type === 'kitchen') v3Type = 'kitchen'
     else if (room.type === 'bathroom') v3Type = 'bathroom'
-    else if (room.type === 'exterior') v3Type = 'other'
-    else if (room.type === 'whole_house') v3Type = 'other'
-    else if (room.type === 'other') v3Type = 'other'
-
-    // Find all decisions for this room
     const roomDecisions = v2.decisions.filter((d) => d.roomId === room.id)
-
     const decisions: DecisionV3[] = roomDecisions.map((decision) => {
-      // Find all options for this decision
       const decisionOptions = v2.options.filter((o) => o.decisionId === decision.id)
-
       const options: OptionV3[] = decisionOptions.map((option) => {
-        // Combine specs, notes, where, and cost into single notes field
-        const noteParts = [
-          option.specs,
-          option.notes,
-          option.where ? `Where: ${option.where}` : '',
-          option.estimatedCost ? `Cost: ${option.estimatedCost}` : '',
-        ]
-          .filter(Boolean)
-          .join('\n\n')
-
+        const noteParts = [option.specs, option.notes, option.where ? `Where: ${option.where}` : '', option.estimatedCost ? `Cost: ${option.estimatedCost}` : '']
+          .filter(Boolean).join('\n\n')
         return {
-          id: option.id,
-          name: option.name,
-          notes: noteParts.trim(),
-          urls: option.links.map((link) => ({
-            id: link.id,
-            url: link.url,
-          })),
+          id: option.id, name: option.name, notes: noteParts.trim(),
+          urls: option.links.map((link) => ({ id: link.id, url: link.url })),
           isSelected: decision.selectedOptionId === option.id,
-          createdAt: option.createdAt,
-          updatedAt: option.updatedAt,
+          createdAt: option.createdAt, updatedAt: option.updatedAt,
         }
       })
-
-      // Map V2 status to V3
       let v3Status: StatusV3 = 'deciding'
-      if (decision.status === 'exploring') v3Status = 'deciding'
-      else if (decision.status === 'comparing') v3Status = 'deciding'
-      else if (decision.status === 'decided') v3Status = 'selected'
+      if (decision.status === 'decided') v3Status = 'selected'
       else if (decision.status === 'ordered') v3Status = 'ordered'
       else if (decision.status === 'complete') v3Status = 'done'
-
-      return {
-        id: decision.id,
-        title: decision.category,
-        status: v3Status,
-        notes: decision.notes || '',
-        options,
-        createdAt: decision.createdAt,
-        updatedAt: decision.updatedAt,
-      }
+      return { id: decision.id, title: decision.category, status: v3Status, notes: decision.notes || '', options, createdAt: decision.createdAt, updatedAt: decision.updatedAt }
     })
-
-    return {
-      id: room.id,
-      type: v3Type,
-      name: room.name,
-      decisions,
-      createdAt: room.createdAt,
-      updatedAt: new Date().toISOString(),
-    }
+    return { id: room.id, type: v3Type, name: room.name, decisions, createdAt: room.createdAt, updatedAt: new Date().toISOString() }
   })
-
-  return {
-    version: 3,
-    rooms,
-  }
+  return { version: 3, rooms }
 }
 
 function migrateV3toV4(v3: FinishDecisionsPayloadV3): FinishDecisionsPayloadV4 {
   const selections: SelectionV4[] = []
   const allAppliedKitIds: string[] = []
-
   for (const room of v3.rooms) {
-    // Collect applied kit IDs from rooms
     if (room.appliedKitIds) {
       for (const id of room.appliedKitIds) {
         if (!allAppliedKitIds.includes(id)) allAppliedKitIds.push(id)
       }
     }
-
-    // Convert room name to a tag (skip system rooms)
     const roomTag = room.systemKey === 'global_uncategorized' ? 'Unsorted' : room.name
-
     for (const decision of room.decisions) {
-      // Skip system uncategorized decisions that have no options
       if (decision.systemKey === 'uncategorized' && decision.options.length === 0) continue
-
       const tags: string[] = roomTag ? [roomTag] : []
-
-      const selection: SelectionV4 = {
-        id: decision.id,
-        title: decision.systemKey === 'uncategorized' ? 'Unsorted' : decision.title,
-        status: decision.status,
-        notes: decision.notes,
-        options: decision.options,
-        tags,
-        dueDate: decision.dueDate,
-        priority: decision.priority,
+      selections.push({
+        id: decision.id, title: decision.systemKey === 'uncategorized' ? 'Unsorted' : decision.title,
+        status: decision.status, notes: decision.notes, options: decision.options, tags,
+        dueDate: decision.dueDate, priority: decision.priority,
         dismissedSuggestionKeys: decision.dismissedSuggestionKeys,
-        comments: decision.comments,
-        picksByUser: decision.picksByUser,
-        originKitId: decision.originKitId,
-        finalSelection: decision.finalSelection,
-        statusLog: decision.statusLog,
-        files: decision.files,
-        location: decision.location,
-        createdAt: decision.createdAt,
-        updatedAt: decision.updatedAt,
-      }
-
-      selections.push(selection)
+        comments: decision.comments, picksByUser: decision.picksByUser,
+        originKitId: decision.originKitId, finalSelection: decision.finalSelection,
+        statusLog: decision.statusLog, files: decision.files, location: decision.location,
+        createdAt: decision.createdAt, updatedAt: decision.updatedAt,
+      })
     }
   }
-
-  return {
-    version: 4,
-    selections,
-    ownedKitIds: v3.ownedKitIds,
-    appliedKitIds: allAppliedKitIds.length > 0 ? allAppliedKitIds : undefined,
-  }
+  return { version: 4, selections, ownedKitIds: v3.ownedKitIds, appliedKitIds: allAppliedKitIds.length > 0 ? allAppliedKitIds : undefined }
 }
 
 function migrateToV4(payload: any): FinishDecisionsPayloadV4 {
-  if (payload.version === 4) {
-    return payload as FinishDecisionsPayloadV4
-  }
-  // First migrate to V3 if needed
+  if (payload.version === 4) return payload as FinishDecisionsPayloadV4
   let v3: FinishDecisionsPayloadV3
-  if (payload.version === 3) {
-    v3 = payload as FinishDecisionsPayloadV3
-  } else if (payload.version === 2) {
-    v3 = migrateV2toV3(payload as V2FinishDecisionsPayload)
-  } else {
-    v3 = migrateV1toV3(payload as V1FinishDecisionsPayload)
-  }
-  // Then migrate V3 → V4
+  if (payload.version === 3) v3 = payload as FinishDecisionsPayloadV3
+  else if (payload.version === 2) v3 = migrateV2toV3(payload as V2FinishDecisionsPayload)
+  else v3 = migrateV1toV3(payload as V1FinishDecisionsPayload)
   return migrateV3toV4(v3)
 }
 
@@ -291,15 +171,12 @@ export function ToolContent({
   const { projects, currentProject } = useProject()
   const router = useRouter()
 
-  // Collection mode: use collection-based state
-  const collResult = useCollectionState<FinishDecisionsPayloadV4 | any>({
-    collectionId: collectionId ?? null,
-    toolKey: 'finish_decisions',
-    localStorageKey: 'hhc_finish_decisions_v2',
-    defaultValue: { version: 4, selections: [] },
+  // Workspace mode: use workspace-first hook
+  const workspaceResult = useSelectionsWorkspace({
+    workspaceId: isWorkspaceMode ? workspaceInfo.workspaceCollectionId : '__disabled__',
   })
 
-  // Legacy mode: use tool-based state
+  // Legacy local-only mode: use tool-based state (for users not signed in)
   const toolResult = useToolState<FinishDecisionsPayloadV4 | any>({
     toolKey: 'finish_decisions',
     localStorageKey: 'hhc_finish_decisions_v2',
@@ -307,22 +184,25 @@ export function ToolContent({
     localOnly,
   })
 
-  const useCollMode = !!collectionId
-  const result = useCollMode ? collResult : toolResult
+  // In workspace mode, always use workspace result. Local-only uses toolResult.
+  const result = isWorkspaceMode ? workspaceResult : toolResult
   const { state, setState, isLoaded, isSyncing, noAccess } = result
-  const collectionTitle = useCollMode ? collResult.title : undefined
+
+  // The workspace anchor ID for adapter boundaries (comments, activity, sharing)
+  const workspaceCollectionId = isWorkspaceMode ? workspaceResult._anchorCollectionId : collectionId
+
   const [activityOpen, setActivityOpen] = useState(false)
-  const [titleOverride, setTitleOverride] = useState<string | null>(null)
   const { count: unseenActivity, markSeen: markActivitySeen } = useUnseenActivityCount(
-    collectionId ? { toolKey: 'finish_decisions', collectionId } : undefined
+    workspaceCollectionId ? { toolKey: 'finish_decisions', collectionId: workspaceCollectionId } : undefined
   )
 
-  // Redirect to picker if the loaded collection belongs to a different project
+  // Redirect if loaded collection belongs to a different project
   useEffect(() => {
-    if (collectionId && isLoaded && collResult.projectId && currentProject?.id && collResult.projectId !== currentProject.id) {
+    if (isWorkspaceMode && isLoaded && workspaceResult.projectId && currentProject?.id && workspaceResult.projectId !== currentProject.id) {
       router.replace('/app/tools/finish-decisions')
     }
-  }, [collectionId, isLoaded, collResult.projectId, currentProject?.id, router])
+  }, [isWorkspaceMode, isLoaded, workspaceResult.projectId, currentProject?.id, router])
+
   function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
     if (a === 'OWNER') return 'OWNER'
     if (a === 'EDITOR' || a === 'EDIT') return 'EDIT'
@@ -344,24 +224,18 @@ export function ToolContent({
   useEffect(() => {
     if (!isLoaded || localOnly) return
     if (projects.filter((p) => p.status === 'ACTIVE').length > 1) return
-
     const v4 = state.version === 4 ? (state as FinishDecisionsPayloadV4) : null
     if (!v4 || v4.selections.length > 0) return
-
     try {
       const LEGACY_KEY = 'hhc_finish_decisions_v2'
       const stored = localStorage.getItem(LEGACY_KEY)
       if (!stored) return
-
       const local = JSON.parse(stored)
       const localV4 = migrateToV4(local)
       if (localV4.selections.length === 0) return
-
       setState(() => localV4)
       localStorage.removeItem(LEGACY_KEY)
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
   }, [isLoaded, localOnly, state, setState, projects])
 
   // Ensure we're working with V4 data
@@ -370,7 +244,6 @@ export function ToolContent({
       ? (state as FinishDecisionsPayloadV4)
       : { version: 4 as const, selections: [] as SelectionV4[] }
 
-  // Acquire (own) a pack
   const handleAcquireKit = (kitId: string) => {
     setState((prev) => {
       const p = prev as FinishDecisionsPayloadV4
@@ -380,24 +253,15 @@ export function ToolContent({
     })
   }
 
-  // Add a single selection to the board
   const handleAddSelection = (title: string) => {
     const ts = new Date().toISOString()
     const selection: SelectionV4 = {
-      id: crypto.randomUUID(),
-      title,
-      status: 'deciding' as StatusV3,
-      notes: '',
-      options: [],
-      tags: [],
-      createdAt: ts,
-      updatedAt: ts,
+      id: crypto.randomUUID(), title, status: 'deciding' as StatusV3,
+      notes: '', options: [], tags: [], createdAt: ts, updatedAt: ts,
     }
     const events: ActivityEventHint[] = [{
-      action: 'created',
-      entityType: 'decision',
-      summaryText: `Added selection: "${title}"`,
-      entityLabel: title,
+      action: 'created', entityType: 'decision',
+      summaryText: `Added selection: "${title}"`, entityLabel: title,
     }]
     setState((prev) => {
       const p = prev as FinishDecisionsPayloadV4
@@ -405,51 +269,17 @@ export function ToolContent({
     }, events)
   }
 
-  // Update selections array
   const handleUpdateSelections = (selections: SelectionV4[]) => {
-    setState((prev) => ({
-      ...prev,
-      selections,
-    }))
+    setState((prev) => ({ ...prev, selections }))
   }
 
-  // Update applied kit IDs at workspace level
   const handleUpdateAppliedKitIds = (appliedKitIds: string[]) => {
-    setState((prev) => ({
-      ...prev,
-      appliedKitIds,
-    }))
+    setState((prev) => ({ ...prev, appliedKitIds }))
   }
-
-  const handleRename = useCallback(async (newTitle: string) => {
-    if (!collectionId) return
-    setTitleOverride(newTitle)
-    try {
-      await fetch(`/api/collections/${collectionId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTitle }),
-      })
-    } catch { /* ignore */ }
-  }, [collectionId])
-
-  const handleArchive = useCallback(async () => {
-    if (!collectionId || !confirm('Archive this list? You can restore it later.')) return
-    try {
-      await fetch(`/api/collections/${collectionId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ archivedAt: new Date().toISOString() }),
-      })
-      router.push('/app/tools/finish-decisions')
-    } catch { /* ignore */ }
-  }, [collectionId, router])
 
   // Collect unique tags for export scoping
   const tagScopes = Array.from(new Set(v4State.selections.flatMap((s) => s.tags))).sort().map((tag) => ({
-    id: tag,
-    name: tag,
-    emoji: '🏷️',
+    id: tag, name: tag, emoji: '🏷️',
   }))
 
   return (
@@ -465,26 +295,20 @@ export function ToolContent({
             description="Track the choices you need to make—and what you picked."
             accessLevel={access}
             hasContent={v4State.selections.length > 0}
-            collectionId={collectionId}
-            collectionName={isWorkspaceMode ? undefined : (titleOverride || collectionTitle)}
+            collectionId={workspaceCollectionId}
             eyebrowLabel="Selections"
-            backHref={!isWorkspaceMode && collectionId ? '/app/tools/finish-decisions' : undefined}
-            backLabel={!isWorkspaceMode && collectionId ? 'All Selections' : undefined}
             toolLabel="Selections"
             scopes={tagScopes}
             scopeLabel="Tags"
             buildExportUrl={({ projectId: pid, selectedScopeIds, scopeMode, includeNotes, includeComments, includePhotos }) => {
               const reportBase = `/app/tools/finish-decisions/report?projectId=${pid}`
-              const sep = '&'
-              let url = `${reportBase}${sep}includeNotes=${includeNotes}&includeComments=${includeComments}&includePhotos=${includePhotos}`
+              let url = `${reportBase}&includeNotes=${includeNotes}&includeComments=${includeComments}&includePhotos=${includePhotos}`
               if (scopeMode === 'selected' && selectedScopeIds.length > 0) {
                 url += `&tags=${encodeURIComponent(selectedScopeIds.join(','))}`
               }
               return url
             }}
-            onRename={!isWorkspaceMode && collectionId ? handleRename : undefined}
-            onArchive={!isWorkspaceMode && collectionId ? handleArchive : undefined}
-            actions={collectionId ? (
+            actions={workspaceCollectionId ? (
               <button
                 type="button"
                 onClick={() => { setActivityOpen(true); markActivitySeen() }}
@@ -503,25 +327,24 @@ export function ToolContent({
             ) : undefined}
           />
         )}
-        {activityOpen && collectionId && (
+        {activityOpen && workspaceCollectionId && (
           <ActivityPanel
             onClose={() => setActivityOpen(false)}
             toolKey="finish_decisions"
-            collectionId={collectionId}
-            collectionTitle={titleOverride || collectionTitle}
+            collectionId={workspaceCollectionId}
           />
         )}
         {isWorkspaceMode && workspaceInfo.hasMultipleCollections && (
           <MultiCollectionBanner
             collectionCount={workspaceInfo.collectionCount}
-            projectId={collResult.projectId || currentProject?.id || ''}
+            projectId={workspaceResult.projectId || currentProject?.id || ''}
             primaryCollectionId={workspaceInfo.workspaceCollectionId}
           />
         )}
         <UnsortedBanner toolKey="finish_decisions" />
         {noAccess ? (
           <div className="bg-basalt-50 rounded-card p-8 text-center">
-            <p className="text-cream/50 mb-2">You don&apos;t have access to this tool for the current home.</p>
+            <p className="text-cream/50 mb-2">You don&apos;t have access to Selections for this home.</p>
             <a href="/app" className="text-sandstone hover:text-sandstone-light text-sm">Back to Tools</a>
           </div>
         ) : isLoaded && state.version === 4 ? (
@@ -536,8 +359,8 @@ export function ToolContent({
             ownedKitIds={v4State.ownedKitIds || []}
             appliedKitIds={v4State.appliedKitIds || []}
             onUpdateAppliedKitIds={handleUpdateAppliedKitIds}
-            collectionId={collectionId}
-            projectId={collResult.projectId || currentProject?.id}
+            collectionId={workspaceCollectionId}
+            projectId={workspaceResult.projectId || currentProject?.id}
           />
         ) : !isLoaded ? (
           <div className="text-center py-12 text-cream/50">

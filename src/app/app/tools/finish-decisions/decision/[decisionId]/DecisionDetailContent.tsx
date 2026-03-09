@@ -32,8 +32,6 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { relativeTime } from '@/lib/relativeTime'
 import { useComments, type CommentRow } from '@/hooks/useComments'
 import { useProject } from '@/contexts/ProjectContext'
-import { DestinationPicker } from '@/components/app/DestinationPicker'
-import { useCollectionTransfer } from '@/hooks/useCollectionTransfer'
 
 const COMMENTS_PER_PAGE = 10
 const MAX_COMMENT_LENGTH = 400
@@ -74,14 +72,9 @@ export function DecisionDetailContent({
   const [assignToast, setAssignToast] = useState<string | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [guidanceOpen, setGuidanceOpen] = useState(false)
-  const [moveDecisionOpen, setMoveDecisionOpen] = useState(false)
-  const [copyOptionId, setCopyOptionId] = useState<string | null>(null)
-  const [copyResetKey, setCopyResetKey] = useState(0)
-  const [copyCount, setCopyCount] = useState(0)
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
   const addActionsRef = useRef<IdeasBoardAddActions | null>(null)
   const { currentProject } = useProject()
-  const { transfer, isTransferring } = useCollectionTransfer()
 
   const collResult = useCollectionState<FinishDecisionsPayloadV4 | any>({
     collectionId: collectionId ?? null,
@@ -492,8 +485,7 @@ export function DecisionDetailContent({
         (s) => s.id !== decisionId
       ),
     }))
-    const basePath = collectionId ? `/app/tools/finish-decisions/${collectionId}` : '/app/tools/finish-decisions'
-    router.push(basePath)
+    router.push('/app/tools/finish-decisions')
   }
 
   if (!isLoaded) {
@@ -941,8 +933,8 @@ export function DecisionDetailContent({
             currentSelectionId={foundDecision.id}
             onImportToDecision={handleImportToDecision}
             onMoveOption={(optId) => setMoveOptionId(optId)}
-            onCopyOption={collectionId ? (optId) => setCopyOptionId(optId) : undefined}
-            copyDisabledReason={!collectionId ? 'Workspace is loading — copy will be available shortly' : undefined}
+            onCopyOption={undefined}
+            copyDisabledReason={undefined}
             addActionsRef={addActionsRef}
           />
         </div>
@@ -961,19 +953,6 @@ export function DecisionDetailContent({
         {/* Actions */}
         {!readOnly && (
           <div className="mt-8 pt-4 border-t border-cream/10 space-y-3">
-            {collectionId && currentProject && (
-              <button
-                type="button"
-                onClick={() => setMoveDecisionOpen(true)}
-                disabled={isTransferring}
-                className="flex items-center gap-2 text-xs text-cream/40 hover:text-cream/60 disabled:opacity-50 transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                {isTransferring ? 'Moving...' : 'Move to another list...'}
-              </button>
-            )}
             <button
               type="button"
               onClick={() => setDeleteConfirmOpen(true)}
@@ -1163,70 +1142,6 @@ export function DecisionDetailContent({
             deleteDecision()
           }}
           onCancel={() => setDeleteConfirmOpen(false)}
-        />
-      )}
-
-      {/* Move decision to another list */}
-      {moveDecisionOpen && collectionId && currentProject && (
-        <DestinationPicker
-          toolKey="finish_decisions"
-          projectId={currentProject.id}
-          excludeCollectionId={collectionId}
-          actionLabel="Move"
-          title="Move selection to..."
-          onClose={() => setMoveDecisionOpen(false)}
-          onConfirm={async (dest) => {
-            const result = await transfer({
-              sourceCollectionId: collectionId,
-              destinationCollectionId: dest.collectionId,
-              operation: 'move',
-              entityType: 'decision',
-              entityId: decisionId,
-              destinationRoomId: dest.roomId,
-            })
-            setMoveDecisionOpen(false)
-            if (result.success) {
-              const basePath = collectionId ? `/app/tools/finish-decisions/${collectionId}` : '/app/tools/finish-decisions'
-              router.push(basePath)
-            }
-          }}
-        />
-      )}
-
-      {/* Copy option to another list (supports copy-to-multiple) */}
-      {copyOptionId && collectionId && (collResult.projectId || currentProject?.id) && (
-        <DestinationPicker
-          key={copyResetKey}
-          toolKey="finish_decisions"
-          projectId={(collResult.projectId || currentProject?.id)!}
-          excludeCollectionId={collectionId}
-          requireRoom
-          requireDecision
-          actionLabel={copyCount > 0 ? 'Copy again' : 'Copy'}
-          title={copyCount > 0 ? `Copied ${copyCount} — pick another or close` : 'Copy option to...'}
-          onClose={() => { setCopyOptionId(null); setCopyCount(0) }}
-          onConfirm={async (dest) => {
-            const result = await transfer({
-              sourceCollectionId: collectionId,
-              destinationCollectionId: dest.collectionId,
-              operation: 'copy',
-              entityType: 'option',
-              entityId: copyOptionId,
-              sourceDecisionId: decisionId,
-              destinationRoomId: dest.roomId,
-              destinationDecisionId: dest.decisionId,
-            })
-            if (result.success) {
-              const n = copyCount + 1
-              setCopyCount(n)
-              setCopyResetKey((k) => k + 1)
-              setAssignToast(`Copied to ${result.destinationCollectionTitle || 'destination'}`)
-              setTimeout(() => setAssignToast(null), 3000)
-            } else {
-              setCopyOptionId(null)
-              setCopyCount(0)
-            }
-          }}
         />
       )}
 

@@ -164,9 +164,6 @@ export function DecisionsTable({
               <th className="px-3 py-2 text-center text-xs font-medium text-cream/60 uppercase tracking-wide">
                 Options
               </th>
-              <th className="px-3 py-2 text-center text-xs font-medium text-cream/60 uppercase tracking-wide">
-                Comments
-              </th>
               <th className="px-3 py-2 text-left text-xs font-medium text-cream/60 uppercase tracking-wide">
                 Notes
               </th>
@@ -241,19 +238,6 @@ export function DecisionsTable({
                     <span className="text-xs text-cream/40">
                       {decision.options.length}
                     </span>
-                  </td>
-                  <td className="px-3 py-2.5 text-center">
-                    {(() => {
-                      const cmt = decision.comments?.length ?? 0
-                      return cmt > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-cream/50">
-                          <span>💬</span>
-                          <span>{cmt}</span>
-                        </span>
-                      ) : (
-                        <span className="text-xs text-cream/20">&mdash;</span>
-                      )
-                    })()}
                   </td>
                   <td className="px-3 py-2.5 max-w-[200px]">
                     {decision.notes ? (

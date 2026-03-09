@@ -115,8 +115,6 @@ export function SelectionsBoardView({
         const thumbnail = getSelectionThumbnail(decision)
         const statusCfg = safeStatusConfig(decision.status)
         const selectedOption = decision.options.find((o) => o.isSelected)
-        const userCommentCount = (decision.comments || []).filter((c) => c.authorEmail !== '').length
-
         const selectionEmoji = getSelectionEmoji(decision.title, emojiMap)
 
         return (
@@ -216,14 +214,6 @@ export function SelectionsBoardView({
                 >
                   Open
                 </button>
-                {userCommentCount > 0 && (
-                  <>
-                    <span className="text-cream/20">·</span>
-                    <span className="inline-flex items-center gap-0.5" title="Comments">
-                      💬 {userCommentCount}
-                    </span>
-                  </>
-                )}
               </div>
 
               {/* Due date + updated */}
