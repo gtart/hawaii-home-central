@@ -2,11 +2,19 @@
 
 import { useState, useRef, useEffect } from 'react'
 
+/** Tag suggestions — categorization, phase, style (NOT locations — use LOCATION_SUGGESTIONS for rooms/areas). */
 export const TAG_SUGGESTIONS = [
-  'Kitchen', 'Bathroom', 'Living Room', 'Bedroom', 'Laundry',
-  'Exterior', 'Flooring', 'Lighting', 'Hardware', 'Paint',
+  'Flooring', 'Lighting', 'Hardware', 'Paint',
   'Countertops', 'Cabinets', 'Appliances', 'Plumbing',
   'Phase 1', 'Phase 2', 'Budget-friendly', 'Splurge',
+  'Must-decide', 'Nice-to-have', 'Contractor-pick', 'DIY',
+]
+
+/** Location suggestions — rooms and areas of the home. */
+export const LOCATION_SUGGESTIONS = [
+  'Kitchen', 'Bathroom', 'Master Bath', 'Living Room', 'Bedroom',
+  'Dining Room', 'Laundry', 'Exterior', 'Garage', 'Office',
+  'Hallway', 'Entry', 'Lanai/Patio',
 ]
 
 interface TagInputProps {

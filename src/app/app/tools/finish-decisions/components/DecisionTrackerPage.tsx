@@ -13,11 +13,11 @@ import {
 } from '@/data/finish-decisions'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { applyKitToWorkspace, removeKitFromWorkspace } from '@/lib/finish-decision-kits'
-import { getUniqueTags } from '@/lib/decisionHelpers'
+import { getUniqueTags, getUniqueLocations } from '@/lib/decisionHelpers'
 import { displayUrl } from '@/lib/finishDecisionsImages'
 import { OnboardingView } from './OnboardingView'
 import { IdeasPackModal } from './IdeasPackModal'
-import { TAG_SUGGESTIONS } from './TagInput'
+import { TAG_SUGGESTIONS, LOCATION_SUGGESTIONS } from './TagInput'
 import { buildDecisionHref } from '../lib/routing'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
@@ -59,11 +59,12 @@ function relativeTime(iso: string): string {
 
 const SORT_KEY = 'hhc_finish_sort_key'
 
-type SortKey = 'created' | 'updated' | 'due'
+type SortKey = 'created' | 'updated' | 'due' | 'location'
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'created', label: 'Date added' },
   { key: 'updated', label: 'Recently updated' },
   { key: 'due', label: 'Next due date' },
+  { key: 'location', label: 'Location' },
 ]
 
 export function DecisionTrackerPage({
@@ -102,7 +103,8 @@ export function DecisionTrackerPage({
     return p.split(',').filter((s): s is StatusV3 => valid.includes(s as StatusV3))
   })
   const [tagFilters, setTagFilters] = useState<string[]>([])
-  const [groupBy, setGroupBy] = useState<'none' | 'tag' | 'status' | 'priority'>('none')
+  const [locationFilters, setLocationFilters] = useState<string[]>([])
+  const [groupBy, setGroupBy] = useState<'none' | 'tag' | 'location' | 'status' | 'priority'>('none')
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [ideasModalOpen, setIdeasModalOpen] = useState(false)
   const [toast, setToast] = useState<{ message: string; kitId: string } | null>(null)
@@ -154,12 +156,19 @@ export function DecisionTrackerPage({
       )
     }
 
+    if (locationFilters.length > 0) {
+      result = result.filter((d) =>
+        d.location && locationFilters.includes(d.location)
+      )
+    }
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       result = result.filter((decision) => {
         const searchable = [
           decision.title,
           decision.notes,
+          decision.location || '',
           ...decision.tags,
           ...decision.options.flatMap((opt) => [
             opt.name,
@@ -174,7 +183,7 @@ export function DecisionTrackerPage({
     }
 
     return result
-  }, [selections, searchQuery, statusFilters, tagFilters])
+  }, [selections, searchQuery, statusFilters, tagFilters, locationFilters])
 
   // Sort decisions
   const sortedDecisions = useMemo(() => {
@@ -189,6 +198,14 @@ export function DecisionTrackerPage({
           if (!a.dueDate && b.dueDate) return 1
           if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate)
           return 0
+        }
+        case 'location': {
+          const aLoc = (a.location || '').toLowerCase()
+          const bLoc = (b.location || '').toLowerCase()
+          if (!aLoc && !bLoc) return 0
+          if (!aLoc) return 1
+          if (!bLoc) return -1
+          return aLoc.localeCompare(bLoc)
         }
         default:
           return 0
@@ -212,12 +229,35 @@ export function DecisionTrackerPage({
   }, [])
 
   const uniqueLocations = useMemo(() => {
-    const locs = new Set(selections.map((d) => d.location).filter(Boolean) as string[])
-    return Array.from(locs).sort()
+    const fromData = getUniqueLocations(selections)
+    const all = new Set([...fromData, ...LOCATION_SUGGESTIONS])
+    return Array.from(all).sort()
   }, [selections])
 
+  // Locations actually used in data (for filter chips — only show locations that exist)
+  const usedLocations = useMemo(() => getUniqueLocations(selections), [selections])
+
+  // Location counts for filter chips
+  const locationCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const d of selections) {
+      if (d.location) {
+        counts[d.location] = (counts[d.location] || 0) + 1
+      }
+    }
+    return counts
+  }, [selections])
+
+  const toggleLocationFilter = (loc: string) => {
+    setLocationFilters((prev) =>
+      prev.includes(loc)
+        ? prev.filter((l) => l !== loc)
+        : [...prev, loc]
+    )
+  }
+
   // Total stats
-  const isFiltering = searchQuery.trim() !== '' || statusFilters.length > 0 || tagFilters.length > 0
+  const isFiltering = searchQuery.trim() !== '' || statusFilters.length > 0 || tagFilters.length > 0 || locationFilters.length > 0
 
   const summaryStats = useMemo(() => {
     const source = isFiltering ? filteredDecisions : selections
@@ -271,7 +311,7 @@ export function DecisionTrackerPage({
     )
   }
 
-  const activeFilterCount = statusFilters.length + tagFilters.length
+  const activeFilterCount = statusFilters.length + tagFilters.length + locationFilters.length
 
   // Group-by computation
   const groupedSections = useMemo(() => {
@@ -291,6 +331,10 @@ export function DecisionTrackerPage({
             groups.get(tag)!.push(d)
           }
         }
+      } else if (groupBy === 'location') {
+        const key = d.location || 'No location'
+        if (!groups.has(key)) groups.set(key, [])
+        groups.get(key)!.push(d)
       } else if (groupBy === 'status') {
         const label = STATUS_CONFIG_V3[d.status]?.label || d.status
         if (!groups.has(label)) groups.set(label, [])
@@ -406,6 +450,7 @@ export function DecisionTrackerPage({
                   className="bg-basalt-50 text-cream/60 text-[11px] rounded-lg border border-cream/10 px-2 py-1 focus:outline-none focus:border-sandstone/40"
                 >
                   <option value="none">None</option>
+                  <option value="location">By Location</option>
                   <option value="tag">By Tag</option>
                   <option value="status">By Status</option>
                   <option value="priority">By Priority</option>
@@ -586,6 +631,38 @@ export function DecisionTrackerPage({
             </div>
           )}
 
+          {/* Desktop location filter row */}
+          {usedLocations.length > 0 && (
+            <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
+              <span className="text-[11px] text-cream/30 mr-1">Location</span>
+              {usedLocations.map((loc) => {
+                const isActive = locationFilters.includes(loc)
+                return (
+                  <button
+                    key={loc}
+                    onClick={() => toggleLocationFilter(loc)}
+                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                      isActive
+                        ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                        : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                    }`}
+                  >
+                    {loc}
+                    <span className="text-[10px] opacity-70">{locationCounts[loc] || 0}</span>
+                  </button>
+                )
+              })}
+              {locationFilters.length > 0 && (
+                <button
+                  onClick={() => setLocationFilters([])}
+                  className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors ml-1"
+                >
+                  Clear locations
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Decision list */}
           {sortedDecisions.length === 0 ? (
             <div className="bg-basalt-50 rounded-card p-8 text-center">
@@ -597,6 +674,7 @@ export function DecisionTrackerPage({
                   setSearchQuery('')
                   setStatusFilters([])
                   setTagFilters([])
+                  setLocationFilters([])
                 }}
                 className="text-sandstone text-sm mt-2 hover:text-sandstone-light"
               >
@@ -698,8 +776,12 @@ export function DecisionTrackerPage({
                             )}
                           </Link>
                         </td>
-                        <td className="py-2.5 pr-3 text-[11px] text-cream/40 truncate max-w-[120px]">
-                          {decision.location || '—'}
+                        <td className="py-2.5 pr-3 text-[11px] truncate max-w-[120px]">
+                          {decision.location ? (
+                            <span className="text-cream/40">{decision.location}</span>
+                          ) : (
+                            <span className="text-cream/15 italic">Set location</span>
+                          )}
                         </td>
                         <td className="py-2.5 pr-3">
                           <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium ${config.pillClass}`}>
@@ -1229,7 +1311,7 @@ export function DecisionTrackerPage({
               <h2 className="text-lg font-medium text-cream">Filters</h2>
               {activeFilterCount > 0 && (
                 <button
-                  onClick={() => { setStatusFilters([]); setTagFilters([]) }}
+                  onClick={() => { setStatusFilters([]); setTagFilters([]); setLocationFilters([]) }}
                   className="text-xs text-sandstone hover:text-sandstone-light transition-colors"
                 >
                   Clear all
@@ -1266,6 +1348,32 @@ export function DecisionTrackerPage({
                   )}
                 </div>
               </div>
+
+              {/* Location */}
+              {usedLocations.length > 0 && (
+                <div>
+                  <label className="block text-sm text-cream/70 mb-2">Location</label>
+                  <div className="flex flex-wrap gap-2">
+                    {usedLocations.map((loc) => {
+                      const isActive = locationFilters.includes(loc)
+                      return (
+                        <button
+                          key={loc}
+                          onClick={() => toggleLocationFilter(loc)}
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                            isActive
+                              ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                              : 'bg-cream/10 text-cream/60'
+                          }`}
+                        >
+                          {loc}
+                          <span className="text-[10px] opacity-70">{locationCounts[loc] || 0}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Tags */}
               {allTags.length > 0 && (
@@ -1316,6 +1424,7 @@ export function DecisionTrackerPage({
                   className="w-full bg-basalt text-cream/60 text-sm rounded-lg border border-cream/10 px-3 py-2 focus:outline-none focus:border-sandstone/40"
                 >
                   <option value="none">None</option>
+                  <option value="location">By Location</option>
                   <option value="tag">By Tag</option>
                   <option value="status">By Status</option>
                   <option value="priority">By Priority</option>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { resolveCollectionAccess } from '@/lib/collection-access'
+import { resolveServerSelectionAccess } from '@/lib/selection-access-server'
 import { writeActivityEvents } from '@/server/activity/writeActivityEvent'
 
 type Params = { params: Promise<{ id: string }> }
@@ -9,9 +10,39 @@ type Params = { params: Promise<{ id: string }> }
 const MAX_COMMENT_LENGTH = 400
 
 /**
+ * Check selection-level access for finish_decisions comments.
+ * Returns a 403 response if the user is blocked, or null if access is allowed.
+ */
+async function enforceSelectionAccess(
+  userId: string,
+  userEmail: string,
+  collectionId: string,
+  targetType: string,
+  targetId: string,
+): Promise<Response | null> {
+  // Only enforce for selections (targetType 'decision' = a selection in finish_decisions)
+  if (targetType !== 'decision') return null
+
+  const result = await resolveServerSelectionAccess(userId, userEmail, collectionId, targetId)
+
+  // If result is null, collection doesn't exist or user has no workspace access
+  // (already checked by caller), so skip. If toolKey isn't finish_decisions, skip.
+  if (!result || result.toolKey !== 'finish_decisions') return null
+
+  if (result.selectionAccess === null) {
+    return NextResponse.json(
+      { error: 'No access to this selection' },
+      { status: 403 },
+    )
+  }
+
+  return null
+}
+
+/**
  * GET /api/collections/[id]/comments
  * List comments for a collection. Optionally filter by targetType + targetId.
- * Requires VIEWER+.
+ * Requires VIEWER+. Enforces selection-level access for restricted selections.
  */
 export async function GET(request: Request, { params }: Params) {
   const session = await auth()
@@ -28,6 +59,14 @@ export async function GET(request: Request, { params }: Params) {
   const url = new URL(request.url)
   const targetType = url.searchParams.get('targetType')
   const targetId = url.searchParams.get('targetId')
+
+  // Enforce selection-level access when reading comments for a specific selection
+  if (targetType && targetId) {
+    const blocked = await enforceSelectionAccess(
+      session.user.id, session.user.email || '', id, targetType, targetId,
+    )
+    if (blocked) return blocked
+  }
 
   const where: Record<string, unknown> = { collectionId: id }
   if (targetType) where.targetType = targetType
@@ -57,7 +96,7 @@ export async function GET(request: Request, { params }: Params) {
 
 /**
  * POST /api/collections/[id]/comments
- * Create a comment. Requires EDITOR+.
+ * Create a comment. Requires EDITOR+. Enforces selection-level access for restricted selections.
  */
 export async function POST(request: Request, { params }: Params) {
   const session = await auth()
@@ -90,6 +129,12 @@ export async function POST(request: Request, { params }: Params) {
   if (text.length > MAX_COMMENT_LENGTH) {
     return NextResponse.json({ error: `Comment exceeds ${MAX_COMMENT_LENGTH} characters` }, { status: 400 })
   }
+
+  // Enforce selection-level access for restricted selections
+  const blocked = await enforceSelectionAccess(
+    userId, session.user.email || '', id, targetType, targetId,
+  )
+  if (blocked) return blocked
 
   // Get collection metadata for activity event
   const collection = await prisma.toolCollection.findUnique({
@@ -151,6 +196,7 @@ export async function POST(request: Request, { params }: Params) {
 /**
  * DELETE /api/collections/[id]/comments
  * Delete a comment by commentId query param. Requires EDITOR+ or comment author.
+ * Enforces selection-level access for restricted selections.
  */
 export async function DELETE(request: Request, { params }: Params) {
   const session = await auth()
@@ -174,12 +220,18 @@ export async function DELETE(request: Request, { params }: Params) {
 
   const comment = await prisma.comment.findUnique({
     where: { id: commentId },
-    select: { collectionId: true, authorUserId: true },
+    select: { collectionId: true, authorUserId: true, targetType: true, targetId: true },
   })
 
   if (!comment || comment.collectionId !== id) {
     return NextResponse.json({ error: 'Comment not found' }, { status: 404 })
   }
+
+  // Enforce selection-level access for restricted selections
+  const blocked = await enforceSelectionAccess(
+    userId, session.user.email || '', id, comment.targetType, comment.targetId,
+  )
+  if (blocked) return blocked
 
   // Allow delete if user is EDITOR+ or the comment author
   const isAuthor = comment.authorUserId === userId

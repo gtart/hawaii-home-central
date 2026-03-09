@@ -25,7 +25,7 @@ import {
   type FinishDecisionsPayloadV4,
 } from '@/data/finish-decisions'
 import { moveIdea, getUniqueTags } from '@/lib/decisionHelpers'
-import { TagInput } from '../../components/TagInput'
+import { TagInput, LOCATION_SUGGESTIONS } from '../../components/TagInput'
 import { DecisionFiles } from '../../components/DecisionFiles'
 import { uploadFile as uploadFileForDecision } from '../../uploadFile'
 import { MoveIdeaSheet } from '../../components/MoveIdeaSheet'
@@ -126,7 +126,7 @@ export function DecisionDetailContent({
   // Collect unique locations from all decisions for autocomplete
   // NOTE: must be before early returns to keep hook order stable across renders
   const locationSuggestions = useMemo(() => {
-    const locs = new Set<string>()
+    const locs = new Set<string>(LOCATION_SUGGESTIONS)
     for (const d of v4State.selections) {
       if (d.location?.trim()) locs.add(d.location.trim())
     }
@@ -765,7 +765,7 @@ export function DecisionDetailContent({
             list="location-suggestions"
             value={foundDecision.location || ''}
             onChange={(e) => updateDecision({ location: e.target.value })}
-            placeholder="Add location..."
+            placeholder="Where does this go? e.g. Kitchen"
             readOnly={readOnly}
             className="bg-transparent text-sm text-cream/60 placeholder:text-cream/25 focus:outline-none focus:text-cream border-b border-transparent hover:border-cream/10 focus:border-sandstone/40 transition-colors max-w-[240px] disabled:opacity-50"
           />
@@ -783,6 +783,7 @@ export function DecisionDetailContent({
             allTags={allTags}
             onChange={(newTags) => updateDecision({ tags: newTags })}
             readOnly={readOnly}
+            placeholder="Categorize: phase, priority, type..."
           />
         </div>
 

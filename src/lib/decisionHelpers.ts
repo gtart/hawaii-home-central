@@ -60,6 +60,46 @@ export function groupByTag(selections: SelectionV4[]): Map<string, SelectionV4[]
 }
 
 // ============================================================================
+// Location helpers (V4 — single-value location field)
+// ============================================================================
+
+/** Get all unique locations across selections (sorted, excludes empty). */
+export function getUniqueLocations(selections: SelectionV4[]): string[] {
+  const locs = new Set<string>()
+  for (const s of selections) {
+    if (s.location) locs.add(s.location)
+  }
+  return Array.from(locs).sort()
+}
+
+/** Filter selections by location (returns selections with matching location). */
+export function filterByLocations(selections: SelectionV4[], locations: string[]): SelectionV4[] {
+  if (locations.length === 0) return selections
+  return selections.filter((s) => s.location && locations.includes(s.location))
+}
+
+/** Group selections by location. Returns a Map of location → selections. */
+export function groupByLocation(selections: SelectionV4[]): Map<string, SelectionV4[]> {
+  const groups = new Map<string, SelectionV4[]>()
+  const noLocation: SelectionV4[] = []
+
+  for (const s of selections) {
+    if (!s.location) {
+      noLocation.push(s)
+    } else {
+      if (!groups.has(s.location)) groups.set(s.location, [])
+      groups.get(s.location)!.push(s)
+    }
+  }
+
+  if (noLocation.length > 0) {
+    groups.set('No location', noLocation)
+  }
+
+  return groups
+}
+
+// ============================================================================
 // Move helper (V4 — move an idea between selections)
 // ============================================================================
 

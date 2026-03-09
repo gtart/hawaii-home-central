@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { useToolState } from '@/hooks/useToolState'
 import { useCollectionState } from '@/hooks/useCollectionState'
 import type {
@@ -9,7 +10,7 @@ import type {
   SelectionV4,
   StatusV3,
 } from '@/data/finish-decisions'
-import { STATUS_CONFIG_V3 } from '@/data/finish-decisions'
+import { STATUS_CONFIG_V3, resolveSelectionAccess } from '@/data/finish-decisions'
 
 const STATUS_ORDER: StatusV3[] = ['deciding', 'selected', 'ordered', 'done']
 
@@ -98,7 +99,10 @@ function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProj
     projectIdOverride: requiredProjectId || undefined,
   })
   const useCollection = !!collectionIdOverride
-  const { state, isLoaded } = useCollection ? collResult : toolResult
+  const result = useCollection ? collResult : toolResult
+  const { state, isLoaded } = result
+  const access = 'access' in result ? result.access : null
+  const { data: session } = useSession()
 
   const [projectName, setProjectName] = useState<string | null>(null)
   useEffect(() => {
@@ -138,9 +142,14 @@ function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProj
     load()
   }, [])
 
+  // Filter out restricted selections the current user cannot access
   const selections = useMemo(() => {
-    return state?.selections || []
-  }, [state?.selections])
+    const all = state?.selections || []
+    const userEmail = session?.user?.email || ''
+    if (!userEmail || access === 'OWNER') return all
+    const wsAccess = access === 'EDITOR' ? 'EDITOR' : 'VIEWER'
+    return all.filter((s) => resolveSelectionAccess(s, userEmail, wsAccess) !== null)
+  }, [state?.selections, session?.user?.email, access])
 
   // Group selections by status
   const byStatus = useMemo(() => {
@@ -324,6 +333,9 @@ function SelectionReportCard({
             <span>Status: {cfg.label}</span>
             {selectedOption && <span>Selected: {selectedOption.name}</span>}
             <span>{selection.options.length} option{selection.options.length !== 1 ? 's' : ''}</span>
+            {selection.location && (
+              <span>Location: {selection.location}</span>
+            )}
             {selection.dueDate && (
               <span>Due: {new Date(selection.dueDate).toLocaleDateString()}</span>
             )}
