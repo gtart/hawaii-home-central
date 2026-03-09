@@ -7,12 +7,13 @@ import { useCollectionState, type ActivityEventHint } from '@/hooks/useCollectio
 import { useProject } from '@/contexts/ProjectContext'
 import { LocalModeBanner } from '@/components/guides/LocalModeBanner'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
-import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
 import { ActivityPanel } from '@/components/app/ActivityPanel'
 import { useUnseenActivityCount } from '@/hooks/useUnseenActivityCount'
 import { UnsortedBanner } from '@/components/app/UnsortedBanner'
 import { DecisionTrackerPage } from './components/DecisionTrackerPage'
+import { MultiCollectionBanner } from './components/MultiCollectionBanner'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
+import type { SelectionsWorkspaceInfo } from '@/lib/selections-workspace'
 import {
   DEFAULT_DECISIONS_BY_ROOM_TYPE,
   type RoomV3,
@@ -275,6 +276,8 @@ interface ToolContentProps {
   collectionId?: string
   kits?: FinishDecisionKit[]
   emojiMap?: Record<string, string>
+  /** Workspace info from the resolver. When set, this is workspace mode. */
+  workspaceInfo?: SelectionsWorkspaceInfo
 }
 
 export function ToolContent({
@@ -282,7 +285,9 @@ export function ToolContent({
   collectionId,
   kits = [],
   emojiMap = {},
+  workspaceInfo,
 }: ToolContentProps) {
+  const isWorkspaceMode = !!workspaceInfo
   const { projects, currentProject } = useProject()
   const router = useRouter()
 
@@ -461,27 +466,24 @@ export function ToolContent({
             accessLevel={access}
             hasContent={v4State.selections.length > 0}
             collectionId={collectionId}
-            collectionName={titleOverride || collectionTitle}
+            collectionName={isWorkspaceMode ? undefined : (titleOverride || collectionTitle)}
             eyebrowLabel="Selections"
-            backHref={collectionId ? '/app/tools/finish-decisions' : undefined}
-            backLabel={collectionId ? 'All Selections' : undefined}
-            headerSlot={collectionId ? <InstanceSwitcher toolKey="finish_decisions" currentCollectionId={collectionId} itemNoun="Selection List" /> : undefined}
+            backHref={!isWorkspaceMode && collectionId ? '/app/tools/finish-decisions' : undefined}
+            backLabel={!isWorkspaceMode && collectionId ? 'All Selections' : undefined}
             toolLabel="Selections"
             scopes={tagScopes}
             scopeLabel="Tags"
             buildExportUrl={({ projectId: pid, selectedScopeIds, scopeMode, includeNotes, includeComments, includePhotos }) => {
-              const reportBase = collectionId
-                ? `/app/tools/finish-decisions/${collectionId}/report`
-                : `/app/tools/finish-decisions/report?projectId=${pid}`
-              const sep = reportBase.includes('?') ? '&' : '?'
+              const reportBase = `/app/tools/finish-decisions/report?projectId=${pid}`
+              const sep = '&'
               let url = `${reportBase}${sep}includeNotes=${includeNotes}&includeComments=${includeComments}&includePhotos=${includePhotos}`
               if (scopeMode === 'selected' && selectedScopeIds.length > 0) {
                 url += `&tags=${encodeURIComponent(selectedScopeIds.join(','))}`
               }
               return url
             }}
-            onRename={collectionId ? handleRename : undefined}
-            onArchive={collectionId ? handleArchive : undefined}
+            onRename={!isWorkspaceMode && collectionId ? handleRename : undefined}
+            onArchive={!isWorkspaceMode && collectionId ? handleArchive : undefined}
             actions={collectionId ? (
               <button
                 type="button"
@@ -507,6 +509,13 @@ export function ToolContent({
             toolKey="finish_decisions"
             collectionId={collectionId}
             collectionTitle={titleOverride || collectionTitle}
+          />
+        )}
+        {isWorkspaceMode && workspaceInfo.hasMultipleCollections && (
+          <MultiCollectionBanner
+            collectionCount={workspaceInfo.collectionCount}
+            projectId={collResult.projectId || currentProject?.id || ''}
+            primaryCollectionId={workspaceInfo.workspaceCollectionId}
           />
         )}
         <UnsortedBanner toolKey="finish_decisions" />

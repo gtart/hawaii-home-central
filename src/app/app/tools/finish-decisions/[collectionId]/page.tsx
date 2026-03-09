@@ -1,23 +1,10 @@
-import { ToolContent } from '../ToolContent'
-import { getPublishedIdeaPacks } from '@/lib/idea-packs-db'
-import { getSelectionEmojiMap } from '@/lib/default-selections-db'
+import { redirect } from 'next/navigation'
 
-export default async function DecisionTrackerCollectionPage({
-  params,
-}: {
-  params: Promise<{ collectionId: string }>
-}) {
-  const { collectionId } = await params
-  const [kits, emojiMap] = await Promise.all([
-    getPublishedIdeaPacks(),
-    getSelectionEmojiMap(),
-  ])
-
-  return (
-    <ToolContent
-      collectionId={collectionId}
-      kits={kits}
-      emojiMap={emojiMap}
-    />
-  )
+/**
+ * Legacy collection route redirect.
+ * Old URLs like /app/tools/finish-decisions/[collectionId] now redirect
+ * to the workspace-first landing page.
+ */
+export default async function DecisionTrackerCollectionPage() {
+  redirect('/app/tools/finish-decisions')
 }

@@ -1,22 +1,14 @@
-import type { Metadata } from 'next'
-import { DecisionDetailContent } from '../../../decision/[decisionId]/DecisionDetailContent'
-import { getPublishedIdeaPacks } from '@/lib/idea-packs-db'
-import { getSelectionEmojiMap } from '@/lib/default-selections-db'
+import { redirect } from 'next/navigation'
 
-export const metadata: Metadata = {
-  title: 'Selection Detail',
-}
-
+/**
+ * Legacy collection decision detail redirect.
+ * Redirects to the workspace-first decision detail route.
+ */
 export default async function CollectionDecisionDetailPage({
   params,
 }: {
   params: Promise<{ collectionId: string; decisionId: string }>
 }) {
-  const { collectionId } = await params
-  const [kits, emojiMap] = await Promise.all([
-    getPublishedIdeaPacks(),
-    getSelectionEmojiMap(),
-  ])
-
-  return <DecisionDetailContent collectionId={collectionId} kits={kits} emojiMap={emojiMap} />
+  const { decisionId } = await params
+  redirect(`/app/tools/finish-decisions/decision/${decisionId}`)
 }

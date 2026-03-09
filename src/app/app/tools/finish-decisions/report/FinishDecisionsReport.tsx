@@ -36,7 +36,47 @@ export function FinishDecisionsReport({ collectionIdOverride }: { collectionIdOv
     )
   }
 
+  // When we have a projectId but no collectionId, resolve the workspace anchor
+  if (requiredProjectId && !collectionIdOverride) {
+    return <WorkspaceReportResolver projectId={requiredProjectId} />
+  }
+
   return <ReportInner requiredProjectId={requiredProjectId} collectionIdOverride={collectionIdOverride} />
+}
+
+function WorkspaceReportResolver({ projectId }: { projectId: string }) {
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null)
+  const [resolved, setResolved] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    async function resolve() {
+      try {
+        const res = await fetch(`/api/selections-workspace/resolve?projectId=${projectId}`)
+        if (cancelled) return
+        if (res.ok) {
+          const info = await res.json()
+          setWorkspaceId(info.workspaceCollectionId)
+        }
+      } catch {
+        // Fall through to non-collection mode
+      } finally {
+        if (!cancelled) setResolved(true)
+      }
+    }
+    resolve()
+    return () => { cancelled = true }
+  }, [projectId])
+
+  if (!resolved) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  return <ReportInner requiredProjectId={projectId} collectionIdOverride={workspaceId ?? undefined} />
 }
 
 function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProjectId: string | null; collectionIdOverride?: string }) {
@@ -79,7 +119,7 @@ function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProj
 
   const [settings, setSettings] = useState<ReportSettings>({
     companyName: 'HawaiiHomeCentral.com',
-    reportTitle: 'Selection List Report',
+    reportTitle: 'Selections Report',
     footerText: 'Created at HawaiiHomeCentral.com',
   })
 
@@ -89,7 +129,7 @@ function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProj
         const res = await fetch('/api/tools/punchlist/report-settings')
         if (res.ok) {
           const data = await res.json()
-          setSettings((prev) => ({ ...prev, ...data, reportTitle: 'Selection List Report' }))
+          setSettings((prev) => ({ ...prev, ...data, reportTitle: 'Selections Report' }))
         }
       } catch {
         // use defaults

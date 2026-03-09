@@ -8,7 +8,7 @@ const DISMISSED_KEY = 'hhc_save_tip_dismissed'
 
 /**
  * Expandable "Tip" banner for the "Save to HHC" bookmarklet.
- * Placed near the top of the Selection Lists page.
+ * Placed near the top of the Selections workspace page.
  * Collapsible — users can dismiss it, and it stays collapsed.
  */
 export function SaveFromWebCTA({ className = '' }: { className?: string }) {

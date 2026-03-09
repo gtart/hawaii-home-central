@@ -1,26 +1,25 @@
 /**
- * Centralized routing helpers for Selection Lists (finish-decisions).
- * All decision links should use these helpers to ensure consistent routing.
+ * Centralized routing helpers for Selections (finish-decisions).
+ *
+ * Workspace-first: routes no longer include collectionId segments.
+ * The workspace anchor is resolved server-side, not embedded in URLs.
  */
 
 const BASE = '/app/tools/finish-decisions'
 
 export function buildDecisionHref({
   decisionId,
-  collectionId,
 }: {
   decisionId: string
+  /** @deprecated No longer used — kept for call-site compatibility during migration */
   collectionId?: string
 }): string {
-  if (collectionId) {
-    return `${BASE}/${collectionId}/decision/${decisionId}`
-  }
   return `${BASE}/decision/${decisionId}`
 }
 
-export function buildBoardHref(collectionId?: string): string {
-  if (collectionId) {
-    return `${BASE}/${collectionId}`
-  }
+export function buildBoardHref(
+  /** @deprecated No longer used — kept for call-site compatibility during migration */
+  _collectionId?: string
+): string {
   return BASE
 }

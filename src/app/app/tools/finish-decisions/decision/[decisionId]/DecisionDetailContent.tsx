@@ -111,10 +111,9 @@ export function DecisionDetailContent({
   const shouldRedirect = isLoaded && !foundDecision
   useEffect(() => {
     if (shouldRedirect) {
-      const basePath = collectionId ? `/app/tools/finish-decisions/${collectionId}` : '/app/tools/finish-decisions'
-      router.replace(basePath)
+      router.replace('/app/tools/finish-decisions')
     }
-  }, [shouldRedirect, collectionId, router])
+  }, [shouldRedirect, router])
 
   // DB-backed comments for this decision
   const decisionComments = useComments({
@@ -943,7 +942,7 @@ export function DecisionDetailContent({
             onImportToDecision={handleImportToDecision}
             onMoveOption={(optId) => setMoveOptionId(optId)}
             onCopyOption={collectionId ? (optId) => setCopyOptionId(optId) : undefined}
-            copyDisabledReason={!collectionId ? 'Open this selection from a Selection List to copy options' : undefined}
+            copyDisabledReason={!collectionId ? 'Workspace is loading — copy will be available shortly' : undefined}
             addActionsRef={addActionsRef}
           />
         </div>

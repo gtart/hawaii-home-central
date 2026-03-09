@@ -29,7 +29,7 @@ export function OnboardingView({
       </h2>
 
       <p className="text-sm text-cream/50 leading-relaxed mb-6">
-        Create a Selection List to finalize your choices and make it easier.
+        Add the things you need to decide on — countertops, flooring, fixtures — and track your picks.
       </p>
 
       {/* Add selection input */}

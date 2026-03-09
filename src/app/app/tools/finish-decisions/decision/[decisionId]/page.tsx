@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { DecisionDetailContent } from './DecisionDetailContent'
+import { DecisionDetailLoader } from './DecisionDetailLoader'
 import { getPublishedIdeaPacks } from '@/lib/idea-packs-db'
 import { getSelectionEmojiMap } from '@/lib/default-selections-db'
 
@@ -13,5 +13,5 @@ export default async function DecisionDetailPage() {
     getSelectionEmojiMap(),
   ])
 
-  return <DecisionDetailContent kits={kits} emojiMap={emojiMap} />
+  return <DecisionDetailLoader kits={kits} emojiMap={emojiMap} />
 }
