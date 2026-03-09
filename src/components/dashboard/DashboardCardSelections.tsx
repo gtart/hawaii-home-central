@@ -28,15 +28,9 @@ export function DashboardCardSelections({
   const totalDeciding = lists.reduce((s, l) => s + l.decidingCount, 0)
   const totalDone = lists.reduce((s, l) => s + l.doneCount, 0)
   const totalActive = totalNotStarted + totalDeciding
+  const totalAll = totalNotStarted + totalDeciding + totalDone
   const hasItems = lists.length > 0
   const lastUpdated = lists.length > 0 ? lists[0].updatedAt : null
-
-  // Find last comment across all lists
-  const lastComment = lists
-    .filter((l) => l.lastComment)
-    .sort((a, b) => new Date(b.lastComment!.updatedAt).getTime() - new Date(a.lastComment!.updatedAt).getTime())[0]?.lastComment
-
-  const totalAll = totalNotStarted + totalDeciding + totalDone
 
   // No workspace or no selections at all
   if (!hasItems || totalAll === 0) {
@@ -59,9 +53,9 @@ export function DashboardCardSelections({
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
         <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Selections</p>
-        <p className="text-lg font-medium text-cream/60 mb-1">All selections made</p>
+        <p className="text-lg font-medium text-cream/60 mb-1">All caught up</p>
         <p className="text-xs text-cream/35 mb-1">
-          {totalDone} selection{totalDone !== 1 ? 's' : ''} decided
+          All {totalDone} selection{totalDone !== 1 ? 's' : ''} have been decided
         </p>
         {lastUpdated && (
           <p className="text-[11px] text-cream/25 mb-1">Last activity: {relativeTime(lastUpdated)}</p>
@@ -79,8 +73,10 @@ export function DashboardCardSelections({
 
   // Has active items
   let heuristic: string
-  if (totalNotStarted > 0) {
-    heuristic = `${totalNotStarted} selection${totalNotStarted !== 1 ? 's' : ''} haven't been started`
+  if (totalNotStarted > 0 && totalDeciding > 0) {
+    heuristic = `${totalNotStarted} not started, ${totalDeciding} in progress`
+  } else if (totalNotStarted > 0) {
+    heuristic = `${totalNotStarted} selection${totalNotStarted !== 1 ? 's' : ''} not started yet`
   } else {
     heuristic = `${totalDeciding} selection${totalDeciding !== 1 ? 's' : ''} still in progress`
   }
@@ -89,11 +85,11 @@ export function DashboardCardSelections({
     <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm uppercase tracking-wider text-cream/40">Selections</p>
-        <span className="text-[10px] text-cream/30 tabular-nums">{lists.length} list{lists.length !== 1 ? 's' : ''}</span>
+        <span className="text-[10px] text-cream/30 tabular-nums">{totalAll} total</span>
       </div>
       <div className="flex items-baseline gap-3 mb-1">
         <span className="text-2xl font-semibold text-cream tabular-nums">{totalActive}</span>
-        <span className="text-sm text-cream/40">need selections</span>
+        <span className="text-sm text-cream/40">still deciding</span>
         {totalDone > 0 && (
           <>
             <span className="text-cream/15">&middot;</span>
@@ -102,17 +98,6 @@ export function DashboardCardSelections({
         )}
       </div>
       <p className="text-xs text-cream/35 mb-2">{heuristic}</p>
-      {(() => {
-        const urgent = [...lists].sort((a, b) => (b.notStartedCount + b.decidingCount) - (a.notStartedCount + a.decidingCount))[0]
-        const reason = urgent.notStartedCount > 0
-          ? `${urgent.notStartedCount} not started`
-          : `${urgent.decidingCount} deciding`
-        return (
-          <Link href={`/app/tools/finish-decisions/${urgent.id}`} className="block text-[11px] text-cream/35 hover:text-cream/50 transition-colors mb-1 truncate">
-            Needs review: <span className="text-cream/50">{urgent.title}</span> <span className="text-cream/25">({reason})</span>
-          </Link>
-        )
-      })()}
       <ShareMetaLine meta={data?.toolMeta?.finish_decisions} />
       {data?.recentActivity?.finish_decisions && data.recentActivity.finish_decisions.length > 0 ? (
         <div className="mb-4 space-y-1">
@@ -128,10 +113,12 @@ export function DashboardCardSelections({
             </div>
           ))}
         </div>
-      ) : (
+      ) : lastUpdated ? (
         <p className="text-[11px] text-cream/25 mb-4 truncate">
-          Last updated: {lists[0].title} · {relativeTime(lists[0].updatedAt)}{lists[0].updatedByName ? ` by ${lists[0].updatedByName.split(' ')[0]}` : ''}
+          Last updated {relativeTime(lastUpdated)}{lists[0].updatedByName ? ` by ${lists[0].updatedByName.split(' ')[0]}` : ''}
         </p>
+      ) : (
+        <div className="mb-4" />
       )}
       <Link
         href="/app/tools/finish-decisions"
