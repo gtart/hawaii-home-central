@@ -58,6 +58,9 @@ export function DestinationPicker({
   const [decisions, setDecisions] = useState<DecisionOption[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showCreateInput, setShowCreateInput] = useState(false)
+  const [newListName, setNewListName] = useState('')
+  const [creating, setCreating] = useState(false)
 
   // ESC to close
   useEffect(() => {
@@ -92,6 +95,37 @@ export function DestinationPicker({
         setLoading(false)
       })
   }, [projectId, toolKey, excludeCollectionId])
+
+  async function handleCreateList() {
+    const title = newListName.trim()
+    if (!title || creating) return
+    setCreating(true)
+    setError('')
+    try {
+      const res = await fetch('/api/collections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, toolKey, title }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Failed to create list')
+        setCreating(false)
+        return
+      }
+      const data = await res.json()
+      const newColl: CollectionOption = { id: data.collection.id, title: data.collection.title }
+      setCollections((prev) => [...prev, newColl])
+      setNewListName('')
+      setShowCreateInput(false)
+      setCreating(false)
+      // Auto-select the newly created list
+      handleCollectionSelect(newColl)
+    } catch {
+      setError('Failed to create list')
+      setCreating(false)
+    }
+  }
 
   function handleCollectionSelect(coll: CollectionOption) {
     setSelectedCollection(coll)
@@ -232,9 +266,9 @@ export function DestinationPicker({
         {/* Collection step */}
         {step === 'collection' && !loading && (
           <div className="space-y-2">
-            {collections.length === 0 && !error && (
+            {collections.length === 0 && !error && !showCreateInput && (
               <p className="text-sm text-cream/40 text-center py-4">
-                No other lists found. Create another list first.
+                No other lists found.
               </p>
             )}
             {collections.map((coll) => (
@@ -250,6 +284,44 @@ export function DestinationPicker({
                 </svg>
               </button>
             ))}
+
+            {/* Create new list */}
+            {showCreateInput ? (
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  autoFocus
+                  type="text"
+                  value={newListName}
+                  onChange={(e) => setNewListName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCreateList()
+                    if (e.key === 'Escape') { setShowCreateInput(false); setNewListName('') }
+                  }}
+                  placeholder="New list name..."
+                  disabled={creating}
+                  className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50 disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={handleCreateList}
+                  disabled={!newListName.trim() || creating}
+                  className="px-3 py-2 text-sm font-medium text-basalt bg-sandstone rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-40 shrink-0"
+                >
+                  {creating ? 'Creating...' : 'Create'}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowCreateInput(true)}
+                className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-cream/15 rounded-lg hover:border-sandstone/40 transition-colors group"
+              >
+                <svg className="w-4 h-4 text-cream/30 group-hover:text-sandstone transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                </svg>
+                <span className="text-sm text-cream/40 group-hover:text-sandstone transition-colors">Create new list</span>
+              </button>
+            )}
           </div>
         )}
 
