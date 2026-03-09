@@ -355,6 +355,18 @@ export interface FinishDecisionsPayloadV3 {
 // Idea (was OptionV3) — a competing choice within a selection
 export type IdeaV4 = OptionV3
 
+// Selection access level for collaborator-based sharing
+export type SelectionAccessLevel = 'edit' | 'view'
+
+// Per-collaborator access entry for restricted selections
+export interface SelectionAccess {
+  email: string
+  level: SelectionAccessLevel
+}
+
+// Selection visibility mode
+export type SelectionVisibility = 'workspace' | 'restricted'
+
 // Selection (was DecisionV3) — a decision to be made, contains ideas
 export interface SelectionV4 {
   id: string
@@ -373,6 +385,9 @@ export interface SelectionV4 {
   statusLog?: StatusLogEntry[]
   files?: DecisionFileV3[]
   location?: string
+  visibility?: SelectionVisibility // default: 'workspace' (all workspace members can see)
+  access?: SelectionAccess[] // only used when visibility === 'restricted'
+  createdBy?: string // email of selection creator
   createdAt: string
   updatedAt: string
 }
@@ -444,6 +459,51 @@ export function toPublicSelection(
   }
 
   return pub
+}
+
+// ============================================================================
+// SELECTION-LEVEL ACCESS RESOLUTION
+// ============================================================================
+
+/**
+ * Resolve a user's access level for a specific selection.
+ *
+ * Rules:
+ * - If visibility is not 'restricted' (or is undefined/'workspace'), return
+ *   the workspace-level access (capped to 'edit' since 'OWNER' maps to 'edit')
+ * - If visibility is 'restricted':
+ *   - Creator always has access (capped at workspace level)
+ *   - Users in the selection's access list have their listed level (capped at workspace)
+ *   - Everyone else gets null (no access)
+ */
+export function resolveSelectionAccess(
+  selection: SelectionV4,
+  userEmail: string,
+  workspaceAccess: string // 'OWNER' | 'EDITOR' | 'VIEWER'
+): 'edit' | 'view' | null {
+  // Cap workspace access to selection-level terminology
+  const cappedAccess: 'edit' | 'view' =
+    workspaceAccess === 'OWNER' || workspaceAccess === 'EDITOR' ? 'edit' : 'view'
+
+  // Non-restricted = everyone with workspace access can see it
+  if (selection.visibility !== 'restricted') {
+    return cappedAccess
+  }
+
+  // Restricted: creator always has access
+  if (selection.createdBy && selection.createdBy.toLowerCase() === userEmail.toLowerCase()) {
+    return cappedAccess
+  }
+
+  // Check explicit access list
+  const entry = (selection.access || []).find(
+    (a) => a.email.toLowerCase() === userEmail.toLowerCase()
+  )
+  if (!entry) return null
+
+  // Cap at workspace level
+  if (cappedAccess === 'view') return 'view'
+  return entry.level
 }
 
 // ============================================================================

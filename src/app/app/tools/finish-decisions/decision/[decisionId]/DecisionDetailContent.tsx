@@ -15,6 +15,7 @@ import { findKitsForDecisionTitle, applyKitToDecision } from '@/lib/finish-decis
 import {
   STATUS_CONFIG_V3,
   SELECTION_PRIORITY_CONFIG,
+  resolveSelectionAccess,
   type OptionV3,
   type StatusV3,
   type SelectionPriority,
@@ -32,6 +33,8 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { relativeTime } from '@/lib/relativeTime'
 import { useComments, type CommentRow } from '@/hooks/useComments'
 import { useProject } from '@/contexts/ProjectContext'
+import { SelectionShareSheet } from '../../components/SelectionShareSheet'
+import type { SelectionVisibility, SelectionAccess } from '@/data/finish-decisions'
 
 const COMMENTS_PER_PAGE = 10
 const MAX_COMMENT_LENGTH = 400
@@ -63,8 +66,6 @@ export function DecisionDetailContent({
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
-  const [shareLink, setShareLink] = useState<string | null>(null)
-  const [shareCreating, setShareCreating] = useState(false)
   const [draftRef, setDraftRef] = useState<{ optionId: string; optionLabel: string } | null>(null)
   const [ideasPackOpen, setIdeasPackOpen] = useState(false)
   const [mobileCommentsOpen, setMobileCommentsOpen] = useState(false)
@@ -91,6 +92,8 @@ export function DecisionDetailContent({
   const result = useCollectionMode ? collResult : toolResult
   const { state, setState, isLoaded } = result
   const readOnly = useCollectionMode ? collResult.readOnly : toolResult.readOnly
+  const workspaceAccess = useCollectionMode ? (collResult.access || null) : null
+  const isWorkspaceOwner = workspaceAccess === 'OWNER'
 
   const v4State =
     state.version === 4
@@ -100,8 +103,14 @@ export function DecisionDetailContent({
   // Find the selection (was "decision")
   const foundDecision = v4State.selections.find((s) => s.id === decisionId)
 
-  // Redirect when decision not found — must be in useEffect, not during render
-  const shouldRedirect = isLoaded && !foundDecision
+  // Check selection-level access for restricted selections
+  const selectionAccess = foundDecision && session?.user?.email
+    ? resolveSelectionAccess(foundDecision, session.user.email, workspaceAccess || 'VIEWER')
+    : (foundDecision ? 'edit' : null) // no email = local mode, allow
+  const selectionBlocked = foundDecision && selectionAccess === null
+
+  // Redirect when decision not found or access blocked
+  const shouldRedirect = isLoaded && (!foundDecision || selectionBlocked)
   useEffect(() => {
     if (shouldRedirect) {
       router.replace('/app/tools/finish-decisions')
@@ -674,7 +683,7 @@ export function DecisionDetailContent({
             disabled={readOnly}
             className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50 shrink-0"
           />
-          {collectionId && !readOnly && (
+          {collectionId && (
             <button
               type="button"
               onClick={() => setShareOpen(true)}
@@ -687,6 +696,9 @@ export function DecisionDetailContent({
                 <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
               </svg>
               Share
+              {foundDecision.visibility === 'restricted' && (
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Restricted" />
+              )}
             </button>
           )}
         </div>
@@ -1152,86 +1164,23 @@ export function DecisionDetailContent({
         </div>
       )}
 
-      {/* Per-selection share dialog */}
-      {shareOpen && collectionId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => { setShareOpen(false); setShareLink(null) }} />
-          <div className="relative bg-basalt-50 border border-cream/15 rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
-            <h3 className="text-lg font-medium text-cream mb-1">Share this selection</h3>
-            <p className="text-sm text-cream/50 mb-4">
-              Create a read-only link for &ldquo;{foundDecision.title}&rdquo;
-            </p>
-
-            {shareLink ? (
-              <div className="space-y-3">
-                <div className="bg-basalt border border-cream/15 rounded-lg p-3">
-                  <p className="text-xs text-cream/40 mb-1">Share link</p>
-                  <p className="text-sm text-cream/80 break-all font-mono">{shareLink}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => { navigator.clipboard.writeText(shareLink); }}
-                  className="w-full py-2.5 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors text-sm"
-                >
-                  Copy link
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setShareOpen(false); setShareLink(null) }}
-                  className="w-full py-2 text-sm text-cream/50 hover:text-cream/70 transition-colors"
-                >
-                  Done
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 justify-end">
-                <button
-                  type="button"
-                  onClick={() => { setShareOpen(false); setShareLink(null) }}
-                  className="px-4 py-1.5 text-sm text-cream/50 hover:text-cream/70 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={shareCreating}
-                  onClick={async () => {
-                    setShareCreating(true)
-                    try {
-                      const res = await fetch(`/api/collections/${collectionId}/share-token`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          settings: {
-                            includeNotes: false,
-                            includeComments: true,
-                            includePhotos: true,
-                            scope: {
-                              mode: 'selected',
-                              selectionIds: [foundDecision.id],
-                              selectionLabels: [foundDecision.title],
-                            },
-                          },
-                        }),
-                      })
-                      if (res.ok) {
-                        const data = await res.json()
-                        const token = data.token || data.shareToken?.token
-                        if (token) {
-                          setShareLink(`${window.location.origin}/share/finish_decisions/${token}`)
-                        }
-                      }
-                    } catch { /* silent */ }
-                    finally { setShareCreating(false) }
-                  }}
-                  className="px-4 py-1.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-50"
-                >
-                  {shareCreating ? 'Creating...' : 'Create link'}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Per-selection share sheet */}
+      {shareOpen && collectionId && currentProject && (
+        <SelectionShareSheet
+          selection={foundDecision}
+          currentUserEmail={session?.user?.email || ''}
+          isOwner={isWorkspaceOwner}
+          projectId={currentProject.id}
+          collectionId={collectionId}
+          onUpdateVisibility={(visibility: SelectionVisibility, access: SelectionAccess[]) => {
+            updateDecision({
+              visibility,
+              access: visibility === 'restricted' ? access : undefined,
+              createdBy: foundDecision.createdBy || session?.user?.email || undefined,
+            })
+          }}
+          onClose={() => setShareOpen(false)}
+        />
       )}
     </div>
   )

@@ -137,12 +137,22 @@ export async function POST(request: Request) {
     }
   }
 
+  // Union ownedKitIds and appliedKitIds across anchor + all sources
+  const mergedOwnedKitIds = Array.from(new Set([
+    ...((anchorPayload as any).ownedKitIds || []),
+    ...sources.flatMap((s) => ((s.payload as any)?.ownedKitIds || [])),
+  ]))
+  const mergedAppliedKitIds = Array.from(new Set([
+    ...((anchorPayload as any).appliedKitIds || []),
+    ...sources.flatMap((s) => ((s.payload as any)?.appliedKitIds || [])),
+  ]))
+
   // Save merged payload to anchor
   const mergedPayload: FinishDecisionsPayloadV4 = {
     version: 4,
     selections: anchorSelections,
-    ownedKitIds: (anchorPayload as any).ownedKitIds,
-    appliedKitIds: (anchorPayload as any).appliedKitIds,
+    ownedKitIds: mergedOwnedKitIds.length > 0 ? mergedOwnedKitIds : undefined,
+    appliedKitIds: mergedAppliedKitIds.length > 0 ? mergedAppliedKitIds : undefined,
   }
 
   const sourceIds = sources.map((s) => s.id)
@@ -181,35 +191,59 @@ export async function POST(request: Request) {
     data: { collectionId: anchorCollectionId },
   })
 
-  // Migrate members (skip duplicates by collecting existing)
+  // Migrate members — prefer strongest role when same user exists in multiple collections
+  const ROLE_STRENGTH: Record<string, number> = { OWNER: 3, EDITOR: 2, VIEWER: 1 }
+
   const existingMembers = await prisma.toolCollectionMember.findMany({
     where: { collectionId: anchorCollectionId },
-    select: { userId: true },
+    select: { userId: true, role: true },
   })
-  const existingMemberUserIds = new Set(existingMembers.map((m) => m.userId))
+  const existingMemberMap = new Map<string, string>(existingMembers.map((m) => [m.userId, m.role]))
 
   const sourceMembers = await prisma.toolCollectionMember.findMany({
-    where: {
-      collectionId: { in: sourceIds },
-      userId: { notIn: Array.from(existingMemberUserIds) },
-    },
+    where: { collectionId: { in: sourceIds } },
   })
 
-  let membersMigrated = 0
+  // Determine strongest role per user across all sources
+  const bestSourceRole = new Map<string, string>()
   for (const sm of sourceMembers) {
-    if (!existingMemberUserIds.has(sm.userId)) {
+    const current = bestSourceRole.get(sm.userId)
+    if (!current || (ROLE_STRENGTH[sm.role] || 0) > (ROLE_STRENGTH[current] || 0)) {
+      bestSourceRole.set(sm.userId, sm.role)
+    }
+  }
+
+  let membersMigrated = 0
+  for (const [uid, sourceRole] of bestSourceRole) {
+    const existingRole = existingMemberMap.get(uid)
+    if (!existingRole) {
+      // New member — create
       try {
         await prisma.toolCollectionMember.create({
           data: {
             collectionId: anchorCollectionId,
-            userId: sm.userId,
-            role: sm.role,
+            userId: uid,
+            role: sourceRole as any,
           },
         })
         membersMigrated++
-        existingMemberUserIds.add(sm.userId)
+        existingMemberMap.set(uid, sourceRole)
       } catch {
         // Unique constraint race — skip
+      }
+    } else if ((ROLE_STRENGTH[sourceRole] || 0) > (ROLE_STRENGTH[existingRole] || 0)) {
+      // Existing member with weaker role — upgrade
+      try {
+        await prisma.toolCollectionMember.updateMany({
+          where: {
+            collectionId: anchorCollectionId,
+            userId: uid,
+          },
+          data: { role: sourceRole as any },
+        })
+        membersMigrated++
+      } catch {
+        // Race — skip
       }
     }
   }

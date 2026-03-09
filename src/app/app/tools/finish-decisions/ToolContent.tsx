@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { useToolState } from '@/hooks/useToolState'
 import { useSelectionsWorkspace, type ActivityEventHint } from '@/hooks/useSelectionsWorkspace'
 import { useProject } from '@/contexts/ProjectContext'
@@ -26,6 +27,7 @@ import {
   type V1DecisionItem,
   type V2FinishDecisionsPayload,
   type OptionV3,
+  resolveSelectionAccess,
 } from '@/data/finish-decisions'
 
 // ============================================================================
@@ -170,6 +172,7 @@ export function ToolContent({
   const isWorkspaceMode = !!workspaceInfo
   const { projects, currentProject } = useProject()
   const router = useRouter()
+  const { data: session } = useSession()
 
   // Workspace mode: use workspace-first hook
   const workspaceResult = useSelectionsWorkspace({
@@ -243,6 +246,17 @@ export function ToolContent({
     state.version === 4
       ? (state as FinishDecisionsPayloadV4)
       : { version: 4 as const, selections: [] as SelectionV4[] }
+
+  // Filter selections by visibility — restricted selections hidden from unauthorized users
+  const userEmail = session?.user?.email || ''
+  const workspaceAccessStr = access === 'OWNER' ? 'OWNER' : access === 'EDIT' ? 'EDITOR' : 'VIEWER'
+  const visibleSelections = useMemo(() => {
+    if (!userEmail || access === 'OWNER') return v4State.selections // owners see everything
+    return v4State.selections.filter((s) => {
+      const selAccess = resolveSelectionAccess(s, userEmail, workspaceAccessStr)
+      return selAccess !== null
+    })
+  }, [v4State.selections, userEmail, access, workspaceAccessStr])
 
   const handleAcquireKit = (kitId: string) => {
     setState((prev) => {
@@ -349,7 +363,7 @@ export function ToolContent({
           </div>
         ) : isLoaded && state.version === 4 ? (
           <DecisionTrackerPage
-            selections={v4State.selections}
+            selections={visibleSelections}
             onUpdateSelections={handleUpdateSelections}
             onAcquireKit={handleAcquireKit}
             onAddSelection={handleAddSelection}
