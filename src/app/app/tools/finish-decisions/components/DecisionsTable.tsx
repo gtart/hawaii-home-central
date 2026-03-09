@@ -38,7 +38,6 @@ function safeStatusConfig(status: string) {
 
 export function DecisionsTable({
   decisions,
-  roomType,
   onDeleteDecision,
   onMoveDecision,
   readOnly = false,
@@ -46,7 +45,6 @@ export function DecisionsTable({
   collectionId,
 }: {
   decisions: DecisionV3[]
-  roomType: string
   onDeleteDecision: (decisionId: string) => void
   onMoveDecision?: (decisionId: string) => void
   readOnly?: boolean

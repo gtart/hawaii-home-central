@@ -194,7 +194,34 @@ function convertToSelection(
     updatedAt: ts,
   }
 
-  // Navigate rooms → decisions → find target decision
+  const version = typeof payload.version === 'number' ? payload.version : 0
+
+  // V4: flat selections array
+  if (version >= 4 || Array.isArray(payload.selections)) {
+    const selections = (payload.selections || []) as Array<{
+      id: string; options: unknown[]; updatedAt: string; [k: string]: unknown
+    }>
+
+    let found = false
+    const updatedSelections = selections.map((sel) => {
+      if (sel.id === decisionId) {
+        found = true
+        return { ...sel, options: [...(sel.options || []), option], updatedAt: ts }
+      }
+      return sel
+    })
+
+    if (!found) {
+      throw new Error('Selection not found in collection')
+    }
+
+    return {
+      entityId: optionId,
+      payload: { ...payload, selections: updatedSelections },
+    }
+  }
+
+  // V3 legacy: rooms → decisions
   const rooms = (payload.rooms || []) as Array<{
     id: string
     decisions: Array<{ id: string; options: unknown[]; updatedAt: string; [k: string]: unknown }>

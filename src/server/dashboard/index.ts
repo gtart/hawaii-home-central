@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import type { FinishDecisionsPayloadV3, DecisionV3 } from '@/data/finish-decisions'
+import { readSelectionsPayload, countSelectionStatuses } from '@/lib/selections-payload'
 import type { PunchlistPayload, PunchlistItem } from '@/app/app/tools/punchlist/types'
 import type { MoodBoardPayload } from '@/data/mood-boards'
 
@@ -83,43 +83,21 @@ export interface DashboardResponse {
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000
 
-function getOptionThumb(option: { images?: { thumbnailUrl?: string; url: string }[]; thumbnailUrl?: string; imageUrl?: string }): string | null {
-  if (option.images?.length) {
-    return option.images[0].thumbnailUrl || option.images[0].url
-  }
-  return option.thumbnailUrl || option.imageUrl || null
-}
-
 function summarizeSelectionList(id: string, title: string, updatedAt: Date, updatedByName: string | undefined, raw: unknown): SelectionListSummary {
-  const payload = raw as FinishDecisionsPayloadV3 | null
-  const rooms = payload?.rooms ?? []
-  const decisions: DecisionV3[] = rooms.flatMap((r) => r.decisions ?? [])
+  const { selections } = readSelectionsPayload(raw)
+  const counts = countSelectionStatuses(selections)
 
-  let notStartedCount = 0
-  let decidingCount = 0
-  let doneCount = 0
+  // Find first thumbnail from a selected option
   let thumbnailUrl: string | null = null
-
-  for (const d of decisions) {
-    const status = d.status ?? 'deciding'
-    if (status === 'deciding') {
-      if ((d.options?.length ?? 0) === 0) notStartedCount++
-      else decidingCount++
-    } else {
-      doneCount++
-    }
-    // Get thumbnail from first selected option
-    if (!thumbnailUrl) {
-      const sel = d.options?.find((o) => o.isSelected)
-      if (sel) thumbnailUrl = getOptionThumb(sel)
-    }
+  for (const s of selections) {
+    if (s.thumbnailUrl) { thumbnailUrl = s.thumbnailUrl; break }
   }
 
-  // Find last user comment (non-system) across all decisions
+  // Find last user comment (non-system) across all selections
   let lastComment: SelectionListSummary['lastComment'] | undefined
   let lastCommentTime = 0
-  for (const d of decisions) {
-    for (const c of d.comments ?? []) {
+  for (const s of selections) {
+    for (const c of s.comments) {
       if (!c.authorEmail) continue
       const t = new Date(c.createdAt).getTime()
       if (t > lastCommentTime) {
@@ -134,9 +112,9 @@ function summarizeSelectionList(id: string, title: string, updatedAt: Date, upda
     title,
     updatedAt: updatedAt.toISOString(),
     updatedByName,
-    notStartedCount,
-    decidingCount,
-    doneCount,
+    notStartedCount: counts.notStarted,
+    decidingCount: counts.deciding,
+    doneCount: counts.done,
     lastComment,
     thumbnailUrl: thumbnailUrl ?? undefined,
   }

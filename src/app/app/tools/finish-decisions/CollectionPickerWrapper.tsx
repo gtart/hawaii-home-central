@@ -45,7 +45,7 @@ export function CollectionPickerWrapper() {
         )}
         <CollectionsPickerView
           toolKey="finish_decisions"
-          itemNoun="Selection List"
+          itemNoun="Selections"
           previewMode="statuses"
           customEmptyState={(onCreate) => (
             <SelectionListsEmptyState onCreate={onCreate} />

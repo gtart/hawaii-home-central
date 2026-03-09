@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { ensureCurrentProject } from '@/lib/project'
+import { readSelectionsPayload, countSelectionStatuses } from '@/lib/selections-payload'
 
 type ToolStats = Record<string, unknown>
 
@@ -18,17 +19,9 @@ function computeStats(toolKey: string, raw: unknown): ToolStats {
     }
 
     if (toolKey === 'finish_decisions') {
-      const rooms = Array.isArray(payload?.rooms)
-        ? (payload.rooms as Array<{ decisions?: unknown[] }>)
-        : []
-      const decisions = rooms.flatMap((r) =>
-        Array.isArray(r.decisions) ? (r.decisions as Array<{ status?: string }>) : []
-      )
-      const total = decisions.length
-      const finalized = decisions.filter((d) =>
-        ['selected', 'ordered', 'done'].includes(d.status ?? '')
-      ).length
-      return { total, finalized }
+      const { selections } = readSelectionsPayload(payload)
+      const counts = countSelectionStatuses(selections)
+      return { total: counts.total, finalized: counts.done }
     }
 
     if (toolKey === 'punchlist') {

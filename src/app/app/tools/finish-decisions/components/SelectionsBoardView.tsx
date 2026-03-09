@@ -69,7 +69,6 @@ export function SelectionsBoardView({
   collectionId,
 }: {
   decisions: DecisionV3[]
-  roomType: string
   onDeleteDecision: (decisionId: string) => void
   onAddSelection?: () => void
   readOnly?: boolean

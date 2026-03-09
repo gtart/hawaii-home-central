@@ -36,12 +36,14 @@ export function DashboardCardSelections({
     .filter((l) => l.lastComment)
     .sort((a, b) => new Date(b.lastComment!.updatedAt).getTime() - new Date(a.lastComment!.updatedAt).getTime())[0]?.lastComment
 
-  // Not started
-  if (!hasItems) {
+  const totalAll = totalNotStarted + totalDeciding + totalDone
+
+  // No workspace or no selections at all
+  if (!hasItems || totalAll === 0) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
         <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Selections</p>
-        <p className="text-sm text-cream/40 mb-4">No selection lists yet.</p>
+        <p className="text-sm text-cream/40 mb-4">No selections yet.</p>
         <Link
           href="/app/tools/finish-decisions"
           className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
@@ -52,14 +54,14 @@ export function DashboardCardSelections({
     )
   }
 
-  // All caught up
+  // All caught up — every selection has progressed past 'deciding'
   if (totalActive === 0) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
         <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Selections</p>
         <p className="text-lg font-medium text-cream/60 mb-1">All selections made</p>
         <p className="text-xs text-cream/35 mb-1">
-          All {totalDone} selection{totalDone !== 1 ? 's' : ''} finalized
+          {totalDone} selection{totalDone !== 1 ? 's' : ''} decided
         </p>
         {lastUpdated && (
           <p className="text-[11px] text-cream/25 mb-1">Last activity: {relativeTime(lastUpdated)}</p>
