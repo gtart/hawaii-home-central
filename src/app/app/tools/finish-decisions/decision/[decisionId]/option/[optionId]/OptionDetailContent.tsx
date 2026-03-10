@@ -605,15 +605,18 @@ export function OptionDetailContent({
             </div>
           )}
 
-          {/* Name */}
-          <input
-            type="text"
-            value={option.name}
-            onChange={(e) => updateOption({ name: e.target.value })}
-            readOnly={readOnly}
-            placeholder="Option name..."
-            className="w-full bg-transparent text-cream text-xl font-medium placeholder:text-cream/30 focus:outline-none mb-3"
-          />
+          {/* Name — read-only shows as wrapping text, edit mode uses input */}
+          {readOnly ? (
+            <h1 className="text-cream text-xl font-medium mb-3 break-words">{option.name || 'Untitled'}</h1>
+          ) : (
+            <input
+              type="text"
+              value={option.name}
+              onChange={(e) => updateOption({ name: e.target.value })}
+              placeholder="Option name..."
+              className="w-full min-w-0 bg-transparent text-cream text-xl font-medium placeholder:text-cream/30 focus:outline-none mb-3"
+            />
+          )}
 
           {/* Action row */}
           <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-cream/8">
@@ -706,10 +709,10 @@ export function OptionDetailContent({
         </div>
 
         {/* ── 2-column desktop layout / stacked mobile ── */}
-        <div className="md:grid md:grid-cols-[1fr_340px] md:gap-6">
+        <div className="md:grid md:grid-cols-[340px_1fr] md:gap-6">
 
-          {/* ── LEFT COLUMN: Image gallery + voting ── */}
-          <div className="space-y-4">
+          {/* ── LEFT COLUMN: Image gallery only (compact, constrained) ── */}
+          <div className="space-y-3">
 
             {/* Photos */}
             <div>
@@ -730,7 +733,7 @@ export function OptionDetailContent({
                       <ImageWithFallback
                         src={displayUrl(hero?.url || images[0].url)}
                         alt={option.name || 'Option image'}
-                        className="w-full max-h-80 object-contain"
+                        className="w-full max-h-64 object-contain"
                         fallback={<div className="w-full h-32 flex items-center justify-center bg-basalt"><span className="text-3xl opacity-20">🖼️</span></div>}
                       />
                       {uploading && (
@@ -777,7 +780,7 @@ export function OptionDetailContent({
                               key={img.id}
                               type="button"
                               onClick={() => !readOnly && updateOption({ heroImageId: img.id })}
-                              className={`relative w-14 h-14 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${isHero ? 'border-sandstone' : 'border-transparent hover:border-cream/20'}`}
+                              className={`relative w-12 h-12 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${isHero ? 'border-sandstone' : 'border-transparent hover:border-cream/20'}`}
                               title={isHero ? 'Primary image' : 'Set as primary'}
                             >
                               <ImageWithFallback src={displayUrl(img.thumbnailUrl || img.url)} alt={img.label || ''} className="w-full h-full object-cover" fallback={<div className="w-full h-full flex items-center justify-center bg-cream/5"><span className="text-xs opacity-30">🖼️</span></div>} />
@@ -800,16 +803,16 @@ export function OptionDetailContent({
                       disabled={uploading}
                       className="w-full rounded-xl border border-dashed border-cream/15 bg-basalt/30 hover:border-cream/30 hover:bg-basalt/50 transition-all cursor-pointer disabled:opacity-50"
                     >
-                      <div className="flex flex-col items-center justify-center gap-2 py-10">
+                      <div className="flex flex-col items-center justify-center gap-2 py-8">
                         {uploading ? (
                           <div className="w-8 h-8 border-2 border-cream/20 border-t-cream/60 rounded-full animate-spin" />
                         ) : (
-                          <svg className="w-8 h-8 text-cream/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <svg className="w-7 h-7 text-cream/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                             <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
                             <circle cx="12" cy="13" r="4" />
                           </svg>
                         )}
-                        <span className="text-sm text-cream/30">{uploading ? 'Uploading...' : 'Tap to add a photo'}</span>
+                        <span className="text-xs text-cream/30">{uploading ? 'Uploading...' : 'Add a photo'}</span>
                       </div>
                     </button>
                     <div className="mt-2 flex gap-2">
@@ -819,9 +822,9 @@ export function OptionDetailContent({
                         onChange={(e) => setPhotoUrlInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') handlePhotoUrl() }}
                         placeholder="Or paste a photo URL..."
-                        className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
+                        className="flex-1 bg-basalt border border-cream/15 rounded-lg px-2.5 py-1.5 text-xs text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
                       />
-                      <button type="button" onClick={handlePhotoUrl} disabled={!photoUrlInput.trim() || !isValidUrl(photoUrlInput)} className="px-3 py-2 bg-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/20 transition-colors disabled:opacity-30">
+                      <button type="button" onClick={handlePhotoUrl} disabled={!photoUrlInput.trim() || !isValidUrl(photoUrlInput)} className="px-2.5 py-1.5 bg-cream/10 text-cream/60 text-xs rounded-lg hover:bg-cream/20 transition-colors disabled:opacity-30">
                         Use
                       </button>
                     </div>
@@ -832,7 +835,65 @@ export function OptionDetailContent({
               {uploadError && <p className="text-sm text-red-400 mt-2">{uploadError}</p>}
             </div>
 
-            {/* Links (left column — visual, card-based) */}
+            {/* Timestamps (desktop, under image) */}
+            <div className="hidden md:flex flex-col gap-1 text-[11px] text-cream/35 px-1">
+              <span>Added {formatDate(option.createdAt)}</span>
+              {option.updatedAt !== option.createdAt && (
+                <span>Updated {formatDate(option.updatedAt)}</span>
+              )}
+            </div>
+
+            {/* Desktop delete action (under image) */}
+            {!readOnly && (
+              <div className="hidden md:block pt-2">
+                <button type="button" onClick={deleteOption} className="text-red-400/50 hover:text-red-400 text-xs transition-colors">
+                  Delete option
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* ── RIGHT COLUMN: Price, specs, links, files, comments ── */}
+          <div className="space-y-4 mt-5 md:mt-0">
+
+            {/* Final Decision badge */}
+            {option.isSelected && (
+              <div className="bg-sandstone/10 border border-sandstone/25 rounded-xl px-3 py-2.5 flex items-center gap-2">
+                <svg className="w-4 h-4 text-sandstone shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="text-xs font-semibold text-sandstone uppercase tracking-wider">Final Decision</span>
+              </div>
+            )}
+
+            {/* Price */}
+            {(!readOnly || option.price) && (
+              <div>
+                <label className="text-[11px] text-cream/40 uppercase tracking-wider mb-1 block">Price</label>
+                {readOnly ? (
+                  <p className="text-lg font-medium text-cream">{displayPrice(option.price)}</p>
+                ) : (
+                  <input
+                    value={option.price || ''}
+                    onChange={(e) => updateOption({ price: e.target.value })}
+                    placeholder="e.g. $1,200"
+                    className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50"
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Specs / Notes */}
+            {(!readOnly || option.notes) && (
+              <ExpandableSpecs
+                value={option.notes}
+                readOnly={readOnly}
+                onChange={(val) => updateOption({ notes: val })}
+                optionName={option.name}
+              />
+            )}
+
+            {/* Links */}
             <div>
               {option.urls.length > 0 && (
                 <div className="space-y-2 mb-2">
@@ -849,15 +910,15 @@ export function OptionDetailContent({
                       ) : (
                         <div className="bg-basalt rounded-xl overflow-hidden border border-cream/8">
                           {u.linkImage && (
-                            <ImageWithFallback src={`/api/image-proxy?url=${encodeURIComponent(u.linkImage)}`} alt="" className="w-full h-28 object-cover" fallback={<div className="w-full h-28 bg-cream/5" />} />
+                            <ImageWithFallback src={`/api/image-proxy?url=${encodeURIComponent(u.linkImage)}`} alt="" className="w-full h-24 object-cover" fallback={<div className="w-full h-24 bg-cream/5" />} />
                           )}
-                          <div className="px-3 py-2.5 flex items-start gap-2">
+                          <div className="px-3 py-2 flex items-start gap-2">
                             <div className="flex-1 min-w-0">
                               {u.linkTitle ? (
                                 <>
                                   <p className="text-sm font-medium text-cream/80 leading-snug line-clamp-1">{u.linkTitle}</p>
                                   {u.linkDescription && <p className="text-xs text-cream/40 line-clamp-1 mt-0.5">{u.linkDescription}</p>}
-                                  <p className="text-[11px] text-cream/30 mt-1">{linkHostname(u.url)}</p>
+                                  <p className="text-[11px] text-cream/30 mt-0.5">{linkHostname(u.url)}</p>
                                 </>
                               ) : (
                                 <p className="text-sm text-cream/60 font-mono truncate">{u.url}</p>
@@ -898,7 +959,7 @@ export function OptionDetailContent({
               {newUrl && !isValidUrl(newUrl) && <p className="text-yellow-500 text-xs mt-1">URL should start with http:// or https://</p>}
             </div>
 
-            {/* Files (left column) */}
+            {/* Files */}
             {(!readOnly || (option.documents && option.documents.length > 0)) && (
               <div>
                 <input ref={docInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.jpg,.jpeg,.png,.webp,.heic,.heif" className="hidden" onChange={(e) => handleDocumentFile(e.target.files?.[0] ?? null)} />
@@ -959,83 +1020,7 @@ export function OptionDetailContent({
               </div>
             )}
 
-            {/* Delete + back (left column footer) — desktop only, mobile gets it below */}
-            {!readOnly && (
-              <div className="hidden md:flex pt-3 border-t border-cream/10 items-center justify-between">
-                <button type="button" onClick={deleteOption} className="text-red-400/60 hover:text-red-400 text-sm transition-colors">
-                  Delete option
-                </button>
-                <Link
-                  href={`/app/tools/finish-decisions/decision/${decisionId}`}
-                  className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
-                >
-                  Done
-                </Link>
-              </div>
-            )}
-            {readOnly && (
-              <div className="hidden md:flex pt-3 border-t border-cream/10 justify-end">
-                <Link
-                  href={`/app/tools/finish-decisions/decision/${decisionId}`}
-                  className="px-4 py-2 bg-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/20 transition-colors"
-                >
-                  Done
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* ── RIGHT COLUMN: Price, specs, comments (desktop: sticky) ── */}
-          <div className="md:sticky md:top-28 md:self-start md:max-h-[calc(100vh-8rem)] md:overflow-y-auto md:scrollbar-thin space-y-4 mt-6 md:mt-0">
-
-            {/* Final Decision badge (right column) */}
-            {option.isSelected && (
-              <div className="bg-sandstone/10 border border-sandstone/25 rounded-xl px-3 py-2.5 flex items-center gap-2">
-                <svg className="w-4 h-4 text-sandstone shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <span className="text-xs font-semibold text-sandstone uppercase tracking-wider">Final Decision</span>
-              </div>
-            )}
-
-            {/* Price */}
-            {(!readOnly || option.price) && (
-              <div className="bg-basalt-50 border border-cream/10 rounded-xl px-4 py-3">
-                <label className="text-[11px] text-cream/40 uppercase tracking-wider mb-1.5 block">Price</label>
-                {readOnly ? (
-                  <p className="text-lg font-medium text-cream">{displayPrice(option.price)}</p>
-                ) : (
-                  <input
-                    value={option.price || ''}
-                    onChange={(e) => updateOption({ price: e.target.value })}
-                    placeholder="e.g. $1,200"
-                    className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50"
-                  />
-                )}
-              </div>
-            )}
-
-            {/* Specs / Notes */}
-            {(!readOnly || option.notes) && (
-              <div className="bg-basalt-50 border border-cream/10 rounded-xl px-4 py-3">
-                <ExpandableSpecs
-                  value={option.notes}
-                  readOnly={readOnly}
-                  onChange={(val) => updateOption({ notes: val })}
-                  optionName={option.name}
-                />
-              </div>
-            )}
-
-            {/* Timestamps */}
-            <div className="md:flex flex-col gap-1 text-[11px] text-cream/35 hidden px-1">
-              <span>Added {formatDate(option.createdAt)}</span>
-              {option.updatedAt !== option.createdAt && (
-                <span>Updated {formatDate(option.updatedAt)}</span>
-              )}
-            </div>
-
-            {/* Comment sidebar (desktop: inline in right column, mobile: bottom sheet) */}
+            {/* Comment sidebar (desktop: inline, mobile: bottom sheet) */}
             <CollapsibleCommentSidebar
               ref={commentSidebarRef}
               title="Option comments"
@@ -1057,10 +1042,25 @@ export function OptionDetailContent({
               filterRefEntityId={optionId}
               filterRefEntityLabel={option.name || 'Untitled'}
             />
-          </div>
 
-          {/* Mobile-only footer: delete + done */}
-          <div className="md:hidden mt-6">
+            {/* Done button (desktop) */}
+            <div className="hidden md:flex pt-3 border-t border-cream/10 justify-end">
+              <Link
+                href={`/app/tools/finish-decisions/decision/${decisionId}`}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  readOnly
+                    ? 'bg-cream/10 text-cream/60 hover:bg-cream/20'
+                    : 'bg-sandstone text-basalt hover:bg-sandstone-light'
+                }`}
+              >
+                Done
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile-only footer: delete + done */}
+        <div className="md:hidden mt-6">
             {!readOnly ? (
               <div className="pt-3 border-t border-cream/10 flex items-center justify-between">
                 <button type="button" onClick={deleteOption} className="text-red-400/60 hover:text-red-400 text-sm transition-colors">
@@ -1085,7 +1085,6 @@ export function OptionDetailContent({
             )}
           </div>
         </div>
-      </div>
 
       {/* Move/Copy sheet */}
       {moveSheetOpen && (
