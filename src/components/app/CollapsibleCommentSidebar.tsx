@@ -38,10 +38,13 @@ interface Props {
   hasUnread?: boolean
   /** Render inline (full-width, non-sticky) instead of as a fixed-width sidebar */
   inline?: boolean
+  /** Hide the collapsed tab — parent controls open/close via ref.toggle() */
+  hideCollapsedTab?: boolean
 }
 
 export interface CommentSidebarHandle {
   openMobileSheet: () => void
+  toggle: () => void
 }
 
 export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>(function CollapsibleCommentSidebar({
@@ -67,6 +70,7 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
   highlightCommentId,
   hasUnread: hasUnreadProp,
   inline,
+  hideCollapsedTab,
 }: Props, ref: React.Ref<CommentSidebarHandle>) {
   // Default expanded on first visit
   const [collapsed, setCollapsed] = useState(() => {
@@ -96,7 +100,7 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
     setMobileOpen(true)
   }, [])
 
-  useImperativeHandle(ref, () => ({ openMobileSheet }), [openMobileSheet])
+  useImperativeHandle(ref, () => ({ openMobileSheet, toggle }), [openMobileSheet, toggle])
 
   const commentCount = comments.length
 
@@ -125,7 +129,7 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
   return (
     <>
       {/* ===== Desktop ===== */}
-      {collapsed && !inline ? (
+      {collapsed && !inline && !hideCollapsedTab && (
         /* Collapsed tab (standalone sidebar mode only) */
         <div className="hidden md:flex shrink-0 w-10">
           <button
@@ -148,7 +152,8 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
             )}
           </button>
         </div>
-      ) : (
+      )}
+      {!collapsed && (
         /* Expanded sidebar — inline fills parent width, standalone is fixed 320px sticky */
         <aside className={`hidden md:block shrink-0 ${
           inline
@@ -158,7 +163,7 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
           <div className={`bg-basalt-50 border border-cream/15 rounded-card flex flex-col ${
             inline ? 'max-h-[60vh]' : 'h-full max-h-[calc(100vh-7rem)]'
           }`}>
-            <CommentThread {...threadProps} onClose={inline ? () => {} : toggle} />
+            <CommentThread {...threadProps} onClose={toggle} />
           </div>
         </aside>
       )}

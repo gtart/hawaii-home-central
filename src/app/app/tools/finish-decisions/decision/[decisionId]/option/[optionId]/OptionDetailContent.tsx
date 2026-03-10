@@ -58,6 +58,7 @@ export function OptionDetailContent({
   const [docUploading, setDocUploading] = useState(false)
   const [docUploadError, setDocUploadError] = useState('')
   const [addLinkOpen, setAddLinkOpen] = useState(false)
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [editingDocId, setEditingDocId] = useState<string | null>(null)
   const [editingDocTitle, setEditingDocTitle] = useState('')
   const commentSidebarRef = useRef<CommentSidebarHandle>(null)
@@ -595,16 +596,15 @@ export function OptionDetailContent({
               </div>
             )}
 
-            {/* Right: comment trigger (both mobile + desktop) */}
-            <div className="flex items-center gap-2 shrink-0">
-              <CommentTriggerButton
-                commentCount={optionComments.length}
-                hasUnread={hasUnreadComments}
-                onClick={() => {
-                  commentSidebarRef.current?.openMobileSheet()
-                  markOptionCommentsSeen()
-                }}
-              />
+            {/* Right: timestamps on desktop */}
+            <div className="hidden md:flex items-center gap-2 text-[11px] text-cream/40 shrink-0">
+              <span>Added {formatDate(option.createdAt)}</span>
+              {option.updatedAt !== option.createdAt && (
+                <>
+                  <span className="text-cream/15">·</span>
+                  <span>Updated {formatDate(option.updatedAt)}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -628,18 +628,36 @@ export function OptionDetailContent({
             </div>
           )}
 
-          {/* Name — read-only shows as wrapping text, edit mode uses input */}
-          {readOnly ? (
-            <h1 className="text-cream text-xl font-medium mb-3 break-words">{option.name || 'Untitled'}</h1>
-          ) : (
-            <input
-              type="text"
-              value={option.name}
-              onChange={(e) => updateOption({ name: e.target.value })}
-              placeholder="Option name..."
-              className="w-full min-w-0 bg-transparent text-cream text-xl font-medium placeholder:text-cream/30 focus:outline-none mb-3"
+          {/* Name + Comment trigger on same row */}
+          <div className="flex items-start gap-3 mb-3">
+            <div className="flex-1 min-w-0">
+              {readOnly ? (
+                <h1 className="text-cream text-xl font-medium break-words">{option.name || 'Untitled'}</h1>
+              ) : (
+                <input
+                  type="text"
+                  value={option.name}
+                  onChange={(e) => updateOption({ name: e.target.value })}
+                  placeholder="Option name..."
+                  className="w-full min-w-0 bg-transparent text-cream text-xl font-medium placeholder:text-cream/30 focus:outline-none"
+                />
+              )}
+            </div>
+            <CommentTriggerButton
+              commentCount={optionComments.length}
+              hasUnread={hasUnreadComments}
+              onClick={() => {
+                // Desktop: toggle sidebar, Mobile: open sheet
+                if (window.innerWidth >= 768) {
+                  commentSidebarRef.current?.toggle()
+                } else {
+                  commentSidebarRef.current?.openMobileSheet()
+                }
+                markOptionCommentsSeen()
+              }}
+              className="shrink-0 mt-1"
             />
-          )}
+          </div>
 
           {/* Action row: Voting + Final Decision | Move/Copy/Delete */}
           <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-cream/8">
@@ -711,34 +729,73 @@ export function OptionDetailContent({
               </span>
             ) : null}
 
-            {/* RIGHT GROUP: Move/Copy/Delete (pushed right) */}
+            {/* RIGHT GROUP: Move/Copy/Delete — inline on desktop, overflow menu on mobile */}
             {!readOnly && (
-              <div className="flex items-center gap-1 ml-auto">
-                <button
-                  type="button"
-                  onClick={() => { setMoveMode('move'); setMoveSheetOpen(true) }}
-                  className="px-2.5 py-1.5 rounded-full text-xs text-cream/40 hover:text-cream/60 hover:bg-cream/10 transition-colors"
-                >
-                  Move
-                </button>
-                {v4State.selections.length > 1 && (
+              <>
+                {/* Desktop: inline buttons */}
+                <div className="hidden md:flex items-center gap-1 ml-auto">
                   <button
                     type="button"
-                    onClick={() => { setMoveMode('copy'); setMoveSheetOpen(true) }}
+                    onClick={() => { setMoveMode('move'); setMoveSheetOpen(true) }}
                     className="px-2.5 py-1.5 rounded-full text-xs text-cream/40 hover:text-cream/60 hover:bg-cream/10 transition-colors"
                   >
-                    Copy to...
+                    Move
                   </button>
-                )}
-                <span className="w-px h-4 bg-cream/10" />
-                <button
-                  type="button"
-                  onClick={deleteOption}
-                  className="px-2.5 py-1.5 rounded-full text-xs text-red-400/50 hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
+                  {v4State.selections.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => { setMoveMode('copy'); setMoveSheetOpen(true) }}
+                      className="px-2.5 py-1.5 rounded-full text-xs text-cream/40 hover:text-cream/60 hover:bg-cream/10 transition-colors"
+                    >
+                      Copy to...
+                    </button>
+                  )}
+                  <span className="w-px h-4 bg-cream/10" />
+                  <button
+                    type="button"
+                    onClick={deleteOption}
+                    className="px-2.5 py-1.5 rounded-full text-xs text-red-400/50 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+
+                {/* Mobile: three-dot overflow menu */}
+                <div className="md:hidden relative ml-auto">
+                  <button
+                    type="button"
+                    onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+                    className="p-1.5 rounded-full text-cream/40 hover:text-cream/60 hover:bg-cream/10 transition-colors"
+                    aria-label="More actions"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
+                    </svg>
+                  </button>
+                  {moreMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-30" onClick={() => setMoreMenuOpen(false)} />
+                      <div className="absolute right-0 top-full mt-1 z-40 w-40 bg-basalt-50 border border-cream/15 rounded-xl shadow-lg overflow-hidden">
+                        <button type="button" onClick={() => { setMoveMode('move'); setMoveSheetOpen(true); setMoreMenuOpen(false) }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-cream/70 hover:bg-cream/5 transition-colors">
+                          Move
+                        </button>
+                        {v4State.selections.length > 1 && (
+                          <button type="button" onClick={() => { setMoveMode('copy'); setMoveSheetOpen(true); setMoreMenuOpen(false) }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-cream/70 hover:bg-cream/5 transition-colors">
+                            Copy to...
+                          </button>
+                        )}
+                        <div className="border-t border-cream/10" />
+                        <button type="button" onClick={() => { deleteOption(); setMoreMenuOpen(false) }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-red-400/70 hover:bg-red-400/5 transition-colors">
+                          Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -870,13 +927,6 @@ export function OptionDetailContent({
               {uploadError && <p className="text-sm text-red-400 mt-2">{uploadError}</p>}
             </div>
 
-            {/* Timestamps (desktop, under image) */}
-            <div className="hidden md:flex flex-col gap-1 text-[11px] text-cream/35 px-1">
-              <span>Added {formatDate(option.createdAt)}</span>
-              {option.updatedAt !== option.createdAt && (
-                <span>Updated {formatDate(option.updatedAt)}</span>
-              )}
-            </div>
 
           </div>
 
@@ -937,31 +987,33 @@ export function OptionDetailContent({
                         <button type="button" onClick={() => { setEditingUrlId(null); setEditingUrlValue('') }} className="px-2 py-1.5 text-cream/40 hover:text-cream/70 text-xs transition-colors">✕</button>
                       </div>
                     ) : (
-                      <div key={u.id} className="group relative flex items-center gap-1.5 bg-cream/5 hover:bg-cream/10 border border-cream/10 rounded-lg px-2.5 py-1.5 transition-colors">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`}
-                          alt=""
-                          className="w-4 h-4 rounded-sm shrink-0"
-                        />
+                      <div key={u.id} className="group relative flex items-center">
                         <a
                           href={u.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-cream/70 hover:text-sandstone transition-colors capitalize truncate max-w-[120px]"
+                          className="flex items-center gap-1.5 bg-cream/5 hover:bg-cream/10 border border-cream/10 rounded-lg px-2.5 py-1.5 transition-colors"
                           title={u.url}
                         >
-                          {displayName}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`}
+                            alt=""
+                            className="w-4 h-4 rounded-sm shrink-0"
+                          />
+                          <span className="text-sm text-cream/70 group-hover:text-sandstone transition-colors capitalize truncate max-w-[140px]">
+                            {displayName}
+                          </span>
+                          <svg className="w-3 h-3 text-cream/25 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" strokeLinecap="round" /><path d="M15 3h6v6" strokeLinecap="round" /><path d="M10 14L21 3" strokeLinecap="round" />
+                          </svg>
                         </a>
-                        <svg className="w-3 h-3 text-cream/25 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" strokeLinecap="round" /><path d="M15 3h6v6" strokeLinecap="round" /><path d="M10 14L21 3" strokeLinecap="round" />
-                        </svg>
                         {!readOnly && (
-                          <div className="hidden group-hover:flex items-center gap-0.5 ml-0.5">
-                            <button type="button" onClick={() => { setEditingUrlId(u.id); setEditingUrlValue(u.url) }} className="p-0.5 text-cream/30 hover:text-cream/60 transition-colors" title="Edit URL">
+                          <div className="hidden group-hover:flex items-center gap-0.5 ml-1">
+                            <button type="button" onClick={(e) => { e.preventDefault(); setEditingUrlId(u.id); setEditingUrlValue(u.url) }} className="p-1 text-cream/30 hover:text-cream/60 transition-colors" title="Edit URL">
                               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" /></svg>
                             </button>
-                            <button type="button" onClick={() => handleRemoveUrl(u.id)} className="p-0.5 text-cream/30 hover:text-red-400 transition-colors" title="Remove">
+                            <button type="button" onClick={(e) => { e.preventDefault(); handleRemoveUrl(u.id) }} className="p-1 text-cream/30 hover:text-red-400 transition-colors" title="Remove">
                               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" /></svg>
                             </button>
                           </div>
@@ -1130,6 +1182,7 @@ export function OptionDetailContent({
           filterRefEntityLabel={option.name || 'Untitled'}
           hasUnread={hasUnreadComments}
           forceExpand={hasUnreadComments}
+          hideCollapsedTab
         />
 
         </div>{/* end flex wrapper */}
