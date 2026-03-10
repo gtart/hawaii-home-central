@@ -5,22 +5,34 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null
 
-const DEFAULT_SUBJECT = '{{inviterName}} shared {{toolName}} with you'
+const DEFAULT_SUBJECT = '{{inviterName}} shared {{toolName}} with you on Hawaii Home Central'
 
 const DEFAULT_BODY = `
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 40px 20px;">
-  <h2 style="color: #1a1a1a; font-size: 22px; margin: 0 0 8px;">You've been invited to collaborate</h2>
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 40px 20px; color: #333;">
+  <div style="margin-bottom: 32px;">
+    <span style="font-size: 18px; font-weight: 700; color: #C4A265;">Hawaii Home Central</span>
+  </div>
+  <h2 style="color: #1a1a1a; font-size: 22px; margin: 0 0 8px;">You\u2019ve been invited to collaborate</h2>
   <p style="color: #555; font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
     <strong>{{inviterName}}</strong> has invited you to <strong>{{accessLevel}}</strong>
-    the <strong>{{toolName}}</strong> for their home <strong>{{projectName}}</strong>
-    on Hawaii Home Central.
+    their <strong>{{toolName}}</strong> for <strong>{{projectName}}</strong>.
   </p>
   <a href="{{inviteLink}}"
-     style="display: inline-block; padding: 12px 28px; background: #C4A265; color: #1a1a1a; font-weight: 600; text-decoration: none; border-radius: 8px; font-size: 15px;">
+     style="display: inline-block; padding: 14px 32px; background: #C4A265; color: #1a1a1a; font-weight: 600; text-decoration: none; border-radius: 8px; font-size: 15px;">
     Accept Invite
   </a>
-  <p style="color: #999; font-size: 13px; margin-top: 28px; line-height: 1.5;">
-    This invite expires in 7 days. If you didn't expect this, you can safely ignore it.
+  <div style="margin-top: 32px; padding: 20px; background: #f7f5f2; border-radius: 8px;">
+    <p style="color: #666; font-size: 13px; line-height: 1.6; margin: 0 0 8px;">
+      <strong>How to get started:</strong> Click the button above and sign in with your Google account.
+      Your access has been set up automatically\u2014no approval needed.
+    </p>
+    <p style="color: #888; font-size: 13px; line-height: 1.6; margin: 0;">
+      Hawaii Home Central helps homeowners track renovation decisions, manage fix lists,
+      and collaborate with their team\u2014all in one place.
+    </p>
+  </div>
+  <p style="color: #aaa; font-size: 12px; margin-top: 24px; line-height: 1.5;">
+    This invite expires in 7 days. If you didn\u2019t expect this, you can safely ignore it.
   </p>
 </div>
 `.trim()

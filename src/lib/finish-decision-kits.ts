@@ -4,7 +4,14 @@ import type {
   OptionOriginV3,
   SelectionV4,
 } from '@/data/finish-decisions'
+import { ROOM_TYPE_OPTIONS_V3 } from '@/data/finish-decisions'
 import { type FinishDecisionKit } from '@/data/finish-decision-kits'
+
+/** Map a roomType slug to its user-facing label (e.g. "kitchen" → "Kitchen") */
+function roomTypeLabel(roomType: string): string | null {
+  const found = ROOM_TYPE_OPTIONS_V3.find((r) => r.value === roomType)
+  return found?.label ?? null
+}
 
 // ============================================================================
 // Deterministic option key for deduplication
@@ -187,13 +194,20 @@ export function applyKitToWorkspace(
     } else {
       if (newOptions.length > 0) {
         addedSelectionCount++
+        // Auto-set location from pack's room type (first room type)
+        const packLocation = kit.roomTypes.length > 0 ? roomTypeLabel(kit.roomTypes[0]) : null
+        // Auto-set labels from pack's room type labels
+        const packLabels = kit.roomTypes
+          .map((rt) => roomTypeLabel(rt))
+          .filter((l): l is string => l !== null)
         const newSelection: SelectionV4 = {
           id: crypto.randomUUID(),
           title: kitDec.title,
           status: 'deciding',
           notes: '',
           options: newOptions,
-          tags: [],
+          tags: packLabels,
+          location: packLocation || undefined,
           originKitId: kit.id,
           createdAt: now,
           updatedAt: now,

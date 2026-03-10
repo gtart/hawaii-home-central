@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { resolveCollectionAccess, MAX_COLLECTION_EDITORS } from '@/lib/collection-access'
 import { sendInviteEmail } from '@/lib/email'
+import { TOOL_LABELS } from '@/lib/tool-registry'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -119,6 +120,17 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ success: true, addedDirectly: true })
   }
 
+  // Auto-whitelist the invited email so they can sign in
+  try {
+    await prisma.earlyAccessAllowlist.upsert({
+      where: { email },
+      create: { email, addedBy: `invite:${session.user.id}` },
+      update: {},
+    })
+  } catch {
+    // Non-critical — may fail if model doesn't exist in edge cases
+  }
+
   // Create invite for unknown email
   const invite = await prisma.toolCollectionInvite.create({
     data: {
@@ -130,10 +142,10 @@ export async function POST(request: Request, { params }: Params) {
     },
   })
 
-  // Send invite email
+  // Send invite email with user-facing tool name
   try {
     const inviterName = session.user.name || session.user.email || 'Someone'
-    const toolName = collection?.toolKey?.replace(/_/g, ' ') || 'a tool'
+    const toolName = (collection?.toolKey ? TOOL_LABELS[collection.toolKey] : null) || 'a tool'
     const projectName = collection?.project?.name || 'their home'
 
     await sendInviteEmail({

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
 import { findKitsForDecisionTitle } from '@/lib/finish-decision-kits'
+import { ROOM_TYPE_OPTIONS_V3 } from '@/data/finish-decisions'
 import { cn } from '@/lib/utils'
 
 // ── Disclosure badges ──
@@ -80,6 +81,8 @@ export function IdeasPackModal({
   const [selectedKitId, setSelectedKitId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ModalTab>('recommended')
   const [showAllInRecommended, setShowAllInRecommended] = useState(false)
+  const [roomFilter, setRoomFilter] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Decision-level mode: only show kits matching this title
   const isDecisionMode = !!decisionTitle
@@ -93,17 +96,40 @@ export function IdeasPackModal({
   const allKits = kits
 
   const getTabKits = (): FinishDecisionKit[] => {
+    let base: FinishDecisionKit[]
     switch (activeTab) {
       case 'recommended':
-        return showAllInRecommended ? allKits : fittingKits
+        base = showAllInRecommended ? allKits : fittingKits
+        break
       case 'my-packs':
-        return ownedKits
+        base = ownedKits
+        break
       case 'browse':
-        return allKits
+        base = allKits
+        break
       default:
-        return fittingKits
+        base = fittingKits
     }
+    // Apply room filter (workspace mode only)
+    if (roomFilter && !isDecisionMode) {
+      base = base.filter((k) => k.roomTypes.includes(roomFilter as never) || k.roomTypes.length === 0)
+    }
+    // Apply search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      base = base.filter((k) =>
+        k.label.toLowerCase().includes(q) ||
+        k.description.toLowerCase().includes(q) ||
+        k.decisions.some((d) => d.title.toLowerCase().includes(q))
+      )
+    }
+    return base
   }
+
+  // Room types that exist in available kits
+  const availableRoomTypes = !isDecisionMode
+    ? ROOM_TYPE_OPTIONS_V3.filter((rt) => kits.some((k) => k.roomTypes.includes(rt.value as never)))
+    : []
 
   const tabKits = getTabKits()
   const selectedKit = tabKits.find((k) => k.id === selectedKitId)
@@ -157,7 +183,7 @@ export function IdeasPackModal({
         <div className="px-5 pt-5 pb-3 border-b border-cream/10">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium text-cream">
-              {decisionTitle ? `Options for \u201c${decisionTitle}\u201d` : 'Selection Packs'}
+              {decisionTitle ? `Options for \u201c${decisionTitle}\u201d` : 'Add an Idea Pack'}
             </h2>
             <button
               type="button"
@@ -172,7 +198,7 @@ export function IdeasPackModal({
           <p className="text-xs text-cream/40 mt-1">
             {decisionTitle
               ? 'Adds curated options to this selection so you have more to compare.'
-              : 'Selection Packs add curated options to your selections\u2014so you can compare and choose faster.'}
+              : 'Quick-start your room with selections you\u2019ll likely need\u2014plus curated options to compare.'}
           </p>
         </div>
 
@@ -202,14 +228,58 @@ export function IdeasPackModal({
           </div>
         )}
 
+        {/* Search + room filter (workspace mode only) */}
+        {!isDecisionMode && (
+          <div className="px-5 pt-3 space-y-2">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search packs by name or selection..."
+              className="w-full bg-basalt border border-cream/15 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
+            />
+            {availableRoomTypes.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setRoomFilter(null)}
+                  className={cn(
+                    'px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors',
+                    !roomFilter
+                      ? 'bg-sandstone/25 text-sandstone ring-1 ring-sandstone/40'
+                      : 'bg-cream/8 text-cream/50 hover:text-cream/70'
+                  )}
+                >
+                  All rooms
+                </button>
+                {availableRoomTypes.map((rt) => (
+                  <button
+                    key={rt.value}
+                    type="button"
+                    onClick={() => setRoomFilter(roomFilter === rt.value ? null : rt.value)}
+                    className={cn(
+                      'px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors',
+                      roomFilter === rt.value
+                        ? 'bg-sandstone/25 text-sandstone ring-1 ring-sandstone/40'
+                        : 'bg-cream/8 text-cream/50 hover:text-cream/70'
+                    )}
+                  >
+                    {rt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Kit list */}
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
           {tabKits.length === 0 ? (
             <div className="py-8 text-center">
               <p className="text-cream/40 text-sm">
                 {activeTab === 'my-packs'
-                  ? "You don\u2019t own any Selection Packs yet."
-                  : `No Selection Packs available${decisionTitle ? ' for this selection' : ''}.`}
+                  ? "You don\u2019t own any Idea Packs yet."
+                  : `No Idea Packs available${decisionTitle ? ' for this selection' : ''}.`}
               </p>
               {activeTab === 'my-packs' && (
                 <div className="flex flex-col items-center gap-2 mt-3">
@@ -263,11 +333,29 @@ export function IdeasPackModal({
                     )}
                   </div>
                   <p className="text-xs text-cream/50 leading-relaxed">{kit.description}</p>
-                  <p className="text-[11px] text-cream/30 mt-1.5">
-                    {kit.decisions.length} selection{kit.decisions.length !== 1 ? 's' : ''},{' '}
-                    {kit.decisions.reduce((s, d) => s + d.options.length, 0)} option
-                    {kit.decisions.reduce((s, d) => s + d.options.length, 0) !== 1 ? 's' : ''}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    <p className="text-[11px] text-cream/30">
+                      {kit.decisions.length} selection{kit.decisions.length !== 1 ? 's' : ''},{' '}
+                      {kit.decisions.reduce((s, d) => s + d.options.length, 0)} option
+                      {kit.decisions.reduce((s, d) => s + d.options.length, 0) !== 1 ? 's' : ''}
+                    </p>
+                    {kit.roomTypes.length > 0 && (
+                      <div className="flex gap-1">
+                        {kit.roomTypes.map((rt) => {
+                          const label = ROOM_TYPE_OPTIONS_V3.find((r) => r.value === rt)?.label
+                          return label ? (
+                            <span key={rt} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cream/6 text-[10px] text-cream/40">
+                              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
+                                <circle cx="12" cy="10" r="3" />
+                              </svg>
+                              {label}
+                            </span>
+                          ) : null
+                        })}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Expanded preview when selected */}
                   {isSelected && (() => {
