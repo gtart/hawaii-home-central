@@ -698,12 +698,12 @@ export function IdeasBoard({
             return (
               <>
                 {/* Desktop: always show all cards */}
-                <div className="hidden md:grid md:grid-cols-3 gap-3 mb-3">
+                <div className="hidden md:block md:columns-3 md:gap-3 mb-3">
                   {decision.options.map((opt) => {
                     const optComments = comments.filter((c) => c.refEntityId === opt.id)
                     const latestCmt = optComments.length > 0 ? optComments.reduce((latest, c) => c.createdAt > latest.createdAt ? c : latest) : null
                     return (
-                    <div key={opt.id} className="relative">
+                    <div key={opt.id} className="relative break-inside-avoid mb-3">
                       <IdeaCardTile
                         option={opt}
                         decision={decision}

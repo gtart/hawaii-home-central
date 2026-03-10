@@ -414,6 +414,7 @@ model Comment {
   targetId        String    // entity ID within the payload
 
   text            String
+  edited          Boolean   @default(false)
 
   // Author
   authorUserId    String?   // authenticated users (nullable for future guests)

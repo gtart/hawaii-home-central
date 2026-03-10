@@ -15,6 +15,7 @@ export interface CommentRow {
   refEntityLabel: string | null
   parentCommentId: string | null
   createdAt: string
+  edited?: boolean
 }
 
 interface UseCommentsOptions {
@@ -35,6 +36,7 @@ interface UseCommentsReturn {
     entityTitle?: string
   }) => Promise<void>
   deleteComment: (commentId: string) => Promise<void>
+  editComment: (commentId: string, text: string) => Promise<void>
 }
 
 const POLL_INTERVAL = 20_000
@@ -217,7 +219,50 @@ export function useComments({
     [collectionId, comments]
   )
 
-  return { comments, isLoading, addComment, deleteComment }
+  // Edit comment (optimistic)
+  const editComment = useCallback(
+    async (commentId: string, text: string) => {
+      if (!collectionId) return
+
+      const original = comments.find((c) => c.id === commentId)
+      if (!original) return
+
+      // Optimistic update
+      setComments((prev) =>
+        prev.map((c) => c.id === commentId ? { ...c, text, edited: true } : c)
+      )
+
+      try {
+        const res = await fetch(
+          `/api/collections/${collectionId}/comments?commentId=${commentId}`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text }),
+          }
+        )
+        if (!res.ok) {
+          // Rollback
+          setComments((prev) =>
+            prev.map((c) => c.id === commentId ? original : c)
+          )
+        } else {
+          const data = await res.json()
+          setComments((prev) =>
+            prev.map((c) => c.id === commentId ? data.comment : c)
+          )
+        }
+      } catch {
+        // Rollback
+        setComments((prev) =>
+          prev.map((c) => c.id === commentId ? original : c)
+        )
+      }
+    },
+    [collectionId, comments]
+  )
+
+  return { comments, isLoading, addComment, deleteComment, editComment }
 }
 
 /**

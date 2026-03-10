@@ -89,6 +89,7 @@ export async function GET(request: Request, { params }: Params) {
       refEntityLabel: true,
       parentCommentId: true,
       createdAt: true,
+      edited: true,
     },
   })
 
@@ -197,11 +198,13 @@ export async function POST(request: Request, { params }: Params) {
       refEntityLabel: true,
       parentCommentId: true,
       createdAt: true,
+      edited: true,
     },
   })
 
   // Fire-and-forget activity event
   const snippet = text.length > 60 ? text.slice(0, 59) + '…' : text
+  const hasOptionRef = refEntityLabel && typeof refEntityLabel === 'string'
   writeActivityEvents([{
     projectId: collection.projectId,
     toolKey: collection.toolKey,
@@ -209,9 +212,11 @@ export async function POST(request: Request, { params }: Params) {
     entityType: targetType,
     entityId: targetId,
     action: 'commented',
-    summaryText: `Commented: "${snippet}"`,
+    summaryText: hasOptionRef
+      ? `Commented on ${refEntityLabel}: "${snippet}"`
+      : `Commented: "${snippet}"`,
     entityLabel: typeof entityTitle === 'string' ? entityTitle : undefined,
-    detailText: snippet,
+    detailText: hasOptionRef ? `On "${refEntityLabel}": ${snippet}` : snippet,
     actorUserId: userId,
   }]).catch(() => {})
 
@@ -269,4 +274,83 @@ export async function DELETE(request: Request, { params }: Params) {
   await prisma.comment.delete({ where: { id: commentId } })
 
   return NextResponse.json({ success: true })
+}
+
+/**
+ * PATCH /api/collections/[id]/comments
+ * Edit a comment's text. Only the comment author can edit.
+ * Enforces selection-level access for restricted selections.
+ */
+export async function PATCH(request: Request, { params }: Params) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { id } = await params
+  const userId = session.user.id
+  const access = await resolveCollectionAccess(userId, id)
+
+  if (!access) {
+    return NextResponse.json({ error: 'No access' }, { status: 403 })
+  }
+
+  const url = new URL(request.url)
+  const commentId = url.searchParams.get('commentId')
+  if (!commentId) {
+    return NextResponse.json({ error: 'Missing commentId' }, { status: 400 })
+  }
+
+  const body = await request.json()
+  const { text } = body
+
+  if (!text || typeof text !== 'string' || text.trim().length === 0) {
+    return NextResponse.json({ error: 'Comment text cannot be empty' }, { status: 400 })
+  }
+
+  if (text.length > MAX_COMMENT_LENGTH) {
+    return NextResponse.json({ error: `Comment exceeds ${MAX_COMMENT_LENGTH} characters` }, { status: 400 })
+  }
+
+  const comment = await prisma.comment.findUnique({
+    where: { id: commentId },
+    select: { collectionId: true, authorUserId: true, targetType: true, targetId: true },
+  })
+
+  if (!comment || comment.collectionId !== id) {
+    return NextResponse.json({ error: 'Comment not found' }, { status: 404 })
+  }
+
+  // Only the author can edit
+  if (comment.authorUserId !== userId) {
+    return NextResponse.json({ error: 'Only the author can edit this comment' }, { status: 403 })
+  }
+
+  // Enforce selection-level access for restricted selections
+  const blocked = await enforceSelectionAccess(
+    userId, session.user.email || '', id, comment.targetType, comment.targetId,
+  )
+  if (blocked) return blocked
+
+  const updated = await prisma.comment.update({
+    where: { id: commentId },
+    data: { text: text.trim(), edited: true },
+    select: {
+      id: true,
+      targetType: true,
+      targetId: true,
+      text: true,
+      authorUserId: true,
+      authorName: true,
+      authorEmail: true,
+      refEntityType: true,
+      refEntityId: true,
+      refEntityLabel: true,
+      parentCommentId: true,
+      createdAt: true,
+      edited: true,
+    },
+  })
+
+  return NextResponse.json({ comment: updated })
 }

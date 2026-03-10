@@ -48,6 +48,16 @@ function parseLegacy(text: string, action: string): { verb: string; entityLabel:
   return { verb, entityLabel: null, detailText: null }
 }
 
+// ── Parse enriched comment detailText: On "OptionName": snippet ──
+
+function parseCommentDetail(detailText: string): { optionName: string | null; commentText: string } {
+  const match = detailText.match(/^On "([^"]+)":\s*(.*)$/)
+  if (match) {
+    return { optionName: match[1], commentText: match[2] }
+  }
+  return { optionName: null, commentText: detailText }
+}
+
 // ── Decompose event into structured parts ──
 
 function decompose(evt: { action: string; summaryText: string; entityLabel?: string | null; detailText?: string | null }) {
@@ -92,12 +102,15 @@ function FullRow({ evt }: { evt: ActivityFeedEvent }) {
     return <span className="text-sm text-cream/60 leading-snug">{evt.summaryText}</span>
   }
 
+  // Parse enriched comment detail for option context
+  const commentParsed = isComment && detailText ? parseCommentDetail(detailText) : null
+
   return (
     <span className="flex flex-wrap items-center gap-1 text-sm leading-snug min-w-0">
       {/* Action verb */}
       {verb && <span className="text-cream/40 shrink-0">{verb}</span>}
 
-      {/* Entity pill */}
+      {/* Entity pill (selection title) */}
       {entityLabel && (
         <EntityPill label={entityLabel} className="text-xs max-w-[140px] md:max-w-[200px]" />
       )}
@@ -107,8 +120,27 @@ function FullRow({ evt }: { evt: ActivityFeedEvent }) {
         <span className="text-cream/50">→ {detailText}</span>
       )}
 
-      {/* Comment body */}
-      {isComment && detailText && (
+      {/* Comment with option context */}
+      {isComment && commentParsed && (
+        <>
+          {commentParsed.optionName && (
+            <>
+              <span className="text-cream/30 shrink-0">·</span>
+              <span className="text-cream/50 text-xs truncate max-w-[120px] md:max-w-[160px]" title={commentParsed.optionName}>
+                {commentParsed.optionName}
+              </span>
+            </>
+          )}
+          {commentParsed.commentText && (
+            <span className="text-cream/40 italic truncate min-w-0">
+              &ldquo;{commentParsed.commentText}&rdquo;
+            </span>
+          )}
+        </>
+      )}
+
+      {/* Comment body (no option context — legacy format) */}
+      {isComment && !commentParsed && detailText && (
         <span className="text-cream/40 italic truncate min-w-0">
           &ldquo;{detailText}&rdquo;
         </span>
@@ -136,6 +168,8 @@ function CompactRow({ evt }: { evt: { action: string; summaryText: string; entit
     return <span className="text-cream/30 truncate">{evt.summaryText}</span>
   }
 
+  const commentParsed = isComment && detailText ? parseCommentDetail(detailText) : null
+
   return (
     <span className="flex items-center gap-1 min-w-0 text-[11px]">
       {verb && <span className="text-cream/35 shrink-0">{verb}</span>}
@@ -145,7 +179,19 @@ function CompactRow({ evt }: { evt: { action: string; summaryText: string; entit
       {isStatusChange && detailText && (
         <span className="text-cream/40">→ {detailText}</span>
       )}
-      {isComment && detailText && (
+      {isComment && commentParsed && (
+        <>
+          {commentParsed.optionName && (
+            <span className="text-cream/35 truncate max-w-[80px]" title={commentParsed.optionName}>
+              · {commentParsed.optionName}
+            </span>
+          )}
+          {commentParsed.commentText && (
+            <span className="text-cream/30 italic truncate min-w-0">&ldquo;{commentParsed.commentText}&rdquo;</span>
+          )}
+        </>
+      )}
+      {isComment && !commentParsed && detailText && (
         <span className="text-cream/30 italic truncate min-w-0">&ldquo;{detailText}&rdquo;</span>
       )}
       {!isComment && !isStatusChange && detailText && (

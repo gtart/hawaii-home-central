@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState, useRef } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Input } from '@/components/ui/Input'
 import { useToolState } from '@/hooks/useToolState'
@@ -68,6 +68,8 @@ export function DecisionDetailContent({
   const [commentFilterRef, setCommentFilterRef] = useState<RefEntity | null>(null)
   const [forceExpandComments, setForceExpandComments] = useState(false)
   const addActionsRef = useRef<IdeasBoardAddActions | null>(null)
+  const deepLinkProcessed = useRef(false)
+  const searchParams = useSearchParams()
   const { currentProject } = useProject()
 
   const collResult = useCollectionState<FinishDecisionsPayloadV4 | any>({
@@ -109,6 +111,30 @@ export function DecisionDetailContent({
       router.replace('/app/tools/finish-decisions')
     }
   }, [shouldRedirect, router])
+
+  // Deep-link: auto-open option / comments from query params (runs once)
+  useEffect(() => {
+    if (!foundDecision || deepLinkProcessed.current) return
+    deepLinkProcessed.current = true
+
+    const qOptionId = searchParams.get('optionId')
+    const qComments = searchParams.get('comments')
+    const qCommentId = searchParams.get('commentId')
+
+    if (qOptionId) {
+      const opt = foundDecision.options.find((o) => o.id === qOptionId)
+      if (opt) {
+        setActiveCardId(qOptionId)
+        // Also filter sidebar to this option
+        setCommentFilterRef({ id: qOptionId, label: opt.name || 'Untitled' })
+      }
+    }
+
+    if (qComments === '1' || qCommentId) {
+      setForceExpandComments(true)
+      setTimeout(() => setForceExpandComments(false), 100)
+    }
+  }, [foundDecision, searchParams])
 
   // DB-backed comments for this decision
   const decisionComments = useComments({
@@ -299,6 +325,21 @@ export function DecisionDetailContent({
     setForceExpandComments(true)
     setTimeout(() => setForceExpandComments(false), 100)
   }
+
+  // SEL-004: Sync comment sidebar filter with active option modal
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!foundDecision) return
+    if (activeCardId) {
+      const opt = foundDecision.options.find((o) => o.id === activeCardId)
+      if (opt) {
+        setCommentFilterRef({ id: activeCardId, label: opt.name || 'Untitled' })
+      }
+    } else {
+      // Modal closed — show all comments
+      setCommentFilterRef(null)
+    }
+  }, [activeCardId])
 
   const availableKits = foundDecision
     ? findKitsForDecisionTitle(kits, foundDecision.title, 'other')
@@ -972,6 +1013,7 @@ export function DecisionDetailContent({
         readOnly={readOnly}
         onAddComment={decisionComments.addComment}
         onDeleteComment={decisionComments.deleteComment}
+        onEditComment={decisionComments.editComment}
         refEntities={commentRefEntities}
         refEntityType="option"
         refPickerLabel="Tag an option"
@@ -982,6 +1024,7 @@ export function DecisionDetailContent({
         filterRefEntityId={commentFilterRef?.id ?? null}
         filterRefEntityLabel={commentFilterRef?.label ?? null}
         onClearFilter={() => setCommentFilterRef(null)}
+        currentUserId={session?.user?.id ?? null}
       />
       </div>{/* end flex wrapper */}
 

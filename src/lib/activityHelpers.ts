@@ -20,9 +20,11 @@ export function eventHref(event: ActivityFeedEvent): string {
 
   const collUrl = `${base}/${event.collectionId}`
 
-  // Decision-level deep link
+  // Decision-level deep link (workspace-first: no collectionId in URL)
   if (event.toolKey === 'finish_decisions' && event.entityType === 'decision' && event.entityId) {
-    return `${collUrl}/decision/${event.entityId}`
+    let href = `${base}/decision/${event.entityId}`
+    if (event.action === 'commented') href += '?comments=1'
+    return href
   }
 
   // Punchlist item deep link — scroll to item

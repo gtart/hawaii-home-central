@@ -17,6 +17,7 @@ interface Props {
     refEntityLabel?: string
   }) => Promise<void>
   onDeleteComment: (commentId: string) => Promise<void>
+  onEditComment?: (commentId: string, text: string) => Promise<void>
   refEntities?: RefEntity[]
   refEntityType?: string
   refPickerLabel?: string
@@ -29,6 +30,8 @@ interface Props {
   filterRefEntityId?: string | null
   filterRefEntityLabel?: string | null
   onClearFilter?: () => void
+  /** Current user ID for edit permissions */
+  currentUserId?: string | null
 }
 
 export function CollapsibleCommentSidebar({
@@ -39,6 +42,7 @@ export function CollapsibleCommentSidebar({
   readOnly,
   onAddComment,
   onDeleteComment,
+  onEditComment,
   refEntities,
   refEntityType,
   refPickerLabel,
@@ -49,6 +53,7 @@ export function CollapsibleCommentSidebar({
   filterRefEntityId,
   filterRefEntityLabel,
   onClearFilter,
+  currentUserId,
 }: Props) {
   // Default expanded on first visit
   const [collapsed, setCollapsed] = useState(() => {
@@ -88,6 +93,27 @@ export function CollapsibleCommentSidebar({
 
   const commentCount = comments.length
 
+  const threadProps = {
+    mode: 'inline' as const,
+    title,
+    comments,
+    isLoading,
+    readOnly,
+    onAddComment,
+    onDeleteComment,
+    onEditComment,
+    refEntities,
+    refEntityType,
+    refPickerLabel,
+    initialRef,
+    onClearInitialRef,
+    onNavigateToRef,
+    filterRefEntityId,
+    filterRefEntityLabel,
+    onClearFilter,
+    currentUserId,
+  }
+
   return (
     <>
       {/* ===== Desktop ===== */}
@@ -97,7 +123,7 @@ export function CollapsibleCommentSidebar({
           <button
             type="button"
             onClick={toggle}
-            className="sticky top-24 self-start w-10 h-auto flex flex-col items-center gap-2 py-3 bg-basalt-50 border border-cream/10 rounded-card hover:border-cream/20 transition-colors"
+            className="sticky top-24 self-start w-10 h-auto flex flex-col items-center gap-2 py-3 bg-basalt-50 border border-cream/12 rounded-card hover:border-cream/20 transition-colors"
             title="Open comments"
           >
             <svg className="w-4 h-4 text-cream/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -117,26 +143,8 @@ export function CollapsibleCommentSidebar({
       ) : (
         /* Expanded sidebar */
         <aside className="hidden md:block w-80 shrink-0 sticky top-24 self-start max-h-[calc(100vh-7rem)]">
-          <div className="bg-basalt-50 border border-cream/10 rounded-card h-full flex flex-col max-h-[calc(100vh-7rem)]">
-            <CommentThread
-              mode="inline"
-              title={title}
-              comments={comments}
-              isLoading={isLoading}
-              readOnly={readOnly}
-              onClose={toggle}
-              onAddComment={onAddComment}
-              onDeleteComment={onDeleteComment}
-              refEntities={refEntities}
-              refEntityType={refEntityType}
-              refPickerLabel={refPickerLabel}
-              initialRef={initialRef}
-              onClearInitialRef={onClearInitialRef}
-              onNavigateToRef={onNavigateToRef}
-              filterRefEntityId={filterRefEntityId}
-              filterRefEntityLabel={filterRefEntityLabel}
-              onClearFilter={onClearFilter}
-            />
+          <div className="bg-basalt-50 border border-cream/15 rounded-card h-full flex flex-col max-h-[calc(100vh-7rem)]">
+            <CommentThread {...threadProps} onClose={toggle} />
           </div>
         </aside>
       )}
@@ -169,26 +177,8 @@ export function CollapsibleCommentSidebar({
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex items-end">
           <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
-          <div className="relative bg-basalt-50 border-t border-cream/10 rounded-t-xl w-full max-h-[80vh] flex flex-col shadow-2xl">
-            <CommentThread
-              mode="inline"
-              title={title}
-              comments={comments}
-              isLoading={isLoading}
-              readOnly={readOnly}
-              onClose={() => setMobileOpen(false)}
-              onAddComment={onAddComment}
-              onDeleteComment={onDeleteComment}
-              refEntities={refEntities}
-              refEntityType={refEntityType}
-              refPickerLabel={refPickerLabel}
-              initialRef={initialRef}
-              onClearInitialRef={onClearInitialRef}
-              onNavigateToRef={onNavigateToRef}
-              filterRefEntityId={filterRefEntityId}
-              filterRefEntityLabel={filterRefEntityLabel}
-              onClearFilter={onClearFilter}
-            />
+          <div className="relative bg-basalt-50 border-t border-cream/15 rounded-t-xl w-full max-h-[80vh] flex flex-col shadow-2xl">
+            <CommentThread {...threadProps} onClose={() => setMobileOpen(false)} />
             <div className="pb-[env(safe-area-inset-bottom)]" />
           </div>
         </div>
