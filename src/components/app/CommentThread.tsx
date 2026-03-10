@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import type { CommentRow } from '@/hooks/useComments'
 
 function truncateLabel(s: string, max = 40): string {
@@ -50,9 +50,18 @@ interface Props {
   /** Called when user clicks a reference chip on a comment */
   onNavigateToRef?: (refEntityId: string) => void
   pageSize?: number
+  /** 'overlay' = modal with backdrop (default). 'inline' = renders as flex column, no backdrop/scroll lock. */
+  mode?: 'overlay' | 'inline'
+  /** If set, only show comments matching this refEntityId. null = show all. */
+  filterRefEntityId?: string | null
+  /** Label for the active filter (e.g. option name) */
+  filterRefEntityLabel?: string | null
+  /** Called when user wants to clear the filter */
+  onClearFilter?: () => void
 }
 
 const MAX_COMMENT_LENGTH = 400
+const NEW_COMMENT_HIGHLIGHT_MS = 4000
 
 export function CommentThread({
   title,
@@ -69,12 +78,24 @@ export function CommentThread({
   onClearInitialRef,
   onNavigateToRef,
   pageSize = 15,
+  mode = 'overlay',
+  filterRefEntityId,
+  filterRefEntityLabel,
+  onClearFilter,
 }: Props) {
   const [page, setPage] = useState(0)
   const [draft, setDraft] = useState('')
   const [selectedRef, setSelectedRef] = useState<RefEntity | null>(initialRef || null)
   const [showPicker, setShowPicker] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const prevCountRef = useRef(comments.length)
+  const [highlightIds, setHighlightIds] = useState<Set<string>>(new Set())
+
+  // @ mention state
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  const [mentionIdx, setMentionIdx] = useState(0)
+  const mentionAnchorRef = useRef<number>(-1) // cursor position of the @
 
   // Sync initialRef prop
   useEffect(() => {
@@ -84,27 +105,117 @@ export function CommentThread({
     }
   }, [initialRef])
 
-  // Sort newest-first
-  const sorted = [...comments].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  )
+  // Filter + sort newest-first
+  const filtered = useMemo(() => {
+    const base = filterRefEntityId
+      ? comments.filter((c) => c.refEntityId === filterRefEntityId)
+      : comments
+    return [...base].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+  }, [comments, filterRefEntityId])
+  const sorted = filtered
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
   const pageComments = sorted.slice(page * pageSize, (page + 1) * pageSize)
 
-  // ESC to close
+  // Reset page when filter changes
   useEffect(() => {
+    setPage(0)
+  }, [filterRefEntityId])
+
+  // Auto-scroll + highlight when new comments arrive
+  useEffect(() => {
+    if (comments.length > prevCountRef.current && page === 0) {
+      // Scroll to top (newest-first ordering)
+      listRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+
+      // Highlight new comments
+      const newIds = new Set<string>()
+      const now = Date.now()
+      for (const c of comments) {
+        if (now - new Date(c.createdAt).getTime() < NEW_COMMENT_HIGHLIGHT_MS) {
+          newIds.add(c.id)
+        }
+      }
+      if (newIds.size > 0) {
+        setHighlightIds(newIds)
+        setTimeout(() => setHighlightIds(new Set()), NEW_COMMENT_HIGHLIGHT_MS)
+      }
+    }
+    prevCountRef.current = comments.length
+  }, [comments, comments.length, page])
+
+  // Overlay-only effects
+  useEffect(() => {
+    if (mode !== 'overlay') return
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
+  }, [onClose, mode])
 
-  // Lock body scroll
   useEffect(() => {
+    if (mode !== 'overlay') return
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
-  }, [])
+  }, [mode])
+
+  // @ mention filtered list
+  const mentionResults = useMemo(() => {
+    if (mentionQuery === null || !refEntities || refEntities.length === 0) return []
+    const q = mentionQuery.toLowerCase()
+    return refEntities.filter((e) => e.label.toLowerCase().includes(q)).slice(0, 8)
+  }, [mentionQuery, refEntities])
+
+  function handleTextChange(value: string) {
+    setDraft(value.slice(0, MAX_COMMENT_LENGTH))
+
+    // Detect @ mention
+    if (!refEntities || refEntities.length === 0) return
+
+    const textarea = inputRef.current
+    if (!textarea) return
+    const cursor = textarea.selectionStart
+
+    // Find the last @ before cursor
+    const textBeforeCursor = value.slice(0, cursor)
+    const lastAt = textBeforeCursor.lastIndexOf('@')
+
+    if (lastAt >= 0) {
+      // @ must be at start or preceded by whitespace
+      const charBefore = lastAt > 0 ? value[lastAt - 1] : ' '
+      if (charBefore === ' ' || charBefore === '\n' || lastAt === 0) {
+        const query = textBeforeCursor.slice(lastAt + 1)
+        // Close if query contains space or newline (user moved on)
+        if (query.includes(' ') || query.includes('\n')) {
+          setMentionQuery(null)
+        } else {
+          setMentionQuery(query)
+          mentionAnchorRef.current = lastAt
+          setMentionIdx(0)
+        }
+        return
+      }
+    }
+    setMentionQuery(null)
+  }
+
+  function selectMention(entity: RefEntity) {
+    // Remove @query from draft text
+    const anchor = mentionAnchorRef.current
+    if (anchor >= 0) {
+      const textarea = inputRef.current
+      const cursor = textarea?.selectionStart ?? draft.length
+      const before = draft.slice(0, anchor)
+      const after = draft.slice(cursor)
+      setDraft(before + after)
+    }
+    setSelectedRef(entity)
+    setMentionQuery(null)
+    mentionAnchorRef.current = -1
+    inputRef.current?.focus()
+  }
 
   const handleSubmit = useCallback(async () => {
     const text = draft.trim()
@@ -124,8 +235,41 @@ export function CommentThread({
     setSelectedRef(null)
     onClearInitialRef?.()
     setShowPicker(false)
+    setMentionQuery(null)
     setPage(0)
   }, [draft, selectedRef, refEntityType, onAddComment, onClearInitialRef])
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    // @ mention navigation
+    if (mentionQuery !== null && mentionResults.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setMentionIdx((i) => Math.min(i + 1, mentionResults.length - 1))
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setMentionIdx((i) => Math.max(i - 1, 0))
+        return
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault()
+        selectMention(mentionResults[mentionIdx])
+        return
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setMentionQuery(null)
+        return
+      }
+    }
+
+    // Submit
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault()
+      handleSubmit()
+    }
+  }
 
   const commentInput = !readOnly && (
     <div className="border-t border-cream/10 p-4 space-y-2">
@@ -148,47 +292,67 @@ export function CommentThread({
         </div>
       )}
 
-      <div className="flex gap-2">
-        <textarea
-          ref={inputRef}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value.slice(0, MAX_COMMENT_LENGTH))}
-          placeholder={
-            selectedRef
-              ? `Comment on ${truncateLabel(selectedRef.label)}...`
-              : 'Add a comment...'
-          }
-          rows={2}
-          className="flex-1 bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/40 resize-none"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault()
-              handleSubmit()
+      <div className="relative">
+        <div className="flex gap-2">
+          <textarea
+            ref={inputRef}
+            value={draft}
+            onChange={(e) => handleTextChange(e.target.value)}
+            placeholder={
+              selectedRef
+                ? `Comment on ${truncateLabel(selectedRef.label)}...`
+                : refEntities && refEntities.length > 0
+                  ? 'Add a comment... (@ to tag)'
+                  : 'Add a comment...'
             }
-          }}
-        />
-        <div className="flex flex-col gap-1">
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={!draft.trim()}
-            className="px-3 py-1.5 bg-sandstone text-basalt text-xs font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            Post
-          </button>
-          {refEntities && refEntities.length > 0 && (
+            rows={2}
+            className="flex-1 bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/40 resize-none"
+            onKeyDown={handleKeyDown}
+          />
+          <div className="flex flex-col gap-1">
             <button
               type="button"
-              onClick={() => setShowPicker(!showPicker)}
-              className={`px-2 py-1 text-[10px] rounded-lg transition-colors ${
-                showPicker ? 'bg-sandstone/20 text-sandstone' : 'text-cream/30 hover:text-cream/50 bg-cream/5'
-              }`}
-              title={refPickerLabel}
+              onClick={handleSubmit}
+              disabled={!draft.trim()}
+              className="px-3 py-1.5 bg-sandstone text-basalt text-xs font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              #
+              Post
             </button>
-          )}
+            {refEntities && refEntities.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowPicker(!showPicker)}
+                className={`px-2 py-1 text-[10px] rounded-lg transition-colors ${
+                  showPicker ? 'bg-sandstone/20 text-sandstone' : 'text-cream/30 hover:text-cream/50 bg-cream/5'
+                }`}
+                title={refPickerLabel}
+              >
+                #
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* @ mention dropdown */}
+        {mentionQuery !== null && mentionResults.length > 0 && (
+          <div className="absolute bottom-full left-0 right-12 mb-1 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg max-h-40 overflow-y-auto z-10">
+            {mentionResults.map((entity, idx) => (
+              <button
+                key={entity.id}
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); selectMention(entity) }}
+                onMouseEnter={() => setMentionIdx(idx)}
+                className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                  idx === mentionIdx
+                    ? 'bg-sandstone/15 text-sandstone'
+                    : 'text-cream/60 hover:bg-cream/5'
+                }`}
+              >
+                {truncateLabel(entity.label, 50)}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Reference picker dropdown */}
@@ -222,7 +386,7 @@ export function CommentThread({
   )
 
   const commentList = (
-    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+    <div ref={listRef} className="flex-1 overflow-y-auto p-4 space-y-3">
       {isLoading ? (
         <div className="text-center py-12">
           <p className="text-sm text-cream/30">Loading comments...</p>
@@ -238,6 +402,7 @@ export function CommentThread({
             <CommentCard
               key={comment.id}
               comment={comment}
+              highlight={highlightIds.has(comment.id)}
               onNavigateToRef={
                 comment.refEntityId && onNavigateToRef
                   ? () => onNavigateToRef(comment.refEntityId!)
@@ -274,6 +439,55 @@ export function CommentThread({
     </div>
   )
 
+  const header = (
+    <div className="shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-cream/10">
+        <h3 className="text-sm font-medium text-cream/80">
+          {title}
+          {sorted.length > 0 && (
+            <span className="ml-1.5 text-cream/30 text-xs">({sorted.length})</span>
+          )}
+        </h3>
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-7 h-7 rounded-md flex items-center justify-center text-cream/40 hover:text-cream/60 hover:bg-cream/5 transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      {filterRefEntityLabel && onClearFilter && (
+        <div className="px-4 py-2 border-b border-cream/5 bg-sandstone/5 flex items-center justify-between gap-2">
+          <span className="text-[11px] text-cream/50 truncate">
+            Showing: <span className="text-cream/70 font-medium">{truncateLabel(filterRefEntityLabel, 30)}</span>
+          </span>
+          <button
+            type="button"
+            onClick={onClearFilter}
+            className="text-[11px] text-sandstone/70 hover:text-sandstone transition-colors whitespace-nowrap shrink-0"
+          >
+            Show all ({comments.length})
+          </button>
+        </div>
+      )}
+    </div>
+  )
+
+  // Inline mode: render as a simple flex column
+  if (mode === 'inline') {
+    return (
+      <div className="flex flex-col h-full">
+        {header}
+        {commentList}
+        {commentInput}
+      </div>
+    )
+  }
+
+  // Overlay mode (default): backdrop + fixed panels
   return (
     <>
       {/* Backdrop */}
@@ -284,24 +498,7 @@ export function CommentThread({
 
       {/* Desktop: right side panel */}
       <div className="hidden md:flex fixed right-0 top-0 bottom-0 z-[56] w-96 bg-basalt-50 border-l border-cream/10 flex-col shadow-2xl">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-cream/10">
-          <h3 className="text-sm font-medium text-cream/80">
-            {title}
-            {sorted.length > 0 && (
-              <span className="ml-1.5 text-cream/30 text-xs">({sorted.length})</span>
-            )}
-          </h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-7 h-7 rounded-md flex items-center justify-center text-cream/40 hover:text-cream/60 hover:bg-cream/5 transition-colors"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
+        {header}
         {commentList}
         {commentInput}
       </div>
@@ -312,7 +509,7 @@ export function CommentThread({
         <div className="flex justify-center pt-2 pb-1">
           <div className="w-10 h-1 rounded-full bg-cream/20" />
         </div>
-        <div className="flex items-center justify-between px-4 py-2 border-b border-cream/10">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-cream/10 shrink-0">
           <h3 className="text-sm font-medium text-cream/80">
             {title}
             {sorted.length > 0 && (
@@ -336,15 +533,21 @@ export function CommentThread({
 
 function CommentCard({
   comment,
+  highlight,
   onNavigateToRef,
   onDelete,
 }: {
   comment: CommentRow
+  highlight?: boolean
   onNavigateToRef?: () => void
   onDelete?: () => void
 }) {
   return (
-    <div className="bg-basalt/50 border border-cream/8 rounded-lg p-3 space-y-1.5 group">
+    <div className={`border rounded-lg p-3 space-y-1.5 group transition-colors duration-1000 ${
+      highlight
+        ? 'bg-sandstone/10 border-sandstone/20'
+        : 'bg-basalt/50 border-cream/8'
+    }`}>
       {/* Reference chip */}
       {comment.refEntityLabel && onNavigateToRef && (
         <button

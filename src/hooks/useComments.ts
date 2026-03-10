@@ -219,3 +219,34 @@ export function useComments({
 
   return { comments, isLoading, addComment, deleteComment }
 }
+
+/**
+ * Lightweight hook that fetches all comments for a collection and returns
+ * a count-by-targetId map. Polls on the same interval as useComments.
+ */
+export function useCommentCounts(collectionId: string | null | undefined): Map<string, number> {
+  const [counts, setCounts] = useState<Map<string, number>>(new Map())
+
+  const fetchCounts = useCallback(async () => {
+    if (!collectionId) return
+    try {
+      const res = await fetch(`/api/collections/${collectionId}/comments`)
+      if (!res.ok) return
+      const data = await res.json()
+      const map = new Map<string, number>()
+      for (const c of data.comments as { targetId: string }[]) {
+        map.set(c.targetId, (map.get(c.targetId) || 0) + 1)
+      }
+      setCounts(map)
+    } catch { /* silent */ }
+  }, [collectionId])
+
+  useEffect(() => {
+    if (!collectionId) return
+    fetchCounts()
+    const id = setInterval(fetchCounts, POLL_INTERVAL)
+    return () => clearInterval(id)
+  }, [collectionId, fetchCounts])
+
+  return counts
+}

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useProject } from '@/contexts/ProjectContext'
 import { useToolState } from '@/hooks/useToolState'
+import { useCollectionState } from '@/hooks/useCollectionState'
 import type { FinishDecisionsPayloadV4, SelectionV4 } from '@/data/finish-decisions'
 import type { MoodBoardPayload } from '@/data/mood-boards'
 import { DEFAULT_PAYLOAD as DEFAULT_MB_PAYLOAD, ensureDefaultBoard, findDefaultBoard, genId } from '@/data/mood-boards'
@@ -69,13 +70,46 @@ export function SaveFromWebContent() {
 
   const projectIdOverride = selectedProjectId || currentProject?.id || null
 
-  // Finish Decisions state
+  // Resolve workspace collection for Selections (same pattern as SelectionsWorkspaceLoader)
+  const [workspaceCollectionId, setWorkspaceCollectionId] = useState<string | null>(null)
+  const [workspaceLoading, setWorkspaceLoading] = useState(true)
+
+  useEffect(() => {
+    if (!projectIdOverride) {
+      setWorkspaceLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setWorkspaceLoading(true)
+    setWorkspaceCollectionId(null)
+
+    async function resolve() {
+      try {
+        const res = await fetch(`/api/selections-workspace/resolve?projectId=${projectIdOverride}`)
+        if (cancelled) return
+        if (res.ok) {
+          const info = await res.json()
+          setWorkspaceCollectionId(info.workspaceCollectionId)
+        }
+      } catch {
+        // Silent — will fall back to empty selections
+      } finally {
+        if (!cancelled) setWorkspaceLoading(false)
+      }
+    }
+
+    resolve()
+    return () => { cancelled = true }
+  }, [projectIdOverride])
+
+  // Finish Decisions state — uses workspace collection
   const { state: fdState, setState: setFdState, isLoaded: fdLoaded, readOnly: fdReadOnly } =
-    useToolState<FinishDecisionsPayloadV4>({
+    useCollectionState<FinishDecisionsPayloadV4>({
+      collectionId: workspaceCollectionId,
       toolKey: 'finish_decisions',
       localStorageKey: 'hhc_finish_decisions_v2',
       defaultValue: DEFAULT_FD_PAYLOAD,
-      projectIdOverride,
     })
 
   // Mood Boards state
@@ -87,7 +121,7 @@ export function SaveFromWebContent() {
       projectIdOverride,
     })
 
-  const isLoaded = fdLoaded && mbLoaded
+  const isLoaded = fdLoaded && mbLoaded && !workspaceLoading
   const readOnly = fdReadOnly && mbReadOnly
 
   // Determine initial destination from query params
@@ -299,9 +333,10 @@ export function SaveFromWebContent() {
 
       setFdState((prev) => {
         const payload = prev as FinishDecisionsPayloadV4
-        const newSelections = payload.selections.map((s) =>
+        const selections = payload.selections || []
+        const newSelections = selections.map((s) =>
           s.id === resolvedSelectionId
-            ? { ...s, options: [...s.options, newOption], updatedAt: new Date().toISOString() }
+            ? { ...s, options: [...(s.options || []), newOption], updatedAt: new Date().toISOString() }
             : s
         )
         return { ...payload, selections: newSelections }
@@ -326,7 +361,7 @@ export function SaveFromWebContent() {
 
       setFdState((prev) => {
         const payload = prev as FinishDecisionsPayloadV4
-        return { ...payload, selections: [...payload.selections, newSelection] }
+        return { ...payload, selections: [...(payload.selections || []), newSelection] }
       })
     }
 
@@ -381,7 +416,7 @@ export function SaveFromWebContent() {
     }
     setFdState((prev) => {
       const payload = prev as FinishDecisionsPayloadV4
-      return { ...payload, selections: [...payload.selections, newSelection] }
+      return { ...payload, selections: [...(payload.selections || []), newSelection] }
     })
     setSelectedSelectionId(id)
     setNewSelectionName('')

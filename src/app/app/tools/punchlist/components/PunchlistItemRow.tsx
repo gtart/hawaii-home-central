@@ -11,6 +11,7 @@ interface Props {
   onRename?: (itemId: string, newTitle: string) => void
   selected?: boolean
   onToggleSelect?: (itemId: string) => void
+  commentCount?: number
 }
 
 function shortDate(iso: string): string {
@@ -18,7 +19,7 @@ function shortDate(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-export function PunchlistItemRow({ item, onTap, onStatusChange, onRename, selected, onToggleSelect }: Props) {
+export function PunchlistItemRow({ item, onTap, onStatusChange, onRename, selected, onToggleSelect, commentCount }: Props) {
   const statusCfg = STATUS_CONFIG[item.status]
   const priorityCfg = item.priority ? PRIORITY_CONFIG[item.priority] : null
   const [menuOpen, setMenuOpen] = useState(false)
@@ -120,9 +121,19 @@ export function PunchlistItemRow({ item, onTap, onStatusChange, onRename, select
       </div>
 
       {/* #N Title */}
-      <div className="truncate text-sm text-cream">
-        <span className="text-cream/30 text-xs">#{item.itemNumber}</span>{' '}
-        {item.title || <span className="text-cream/40 italic">Untitled</span>}
+      <div className="truncate text-sm text-cream flex items-center gap-1.5">
+        <span className="truncate">
+          <span className="text-cream/30 text-xs">#{item.itemNumber}</span>{' '}
+          {item.title || <span className="text-cream/40 italic">Untitled</span>}
+        </span>
+        {commentCount && commentCount > 0 ? (
+          <span className="inline-flex items-center gap-0.5 text-[10px] text-cream/30 shrink-0">
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {commentCount}
+          </span>
+        ) : null}
       </div>
 
       {/* Location */}

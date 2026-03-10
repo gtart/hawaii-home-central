@@ -1,7 +1,8 @@
 'use client'
 
 import { useRef, useState, useEffect, useImperativeHandle } from 'react'
-import type { OptionV3, DecisionV3, SelectionComment, SelectionV4 } from '@/data/finish-decisions'
+import type { OptionV3, DecisionV3, SelectionV4 } from '@/data/finish-decisions'
+import type { CommentRow } from '@/hooks/useComments'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { relativeTime } from '@/lib/relativeTime'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
@@ -50,7 +51,7 @@ interface Props {
   onCommentOnOption?: (optionId: string, optionLabel: string) => void
   onOpenGlobalComment?: () => void
   showContent?: boolean
-  comments: SelectionComment[]
+  comments: CommentRow[]
   hasKits?: boolean
   onOpenPack?: () => void
   hideFinalize?: boolean
@@ -524,7 +525,7 @@ export function IdeasBoard({
 
   const activeOption = decision.options.find((o) => o.id === activeCardId) ?? null
   const activeIdeaComments = activeCardId
-    ? comments.filter((c) => c.refOptionId === activeCardId)
+    ? comments.filter((c) => c.refEntityId === activeCardId)
     : []
 
   async function handlePhotoFiles(files: FileList | null) {
@@ -699,7 +700,7 @@ export function IdeasBoard({
                 {/* Desktop: always show all cards */}
                 <div className="hidden md:grid md:grid-cols-3 gap-3 mb-3">
                   {decision.options.map((opt) => {
-                    const optComments = comments.filter((c) => c.refOptionId === opt.id)
+                    const optComments = comments.filter((c) => c.refEntityId === opt.id)
                     const latestCmt = optComments.length > 0 ? optComments.reduce((latest, c) => c.createdAt > latest.createdAt ? c : latest) : null
                     return (
                     <div key={opt.id} className="relative">
@@ -745,7 +746,7 @@ export function IdeasBoard({
                 {/* Mobile: collapsible grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 md:hidden">
                   {mobileVisible.map((opt) => {
-                    const optComments = comments.filter((c) => c.refOptionId === opt.id)
+                    const optComments = comments.filter((c) => c.refEntityId === opt.id)
                     const latestCmt = optComments.length > 0 ? optComments.reduce((latest, c) => c.createdAt > latest.createdAt ? c : latest) : null
                     return (
                     <div key={opt.id} className="relative">
@@ -891,6 +892,7 @@ export function IdeasBoard({
           copyDisabledReason={!onCopyOption ? copyDisabledReason : undefined}
           onUpdateDecision={onUpdateDecision}
           onAddComment={onAddComment}
+          onOpenComments={onCommentOnOption ? () => onCommentOnOption(activeOption.id, activeOption.name || 'Untitled') : undefined}
           onUploadPhoto={uploadIdeaFile}
           onUploadDocument={uploadDocument}
           onClose={() => {

@@ -1,7 +1,8 @@
 'use client'
 
 import { useRef, useState, useEffect, useCallback } from 'react'
-import type { OptionV3, OptionImageV3, OptionDocumentV3, DecisionV3, SelectionComment, LinkV3 } from '@/data/finish-decisions'
+import type { OptionV3, OptionImageV3, OptionDocumentV3, DecisionV3, LinkV3 } from '@/data/finish-decisions'
+import type { CommentRow } from '@/hooks/useComments'
 import { getAllImages, getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { relativeTime } from '@/lib/relativeTime'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
@@ -20,7 +21,7 @@ interface Props {
   readOnly: boolean
   userEmail: string
   userName: string
-  ideaComments: SelectionComment[]
+  ideaComments: CommentRow[]
   onUpdate: (updates: Partial<OptionV3>) => void
   onDelete: () => void
   onSelect?: () => void
@@ -29,6 +30,7 @@ interface Props {
   copyDisabledReason?: string
   onUpdateDecision: (updates: Partial<DecisionV3>) => void
   onAddComment: (comment: CommentPayload) => void
+  onOpenComments?: () => void
   onUploadPhoto: (file: File) => Promise<{ url: string; thumbnailUrl: string; id: string }>
   onUploadDocument: (file: File) => Promise<{ url: string; id: string; fileName: string; fileSize: number; mimeType: string }>
   onClose: () => void
@@ -188,6 +190,7 @@ export function IdeaCardModal({
   copyDisabledReason,
   onUpdateDecision,
   onAddComment,
+  onOpenComments,
   onUploadPhoto,
   onUploadDocument,
   onClose,
@@ -1062,13 +1065,24 @@ export function IdeaCardModal({
 
           {/* ── Comments on this option ── */}
           <div className="pt-2 border-t border-cream/10">
-            <div className="flex items-center gap-2 mb-2">
-              <svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span className="text-xs text-cream/40">
-                {ideaComments.length > 0 ? `${ideaComments.length} comment${ideaComments.length !== 1 ? 's' : ''}` : 'Comments'}
-              </span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="text-xs text-cream/40">
+                  {ideaComments.length > 0 ? `${ideaComments.length} comment${ideaComments.length !== 1 ? 's' : ''}` : 'Comments'}
+                </span>
+              </div>
+              {onOpenComments && (
+                <button
+                  type="button"
+                  onClick={onOpenComments}
+                  className="text-[11px] text-sandstone/70 hover:text-sandstone transition-colors"
+                >
+                  {ideaComments.length > 0 ? 'View all' : 'Open sidebar'} &rarr;
+                </button>
+              )}
             </div>
 
             {ideaComments.length > 0 && (

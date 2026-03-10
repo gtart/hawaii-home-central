@@ -6,7 +6,10 @@ import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
 import { ActivityPanel } from '@/components/app/ActivityPanel'
 import { UnsortedBanner } from '@/components/app/UnsortedBanner'
+import { CollapsibleCommentSidebar } from '@/components/app/CollapsibleCommentSidebar'
+import type { RefEntity } from '@/components/app/CommentThread'
 import { useProject } from '@/contexts/ProjectContext'
+import { useComments } from '@/hooks/useComments'
 import { usePunchlistState } from './usePunchlistState'
 import { PunchlistPage } from './components/PunchlistPage'
 import { PunchlistEmptyState } from './components/PunchlistEmptyState'
@@ -20,6 +23,15 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
   const router = useRouter()
   const [activityOpen, setActivityOpen] = useState(false)
   const [titleOverride, setTitleOverride] = useState<string | null>(null)
+  const [commentRef, setCommentRef] = useState<RefEntity | null>(null)
+  const [forceExpandComments, setForceExpandComments] = useState(false)
+
+  // Collection-level comments
+  const collComments = useComments({
+    collectionId: collectionId || null,
+    targetType: 'collection',
+    targetId: collectionId || null,
+  })
   const { count: unseenActivity, markSeen: markActivitySeen } = useUnseenActivityCount(
     collectionId ? { toolKey: 'punchlist', collectionId } : undefined
   )
@@ -54,6 +66,31 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
       router.push('/app/tools/punchlist')
     } catch { /* ignore */ }
   }, [collectionId, router])
+
+  // Build ref entities for comment @ mentions — must be before early returns for hook order
+  const commentRefEntities: RefEntity[] = useMemo(() =>
+    payload.items.map((i) => ({ id: i.id, label: i.title || `#${i.itemNumber}` })),
+    [payload.items]
+  )
+
+  // Per-item comment counts — must be before early returns for hook order
+  const commentCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const c of collComments.comments) {
+      if (c.refEntityId) {
+        counts.set(c.refEntityId, (counts.get(c.refEntityId) || 0) + 1)
+      }
+    }
+    return counts
+  }, [collComments.comments])
+
+  const handleOpenComments = useCallback((ref?: RefEntity) => {
+    if (ref) {
+      setCommentRef(ref)
+    }
+    setForceExpandComments(true)
+    setTimeout(() => setForceExpandComments(false), 100)
+  }, [])
 
   if (!isLoaded) {
     return (
@@ -156,7 +193,35 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
       {payload.items.length === 0 ? (
         <PunchlistEmptyState readOnly={readOnly} api={api} />
       ) : (
-        <PunchlistPage api={api} collectionId={collectionId} projectId={collectionProjectId || currentProject?.id} />
+        <div className="md:flex md:gap-6 md:items-start">
+          <div className="flex-1 min-w-0">
+            <PunchlistPage
+              api={api}
+              collectionId={collectionId}
+              projectId={collectionProjectId || currentProject?.id}
+              commentCounts={commentCounts}
+              onOpenComments={collectionId ? handleOpenComments : undefined}
+              allComments={collComments.comments}
+            />
+          </div>
+          {collectionId && (
+            <CollapsibleCommentSidebar
+              title="Comments"
+              storageKey="punchlist_comments_collapsed"
+              comments={collComments.comments}
+              isLoading={collComments.isLoading}
+              readOnly={readOnly}
+              onAddComment={collComments.addComment}
+              onDeleteComment={collComments.deleteComment}
+              refEntities={commentRefEntities}
+              refEntityType="item"
+              refPickerLabel="Tag a fix"
+              initialRef={commentRef}
+              onClearInitialRef={() => setCommentRef(null)}
+              forceExpand={forceExpandComments}
+            />
+          )}
+        </div>
       )}
     </>
   )

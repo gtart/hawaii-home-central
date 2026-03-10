@@ -21,7 +21,6 @@ import {
   type SelectionPriority,
   type StatusLogEntry,
   type SelectionV4,
-  type SelectionComment,
   type FinishDecisionsPayloadV4,
 } from '@/data/finish-decisions'
 import { moveIdea, getUniqueTags } from '@/lib/decisionHelpers'
@@ -30,18 +29,12 @@ import { DecisionFiles } from '../../components/DecisionFiles'
 import { uploadFile as uploadFileForDecision } from '../../uploadFile'
 import { MoveIdeaSheet } from '../../components/MoveIdeaSheet'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { relativeTime } from '@/lib/relativeTime'
 import { useComments, type CommentRow } from '@/hooks/useComments'
+import { CollapsibleCommentSidebar } from '@/components/app/CollapsibleCommentSidebar'
+import type { RefEntity } from '@/components/app/CommentThread'
 import { useProject } from '@/contexts/ProjectContext'
 import { SelectionShareSheet } from '../../components/SelectionShareSheet'
 import type { SelectionVisibility, SelectionAccess } from '@/data/finish-decisions'
-
-const COMMENTS_PER_PAGE = 10
-const MAX_COMMENT_LENGTH = 400
-
-function truncateLabel(s: string, max = 40): string {
-  return s.length > max ? s.slice(0, max).trimEnd() + '…' : s
-}
 
 function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
   if (!a) return null
@@ -66,14 +59,14 @@ export function DecisionDetailContent({
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
-  const [draftRef, setDraftRef] = useState<{ optionId: string; optionLabel: string } | null>(null)
   const [ideasPackOpen, setIdeasPackOpen] = useState(false)
-  const [mobileCommentsOpen, setMobileCommentsOpen] = useState(false)
   const [moveOptionId, setMoveOptionId] = useState<string | null>(null)
   const [assignToast, setAssignToast] = useState<string | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [guidanceOpen, setGuidanceOpen] = useState(false)
-  const commentInputRef = useRef<HTMLTextAreaElement>(null)
+  const [commentInitialRef, setCommentInitialRef] = useState<RefEntity | null>(null)
+  const [commentFilterRef, setCommentFilterRef] = useState<RefEntity | null>(null)
+  const [forceExpandComments, setForceExpandComments] = useState(false)
   const addActionsRef = useRef<IdeasBoardAddActions | null>(null)
   const { currentProject } = useProject()
 
@@ -134,6 +127,14 @@ export function DecisionDetailContent({
   }, [v4State.selections])
 
   const allTags = useMemo(() => getUniqueTags(v4State.selections), [v4State.selections])
+
+  // Build ref entities for comment @ mentions (options/ideas) — must be before early returns for hook order
+  const commentRefEntities: RefEntity[] = useMemo(() =>
+    foundDecision
+      ? (foundDecision.options || []).map((o) => ({ id: o.id, label: o.name || 'Untitled' }))
+      : [],
+    [foundDecision?.options]
+  )
 
   // Guidance computation — must be before early returns to keep hook order stable
   const guidanceResult = useMemo(
@@ -287,15 +288,16 @@ export function DecisionDetailContent({
   }
 
   function openGlobalCommentComposer() {
-    // On mobile, open the bottom sheet
-    setMobileCommentsOpen(true)
-    setTimeout(() => commentInputRef.current?.focus(), 300)
+    setForceExpandComments(true)
+    setTimeout(() => setForceExpandComments(false), 100)
   }
 
   function handleCommentOnOption(optionId: string, optionLabel: string) {
-    setDraftRef({ optionId, optionLabel })
-    setMobileCommentsOpen(true)
-    setTimeout(() => commentInputRef.current?.focus(), 300)
+    const ref = { id: optionId, label: optionLabel }
+    setCommentInitialRef(ref)
+    setCommentFilterRef(ref)
+    setForceExpandComments(true)
+    setTimeout(() => setForceExpandComments(false), 100)
   }
 
   const availableKits = foundDecision
@@ -617,8 +619,7 @@ export function DecisionDetailContent({
 
   // Filter: only show user comments (non-empty authorEmail), not system comments
   const userComments = decisionComments.comments
-  const commentCount = userComments.length
-  const lastUserComment = [...userComments].reverse()[0]
+
   const statusCfg = STATUS_CONFIG_V3[foundDecision.status] ?? STATUS_CONFIG_V3.deciding
   const formattedDue = foundDecision.dueDate
     ? new Date(foundDecision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -893,20 +894,6 @@ export function DecisionDetailContent({
                 {foundDecision.options.length}
               </span>
             </h2>
-            <button
-              type="button"
-              onClick={() => setMobileCommentsOpen(true)}
-              className={`md:hidden inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                commentCount > 0
-                  ? 'bg-sandstone/20 text-sandstone hover:bg-sandstone/30'
-                  : 'bg-cream/10 text-cream/50 hover:bg-cream/15 hover:text-cream/70'
-              }`}
-            >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              {commentCount > 0 ? `${commentCount} Comment${commentCount !== 1 ? 's' : ''}` : 'Comments'}
-            </button>
             <div className="flex-1" />
             {!readOnly && (
               <AddIdeaMenu
@@ -977,98 +964,26 @@ export function DecisionDetailContent({
         )}
       </div>
 
-      {/* Desktop: always-open side panel */}
-      <aside className="hidden md:block w-80 shrink-0 sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto">
-        <div className="bg-basalt-50 border border-cream/10 rounded-card">
-          <div className="border-b border-cream/10 px-4 py-3">
-            <h2 className="text-sm font-medium text-cream flex items-center gap-2">
-              <svg className="w-4 h-4 text-cream/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Comments
-              {commentCount > 0 && (
-                <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-cream/10 text-cream/50 text-xs font-medium rounded-full">
-                  {commentCount}
-                </span>
-              )}
-            </h2>
-          </div>
-          <div className="p-4">
-            <CommentsSection
-              comments={userComments}
-              onAddComment={addComment}
-              readOnly={readOnly}
-              commentInputRef={commentInputRef}
-              draftRef={draftRef}
-              onClearDraftRef={() => setDraftRef(null)}
-              onSetDraftRef={setDraftRef}
-              onOpenCard={(optId) => setActiveCardId(optId)}
-              options={foundDecision.options}
-            />
-          </div>
-        </div>
-      </aside>
+      <CollapsibleCommentSidebar
+        title="Comments"
+        storageKey="selections_comments_collapsed"
+        comments={userComments}
+        isLoading={decisionComments.isLoading}
+        readOnly={readOnly}
+        onAddComment={decisionComments.addComment}
+        onDeleteComment={decisionComments.deleteComment}
+        refEntities={commentRefEntities}
+        refEntityType="option"
+        refPickerLabel="Tag an option"
+        initialRef={commentInitialRef}
+        onClearInitialRef={() => setCommentInitialRef(null)}
+        onNavigateToRef={(refId) => setActiveCardId(refId)}
+        forceExpand={forceExpandComments}
+        filterRefEntityId={commentFilterRef?.id ?? null}
+        filterRefEntityLabel={commentFilterRef?.label ?? null}
+        onClearFilter={() => setCommentFilterRef(null)}
+      />
       </div>{/* end flex wrapper */}
-
-      {/* Mobile: fixed bottom bar + bottom sheet */}
-      {!mobileCommentsOpen && (
-        <button
-          type="button"
-          onClick={() => setMobileCommentsOpen(true)}
-          className="md:hidden fixed bottom-20 left-4 right-4 z-40 bg-basalt-50 border border-cream/15 rounded-xl shadow-lg px-4 py-3 flex items-center justify-between active:scale-[0.98] transition-transform"
-        >
-          <span className="flex items-center gap-2 text-sm font-medium text-cream">
-            <svg className="w-4 h-4 text-sandstone/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Comments
-            {commentCount > 0 && (
-              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-sandstone/20 text-sandstone text-xs font-medium rounded-full">
-                {commentCount}
-              </span>
-            )}
-          </span>
-          <svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M18 15l-6-6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-      )}
-
-      {mobileCommentsOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex items-end">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileCommentsOpen(false)} />
-          <div className="relative bg-basalt-50 border-t border-cream/10 rounded-t-xl w-full max-h-[80vh] overflow-y-auto">
-            <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 flex items-center justify-between px-5 py-3 z-10 rounded-t-xl">
-              <h2 className="text-base font-medium text-cream">Comments</h2>
-              <button
-                type="button"
-                onClick={() => setMobileCommentsOpen(false)}
-                className="text-cream/40 hover:text-cream transition-colors"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-5">
-              <CommentsSection
-                comments={userComments}
-                onAddComment={addComment}
-                readOnly={readOnly}
-                commentInputRef={commentInputRef}
-                draftRef={draftRef}
-                onClearDraftRef={() => setDraftRef(null)}
-                onSetDraftRef={setDraftRef}
-                onOpenCard={(optId) => {
-                  setActiveCardId(optId)
-                  setMobileCommentsOpen(false)
-                }}
-                options={foundDecision.options}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Guidance Modal */}
       {guidanceOpen && guidanceTipCount > 0 && (
@@ -1187,317 +1102,3 @@ export function DecisionDetailContent({
   )
 }
 
-// ---------------------------------------------------------------------------
-// Comments Components
-// ---------------------------------------------------------------------------
-
-function CommentsSection({
-  comments,
-  onAddComment,
-  readOnly,
-  commentInputRef,
-  draftRef,
-  onClearDraftRef,
-  onSetDraftRef,
-  onOpenCard,
-  options,
-}: {
-  comments: CommentRow[]
-  onAddComment: (comment: { text: string; authorName: string; authorEmail: string; refOptionId?: string; refOptionLabel?: string }) => void
-  readOnly: boolean
-  commentInputRef?: React.RefObject<HTMLTextAreaElement | null>
-  draftRef?: { optionId: string; optionLabel: string } | null
-  onClearDraftRef?: () => void
-  onSetDraftRef?: (ref: { optionId: string; optionLabel: string }) => void
-  onOpenCard?: (optionId: string) => void
-  options?: OptionV3[]
-}) {
-  const [page, setPage] = useState(0)
-  const scrollRef = useRef<HTMLDivElement>(null)
-
-  // Chronological order (oldest first for chat-thread feel)
-  const allComments = [...comments].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  )
-  const totalPages = Math.max(1, Math.ceil(allComments.length / COMMENTS_PER_PAGE))
-  // Show the LAST page by default (most recent comments)
-  const effectivePage = page === 0 && totalPages > 1 ? totalPages - 1 : page
-  const pageComments = allComments.slice(effectivePage * COMMENTS_PER_PAGE, (effectivePage + 1) * COMMENTS_PER_PAGE)
-
-  // Scroll to bottom when comments change
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
-  }, [comments.length])
-
-  return (
-    <div className="flex flex-col h-full">
-      <h3 className="text-xs uppercase tracking-wider text-cream/30 mb-1">
-        Comments {allComments.length > 0 && `(${allComments.length})`}
-      </h3>
-      <p className="text-[11px] text-cream/20 mb-3">
-        Comments are shared with collaborators who can access this tool.
-      </p>
-
-      {/* Scrollable comment thread */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 mb-3">
-        {allComments.length === 0 && (
-          <p className="text-xs text-cream/20 mt-3">No comments yet.</p>
-        )}
-
-        {totalPages > 1 && effectivePage > 0 && (
-          <div className="flex justify-center mb-3">
-            <button
-              type="button"
-              onClick={() => setPage(effectivePage - 1)}
-              className="text-xs text-cream/30 hover:text-cream/50 transition-colors"
-            >
-              Load older comments
-            </button>
-          </div>
-        )}
-
-        <div className="space-y-2.5">
-          {pageComments.map((comment) => (
-            <div key={comment.id} className="bg-basalt/50 border border-cream/8 rounded-lg p-3">
-              <div className="flex items-start gap-2.5">
-                {/* Avatar initial */}
-                <span className="w-6 h-6 rounded-full bg-sandstone/20 text-sandstone text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
-                  {comment.authorName.charAt(0).toUpperCase()}
-                </span>
-                <div className="flex-1 min-w-0">
-                  {/* Author + time */}
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-xs font-medium text-cream/70">{comment.authorName}</span>
-                    <span className="text-[10px] text-cream/25">
-                      {relativeTime(comment.createdAt)}
-                    </span>
-                  </div>
-                  {/* Reference chip */}
-                  {comment.refEntityId && comment.refEntityLabel ? (
-                    <button
-                      type="button"
-                      onClick={() => onOpenCard?.(comment.refEntityId!)}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 mb-1 rounded-full text-[10px] bg-sandstone/10 text-sandstone/70 hover:bg-sandstone/20 hover:text-sandstone transition-colors"
-                    >
-                      Re: {truncateLabel(comment.refEntityLabel, 30)}
-                      <span className="text-sandstone/30">↗</span>
-                    </button>
-                  ) : null}
-                  {/* Comment text */}
-                  <p className="text-sm text-cream/60 whitespace-pre-wrap leading-relaxed">
-                    {comment.text}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {totalPages > 1 && effectivePage < totalPages - 1 && (
-          <div className="flex justify-center mt-3">
-            <button
-              type="button"
-              onClick={() => setPage(effectivePage + 1)}
-              className="text-xs text-cream/30 hover:text-cream/50 transition-colors"
-            >
-              Load newer comments
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Pinned composer */}
-      <div className="border-t border-cream/10 pt-3 shrink-0">
-        <CommentInput onAddComment={onAddComment} inputRef={commentInputRef} draftRef={draftRef} onClearDraftRef={onClearDraftRef} onSetDraftRef={onSetDraftRef} options={options} />
-      </div>
-    </div>
-  )
-}
-
-function CommentInput({
-  onAddComment,
-  inputRef,
-  draftRef,
-  onClearDraftRef,
-  onSetDraftRef,
-  options,
-}: {
-  onAddComment: (comment: { text: string; authorName: string; authorEmail: string; refOptionId?: string; refOptionLabel?: string }) => void
-  inputRef?: React.RefObject<HTMLTextAreaElement | null>
-  draftRef?: { optionId: string; optionLabel: string } | null
-  onClearDraftRef?: () => void
-  onSetDraftRef?: (ref: { optionId: string; optionLabel: string }) => void
-  options?: OptionV3[]
-}) {
-  const { data: session } = useSession()
-  const [text, setText] = useState('')
-  const [mentionOpen, setMentionOpen] = useState(false)
-  const [mentionFilter, setMentionFilter] = useState('')
-  const mentionRef = useRef<HTMLDivElement>(null)
-
-  // Close mention picker on click outside
-  useEffect(() => {
-    if (!mentionOpen) return
-    function handleClick(e: MouseEvent) {
-      if (mentionRef.current && !mentionRef.current.contains(e.target as Node)) {
-        setMentionOpen(false)
-        setMentionFilter('')
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [mentionOpen])
-
-  const filteredOptions = useMemo(() => {
-    if (!options || options.length === 0) return []
-    if (!mentionFilter) return options
-    const q = mentionFilter.toLowerCase()
-    return options.filter((o) => (o.name || 'Untitled').toLowerCase().includes(q))
-  }, [options, mentionFilter])
-
-  function handleSubmit() {
-    if (!text.trim() || !session?.user) return
-    onAddComment({
-      text: text.trim().slice(0, MAX_COMMENT_LENGTH),
-      authorName: session.user.name || 'Unknown',
-      authorEmail: session.user.email || '',
-      ...(draftRef ? { refOptionId: draftRef.optionId, refOptionLabel: draftRef.optionLabel } : {}),
-    })
-    setText('')
-    onClearDraftRef?.()
-  }
-
-  function handleTextChange(value: string) {
-    setText(value.slice(0, MAX_COMMENT_LENGTH))
-
-    // Detect @ trigger — check if the last word starts with @
-    const cursorText = value
-    const lastAtIndex = cursorText.lastIndexOf('@')
-    if (lastAtIndex >= 0 && options && options.length > 0) {
-      const beforeAt = cursorText[lastAtIndex - 1]
-      // Only trigger if @ is at start or after whitespace
-      if (lastAtIndex === 0 || beforeAt === ' ' || beforeAt === '\n') {
-        const query = cursorText.slice(lastAtIndex + 1)
-        // Only keep open if no space in query (user is still typing the mention)
-        if (!query.includes(' ') && !query.includes('\n')) {
-          setMentionOpen(true)
-          setMentionFilter(query)
-          return
-        }
-      }
-    }
-    if (mentionOpen) {
-      setMentionOpen(false)
-      setMentionFilter('')
-    }
-  }
-
-  function handleSelectMention(opt: OptionV3) {
-    // Remove the @query from text
-    const lastAtIndex = text.lastIndexOf('@')
-    const newText = lastAtIndex >= 0 ? text.slice(0, lastAtIndex) : text
-    setText(newText)
-    setMentionOpen(false)
-    setMentionFilter('')
-    onSetDraftRef?.({ optionId: opt.id, optionLabel: opt.name || 'Untitled' })
-    inputRef?.current?.focus()
-  }
-
-  return (
-    <div>
-      {/* Draft ref pill */}
-      {draftRef ? (
-        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-sandstone/15 text-sandstone text-xs rounded-full">
-            Re: {draftRef.optionLabel}
-            <button
-              type="button"
-              onClick={() => onClearDraftRef?.()}
-              className="text-sandstone/50 hover:text-sandstone ml-0.5"
-            >
-              ×
-            </button>
-          </span>
-          <button
-            type="button"
-            onClick={() => onClearDraftRef?.()}
-            className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors"
-          >
-            Comment on the whole selection instead
-          </button>
-        </div>
-      ) : (
-        <div className="text-[11px] text-cream/20 mb-1">
-          {options && options.length > 0 ? 'Type @ to reference an option' : 'General comment on this selection'}
-        </div>
-      )}
-      <div className="relative">
-        <div className="flex gap-2">
-          <textarea
-            ref={inputRef}
-            rows={2}
-            value={text}
-            onChange={(e) => handleTextChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (mentionOpen && filteredOptions.length > 0) {
-                if (e.key === 'Escape') {
-                  e.preventDefault()
-                  setMentionOpen(false)
-                  setMentionFilter('')
-                  return
-                }
-              }
-              if (e.key === 'Enter' && !e.shiftKey && !mentionOpen) {
-                e.preventDefault()
-                handleSubmit()
-              }
-            }}
-            placeholder={draftRef ? `Comment on ${draftRef.optionLabel}...` : 'Add a comment...'}
-            maxLength={MAX_COMMENT_LENGTH}
-            className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50 resize-none"
-          />
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={!text.trim()}
-            className="px-3 py-2 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors disabled:opacity-30"
-          >
-            Post
-          </button>
-        </div>
-
-        {/* @ mention picker */}
-        {mentionOpen && filteredOptions.length > 0 && (
-          <div ref={mentionRef} className="absolute bottom-full mb-1 left-0 right-12 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl z-20 max-h-48 overflow-y-auto py-1">
-            <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-cream/25 border-b border-cream/8">
-              Reference an option
-            </div>
-            {filteredOptions.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => handleSelectMention(opt)}
-                className="w-full text-left px-3 py-2 text-sm text-cream/70 hover:bg-cream/5 hover:text-cream transition-colors flex items-center gap-2"
-              >
-                {opt.isSelected && (
-                  <span className="w-2 h-2 rounded-full bg-sandstone shrink-0" title="Final pick" />
-                )}
-                <span className="truncate">{opt.name || 'Untitled'}</span>
-              </button>
-            ))}
-            {filteredOptions.length === 0 && (
-              <p className="px-3 py-2 text-xs text-cream/30">No matching options</p>
-            )}
-          </div>
-        )}
-      </div>
-      {text.length > 0 && (
-        <p className={`text-[10px] mt-1 text-right ${text.length >= MAX_COMMENT_LENGTH ? 'text-red-400' : 'text-cream/25'}`}>
-          {text.length}/{MAX_COMMENT_LENGTH}
-        </p>
-      )}
-    </div>
-  )
-}

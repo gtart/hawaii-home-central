@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useRef, useMemo } from 'react'
+
 import type { PunchlistItem, PunchlistPhoto, PunchlistPriority } from '../types'
-import { useComments } from '@/hooks/useComments'
+import type { CommentRow } from '@/hooks/useComments'
 import type { PunchlistStateAPI } from '../usePunchlistState'
 import { STATUS_CONFIG, STATUS_CYCLE, PRIORITY_CONFIG } from '../constants'
 import { LOCATION_SEEDS, ASSIGNEE_SEEDS } from '../utils'
@@ -19,6 +20,9 @@ interface Props {
   collectionId?: string
   projectId?: string
   onClose: () => void
+  onMoveComplete?: (message: string) => void
+  onOpenComments?: (ref?: import('@/components/app/CommentThread').RefEntity) => void
+  allComments?: import('@/hooks/useComments').CommentRow[]
 }
 
 /** Small pencil icon button shown next to editable fields */
@@ -38,7 +42,7 @@ function PencilButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-export function PunchlistItemDetail({ item, api, collectionId, projectId, onClose }: Props) {
+export function PunchlistItemDetail({ item, api, collectionId, projectId, onClose, onMoveComplete, onOpenComments, allComments }: Props) {
   const { readOnly, updateItem, setStatus, deleteItem, addPhoto, payload } = api
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -428,8 +432,15 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
             )}
           </div>
 
-          {/* Comments section */}
-          <DBCommentsSection itemId={item.id} collectionId={collectionId} readOnly={readOnly} />
+          {/* Comments preview */}
+          <ItemCommentsPreview
+            itemId={item.id}
+            itemTitle={item.title}
+            collectionId={collectionId}
+            allComments={allComments}
+            onOpenComments={onOpenComments}
+            readOnly={readOnly}
+          />
 
           {/* Actions */}
           {!readOnly && (
@@ -491,6 +502,7 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
             })
             if (result.success) {
               deleteItem(item.id)
+              onMoveComplete?.(`Moved "${item.title}" to ${dest.collectionTitle}`)
               onClose()
             }
             setMoveOpen(false)
@@ -580,9 +592,6 @@ function EditableDetailRow({
   )
 }
 
-const COMMENTS_PER_PAGE = 10
-const MAX_COMMENT_LENGTH = 400
-
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60_000)
@@ -595,122 +604,81 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString()
 }
 
-function DBCommentsSection({ itemId, collectionId, readOnly }: { itemId: string; collectionId?: string; readOnly: boolean }) {
-  const { comments, isLoading, addComment, deleteComment } = useComments({
-    collectionId: collectionId || null,
-    targetType: 'item',
-    targetId: itemId,
-  })
-  const [page, setPage] = useState(0)
-  const [text, setText] = useState('')
+/** Compact comment preview for item detail — shows last 3 comments + link to sidebar */
+function ItemCommentsPreview({
+  itemId,
+  itemTitle,
+  collectionId,
+  allComments,
+  onOpenComments,
+  readOnly,
+}: {
+  itemId: string
+  itemTitle: string
+  collectionId?: string
+  allComments?: CommentRow[]
+  onOpenComments?: (ref?: import('@/components/app/CommentThread').RefEntity) => void
+  readOnly: boolean
+}) {
+  // Filter to comments that reference this item
+  const itemComments = useMemo(() => {
+    if (!allComments) return []
+    return allComments
+      .filter((c) => c.refEntityId === itemId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 3)
+  }, [allComments, itemId])
 
-  const sorted = [...comments].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  )
-  const totalPages = Math.max(1, Math.ceil(sorted.length / COMMENTS_PER_PAGE))
-  const pageComments = sorted.slice(page * COMMENTS_PER_PAGE, (page + 1) * COMMENTS_PER_PAGE)
+  const totalCount = useMemo(() => {
+    if (!allComments) return 0
+    return allComments.filter((c) => c.refEntityId === itemId).length
+  }, [allComments, itemId])
 
-  function handleSubmit() {
-    if (!text.trim()) return
-    addComment({ text: text.trim().slice(0, MAX_COMMENT_LENGTH) })
-    setText('')
-    setPage(0)
+  const handleOpenSidebar = () => {
+    onOpenComments?.({ id: itemId, label: itemTitle })
   }
+
+  // If no sidebar integration, don't show anything
+  if (!collectionId || !onOpenComments) return null
 
   return (
     <div>
-      <h3 className="text-xs uppercase tracking-wider text-cream/30 mb-3">
-        Comments {sorted.length > 0 && `(${sorted.length})`}
-      </h3>
-
-      {/* Comment input — editors/owners only, at top */}
-      {!readOnly && (
-        <div>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={text}
-              onChange={(e) => setText(e.target.value.slice(0, MAX_COMMENT_LENGTH))}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
-              placeholder="Add a comment..."
-              maxLength={MAX_COMMENT_LENGTH}
-              className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
-            />
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={!text.trim()}
-              className="px-3 py-2 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors disabled:opacity-30"
-            >
-              Post
-            </button>
-          </div>
-          {text.length > 0 && (
-            <p className={`text-[10px] mt-1 text-right ${text.length >= MAX_COMMENT_LENGTH ? 'text-red-400' : 'text-cream/25'}`}>
-              {text.length}/{MAX_COMMENT_LENGTH}
-            </p>
-          )}
-        </div>
-      )}
-
-      {isLoading && (
-        <p className="text-xs text-cream/20 mt-3">Loading comments...</p>
-      )}
-
-      {!isLoading && sorted.length === 0 && (
-        <p className="text-xs text-cream/20 mt-3">No comments yet.</p>
-      )}
-
-      <div className="space-y-3 mt-3">
-        {pageComments.map((comment) => (
-          <div key={comment.id} className="pb-3 border-b border-cream/5 last:border-0 group">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-medium text-cream/70">{comment.authorName || 'Unknown'}</span>
-              <span className="text-cream/20">&middot;</span>
-              <span className="text-[11px] text-cream/30">
-                {relativeTime(comment.createdAt)}
-              </span>
-              {!readOnly && (
-                <button
-                  type="button"
-                  onClick={() => deleteComment(comment.id)}
-                  className="ml-auto text-cream/15 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                  title="Delete"
-                >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
-                  </svg>
-                </button>
-              )}
-            </div>
-            <p className="text-sm text-cream/50 whitespace-pre-wrap">{comment.text}</p>
-          </div>
-        ))}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs uppercase tracking-wider text-cream/30">
+          Comments {totalCount > 0 && `(${totalCount})`}
+        </h3>
+        <button
+          type="button"
+          onClick={handleOpenSidebar}
+          className="text-[11px] text-sandstone/70 hover:text-sandstone transition-colors"
+        >
+          {totalCount > 0 ? 'View all' : 'Add comment'} →
+        </button>
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 mt-4 pt-3 border-t border-cream/5">
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={page === 0}
-            className="text-xs text-cream/40 hover:text-cream disabled:opacity-30 transition-colors"
-          >
-            Newer
-          </button>
-          <span className="text-[11px] text-cream/30">
-            {page + 1} / {totalPages}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-            disabled={page === totalPages - 1}
-            className="text-xs text-cream/40 hover:text-cream disabled:opacity-30 transition-colors"
-          >
-            Older
-          </button>
+      {itemComments.length > 0 ? (
+        <div className="space-y-2">
+          {itemComments.map((comment) => (
+            <div key={comment.id} className="pb-2 border-b border-cream/5 last:border-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-xs font-medium text-cream/70">{comment.authorName || 'Unknown'}</span>
+                <span className="text-[10px] text-cream/25">{relativeTime(comment.createdAt)}</span>
+              </div>
+              <p className="text-sm text-cream/50 whitespace-pre-wrap line-clamp-2">{comment.text}</p>
+            </div>
+          ))}
+          {totalCount > 3 && (
+            <button
+              type="button"
+              onClick={handleOpenSidebar}
+              className="text-xs text-cream/30 hover:text-cream/50 transition-colors"
+            >
+              +{totalCount - 3} more comment{totalCount - 3 !== 1 ? 's' : ''}
+            </button>
+          )}
         </div>
+      ) : (
+        <p className="text-xs text-cream/20">No comments on this fix yet.</p>
       )}
     </div>
   )

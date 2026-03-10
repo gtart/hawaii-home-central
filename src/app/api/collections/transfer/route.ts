@@ -227,6 +227,7 @@ function transferPunchlistItem(
     },
     destPayload: {
       ...destPayload,
+      version: (destPayload.version as number) || 3,
       items: [...destItems, { ...item, itemNumber: nextNum, updatedAt: ts }],
       nextItemNumber: nextNum + 1,
     },

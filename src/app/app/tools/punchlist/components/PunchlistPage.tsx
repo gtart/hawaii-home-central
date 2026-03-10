@@ -35,9 +35,12 @@ interface Props {
   api: PunchlistStateAPI
   collectionId?: string
   projectId?: string
+  commentCounts?: Map<string, number>
+  onOpenComments?: (ref?: import('@/components/app/CommentThread').RefEntity) => void
+  allComments?: import('@/hooks/useComments').CommentRow[]
 }
 
-export function PunchlistPage({ api, collectionId, projectId }: Props) {
+export function PunchlistPage({ api, collectionId, projectId, commentCounts, onOpenComments, allComments }: Props) {
   const { payload, readOnly } = api
   const searchParams = useSearchParams()
 
@@ -678,6 +681,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                   onRename={readOnly ? undefined : (id, title) => api.updateItem(id, { title })}
                   selected={selectedIds.has(item.id)}
                   onToggleSelect={readOnly ? undefined : toggleSelect}
+                  commentCount={commentCounts?.get(item.id)}
                 />
               ))}
             </div>
@@ -694,6 +698,7 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                 onRename={readOnly ? undefined : (id, title) => api.updateItem(id, { title })}
                 selected={selectedIds.has(item.id)}
                 onToggleSelect={readOnly ? undefined : toggleSelect}
+                commentCount={commentCounts?.get(item.id)}
               />
             ))}
           </div>
@@ -789,6 +794,12 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
           collectionId={collectionId}
           projectId={projectId}
           onClose={() => setViewingId(null)}
+          onMoveComplete={(msg) => {
+            setBulkToast(msg)
+            setTimeout(() => setBulkToast(null), 5000)
+          }}
+          onOpenComments={onOpenComments}
+          allComments={allComments}
         />
       )}
 
@@ -1065,6 +1076,10 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
           onClose={() => setBulkMoveOpen(false)}
           onConfirm={async (dest) => {
             const ids = Array.from(selectedIds)
+            const total = ids.length
+            setBulkMoveOpen(false)
+            deselectAll()
+            setBulkToast(`Moving ${total} item${total !== 1 ? 's' : ''} to ${dest.collectionTitle}...`)
             let moved = 0
             for (const id of ids) {
               const result = await transfer({
@@ -1079,11 +1094,11 @@ export function PunchlistPage({ api, collectionId, projectId }: Props) {
                 moved++
               }
             }
-            deselectAll()
-            setBulkMoveOpen(false)
             if (moved > 0) {
               setBulkToast(`Moved ${moved} item${moved !== 1 ? 's' : ''} to ${dest.collectionTitle}`)
-              setTimeout(() => setBulkToast(null), 4000)
+              setTimeout(() => setBulkToast(null), 5000)
+            } else {
+              setBulkToast(null)
             }
           }}
         />

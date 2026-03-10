@@ -11,6 +11,7 @@ import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { ActivityPanel } from '@/components/app/ActivityPanel'
 import { useUnseenActivityCount } from '@/hooks/useUnseenActivityCount'
 import { UnsortedBanner } from '@/components/app/UnsortedBanner'
+import { useCommentCounts } from '@/hooks/useComments'
 import { DecisionTrackerPage } from './components/DecisionTrackerPage'
 import { MultiCollectionBanner } from './components/MultiCollectionBanner'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
@@ -194,6 +195,7 @@ export function ToolContent({
   // The workspace anchor ID for adapter boundaries (comments, activity, sharing)
   const workspaceCollectionId = isWorkspaceMode ? workspaceResult._anchorCollectionId : collectionId
 
+  const commentCounts = useCommentCounts(workspaceCollectionId)
   const [activityOpen, setActivityOpen] = useState(false)
   const { count: unseenActivity, markSeen: markActivitySeen } = useUnseenActivityCount(
     workspaceCollectionId ? { toolKey: 'finish_decisions', collectionId: workspaceCollectionId } : undefined
@@ -375,6 +377,7 @@ export function ToolContent({
             onUpdateAppliedKitIds={handleUpdateAppliedKitIds}
             collectionId={workspaceCollectionId}
             projectId={workspaceResult.projectId || currentProject?.id}
+            commentCounts={commentCounts}
           />
         ) : !isLoaded ? (
           <div className="text-center py-12 text-cream/50">

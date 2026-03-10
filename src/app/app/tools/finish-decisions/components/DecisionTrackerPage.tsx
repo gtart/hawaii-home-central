@@ -80,6 +80,7 @@ export function DecisionTrackerPage({
   onUpdateAppliedKitIds,
   collectionId,
   projectId,
+  commentCounts,
 }: {
   selections: SelectionV4[]
   onUpdateSelections: (selections: SelectionV4[]) => void
@@ -93,6 +94,7 @@ export function DecisionTrackerPage({
   onUpdateAppliedKitIds?: (ids: string[]) => void
   collectionId?: string
   projectId?: string
+  commentCounts?: Map<string, number>
 }) {
   const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState('')
@@ -766,6 +768,14 @@ export function DecisionTrackerPage({
                             {decision.options.length > 0 && (
                               <span className="text-[11px] text-cream/30 ml-2">{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
                             )}
+                            {commentCounts && (commentCounts.get(decision.id) || 0) > 0 && (
+                              <span className="inline-flex items-center gap-0.5 text-[10px] text-cream/30 ml-2">
+                                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                                {commentCounts.get(decision.id)}
+                              </span>
+                            )}
                             {decision.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-0.5">
                                 {decision.tags.slice(0, 3).map((tag) => (
@@ -915,6 +925,14 @@ export function DecisionTrackerPage({
                               </span>
                             )}
                             <span>Updated {relativeTime(decision.updatedAt)}</span>
+                            {commentCounts && (commentCounts.get(decision.id) || 0) > 0 && (
+                              <span className="inline-flex items-center gap-0.5 text-cream/35">
+                                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                                {commentCounts.get(decision.id)}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <svg className="w-4 h-4 text-cream/20 group-hover:text-cream/40 transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -30,9 +30,20 @@ function migrateStatus(status: string): PunchlistStatus {
 }
 
 function ensureShape(raw: unknown): PunchlistPayload {
-  if (!raw || typeof raw !== 'object' || !('version' in raw)) return DEFAULT_PAYLOAD
+  if (!raw || typeof raw !== 'object') return DEFAULT_PAYLOAD
 
   const obj = raw as Record<string, unknown>
+
+  // Handle payloads with items but missing version (e.g. from transfer to empty collection)
+  if (!('version' in obj) && Array.isArray(obj.items)) {
+    return {
+      version: 3,
+      nextItemNumber: (obj.nextItemNumber as number) || (obj.items as unknown[]).length + 1,
+      items: obj.items as PunchlistItem[],
+    }
+  }
+
+  if (!('version' in obj)) return DEFAULT_PAYLOAD
 
   // v3 — current format
   if (

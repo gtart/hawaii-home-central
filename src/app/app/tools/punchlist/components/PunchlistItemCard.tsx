@@ -11,9 +11,10 @@ interface Props {
   onRename?: (itemId: string, newTitle: string) => void
   selected?: boolean
   onToggleSelect?: (itemId: string) => void
+  commentCount?: number
 }
 
-export function PunchlistItemCard({ item, onTap, onStatusChange, onRename, selected, onToggleSelect }: Props) {
+export function PunchlistItemCard({ item, onTap, onStatusChange, onRename, selected, onToggleSelect, commentCount }: Props) {
   const statusCfg = STATUS_CONFIG[item.status]
   const priorityCfg = item.priority ? PRIORITY_CONFIG[item.priority] : null
   const [menuOpen, setMenuOpen] = useState(false)
@@ -155,6 +156,17 @@ export function PunchlistItemCard({ item, onTap, onStatusChange, onRename, selec
                 </span>
               </>
             )}
+            {commentCount && commentCount > 0 ? (
+              <>
+                <span className="text-cream/20">&middot;</span>
+                <span className="inline-flex items-center gap-0.5 text-[10px] text-cream/35">
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {commentCount}
+                </span>
+              </>
+            ) : null}
           </div>
 
           {item.notes && (
