@@ -202,15 +202,18 @@ export async function POST(request: Request, { params }: Params) {
     },
   })
 
-  // Fire-and-forget activity event with structured metadata
+  // Fire-and-forget activity event with full structured metadata
   const snippet = text.length > 60 ? text.slice(0, 59) + '…' : text
   const hasOptionRef = refEntityLabel && typeof refEntityLabel === 'string'
   const commentMetadata: Record<string, unknown> = {
     commentId: comment.id,
+    commentSnippet: snippet,
+    selectionId: targetId,
+    selectionTitle: typeof entityTitle === 'string' ? entityTitle : null,
   }
   if (hasOptionRef) {
-    commentMetadata.refEntityId = refEntityId
-    commentMetadata.refEntityLabel = refEntityLabel
+    commentMetadata.optionId = refEntityId
+    commentMetadata.optionTitle = refEntityLabel
   }
   writeActivityEvents([{
     projectId: collection.projectId,

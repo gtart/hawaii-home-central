@@ -31,7 +31,7 @@ export function TagInput({
   onChange,
   allTags = [],
   readOnly = false,
-  placeholder = 'Add tag...',
+  placeholder = 'Add label...',
   compact = false,
 }: TagInputProps) {
   const [input, setInput] = useState('')
@@ -180,7 +180,7 @@ export function TagInput({
                   : 'text-cream/50 hover:bg-cream/5'
               }`}
             >
-              Create &ldquo;{input.trim()}&rdquo;
+              Create label &ldquo;{input.trim()}&rdquo;
             </button>
           )}
         </div>

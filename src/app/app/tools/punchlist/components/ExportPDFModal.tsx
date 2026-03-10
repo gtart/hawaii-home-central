@@ -190,7 +190,7 @@ export function ExportPDFModal({ onClose, locations, assignees, projectId, colle
 
           {/* Additional Information option */}
           <div>
-            <p className="text-sm text-cream/70 mb-3">Include additional information in report?</p>
+            <p className="text-sm text-cream/70 mb-3">Include additional details in report?</p>
             <div className="space-y-2">
               <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
                 <input
@@ -201,8 +201,8 @@ export function ExportPDFModal({ onClose, locations, assignees, projectId, colle
                   className="accent-sandstone"
                 />
                 <div>
-                  <p className="text-sm text-cream">Without additional info</p>
-                  <p className="text-xs text-cream/40">Clean report for contractors</p>
+                  <p className="text-sm text-cream">Without additional details</p>
+                  <p className="text-xs text-cream/40">Clean report for sharing</p>
                 </div>
               </label>
               <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
@@ -214,8 +214,8 @@ export function ExportPDFModal({ onClose, locations, assignees, projectId, colle
                   className="accent-sandstone"
                 />
                 <div>
-                  <p className="text-sm text-cream">With additional info</p>
-                  <p className="text-xs text-cream/40">Includes your additional information</p>
+                  <p className="text-sm text-cream">With additional details</p>
+                  <p className="text-xs text-cream/40">Includes your additional details</p>
                 </div>
               </label>
             </div>

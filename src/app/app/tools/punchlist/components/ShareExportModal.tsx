@@ -237,8 +237,8 @@ function ExportTabContent({
       <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
         <input type="checkbox" checked={includeNotes} onChange={(e) => setIncludeNotes(e.target.checked)} className="accent-sandstone" />
         <div>
-          <p className="text-sm text-cream">Include additional info</p>
-          <p className="text-xs text-cream/40">Your private notes on each item</p>
+          <p className="text-sm text-cream">Include additional details</p>
+          <p className="text-xs text-cream/40">Your notes on each item</p>
         </div>
       </label>
       <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">

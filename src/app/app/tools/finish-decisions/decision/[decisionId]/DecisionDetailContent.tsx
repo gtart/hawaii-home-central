@@ -65,7 +65,6 @@ export function DecisionDetailContent({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [guidanceOpen, setGuidanceOpen] = useState(false)
   const [commentInitialRef, setCommentInitialRef] = useState<RefEntity | null>(null)
-  const [commentFilterRef, setCommentFilterRef] = useState<RefEntity | null>(null)
   const [forceExpandComments, setForceExpandComments] = useState(false)
   const [deepLinkCommentId, setDeepLinkCommentId] = useState<string | null>(null)
   const addActionsRef = useRef<IdeasBoardAddActions | null>(null)
@@ -126,16 +125,16 @@ export function DecisionDetailContent({
       const opt = foundDecision.options.find((o) => o.id === qOptionId)
       if (opt) {
         setActiveCardId(qOptionId)
-        // Also filter sidebar to this option
-        setCommentFilterRef({ id: qOptionId, label: opt.name || 'Untitled' })
       }
     }
 
     if (qCommentId) {
       setDeepLinkCommentId(qCommentId)
-    }
-
-    if (qComments === '1' || qCommentId) {
+      // Open the sidebar so the highlighted comment is visible
+      setForceExpandComments(true)
+      setTimeout(() => setForceExpandComments(false), 100)
+    } else if (qComments === '1' && !qOptionId) {
+      // Only auto-open sidebar for selection-level comment links (no option)
       setForceExpandComments(true)
       setTimeout(() => setForceExpandComments(false), 100)
     }
@@ -324,27 +323,9 @@ export function DecisionDetailContent({
   }
 
   function handleCommentOnOption(optionId: string, optionLabel: string) {
-    const ref = { id: optionId, label: optionLabel }
-    setCommentInitialRef(ref)
-    setCommentFilterRef(ref)
-    setForceExpandComments(true)
-    setTimeout(() => setForceExpandComments(false), 100)
+    // Open the option modal — its inline comment thread is the primary home
+    setActiveCardId(optionId)
   }
-
-  // SEL-004: Sync comment sidebar filter with active option modal
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (!foundDecision) return
-    if (activeCardId) {
-      const opt = foundDecision.options.find((o) => o.id === activeCardId)
-      if (opt) {
-        setCommentFilterRef({ id: activeCardId, label: opt.name || 'Untitled' })
-      }
-    } else {
-      // Modal closed — show all comments
-      setCommentFilterRef(null)
-    }
-  }, [activeCardId])
 
   const availableKits = foundDecision
     ? findKitsForDecisionTitle(kits, foundDecision.title, 'other')
@@ -802,19 +783,22 @@ export function DecisionDetailContent({
         </div>
 
         {/* Location field */}
-        <div className="flex items-center gap-2 mb-2">
-          <svg className="w-3.5 h-3.5 text-cream/30 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
+        <div className="mb-3">
+          <div className="flex items-center gap-1.5 mb-1">
+            <svg className="w-3.5 h-3.5 text-cream/40 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            <span className="text-[11px] uppercase tracking-wider text-cream/40 font-medium">Location</span>
+          </div>
           <input
             type="text"
             list="location-suggestions"
             value={foundDecision.location || ''}
             onChange={(e) => updateDecision({ location: e.target.value })}
-            placeholder="Where does this go? e.g. Kitchen"
+            placeholder="Where in the home? e.g. Kitchen"
             readOnly={readOnly}
-            className="bg-transparent text-sm text-cream/60 placeholder:text-cream/25 focus:outline-none focus:text-cream border-b border-transparent hover:border-cream/10 focus:border-sandstone/40 transition-colors max-w-[240px] disabled:opacity-50"
+            className="bg-basalt border border-cream/12 rounded-lg px-3 py-1.5 text-sm text-cream/70 placeholder:text-cream/25 focus:outline-none focus:text-cream focus:border-sandstone/40 transition-colors w-full max-w-[280px] disabled:opacity-50"
           />
           <datalist id="location-suggestions">
             {locationSuggestions.map((loc) => (
@@ -823,14 +807,15 @@ export function DecisionDetailContent({
           </datalist>
         </div>
 
-        {/* Tags */}
+        {/* Labels */}
         <div className="mb-2">
+          <span className="text-[11px] uppercase tracking-wider text-cream/30 font-medium mb-1 block">Labels</span>
           <TagInput
             tags={foundDecision.tags || []}
             allTags={allTags}
             onChange={(newTags) => updateDecision({ tags: newTags })}
             readOnly={readOnly}
-            placeholder="Categorize: phase, priority, type..."
+            placeholder="Optional: urgency, type, style, phase..."
           />
         </div>
 
@@ -1014,7 +999,7 @@ export function DecisionDetailContent({
       </div>
 
       <CollapsibleCommentSidebar
-        title="Comments"
+        title="Selection comments"
         storageKey="selections_comments_collapsed"
         comments={userComments}
         isLoading={decisionComments.isLoading}
@@ -1029,9 +1014,9 @@ export function DecisionDetailContent({
         onClearInitialRef={() => setCommentInitialRef(null)}
         onNavigateToRef={(refId) => setActiveCardId(refId)}
         forceExpand={forceExpandComments}
-        filterRefEntityId={commentFilterRef?.id ?? null}
-        filterRefEntityLabel={commentFilterRef?.label ?? null}
-        onClearFilter={() => setCommentFilterRef(null)}
+        filterRefEntityId={null}
+        filterRefEntityLabel={null}
+        onClearFilter={undefined}
         currentUserId={session?.user?.id ?? null}
         highlightCommentId={deepLinkCommentId}
       />

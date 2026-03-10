@@ -340,7 +340,7 @@ function SelectionReportCard({
               <span>Due: {new Date(selection.dueDate).toLocaleDateString()}</span>
             )}
             {selection.tags.length > 0 && (
-              <span>Tags: {selection.tags.join(', ')}</span>
+              <span>Labels: {selection.tags.join(', ')}</span>
             )}
           </div>
 

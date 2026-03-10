@@ -27,34 +27,38 @@ const VERB: Record<string, string> = {
 // ── Extract comment context from event (metadata-first, then string fallback) ──
 
 interface CommentContext {
-  optionName: string | null
+  selectionTitle: string | null
+  optionTitle: string | null
   commentSnippet: string
 }
 
 function extractCommentContext(evt: {
+  entityLabel?: string | null
   detailText?: string | null
   metadata?: Record<string, unknown> | null
 }): CommentContext {
-  // Prefer structured metadata
   const meta = evt.metadata
-  if (meta && typeof meta.refEntityLabel === 'string') {
-    // Metadata has explicit option label — extract snippet from detailText
-    const snippet = typeof evt.detailText === 'string'
-      ? evt.detailText.replace(/^On "[^"]+?":\s*/, '')
-      : ''
-    return { optionName: meta.refEntityLabel, commentSnippet: snippet }
+
+  // Prefer structured metadata (new events)
+  if (meta) {
+    const selectionTitle = typeof meta.selectionTitle === 'string' ? meta.selectionTitle : null
+    const optionTitle = typeof meta.optionTitle === 'string' ? meta.optionTitle
+      : (typeof meta.refEntityLabel === 'string' ? meta.refEntityLabel : null) // backward compat
+    const commentSnippet = typeof meta.commentSnippet === 'string' ? meta.commentSnippet
+      : (typeof evt.detailText === 'string' ? evt.detailText.replace(/^On "[^"]+?":\s*/, '') : '')
+    return { selectionTitle, optionTitle, commentSnippet }
   }
 
   // Fallback: parse detailText string format `On "OptionName": snippet`
   if (typeof evt.detailText === 'string') {
     const match = evt.detailText.match(/^On "([^"]+)":\s*(.*)$/)
     if (match) {
-      return { optionName: match[1], commentSnippet: match[2] }
+      return { selectionTitle: evt.entityLabel ?? null, optionTitle: match[1], commentSnippet: match[2] }
     }
-    return { optionName: null, commentSnippet: evt.detailText }
+    return { selectionTitle: evt.entityLabel ?? null, optionTitle: null, commentSnippet: evt.detailText }
   }
 
-  return { optionName: null, commentSnippet: '' }
+  return { selectionTitle: evt.entityLabel ?? null, optionTitle: null, commentSnippet: '' }
 }
 
 // ── Legacy parser ──
@@ -128,6 +132,34 @@ function FullRow({ evt }: { evt: ActivityFeedEvent }) {
   // Extract comment context using metadata-first approach
   const commentCtx = isComment ? extractCommentContext(evt) : null
 
+  // For comments, render structured: SelectionTitle · OptionTitle · "snippet"
+  if (isComment && commentCtx) {
+    const displaySelection = commentCtx.selectionTitle || entityLabel
+    return (
+      <span className="flex flex-wrap items-center gap-1 text-sm leading-snug min-w-0">
+        {displaySelection && (
+          <EntityPill label={displaySelection} className="text-xs max-w-[140px] md:max-w-[200px]" />
+        )}
+        {commentCtx.optionTitle && (
+          <>
+            <span className="text-cream/30 shrink-0">·</span>
+            <span className="text-cream/50 text-xs truncate max-w-[120px] md:max-w-[160px]" title={commentCtx.optionTitle}>
+              {commentCtx.optionTitle}
+            </span>
+          </>
+        )}
+        {commentCtx.commentSnippet && (
+          <>
+            <span className="text-cream/30 shrink-0">·</span>
+            <span className="text-cream/40 italic truncate min-w-0">
+              &ldquo;{commentCtx.commentSnippet}&rdquo;
+            </span>
+          </>
+        )}
+      </span>
+    )
+  }
+
   return (
     <span className="flex flex-wrap items-center gap-1 text-sm leading-snug min-w-0">
       {/* Action verb */}
@@ -143,27 +175,8 @@ function FullRow({ evt }: { evt: ActivityFeedEvent }) {
         <span className="text-cream/50">→ {detailText}</span>
       )}
 
-      {/* Comment with option context */}
-      {isComment && commentCtx && (
-        <>
-          {commentCtx.optionName && (
-            <>
-              <span className="text-cream/30 shrink-0">·</span>
-              <span className="text-cream/50 text-xs truncate max-w-[120px] md:max-w-[160px]" title={commentCtx.optionName}>
-                {commentCtx.optionName}
-              </span>
-            </>
-          )}
-          {commentCtx.commentSnippet && (
-            <span className="text-cream/40 italic truncate min-w-0">
-              &ldquo;{commentCtx.commentSnippet}&rdquo;
-            </span>
-          )}
-        </>
-      )}
-
       {/* Detail text for moves/copies (not comment, not status) */}
-      {!isComment && !isStatusChange && detailText && (
+      {!isStatusChange && detailText && (
         <span className="text-cream/30 text-xs truncate">{detailText}</span>
       )}
 
@@ -184,7 +197,26 @@ function CompactRow({ evt }: { evt: ActivityFeedEvent | { action: string; summar
     return <span className="text-cream/30 truncate">{evt.summaryText}</span>
   }
 
-  const commentCtx = isComment ? extractCommentContext(evt as { detailText?: string | null; metadata?: Record<string, unknown> | null }) : null
+  const commentCtx = isComment ? extractCommentContext(evt as { entityLabel?: string | null; detailText?: string | null; metadata?: Record<string, unknown> | null }) : null
+
+  if (isComment && commentCtx) {
+    const displaySelection = commentCtx.selectionTitle || entityLabel
+    return (
+      <span className="flex items-center gap-1 min-w-0 text-[11px]">
+        {displaySelection && (
+          <EntityPill label={displaySelection} className="text-[11px] max-w-[120px]" />
+        )}
+        {commentCtx.optionTitle && (
+          <span className="text-cream/35 truncate max-w-[80px]" title={commentCtx.optionTitle}>
+            · {commentCtx.optionTitle}
+          </span>
+        )}
+        {commentCtx.commentSnippet && (
+          <span className="text-cream/30 italic truncate min-w-0">&ldquo;{commentCtx.commentSnippet}&rdquo;</span>
+        )}
+      </span>
+    )
+  }
 
   return (
     <span className="flex items-center gap-1 min-w-0 text-[11px]">
@@ -195,19 +227,7 @@ function CompactRow({ evt }: { evt: ActivityFeedEvent | { action: string; summar
       {isStatusChange && detailText && (
         <span className="text-cream/40">→ {detailText}</span>
       )}
-      {isComment && commentCtx && (
-        <>
-          {commentCtx.optionName && (
-            <span className="text-cream/35 truncate max-w-[80px]" title={commentCtx.optionName}>
-              · {commentCtx.optionName}
-            </span>
-          )}
-          {commentCtx.commentSnippet && (
-            <span className="text-cream/30 italic truncate min-w-0">&ldquo;{commentCtx.commentSnippet}&rdquo;</span>
-          )}
-        </>
-      )}
-      {!isComment && !isStatusChange && detailText && (
+      {!isStatusChange && detailText && (
         <span className="text-cream/25 truncate">{detailText}</span>
       )}
       {!entityLabel && !detailText && (

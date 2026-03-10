@@ -315,7 +315,7 @@ export function ToolContent({
             eyebrowLabel="Selections"
             toolLabel="Selections"
             scopes={tagScopes}
-            scopeLabel="Tags"
+            scopeLabel="Labels"
             buildExportUrl={({ projectId: pid, selectedScopeIds, scopeMode, includeNotes, includeComments, includePhotos }) => {
               const reportBase = `/app/tools/finish-decisions/report?projectId=${pid}`
               let url = `${reportBase}&includeNotes=${includeNotes}&includeComments=${includeComments}&includePhotos=${includePhotos}`

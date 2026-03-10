@@ -324,7 +324,7 @@ export function DecisionTrackerPage({
     for (const d of sortedDecisions) {
       if (groupBy === 'tag') {
         if (d.tags.length === 0) {
-          const key = 'Untagged'
+          const key = 'Unlabeled'
           if (!groups.has(key)) groups.set(key, [])
           groups.get(key)!.push(d)
         } else {
@@ -453,7 +453,7 @@ export function DecisionTrackerPage({
                 >
                   <option value="none">None</option>
                   <option value="location">By Location</option>
-                  <option value="tag">By Tag</option>
+                  <option value="tag">By Label</option>
                   <option value="status">By Status</option>
                   <option value="priority">By Priority</option>
                 </select>
@@ -604,7 +604,7 @@ export function DecisionTrackerPage({
           {/* Desktop tag filter row */}
           {allTags.length > 0 && (
             <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
-              <span className="text-[11px] text-cream/30 mr-1">Tags</span>
+              <span className="text-[11px] text-cream/30 mr-1">Labels</span>
               {allTags.map((tag) => {
                 const isActive = tagFilters.includes(tag)
                 return (
@@ -627,7 +627,7 @@ export function DecisionTrackerPage({
                   onClick={() => setTagFilters([])}
                   className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors ml-1"
                 >
-                  Clear tags
+                  Clear labels
                 </button>
               )}
             </div>
@@ -636,7 +636,13 @@ export function DecisionTrackerPage({
           {/* Desktop location filter row */}
           {usedLocations.length > 0 && (
             <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
-              <span className="text-[11px] text-cream/30 mr-1">Location</span>
+              <span className="inline-flex items-center gap-1 text-[11px] text-cream/30 mr-1">
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                Location
+              </span>
               {usedLocations.map((loc) => {
                 const isActive = locationFilters.includes(loc)
                 return (
@@ -786,9 +792,15 @@ export function DecisionTrackerPage({
                             )}
                           </Link>
                         </td>
-                        <td className="py-2.5 pr-3 text-[11px] truncate max-w-[120px]">
+                        <td className="py-2.5 pr-3 text-[11px] max-w-[120px]">
                           {decision.location ? (
-                            <span className="text-cream/40">{decision.location}</span>
+                            <span className="inline-flex items-center gap-1 text-cream/50">
+                              <svg className="w-3 h-3 text-cream/25 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
+                                <circle cx="12" cy="10" r="3" />
+                              </svg>
+                              <span className="truncate">{decision.location}</span>
+                            </span>
                           ) : (
                             <span className="text-cream/15 italic">Set location</span>
                           )}
@@ -1086,14 +1098,14 @@ export function DecisionTrackerPage({
                 )}
               </div>
 
-              {/* Tags */}
+              {/* Labels */}
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => { setBulkMenuOpen(bulkMenuOpen === 'tags' ? null : 'tags'); setBulkTagInput('') }}
                   className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
                 >
-                  Tags
+                  Labels
                 </button>
                 {bulkMenuOpen === 'tags' && (
                   <>
@@ -1102,7 +1114,7 @@ export function DecisionTrackerPage({
                       <div className="p-2 border-b border-cream/10">
                         <input
                           autoFocus
-                          placeholder="Type to add tag..."
+                          placeholder="Type to add label..."
                           value={bulkTagInput}
                           onChange={(e) => setBulkTagInput(e.target.value)}
                           onKeyDown={(e) => {
@@ -1199,7 +1211,7 @@ export function DecisionTrackerPage({
                                 </button>
                               )}
                               {filtered.length === 0 && !showCreate && (
-                                <div className="px-3 py-2 text-xs text-cream/30 italic">No tags</div>
+                                <div className="px-3 py-2 text-xs text-cream/30 italic">No labels</div>
                               )}
                             </>
                           )
@@ -1393,10 +1405,10 @@ export function DecisionTrackerPage({
                 </div>
               )}
 
-              {/* Tags */}
+              {/* Labels */}
               {allTags.length > 0 && (
                 <div>
-                  <label className="block text-sm text-cream/70 mb-2">Tags</label>
+                  <label className="block text-sm text-cream/70 mb-2">Labels</label>
                   <div className="flex flex-wrap gap-2">
                     {allTags.map((tag) => {
                       const isActive = tagFilters.includes(tag)
@@ -1443,7 +1455,7 @@ export function DecisionTrackerPage({
                 >
                   <option value="none">None</option>
                   <option value="location">By Location</option>
-                  <option value="tag">By Tag</option>
+                  <option value="tag">By Label</option>
                   <option value="status">By Status</option>
                   <option value="priority">By Priority</option>
                 </select>

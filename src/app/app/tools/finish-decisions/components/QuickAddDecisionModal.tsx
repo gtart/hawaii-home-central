@@ -126,9 +126,9 @@ export function QuickAddDecisionModal({ onAdd, onClose, triggerRef, allTags }: P
             />
           </div>
 
-          {/* Tags */}
+          {/* Labels */}
           <div>
-            <label className="block text-sm text-cream/70 mb-1.5">Tags</label>
+            <label className="block text-sm text-cream/70 mb-1.5">Labels</label>
             <TagInput
               tags={tags}
               onChange={setTags}

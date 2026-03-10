@@ -220,12 +220,14 @@ function IdeaCardTile({
           </span>
         </div>
 
-        {/* Latest comment preview */}
+        {/* Latest comment preview — styled as a collaboration cue */}
         {latestOptionComment && (
-          <p className="text-[10px] text-cream/40 italic line-clamp-2 leading-relaxed">
-            <span className="font-medium text-cream/50 not-italic">{latestOptionComment.authorName.split(' ')[0]}:</span>{' '}
-            {latestOptionComment.text.length > 60 ? latestOptionComment.text.slice(0, 60) + '...' : latestOptionComment.text}
-          </p>
+          <div className="border-l-2 border-sandstone/20 pl-2 py-0.5">
+            <p className="text-[10px] text-cream/45 line-clamp-2 leading-relaxed">
+              <span className="font-medium text-cream/55">{latestOptionComment.authorName.split(' ')[0]}:</span>{' '}
+              <span className="italic">{latestOptionComment.text.length > 60 ? latestOptionComment.text.slice(0, 60) + '...' : latestOptionComment.text}</span>
+            </p>
+          </div>
         )}
 
         {/* Voting row */}
@@ -901,7 +903,7 @@ export function IdeasBoard({
           onDeleteComment={onDeleteComment}
           onEditComment={onEditComment}
           currentUserId={currentUserId}
-          onOpenComments={onCommentOnOption ? () => onCommentOnOption(activeOption.id, activeOption.name || 'Untitled') : undefined}
+          onOpenComments={onOpenGlobalComment}
           onUploadPhoto={uploadIdeaFile}
           onUploadDocument={uploadDocument}
           onClose={() => {

@@ -28,7 +28,8 @@ export function eventHref(event: ActivityFeedEvent): string {
       // Use structured metadata for option + comment deep linking
       const meta = event.metadata
       if (meta) {
-        if (typeof meta.refEntityId === 'string') params.set('optionId', meta.refEntityId)
+        const optId = typeof meta.optionId === 'string' ? meta.optionId : (typeof meta.refEntityId === 'string' ? meta.refEntityId : null)
+        if (optId) params.set('optionId', optId)
         if (typeof meta.commentId === 'string') params.set('commentId', meta.commentId)
       }
     }
