@@ -14,7 +14,7 @@ import { capturedToMoodBoardIdea, capturedToSelectionOption } from '@/lib/captur
 const DEFAULT_FD_PAYLOAD: FinishDecisionsPayloadV4 = { version: 4, selections: [] }
 
 type Destination = 'mood_boards' | 'finish_decisions'
-type SelectField = 'price' | 'specs' | 'name'
+type SelectField = 'price' | 'specs' | 'name' | 'notes' | 'photo'
 
 export function OverlayContent() {
   const { currentProject, isLoading: projectsLoading } = useProject()
@@ -75,6 +75,12 @@ export function OverlayContent() {
   const [saved, setSaved] = useState(false)
   const [savedName, setSavedName] = useState('')
   const [selectingField, setSelectingField] = useState<SelectField | null>(null)
+  const [pickMode, setPickMode] = useState(false)
+  const [captureLog, setCaptureLog] = useState<string[]>([])
+
+  const addCaptureLog = useCallback((msg: string) => {
+    setCaptureLog((prev) => [...prev.slice(-4), msg])
+  }, [])
 
   // Listen for messages from parent page
   useEffect(() => {
@@ -94,10 +100,31 @@ export function OverlayContent() {
       }
 
       if (ev.data.type === 'hhc:selected') {
-        const { field, value } = ev.data as { field: SelectField; value: string }
-        if (field === 'price') setPrice(value)
-        if (field === 'specs') setSpecs((prev) => prev ? `${prev}\n${value}` : value)
-        if (field === 'name') setName(value)
+        const { field, value, isImage } = ev.data as { field: SelectField; value: string; isImage?: boolean }
+        if (isImage || field === 'photo') {
+          // Add image to selected URLs
+          setSelectedUrls((prev) => new Set([...prev, value]))
+          // Also add to captured content images if not already there
+          setCapturedContent((prev) => {
+            if (!prev) return prev
+            const exists = prev.images.some((img: { url: string }) => img.url === value)
+            if (exists) return prev
+            return { ...prev, images: [...prev.images, { url: value, label: 'From page' }] }
+          })
+          addCaptureLog('Photo captured')
+        } else if (field === 'price') {
+          setPrice(value)
+          addCaptureLog(`Price: ${value.substring(0, 30)}`)
+        } else if (field === 'specs') {
+          setSpecs((prev) => prev ? `${prev}\n${value}` : value)
+          addCaptureLog('Specs captured')
+        } else if (field === 'name') {
+          setName(value)
+          addCaptureLog(`Name: ${value.substring(0, 30)}`)
+        } else if (field === 'notes') {
+          setNotes((prev) => prev ? `${prev}\n${value}` : value)
+          addCaptureLog('Notes captured')
+        }
         setSelectingField(null)
       }
     }
@@ -107,13 +134,28 @@ export function OverlayContent() {
   }, [])
 
   const startSelect = useCallback((field: SelectField) => {
+    setPickMode(false)
     setSelectingField(field)
     window.parent.postMessage({ type: 'hhc:startSelect', field }, '*')
   }, [])
 
   const cancelSelect = useCallback(() => {
     setSelectingField(null)
+    setPickMode(false)
     window.parent.postMessage({ type: 'hhc:cancelSelect' }, '*')
+  }, [])
+
+  const togglePickMode = useCallback(() => {
+    setPickMode((prev) => {
+      const next = !prev
+      if (next) {
+        setSelectingField(null)
+        window.parent.postMessage({ type: 'hhc:startPickMode' }, '*')
+      } else {
+        window.parent.postMessage({ type: 'hhc:stopPickMode' }, '*')
+      }
+      return next
+    })
   }, [])
 
   const closeOverlay = useCallback(() => {
@@ -280,6 +322,34 @@ export function OverlayContent() {
               )}
               <p className="text-[10px] text-cream/30 truncate mt-0.5">{capturedContent.url}</p>
             </div>
+
+            {/* Pick from page button */}
+            <button
+              type="button"
+              onClick={togglePickMode}
+              className={`w-full py-2.5 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${
+                pickMode
+                  ? 'bg-amber-500/20 text-amber-400 border border-amber-400/40 animate-pulse'
+                  : 'bg-sandstone/15 text-sandstone border border-sandstone/30 hover:bg-sandstone/25'
+              }`}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M13 13l6 6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {pickMode ? 'Click items on page... (Done)' : 'Pick from page'}
+            </button>
+
+            {/* Capture log */}
+            {captureLog.length > 0 && (
+              <div className="bg-cream/5 rounded-lg px-2.5 py-2 space-y-0.5">
+                {captureLog.map((msg, idx) => (
+                  <p key={idx} className="text-[10px] text-green-400/70 flex items-center gap-1.5">
+                    <span className="text-green-400">✓</span> {msg}
+                  </p>
+                ))}
+              </div>
+            )}
 
             {/* Image thumbnails */}
             {capturedContent.images.length > 0 && (
