@@ -20,13 +20,26 @@ export function buildDecisionHref({
   commentId?: string
   comments?: boolean
 }): string {
+  // If optionId is provided, use the dedicated option page
+  if (optionId) {
+    return `${BASE}/decision/${decisionId}/option/${optionId}`
+  }
   const url = `${BASE}/decision/${decisionId}`
   const params = new URLSearchParams()
-  if (optionId) params.set('optionId', optionId)
   if (commentId) params.set('commentId', commentId)
   if (comments) params.set('comments', '1')
   const qs = params.toString()
   return qs ? `${url}?${qs}` : url
+}
+
+export function buildOptionHref({
+  decisionId,
+  optionId,
+}: {
+  decisionId: string
+  optionId: string
+}): string {
+  return `${BASE}/decision/${decisionId}/option/${optionId}`
 }
 
 export function buildBoardHref(

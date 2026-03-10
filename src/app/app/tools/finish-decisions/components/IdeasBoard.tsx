@@ -1,15 +1,17 @@
 'use client'
 
 import { useRef, useState, useEffect, useImperativeHandle } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import type { OptionV3, DecisionV3, SelectionV4 } from '@/data/finish-decisions'
 import type { CommentRow } from '@/hooks/useComments'
 import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { relativeTime } from '@/lib/relativeTime'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { uploadDocument } from '../uploadDocument'
-import { IdeaCardModal } from './IdeaCardModal'
 import { CompareModal } from './CompareModal'
 import { SaveFromWebDialog } from './SaveFromWebDialog'
+import { buildOptionHref } from '../lib/routing'
 
 function displayPrice(raw: string | undefined): string {
   if (!raw) return ''
@@ -40,8 +42,6 @@ interface Props {
   readOnly: boolean
   userEmail: string
   userName: string
-  activeCardId: string | null
-  setActiveCardId: (id: string | null) => void
   onAddOption: (opt: OptionV3) => void
   onUpdateOption: (id: string, updates: Partial<OptionV3>) => void
   onDeleteOption: (id: string) => void
@@ -465,8 +465,6 @@ export function IdeasBoard({
   readOnly,
   userEmail,
   userName,
-  activeCardId,
-  setActiveCardId,
   onAddOption,
   onUpdateOption,
   onDeleteOption,
@@ -492,6 +490,7 @@ export function IdeasBoard({
   onImportToDecision,
   addActionsRef,
 }: Props) {
+  const router = useRouter()
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [expanded, setExpanded] = useState(false)
@@ -531,11 +530,6 @@ export function IdeasBoard({
     })
   }
 
-  const activeOption = decision.options.find((o) => o.id === activeCardId) ?? null
-  const activeIdeaComments = activeCardId
-    ? comments.filter((c) => c.refEntityId === activeCardId)
-    : []
-
   async function handlePhotoFiles(files: FileList | null) {
     if (!files || files.length === 0) return
     setUploadError('')
@@ -574,7 +568,7 @@ export function IdeasBoard({
         }
       }
     }
-    if (firstUploadedId) setActiveCardId(firstUploadedId)
+    if (firstUploadedId) router.push(buildOptionHref({ decisionId: decision.id, optionId: firstUploadedId }))
     setUploading(false)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
@@ -620,7 +614,7 @@ export function IdeasBoard({
       updatedAt: now,
     })
     setShowWebDialog(false)
-    setActiveCardId(id)
+    router.push(buildOptionHref({ decisionId: decision.id, optionId: id }))
   }
 
   function handleImageUrlSubmit(url: string, title: string) {
@@ -641,7 +635,7 @@ export function IdeasBoard({
       updatedAt: now,
     })
     setShowImageUrlModal(false)
-    setActiveCardId(id)
+    router.push(buildOptionHref({ decisionId: decision.id, optionId: id }))
   }
 
   return (
@@ -717,7 +711,7 @@ export function IdeasBoard({
                         decision={decision}
                         userEmail={userEmail}
                         readOnly={readOnly}
-                        onClick={() => compareMode ? toggleCompareSelect(opt.id) : setActiveCardId(opt.id)}
+                        onClick={() => compareMode ? toggleCompareSelect(opt.id) : router.push(buildOptionHref({ decisionId: decision.id, optionId: opt.id }))}
                         onToggleFinal={compareMode || hideFinalize ? undefined : () => onSelectOption(opt.id)}
                         onMove={!compareMode && onMoveOption ? () => onMoveOption(opt.id) : undefined}
                         onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
@@ -763,7 +757,7 @@ export function IdeasBoard({
                         decision={decision}
                         userEmail={userEmail}
                         readOnly={readOnly}
-                        onClick={() => compareMode ? toggleCompareSelect(opt.id) : setActiveCardId(opt.id)}
+                        onClick={() => compareMode ? toggleCompareSelect(opt.id) : router.push(buildOptionHref({ decisionId: decision.id, optionId: opt.id }))}
                         onToggleFinal={compareMode || hideFinalize ? undefined : () => onSelectOption(opt.id)}
                         onMove={!compareMode && onMoveOption ? () => onMoveOption(opt.id) : undefined}
                         onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
@@ -881,41 +875,6 @@ export function IdeasBoard({
             <p className="text-sm text-red-400 mt-2">{uploadError}</p>
           )}
         </>
-      )}
-
-      {/* Card modal */}
-      {activeOption && (
-        <IdeaCardModal
-          option={activeOption}
-          decision={decision}
-          readOnly={readOnly}
-          userEmail={userEmail}
-          userName={userName}
-          ideaComments={activeIdeaComments}
-          onUpdate={(updates) => onUpdateOption(activeOption.id, updates)}
-          onDelete={() => onDeleteOption(activeOption.id)}
-          onSelect={hideFinalize ? undefined : () => onSelectOption(activeOption.id)}
-          onMove={onMoveOption ? () => onMoveOption(activeOption.id) : undefined}
-          onCopy={onCopyOption ? () => onCopyOption(activeOption.id) : undefined}
-          copyDisabledReason={!onCopyOption ? copyDisabledReason : undefined}
-          onUpdateDecision={onUpdateDecision}
-          onAddComment={onAddComment}
-          onDeleteComment={onDeleteComment}
-          onEditComment={onEditComment}
-          currentUserId={currentUserId}
-          onOpenComments={onOpenGlobalComment}
-          onNavigate={(optionId) => setActiveCardId(optionId)}
-          onUploadPhoto={uploadIdeaFile}
-          onUploadDocument={uploadDocument}
-          onClose={() => {
-            // Auto-delete empty ideas (e.g. new text card closed without filling in)
-            const opt = activeOption
-            if (opt && !opt.name && !opt.notes && !opt.imageUrl && (!opt.images || opt.images.length === 0) && (!opt.urls || opt.urls.length === 0) && (!opt.documents || opt.documents.length === 0)) {
-              onDeleteOption(opt.id)
-            }
-            setActiveCardId(null)
-          }}
-        />
       )}
 
       {/* Save from web dialog */}

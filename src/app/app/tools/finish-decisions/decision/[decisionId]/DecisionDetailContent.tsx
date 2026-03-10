@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { useToolState } from '@/hooks/useToolState'
 import { useCollectionState, type ActivityEventHint } from '@/hooks/useCollectionState'
 import { IdeasBoard, AddIdeaMenu, type IdeasBoardAddActions } from '../../components/IdeasBoard'
-import { buildBoardHref } from '../../lib/routing'
+import { buildBoardHref, buildOptionHref } from '../../lib/routing'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
 import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
@@ -57,7 +57,6 @@ export function DecisionDetailContent({
   const router = useRouter()
   const { data: session } = useSession()
   const decisionId = params.decisionId as string
-  const [activeCardId, setActiveCardId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [ideasPackOpen, setIdeasPackOpen] = useState(false)
@@ -125,7 +124,8 @@ export function DecisionDetailContent({
     if (qOptionId) {
       const opt = foundDecision.options.find((o) => o.id === qOptionId)
       if (opt) {
-        setActiveCardId(qOptionId)
+        router.replace(buildOptionHref({ decisionId, optionId: qOptionId }))
+        return
       }
     }
 
@@ -327,14 +327,12 @@ export function DecisionDetailContent({
   }
 
   function openGlobalCommentComposer() {
-    setActiveCardId(null)
     setForceExpandComments(true)
     setTimeout(() => setForceExpandComments(false), 100)
   }
 
   function handleCommentOnOption(optionId: string, optionLabel: string) {
-    // Open the option modal — its inline comment thread is the primary home
-    setActiveCardId(optionId)
+    router.push(buildOptionHref({ decisionId, optionId }))
   }
 
   const availableKits = foundDecision
@@ -390,7 +388,6 @@ export function DecisionDetailContent({
 
     setAssignToast(`Moved to ${targetName}`)
     setMoveOptionId(null)
-    setActiveCardId(null)
     setTimeout(() => setAssignToast(null), 3000)
   }
 
@@ -886,7 +883,7 @@ export function DecisionDetailContent({
                 <span className="text-[11px] text-sandstone font-semibold">Final decision selected:</span>
                 <button
                   type="button"
-                  onClick={() => setActiveCardId(finalPick.id)}
+                  onClick={() => router.push(buildOptionHref({ decisionId, optionId: finalPick.id }))}
                   className="text-[11px] text-cream/70 font-medium hover:text-cream transition-colors underline decoration-cream/20 hover:decoration-cream/40"
                 >
                   {finalPick.name || 'Untitled'}
@@ -952,8 +949,6 @@ export function DecisionDetailContent({
             readOnly={readOnly}
             userEmail={session?.user?.email || ''}
             userName={session?.user?.name || 'Unknown'}
-            activeCardId={activeCardId}
-            setActiveCardId={setActiveCardId}
             onAddOption={(opt) => updateDecision({ options: [...foundDecision.options, opt] })}
             onUpdateOption={updateOption}
             onDeleteOption={(id) => {
@@ -988,7 +983,7 @@ export function DecisionDetailContent({
           readOnly={readOnly}
           userName={session?.user?.name || 'Unknown'}
           userEmail={session?.user?.email || ''}
-          onOpenOption={(optionId) => setActiveCardId(optionId)}
+          onOpenOption={(optionId) => router.push(buildOptionHref({ decisionId, optionId }))}
           onUpdateDecision={(patch) => updateDecision(patch)}
           onUploadFile={uploadFileForDecision}
         />
@@ -1021,7 +1016,7 @@ export function DecisionDetailContent({
         refPickerLabel="Tag an option"
         initialRef={commentInitialRef}
         onClearInitialRef={() => setCommentInitialRef(null)}
-        onNavigateToRef={(refId) => setActiveCardId(refId)}
+        onNavigateToRef={(refId) => router.push(buildOptionHref({ decisionId, optionId: refId }))}
         forceExpand={forceExpandComments}
         filterRefEntityId={null}
         filterRefEntityLabel={null}

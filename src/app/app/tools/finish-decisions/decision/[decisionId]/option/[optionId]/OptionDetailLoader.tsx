@@ -2,25 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { useProject } from '@/contexts/ProjectContext'
-import { DecisionDetailContent } from './DecisionDetailContent'
-import type { FinishDecisionKit } from '@/data/finish-decision-kits'
+import { OptionDetailContent } from './OptionDetailContent'
 
-interface DecisionDetailLoaderProps {
-  kits?: FinishDecisionKit[]
-  emojiMap?: Record<string, string>
-}
-
-/**
- * Resolves the workspace anchor ID before rendering DecisionDetailContent.
- * This ensures comments, activity, and sharing work correctly without
- * requiring collectionId in the URL.
- */
 const WS_CACHE_PREFIX = 'hhc_ws_resolved_'
 
-export function DecisionDetailLoader({
-  kits = [],
-  emojiMap = {},
-}: DecisionDetailLoaderProps) {
+/**
+ * Resolves the workspace anchor ID before rendering OptionDetailContent.
+ * Uses localStorage cache to skip the API call when possible.
+ */
+export function OptionDetailLoader() {
   const { currentProject } = useProject()
   const [workspaceId, setWorkspaceId] = useState<string | null>(() => {
     if (typeof window === 'undefined' || !currentProject?.id) return null
@@ -33,7 +23,7 @@ export function DecisionDetailLoader({
   useEffect(() => {
     if (!currentProject?.id) return
 
-    // Use cached value immediately if available
+    // If we already have a cached value, use it immediately but still validate in background
     const cached = (() => {
       try {
         return localStorage.getItem(`${WS_CACHE_PREFIX}${currentProject.id}`)
@@ -62,7 +52,7 @@ export function DecisionDetailLoader({
           } catch { /* silent */ }
         }
       } catch {
-        // Silent — will fall back to useToolState behavior
+        // Silent — will fall back if cache was available
       } finally {
         if (!cancelled) setIsResolving(false)
       }
@@ -82,11 +72,5 @@ export function DecisionDetailLoader({
     )
   }
 
-  return (
-    <DecisionDetailContent
-      kits={kits}
-      emojiMap={emojiMap}
-      collectionId={workspaceId ?? undefined}
-    />
-  )
+  return <OptionDetailContent collectionId={workspaceId ?? undefined} />
 }
