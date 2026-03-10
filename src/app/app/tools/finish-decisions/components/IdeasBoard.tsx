@@ -904,6 +904,7 @@ export function IdeasBoard({
           onEditComment={onEditComment}
           currentUserId={currentUserId}
           onOpenComments={onOpenGlobalComment}
+          onNavigate={(optionId) => setActiveCardId(optionId)}
           onUploadPhoto={uploadIdeaFile}
           onUploadDocument={uploadDocument}
           onClose={() => {
@@ -942,12 +943,14 @@ export function IdeasBoard({
           options={decision.options.filter((o) => selectedForCompare.has(o.id))}
           decision={decision}
           readOnly={readOnly}
+          userEmail={userEmail}
           onSelectOption={(id) => {
             onSelectOption(id)
             setShowCompareModal(false)
             setCompareMode(false)
             setSelectedForCompare(new Set())
           }}
+          onUpdateOption={readOnly ? undefined : (optionId, updates) => onUpdateOption(optionId, updates)}
           onClose={() => setShowCompareModal(false)}
         />
       )}

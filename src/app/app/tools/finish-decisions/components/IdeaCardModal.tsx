@@ -34,6 +34,7 @@ interface Props {
   onEditComment?: (commentId: string, text: string) => Promise<void>
   currentUserId?: string | null
   onOpenComments?: () => void
+  onNavigate?: (optionId: string) => void
   onUploadPhoto: (file: File) => Promise<{ url: string; thumbnailUrl: string; id: string }>
   onUploadDocument: (file: File) => Promise<{ url: string; id: string; fileName: string; fileSize: number; mimeType: string }>
   onClose: () => void
@@ -197,10 +198,12 @@ export function IdeaCardModal({
   onEditComment,
   currentUserId,
   onOpenComments,
+  onNavigate,
   onUploadPhoto,
   onUploadDocument,
   onClose,
 }: Props) {
+  const [mobileTab, setMobileTab] = useState<'details' | 'comments'>('details')
   const [inlineCommentText, setInlineCommentText] = useState('')
   const [newUrl, setNewUrl] = useState('')
   const [editingUrlId, setEditingUrlId] = useState<string | null>(null)
@@ -228,6 +231,30 @@ export function IdeaCardModal({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showPhotoMenu])
+
+  // Carousel: prev/next option navigation
+  const currentIndex = decision.options.findIndex(o => o.id === option.id)
+  const hasPrev = currentIndex > 0
+  const hasNext = currentIndex < decision.options.length - 1
+  const totalOptions = decision.options.length
+
+  // Keyboard navigation (ArrowLeft/ArrowRight when no input focused)
+  useEffect(() => {
+    if (!onNavigate || totalOptions <= 1) return
+    function handleKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (e.key === 'ArrowLeft' && hasPrev) {
+        e.preventDefault()
+        onNavigate!(decision.options[currentIndex - 1].id)
+      } else if (e.key === 'ArrowRight' && hasNext) {
+        e.preventDefault()
+        onNavigate!(decision.options[currentIndex + 1].id)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onNavigate, currentIndex, hasPrev, hasNext, totalOptions, decision.options])
 
   // ---- Handlers ----
 
@@ -455,20 +482,48 @@ export function IdeaCardModal({
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
       {/* Sheet / Modal */}
-      <div className="relative bg-basalt-50 border-t sm:border border-cream/10 rounded-t-xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-basalt-50 border-t sm:border border-cream/10 rounded-t-xl sm:rounded-xl w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto">
 
         {/* ── Sticky header ── */}
         <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 px-5 pt-3 pb-0 z-10">
-          {/* Date line + close */}
+          {/* Nav + date + close */}
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 text-[11px] text-cream/30">
-              <span>Added {formatDate(option.createdAt)}</span>
-              {option.updatedAt !== option.createdAt && (
-                <>
-                  <span className="text-cream/15">·</span>
-                  <span>Updated {formatDate(option.updatedAt)}</span>
-                </>
+            <div className="flex items-center gap-2">
+              {/* Carousel nav */}
+              {onNavigate && totalOptions > 1 && (
+                <div className="flex items-center gap-1 mr-1">
+                  <button
+                    type="button"
+                    onClick={() => hasPrev && onNavigate(decision.options[currentIndex - 1].id)}
+                    disabled={!hasPrev}
+                    className="w-7 h-7 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-cream/8 text-cream/50 hover:bg-cream/15 hover:text-cream transition-colors disabled:opacity-20 disabled:pointer-events-none"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <span className="text-[10px] text-cream/30 tabular-nums min-w-[32px] text-center">{currentIndex + 1} / {totalOptions}</span>
+                  <button
+                    type="button"
+                    onClick={() => hasNext && onNavigate(decision.options[currentIndex + 1].id)}
+                    disabled={!hasNext}
+                    className="w-7 h-7 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-cream/8 text-cream/50 hover:bg-cream/15 hover:text-cream transition-colors disabled:opacity-20 disabled:pointer-events-none"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                </div>
               )}
+              <div className="flex items-center gap-2 text-[11px] text-cream/30">
+                <span>Added {formatDate(option.createdAt)}</span>
+                {option.updatedAt !== option.createdAt && (
+                  <>
+                    <span className="text-cream/15">·</span>
+                    <span>Updated {formatDate(option.updatedAt)}</span>
+                  </>
+                )}
+              </div>
             </div>
             <button
               type="button"
@@ -600,7 +655,27 @@ export function IdeaCardModal({
           </div>
         </div>
 
-        <div className="px-5 py-5 space-y-5">
+        {/* Mobile tab bar */}
+        <div className="sm:hidden flex border-b border-cream/10">
+          <button
+            type="button"
+            onClick={() => setMobileTab('details')}
+            className={`flex-1 py-2.5 text-xs font-medium text-center transition-colors ${mobileTab === 'details' ? 'text-sandstone border-b-2 border-sandstone' : 'text-cream/40'}`}
+          >
+            Details
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab('comments')}
+            className={`flex-1 py-2.5 text-xs font-medium text-center transition-colors ${mobileTab === 'comments' ? 'text-sandstone border-b-2 border-sandstone' : 'text-cream/40'}`}
+          >
+            Comments{ideaComments.length > 0 ? ` (${ideaComments.length})` : ''}
+          </button>
+        </div>
+
+        <div className="sm:grid sm:grid-cols-[1fr_280px] sm:gap-0">
+        {/* ── Left column: Details ── */}
+        <div className={`px-5 py-5 space-y-5 ${mobileTab !== 'details' ? 'hidden sm:block' : ''}`}>
 
           {/* ── Photo section ── */}
           <div>
@@ -1069,9 +1144,43 @@ export function IdeaCardModal({
             </div>
           )}
 
-          {/* ── Comments on this option ── */}
-          <div className="pt-2 border-t border-cream/10">
-            <div className="flex items-center justify-between mb-2">
+          {/* ── Footer: Delete + Save (left column) ── */}
+          {!readOnly && (
+            <div className="pt-1 border-t border-cream/10 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="text-red-400/60 hover:text-red-400 text-sm transition-colors"
+              >
+                Delete option
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          )}
+
+          {readOnly && (
+            <div className="pt-1 border-t border-cream/10 flex justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 bg-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/20 transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ── Right column: Comments ── */}
+        <div className={`sm:border-l sm:border-cream/10 flex flex-col ${mobileTab !== 'comments' ? 'hidden sm:flex' : 'flex'}`}>
+          <div className="flex-1 overflow-y-auto px-4 py-4 sm:max-h-[calc(90vh-140px)]">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
@@ -1095,7 +1204,7 @@ export function IdeaCardModal({
             </div>
 
             {ideaComments.length > 0 && (
-              <div className="space-y-2.5 mb-3 max-h-[300px] overflow-y-auto">
+              <div className="space-y-2.5 mb-3">
                 {[...ideaComments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((c) => (
                   <div key={c.id} className="group border border-cream/8 rounded-lg p-2.5 bg-cream/[0.03]">
                     <div className="flex items-center gap-2 mb-1">
@@ -1137,73 +1246,43 @@ export function IdeaCardModal({
             {ideaComments.length === 0 && (
               <p className="text-xs text-cream/30 mb-3">No comments on this option yet.</p>
             )}
-
-            {!readOnly && (
-              <>
-                <div className="flex gap-2">
-                  <textarea
-                    rows={1}
-                    value={inlineCommentText}
-                    onChange={(e) => setInlineCommentText(e.target.value.slice(0, 400))}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        handleInlineComment()
-                      }
-                    }}
-                    placeholder="Add a comment on this option..."
-                    maxLength={400}
-                    className="flex-1 bg-basalt border border-cream/12 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/40 resize-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleInlineComment}
-                    disabled={!inlineCommentText.trim()}
-                    className="px-3 py-2 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors disabled:opacity-30 self-end"
-                  >
-                    Post
-                  </button>
-                </div>
-                {inlineCommentText.length > 0 && (
-                  <p className={`text-[10px] mt-1 text-right ${inlineCommentText.length >= 400 ? 'text-red-400' : 'text-cream/25'}`}>
-                    {inlineCommentText.length}/400
-                  </p>
-                )}
-              </>
-            )}
           </div>
 
-          {/* ── Footer: Delete + Save ── */}
+          {/* Sticky comment input */}
           {!readOnly && (
-            <div className="pt-1 border-t border-cream/10 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="text-red-400/60 hover:text-red-400 text-sm transition-colors"
-              >
-                Delete option
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
-              >
-                Done
-              </button>
+            <div className="sticky bottom-0 bg-basalt-50 border-t border-cream/10 px-4 py-3">
+              <div className="flex gap-2">
+                <textarea
+                  rows={1}
+                  value={inlineCommentText}
+                  onChange={(e) => setInlineCommentText(e.target.value.slice(0, 400))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleInlineComment()
+                    }
+                  }}
+                  placeholder="Add a comment..."
+                  maxLength={400}
+                  className="flex-1 bg-basalt border border-cream/12 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/40 resize-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleInlineComment}
+                  disabled={!inlineCommentText.trim()}
+                  className="px-3 py-2 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors disabled:opacity-30 self-end"
+                >
+                  Post
+                </button>
+              </div>
+              {inlineCommentText.length > 0 && (
+                <p className={`text-[10px] mt-1 text-right ${inlineCommentText.length >= 400 ? 'text-red-400' : 'text-cream/25'}`}>
+                  {inlineCommentText.length}/400
+                </p>
+              )}
             </div>
           )}
-
-          {readOnly && (
-            <div className="pt-1 border-t border-cream/10 flex justify-end">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 bg-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/20 transition-colors"
-              >
-                Done
-              </button>
-            </div>
-          )}
+        </div>
         </div>
       </div>
     </div>

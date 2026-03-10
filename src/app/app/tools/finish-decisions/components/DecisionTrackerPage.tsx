@@ -81,6 +81,8 @@ export function DecisionTrackerPage({
   collectionId,
   projectId,
   commentCounts,
+  commentLatestAt,
+  selectionVisited,
 }: {
   selections: SelectionV4[]
   onUpdateSelections: (selections: SelectionV4[]) => void
@@ -95,6 +97,8 @@ export function DecisionTrackerPage({
   collectionId?: string
   projectId?: string
   commentCounts?: Map<string, number>
+  commentLatestAt?: Map<string, string>
+  selectionVisited?: { hasUnread: (selectionId: string, latestAt: string | undefined | null) => boolean }
 }) {
   const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState('')
@@ -774,14 +778,19 @@ export function DecisionTrackerPage({
                             {decision.options.length > 0 && (
                               <span className="text-[11px] text-cream/30 ml-2">{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
                             )}
-                            {commentCounts && (commentCounts.get(decision.id) || 0) > 0 && (
-                              <span className="inline-flex items-center gap-0.5 text-[10px] text-cream/30 ml-2">
-                                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                                {commentCounts.get(decision.id)}
-                              </span>
-                            )}
+                            {commentCounts && (commentCounts.get(decision.id) || 0) > 0 && (() => {
+                              const count = commentCounts.get(decision.id) || 0
+                              const unread = selectionVisited?.hasUnread(decision.id, commentLatestAt?.get(decision.id))
+                              return (
+                                <span className={`relative inline-flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded-full text-[11px] ${unread ? 'bg-sandstone/15 text-sandstone' : 'bg-cream/8 text-cream/50'}`}>
+                                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                  {count}
+                                  {unread && <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-sandstone" />}
+                                </span>
+                              )
+                            })()}
                             {decision.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-0.5">
                                 {decision.tags.slice(0, 3).map((tag) => (
@@ -937,14 +946,19 @@ export function DecisionTrackerPage({
                               </span>
                             )}
                             <span>Updated {relativeTime(decision.updatedAt)}</span>
-                            {commentCounts && (commentCounts.get(decision.id) || 0) > 0 && (
-                              <span className="inline-flex items-center gap-0.5 text-cream/35">
-                                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                                {commentCounts.get(decision.id)}
-                              </span>
-                            )}
+                            {commentCounts && (commentCounts.get(decision.id) || 0) > 0 && (() => {
+                              const count = commentCounts.get(decision.id) || 0
+                              const unread = selectionVisited?.hasUnread(decision.id, commentLatestAt?.get(decision.id))
+                              return (
+                                <span className={`relative inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] ${unread ? 'bg-sandstone/15 text-sandstone' : 'bg-cream/8 text-cream/50'}`}>
+                                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                  {count}
+                                  {unread && <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-sandstone" />}
+                                </span>
+                              )
+                            })()}
                           </div>
                         </div>
                         <svg className="w-4 h-4 text-cream/20 group-hover:text-cream/40 transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

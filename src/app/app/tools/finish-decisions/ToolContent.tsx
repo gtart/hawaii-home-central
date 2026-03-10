@@ -12,6 +12,7 @@ import { ActivityPanel } from '@/components/app/ActivityPanel'
 import { useUnseenActivityCount } from '@/hooks/useUnseenActivityCount'
 import { UnsortedBanner } from '@/components/app/UnsortedBanner'
 import { useCommentCounts } from '@/hooks/useComments'
+import { useSelectionLastVisited } from '@/hooks/useSelectionLastVisited'
 import { DecisionTrackerPage } from './components/DecisionTrackerPage'
 import { MultiCollectionBanner } from './components/MultiCollectionBanner'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
@@ -195,7 +196,8 @@ export function ToolContent({
   // The workspace anchor ID for adapter boundaries (comments, activity, sharing)
   const workspaceCollectionId = isWorkspaceMode ? workspaceResult._anchorCollectionId : collectionId
 
-  const commentCounts = useCommentCounts(workspaceCollectionId)
+  const { counts: commentCounts, latestAt: commentLatestAt } = useCommentCounts(workspaceCollectionId)
+  const selectionVisited = useSelectionLastVisited(workspaceCollectionId)
   const [activityOpen, setActivityOpen] = useState(false)
   const { count: unseenActivity, markSeen: markActivitySeen } = useUnseenActivityCount(
     workspaceCollectionId ? { toolKey: 'finish_decisions', collectionId: workspaceCollectionId } : undefined
@@ -378,6 +380,8 @@ export function ToolContent({
             collectionId={workspaceCollectionId}
             projectId={workspaceResult.projectId || currentProject?.id}
             commentCounts={commentCounts}
+            commentLatestAt={commentLatestAt}
+            selectionVisited={selectionVisited}
           />
         ) : !isLoaded ? (
           <div className="text-center py-12 text-cream/50">

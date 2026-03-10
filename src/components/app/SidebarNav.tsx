@@ -121,7 +121,7 @@ export function SidebarNav() {
         />
       )}
 
-      <nav className="hidden md:flex fixed left-0 top-0 bottom-0 w-56 pt-16 border-r border-cream/10 bg-basalt flex-col z-30">
+      <nav className="hidden md:flex fixed left-0 top-16 bottom-0 w-56 border-r border-cream/10 bg-basalt flex-col z-30">
         <div className="flex-1 py-4 space-y-1">
           {/* Quick Capture button */}
           <button

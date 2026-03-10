@@ -265,12 +265,18 @@ export function useComments({
   return { comments, isLoading, addComment, deleteComment, editComment }
 }
 
+export interface CommentCountsResult {
+  counts: Map<string, number>
+  latestAt: Map<string, string>
+}
+
 /**
  * Lightweight hook that fetches all comments for a collection and returns
- * a count-by-targetId map. Polls on the same interval as useComments.
+ * a count-by-targetId map plus the latest comment timestamp per targetId.
+ * Polls on the same interval as useComments.
  */
-export function useCommentCounts(collectionId: string | null | undefined): Map<string, number> {
-  const [counts, setCounts] = useState<Map<string, number>>(new Map())
+export function useCommentCounts(collectionId: string | null | undefined): CommentCountsResult {
+  const [result, setResult] = useState<CommentCountsResult>({ counts: new Map(), latestAt: new Map() })
 
   const fetchCounts = useCallback(async () => {
     if (!collectionId) return
@@ -278,11 +284,16 @@ export function useCommentCounts(collectionId: string | null | undefined): Map<s
       const res = await fetch(`/api/collections/${collectionId}/comments`)
       if (!res.ok) return
       const data = await res.json()
-      const map = new Map<string, number>()
-      for (const c of data.comments as { targetId: string }[]) {
-        map.set(c.targetId, (map.get(c.targetId) || 0) + 1)
+      const counts = new Map<string, number>()
+      const latestAt = new Map<string, string>()
+      for (const c of data.comments as { targetId: string; createdAt: string }[]) {
+        counts.set(c.targetId, (counts.get(c.targetId) || 0) + 1)
+        const prev = latestAt.get(c.targetId)
+        if (!prev || c.createdAt > prev) {
+          latestAt.set(c.targetId, c.createdAt)
+        }
       }
-      setCounts(map)
+      setResult({ counts, latestAt })
     } catch { /* silent */ }
   }, [collectionId])
 
@@ -293,5 +304,5 @@ export function useCommentCounts(collectionId: string | null | undefined): Map<s
     return () => clearInterval(id)
   }, [collectionId, fetchCounts])
 
-  return counts
+  return result
 }

@@ -121,7 +121,7 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
 
         {/* Tool filter chips (global mode only) */}
         {isGlobal && (
-          <div className="flex gap-1.5 overflow-x-auto pb-1.5">
+          <div className="flex gap-1.5 overflow-x-auto pb-1.5 mb-2">
             {TOOL_FILTERS.map((f) => (
               <button
                 key={f.label}
@@ -140,7 +140,7 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
         )}
 
         {/* Action type filter chips */}
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 flex-wrap">
           {ACTION_FILTERS.map((f) => (
             <button
               key={f.label}

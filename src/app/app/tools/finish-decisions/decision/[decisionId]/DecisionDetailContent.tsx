@@ -34,6 +34,7 @@ import { CollapsibleCommentSidebar } from '@/components/app/CollapsibleCommentSi
 import type { RefEntity } from '@/components/app/CommentThread'
 import { useProject } from '@/contexts/ProjectContext'
 import { SelectionShareSheet } from '../../components/SelectionShareSheet'
+import { useSelectionLastVisited } from '@/hooks/useSelectionLastVisited'
 import type { SelectionVisibility, SelectionAccess } from '@/data/finish-decisions'
 
 function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
@@ -157,6 +158,14 @@ export function DecisionDetailContent({
   }, [v4State.selections])
 
   const allTags = useMemo(() => getUniqueTags(v4State.selections), [v4State.selections])
+
+  // Mark this selection as visited (for unread comment badges in the list)
+  const { markVisited } = useSelectionLastVisited(collectionId)
+  useEffect(() => {
+    if (foundDecision && collectionId) {
+      markVisited(decisionId)
+    }
+  }, [foundDecision, collectionId, decisionId, markVisited])
 
   // Build ref entities for comment @ mentions (options/ideas) — must be before early returns for hook order
   const commentRefEntities: RefEntity[] = useMemo(() =>
@@ -926,7 +935,6 @@ export function DecisionDetailContent({
                 {foundDecision.options.length}
               </span>
             </h2>
-            <div className="flex-1" />
             {!readOnly && (
               <AddIdeaMenu
                 onPhoto={() => addActionsRef.current?.triggerPhoto()}
