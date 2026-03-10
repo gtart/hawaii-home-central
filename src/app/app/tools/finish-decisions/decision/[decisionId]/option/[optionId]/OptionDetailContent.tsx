@@ -57,6 +57,7 @@ export function OptionDetailContent({
   const [showPhotoMenu, setShowPhotoMenu] = useState(false)
   const [docUploading, setDocUploading] = useState(false)
   const [docUploadError, setDocUploadError] = useState('')
+  const [addLinkOpen, setAddLinkOpen] = useState(false)
   const [editingDocId, setEditingDocId] = useState<string | null>(null)
   const [editingDocTitle, setEditingDocTitle] = useState('')
   const commentSidebarRef = useRef<CommentSidebarHandle>(null)
@@ -897,71 +898,86 @@ export function OptionDetailContent({
               />
             )}
 
-            {/* Links */}
-            <div>
-              {option.urls.length > 0 && (
-                <div className="space-y-2 mb-2">
-                  {option.urls.map((u) => (
-                    <div key={u.id}>
-                      {editingUrlId === u.id ? (
-                        <div className="flex gap-2">
-                          <input autoFocus type="text" value={editingUrlValue} onChange={(e) => setEditingUrlValue(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEditUrl(u.id); if (e.key === 'Escape') { setEditingUrlId(null); setEditingUrlValue('') } }}
-                            className="flex-1 bg-basalt border border-sandstone/40 rounded-lg px-3 py-2 text-sm text-cream focus:outline-none" />
-                          <button type="button" onClick={() => handleSaveEditUrl(u.id)} className="px-3 py-2 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors">Save</button>
-                          <button type="button" onClick={() => { setEditingUrlId(null); setEditingUrlValue('') }} className="px-2 py-2 text-cream/40 hover:text-cream/70 text-sm transition-colors">✕</button>
-                        </div>
-                      ) : (
-                        <div className="bg-basalt rounded-xl overflow-hidden border border-cream/8">
-                          {u.linkImage && (
-                            <ImageWithFallback src={`/api/image-proxy?url=${encodeURIComponent(u.linkImage)}`} alt="" className="w-full h-24 object-cover" fallback={<div className="w-full h-24 bg-cream/5" />} />
-                          )}
-                          <div className="px-3 py-2 flex items-start gap-2">
-                            <div className="flex-1 min-w-0">
-                              {u.linkTitle ? (
-                                <>
-                                  <p className="text-sm font-medium text-cream/80 leading-snug line-clamp-1">{u.linkTitle}</p>
-                                  {u.linkDescription && <p className="text-xs text-cream/40 line-clamp-1 mt-0.5">{u.linkDescription}</p>}
-                                  <p className="text-[11px] text-cream/30 mt-0.5">{linkHostname(u.url)}</p>
-                                </>
-                              ) : (
-                                <p className="text-sm text-cream/60 font-mono truncate">{u.url}</p>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1 shrink-0 mt-0.5">
-                              <a href={u.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-1.5 text-cream/40 hover:text-sandstone transition-colors" title="Open link">
-                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" strokeLinecap="round" /><path d="M15 3h6v6" strokeLinecap="round" /><path d="M10 14L21 3" strokeLinecap="round" /></svg>
-                              </a>
-                              {!readOnly && (
-                                <>
-                                  <button type="button" onClick={() => { setEditingUrlId(u.id); setEditingUrlValue(u.url) }} className="p-1.5 text-cream/40 hover:text-cream/70 transition-colors" title="Edit URL">
-                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" /></svg>
-                                  </button>
-                                  <button type="button" onClick={() => handleRemoveUrl(u.id)} className="p-1.5 text-cream/30 hover:text-red-400 transition-colors" title="Remove">
-                                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" /></svg>
-                                  </button>
-                                </>
-                              )}
-                            </div>
+            {/* Links — compact favicon chips */}
+            {(option.urls.length > 0 || !readOnly) && (
+              <div>
+                <label className="text-[11px] text-cream/40 uppercase tracking-wider mb-2 block">Links</label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {option.urls.map((u) => {
+                    const hostname = linkHostname(u.url)
+                    const displayName = u.linkTitle || hostname.replace(/\.com$|\.net$|\.org$|\.co$/, '') || hostname
+                    return editingUrlId === u.id ? (
+                      <div key={u.id} className="flex gap-2 w-full">
+                        <input autoFocus type="text" value={editingUrlValue} onChange={(e) => setEditingUrlValue(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEditUrl(u.id); if (e.key === 'Escape') { setEditingUrlId(null); setEditingUrlValue('') } }}
+                          className="flex-1 bg-basalt border border-sandstone/40 rounded-lg px-3 py-1.5 text-sm text-cream focus:outline-none" />
+                        <button type="button" onClick={() => handleSaveEditUrl(u.id)} className="px-3 py-1.5 bg-sandstone/20 text-sandstone text-xs rounded-lg hover:bg-sandstone/30 transition-colors">Save</button>
+                        <button type="button" onClick={() => { setEditingUrlId(null); setEditingUrlValue('') }} className="px-2 py-1.5 text-cream/40 hover:text-cream/70 text-xs transition-colors">✕</button>
+                      </div>
+                    ) : (
+                      <div key={u.id} className="group relative flex items-center gap-1.5 bg-cream/5 hover:bg-cream/10 border border-cream/10 rounded-lg px-2.5 py-1.5 transition-colors">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`}
+                          alt=""
+                          className="w-4 h-4 rounded-sm shrink-0"
+                        />
+                        <a
+                          href={u.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-cream/70 hover:text-sandstone transition-colors capitalize truncate max-w-[120px]"
+                          title={u.url}
+                        >
+                          {displayName}
+                        </a>
+                        <svg className="w-3 h-3 text-cream/25 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" strokeLinecap="round" /><path d="M15 3h6v6" strokeLinecap="round" /><path d="M10 14L21 3" strokeLinecap="round" />
+                        </svg>
+                        {!readOnly && (
+                          <div className="hidden group-hover:flex items-center gap-0.5 ml-0.5">
+                            <button type="button" onClick={() => { setEditingUrlId(u.id); setEditingUrlValue(u.url) }} className="p-0.5 text-cream/30 hover:text-cream/60 transition-colors" title="Edit URL">
+                              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" /></svg>
+                            </button>
+                            <button type="button" onClick={() => handleRemoveUrl(u.id)} className="p-0.5 text-cream/30 hover:text-red-400 transition-colors" title="Remove">
+                              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" /></svg>
+                            </button>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                        )}
+                      </div>
+                    )
+                  })}
 
-              {!readOnly && (
-                <div className="flex gap-2">
-                  <input type="text" value={newUrl} onChange={(e) => setNewUrl(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddUrl() }}
-                    placeholder="https://..."
-                    className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50" />
-                  <button type="button" onClick={handleAddUrl} disabled={!newUrl.trim() || !isValidUrl(newUrl)} className="px-3 py-2 bg-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/20 transition-colors disabled:opacity-30">Add</button>
+                  {/* Add Link button */}
+                  {!readOnly && !addLinkOpen && (
+                    <button
+                      type="button"
+                      onClick={() => setAddLinkOpen(true)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 border border-dashed border-cream/15 rounded-lg text-xs text-cream/40 hover:text-cream/60 hover:border-cream/25 transition-colors"
+                    >
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" strokeLinecap="round" /></svg>
+                      Add Link
+                    </button>
+                  )}
                 </div>
-              )}
-              {newUrl && !isValidUrl(newUrl) && <p className="text-yellow-500 text-xs mt-1">URL should start with http:// or https://</p>}
-            </div>
+
+                {/* Add Link input (shown when button clicked) */}
+                {!readOnly && addLinkOpen && (
+                  <div className="flex gap-2 mt-2">
+                    <input type="text" autoFocus value={newUrl} onChange={(e) => setNewUrl(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') { handleAddUrl(); setAddLinkOpen(false) }
+                        if (e.key === 'Escape') { setAddLinkOpen(false); setNewUrl('') }
+                      }}
+                      onBlur={() => { if (!newUrl.trim()) setAddLinkOpen(false) }}
+                      placeholder="https://..."
+                      className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50" />
+                    <button type="button" onClick={() => { handleAddUrl(); setAddLinkOpen(false) }} disabled={!newUrl.trim() || !isValidUrl(newUrl)} className="px-3 py-1.5 bg-cream/10 text-cream/60 text-xs rounded-lg hover:bg-cream/20 transition-colors disabled:opacity-30">Add</button>
+                  </div>
+                )}
+                {addLinkOpen && newUrl && !isValidUrl(newUrl) && <p className="text-yellow-500 text-xs mt-1">URL should start with http:// or https://</p>}
+              </div>
+            )}
 
             {/* Files */}
             {(!readOnly || (option.documents && option.documents.length > 0)) && (
