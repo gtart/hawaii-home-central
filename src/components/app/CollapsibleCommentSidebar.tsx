@@ -36,6 +36,8 @@ interface Props {
   highlightCommentId?: string | null
   /** Whether there are unread comments (from real source of truth) */
   hasUnread?: boolean
+  /** Render inline (full-width, non-sticky) instead of as a fixed-width sidebar */
+  inline?: boolean
 }
 
 export interface CommentSidebarHandle {
@@ -64,6 +66,7 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
   currentUserId,
   highlightCommentId,
   hasUnread: hasUnreadProp,
+  inline,
 }: Props, ref: React.Ref<CommentSidebarHandle>) {
   // Default expanded on first visit
   const [collapsed, setCollapsed] = useState(() => {
@@ -122,8 +125,8 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
   return (
     <>
       {/* ===== Desktop ===== */}
-      {collapsed ? (
-        /* Collapsed tab */
+      {collapsed && !inline ? (
+        /* Collapsed tab (standalone sidebar mode only) */
         <div className="hidden md:flex shrink-0 w-10">
           <button
             type="button"
@@ -146,10 +149,16 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
           </button>
         </div>
       ) : (
-        /* Expanded sidebar */
-        <aside className="hidden md:block w-80 shrink-0 sticky top-24 self-start max-h-[calc(100vh-7rem)]">
-          <div className="bg-basalt-50 border border-cream/15 rounded-card h-full flex flex-col max-h-[calc(100vh-7rem)]">
-            <CommentThread {...threadProps} onClose={toggle} />
+        /* Expanded sidebar — inline fills parent width, standalone is fixed 320px sticky */
+        <aside className={`hidden md:block shrink-0 ${
+          inline
+            ? 'w-full'
+            : 'w-80 sticky top-24 self-start max-h-[calc(100vh-7rem)]'
+        }`}>
+          <div className={`bg-basalt-50 border border-cream/15 rounded-card flex flex-col ${
+            inline ? 'max-h-[60vh]' : 'h-full max-h-[calc(100vh-7rem)]'
+          }`}>
+            <CommentThread {...threadProps} onClose={inline ? () => {} : toggle} />
           </div>
         </aside>
       )}

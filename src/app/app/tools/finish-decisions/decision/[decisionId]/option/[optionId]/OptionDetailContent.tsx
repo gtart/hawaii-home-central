@@ -503,7 +503,7 @@ export function OptionDetailContent({
   if (!foundDecision || !foundOption) {
     return (
       <div className="pt-32 pb-24 px-6">
-        <div className="max-w-4xl mx-auto text-center py-12 text-cream/50">
+        <div className="max-w-3xl mx-auto text-center py-12 text-cream/50">
           <p>Redirecting...</p>
         </div>
       </div>
@@ -517,11 +517,11 @@ export function OptionDetailContent({
 
   return (
     <div className="pt-20 md:pt-20 pb-24 px-4 md:px-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-3xl mx-auto">
 
         {/* ── Sticky breadcrumb header ── */}
         <div className="sticky top-16 z-20 bg-basalt/95 backdrop-blur-sm -mx-4 md:-mx-8 px-4 md:px-8 py-3 border-b border-cream/8">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
             {/* Left: back link + selection name */}
             <Link
               href={`/app/tools/finish-decisions/decision/${decisionId}`}
@@ -618,47 +618,11 @@ export function OptionDetailContent({
             />
           )}
 
-          {/* Action row */}
+          {/* Action row: Voting + Final Decision | Move/Copy/Delete */}
           <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-cream/8">
-            {!readOnly && (
-              <button
-                type="button"
-                onClick={() => { setMoveMode('move'); setMoveSheetOpen(true) }}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-cream/10 text-cream/60 hover:bg-cream/20 transition-colors"
-              >
-                Move
-              </button>
-            )}
-            {!readOnly && v4State.selections.length > 1 && (
-              <button
-                type="button"
-                onClick={() => { setMoveMode('copy'); setMoveSheetOpen(true) }}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-cream/10 text-cream/60 hover:bg-cream/20 transition-colors"
-              >
-                Copy to...
-              </button>
-            )}
+            {/* LEFT GROUP: Voting + Final Decision */}
             {!readOnly ? (
-              <button
-                type="button"
-                onClick={selectOption}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  option.isSelected
-                    ? 'bg-sandstone text-basalt'
-                    : 'bg-cream/10 text-cream/60 hover:bg-cream/20'
-                }`}
-              >
-                {option.isSelected ? 'Final Decision' : 'Mark as Final Decision'}
-              </button>
-            ) : option.isSelected ? (
-              <span className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-sandstone text-basalt">
-                Final Decision
-              </span>
-            ) : null}
-
-            {/* Voting */}
-            {!readOnly ? (
-              <div className="flex items-center gap-1 ml-auto">
+              <div className="flex items-center gap-1">
                 {(['love', 'up', 'down'] as const).map((type) => {
                   const emoji = type === 'love' ? '❤️' : type === 'up' ? '👍' : '👎'
                   const votes = option.votes ?? {}
@@ -691,7 +655,7 @@ export function OptionDetailContent({
               const hasVotes = Object.keys(votes).length > 0
               if (!hasVotes) return null
               return (
-                <div className="flex items-center gap-1 ml-auto">
+                <div className="flex items-center gap-1">
                   {(['love', 'up', 'down'] as const).map((type) => {
                     const emoji = type === 'love' ? '❤️' : type === 'up' ? '👍' : '👎'
                     const count = Object.values(votes).filter(v => v === type).length
@@ -705,11 +669,51 @@ export function OptionDetailContent({
                 </div>
               )
             })()}
+
+            {!readOnly ? (
+              <button
+                type="button"
+                onClick={selectOption}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  option.isSelected
+                    ? 'bg-sandstone text-basalt'
+                    : 'bg-sandstone/15 text-sandstone hover:bg-sandstone/25'
+                }`}
+              >
+                {option.isSelected ? 'Final Decision' : 'Mark as Final'}
+              </button>
+            ) : option.isSelected ? (
+              <span className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-sandstone text-basalt">
+                Final Decision
+              </span>
+            ) : null}
+
+            {/* RIGHT GROUP: Move/Copy (pushed right) */}
+            {!readOnly && (
+              <div className="flex items-center gap-1 ml-auto">
+                <button
+                  type="button"
+                  onClick={() => { setMoveMode('move'); setMoveSheetOpen(true) }}
+                  className="px-2.5 py-1.5 rounded-full text-xs text-cream/40 hover:text-cream/60 hover:bg-cream/10 transition-colors"
+                >
+                  Move
+                </button>
+                {v4State.selections.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => { setMoveMode('copy'); setMoveSheetOpen(true) }}
+                    className="px-2.5 py-1.5 rounded-full text-xs text-cream/40 hover:text-cream/60 hover:bg-cream/10 transition-colors"
+                  >
+                    Copy to...
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         {/* ── 2-column desktop layout / stacked mobile ── */}
-        <div className="md:grid md:grid-cols-[340px_1fr] md:gap-6">
+        <div className="md:grid md:grid-cols-[280px_1fr] md:gap-5">
 
           {/* ── LEFT COLUMN: Image gallery only (compact, constrained) ── */}
           <div className="space-y-3">
@@ -1020,10 +1024,10 @@ export function OptionDetailContent({
               </div>
             )}
 
-            {/* Comment sidebar (desktop: inline, mobile: bottom sheet) */}
+            {/* Comment sidebar (desktop: inline full-width in column, mobile: bottom sheet) */}
             <CollapsibleCommentSidebar
               ref={commentSidebarRef}
-              title="Option comments"
+              title="Comments"
               storageKey="option_comments_collapsed"
               comments={optionComments}
               isLoading={decisionComments.isLoading}
@@ -1041,6 +1045,7 @@ export function OptionDetailContent({
               currentUserId={session?.user?.id ?? null}
               filterRefEntityId={optionId}
               filterRefEntityLabel={option.name || 'Untitled'}
+              inline
             />
 
             {/* Done button (desktop) */}
