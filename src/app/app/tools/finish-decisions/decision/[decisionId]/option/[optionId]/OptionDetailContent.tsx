@@ -130,6 +130,24 @@ export function OptionDetailContent({
     [decisionComments.comments, optionId]
   )
 
+  // Option-level unread tracking (localStorage-based)
+  const optionVisitedKey = `hhc_opt_visited_${optionId}`
+  const [hasUnreadComments, setHasUnreadComments] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const lastSeen = parseInt(localStorage.getItem(optionVisitedKey) || '0', 10)
+    if (optionComments.length > lastSeen) {
+      setHasUnreadComments(true)
+    }
+  }, [optionComments.length, optionVisitedKey])
+
+  // Mark comments as seen when sidebar opens
+  const markOptionCommentsSeen = useCallback(() => {
+    if (typeof window === 'undefined') return
+    localStorage.setItem(optionVisitedKey, String(optionComments.length))
+    setHasUnreadComments(false)
+  }, [optionVisitedKey, optionComments.length])
+
   // Carousel
   const currentIndex = foundDecision?.options.findIndex((o) => o.id === optionId) ?? -1
   const hasPrev = currentIndex > 0
@@ -518,11 +536,11 @@ export function OptionDetailContent({
 
   return (
     <div className="pt-20 md:pt-20 pb-24 px-4 md:px-8">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-5xl mx-auto">
 
         {/* ── Sticky breadcrumb header ── */}
         <div className="sticky top-16 z-20 bg-basalt/95 backdrop-blur-sm -mx-4 md:-mx-8 px-4 md:px-8 py-3 border-b border-cream/8">
-          <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+          <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
             {/* Left: back link + selection name */}
             <Link
               href={`/app/tools/finish-decisions/decision/${decisionId}`}
@@ -577,21 +595,25 @@ export function OptionDetailContent({
               </div>
             )}
 
-            {/* Right: mobile comment trigger + desktop comment trigger */}
+            {/* Right: comment trigger (both mobile + desktop) */}
             <div className="flex items-center gap-2 shrink-0">
               <CommentTriggerButton
                 commentCount={optionComments.length}
-                onClick={() => commentSidebarRef.current?.openMobileSheet()}
-                className="md:hidden"
-              />
-              <CommentTriggerButton
-                commentCount={optionComments.length}
-                onClick={() => commentSidebarRef.current?.openMobileSheet()}
-                className="hidden md:inline-flex"
+                hasUnread={hasUnreadComments}
+                onClick={() => {
+                  commentSidebarRef.current?.openMobileSheet()
+                  markOptionCommentsSeen()
+                }}
               />
             </div>
           </div>
         </div>
+
+        {/* ── Content + Comment Sidebar wrapper ── */}
+        <div className="md:flex md:gap-6">
+
+        {/* ── Main content area ── */}
+        <div className="md:flex-1 min-w-0">
 
         {/* ── Option title + actions bar ── */}
         <div className="mt-5 mb-4">
@@ -689,7 +711,7 @@ export function OptionDetailContent({
               </span>
             ) : null}
 
-            {/* RIGHT GROUP: Move/Copy (pushed right) */}
+            {/* RIGHT GROUP: Move/Copy/Delete (pushed right) */}
             {!readOnly && (
               <div className="flex items-center gap-1 ml-auto">
                 <button
@@ -708,6 +730,14 @@ export function OptionDetailContent({
                     Copy to...
                   </button>
                 )}
+                <span className="w-px h-4 bg-cream/10" />
+                <button
+                  type="button"
+                  onClick={deleteOption}
+                  className="px-2.5 py-1.5 rounded-full text-xs text-red-400/50 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                >
+                  Delete
+                </button>
               </div>
             )}
           </div>
@@ -848,14 +878,6 @@ export function OptionDetailContent({
               )}
             </div>
 
-            {/* Desktop delete action (under image) */}
-            {!readOnly && (
-              <div className="hidden md:block pt-2">
-                <button type="button" onClick={deleteOption} className="text-red-400/50 hover:text-red-400 text-xs transition-colors">
-                  Delete option
-                </button>
-              </div>
-            )}
           </div>
 
           {/* ── RIGHT COLUMN: Price, specs, links, files, comments ── */}
@@ -1040,30 +1062,6 @@ export function OptionDetailContent({
               </div>
             )}
 
-            {/* Comment sidebar (desktop: inline full-width in column, mobile: bottom sheet) */}
-            <CollapsibleCommentSidebar
-              ref={commentSidebarRef}
-              title="Comments"
-              storageKey="option_comments_collapsed"
-              comments={optionComments}
-              isLoading={decisionComments.isLoading}
-              readOnly={readOnly}
-              onAddComment={async (params) => {
-                await decisionComments.addComment({
-                  ...params,
-                  refEntityType: 'option',
-                  refEntityId: optionId,
-                  refEntityLabel: option.name || 'Untitled',
-                })
-              }}
-              onDeleteComment={decisionComments.deleteComment}
-              onEditComment={decisionComments.editComment}
-              currentUserId={session?.user?.id ?? null}
-              filterRefEntityId={optionId}
-              filterRefEntityLabel={option.name || 'Untitled'}
-              inline
-            />
-
             {/* Done button (desktop) */}
             <div className="hidden md:flex pt-3 border-t border-cream/10 justify-end">
               <Link
@@ -1105,7 +1103,37 @@ export function OptionDetailContent({
               </div>
             )}
           </div>
-        </div>
+
+        </div>{/* end main content */}
+
+        {/* ── Comment sidebar (desktop: sticky side panel, mobile: peek sheet) ── */}
+        <CollapsibleCommentSidebar
+          ref={commentSidebarRef}
+          title="Comments"
+          storageKey="option_comments_collapsed"
+          comments={optionComments}
+          isLoading={decisionComments.isLoading}
+          readOnly={readOnly}
+          onAddComment={async (params) => {
+            await decisionComments.addComment({
+              ...params,
+              refEntityType: 'option',
+              refEntityId: optionId,
+              refEntityLabel: option.name || 'Untitled',
+            })
+            markOptionCommentsSeen()
+          }}
+          onDeleteComment={decisionComments.deleteComment}
+          onEditComment={decisionComments.editComment}
+          currentUserId={session?.user?.id ?? null}
+          filterRefEntityId={optionId}
+          filterRefEntityLabel={option.name || 'Untitled'}
+          hasUnread={hasUnreadComments}
+          forceExpand={hasUnreadComments}
+        />
+
+        </div>{/* end flex wrapper */}
+      </div>
 
       {/* Move/Copy sheet */}
       {moveSheetOpen && (
