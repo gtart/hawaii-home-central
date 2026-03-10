@@ -517,11 +517,11 @@ export function OptionDetailContent({
 
   return (
     <div className="pt-20 md:pt-20 pb-24 px-4 md:px-8">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-4xl mx-auto">
 
         {/* ── Sticky breadcrumb header ── */}
         <div className="sticky top-16 z-20 bg-basalt/95 backdrop-blur-sm -mx-4 md:-mx-8 px-4 md:px-8 py-3 border-b border-cream/8">
-          <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+          <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
             {/* Left: back link + selection name */}
             <Link
               href={`/app/tools/finish-decisions/decision/${decisionId}`}
@@ -576,22 +576,18 @@ export function OptionDetailContent({
               </div>
             )}
 
-            {/* Right: mobile comment trigger + desktop timestamps */}
+            {/* Right: mobile comment trigger + desktop comment trigger */}
             <div className="flex items-center gap-2 shrink-0">
               <CommentTriggerButton
                 commentCount={optionComments.length}
                 onClick={() => commentSidebarRef.current?.openMobileSheet()}
                 className="md:hidden"
               />
-              <div className="hidden md:flex items-center gap-2 text-[11px] text-cream/40">
-                <span>Added {formatDate(option.createdAt)}</span>
-                {option.updatedAt !== option.createdAt && (
-                  <>
-                    <span className="text-cream/15">·</span>
-                    <span>Updated {formatDate(option.updatedAt)}</span>
-                  </>
-                )}
-              </div>
+              <CommentTriggerButton
+                commentCount={optionComments.length}
+                onClick={() => commentSidebarRef.current?.openMobileSheet()}
+                className="hidden md:inline-flex"
+              />
             </div>
           </div>
         </div>
@@ -709,11 +705,11 @@ export function OptionDetailContent({
           </div>
         </div>
 
-        {/* ── Content + Comment sidebar ── */}
-        <div className="md:flex md:gap-6">
+        {/* ── 2-column desktop layout / stacked mobile ── */}
+        <div className="md:grid md:grid-cols-[1fr_340px] md:gap-6">
 
-          {/* ── Main content ── */}
-          <div className="md:flex-1 space-y-4">
+          {/* ── LEFT COLUMN: Image gallery + voting ── */}
+          <div className="space-y-4">
 
             {/* Photos */}
             <div>
@@ -836,34 +832,7 @@ export function OptionDetailContent({
               {uploadError && <p className="text-sm text-red-400 mt-2">{uploadError}</p>}
             </div>
 
-            {/* Price */}
-            {(!readOnly || option.price) && (
-              <div>
-                <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-1 block">Price</label>
-                {readOnly ? (
-                  <p className="text-sm text-cream">{displayPrice(option.price)}</p>
-                ) : (
-                  <input
-                    value={option.price || ''}
-                    onChange={(e) => updateOption({ price: e.target.value })}
-                    placeholder="e.g. $1,200"
-                    className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50"
-                  />
-                )}
-              </div>
-            )}
-
-            {/* Specs */}
-            {(!readOnly || option.notes) && (
-              <ExpandableSpecs
-                value={option.notes}
-                readOnly={readOnly}
-                onChange={(val) => updateOption({ notes: val })}
-                optionName={option.name}
-              />
-            )}
-
-            {/* Links */}
+            {/* Links (left column — visual, card-based) */}
             <div>
               {option.urls.length > 0 && (
                 <div className="space-y-2 mb-2">
@@ -929,7 +898,7 @@ export function OptionDetailContent({
               {newUrl && !isValidUrl(newUrl) && <p className="text-yellow-500 text-xs mt-1">URL should start with http:// or https://</p>}
             </div>
 
-            {/* Files */}
+            {/* Files (left column) */}
             {(!readOnly || (option.documents && option.documents.length > 0)) && (
               <div>
                 <input ref={docInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.jpg,.jpeg,.png,.webp,.heic,.heif" className="hidden" onChange={(e) => handleDocumentFile(e.target.files?.[0] ?? null)} />
@@ -990,9 +959,9 @@ export function OptionDetailContent({
               </div>
             )}
 
-            {/* Delete + back (left column footer) */}
+            {/* Delete + back (left column footer) — desktop only, mobile gets it below */}
             {!readOnly && (
-              <div className="pt-3 border-t border-cream/10 flex items-center justify-between">
+              <div className="hidden md:flex pt-3 border-t border-cream/10 items-center justify-between">
                 <button type="button" onClick={deleteOption} className="text-red-400/60 hover:text-red-400 text-sm transition-colors">
                   Delete option
                 </button>
@@ -1004,9 +973,8 @@ export function OptionDetailContent({
                 </Link>
               </div>
             )}
-
             {readOnly && (
-              <div className="pt-3 border-t border-cream/10 flex justify-end">
+              <div className="hidden md:flex pt-3 border-t border-cream/10 justify-end">
                 <Link
                   href={`/app/tools/finish-decisions/decision/${decisionId}`}
                   className="px-4 py-2 bg-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/20 transition-colors"
@@ -1017,28 +985,105 @@ export function OptionDetailContent({
             )}
           </div>
 
-          {/* ── Comment sidebar (desktop: sticky column, mobile: bottom sheet) ── */}
-          <CollapsibleCommentSidebar
-            ref={commentSidebarRef}
-            title="Option comments"
-            storageKey="option_comments_collapsed"
-            comments={optionComments}
-            isLoading={decisionComments.isLoading}
-            readOnly={readOnly}
-            onAddComment={async (params) => {
-              await decisionComments.addComment({
-                ...params,
-                refEntityType: 'option',
-                refEntityId: optionId,
-                refEntityLabel: option.name || 'Untitled',
-              })
-            }}
-            onDeleteComment={decisionComments.deleteComment}
-            onEditComment={decisionComments.editComment}
-            currentUserId={session?.user?.id ?? null}
-            filterRefEntityId={optionId}
-            filterRefEntityLabel={option.name || 'Untitled'}
-          />
+          {/* ── RIGHT COLUMN: Price, specs, comments (desktop: sticky) ── */}
+          <div className="md:sticky md:top-28 md:self-start md:max-h-[calc(100vh-8rem)] md:overflow-y-auto md:scrollbar-thin space-y-4 mt-6 md:mt-0">
+
+            {/* Final Decision badge (right column) */}
+            {option.isSelected && (
+              <div className="bg-sandstone/10 border border-sandstone/25 rounded-xl px-3 py-2.5 flex items-center gap-2">
+                <svg className="w-4 h-4 text-sandstone shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="text-xs font-semibold text-sandstone uppercase tracking-wider">Final Decision</span>
+              </div>
+            )}
+
+            {/* Price */}
+            {(!readOnly || option.price) && (
+              <div className="bg-basalt-50 border border-cream/10 rounded-xl px-4 py-3">
+                <label className="text-[11px] text-cream/40 uppercase tracking-wider mb-1.5 block">Price</label>
+                {readOnly ? (
+                  <p className="text-lg font-medium text-cream">{displayPrice(option.price)}</p>
+                ) : (
+                  <input
+                    value={option.price || ''}
+                    onChange={(e) => updateOption({ price: e.target.value })}
+                    placeholder="e.g. $1,200"
+                    className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50"
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Specs / Notes */}
+            {(!readOnly || option.notes) && (
+              <div className="bg-basalt-50 border border-cream/10 rounded-xl px-4 py-3">
+                <ExpandableSpecs
+                  value={option.notes}
+                  readOnly={readOnly}
+                  onChange={(val) => updateOption({ notes: val })}
+                  optionName={option.name}
+                />
+              </div>
+            )}
+
+            {/* Timestamps */}
+            <div className="md:flex flex-col gap-1 text-[11px] text-cream/35 hidden px-1">
+              <span>Added {formatDate(option.createdAt)}</span>
+              {option.updatedAt !== option.createdAt && (
+                <span>Updated {formatDate(option.updatedAt)}</span>
+              )}
+            </div>
+
+            {/* Comment sidebar (desktop: inline in right column, mobile: bottom sheet) */}
+            <CollapsibleCommentSidebar
+              ref={commentSidebarRef}
+              title="Option comments"
+              storageKey="option_comments_collapsed"
+              comments={optionComments}
+              isLoading={decisionComments.isLoading}
+              readOnly={readOnly}
+              onAddComment={async (params) => {
+                await decisionComments.addComment({
+                  ...params,
+                  refEntityType: 'option',
+                  refEntityId: optionId,
+                  refEntityLabel: option.name || 'Untitled',
+                })
+              }}
+              onDeleteComment={decisionComments.deleteComment}
+              onEditComment={decisionComments.editComment}
+              currentUserId={session?.user?.id ?? null}
+              filterRefEntityId={optionId}
+              filterRefEntityLabel={option.name || 'Untitled'}
+            />
+          </div>
+
+          {/* Mobile-only footer: delete + done */}
+          <div className="md:hidden mt-6">
+            {!readOnly ? (
+              <div className="pt-3 border-t border-cream/10 flex items-center justify-between">
+                <button type="button" onClick={deleteOption} className="text-red-400/60 hover:text-red-400 text-sm transition-colors">
+                  Delete option
+                </button>
+                <Link
+                  href={`/app/tools/finish-decisions/decision/${decisionId}`}
+                  className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
+                >
+                  Done
+                </Link>
+              </div>
+            ) : (
+              <div className="pt-3 border-t border-cream/10 flex justify-end">
+                <Link
+                  href={`/app/tools/finish-decisions/decision/${decisionId}`}
+                  className="px-4 py-2 bg-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/20 transition-colors"
+                >
+                  Done
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

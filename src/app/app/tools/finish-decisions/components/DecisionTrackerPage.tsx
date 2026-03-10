@@ -462,6 +462,19 @@ export function DecisionTrackerPage({
                 </span>
               )}
             </button>
+            {/* Add Selection (desktop) */}
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => setAddInputVisible(true)}
+                className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium rounded-lg bg-sandstone text-basalt hover:bg-sandstone-light transition-colors shrink-0 ml-auto"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                </svg>
+                Add Selection
+              </button>
+            )}
             {/* View menu (desktop) — sort + group */}
             <div className="hidden md:block relative shrink-0">
               <button
