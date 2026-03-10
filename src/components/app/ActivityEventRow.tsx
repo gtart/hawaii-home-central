@@ -135,6 +135,12 @@ function FullRow({ evt }: { evt: ActivityFeedEvent }) {
   // For comments, render structured: SelectionTitle · OptionTitle · "snippet"
   if (isComment && commentCtx) {
     const displaySelection = commentCtx.selectionTitle || entityLabel
+    // Use parsed detailText as snippet fallback for legacy events without metadata
+    const snippet = commentCtx.commentSnippet || detailText || ''
+    const hasContent = displaySelection || commentCtx.optionTitle || snippet
+    if (!hasContent) {
+      return <span className="text-sm text-cream/60 leading-snug">{evt.summaryText}</span>
+    }
     return (
       <span className="flex flex-wrap items-center gap-1 text-sm leading-snug min-w-0">
         {displaySelection && (
@@ -148,11 +154,11 @@ function FullRow({ evt }: { evt: ActivityFeedEvent }) {
             </span>
           </>
         )}
-        {commentCtx.commentSnippet && (
+        {snippet && (
           <>
             <span className="text-cream/30 shrink-0">·</span>
             <span className="text-cream/40 italic truncate min-w-0">
-              &ldquo;{commentCtx.commentSnippet}&rdquo;
+              &ldquo;{snippet}&rdquo;
             </span>
           </>
         )}
@@ -201,6 +207,11 @@ function CompactRow({ evt }: { evt: ActivityFeedEvent | { action: string; summar
 
   if (isComment && commentCtx) {
     const displaySelection = commentCtx.selectionTitle || entityLabel
+    const snippet = commentCtx.commentSnippet || detailText || ''
+    const hasContent = displaySelection || commentCtx.optionTitle || snippet
+    if (!hasContent) {
+      return <span className="text-cream/30 truncate">{evt.summaryText}</span>
+    }
     return (
       <span className="flex items-center gap-1 min-w-0 text-[11px]">
         {displaySelection && (
@@ -211,8 +222,8 @@ function CompactRow({ evt }: { evt: ActivityFeedEvent | { action: string; summar
             · {commentCtx.optionTitle}
           </span>
         )}
-        {commentCtx.commentSnippet && (
-          <span className="text-cream/30 italic truncate min-w-0">&ldquo;{commentCtx.commentSnippet}&rdquo;</span>
+        {snippet && (
+          <span className="text-cream/30 italic truncate min-w-0">&ldquo;{snippet}&rdquo;</span>
         )}
       </span>
     )

@@ -318,6 +318,7 @@ export function DecisionDetailContent({
   }
 
   function openGlobalCommentComposer() {
+    setActiveCardId(null)
     setForceExpandComments(true)
     setTimeout(() => setForceExpandComments(false), 100)
   }
