@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { resolveCollectionAccess } from '@/lib/collection-access'
-import { resolveServerSelectionAccess } from '@/lib/selection-access-server'
+import { resolveServerSelectionAccess, getRestrictedSelectionIds } from '@/lib/selection-access-server'
+import type { SelectionV4 } from '@/data/finish-decisions'
 import { writeActivityEvents } from '@/server/activity/writeActivityEvent'
 
 type Params = { params: Promise<{ id: string }> }
@@ -90,6 +91,30 @@ export async function GET(request: Request, { params }: Params) {
       createdAt: true,
     },
   })
+
+  // Filter out comments on restricted selections the user cannot access.
+  // This covers the case where comments are fetched without targetType/targetId
+  // filters (e.g. collection-level comment sidebar showing all comments).
+  const hasDecisionComments = comments.some((c) => c.targetType === 'decision')
+  if (hasDecisionComments && access !== 'OWNER') {
+    const collection = await prisma.toolCollection.findUnique({
+      where: { id },
+      select: { toolKey: true, payload: true },
+    })
+    if (collection?.toolKey === 'finish_decisions') {
+      const payload = collection.payload as Record<string, unknown> | null
+      const selections = Array.isArray(payload?.selections)
+        ? (payload!.selections as SelectionV4[])
+        : []
+      const blocked = getRestrictedSelectionIds(selections, session.user.email || '', access)
+      if (blocked.size > 0) {
+        const filtered = comments.filter(
+          (c) => c.targetType !== 'decision' || !blocked.has(c.targetId)
+        )
+        return NextResponse.json({ comments: filtered })
+      }
+    }
+  }
 
   return NextResponse.json({ comments })
 }

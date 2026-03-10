@@ -11,22 +11,48 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    const securityHeaders = [
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      {
+        key: 'Permissions-Policy',
+        value: 'camera=(), microphone=(), geolocation=()',
+      },
+      { key: 'X-DNS-Prefetch-Control', value: 'on' },
+      {
+        key: 'Strict-Transport-Security',
+        value: 'max-age=63072000; includeSubDomains; preload',
+      },
+    ]
+
     return [
+      // Overlay route: allow iframe embedding from any origin (bookmarklet sidebar)
+      {
+        source: '/app/save-from-web/overlay',
+        headers: [
+          ...securityHeaders,
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com https://umami-analytics-silk-seven.vercel.app",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://www.googletagmanager.com https://lh3.googleusercontent.com",
+              "font-src 'self'",
+              "connect-src 'self' https://www.google-analytics.com https://*.analytics.google.com https://*.google-analytics.com https://vitals.vercel-insights.com https://va.vercel-scripts.com https://umami-analytics-silk-seven.vercel.app",
+              "frame-ancestors *",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
+        ],
+      },
+      // All other routes: strict security
       {
         source: '/:path*',
         headers: [
+          ...securityHeaders,
           { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
-          },
-          { key: 'X-DNS-Prefetch-Control', value: 'on' },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
           {
             key: 'Content-Security-Policy',
             value: [

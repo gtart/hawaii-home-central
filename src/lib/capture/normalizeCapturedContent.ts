@@ -47,7 +47,7 @@ export function capturedToMoodBoardIdea(
 export function capturedToSelectionOption(
   content: CapturedContent,
   selectedUrls: Set<string>,
-  overrides: { name?: string; notes?: string } = {}
+  overrides: { name?: string; notes?: string; price?: string; specs?: string } = {}
 ): OptionV3 {
   const ts = new Date().toISOString()
 
@@ -60,9 +60,13 @@ export function capturedToSelectionOption(
       sourceUrl: content.url,
     }))
 
+  const name = overrides.name?.trim() || content.productName || content.title || 'Imported idea'
+  const price = overrides.price?.trim() || content.price || undefined
+  const specs = overrides.specs?.trim() || content.specs || undefined
+
   return {
     id: crypto.randomUUID(),
-    name: overrides.name?.trim() || content.title || 'Imported idea',
+    name,
     notes: overrides.notes?.trim() || '',
     urls: content.url ? [{ id: crypto.randomUUID(), url: content.url }] : [],
     kind: images.length > 0 ? 'image' : 'text',
@@ -70,6 +74,8 @@ export function capturedToSelectionOption(
     heroImageId: images[0]?.id || null,
     imageUrl: images[0]?.url,
     thumbnailUrl: images[0]?.url,
+    ...(price && { price }),
+    ...(specs && { specs }),
     createdAt: ts,
     updatedAt: ts,
   }

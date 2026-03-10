@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { resolveCollectionAccess } from '@/lib/collection-access'
+import { filterSelectionsForUser } from '@/lib/selection-access-server'
+import { resolveSelectionAccess, type SelectionV4 } from '@/data/finish-decisions'
 import { writeActivityEvents } from '@/server/activity/writeActivityEvent'
 
 type Params = { params: Promise<{ id: string }> }
@@ -95,8 +97,30 @@ export async function GET(request: Request, { params }: Params) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
+  // Filter restricted selections from finish_decisions payloads for non-OWNER users
+  let responsePayload: unknown = collection.payload
+  if (
+    collection.toolKey === 'finish_decisions' &&
+    access !== 'OWNER' &&
+    responsePayload &&
+    typeof responsePayload === 'object'
+  ) {
+    const p = responsePayload as Record<string, unknown>
+    if (Array.isArray(p.selections)) {
+      responsePayload = {
+        ...p,
+        selections: filterSelectionsForUser(
+          p.selections as SelectionV4[],
+          session.user.email || '',
+          access,
+        ),
+      }
+    }
+  }
+
   return NextResponse.json({
     ...collection,
+    payload: responsePayload,
     access,
   })
 }
@@ -142,7 +166,39 @@ export async function PUT(request: Request, { params }: Params) {
   }
 
   // Strip embedded comments from payload (now stored in Comment table)
-  const cleanPayload = stripPayloadComments(body.payload) as typeof body.payload
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let cleanPayload: any = stripPayloadComments(body.payload)
+
+  // For finish_decisions: protect restricted selections that non-OWNER users cannot see.
+  // The client only has visible selections, so we need to merge back any restricted
+  // selections the user doesn't have access to (they were filtered from their GET).
+  if (access !== 'OWNER') {
+    const existing = await prisma.toolCollection.findUnique({
+      where: { id },
+      select: { toolKey: true, payload: true },
+    })
+    if (existing?.toolKey === 'finish_decisions' && existing.payload) {
+      const existingPayload = existing.payload as Record<string, unknown>
+      if (Array.isArray(existingPayload.selections) && Array.isArray(cleanPayload.selections)) {
+        const existingSelections = existingPayload.selections as SelectionV4[]
+        const incomingSelections = cleanPayload.selections as SelectionV4[]
+        const incomingIds = new Set(incomingSelections.map((s) => s.id))
+
+        // Find selections the user can't access that aren't in the incoming payload
+        const hiddenSelections = existingSelections.filter((s) => {
+          if (incomingIds.has(s.id)) return false // user submitted it, they can see it
+          return resolveSelectionAccess(s, session.user?.email || '', access) === null
+        })
+
+        if (hiddenSelections.length > 0) {
+          cleanPayload = {
+            ...cleanPayload,
+            selections: [...incomingSelections, ...hiddenSelections],
+          }
+        }
+      }
+    }
+  }
 
   const updated = await prisma.toolCollection.update({
     where: { id },

@@ -172,6 +172,8 @@ export function SaveFromWebContent() {
   const [isCreatingBoard, setIsCreatingBoard] = useState(false)
   const [newSelectionName, setNewSelectionName] = useState('')
   const [isCreatingSelection, setIsCreatingSelection] = useState(false)
+  const [price, setPrice] = useState('')
+  const [specs, setSpecs] = useState('')
 
   // Handle URL import from the paste-a-link panel
   const handleUrlImport = (result: { name: string; notes: string; sourceUrl: string; selectedImages: OptionImageV3[] }) => {
@@ -194,7 +196,9 @@ export function SaveFromWebContent() {
     const fromStorage = readSessionStoragePayload()
     if (fromStorage) {
       setCapturedContent(fromStorage)
-      setName(fromStorage.title || '')
+      setName(fromStorage.productName || fromStorage.title || '')
+      if (fromStorage.price) setPrice(fromStorage.price)
+      if (fromStorage.specs) setSpecs(fromStorage.specs)
       clearBookmarkletHash()
       return
     }
@@ -208,7 +212,9 @@ export function SaveFromWebContent() {
 
     if (result.ok) {
       setCapturedContent(result.data)
-      setName(result.data.title || '')
+      setName(result.data.productName || result.data.title || '')
+      if (result.data.price) setPrice(result.data.price)
+      if (result.data.specs) setSpecs(result.data.specs)
     } else if (result.error.code !== 'NO_HASH') {
       // Show error UI only for actual decode failures, not "no data"
       setDecodeError(result.error)
@@ -315,7 +321,7 @@ export function SaveFromWebContent() {
   const handleSaveFinishSelections = () => {
     if (!capturedContent) return
 
-    const newOption = capturedToSelectionOption(capturedContent, selectedUrls, { name, notes })
+    const newOption = capturedToSelectionOption(capturedContent, selectedUrls, { name, notes, price, specs })
 
     const currentSelections = (fdState as FinishDecisionsPayloadV4).selections || []
     let resolvedSelectionId = selectedSelectionId
@@ -502,8 +508,7 @@ export function SaveFromWebContent() {
                     setSaved(false)
                     setCapturedContent(null); setDecodeError(null)
                     setSelectedUrls(new Set())
-                    setName('')
-                    setNotes('')
+                    setName(''); setNotes(''); setPrice(''); setSpecs('')
                     setDestination(null)
                   }}
                   className="px-4 py-2 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors"
@@ -531,8 +536,7 @@ export function SaveFromWebContent() {
                     setSaved(false)
                     setCapturedContent(null); setDecodeError(null)
                     setSelectedUrls(new Set())
-                    setName('')
-                    setNotes('')
+                    setName(''); setNotes(''); setPrice(''); setSpecs('')
                     setDestination(null)
                   }}
                   className="px-4 py-2 text-sm text-cream/60 hover:text-cream border border-cream/20 rounded-lg transition-colors"
@@ -689,6 +693,19 @@ export function SaveFromWebContent() {
                   {capturedContent.title}
                 </p>
               )}
+              {(capturedContent.brand || capturedContent.price) && (
+                <div className="flex items-center gap-2 mt-1">
+                  {capturedContent.brand && (
+                    <span className="text-xs text-cream/50">{capturedContent.brand}</span>
+                  )}
+                  {capturedContent.brand && capturedContent.price && (
+                    <span className="text-cream/20">·</span>
+                  )}
+                  {capturedContent.price && (
+                    <span className="text-xs text-sandstone font-medium">{capturedContent.price}</span>
+                  )}
+                </div>
+              )}
               <a
                 href={capturedContent.url}
                 target="_blank"
@@ -771,7 +788,7 @@ export function SaveFromWebContent() {
               </div>
             )}
 
-            {/* Name & Notes */}
+            {/* Name, Price, Specs & Notes */}
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-cream/50 mb-1">Idea name</label>
@@ -783,12 +800,46 @@ export function SaveFromWebContent() {
                   className="w-full px-3 py-2 bg-basalt-50 border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone"
                 />
               </div>
+              {destination === 'finish_decisions' && (
+                <>
+                  <div>
+                    <label className="block text-xs text-cream/50 mb-1">
+                      Price (optional)
+                      {capturedContent.price && !price && (
+                        <span className="text-sandstone/60 ml-1">— auto-detected</span>
+                      )}
+                    </label>
+                    <input
+                      type="text"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="e.g. $1,200"
+                      className="w-full px-3 py-2 bg-basalt-50 border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-cream/50 mb-1">
+                      Specs (optional)
+                      {capturedContent.specs && !specs && (
+                        <span className="text-sandstone/60 ml-1">— auto-detected</span>
+                      )}
+                    </label>
+                    <textarea
+                      value={specs}
+                      onChange={(e) => setSpecs(e.target.value)}
+                      placeholder="Dimensions, materials, model number..."
+                      rows={2}
+                      className="w-full px-3 py-2 bg-basalt-50 border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone resize-none"
+                    />
+                  </div>
+                </>
+              )}
               <div>
                 <label className="block text-xs text-cream/50 mb-1">Notes (optional)</label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Price, specs, or other details..."
+                  placeholder="Why you like this, questions to ask..."
                   rows={2}
                   className="w-full px-3 py-2 bg-basalt-50 border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone resize-none"
                 />

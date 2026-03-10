@@ -82,3 +82,45 @@ export async function resolveServerSelectionAccess(
 
   return { selectionAccess, workspaceAccess, toolKey: collection.toolKey }
 }
+
+// ---------------------------------------------------------------------------
+// Bulk helpers — filter selections & get restricted IDs for a user
+// ---------------------------------------------------------------------------
+
+/**
+ * Return the set of selection IDs that a user CANNOT access within a
+ * finish_decisions payload. Used to filter comments and payload responses.
+ *
+ * If the collection is not finish_decisions or the user is OWNER,
+ * returns an empty set (nothing is restricted).
+ */
+export function getRestrictedSelectionIds(
+  selections: SelectionV4[],
+  userEmail: string,
+  workspaceAccess: CollectionAccessLevel,
+): Set<string> {
+  // Owners see everything
+  if (workspaceAccess === 'OWNER') return new Set()
+
+  const blocked = new Set<string>()
+  for (const s of selections) {
+    const access = resolveSelectionAccess(s, userEmail, workspaceAccess)
+    if (access === null) blocked.add(s.id)
+  }
+  return blocked
+}
+
+/**
+ * Filter a selections array to only those the user can access.
+ * Returns a new array (does not mutate the input).
+ */
+export function filterSelectionsForUser(
+  selections: SelectionV4[],
+  userEmail: string,
+  workspaceAccess: CollectionAccessLevel,
+): SelectionV4[] {
+  if (workspaceAccess === 'OWNER') return selections
+  return selections.filter(
+    (s) => resolveSelectionAccess(s, userEmail, workspaceAccess) !== null
+  )
+}

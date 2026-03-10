@@ -278,8 +278,15 @@ export async function buildSanitizedShareResponse(resolution: ShareResolution) {
     let selections = (payload.selections as SelectionV4[])
 
     const fdScope = settings?.scope as { mode?: string; selectionIds?: string[]; roomIds?: string[] } | undefined
-    if (fdScope?.mode === 'selected' && Array.isArray(fdScope.selectionIds) && fdScope.selectionIds.length > 0) {
-      selections = selections.filter((s) => fdScope.selectionIds!.includes(s.id))
+    const isScopedToSpecificSelections =
+      fdScope?.mode === 'selected' && Array.isArray(fdScope.selectionIds) && fdScope.selectionIds.length > 0
+
+    if (isScopedToSpecificSelections) {
+      // Scoped share: only include the specified selection IDs (intentional share)
+      selections = selections.filter((s) => fdScope!.selectionIds!.includes(s.id))
+    } else {
+      // Unscoped share: exclude restricted selections (no user identity in public links)
+      selections = selections.filter((s) => s.visibility !== 'restricted')
     }
 
     payload = {

@@ -17,6 +17,14 @@ export interface CapturedContent {
   title: string
   images: CapturedImage[]
   source: 'bookmarklet' | 'import-url'
+  /** Extracted product name (from JSON-LD or meta tags, separate from page title) */
+  productName?: string
+  /** Extracted price string (e.g. "$1,200") */
+  price?: string
+  /** Extracted brand name */
+  brand?: string
+  /** Extracted product description / specs */
+  specs?: string
 }
 
 export interface DecodeError {
@@ -85,7 +93,18 @@ function validateShape(data: unknown): CapturedContent | null {
       .filter((img) => img.url.length > 0)
   }
 
-  return { url, title, images, source: 'bookmarklet' }
+  const productName = typeof obj.productName === 'string' ? obj.productName.slice(0, 200) : undefined
+  const price = typeof obj.price === 'string' ? obj.price.slice(0, 50) : undefined
+  const brand = typeof obj.brand === 'string' ? obj.brand.slice(0, 100) : undefined
+  const specs = typeof obj.specs === 'string' ? obj.specs.slice(0, 2000) : undefined
+
+  return {
+    url, title, images, source: 'bookmarklet',
+    ...(productName && { productName }),
+    ...(price && { price }),
+    ...(brand && { brand }),
+    ...(specs && { specs }),
+  }
 }
 
 // ── Main decode function ──
