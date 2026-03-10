@@ -13,6 +13,7 @@ export interface ActivityFeedEvent {
   summaryText: string
   entityLabel: string | null
   detailText: string | null
+  metadata: Record<string, unknown> | null
   createdAt: string
   actorName: string | null
 }

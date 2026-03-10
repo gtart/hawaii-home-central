@@ -67,6 +67,7 @@ export function DecisionDetailContent({
   const [commentInitialRef, setCommentInitialRef] = useState<RefEntity | null>(null)
   const [commentFilterRef, setCommentFilterRef] = useState<RefEntity | null>(null)
   const [forceExpandComments, setForceExpandComments] = useState(false)
+  const [deepLinkCommentId, setDeepLinkCommentId] = useState<string | null>(null)
   const addActionsRef = useRef<IdeasBoardAddActions | null>(null)
   const deepLinkProcessed = useRef(false)
   const searchParams = useSearchParams()
@@ -128,6 +129,10 @@ export function DecisionDetailContent({
         // Also filter sidebar to this option
         setCommentFilterRef({ id: qOptionId, label: opt.name || 'Untitled' })
       }
+    }
+
+    if (qCommentId) {
+      setDeepLinkCommentId(qCommentId)
     }
 
     if (qComments === '1' || qCommentId) {
@@ -965,6 +970,9 @@ export function DecisionDetailContent({
             hideCompare
             onUpdateDecision={updateDecision}
             onAddComment={addComment}
+            onDeleteComment={decisionComments.deleteComment}
+            onEditComment={decisionComments.editComment}
+            currentUserId={session?.user?.id ?? null}
             onCommentOnOption={handleCommentOnOption}
             onOpenGlobalComment={openGlobalCommentComposer}
             comments={decisionComments.comments}
@@ -1025,6 +1033,7 @@ export function DecisionDetailContent({
         filterRefEntityLabel={commentFilterRef?.label ?? null}
         onClearFilter={() => setCommentFilterRef(null)}
         currentUserId={session?.user?.id ?? null}
+        highlightCommentId={deepLinkCommentId}
       />
       </div>{/* end flex wrapper */}
 

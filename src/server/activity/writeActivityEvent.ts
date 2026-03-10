@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
 export interface ActivityEventInput {
   projectId: string
@@ -11,6 +12,8 @@ export interface ActivityEventInput {
   entityLabel?: string
   detailText?: string
   actorUserId?: string
+  /** Structured metadata for durable context (e.g. commentId, refEntityId) */
+  metadata?: Record<string, unknown>
 }
 
 const MAX_SUMMARY_LENGTH = 200
@@ -38,6 +41,7 @@ export async function writeActivityEvents(events: ActivityEventInput[]): Promise
         entityLabel: e.entityLabel ? truncate(e.entityLabel, MAX_SUMMARY_LENGTH) : null,
         detailText: e.detailText ? truncate(e.detailText, MAX_SUMMARY_LENGTH) : null,
         actorUserId: e.actorUserId ?? null,
+        metadata: (e.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
       })),
     })
   } catch (err) {

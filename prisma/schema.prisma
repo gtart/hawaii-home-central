@@ -697,6 +697,7 @@ model ActivityEvent {
   entityLabel   String?
   detailText    String?
   actorUserId   String?
+  metadata      Json?
   createdAt     DateTime @default(now())
 
   project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)

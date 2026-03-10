@@ -61,6 +61,8 @@ interface Props {
   onClearFilter?: () => void
   /** Current user ID for determining edit permissions */
   currentUserId?: string | null
+  /** Comment ID to auto-scroll to and highlight (deep link) */
+  highlightCommentId?: string | null
 }
 
 const MAX_COMMENT_LENGTH = 400
@@ -87,6 +89,7 @@ export function CommentThread({
   filterRefEntityLabel,
   onClearFilter,
   currentUserId,
+  highlightCommentId,
 }: Props) {
   const [page, setPage] = useState(0)
   const [draft, setDraft] = useState('')
@@ -96,6 +99,7 @@ export function CommentThread({
   const listRef = useRef<HTMLDivElement>(null)
   const prevCountRef = useRef(comments.length)
   const [highlightIds, setHighlightIds] = useState<Set<string>>(new Set())
+  const deepLinkScrolled = useRef(false)
 
   // Sync initialRef prop
   useEffect(() => {
@@ -142,6 +146,28 @@ export function CommentThread({
     }
     prevCountRef.current = comments.length
   }, [comments, comments.length, page])
+
+  // Deep-link: scroll to and highlight a specific comment (runs once)
+  useEffect(() => {
+    if (!highlightCommentId || deepLinkScrolled.current || isLoading) return
+    // Find the page containing this comment
+    const idx = sorted.findIndex((c) => c.id === highlightCommentId)
+    if (idx === -1) return // comment not found — graceful fallback
+    deepLinkScrolled.current = true
+
+    const targetPage = Math.floor(idx / pageSize)
+    if (targetPage !== page) setPage(targetPage)
+
+    // Highlight the comment
+    setHighlightIds(new Set([highlightCommentId]))
+    setTimeout(() => setHighlightIds(new Set()), 4000)
+
+    // Scroll to the comment element after a tick (for DOM to render)
+    setTimeout(() => {
+      const el = listRef.current?.querySelector(`[data-comment-id="${highlightCommentId}"]`)
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 150)
+  }, [highlightCommentId, sorted, isLoading, page, pageSize])
 
   // Overlay-only effects
   useEffect(() => {
@@ -361,20 +387,27 @@ export function CommentThread({
           </svg>
         </button>
       </div>
-      {filterRefEntityLabel && onClearFilter && (
+      {filterRefEntityLabel && onClearFilter ? (
         <div className="px-4 py-2 border-b border-cream/8 bg-sandstone/5 flex items-center justify-between gap-2">
           <span className="text-[11px] text-cream/60 truncate">
-            Showing: <span className="text-cream/75 font-medium">{truncateLabel(filterRefEntityLabel, 30)}</span>
+            <span className="text-cream/40">on</span>{' '}
+            <span className="text-cream/75 font-medium">{truncateLabel(filterRefEntityLabel, 30)}</span>
           </span>
           <button
             type="button"
             onClick={onClearFilter}
             className="text-[11px] text-sandstone/70 hover:text-sandstone transition-colors whitespace-nowrap shrink-0"
           >
-            Show all ({comments.length})
+            All comments ({comments.length})
           </button>
         </div>
-      )}
+      ) : comments.length > 0 && comments.some((c) => c.refEntityId) ? (
+        <div className="px-4 py-1.5 border-b border-cream/8">
+          <span className="text-[10px] text-cream/30">
+            All selection comments
+          </span>
+        </div>
+      ) : null}
     </div>
   )
 
@@ -490,7 +523,9 @@ function CommentCard({
   }
 
   return (
-    <div className={`border rounded-lg p-3 space-y-1.5 group transition-colors duration-1000 ${
+    <div
+      data-comment-id={comment.id}
+      className={`border rounded-lg p-3 space-y-1.5 group transition-colors duration-1000 ${
       highlight
         ? 'bg-sandstone/10 border-sandstone/20'
         : 'bg-cream/[0.04] border-cream/12'

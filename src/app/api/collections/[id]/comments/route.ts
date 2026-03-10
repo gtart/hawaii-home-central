@@ -202,9 +202,16 @@ export async function POST(request: Request, { params }: Params) {
     },
   })
 
-  // Fire-and-forget activity event
+  // Fire-and-forget activity event with structured metadata
   const snippet = text.length > 60 ? text.slice(0, 59) + '…' : text
   const hasOptionRef = refEntityLabel && typeof refEntityLabel === 'string'
+  const commentMetadata: Record<string, unknown> = {
+    commentId: comment.id,
+  }
+  if (hasOptionRef) {
+    commentMetadata.refEntityId = refEntityId
+    commentMetadata.refEntityLabel = refEntityLabel
+  }
   writeActivityEvents([{
     projectId: collection.projectId,
     toolKey: collection.toolKey,
@@ -218,6 +225,7 @@ export async function POST(request: Request, { params }: Params) {
     entityLabel: typeof entityTitle === 'string' ? entityTitle : undefined,
     detailText: hasOptionRef ? `On "${refEntityLabel}": ${snippet}` : snippet,
     actorUserId: userId,
+    metadata: commentMetadata,
   }]).catch(() => {})
 
   return NextResponse.json({ comment }, { status: 201 })

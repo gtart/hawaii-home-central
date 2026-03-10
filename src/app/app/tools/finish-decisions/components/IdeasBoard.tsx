@@ -48,6 +48,9 @@ interface Props {
   onSelectOption: (id: string) => void
   onUpdateDecision: (updates: Partial<DecisionV3>) => void
   onAddComment: (comment: CommentPayload) => void
+  onDeleteComment?: (commentId: string) => Promise<void>
+  onEditComment?: (commentId: string, text: string) => Promise<void>
+  currentUserId?: string | null
   onCommentOnOption?: (optionId: string, optionLabel: string) => void
   onOpenGlobalComment?: () => void
   showContent?: boolean
@@ -468,6 +471,9 @@ export function IdeasBoard({
   onSelectOption,
   onUpdateDecision,
   onAddComment,
+  onDeleteComment,
+  onEditComment,
+  currentUserId,
   onCommentOnOption,
   onOpenGlobalComment,
   showContent,
@@ -892,6 +898,9 @@ export function IdeasBoard({
           copyDisabledReason={!onCopyOption ? copyDisabledReason : undefined}
           onUpdateDecision={onUpdateDecision}
           onAddComment={onAddComment}
+          onDeleteComment={onDeleteComment}
+          onEditComment={onEditComment}
+          currentUserId={currentUserId}
           onOpenComments={onCommentOnOption ? () => onCommentOnOption(activeOption.id, activeOption.name || 'Untitled') : undefined}
           onUploadPhoto={uploadIdeaFile}
           onUploadDocument={uploadDocument}

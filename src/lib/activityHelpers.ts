@@ -22,9 +22,18 @@ export function eventHref(event: ActivityFeedEvent): string {
 
   // Decision-level deep link (workspace-first: no collectionId in URL)
   if (event.toolKey === 'finish_decisions' && event.entityType === 'decision' && event.entityId) {
-    let href = `${base}/decision/${event.entityId}`
-    if (event.action === 'commented') href += '?comments=1'
-    return href
+    const params = new URLSearchParams()
+    if (event.action === 'commented') {
+      params.set('comments', '1')
+      // Use structured metadata for option + comment deep linking
+      const meta = event.metadata
+      if (meta) {
+        if (typeof meta.refEntityId === 'string') params.set('optionId', meta.refEntityId)
+        if (typeof meta.commentId === 'string') params.set('commentId', meta.commentId)
+      }
+    }
+    const qs = params.toString()
+    return qs ? `${base}/decision/${event.entityId}?${qs}` : `${base}/decision/${event.entityId}`
   }
 
   // Punchlist item deep link — scroll to item

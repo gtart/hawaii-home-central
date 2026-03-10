@@ -24,6 +24,39 @@ const VERB: Record<string, string> = {
   updated: 'Updated',
 }
 
+// ── Extract comment context from event (metadata-first, then string fallback) ──
+
+interface CommentContext {
+  optionName: string | null
+  commentSnippet: string
+}
+
+function extractCommentContext(evt: {
+  detailText?: string | null
+  metadata?: Record<string, unknown> | null
+}): CommentContext {
+  // Prefer structured metadata
+  const meta = evt.metadata
+  if (meta && typeof meta.refEntityLabel === 'string') {
+    // Metadata has explicit option label — extract snippet from detailText
+    const snippet = typeof evt.detailText === 'string'
+      ? evt.detailText.replace(/^On "[^"]+?":\s*/, '')
+      : ''
+    return { optionName: meta.refEntityLabel, commentSnippet: snippet }
+  }
+
+  // Fallback: parse detailText string format `On "OptionName": snippet`
+  if (typeof evt.detailText === 'string') {
+    const match = evt.detailText.match(/^On "([^"]+)":\s*(.*)$/)
+    if (match) {
+      return { optionName: match[1], commentSnippet: match[2] }
+    }
+    return { optionName: null, commentSnippet: evt.detailText }
+  }
+
+  return { optionName: null, commentSnippet: '' }
+}
+
 // ── Legacy parser ──
 
 function parseLegacy(text: string, action: string): { verb: string; entityLabel: string | null; detailText: string | null } {
@@ -46,16 +79,6 @@ function parseLegacy(text: string, action: string): { verb: string; entityLabel:
   }
 
   return { verb, entityLabel: null, detailText: null }
-}
-
-// ── Parse enriched comment detailText: On "OptionName": snippet ──
-
-function parseCommentDetail(detailText: string): { optionName: string | null; commentText: string } {
-  const match = detailText.match(/^On "([^"]+)":\s*(.*)$/)
-  if (match) {
-    return { optionName: match[1], commentText: match[2] }
-  }
-  return { optionName: null, commentText: detailText }
 }
 
 // ── Decompose event into structured parts ──
@@ -102,8 +125,8 @@ function FullRow({ evt }: { evt: ActivityFeedEvent }) {
     return <span className="text-sm text-cream/60 leading-snug">{evt.summaryText}</span>
   }
 
-  // Parse enriched comment detail for option context
-  const commentParsed = isComment && detailText ? parseCommentDetail(detailText) : null
+  // Extract comment context using metadata-first approach
+  const commentCtx = isComment ? extractCommentContext(evt) : null
 
   return (
     <span className="flex flex-wrap items-center gap-1 text-sm leading-snug min-w-0">
@@ -121,29 +144,22 @@ function FullRow({ evt }: { evt: ActivityFeedEvent }) {
       )}
 
       {/* Comment with option context */}
-      {isComment && commentParsed && (
+      {isComment && commentCtx && (
         <>
-          {commentParsed.optionName && (
+          {commentCtx.optionName && (
             <>
               <span className="text-cream/30 shrink-0">·</span>
-              <span className="text-cream/50 text-xs truncate max-w-[120px] md:max-w-[160px]" title={commentParsed.optionName}>
-                {commentParsed.optionName}
+              <span className="text-cream/50 text-xs truncate max-w-[120px] md:max-w-[160px]" title={commentCtx.optionName}>
+                {commentCtx.optionName}
               </span>
             </>
           )}
-          {commentParsed.commentText && (
+          {commentCtx.commentSnippet && (
             <span className="text-cream/40 italic truncate min-w-0">
-              &ldquo;{commentParsed.commentText}&rdquo;
+              &ldquo;{commentCtx.commentSnippet}&rdquo;
             </span>
           )}
         </>
-      )}
-
-      {/* Comment body (no option context — legacy format) */}
-      {isComment && !commentParsed && detailText && (
-        <span className="text-cream/40 italic truncate min-w-0">
-          &ldquo;{detailText}&rdquo;
-        </span>
       )}
 
       {/* Detail text for moves/copies (not comment, not status) */}
@@ -161,14 +177,14 @@ function FullRow({ evt }: { evt: ActivityFeedEvent }) {
 
 // ── Compact variant (Dashboard cards) ──
 
-function CompactRow({ evt }: { evt: { action: string; summaryText: string; entityLabel?: string | null; detailText?: string | null } }) {
+function CompactRow({ evt }: { evt: ActivityFeedEvent | { action: string; summaryText: string; entityLabel?: string | null; detailText?: string | null; metadata?: Record<string, unknown> | null } }) {
   const { verb, entityLabel, detailText, isComment, isStatusChange } = decompose(evt)
 
   if (!entityLabel && !detailText && !verb) {
     return <span className="text-cream/30 truncate">{evt.summaryText}</span>
   }
 
-  const commentParsed = isComment && detailText ? parseCommentDetail(detailText) : null
+  const commentCtx = isComment ? extractCommentContext(evt as { detailText?: string | null; metadata?: Record<string, unknown> | null }) : null
 
   return (
     <span className="flex items-center gap-1 min-w-0 text-[11px]">
@@ -179,20 +195,17 @@ function CompactRow({ evt }: { evt: { action: string; summaryText: string; entit
       {isStatusChange && detailText && (
         <span className="text-cream/40">→ {detailText}</span>
       )}
-      {isComment && commentParsed && (
+      {isComment && commentCtx && (
         <>
-          {commentParsed.optionName && (
-            <span className="text-cream/35 truncate max-w-[80px]" title={commentParsed.optionName}>
-              · {commentParsed.optionName}
+          {commentCtx.optionName && (
+            <span className="text-cream/35 truncate max-w-[80px]" title={commentCtx.optionName}>
+              · {commentCtx.optionName}
             </span>
           )}
-          {commentParsed.commentText && (
-            <span className="text-cream/30 italic truncate min-w-0">&ldquo;{commentParsed.commentText}&rdquo;</span>
+          {commentCtx.commentSnippet && (
+            <span className="text-cream/30 italic truncate min-w-0">&ldquo;{commentCtx.commentSnippet}&rdquo;</span>
           )}
         </>
-      )}
-      {isComment && !commentParsed && detailText && (
-        <span className="text-cream/30 italic truncate min-w-0">&ldquo;{detailText}&rdquo;</span>
       )}
       {!isComment && !isStatusChange && detailText && (
         <span className="text-cream/25 truncate">{detailText}</span>
@@ -222,12 +235,12 @@ function InlineRow({ evt, actorName }: { evt: { action: string; summaryText: str
 // ── Main export ──
 
 interface ActivityEventRowProps {
-  event: ActivityFeedEvent | { action: string; summaryText: string; entityLabel?: string | null; detailText?: string | null; actorName?: string | null }
+  event: ActivityFeedEvent | { action: string; summaryText: string; entityLabel?: string | null; detailText?: string | null; actorName?: string | null; metadata?: Record<string, unknown> | null }
   variant: 'full' | 'compact' | 'inline'
 }
 
 export function ActivityEventRow({ event, variant }: ActivityEventRowProps) {
-  if (variant === 'compact') return <CompactRow evt={event} />
+  if (variant === 'compact') return <CompactRow evt={event as ActivityFeedEvent} />
   if (variant === 'inline') return <InlineRow evt={event} actorName={'actorName' in event ? event.actorName : null} />
   return <FullRow evt={event as ActivityFeedEvent} />
 }

@@ -32,6 +32,8 @@ interface Props {
   onClearFilter?: () => void
   /** Current user ID for edit permissions */
   currentUserId?: string | null
+  /** Comment ID to auto-scroll to and highlight (deep link) */
+  highlightCommentId?: string | null
 }
 
 export function CollapsibleCommentSidebar({
@@ -54,6 +56,7 @@ export function CollapsibleCommentSidebar({
   filterRefEntityLabel,
   onClearFilter,
   currentUserId,
+  highlightCommentId,
 }: Props) {
   // Default expanded on first visit
   const [collapsed, setCollapsed] = useState(() => {
@@ -112,6 +115,7 @@ export function CollapsibleCommentSidebar({
     filterRefEntityLabel,
     onClearFilter,
     currentUserId,
+    highlightCommentId,
   }
 
   return (

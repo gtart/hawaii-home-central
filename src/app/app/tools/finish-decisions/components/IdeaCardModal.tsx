@@ -30,6 +30,9 @@ interface Props {
   copyDisabledReason?: string
   onUpdateDecision: (updates: Partial<DecisionV3>) => void
   onAddComment: (comment: CommentPayload) => void
+  onDeleteComment?: (commentId: string) => Promise<void>
+  onEditComment?: (commentId: string, text: string) => Promise<void>
+  currentUserId?: string | null
   onOpenComments?: () => void
   onUploadPhoto: (file: File) => Promise<{ url: string; thumbnailUrl: string; id: string }>
   onUploadDocument: (file: File) => Promise<{ url: string; id: string; fileName: string; fileSize: number; mimeType: string }>
@@ -190,6 +193,9 @@ export function IdeaCardModal({
   copyDisabledReason,
   onUpdateDecision,
   onAddComment,
+  onDeleteComment,
+  onEditComment,
+  currentUserId,
   onOpenComments,
   onUploadPhoto,
   onUploadDocument,
@@ -1070,8 +1076,11 @@ export function IdeaCardModal({
                 <svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span className="text-xs text-cream/40">
-                  {ideaComments.length > 0 ? `${ideaComments.length} comment${ideaComments.length !== 1 ? 's' : ''}` : 'Comments'}
+                <span className="text-xs text-cream/50 font-medium">
+                  Option comments
+                  {ideaComments.length > 0 && (
+                    <span className="ml-1 text-cream/35 font-normal">({ideaComments.length})</span>
+                  )}
                 </span>
               </div>
               {onOpenComments && (
@@ -1080,28 +1089,53 @@ export function IdeaCardModal({
                   onClick={onOpenComments}
                   className="text-[11px] text-sandstone/70 hover:text-sandstone transition-colors"
                 >
-                  {ideaComments.length > 0 ? 'View all' : 'Open sidebar'} &rarr;
+                  All selection comments &rarr;
                 </button>
               )}
             </div>
 
             {ideaComments.length > 0 && (
-              <div className="space-y-3 mb-3">
-                {ideaComments.map((c) => (
-                  <div key={c.id} className="flex items-start gap-2">
-                    <div className="w-6 h-6 rounded-full bg-sandstone/20 text-sandstone text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
-                      {c.authorName.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2 mb-0.5">
-                        <span className="text-xs font-medium text-cream/70">{c.authorName}</span>
-                        <span className="text-[10px] text-cream/25">{relativeTime(c.createdAt)}</span>
+              <div className="space-y-2.5 mb-3 max-h-[300px] overflow-y-auto">
+                {[...ideaComments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((c) => (
+                  <div key={c.id} className="group border border-cream/8 rounded-lg p-2.5 bg-cream/[0.03]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-5 h-5 rounded-full bg-sandstone/20 text-sandstone text-[10px] font-bold flex items-center justify-center shrink-0">
+                        {c.authorName.charAt(0).toUpperCase()}
                       </div>
-                      <p className="text-sm text-cream/60 whitespace-pre-wrap">{c.text}</p>
+                      <span className="text-xs font-medium text-cream/70">{c.authorName}</span>
+                      <span className="text-[10px] text-cream/30">{relativeTime(c.createdAt)}</span>
+                      {c.edited && (
+                        <span className="text-[10px] text-cream/25 italic">(edited)</span>
+                      )}
+                      <span className="ml-auto flex items-center gap-1">
+                        {onEditComment && currentUserId && c.authorUserId === currentUserId && (
+                          <ModalCommentEditButton
+                            comment={c}
+                            onEdit={(text) => onEditComment(c.id, text)}
+                          />
+                        )}
+                        {onDeleteComment && !readOnly && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onDeleteComment(c.id) }}
+                            className="text-cream/10 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                            title="Delete"
+                          >
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+                            </svg>
+                          </button>
+                        )}
+                      </span>
                     </div>
+                    <p className="text-sm text-cream/70 whitespace-pre-wrap pl-7">{c.text}</p>
                   </div>
                 ))}
               </div>
+            )}
+
+            {ideaComments.length === 0 && (
+              <p className="text-xs text-cream/30 mb-3">No comments on this option yet.</p>
             )}
 
             {!readOnly && (
@@ -1117,9 +1151,9 @@ export function IdeaCardModal({
                         handleInlineComment()
                       }
                     }}
-                    placeholder="Add a comment..."
+                    placeholder="Add a comment on this option..."
                     maxLength={400}
-                    className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40 resize-none"
+                    className="flex-1 bg-basalt border border-cream/12 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/40 resize-none"
                   />
                   <button
                     type="button"
@@ -1173,5 +1207,80 @@ export function IdeaCardModal({
         </div>
       </div>
     </div>
+  )
+}
+
+/** Inline edit button for comments inside the option modal */
+function ModalCommentEditButton({
+  comment,
+  onEdit,
+}: {
+  comment: CommentRow
+  onEdit: (text: string) => Promise<void>
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(comment.text)
+  const [saving, setSaving] = useState(false)
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <input
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value.slice(0, 400))}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              if (draft.trim() && draft.trim() !== comment.text) {
+                setSaving(true)
+                onEdit(draft.trim()).finally(() => { setSaving(false); setEditing(false) })
+              } else {
+                setEditing(false)
+              }
+            }
+            if (e.key === 'Escape') { setEditing(false); setDraft(comment.text) }
+          }}
+          autoFocus
+          className="bg-basalt border border-cream/15 rounded px-2 py-0.5 text-[11px] text-cream w-32 focus:outline-none focus:border-sandstone/40"
+        />
+        <button
+          type="button"
+          onClick={() => {
+            if (draft.trim() && draft.trim() !== comment.text) {
+              setSaving(true)
+              onEdit(draft.trim()).finally(() => { setSaving(false); setEditing(false) })
+            } else {
+              setEditing(false)
+            }
+          }}
+          disabled={saving}
+          className="text-[10px] text-sandstone hover:text-sandstone-light"
+        >
+          {saving ? '...' : 'Save'}
+        </button>
+        <button
+          type="button"
+          onClick={() => { setEditing(false); setDraft(comment.text) }}
+          className="text-[10px] text-cream/30 hover:text-cream/50"
+        >
+          ×
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); setDraft(comment.text); setEditing(true) }}
+      className="text-cream/10 hover:text-cream/50 opacity-0 group-hover:opacity-100 transition-all"
+      title="Edit"
+    >
+      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
   )
 }
