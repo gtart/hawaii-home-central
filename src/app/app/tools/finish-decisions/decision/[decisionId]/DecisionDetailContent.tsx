@@ -8,6 +8,7 @@ import { useToolState } from '@/hooks/useToolState'
 import { useCollectionState, type ActivityEventHint } from '@/hooks/useCollectionState'
 import { IdeasBoard, AddIdeaMenu, type IdeasBoardAddActions } from '../../components/IdeasBoard'
 import { buildBoardHref, buildOptionHref } from '../../lib/routing'
+import { getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
 import { IdeasPackModal } from '../../components/IdeasPackModal'
 import { getHeuristicsConfig, matchDecision } from '@/lib/decisionHeuristics'
 import type { FinishDecisionKit } from '@/data/finish-decision-kits'
@@ -535,9 +536,19 @@ export function DecisionDetailContent({
 
   if (!isLoaded) {
     return (
-      <div className="pt-32 pb-24 px-6">
-        <div className="max-w-3xl mx-auto text-center py-12 text-cream/50">
-          <p>Loading...</p>
+      <div className="pt-20 md:pt-24 pb-24 px-6 animate-pulse">
+        <div className="max-w-3xl mx-auto space-y-4">
+          <div className="h-4 w-24 bg-cream/10 rounded" />
+          <div className="h-8 w-3/4 bg-cream/10 rounded" />
+          <div className="flex gap-2">
+            <div className="h-7 w-20 bg-cream/10 rounded-lg" />
+            <div className="h-7 w-16 bg-cream/10 rounded-lg" />
+          </div>
+          <div className="h-20 bg-cream/10 rounded-xl" />
+          <div className="h-8 w-32 bg-cream/10 rounded" />
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {[1,2,3].map(i => <div key={i} className="h-32 bg-cream/10 rounded-xl" />)}
+          </div>
         </div>
       </div>
     )
@@ -680,65 +691,70 @@ export function DecisionDetailContent({
           <span>Back to list</span>
         </button>
 
-        {/* Desktop header: title + status + due in one row */}
-        <div className="hidden md:flex items-center gap-3 mb-2">
-          <div className="flex-1">
-            <Input
-              value={foundDecision.title}
-              onChange={(e) => updateDecision({ title: e.target.value })}
-              className="text-2xl font-serif"
-              readOnly={readOnly}
+        {/* Desktop header — Row 1: title + comment trigger + share */}
+        <div className="hidden md:block mb-2">
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <Input
+                value={foundDecision.title}
+                onChange={(e) => updateDecision({ title: e.target.value })}
+                className="text-2xl font-serif"
+                readOnly={readOnly}
+              />
+            </div>
+            {collectionId && (
+              <button
+                type="button"
+                onClick={() => setShareOpen(true)}
+                className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
+                title="Share this selection"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
+                  <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
+                  <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
+                </svg>
+                Share
+                {foundDecision.visibility === 'restricted' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Restricted" />
+                )}
+              </button>
+            )}
+          </div>
+          {/* Row 2: status + priority + due (compact) */}
+          <div className="flex items-center gap-2 mt-2">
+            <select
+              value={foundDecision.status}
+              onChange={(e) => !readOnly && handleStatusChange(e.target.value as StatusV3)}
+              disabled={readOnly}
+              className={`shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${statusCfg.pillClass}`}
+            >
+              {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
+                <option key={key} value={key}>{config.label}</option>
+              ))}
+            </select>
+            <select
+              value={foundDecision.priority || ''}
+              onChange={(e) => !readOnly && updateDecision({ priority: (e.target.value || undefined) as SelectionPriority | undefined })}
+              disabled={readOnly}
+              className={`shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-basalt-50 text-cream/40 border-cream/10'}`}
+            >
+              <option value="">Priority</option>
+              {Object.entries(SELECTION_PRIORITY_CONFIG).map(([key, config]) => (
+                <option key={key} value={key}>{config.label}</option>
+              ))}
+            </select>
+            <input
+              type="date"
+              value={foundDecision.dueDate || ''}
+              onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
+              disabled={readOnly}
+              className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50 shrink-0"
             />
           </div>
-          <select
-            value={foundDecision.status}
-            onChange={(e) => !readOnly && handleStatusChange(e.target.value as StatusV3)}
-            disabled={readOnly}
-            className={`shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${statusCfg.pillClass}`}
-          >
-            {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
-              <option key={key} value={key}>{config.label}</option>
-            ))}
-          </select>
-          <select
-            value={foundDecision.priority || ''}
-            onChange={(e) => !readOnly && updateDecision({ priority: (e.target.value || undefined) as SelectionPriority | undefined })}
-            disabled={readOnly}
-            className={`shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-basalt-50 text-cream/40 border-cream/10'}`}
-          >
-            <option value="">Priority</option>
-            {Object.entries(SELECTION_PRIORITY_CONFIG).map(([key, config]) => (
-              <option key={key} value={key}>{config.label}</option>
-            ))}
-          </select>
-          <input
-            type="date"
-            value={foundDecision.dueDate || ''}
-            onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
-            disabled={readOnly}
-            className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50 shrink-0"
-          />
-          {collectionId && (
-            <button
-              type="button"
-              onClick={() => setShareOpen(true)}
-              className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
-              title="Share this selection"
-            >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
-                <polyline points="16 6 12 2 8 6" strokeLinecap="round" strokeLinejoin="round" />
-                <line x1="12" y1="2" x2="12" y2="15" strokeLinecap="round" />
-              </svg>
-              Share
-              {foundDecision.visibility === 'restricted' && (
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Restricted" />
-              )}
-            </button>
-          )}
         </div>
 
-        {/* Mobile header: title + controls */}
+        {/* Mobile header: title + status/priority pills */}
         <div className="md:hidden mb-2">
           {editingTitle ? (
             <Input
@@ -779,81 +795,25 @@ export function DecisionDetailContent({
                 <option key={key} value={key}>{config.label}</option>
               ))}
             </select>
-            <input
-              type="date"
-              value={foundDecision.dueDate || ''}
-              onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
-              disabled={readOnly}
-              className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50 ml-auto"
-            />
           </div>
         </div>
 
-        {/* Location field */}
-        <div className="mb-3">
-          <div className="flex items-center gap-1.5 mb-1">
-            <svg className="w-3.5 h-3.5 text-cream/40 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-            <span className="text-[11px] uppercase tracking-wider text-cream/40 font-medium">Location</span>
-          </div>
-          <input
-            type="text"
-            list="location-suggestions"
-            value={foundDecision.location || ''}
-            onChange={(e) => updateDecision({ location: e.target.value })}
-            placeholder="Where in the home? e.g. Kitchen"
-            readOnly={readOnly}
-            className="bg-basalt border border-cream/12 rounded-lg px-3 py-1.5 text-sm text-cream/70 placeholder:text-cream/25 focus:outline-none focus:text-cream focus:border-sandstone/40 transition-colors w-full max-w-[280px] disabled:opacity-50"
-          />
-          <datalist id="location-suggestions">
-            {locationSuggestions.map((loc) => (
-              <option key={loc} value={loc} />
-            ))}
-          </datalist>
-        </div>
-
-        {/* Labels */}
-        <div className="mb-2">
-          <span className="text-[11px] uppercase tracking-wider text-cream/30 font-medium mb-1 block">Labels</span>
-          <TagInput
-            tags={foundDecision.tags || []}
-            allTags={allTags}
-            onChange={(newTags) => updateDecision({ tags: newTags })}
-            readOnly={readOnly}
-            placeholder="Optional: urgency, type, style, phase..."
-          />
-        </div>
-
-        {/* Meta row */}
+        {/* Guidance tips + warnings (keep visible) */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs mb-2">
-          {formattedDue && (
-            <>
-              <span className="text-cream/40">Due {formattedDue}</span>
-              <span className="text-cream/20">·</span>
-            </>
-          )}
-          <span className="text-cream/40">
-            {optionsCount} option{optionsCount !== 1 ? 's' : ''}
-          </span>
           {guidanceTipCount > 0 && (
-            <>
-              <span className="text-cream/20">·</span>
-              <button
-                type="button"
-                onClick={() => setGuidanceOpen(true)}
-                className="inline-flex items-center gap-1.5 bg-sandstone/10 hover:bg-sandstone/15 border border-sandstone/15 rounded-full px-2.5 py-1 transition-colors"
-              >
-                <svg className="w-3.5 h-3.5 text-sandstone/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
-                </svg>
-                <span className="text-xs text-sandstone font-medium">
-                  {guidanceTipCount} tip{guidanceTipCount !== 1 ? 's' : ''}
-                </span>
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={() => setGuidanceOpen(true)}
+              className="inline-flex items-center gap-1.5 bg-sandstone/10 hover:bg-sandstone/15 border border-sandstone/15 rounded-full px-2.5 py-1 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5 text-sandstone/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
+              </svg>
+              <span className="text-xs text-sandstone font-medium">
+                {guidanceTipCount} tip{guidanceTipCount !== 1 ? 's' : ''}
+              </span>
+            </button>
           )}
           {doneWithoutFinal && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/10 text-red-400 text-[10px] font-medium rounded-full border border-red-400/20">
@@ -875,50 +835,62 @@ export function DecisionDetailContent({
           </p>
         )}
 
-        {/* Final Decision Line */}
+        {/* Final Decision */}
         <div className="mb-4">
-          {finalPick ? (
-            <>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] text-sandstone font-semibold">Final decision selected:</span>
-                <button
-                  type="button"
-                  onClick={() => router.push(buildOptionHref({ decisionId, optionId: finalPick.id }))}
-                  className="text-[11px] text-cream/70 font-medium hover:text-cream transition-colors underline decoration-cream/20 hover:decoration-cream/40"
-                >
-                  {finalPick.name || 'Untitled'}
-                </button>
-                {foundDecision.finalSelection && (
-                  <>
-                    <span className="text-cream/25">&middot;</span>
-                    <span className="px-1.5 py-0.5 bg-cream/10 text-cream/50 text-[10px] rounded-full">
-                      {foundDecision.finalSelection.selectedBy}
-                    </span>
-                    <span className="text-cream/25">&middot;</span>
-                    <span className="text-[10px] text-cream/35">
-                      {new Date(foundDecision.finalSelection.selectedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                    </span>
-                  </>
+          {finalPick ? (() => {
+            const hero = getHeroImage(finalPick)
+            const thumbUrl = hero ? displayUrl(hero.thumbnailUrl || hero.url) : null
+            return (
+              <div className="bg-sandstone/10 border border-sandstone/25 rounded-xl p-4 flex items-center gap-4">
+                {thumbUrl && (
+                  <img src={thumbUrl} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
                 )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-sandstone shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span className="text-[10px] uppercase tracking-wider text-sandstone font-semibold">Final Decision</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => router.push(buildOptionHref({ decisionId, optionId: finalPick.id }))}
+                    className="text-sm font-medium text-cream hover:text-cream/80 transition-colors truncate block"
+                  >
+                    {finalPick.name || 'Untitled'}
+                  </button>
+                  {foundDecision.finalSelection && (
+                    <p className="text-[11px] text-cream/40">
+                      Chosen by {foundDecision.finalSelection.selectedBy} &middot;{' '}
+                      {new Date(foundDecision.finalSelection.selectedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                    </p>
+                  )}
+                </div>
                 {!readOnly && (
                   <button
                     type="button"
                     onClick={() => selectOption(finalPick.id)}
-                    className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors ml-auto"
+                    className="shrink-0 text-[10px] text-cream/30 hover:text-cream/50 transition-colors"
                   >
                     Unselect
                   </button>
                 )}
               </div>
-              {finalPick.notes && (
-                <p className="text-[11px] text-cream/40 mt-1 whitespace-pre-wrap line-clamp-3">{finalPick.notes}</p>
+            )
+          })() : (
+            <div className="border-2 border-dashed border-cream/15 rounded-xl p-6 text-center">
+              <svg className="w-8 h-8 text-cream/20 mx-auto mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4l2 2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <p className="text-sm font-medium text-cream/40">No final decision yet</p>
+              <p className="text-xs text-cream/30">Choose from the options below</p>
+              {doneWithoutFinal && (
+                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 bg-red-500/10 text-red-400 text-[10px] font-medium rounded-full border border-red-400/20">
+                  Marked Done without a pick
+                </span>
               )}
-            </>
-          ) : (
-            <p className="text-xs text-cream/35">
-              No final decision yet &mdash; pick from options below, or add one and mark it final.
-              {doneWithoutFinal && <span className="text-red-400/60 ml-1">(marked Done without a pick)</span>}
-            </p>
+            </div>
           )}
         </div>
 
@@ -976,6 +948,81 @@ export function DecisionDetailContent({
             addActionsRef={addActionsRef}
           />
         </div>
+
+        {/* Collapsible Details — location, labels, due date, option count */}
+        <details className="group mb-6">
+          <summary className="flex items-center gap-2 cursor-pointer select-none text-sm text-cream/50 hover:text-cream/70 transition-colors py-1">
+            <svg className="w-3.5 h-3.5 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="font-medium">Details</span>
+            {(foundDecision.location || (foundDecision.tags && foundDecision.tags.length > 0) || formattedDue) && (
+              <span className="text-[10px] text-cream/30">
+                {[foundDecision.location, formattedDue ? `Due ${formattedDue}` : null, foundDecision.tags?.length ? `${foundDecision.tags.length} label${foundDecision.tags.length !== 1 ? 's' : ''}` : null].filter(Boolean).join(' · ')}
+              </span>
+            )}
+          </summary>
+          <div className="mt-3 space-y-3 pl-5">
+            {/* Location */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <svg className="w-3.5 h-3.5 text-cream/40 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                <span className="text-[11px] uppercase tracking-wider text-cream/40 font-medium">Location</span>
+              </div>
+              <input
+                type="text"
+                list="location-suggestions"
+                value={foundDecision.location || ''}
+                onChange={(e) => updateDecision({ location: e.target.value })}
+                placeholder="Where in the home? e.g. Kitchen"
+                readOnly={readOnly}
+                className="bg-basalt border border-cream/12 rounded-lg px-3 py-1.5 text-sm text-cream/70 placeholder:text-cream/25 focus:outline-none focus:text-cream focus:border-sandstone/40 transition-colors w-full max-w-[280px] disabled:opacity-50"
+              />
+              <datalist id="location-suggestions">
+                {locationSuggestions.map((loc) => (
+                  <option key={loc} value={loc} />
+                ))}
+              </datalist>
+            </div>
+            {/* Labels */}
+            <div>
+              <span className="text-[11px] uppercase tracking-wider text-cream/30 font-medium mb-1 block">Labels</span>
+              <TagInput
+                tags={foundDecision.tags || []}
+                allTags={allTags}
+                onChange={(newTags) => updateDecision({ tags: newTags })}
+                readOnly={readOnly}
+                placeholder="Optional: urgency, type, style, phase..."
+              />
+            </div>
+            {/* Due date (mobile — desktop shows in header row 2) */}
+            <div className="md:hidden">
+              <span className="text-[11px] uppercase tracking-wider text-cream/40 font-medium mb-1 block">Due date</span>
+              <input
+                type="date"
+                value={foundDecision.dueDate || ''}
+                onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
+                disabled={readOnly}
+                className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50"
+              />
+            </div>
+            {/* Meta */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+              {formattedDue && (
+                <>
+                  <span className="text-cream/40 hidden md:inline">Due {formattedDue}</span>
+                  <span className="text-cream/20 hidden md:inline">·</span>
+                </>
+              )}
+              <span className="text-cream/40">
+                {optionsCount} option{optionsCount !== 1 ? 's' : ''}
+              </span>
+            </div>
+          </div>
+        </details>
 
         {/* All Files — aggregated from all options + decision-level files */}
         <DecisionFiles

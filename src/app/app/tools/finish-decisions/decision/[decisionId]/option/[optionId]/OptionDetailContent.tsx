@@ -6,10 +6,11 @@ import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useCollectionState, type ActivityEventHint } from '@/hooks/useCollectionState'
 import { useToolState } from '@/hooks/useToolState'
-import { useComments, type CommentRow } from '@/hooks/useComments'
+import { useComments } from '@/hooks/useComments'
 import { useProject } from '@/contexts/ProjectContext'
 import { useSelectionLastVisited } from '@/hooks/useSelectionLastVisited'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
+import { CollapsibleCommentSidebar } from '@/components/app/CollapsibleCommentSidebar'
 import { MoveIdeaSheet } from '../../../../components/MoveIdeaSheet'
 import { ExpandableSpecs } from '../../../../components/ExpandableSpecs'
 import { uploadIdeaFile } from '../../../../components/IdeasBoard'
@@ -17,7 +18,6 @@ import { uploadDocument } from '../../../../uploadDocument'
 import { buildOptionHref } from '../../../../lib/routing'
 import { formatDate, linkHostname, fetchLinkPreview, displayPrice, formatFileSize, docTypeColor, docTypeLabel, isValidUrl } from '../../../../lib/optionUtils'
 import { getAllImages, getHeroImage, displayUrl } from '@/lib/finishDecisionsImages'
-import { relativeTime } from '@/lib/relativeTime'
 import { moveIdea } from '@/lib/decisionHelpers'
 import {
   STATUS_CONFIG_V3,
@@ -30,14 +30,6 @@ import {
   type SelectionV4,
   type FinishDecisionsPayloadV4,
 } from '@/data/finish-decisions'
-
-interface CommentPayload {
-  text: string
-  authorName: string
-  authorEmail: string
-  refOptionId?: string
-  refOptionLabel?: string
-}
 
 export function OptionDetailContent({
   collectionId,
@@ -56,7 +48,6 @@ export function OptionDetailContent({
   const [assignToast, setAssignToast] = useState<string | null>(null)
 
   // Inline editing state
-  const [inlineCommentText, setInlineCommentText] = useState('')
   const [newUrl, setNewUrl] = useState('')
   const [editingUrlId, setEditingUrlId] = useState<string | null>(null)
   const [editingUrlValue, setEditingUrlValue] = useState('')
@@ -244,19 +235,6 @@ export function OptionDetailContent({
     }]
     updateDecision(updates, events.length > 0 ? events : undefined)
   }, [foundDecision, foundOption, optionId, session, decisionId, updateDecision])
-
-  const addComment = useCallback((comment: CommentPayload) => {
-    decisionComments.addComment({
-      text: comment.text,
-      ...(comment.refOptionId
-        ? {
-            refEntityType: 'option',
-            refEntityId: comment.refOptionId,
-            refEntityLabel: comment.refOptionLabel,
-          }
-        : {}),
-    })
-  }, [decisionComments])
 
   // Move/copy handlers
   function moveOptionToSelection(
@@ -504,24 +482,18 @@ export function OptionDetailContent({
     setEditingDocTitle('')
   }
 
-  function handleInlineComment() {
-    if (!inlineCommentText.trim() || !foundOption) return
-    addComment({
-      text: inlineCommentText.trim().slice(0, 400),
-      authorName: session?.user?.name || 'Unknown',
-      authorEmail: session?.user?.email || '',
-      refOptionId: optionId,
-      refOptionLabel: foundOption.name || 'Untitled',
-    })
-    setInlineCommentText('')
-  }
-
   // ── Loading / not found states ──
   if (!isLoaded) {
     return (
-      <div className="pt-32 pb-24 px-6">
-        <div className="max-w-4xl mx-auto text-center py-12 text-cream/50">
-          <p>Loading...</p>
+      <div className="pt-20 md:pt-20 pb-28 px-4 md:px-8 animate-pulse">
+        <div className="max-w-5xl mx-auto space-y-4">
+          <div className="h-4 w-32 bg-cream/10 rounded" />
+          <div className="h-8 w-2/3 bg-cream/10 rounded" />
+          <div className="h-64 bg-cream/10 rounded-xl" />
+          <div className="space-y-2">
+            <div className="h-4 w-full bg-cream/10 rounded" />
+            <div className="h-4 w-3/4 bg-cream/10 rounded" />
+          </div>
         </div>
       </div>
     )
@@ -543,7 +515,7 @@ export function OptionDetailContent({
   const userName = session?.user?.name || 'Unknown'
 
   return (
-    <div className="pt-20 md:pt-20 pb-24 px-4 md:px-8">
+    <div className="pt-20 md:pt-20 pb-28 px-4 md:px-8">
       <div className="max-w-5xl mx-auto">
 
         {/* ── Sticky breadcrumb header ── */}
@@ -604,7 +576,7 @@ export function OptionDetailContent({
             )}
 
             {/* Right: timestamps */}
-            <div className="hidden md:flex items-center gap-2 text-[11px] text-cream/25 shrink-0">
+            <div className="hidden md:flex items-center gap-2 text-[11px] text-cream/40 shrink-0">
               <span>Added {formatDate(option.createdAt)}</span>
               {option.updatedAt !== option.createdAt && (
                 <>
@@ -729,11 +701,11 @@ export function OptionDetailContent({
           </div>
         </div>
 
-        {/* ── Two-column layout ── */}
-        <div className="md:grid md:grid-cols-[1fr_360px] md:gap-0">
+        {/* ── Content + Comment sidebar ── */}
+        <div className="md:flex md:gap-6">
 
-          {/* ── Left column: Content ── */}
-          <div className="space-y-5 md:pr-6">
+          {/* ── Main content ── */}
+          <div className="md:flex-1 space-y-4">
 
             {/* Photos */}
             <div>
@@ -1037,79 +1009,27 @@ export function OptionDetailContent({
             )}
           </div>
 
-          {/* ── Right column: Comments ── */}
-          <div className="md:border-l md:border-cream/10 md:pl-6 mt-8 md:mt-0">
-            <div className="md:sticky md:top-32">
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <span className="text-xs text-cream/50 font-medium">
-                  Option comments
-                  {optionComments.length > 0 && (
-                    <span className="ml-1 text-cream/35 font-normal">({optionComments.length})</span>
-                  )}
-                </span>
-              </div>
-
-              {optionComments.length > 0 ? (
-                <div className="space-y-2.5 mb-3 max-h-[60vh] overflow-y-auto">
-                  {[...optionComments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((c) => (
-                    <div key={c.id} className="group border border-cream/8 rounded-lg p-2.5 bg-cream/[0.03]">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-5 h-5 rounded-full bg-sandstone/20 text-sandstone text-[10px] font-bold flex items-center justify-center shrink-0">
-                          {c.authorName.charAt(0).toUpperCase()}
-                        </div>
-                        <span className="text-xs font-medium text-cream/70">{c.authorName}</span>
-                        <span className="text-[10px] text-cream/30">{relativeTime(c.createdAt)}</span>
-                        {c.edited && <span className="text-[10px] text-cream/25 italic">(edited)</span>}
-                        <span className="ml-auto flex items-center gap-1">
-                          {session?.user?.id && c.authorUserId === session.user.id && (
-                            <CommentEditButton comment={c} onEdit={(text) => decisionComments.editComment(c.id, text)} />
-                          )}
-                          {!readOnly && (
-                            <button type="button" onClick={(e) => { e.stopPropagation(); decisionComments.deleteComment(c.id) }}
-                              className="text-cream/10 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all" title="Delete">
-                              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" /></svg>
-                            </button>
-                          )}
-                        </span>
-                      </div>
-                      <p className="text-sm text-cream/70 whitespace-pre-wrap pl-7">{c.text}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-cream/30 mb-3">No comments on this option yet.</p>
-              )}
-
-              {/* Comment input */}
-              {!readOnly && (
-                <div className="border-t border-cream/10 pt-3">
-                  <div className="flex gap-2">
-                    <textarea
-                      rows={1}
-                      value={inlineCommentText}
-                      onChange={(e) => setInlineCommentText(e.target.value.slice(0, 400))}
-                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleInlineComment() } }}
-                      placeholder="Add a comment..."
-                      maxLength={400}
-                      className="flex-1 bg-basalt border border-cream/12 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/40 resize-none"
-                    />
-                    <button type="button" onClick={handleInlineComment} disabled={!inlineCommentText.trim()}
-                      className="px-3 py-2 bg-sandstone/20 text-sandstone text-sm rounded-lg hover:bg-sandstone/30 transition-colors disabled:opacity-30 self-end">
-                      Post
-                    </button>
-                  </div>
-                  {inlineCommentText.length > 0 && (
-                    <p className={`text-[10px] mt-1 text-right ${inlineCommentText.length >= 400 ? 'text-red-400' : 'text-cream/25'}`}>
-                      {inlineCommentText.length}/400
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+          {/* ── Comment sidebar (desktop: sticky column, mobile: bottom sheet) ── */}
+          <CollapsibleCommentSidebar
+            title="Option comments"
+            storageKey="option_comments_collapsed"
+            comments={optionComments}
+            isLoading={decisionComments.isLoading}
+            readOnly={readOnly}
+            onAddComment={async (params) => {
+              await decisionComments.addComment({
+                ...params,
+                refEntityType: 'option',
+                refEntityId: optionId,
+                refEntityLabel: option.name || 'Untitled',
+              })
+            }}
+            onDeleteComment={decisionComments.deleteComment}
+            onEditComment={decisionComments.editComment}
+            currentUserId={session?.user?.id ?? null}
+            filterRefEntityId={optionId}
+            filterRefEntityLabel={option.name || 'Untitled'}
+          />
         </div>
       </div>
 
@@ -1135,58 +1055,3 @@ export function OptionDetailContent({
   )
 }
 
-/** Inline edit button for comments */
-function CommentEditButton({
-  comment,
-  onEdit,
-}: {
-  comment: CommentRow
-  onEdit: (text: string) => Promise<void>
-}) {
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(comment.text)
-  const [saving, setSaving] = useState(false)
-
-  if (editing) {
-    return (
-      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-        <input
-          type="text"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value.slice(0, 400))}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              if (draft.trim() && draft.trim() !== comment.text) {
-                setSaving(true)
-                onEdit(draft.trim()).finally(() => { setSaving(false); setEditing(false) })
-              } else { setEditing(false) }
-            }
-            if (e.key === 'Escape') { setEditing(false); setDraft(comment.text) }
-          }}
-          autoFocus
-          className="bg-basalt border border-cream/15 rounded px-2 py-0.5 text-[11px] text-cream w-32 focus:outline-none focus:border-sandstone/40"
-        />
-        <button type="button" onClick={() => {
-          if (draft.trim() && draft.trim() !== comment.text) {
-            setSaving(true)
-            onEdit(draft.trim()).finally(() => { setSaving(false); setEditing(false) })
-          } else { setEditing(false) }
-        }} disabled={saving} className="text-[10px] text-sandstone hover:text-sandstone-light">
-          {saving ? '...' : 'Save'}
-        </button>
-        <button type="button" onClick={() => { setEditing(false); setDraft(comment.text) }} className="text-[10px] text-cream/30 hover:text-cream/50">×</button>
-      </div>
-    )
-  }
-
-  return (
-    <button type="button" onClick={(e) => { e.stopPropagation(); setDraft(comment.text); setEditing(true) }}
-      className="text-cream/10 hover:text-cream/50 opacity-0 group-hover:opacity-100 transition-all" title="Edit">
-      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
-  )
-}

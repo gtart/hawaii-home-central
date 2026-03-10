@@ -112,6 +112,8 @@ export function DecisionTrackerPage({
   const [locationFilters, setLocationFilters] = useState<string[]>([])
   const [groupBy, setGroupBy] = useState<'none' | 'tag' | 'location' | 'status' | 'priority'>('none')
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
+  const [viewMenuOpen, setViewMenuOpen] = useState(false)
+  const [filtersExpanded, setFiltersExpanded] = useState(false)
   const [ideasModalOpen, setIdeasModalOpen] = useState(false)
   const [toast, setToast] = useState<{ message: string; kitId: string } | null>(null)
   const [simpleToast, setSimpleToast] = useState<string | null>(null)
@@ -425,7 +427,7 @@ export function DecisionTrackerPage({
       {/* Main content — when decisions exist */}
       {hasDecisions && (
         <>
-          {/* Toolbar row: Search + Sort + Packs */}
+          {/* Toolbar row: Search + Filters + View */}
           <div className="flex items-center gap-2 mb-3">
             <div className="flex-1 min-w-0">
               <Input
@@ -434,62 +436,98 @@ export function DecisionTrackerPage({
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            {/* Sort + Group dropdowns (desktop) */}
-            <div className="hidden md:flex items-center gap-3 shrink-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-cream/30">Sort</span>
-                <select
-                  value={sortKey}
-                  onChange={(e) => setSortKey(e.target.value as SortKey)}
-                  className="bg-basalt-50 text-cream/60 text-[11px] rounded-lg border border-cream/10 px-2 py-1 focus:outline-none focus:border-sandstone/40"
-                >
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.key} value={opt.key}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-cream/30">Group</span>
-                <select
-                  value={groupBy}
-                  onChange={(e) => setGroupBy(e.target.value as typeof groupBy)}
-                  className="bg-basalt-50 text-cream/60 text-[11px] rounded-lg border border-cream/10 px-2 py-1 focus:outline-none focus:border-sandstone/40"
-                >
-                  <option value="none">None</option>
-                  <option value="location">By Location</option>
-                  <option value="tag">By Label</option>
-                  <option value="status">By Status</option>
-                  <option value="priority">By Priority</option>
-                </select>
-              </div>
-            </div>
-            {/* Packs chip (desktop) */}
-            {!readOnly && kits.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setIdeasModalOpen(true)}
-                className="hidden md:inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-cream/70 hover:text-cream/90 bg-cream/10 hover:bg-cream/15 rounded-full transition-colors shrink-0"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                Add an Idea Pack
-              </button>
-            )}
             {/* Search match count */}
             {searchQuery.trim() && (
               <span className="hidden md:inline text-[11px] text-cream/50 shrink-0">
                 {filteredDecisions.length} match{filteredDecisions.length !== 1 ? 'es' : ''}
               </span>
             )}
-            {/* Desktop Add Selection button */}
-            {!readOnly && (
+            {/* Filters toggle (desktop) */}
+            <button
+              type="button"
+              onClick={() => setFiltersExpanded(!filtersExpanded)}
+              className={`hidden md:inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium rounded-lg border transition-colors shrink-0 ${
+                filtersExpanded || activeFilterCount > 0
+                  ? 'bg-sandstone/10 text-sandstone border-sandstone/30'
+                  : 'bg-cream/5 text-cream/50 hover:text-cream/70 border-cream/10'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+              </svg>
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="w-4 h-4 bg-sandstone text-basalt text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+            {/* View menu (desktop) — sort + group */}
+            <div className="hidden md:block relative shrink-0">
               <button
                 type="button"
-                onClick={() => setAddInputVisible(true)}
-                className="hidden md:inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-sandstone text-basalt font-medium rounded-lg hover:bg-sandstone-light transition-colors ml-auto shrink-0"
+                onClick={() => setViewMenuOpen(!viewMenuOpen)}
+                className="inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium rounded-lg border bg-cream/5 text-cream/50 hover:text-cream/70 border-cream/10 transition-colors"
               >
-                + Add Selection
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="4" y1="21" x2="4" y2="14" strokeLinecap="round" />
+                  <line x1="4" y1="10" x2="4" y2="3" strokeLinecap="round" />
+                  <line x1="12" y1="21" x2="12" y2="12" strokeLinecap="round" />
+                  <line x1="12" y1="8" x2="12" y2="3" strokeLinecap="round" />
+                  <line x1="20" y1="21" x2="20" y2="16" strokeLinecap="round" />
+                  <line x1="20" y1="12" x2="20" y2="3" strokeLinecap="round" />
+                  <line x1="1" y1="14" x2="7" y2="14" strokeLinecap="round" />
+                  <line x1="9" y1="8" x2="15" y2="8" strokeLinecap="round" />
+                  <line x1="17" y1="16" x2="23" y2="16" strokeLinecap="round" />
+                </svg>
+                View
               </button>
-            )}
+              {viewMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setViewMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-40 w-52 bg-basalt-50 border border-cream/15 rounded-xl shadow-lg p-3 space-y-3">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wider text-cream/40 font-medium">Sort by</span>
+                      <div className="mt-1.5 space-y-0.5">
+                        {SORT_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.key}
+                            onClick={() => { setSortKey(opt.key); setViewMenuOpen(false) }}
+                            className={`w-full text-left px-2 py-1 text-xs rounded transition-colors ${
+                              sortKey === opt.key ? 'bg-sandstone/15 text-sandstone font-medium' : 'text-cream/60 hover:text-cream/80 hover:bg-cream/5'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="border-t border-cream/10 pt-2">
+                      <span className="text-[10px] uppercase tracking-wider text-cream/40 font-medium">Group by</span>
+                      <div className="mt-1.5 space-y-0.5">
+                        {[
+                          { key: 'none', label: 'None' },
+                          { key: 'location', label: 'Location' },
+                          { key: 'tag', label: 'Label' },
+                          { key: 'status', label: 'Status' },
+                          { key: 'priority', label: 'Priority' },
+                        ].map((opt) => (
+                          <button
+                            key={opt.key}
+                            onClick={() => { setGroupBy(opt.key as typeof groupBy); setViewMenuOpen(false) }}
+                            className={`w-full text-left px-2 py-1 text-xs rounded transition-colors ${
+                              groupBy === opt.key ? 'bg-sandstone/15 text-sandstone font-medium' : 'text-cream/60 hover:text-cream/80 hover:bg-cream/5'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Inline add selection — shown at top when triggered */}
@@ -573,106 +611,110 @@ export function DecisionTrackerPage({
             )}
           </div>
 
-          {/* Desktop status filter row */}
-          <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
-            <span className="text-[11px] text-cream/30 mr-1">Status</span>
-            {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, (typeof STATUS_CONFIG_V3)[StatusV3]][]).map(
-              ([status, config]) => {
-                const isActive = statusFilters.includes(status)
-                const count = statusCounts[status] ?? 0
-                if (count === 0 && !isActive) return null
+          {/* Desktop filter rows — shown when toggled or when any filter active */}
+          {(filtersExpanded || activeFilterCount > 0) && (
+            <>
+              <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
+                <span className="text-[11px] text-cream/30 mr-1">Status</span>
+                {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, (typeof STATUS_CONFIG_V3)[StatusV3]][]).map(
+                  ([status, config]) => {
+                    const isActive = statusFilters.includes(status)
+                    const count = statusCounts[status] ?? 0
+                    if (count === 0 && !isActive) return null
 
-                return (
-                  <button
-                    key={status}
-                    onClick={() => toggleStatusFilter(status)}
-                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                      isActive
-                        ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
-                        : 'bg-cream/10 text-cream/60 hover:text-cream/80'
-                    }`}
-                  >
-                    {config.label}
-                    <span className="text-[10px] opacity-70">{count}</span>
-                  </button>
-                )
-              }
-            )}
-            {isFiltering && (
-              <span className="text-[11px] text-cream/50 ml-auto">
-                {filteredDecisions.length}/{selections.length}
-              </span>
-            )}
-          </div>
+                    return (
+                      <button
+                        key={status}
+                        onClick={() => toggleStatusFilter(status)}
+                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                          isActive
+                            ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                            : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                        }`}
+                      >
+                        {config.label}
+                        <span className="text-[10px] opacity-70">{count}</span>
+                      </button>
+                    )
+                  }
+                )}
+                {isFiltering && (
+                  <span className="text-[11px] text-cream/50 ml-auto">
+                    {filteredDecisions.length}/{selections.length}
+                  </span>
+                )}
+              </div>
 
-          {/* Desktop tag filter row */}
-          {allTags.length > 0 && (
-            <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
-              <span className="text-[11px] text-cream/30 mr-1">Labels</span>
-              {allTags.map((tag) => {
-                const isActive = tagFilters.includes(tag)
-                return (
-                  <button
-                    key={tag}
-                    onClick={() => toggleTagFilter(tag)}
-                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                      isActive
-                        ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
-                        : 'bg-cream/10 text-cream/60 hover:text-cream/80'
-                    }`}
-                  >
-                    {tag}
-                    <span className="text-[10px] opacity-70">{tagCounts[tag] || 0}</span>
-                  </button>
-                )
-              })}
-              {tagFilters.length > 0 && (
-                <button
-                  onClick={() => setTagFilters([])}
-                  className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors ml-1"
-                >
-                  Clear labels
-                </button>
+              {/* Desktop tag filter row */}
+              {allTags.length > 0 && (
+                <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
+                  <span className="text-[11px] text-cream/30 mr-1">Labels</span>
+                  {allTags.map((tag) => {
+                    const isActive = tagFilters.includes(tag)
+                    return (
+                      <button
+                        key={tag}
+                        onClick={() => toggleTagFilter(tag)}
+                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                          isActive
+                            ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                            : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                        }`}
+                      >
+                        {tag}
+                        <span className="text-[10px] opacity-70">{tagCounts[tag] || 0}</span>
+                      </button>
+                    )
+                  })}
+                  {tagFilters.length > 0 && (
+                    <button
+                      onClick={() => setTagFilters([])}
+                      className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors ml-1"
+                    >
+                      Clear labels
+                    </button>
+                  )}
+                </div>
               )}
-            </div>
-          )}
 
-          {/* Desktop location filter row */}
-          {usedLocations.length > 0 && (
-            <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
-              <span className="inline-flex items-center gap-1 text-[11px] text-cream/30 mr-1">
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-                Location
-              </span>
-              {usedLocations.map((loc) => {
-                const isActive = locationFilters.includes(loc)
-                return (
-                  <button
-                    key={loc}
-                    onClick={() => toggleLocationFilter(loc)}
-                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                      isActive
-                        ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
-                        : 'bg-cream/10 text-cream/60 hover:text-cream/80'
-                    }`}
-                  >
-                    {loc}
-                    <span className="text-[10px] opacity-70">{locationCounts[loc] || 0}</span>
-                  </button>
-                )
-              })}
-              {locationFilters.length > 0 && (
-                <button
-                  onClick={() => setLocationFilters([])}
-                  className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors ml-1"
-                >
-                  Clear locations
-                </button>
+              {/* Desktop location filter row */}
+              {usedLocations.length > 0 && (
+                <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
+                  <span className="inline-flex items-center gap-1 text-[11px] text-cream/30 mr-1">
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    Location
+                  </span>
+                  {usedLocations.map((loc) => {
+                    const isActive = locationFilters.includes(loc)
+                    return (
+                      <button
+                        key={loc}
+                        onClick={() => toggleLocationFilter(loc)}
+                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                          isActive
+                            ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
+                            : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                        }`}
+                      >
+                        {loc}
+                        <span className="text-[10px] opacity-70">{locationCounts[loc] || 0}</span>
+                      </button>
+                    )
+                  })}
+                  {locationFilters.length > 0 && (
+                    <button
+                      onClick={() => setLocationFilters([])}
+                      className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors ml-1"
+                    >
+                      Clear locations
+                    </button>
+                  )}
+                </div>
               )}
-            </div>
+            </>
           )}
 
           {/* Decision list */}
@@ -908,29 +950,13 @@ export function DecisionTrackerPage({
                               {config.label}
                             </span>
                           </div>
-                          {decision.location && (
-                            <p className="text-[11px] text-cream/35 truncate">{decision.location}</p>
+                          {selectedOption && (
+                            <p className="text-[11px] text-sandstone/70 truncate">
+                              Picked: {selectedOption.name}
+                              {selectedOption.price ? ` · ${selectedOption.price}` : ''}
+                            </p>
                           )}
-                          {decision.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-0.5">
-                              {decision.tags.slice(0, 3).map((tag) => (
-                                <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-cream/8 text-cream/35">{tag}</span>
-                              ))}
-                              {decision.tags.length > 3 && <span className="text-[9px] text-cream/25">+{decision.tags.length - 3}</span>}
-                            </div>
-                          )}
-                          {selectedOption ? (
-                            <>
-                              <p className="text-[11px] text-sandstone/70 truncate mb-0.5">
-                                Picked: {selectedOption.name}
-                                {selectedOption.price ? ` · ${selectedOption.price}` : ''}
-                              </p>
-                              {selectedOption.notes && (
-                                <p className="text-[11px] text-cream/35 line-clamp-1 mb-0.5">{selectedOption.notes}</p>
-                              )}
-                            </>
-                          ) : null}
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-cream/40">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-cream/40 mt-0.5">
                             {decision.priority && (
                               <span className={`text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded ${SELECTION_PRIORITY_CONFIG[decision.priority].className}`}>
                                 {SELECTION_PRIORITY_CONFIG[decision.priority].label}

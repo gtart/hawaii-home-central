@@ -214,8 +214,8 @@ function IdeaCardTile({
               📎 {option.documents!.length}
             </span>
           )}
-          <span className="text-[10px] text-cream/25">
-            {option.origin && <span className="text-cream/30">{option.origin.kitLabel} · </span>}
+          <span className="text-[10px] text-cream/35">
+            {option.origin && <span className="text-cream/40">{option.origin.kitLabel} · </span>}
             {relativeTime(lastCommentAt || option.updatedAt)}
           </span>
         </div>
@@ -299,7 +299,7 @@ function IdeaCardTile({
                 className={`text-[10px] px-2 py-0.5 rounded-full transition-colors ml-auto ${
                   option.isSelected
                     ? 'bg-sandstone text-basalt font-semibold'
-                    : 'bg-cream/8 text-cream/40 hover:text-cream/70 hover:bg-cream/15'
+                    : 'bg-sandstone/10 text-sandstone/60 border border-sandstone/20 hover:bg-sandstone/20 hover:text-sandstone'
                 }`}
               >
                 {option.isSelected ? '⭐ Final' : '☆ Final'}
@@ -414,7 +414,7 @@ export function AddIdeaMenu({
               </svg>
               Save to HHC
             </div>
-            <p className="text-[11px] text-cream/25 mt-1 ml-7">
+            <p className="text-[11px] text-cream/40 mt-1 ml-7">
               Web import is available on desktop via the bookmarklet.{' '}
               <a href="/app/save-from-web" className="text-sandstone/60 hover:text-sandstone underline">Learn how</a>
             </p>
@@ -743,6 +743,21 @@ export function IdeasBoard({
                     </div>
                     )
                   })}
+                  {!readOnly && !compareMode && (
+                    <div className="break-inside-avoid mb-3">
+                      <button
+                        type="button"
+                        onClick={() => addActionsRef?.current?.triggerNote()}
+                        className="w-full min-h-[120px] border-2 border-dashed border-cream/15 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-sandstone/40 hover:bg-cream/[0.02] transition-all"
+                      >
+                        <svg className="w-6 h-6 text-cream/25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round" />
+                          <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round" />
+                        </svg>
+                        <span className="text-sm text-cream/30">Add option</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Mobile: collapsible grid */}
@@ -790,6 +805,19 @@ export function IdeasBoard({
                     </div>
                     )
                   })}
+                  {!readOnly && !compareMode && (
+                    <button
+                      type="button"
+                      onClick={() => addActionsRef?.current?.triggerNote()}
+                      className="min-h-[100px] border-2 border-dashed border-cream/15 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-sandstone/40 hover:bg-cream/[0.02] transition-all"
+                    >
+                      <svg className="w-6 h-6 text-cream/25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round" />
+                        <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round" />
+                      </svg>
+                      <span className="text-sm text-cream/30">Add option</span>
+                    </button>
+                  )}
                 </div>
                 {/* Show more/less — mobile only */}
                 {!expanded && hiddenCount > 0 && (
