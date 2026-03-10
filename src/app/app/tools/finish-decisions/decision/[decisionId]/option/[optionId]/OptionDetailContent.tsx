@@ -10,7 +10,7 @@ import { useComments } from '@/hooks/useComments'
 import { useProject } from '@/contexts/ProjectContext'
 import { useSelectionLastVisited } from '@/hooks/useSelectionLastVisited'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
-import { CollapsibleCommentSidebar } from '@/components/app/CollapsibleCommentSidebar'
+import { CollapsibleCommentSidebar, CommentTriggerButton, type CommentSidebarHandle } from '@/components/app/CollapsibleCommentSidebar'
 import { MoveIdeaSheet } from '../../../../components/MoveIdeaSheet'
 import { ExpandableSpecs } from '../../../../components/ExpandableSpecs'
 import { uploadIdeaFile } from '../../../../components/IdeasBoard'
@@ -59,6 +59,7 @@ export function OptionDetailContent({
   const [docUploadError, setDocUploadError] = useState('')
   const [editingDocId, setEditingDocId] = useState<string | null>(null)
   const [editingDocTitle, setEditingDocTitle] = useState('')
+  const commentSidebarRef = useRef<CommentSidebarHandle>(null)
   const docInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
@@ -515,7 +516,7 @@ export function OptionDetailContent({
   const userName = session?.user?.name || 'Unknown'
 
   return (
-    <div className="pt-20 md:pt-20 pb-28 px-4 md:px-8">
+    <div className="pt-20 md:pt-20 pb-24 px-4 md:px-8">
       <div className="max-w-5xl mx-auto">
 
         {/* ── Sticky breadcrumb header ── */}
@@ -575,15 +576,22 @@ export function OptionDetailContent({
               </div>
             )}
 
-            {/* Right: timestamps */}
-            <div className="hidden md:flex items-center gap-2 text-[11px] text-cream/40 shrink-0">
-              <span>Added {formatDate(option.createdAt)}</span>
-              {option.updatedAt !== option.createdAt && (
-                <>
-                  <span className="text-cream/15">·</span>
-                  <span>Updated {formatDate(option.updatedAt)}</span>
-                </>
-              )}
+            {/* Right: mobile comment trigger + desktop timestamps */}
+            <div className="flex items-center gap-2 shrink-0">
+              <CommentTriggerButton
+                commentCount={optionComments.length}
+                onClick={() => commentSidebarRef.current?.openMobileSheet()}
+                className="md:hidden"
+              />
+              <div className="hidden md:flex items-center gap-2 text-[11px] text-cream/40">
+                <span>Added {formatDate(option.createdAt)}</span>
+                {option.updatedAt !== option.createdAt && (
+                  <>
+                    <span className="text-cream/15">·</span>
+                    <span>Updated {formatDate(option.updatedAt)}</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1011,6 +1019,7 @@ export function OptionDetailContent({
 
           {/* ── Comment sidebar (desktop: sticky column, mobile: bottom sheet) ── */}
           <CollapsibleCommentSidebar
+            ref={commentSidebarRef}
             title="Option comments"
             storageKey="option_comments_collapsed"
             comments={optionComments}

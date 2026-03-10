@@ -31,7 +31,7 @@ import { uploadFile as uploadFileForDecision } from '../../uploadFile'
 import { MoveIdeaSheet } from '../../components/MoveIdeaSheet'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useComments, type CommentRow } from '@/hooks/useComments'
-import { CollapsibleCommentSidebar } from '@/components/app/CollapsibleCommentSidebar'
+import { CollapsibleCommentSidebar, CommentTriggerButton, type CommentSidebarHandle } from '@/components/app/CollapsibleCommentSidebar'
 import type { RefEntity } from '@/components/app/CommentThread'
 import { useProject } from '@/contexts/ProjectContext'
 import { SelectionShareSheet } from '../../components/SelectionShareSheet'
@@ -69,6 +69,7 @@ export function DecisionDetailContent({
   const [forceExpandComments, setForceExpandComments] = useState(false)
   const [deepLinkCommentId, setDeepLinkCommentId] = useState<string | null>(null)
   const addActionsRef = useRef<IdeasBoardAddActions | null>(null)
+  const commentSidebarRef = useRef<CommentSidebarHandle>(null)
   const deepLinkProcessed = useRef(false)
   const searchParams = useSearchParams()
   const { currentProject } = useProject()
@@ -679,7 +680,7 @@ export function DecisionDetailContent({
   const doneWithoutFinal = foundDecision.status === 'done' && !finalPick
 
   return (
-    <div className="pt-20 md:pt-24 pb-36 md:pb-24 px-6">
+    <div className="pt-20 md:pt-24 pb-24 px-6">
       <div className="md:flex md:gap-6 md:max-w-6xl md:mx-auto">
       <div className="max-w-3xl md:max-w-none md:flex-1 mx-auto md:mx-0">
         {/* Back link */}
@@ -702,6 +703,7 @@ export function DecisionDetailContent({
                 readOnly={readOnly}
               />
             </div>
+            {/* Desktop comment trigger — hidden on md since desktop uses sidebar tab */}
             {collectionId && (
               <button
                 type="button"
@@ -754,7 +756,7 @@ export function DecisionDetailContent({
           </div>
         </div>
 
-        {/* Mobile header: title + status/priority pills */}
+        {/* Mobile header: title + status/priority pills + comment trigger */}
         <div className="md:hidden mb-2">
           {editingTitle ? (
             <Input
@@ -795,6 +797,11 @@ export function DecisionDetailContent({
                 <option key={key} value={key}>{config.label}</option>
               ))}
             </select>
+            <CommentTriggerButton
+              commentCount={userComments.length}
+              onClick={() => commentSidebarRef.current?.openMobileSheet()}
+              className="ml-auto"
+            />
           </div>
         </div>
 
@@ -1050,6 +1057,7 @@ export function DecisionDetailContent({
       </div>
 
       <CollapsibleCommentSidebar
+        ref={commentSidebarRef}
         title="Selection comments"
         storageKey="selections_comments_collapsed"
         comments={userComments}

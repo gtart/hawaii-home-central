@@ -18,14 +18,14 @@
 
 | ID | Title | Priority | Status |
 |----|-------|----------|--------|
-| SEL-UI-001 | Mobile comments become a bottom-sheet experience | P0 | DONE |
-| SEL-UI-002 | Show unread/new comment state | P0 | DONE |
+| SEL-UI-001 | Mobile comments become a bottom-sheet experience | P0 | DONE — floating bottom bar removed, trigger in page header, opens bottom sheet |
+| SEL-UI-002 | Show unread/new comment state | P0 | DONE — `hasUnread` prop on sidebar uses real lastVisited hook; desktop tab + mobile trigger show count; list page uses `useSelectionLastVisited.hasUnread()`. Caveat: per-device localStorage only, not cross-device |
 | SEL-UI-003 | Redesign desktop Option detail layout | P0 | DONE |
-| SEL-UI-004 | Fix mobile Option detail safe-area and bottom-nav intrusion | P0 | DONE |
-| SEL-UI-005 | Reduce dead/loading feel on Selection detail | P1 | DONE |
+| SEL-UI-004 | Fix mobile Option detail safe-area and bottom-nav intrusion | P0 | DONE — floating bar removed, pb-24 clears bottom nav, bottom sheet has safe-area inset |
+| SEL-UI-005 | Reduce dead/loading feel on Selection detail | P1 | DONE — animate-pulse skeleton with title, pills, card placeholders |
 | SEL-UI-006 | Re-center Selection detail around decision-making | P0 | DONE |
-| SEL-UI-007 | Rework Selection detail header / top information architecture | P0 | DONE |
-| SEL-UI-008 | Clarify Add Option affordance | P1 | DONE |
+| SEL-UI-007 | Rework Selection detail header / top information architecture | P0 | DONE — Desktop: title + comment count + share (Row 1), status/priority/due (Row 2). Mobile: title (Row 1), status/priority + comment trigger (Row 2). Option detail: comment trigger in sticky breadcrumb header |
+| SEL-UI-008 | Clarify Add Option affordance | P1 | DONE — ghost "Add option" card in both desktop and mobile grids |
 | SEL-UI-009 | Make Final Decision a strong, explicit interaction | P0 | DONE |
 | SEL-UI-010 | Remove redundant option-count microcopy | P2 | DONE |
 | SEL-UI-011 | Reassess "Labels" naming and purpose | P2 | DONE |
@@ -33,10 +33,10 @@
 | SEL-UI-013 | Reconsider Group on Selections list | P1 | DONE |
 | SEL-UI-014 | Move Add Selection closer to the table/content | P2 | DONE |
 | SEL-UI-015 | Normalize search/control row heights | P3 | DONE |
-| SEL-UI-016 | Simplify mobile Selection header density | P1 | DONE |
-| SEL-UI-017 | Improve mobile Selection list scanability | P2 | DONE |
+| SEL-UI-016 | Simplify mobile Selection header density | P1 | DONE — mobile header: title + status/priority + inline comment trigger. No floating bar. Reaches options faster |
+| SEL-UI-017 | Improve mobile Selection list scanability | P2 | DONE — removed standalone location, tags row from mobile cards |
 | SEL-UI-018 | Improve list-to-detail continuity | P2 | DONE |
-| SEL-UI-019 | Premium polish pass on spacing, contrast, and weights | P3 | DONE |
+| SEL-UI-019 | Premium polish pass on spacing, contrast, and weights | P3 | DONE — non-placeholder text-cream/25 bumped to /35–/40 across IdeasBoard + OptionDetailContent |
 
 ---
 

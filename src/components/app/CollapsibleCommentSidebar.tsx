@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react'
 import { CommentThread, type RefEntity } from './CommentThread'
 import type { CommentRow } from '@/hooks/useComments'
 
@@ -34,9 +34,15 @@ interface Props {
   currentUserId?: string | null
   /** Comment ID to auto-scroll to and highlight (deep link) */
   highlightCommentId?: string | null
+  /** Whether there are unread comments (from real source of truth) */
+  hasUnread?: boolean
 }
 
-export function CollapsibleCommentSidebar({
+export interface CommentSidebarHandle {
+  openMobileSheet: () => void
+}
+
+export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>(function CollapsibleCommentSidebar({
   title,
   storageKey,
   comments,
@@ -57,7 +63,8 @@ export function CollapsibleCommentSidebar({
   onClearFilter,
   currentUserId,
   highlightCommentId,
-}: Props) {
+  hasUnread: hasUnreadProp,
+}: Props, ref: React.Ref<CommentSidebarHandle>) {
   // Default expanded on first visit
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
@@ -65,10 +72,6 @@ export function CollapsibleCommentSidebar({
     return stored === 'true'
   })
   const [mobileOpen, setMobileOpen] = useState(false)
-
-  // Track unseen count for badge
-  const [lastSeenCount, setLastSeenCount] = useState(comments.length)
-  const unseenCount = collapsed ? Math.max(0, comments.length - lastSeenCount) : 0
 
   // Force expand from parent
   useEffect(() => {
@@ -78,21 +81,19 @@ export function CollapsibleCommentSidebar({
     }
   }, [forceExpand])
 
-  // Reset unseen when expanded
-  useEffect(() => {
-    if (!collapsed) {
-      setLastSeenCount(comments.length)
-    }
-  }, [collapsed, comments.length])
-
   const toggle = useCallback(() => {
     setCollapsed((prev) => {
       const next = !prev
       localStorage.setItem(storageKey, String(next))
-      if (!next) setLastSeenCount(comments.length)
       return next
     })
-  }, [storageKey, comments.length])
+  }, [storageKey])
+
+  const openMobileSheet = useCallback(() => {
+    setMobileOpen(true)
+  }, [])
+
+  useImperativeHandle(ref, () => ({ openMobileSheet }), [openMobileSheet])
 
   const commentCount = comments.length
 
@@ -133,9 +134,9 @@ export function CollapsibleCommentSidebar({
             <svg className="w-4 h-4 text-cream/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            {(commentCount > 0 || unseenCount > 0) && (
+            {(commentCount > 0 || hasUnreadProp) && (
               <span className={`text-[10px] font-medium rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center ${
-                unseenCount > 0
+                hasUnreadProp
                   ? 'bg-sandstone/20 text-sandstone'
                   : 'bg-cream/10 text-cream/40'
               }`}>
@@ -153,31 +154,7 @@ export function CollapsibleCommentSidebar({
         </aside>
       )}
 
-      {/* ===== Mobile: floating button ===== */}
-      {!mobileOpen && (
-        <button
-          type="button"
-          onClick={() => { setMobileOpen(true); setLastSeenCount(comments.length) }}
-          className="md:hidden fixed bottom-20 left-4 right-4 z-40 bg-basalt-50 border border-cream/15 rounded-xl shadow-lg px-4 py-3 flex items-center justify-between active:scale-[0.98] transition-transform"
-        >
-          <span className="flex items-center gap-2 text-sm font-medium text-cream">
-            <svg className="w-4 h-4 text-sandstone/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            {title}
-            {commentCount > 0 && (
-              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-sandstone/20 text-sandstone text-xs font-medium rounded-full">
-                {commentCount}
-              </span>
-            )}
-          </span>
-          <svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M18 15l-6-6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-      )}
-
-      {/* ===== Mobile: bottom sheet ===== */}
+      {/* ===== Mobile: bottom sheet (no floating bar — trigger is rendered by parent in header) ===== */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex items-end">
           <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
@@ -188,5 +165,46 @@ export function CollapsibleCommentSidebar({
         </div>
       )}
     </>
+  )
+})
+
+/**
+ * Inline comment trigger button for use in page headers (mobile + desktop).
+ * Renders a compact chat icon with count badge and optional unread dot.
+ */
+export function CommentTriggerButton({
+  commentCount,
+  hasUnread,
+  onClick,
+  className = '',
+}: {
+  commentCount: number
+  hasUnread?: boolean
+  onClick: () => void
+  className?: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg transition-colors shrink-0 ${
+        hasUnread
+          ? 'bg-sandstone/15 text-sandstone border border-sandstone/25 hover:bg-sandstone/25'
+          : 'bg-cream/5 text-cream/50 hover:text-cream/70 hover:bg-cream/10'
+      } ${className}`}
+      title="Comments"
+    >
+      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      {commentCount > 0 && (
+        <span className={`text-[10px] font-medium ${hasUnread ? 'text-sandstone' : 'text-cream/40'}`}>
+          {commentCount}
+        </span>
+      )}
+      {hasUnread && (
+        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-sandstone rounded-full" />
+      )}
+    </button>
   )
 }
