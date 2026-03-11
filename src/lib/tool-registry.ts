@@ -45,6 +45,14 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
       'Track fixes and share with your contractor.',
     stage: 'Build',
   },
+  {
+    toolKey: 'project_alignment',
+    href: '/app/tools/project-alignment',
+    title: 'Project Alignment',
+    description:
+      'Track scope questions, mismatches, and agreements between you and your contractor.',
+    stage: 'Build',
+  },
 ]
 
 /** toolKey → user-facing title (e.g. "Fix List", "Selection Lists") */

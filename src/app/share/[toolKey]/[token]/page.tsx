@@ -4,6 +4,7 @@ import { TOOL_LABELS } from '@/lib/tool-registry'
 import { PublicPunchlistView } from './PublicPunchlistView'
 import { PublicMoodBoardView } from './PublicMoodBoardView'
 import { PublicFinishDecisionsView } from './PublicFinishDecisionsView'
+import { PublicAlignmentView } from './PublicAlignmentView'
 import { InvalidTokenPage } from './InvalidTokenPage'
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -71,6 +72,17 @@ export default async function SharePage({ params }: Props) {
 
   if (!data) {
     return <InvalidTokenPage />
+  }
+
+  if (toolKey === 'project_alignment') {
+    return (
+      <PublicAlignmentView
+        payload={data.payload}
+        projectName={data.projectName}
+        token={token}
+        allowResponses={(data.payload as Record<string, unknown>).allowResponses === true}
+      />
+    )
   }
 
   if (toolKey === 'finish_decisions') {

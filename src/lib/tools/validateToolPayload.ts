@@ -184,6 +184,19 @@ function validateBeforeYouSign(payload: Record<string, unknown>): ValidationResu
   return { valid: true, payload }
 }
 
+// ── Project Alignment (V1) ──
+
+function validateProjectAlignment(payload: Record<string, unknown>): ValidationResult {
+  if (!Array.isArray(payload.items)) {
+    return { valid: true, payload: { ...payload, items: [], version: 1, nextItemNumber: 1 } }
+  }
+  // Ensure version and nextItemNumber exist
+  const nextItemNumber = typeof payload.nextItemNumber === 'number'
+    ? payload.nextItemNumber
+    : (payload.items as unknown[]).length + 1
+  return { valid: true, payload: { ...payload, version: 1, nextItemNumber } }
+}
+
 // ── Main entry point ──
 
 const VALIDATORS: Record<string, (p: Record<string, unknown>) => ValidationResult> = {
@@ -191,6 +204,7 @@ const VALIDATORS: Record<string, (p: Record<string, unknown>) => ValidationResul
   mood_boards: validateMoodBoards,
   punchlist: validatePunchlist,
   before_you_sign: validateBeforeYouSign,
+  project_alignment: validateProjectAlignment,
 }
 
 /**

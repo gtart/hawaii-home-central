@@ -5,6 +5,7 @@ export const TOOL_LABEL: Record<string, string> = {
   finish_decisions: 'Selections',
   mood_boards: 'Mood Boards',
   before_you_sign: 'Contract Checklist',
+  project_alignment: 'Project Alignment',
 }
 
 export const TOOL_BASE: Record<string, string> = {
@@ -12,6 +13,7 @@ export const TOOL_BASE: Record<string, string> = {
   finish_decisions: '/app/tools/finish-decisions',
   mood_boards: '/app/tools/mood-boards',
   before_you_sign: '/app/tools/before-you-sign',
+  project_alignment: '/app/tools/project-alignment',
 }
 
 export function eventHref(event: ActivityFeedEvent): string {
@@ -42,6 +44,11 @@ export function eventHref(event: ActivityFeedEvent): string {
     return `${collUrl}?highlight=${event.entityId}`
   }
 
+  // Alignment item deep link — open detail
+  if (event.toolKey === 'project_alignment' && event.entityType === 'item' && event.entityId) {
+    return `${collUrl}?item=${event.entityId}`
+  }
+
   // Share token actions — open share modal
   if (event.entityType === 'share_token') {
     return `${collUrl}?openShare=1`
@@ -56,6 +63,7 @@ export const FILTER_CHIPS: { key: string | undefined; label: string }[] = [
   { key: 'finish_decisions', label: 'Selections' },
   { key: 'mood_boards', label: 'Mood Boards' },
   { key: 'before_you_sign', label: 'Contract Checklist' },
+  { key: 'project_alignment', label: 'Project Alignment' },
 ]
 
 /** Group day label for activity list */
