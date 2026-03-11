@@ -45,6 +45,10 @@ interface CollectionsPickerViewProps {
   previewMode?: 'thumbnails' | 'statuses'
   /** Custom empty state rendered instead of the default input when there are zero collections */
   customEmptyState?: (onCreate: (title: string) => void) => React.ReactNode
+  /** Override the default title (tool label) */
+  titleOverride?: string
+  /** Action buttons rendered in the header row (right side, before grid/list toggle) */
+  headerActions?: React.ReactNode
 }
 
 function ThumbnailGrid({ imageUrls }: { imageUrls: string[] }) {
@@ -100,7 +104,7 @@ function ThumbnailGrid({ imageUrls }: { imageUrls: string[] }) {
   )
 }
 
-export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEmptyState }: CollectionsPickerViewProps) {
+export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEmptyState, titleOverride, headerActions }: CollectionsPickerViewProps) {
   const { currentProject } = useProject()
   const router = useRouter()
   const [collections, setCollections] = useState<CollectionSummary[]>([])
@@ -362,9 +366,11 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
     <div>
       {breadcrumb}
       <div className="flex items-center justify-between mb-6 gap-3">
-        <h2 className="font-serif text-2xl text-cream">{toolLabel}</h2>
-        {previewMode && (
-          <div className="hidden md:flex items-center gap-1 bg-basalt border border-cream/10 rounded-lg p-0.5">
+        <h2 className="font-serif text-2xl text-cream">{titleOverride || toolLabel}</h2>
+        <div className="flex items-center gap-2">
+          {headerActions}
+          {previewMode && (
+            <div className="hidden md:flex items-center gap-1 bg-basalt border border-cream/10 rounded-lg p-0.5">
             <button
               type="button"
               onClick={() => { setViewMode('grid'); localStorage.setItem(`hhc-picker-view-${toolKey}`, 'grid') }}
@@ -391,7 +397,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
               </svg>
             </button>
           </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Table view (desktop only) */}
