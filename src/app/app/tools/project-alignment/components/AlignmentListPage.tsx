@@ -9,7 +9,7 @@ import type { AlignmentStateAPI } from '../useAlignmentState'
 import { STATUS_CONFIG, TYPE_CONFIG } from '../constants'
 import { AlignmentItemRow } from './AlignmentItemRow'
 import { AlignmentItemDetail } from './AlignmentItemDetail'
-import { AlignmentCreateForm } from './AlignmentCreateForm'
+import { AlignmentCreateForm, type InitialArtifactLink } from './AlignmentCreateForm'
 
 interface Props {
   api: AlignmentStateAPI
@@ -53,6 +53,35 @@ export function AlignmentListPage({ api, collectionId, commentCounts, onOpenComm
       setSelectedItemId(itemId)
     }
   }, [searchParams, payload.items])
+
+  // Pre-linked creation via sessionStorage (set by "Create Alignment Issue" buttons on other tools)
+  const createFromProcessed = useRef(false)
+  const [pendingLink, setPendingLink] = useState<{ link: InitialArtifactLink; title: string } | null>(null)
+  useEffect(() => {
+    if (createFromProcessed.current) return
+    try {
+      const raw = sessionStorage.getItem('hhc_alignment_create_link')
+      if (!raw) return
+      createFromProcessed.current = true
+      sessionStorage.removeItem('hhc_alignment_create_link')
+      const data = JSON.parse(raw) as {
+        artifact_type: string; entity_label: string; entity_id?: string;
+        tool_key?: string; collection_id?: string
+      }
+      setPendingLink({
+        link: {
+          artifact_type: data.artifact_type as InitialArtifactLink['artifact_type'],
+          relationship: 'references',
+          entity_label: data.entity_label,
+          entity_id: data.entity_id,
+          tool_key: data.tool_key,
+          collection_id: data.collection_id,
+        },
+        title: data.entity_label ? `Re: ${data.entity_label}` : '',
+      })
+      setShowCreate(true)
+    } catch { /* ignore */ }
+  }, [])
 
   // Collect unique areas for filter dropdown
   const areas = useMemo(() => {
@@ -137,8 +166,10 @@ export function AlignmentListPage({ api, collectionId, commentCounts, onOpenComm
     return (
       <AlignmentCreateForm
         api={api}
-        onClose={() => setShowCreate(false)}
+        onClose={() => { setShowCreate(false); setPendingLink(null) }}
         onCreated={(id) => setSelectedItemId(id)}
+        initialTitle={pendingLink?.title}
+        initialLink={pendingLink?.link}
       />
     )
   }

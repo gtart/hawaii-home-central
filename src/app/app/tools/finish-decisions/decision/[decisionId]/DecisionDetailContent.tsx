@@ -38,6 +38,7 @@ import { SelectionShareSheet } from '../../components/SelectionShareSheet'
 import { useSelectionLastVisited } from '@/hooks/useSelectionLastVisited'
 import type { SelectionVisibility, SelectionAccess } from '@/data/finish-decisions'
 import { AlignmentLinkBadge } from '@/components/app/AlignmentLinkBadge'
+import { CreateAlignmentIssueButton } from '@/components/app/CreateAlignmentIssueButton'
 
 function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
   if (!a) return null
@@ -881,8 +882,17 @@ export function DecisionDetailContent({
 
         {/* Cross-tool: alignment items linked to this selection */}
         {currentProject?.id && (
-          <div className="mb-4">
+          <div className="mb-4 space-y-2">
             <AlignmentLinkBadge projectId={currentProject.id} entityId={decisionId} artifactType="selection" />
+            {workspaceAccess !== 'VIEWER' && foundDecision && (
+              <CreateAlignmentIssueButton
+                artifactType="selection"
+                entityId={decisionId}
+                entityLabel={foundDecision.title}
+                toolKey="finish_decisions"
+                collectionId={collectionId}
+              />
+            )}
           </div>
         )}
 

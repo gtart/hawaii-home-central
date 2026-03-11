@@ -1,19 +1,35 @@
 'use client'
 
 import { useState } from 'react'
-import type { AlignmentItemType, WaitingOnRole } from '@/data/alignment'
+import type { AlignmentItemType, AlignmentArtifactLink, WaitingOnRole } from '@/data/alignment'
 import type { AlignmentStateAPI } from '../useAlignmentState'
 import { TYPE_CONFIG, WAITING_ON_CONFIG } from '../constants'
+
+/** Pre-populated artifact link to attach on creation (e.g. from Fix Item / Selection detail). */
+export interface InitialArtifactLink {
+  artifact_type: AlignmentArtifactLink['artifact_type']
+  relationship: AlignmentArtifactLink['relationship']
+  entity_label: string
+  entity_id?: string
+  tool_key?: string
+  collection_id?: string
+}
 
 interface Props {
   api: AlignmentStateAPI
   onClose: () => void
   onCreated?: (id: string) => void
+  /** Pre-fill title */
+  initialTitle?: string
+  /** Pre-fill current issue */
+  initialIssue?: string
+  /** Auto-attach an artifact link on creation */
+  initialLink?: InitialArtifactLink
 }
 
-export function AlignmentCreateForm({ api, onClose, onCreated }: Props) {
-  const [title, setTitle] = useState('')
-  const [currentIssue, setCurrentIssue] = useState('')
+export function AlignmentCreateForm({ api, onClose, onCreated, initialTitle, initialIssue, initialLink }: Props) {
+  const [title, setTitle] = useState(initialTitle || '')
+  const [currentIssue, setCurrentIssue] = useState(initialIssue || '')
   const [type, setType] = useState<AlignmentItemType>('open_question')
   const [areaLabel, setAreaLabel] = useState('')
   const [waitingOn, setWaitingOn] = useState<WaitingOnRole>('none')
@@ -35,6 +51,17 @@ export function AlignmentCreateForm({ api, onClose, onCreated }: Props) {
       original_expectation: originalExpectation.trim(),
       proposed_resolution: proposedResolution.trim(),
     })
+    // Auto-attach pre-populated artifact link (e.g. from Fix Item / Selection detail)
+    if (initialLink) {
+      api.addArtifactLink(id, {
+        artifact_type: initialLink.artifact_type,
+        relationship: initialLink.relationship,
+        entity_label: initialLink.entity_label,
+        entity_id: initialLink.entity_id,
+        tool_key: initialLink.tool_key,
+        collection_id: initialLink.collection_id,
+      })
+    }
     onCreated?.(id)
     onClose()
   }
@@ -53,6 +80,19 @@ export function AlignmentCreateForm({ api, onClose, onCreated }: Props) {
       <p className="text-xs text-cream/40 -mt-2">
         What&apos;s unclear, what changed, or where do you and your contractor disagree?
       </p>
+
+      {/* Pre-linked artifact indicator */}
+      {initialLink && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-400/5 border border-amber-400/10">
+          <svg className="w-3.5 h-3.5 text-amber-400/60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="text-[11px] text-amber-400/70">
+            Will link to: <span className="text-cream/60 font-medium">{initialLink.entity_label}</span>
+          </span>
+        </div>
+      )}
 
       {/* Title — required */}
       <div>

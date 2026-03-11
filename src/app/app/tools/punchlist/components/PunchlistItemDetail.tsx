@@ -11,6 +11,7 @@ import { PhotoLightbox } from './PhotoLightbox'
 import { uploadFile } from '../utils'
 import { DestinationPicker } from '@/components/app/DestinationPicker'
 import { AlignmentLinkBadge } from '@/components/app/AlignmentLinkBadge'
+import { CreateAlignmentIssueButton } from '@/components/app/CreateAlignmentIssueButton'
 import { useCollectionTransfer } from '@/hooks/useCollectionTransfer'
 
 type EditingField = 'title' | 'location' | 'assignee' | 'priority' | 'notes' | null
@@ -435,7 +436,18 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
 
           {/* Cross-tool: alignment items linked to this fix item */}
           {projectId && (
-            <AlignmentLinkBadge projectId={projectId} entityId={item.id} artifactType="fix_item" />
+            <div className="space-y-2">
+              <AlignmentLinkBadge projectId={projectId} entityId={item.id} artifactType="fix_item" />
+              {!readOnly && (
+                <CreateAlignmentIssueButton
+                  artifactType="fix_item"
+                  entityId={item.id}
+                  entityLabel={item.title}
+                  toolKey="punchlist"
+                  collectionId={collectionId}
+                />
+              )}
+            </div>
           )}
 
           {/* Comments preview */}
