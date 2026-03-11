@@ -12,6 +12,8 @@ interface Props {
 
 export function PublicAlignmentView({ payload, projectName, token, allowResponses }: Props) {
   const items = (Array.isArray(payload.items) ? payload.items : []) as PublicAlignmentItem[]
+  const activeItems = items.filter((i) => !i.superseded)
+  const supersededItems = items.filter((i) => i.superseded)
 
   return (
     <div className="min-h-screen bg-basalt">
@@ -21,20 +23,25 @@ export function PublicAlignmentView({ payload, projectName, token, allowResponse
           <p className="text-xs text-cream/30 mb-1">Shared from Hawaii Home Central</p>
           <h1 className="font-serif text-2xl text-cream">{projectName} — Project Alignment</h1>
           <p className="text-sm text-cream/40 mt-1">
-            {items.length} item{items.length !== 1 ? 's' : ''} shared for your review
-            {allowResponses && ' — you can respond below'}
+            {activeItems.length} item{activeItems.length !== 1 ? 's' : ''} shared for your review
+            {allowResponses && ' — you can respond to each item below'}
           </p>
+          {allowResponses && (
+            <p className="text-xs text-cream/25 mt-2">
+              Your responses help resolve scope questions and mismatches. Each response is recorded with your name.
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Items */}
+      {/* Active Items */}
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-        {items.length === 0 ? (
+        {activeItems.length === 0 ? (
           <div className="text-center py-12 text-cream/30 text-sm">
             No items to display.
           </div>
         ) : (
-          items.map((item) => (
+          activeItems.map((item) => (
             <PublicAlignmentItemCard
               key={item.itemNumber}
               item={item}
@@ -42,6 +49,11 @@ export function PublicAlignmentView({ payload, projectName, token, allowResponse
               allowResponses={allowResponses}
             />
           ))
+        )}
+
+        {/* Superseded items — collapsed section */}
+        {supersededItems.length > 0 && (
+          <SupersededSection items={supersededItems} token={token} />
         )}
       </div>
 
@@ -51,6 +63,37 @@ export function PublicAlignmentView({ payload, projectName, token, allowResponse
           This is a shared view from Hawaii Home Central. This is not a legal document.
         </p>
       </div>
+    </div>
+  )
+}
+
+function SupersededSection({ items, token }: { items: PublicAlignmentItem[]; token: string }) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <div className="border-t border-cream/8 pt-6">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 text-xs text-cream/25 hover:text-cream/40 transition-colors mb-4"
+      >
+        <svg className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        {items.length} superseded item{items.length !== 1 ? 's' : ''} (no longer current)
+      </button>
+      {isOpen && (
+        <div className="space-y-4 opacity-60">
+          {items.map((item) => (
+            <PublicAlignmentItemCard
+              key={item.itemNumber}
+              item={item}
+              token={token}
+              allowResponses={false}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -66,28 +109,45 @@ function PublicAlignmentItemCard({
 }) {
   const [showResponseForm, setShowResponseForm] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const isSuperseded = item.superseded
 
   return (
-    <div className="rounded-xl border border-cream/10 bg-basalt-50 overflow-hidden">
+    <div className={`rounded-xl border overflow-hidden ${isSuperseded ? 'border-cream/5 bg-basalt-50/50' : 'border-cream/10 bg-basalt-50'}`}>
       {/* Header */}
       <div className="px-5 py-4 border-b border-cream/8">
         <div className="flex items-start gap-3">
           <span className="text-xs text-cream/30 font-mono mt-0.5">#{item.itemNumber}</span>
           <div className="flex-1">
-            <h3 className="text-base font-serif text-cream">{item.title}</h3>
+            <h3 className={`text-base font-serif ${isSuperseded ? 'text-cream/50 line-through decoration-cream/20' : 'text-cream'}`}>{item.title}</h3>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className="text-[11px] text-cream/50 bg-cream/5 px-2 py-0.5 rounded-full">{item.status.replace(/_/g, ' ')}</span>
               {item.area_label && <span className="text-[11px] text-cream/30">{item.area_label}</span>}
+              {item.waiting_on_role !== 'none' && (
+                <span className="text-[11px] text-cream/40">
+                  Waiting on: <span className="text-cream/60">{item.waiting_on_role}</span>
+                </span>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {isSuperseded && (
+        <div className="px-5 py-2.5 bg-cream/[0.02] border-b border-cream/5">
+          <p className="text-xs text-cream/30 italic">This item has been superseded by a newer version.</p>
+        </div>
+      )}
 
       {/* Agreed Answer */}
       {item.current_agreed_answer && (
         <div className="px-5 py-3 bg-emerald-400/5 border-b border-emerald-400/10">
           <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400/60 mb-1">Current Agreed Answer</p>
           <p className="text-sm text-cream leading-relaxed">{item.current_agreed_answer}</p>
+          {item.answer_updated_at && (
+            <p className="text-[10px] text-emerald-400/30 mt-1">
+              Updated {new Date(item.answer_updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </p>
+          )}
         </div>
       )}
 
@@ -107,6 +167,40 @@ function PublicAlignmentItemCard({
           <div>
             <p className="text-xs font-medium text-cream/40 mb-1">Proposed Resolution</p>
             <p className="text-sm text-cream/70 leading-relaxed whitespace-pre-wrap">{item.proposed_resolution}</p>
+          </div>
+        )}
+
+        {/* Scope Clarity */}
+        {(item.what_changed || item.what_did_not_change || item.whats_still_open) && (
+          <div className="border-t border-cream/8 pt-3 mt-3 space-y-2">
+            <p className="text-xs font-medium text-cream/40">Scope Clarity</p>
+            {item.what_changed && (
+              <div className="flex gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+                <div>
+                  <span className="text-[11px] text-cream/40">Changed:</span>
+                  <p className="text-sm text-cream/70">{item.what_changed}</p>
+                </div>
+              </div>
+            )}
+            {item.what_did_not_change && (
+              <div className="flex gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                <div>
+                  <span className="text-[11px] text-cream/40">Unchanged:</span>
+                  <p className="text-sm text-cream/70">{item.what_did_not_change}</p>
+                </div>
+              </div>
+            )}
+            {item.whats_still_open && (
+              <div className="flex gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 shrink-0" />
+                <div>
+                  <span className="text-[11px] text-cream/40">Still open:</span>
+                  <p className="text-sm text-cream/70">{item.whats_still_open}</p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -143,6 +237,11 @@ function PublicAlignmentItemCard({
             {item.guest_responses.map((resp) => (
               <div key={resp.id} className="text-xs text-cream/50 mb-2 pl-3 border-l-2 border-cream/10">
                 <span className="font-medium text-cream/60">{resp.respondent_name}</span>
+                {resp.included_not_included_unsure && (
+                  <span className="ml-1 text-cream/40">
+                    ({resp.included_not_included_unsure === 'included' ? 'In scope' : resp.included_not_included_unsure === 'not_included' ? 'Not in scope' : 'Unsure'})
+                  </span>
+                )}
                 {resp.suggested_resolution && <span> — {resp.suggested_resolution}</span>}
                 {resp.note && <span> — {resp.note}</span>}
               </div>
@@ -152,7 +251,7 @@ function PublicAlignmentItemCard({
       </div>
 
       {/* Response form */}
-      {allowResponses && !submitted && (
+      {allowResponses && !submitted && !isSuperseded && (
         <div className="px-5 py-4 border-t border-cream/8">
           {showResponseForm ? (
             <GuestResponseForm
@@ -243,6 +342,7 @@ function GuestResponseForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <h4 className="text-xs font-semibold uppercase tracking-wider text-cream/40">Your Response</h4>
+      <p className="text-[11px] text-cream/25">Share your perspective on this scope issue. Your name and response will be visible to the homeowner.</p>
 
       <div>
         <label className="block text-[11px] text-cream/30 mb-1">Your Name *</label>
@@ -280,7 +380,7 @@ function GuestResponseForm({
         </select>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-[11px] text-cream/30 mb-1">Cost impact</label>
           <input

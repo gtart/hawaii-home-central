@@ -104,6 +104,16 @@ export interface AlignmentItem {
   created_at: string
   updated_at: string
   resolved_at?: string
+  // Phase 1.5 — current-truth metadata
+  answer_updated_at?: string          // when agreed answer was last changed
+  answer_updated_by_name?: string     // who last changed agreed answer
+  // Phase 1.5 — scope clarity fields (WS5)
+  what_changed?: string               // what changed from original scope
+  what_did_not_change?: string        // what remains as originally agreed
+  whats_still_open?: string           // what is still unresolved
+  // Thin Phase 2 — superseded linking (WS4)
+  superseded_by_id?: string           // item ID that supersedes this one
+  supersedes_id?: string              // item ID this supersedes
 }
 
 export interface AlignmentPayload {
@@ -171,15 +181,20 @@ export interface PublicAlignmentItem {
   original_expectation?: string
   proposed_resolution?: string
   current_agreed_answer?: string
+  answer_updated_at?: string
   cost_impact_status: CostImpactStatus
   cost_impact_amount_text?: string
   schedule_impact_status: ScheduleImpactStatus
   schedule_impact_text?: string
   waiting_on_role: WaitingOnRole
+  what_changed?: string
+  what_did_not_change?: string
+  whats_still_open?: string
   photos: { url: string; thumbnailUrl?: string }[]
   guest_responses: AlignmentGuestResponse[]
   created_at: string
   resolved_at?: string
+  superseded: boolean
 }
 
 /** Whitelist-map a full AlignmentItem to a safe public shape. */
@@ -198,16 +213,21 @@ export function toPublicAlignmentItem(
     original_expectation: opts.includeNotes ? item.original_expectation || undefined : undefined,
     proposed_resolution: opts.includeNotes ? item.proposed_resolution || undefined : undefined,
     current_agreed_answer: item.current_agreed_answer || undefined,
+    answer_updated_at: item.answer_updated_at || undefined,
     cost_impact_status: item.cost_impact_status,
     cost_impact_amount_text: item.cost_impact_amount_text || undefined,
     schedule_impact_status: item.schedule_impact_status,
     schedule_impact_text: item.schedule_impact_text || undefined,
     waiting_on_role: item.waiting_on_role,
+    what_changed: item.what_changed || undefined,
+    what_did_not_change: item.what_did_not_change || undefined,
+    whats_still_open: item.whats_still_open || undefined,
     photos: opts.includePhotos
       ? item.photos.map((p) => ({ url: p.url, thumbnailUrl: p.thumbnailUrl }))
       : [],
     guest_responses: item.guest_responses,
     created_at: item.created_at,
     resolved_at: item.resolved_at,
+    superseded: item.status === 'superseded',
   }
 }

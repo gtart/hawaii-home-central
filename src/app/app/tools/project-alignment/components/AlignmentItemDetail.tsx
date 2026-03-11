@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { AlignmentItem, AlignmentItemStatus, AlignmentItemType, CostImpactStatus, ScheduleImpactStatus, WaitingOnRole } from '@/data/alignment'
+import { RESOLVED_STATUSES } from '@/data/alignment'
 import type { RefEntity } from '@/components/app/CommentThread'
 import type { AlignmentStateAPI } from '../useAlignmentState'
 import { STATUS_CONFIG, TYPE_CONFIG, COST_IMPACT_CONFIG, SCHEDULE_IMPACT_CONFIG, WAITING_ON_CONFIG } from '../constants'
@@ -19,18 +20,30 @@ interface Props {
 }
 
 export function AlignmentItemDetail({ item, api, collectionId, onBack, onOpenComments, commentCount }: Props) {
-  const { readOnly } = api
+  const { readOnly, payload } = api
   const statusCfg = STATUS_CONFIG[item.status]
   const typeCfg = TYPE_CONFIG[item.type]
+
+  const isSuperseded = item.status === 'superseded'
+  const isResolved = RESOLVED_STATUSES.has(item.status)
+  const supersededByItem = isSuperseded && item.superseded_by_id ? payload.items.find((i) => i.id === item.superseded_by_id) : null
+  const supersedesItem = item.supersedes_id ? payload.items.find((i) => i.id === item.supersedes_id) : null
+
+  // Source-of-truth links
+  const sotLinks = item.artifact_links.filter((l) => l.relationship === 'source_of_truth')
 
   // Collapsible sections
   const [showOriginal, setShowOriginal] = useState(!!item.original_expectation)
   const [showProposed, setShowProposed] = useState(!!item.proposed_resolution)
+  const [showScopeClarity, setShowScopeClarity] = useState(!!(item.what_changed || item.what_did_not_change || item.whats_still_open))
   const [showDelete, setShowDelete] = useState(false)
 
-  // Editable state for inline editing
+  // Inline editing state
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
+
+  // Supersede flow
+  const [showSupersedeSelect, setShowSupersedeSelect] = useState(false)
 
   function startEdit(field: string, value: string) {
     if (readOnly) return
@@ -55,7 +68,7 @@ export function AlignmentItemDetail({ item, api, collectionId, onBack, onOpenCom
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 max-w-3xl">
       {/* Back button */}
       <button
         type="button"
@@ -67,6 +80,26 @@ export function AlignmentItemDetail({ item, api, collectionId, onBack, onOpenCom
         </svg>
         Back to list
       </button>
+
+      {/* ── Superseded banner ── */}
+      {isSuperseded && (
+        <div className="rounded-xl border border-cream/10 bg-cream/[0.03] p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+            </svg>
+            <span className="text-sm font-medium text-cream/50">This item has been superseded</span>
+          </div>
+          {supersededByItem && (
+            <p className="text-xs text-cream/40 ml-6">
+              Replaced by <span className="text-cream/60">#{supersededByItem.itemNumber}: {supersededByItem.title}</span>
+            </p>
+          )}
+          <p className="text-xs text-cream/25 ml-6 mt-1">
+            This item is kept for reference. The newer item contains the current understanding.
+          </p>
+        </div>
+      )}
 
       {/* ── 1. Header ── */}
       <div className="flex items-start gap-3">
@@ -84,8 +117,8 @@ export function AlignmentItemDetail({ item, api, collectionId, onBack, onOpenCom
             />
           ) : (
             <h2
-              className={`text-lg font-serif text-cream ${!readOnly ? 'cursor-pointer hover:text-sandstone transition-colors' : ''}`}
-              onClick={() => startEdit('title', item.title)}
+              className={`text-lg font-serif ${isSuperseded ? 'text-cream/50 line-through decoration-cream/20' : 'text-cream'} ${!readOnly && !isSuperseded ? 'cursor-pointer hover:text-sandstone transition-colors' : ''}`}
+              onClick={() => !isSuperseded && startEdit('title', item.title)}
             >
               {item.title}
             </h2>
@@ -126,10 +159,45 @@ export function AlignmentItemDetail({ item, api, collectionId, onBack, onOpenCom
         )}
       </div>
 
+      {/* ── Supersedes note ── */}
+      {supersedesItem && (
+        <div className="rounded-lg border border-cream/8 bg-cream/[0.02] px-4 py-2.5 text-xs text-cream/40">
+          This item supersedes <span className="text-cream/60">#{supersedesItem.itemNumber}: {supersedesItem.title}</span>
+        </div>
+      )}
+
+      {/* ── Source of Truth links (surfaced prominently) ── */}
+      {sotLinks.length > 0 && (
+        <div className="rounded-xl border border-blue-400/15 bg-blue-400/5 p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-blue-400/60 mb-2">Source of Truth</h3>
+          <div className="space-y-1.5">
+            {sotLinks.map((link) => (
+              <div key={link.id} className="flex items-center gap-2 text-sm">
+                <span className="text-[10px] text-blue-400/40 bg-blue-400/10 px-1.5 py-0.5 rounded">
+                  {link.artifact_type === 'external_link' ? 'Link' : link.artifact_type}
+                </span>
+                {link.url ? (
+                  <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-blue-400/80 hover:text-blue-400 transition-colors">
+                    {link.entity_label}
+                  </a>
+                ) : (
+                  <span className="text-cream/70">{link.entity_label}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── 2. Current Agreed Answer — PROMINENT ── */}
-      <div className="rounded-xl border-2 border-emerald-400/20 bg-emerald-400/5 p-4">
+      <div className={`rounded-xl border-2 p-4 ${isResolved && item.current_agreed_answer ? 'border-emerald-400/30 bg-emerald-400/8' : 'border-emerald-400/20 bg-emerald-400/5'}`}>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-400/70">Current Agreed Answer</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-400/70">Current Agreed Answer</h3>
+            {isResolved && item.current_agreed_answer && (
+              <span className="text-[10px] text-emerald-400/50 bg-emerald-400/10 px-1.5 py-0.5 rounded-full">Settled</span>
+            )}
+          </div>
           {!readOnly && item.current_agreed_answer && editingField !== 'current_agreed_answer' && (
             <button
               type="button"
@@ -150,7 +218,15 @@ export function AlignmentItemDetail({ item, api, collectionId, onBack, onOpenCom
             autoFocus
           />
         ) : item.current_agreed_answer ? (
-          <p className="text-sm text-cream leading-relaxed">{item.current_agreed_answer}</p>
+          <div>
+            <p className="text-sm text-cream leading-relaxed">{item.current_agreed_answer}</p>
+            {item.answer_updated_at && (
+              <p className="text-[10px] text-emerald-400/35 mt-2">
+                Last updated {new Date(item.answer_updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {item.answer_updated_by_name && ` by ${item.answer_updated_by_name}`}
+              </p>
+            )}
+          </div>
         ) : (
           <button
             type="button"
@@ -177,7 +253,61 @@ export function AlignmentItemDetail({ item, api, collectionId, onBack, onOpenCom
         onCancel={() => setEditingField(null)}
       />
 
-      {/* ── 4. Original Expectation — collapsible ── */}
+      {/* ── 4. Scope Clarity — what changed / what didn't / what's still open (WS5) ── */}
+      <CollapsibleSection
+        title="Scope Clarity"
+        isOpen={showScopeClarity}
+        onToggle={() => setShowScopeClarity(!showScopeClarity)}
+        hasContent={!!(item.what_changed || item.what_did_not_change || item.whats_still_open)}
+        hint="What changed, what didn't, what's still open"
+      >
+        <div className="space-y-3">
+          <ScopeField
+            label="What Changed"
+            value={item.what_changed || ''}
+            fieldKey="what_changed"
+            editingField={editingField}
+            editValue={editValue}
+            readOnly={readOnly}
+            onStartEdit={startEdit}
+            onSaveEdit={saveEdit}
+            onChangeValue={setEditValue}
+            onCancel={() => setEditingField(null)}
+            placeholder="What is different from the original scope or plan?"
+            dotColor="bg-amber-400"
+          />
+          <ScopeField
+            label="What Did Not Change"
+            value={item.what_did_not_change || ''}
+            fieldKey="what_did_not_change"
+            editingField={editingField}
+            editValue={editValue}
+            readOnly={readOnly}
+            onStartEdit={startEdit}
+            onSaveEdit={saveEdit}
+            onChangeValue={setEditValue}
+            onCancel={() => setEditingField(null)}
+            placeholder="What remains as originally agreed?"
+            dotColor="bg-emerald-400"
+          />
+          <ScopeField
+            label="What's Still Open"
+            value={item.whats_still_open || ''}
+            fieldKey="whats_still_open"
+            editingField={editingField}
+            editValue={editValue}
+            readOnly={readOnly}
+            onStartEdit={startEdit}
+            onSaveEdit={saveEdit}
+            onChangeValue={setEditValue}
+            onCancel={() => setEditingField(null)}
+            placeholder="What is still unresolved or needs clarification?"
+            dotColor="bg-rose-400"
+          />
+        </div>
+      </CollapsibleSection>
+
+      {/* ── 5. Original Expectation — collapsible ── */}
       <CollapsibleSection
         title="Original Expectation"
         isOpen={showOriginal}
@@ -198,7 +328,7 @@ export function AlignmentItemDetail({ item, api, collectionId, onBack, onOpenCom
         />
       </CollapsibleSection>
 
-      {/* ── 5. Proposed Resolution — collapsible ── */}
+      {/* ── 6. Proposed Resolution — collapsible ── */}
       <CollapsibleSection
         title="Proposed Resolution"
         isOpen={showProposed}
@@ -219,7 +349,7 @@ export function AlignmentItemDetail({ item, api, collectionId, onBack, onOpenCom
         />
       </CollapsibleSection>
 
-      {/* ── 6. Cost / Schedule Impact ── */}
+      {/* ── 7. Cost / Schedule Impact ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="rounded-xl border border-cream/8 bg-basalt-50 p-4">
           <h4 className="text-xs font-medium text-cream/40 mb-2">Cost Impact</h4>
@@ -287,13 +417,13 @@ export function AlignmentItemDetail({ item, api, collectionId, onBack, onOpenCom
         </div>
       </div>
 
-      {/* ── 7. Related Artifacts ── */}
+      {/* ── 8. Related Artifacts ── */}
       <ArtifactLinkSection item={item} api={api} />
 
-      {/* ── 8. Evidence / Photos ── */}
+      {/* ── 9. Evidence / Photos ── */}
       <EvidencePhotos item={item} api={api} collectionId={collectionId} />
 
-      {/* ── 9. Guest Responses ── */}
+      {/* ── 10. Guest Responses ── */}
       {item.guest_responses.length > 0 && (
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-cream/40 mb-3">
@@ -307,7 +437,7 @@ export function AlignmentItemDetail({ item, api, collectionId, onBack, onOpenCom
         </div>
       )}
 
-      {/* ── Status / metadata controls ── */}
+      {/* ── Item Settings ── */}
       {!readOnly && (
         <div className="rounded-xl border border-cream/8 bg-basalt-50 p-4 space-y-3">
           <h4 className="text-xs font-medium text-cream/40 mb-2">Item Settings</h4>
@@ -370,6 +500,50 @@ export function AlignmentItemDetail({ item, api, collectionId, onBack, onOpenCom
             />
           </div>
 
+          {/* Supersede action */}
+          {!isSuperseded && (
+            <div className="pt-2 border-t border-cream/8">
+              {showSupersedeSelect ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-cream/40">Mark as superseded by which item?</p>
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        api.markSuperseded(item.id, e.target.value)
+                        onBack()
+                      }
+                    }}
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-basalt border border-cream/10 text-cream text-sm focus:outline-none"
+                    defaultValue=""
+                  >
+                    <option value="">Select item...</option>
+                    {payload.items
+                      .filter((i) => i.id !== item.id && i.status !== 'superseded')
+                      .map((i) => (
+                        <option key={i.id} value={i.id}>#{i.itemNumber}: {i.title}</option>
+                      ))
+                    }
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowSupersedeSelect(false)}
+                    className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowSupersedeSelect(true)}
+                  className="text-xs text-cream/30 hover:text-cream/50 transition-colors"
+                >
+                  Mark as superseded...
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Delete */}
           <div className="pt-2 border-t border-cream/8">
             {showDelete ? (
@@ -404,7 +578,7 @@ export function AlignmentItemDetail({ item, api, collectionId, onBack, onOpenCom
       )}
 
       {/* Timestamps */}
-      <div className="text-[11px] text-cream/20 flex items-center gap-4">
+      <div className="text-[11px] text-cream/20 flex items-center gap-4 flex-wrap">
         <span>Created {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
         <span>Updated {new Date(item.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
         {item.resolved_at && (
@@ -490,17 +664,95 @@ function Section({
   )
 }
 
+function ScopeField({
+  label,
+  value,
+  fieldKey,
+  editingField,
+  editValue,
+  readOnly,
+  onStartEdit,
+  onSaveEdit,
+  onChangeValue,
+  onCancel,
+  placeholder,
+  dotColor,
+}: {
+  label: string
+  value: string
+  fieldKey: string
+  editingField: string | null
+  editValue: string
+  readOnly: boolean
+  onStartEdit: (field: string, value: string) => void
+  onSaveEdit: (field: string) => void
+  onChangeValue: (v: string) => void
+  onCancel: () => void
+  placeholder: string
+  dotColor: string
+}) {
+  const isEditing = editingField === fieldKey
+
+  return (
+    <div className="flex gap-3">
+      <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${dotColor}`} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-0.5">
+          <span className="text-[11px] font-medium text-cream/50">{label}</span>
+          {!readOnly && value && !isEditing && (
+            <button
+              type="button"
+              onClick={() => onStartEdit(fieldKey, value)}
+              className="text-[10px] text-cream/25 hover:text-cream/50 transition-colors"
+            >
+              Edit
+            </button>
+          )}
+        </div>
+        {isEditing ? (
+          <textarea
+            value={editValue}
+            onChange={(e) => onChangeValue(e.target.value)}
+            onBlur={() => onSaveEdit(fieldKey)}
+            onKeyDown={(e) => { if (e.key === 'Escape') onCancel() }}
+            rows={2}
+            className="w-full px-3 py-2 rounded-lg bg-basalt border border-cream/10 text-cream text-sm focus:outline-none focus:border-sandstone/40 resize-none"
+            autoFocus
+          />
+        ) : value ? (
+          <p
+            className={`text-sm text-cream/70 leading-relaxed whitespace-pre-wrap ${!readOnly ? 'cursor-pointer hover:text-cream/90 transition-colors' : ''}`}
+            onClick={() => !readOnly && onStartEdit(fieldKey, value)}
+          >
+            {value}
+          </p>
+        ) : !readOnly ? (
+          <button
+            type="button"
+            onClick={() => onStartEdit(fieldKey, '')}
+            className="text-sm text-cream/20 hover:text-cream/40 italic transition-colors"
+          >
+            {placeholder}
+          </button>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 function CollapsibleSection({
   title,
   isOpen,
   onToggle,
   hasContent,
+  hint,
   children,
 }: {
   title: string
   isOpen: boolean
   onToggle: () => void
   hasContent: boolean
+  hint?: string
   children: React.ReactNode
 }) {
   return (
@@ -510,7 +762,12 @@ function CollapsibleSection({
         onClick={onToggle}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-cream/[0.02] transition-colors"
       >
-        <span className="text-xs font-semibold uppercase tracking-wider text-cream/40">{title}</span>
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-wider text-cream/40">{title}</span>
+          {hint && !isOpen && !hasContent && (
+            <span className="text-[10px] text-cream/15 ml-2">{hint}</span>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           {!isOpen && !hasContent && (
             <span className="text-[10px] text-cream/20">Empty</span>

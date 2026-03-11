@@ -5,25 +5,31 @@ import { STATUS_CONFIG, TYPE_CONFIG, COST_IMPACT_CONFIG, WAITING_ON_CONFIG } fro
 
 interface Props {
   item: AlignmentItem
+  allItems: AlignmentItem[]
   commentCount: number
   isSelected: boolean
   onClick: () => void
 }
 
-export function AlignmentItemRow({ item, commentCount, isSelected, onClick }: Props) {
+export function AlignmentItemRow({ item, allItems, commentCount, isSelected, onClick }: Props) {
   const statusCfg = STATUS_CONFIG[item.status]
   const typeCfg = TYPE_CONFIG[item.type]
   const costCfg = COST_IMPACT_CONFIG[item.cost_impact_status]
   const waitingCfg = WAITING_ON_CONFIG[item.waiting_on_role]
 
   const updatedAgo = formatRelative(item.updated_at)
+  const isSuperseded = item.status === 'superseded'
+  const supersededBy = isSuperseded && item.superseded_by_id ? allItems.find((i) => i.id === item.superseded_by_id) : null
+  const hasOpenScopeQuestions = !!(item.whats_still_open)
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={`w-full text-left p-4 rounded-xl border transition-colors ${
-        isSelected
+        isSuperseded
+          ? 'border-cream/5 bg-basalt-50/50 opacity-60'
+          : isSelected
           ? 'border-sandstone/30 bg-sandstone/5'
           : 'border-cream/8 bg-basalt-50 hover:border-cream/15 hover:bg-cream/[0.02]'
       }`}
@@ -31,19 +37,33 @@ export function AlignmentItemRow({ item, commentCount, isSelected, onClick }: Pr
       {/* Top row: number, title, status */}
       <div className="flex items-start gap-3 mb-2">
         <span className="text-xs text-cream/30 font-mono mt-0.5 shrink-0">#{item.itemNumber}</span>
-        <h4 className="flex-1 text-sm font-medium text-cream leading-snug line-clamp-2">{item.title}</h4>
+        <h4 className={`flex-1 text-sm font-medium leading-snug line-clamp-2 ${isSuperseded ? 'text-cream/50 line-through decoration-cream/20' : 'text-cream'}`}>
+          {item.title}
+        </h4>
         <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium shrink-0 ${statusCfg.bg} ${statusCfg.text}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
           {statusCfg.label}
         </span>
       </div>
 
+      {/* Superseded note */}
+      {supersededBy && (
+        <div className="mb-2 ml-7 text-[11px] text-cream/30 italic">
+          Replaced by #{supersededBy.itemNumber}: {supersededBy.title}
+        </div>
+      )}
+
       {/* Current agreed answer preview */}
-      {item.current_agreed_answer && (
+      {item.current_agreed_answer && !isSuperseded && (
         <div className="mb-2 ml-7 px-2.5 py-1.5 rounded-lg bg-emerald-400/5 border border-emerald-400/10">
           <p className="text-xs text-emerald-400/80 line-clamp-1">
             <span className="font-medium">Agreed:</span> {item.current_agreed_answer}
           </p>
+          {item.answer_updated_at && (
+            <span className="text-[10px] text-emerald-400/40 mt-0.5 block">
+              Updated {formatRelative(item.answer_updated_at)}
+            </span>
+          )}
         </div>
       )}
 
@@ -63,6 +83,9 @@ export function AlignmentItemRow({ item, commentCount, isSelected, onClick }: Pr
             Cost: {costCfg.label}
             {item.cost_impact_amount_text && ` (${item.cost_impact_amount_text})`}
           </span>
+        )}
+        {hasOpenScopeQuestions && (
+          <span className="text-[11px] text-amber-400/70">Still open</span>
         )}
         {commentCount > 0 && (
           <span className="text-[11px] text-cream/30 flex items-center gap-1">

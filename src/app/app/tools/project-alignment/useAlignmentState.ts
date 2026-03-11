@@ -145,8 +145,9 @@ export function useAlignmentState(opts?: { collectionId?: string | null }) {
         })
       }
 
-      // Log agreed answer changes
+      // Log agreed answer changes + auto-set answer metadata
       if (updates.current_agreed_answer !== undefined && updates.current_agreed_answer !== item?.current_agreed_answer) {
+        updates.answer_updated_at = now()
         events.push({
           action: 'answer_updated',
           entityType: 'item',
@@ -184,6 +185,35 @@ export function useAlignmentState(opts?: { collectionId?: string | null }) {
       }))
     },
     [setState]
+  )
+
+  // ── Supersede ──
+
+  const markSuperseded = useCallback(
+    (oldItemId: string, newItemId: string) => {
+      const oldItem = payload.items.find((i) => i.id === oldItemId)
+      const newItem = payload.items.find((i) => i.id === newItemId)
+      const events: ActivityEventHint[] = [{
+        action: 'status_changed',
+        entityType: 'item',
+        entityId: oldItemId,
+        summaryText: `#${oldItem?.itemNumber} superseded by #${newItem?.itemNumber}: "${newItem?.title}"`,
+        entityLabel: oldItem?.title || 'item',
+      }]
+      setState((prev) => ({
+        ...prev,
+        items: prev.items.map((it) => {
+          if (it.id === oldItemId) {
+            return { ...it, status: 'superseded' as AlignmentItemStatus, superseded_by_id: newItemId, resolved_at: it.resolved_at || now(), updated_at: now() }
+          }
+          if (it.id === newItemId) {
+            return { ...it, supersedes_id: oldItemId, updated_at: now() }
+          }
+          return it
+        }),
+      }), events)
+    },
+    [setState, payload.items]
   )
 
   // ── Artifact Links ──
@@ -270,6 +300,7 @@ export function useAlignmentState(opts?: { collectionId?: string | null }) {
     addItem,
     updateItem,
     deleteItem,
+    markSuperseded,
     addArtifactLink,
     removeArtifactLink,
     addPhoto,

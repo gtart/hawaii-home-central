@@ -30,6 +30,10 @@ export function ArtifactLinkSection({ item, api }: Props) {
   const { readOnly } = api
   const [showAdd, setShowAdd] = useState(false)
 
+  // Separate source_of_truth links (surfaced in detail view header) from regular links
+  const regularLinks = item.artifact_links.filter((l) => l.relationship !== 'source_of_truth')
+  const sotLinks = item.artifact_links.filter((l) => l.relationship === 'source_of_truth')
+
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
@@ -47,10 +51,47 @@ export function ArtifactLinkSection({ item, api }: Props) {
         )}
       </div>
 
-      {/* Existing links */}
-      {item.artifact_links.length > 0 && (
+      {/* Source-of-truth links shown inline here too (they're also surfaced in detail header) */}
+      {sotLinks.length > 0 && (
+        <div className="space-y-1.5 mb-2">
+          {sotLinks.map((link) => (
+            <div key={link.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-400/5 border border-blue-400/10 group">
+              <span className="text-[10px] text-blue-400/50 bg-blue-400/10 px-1.5 py-0.5 rounded font-medium">
+                Source of Truth
+              </span>
+              <span className="text-[10px] text-cream/25">{ARTIFACT_TYPE_LABELS[link.artifact_type]}</span>
+              {link.url ? (
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-400/70 hover:text-blue-400 transition-colors truncate flex-1"
+                >
+                  {link.entity_label}
+                </a>
+              ) : (
+                <span className="text-sm text-cream/70 truncate flex-1">{link.entity_label}</span>
+              )}
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => api.removeArtifactLink(item.id, link.id)}
+                  className="opacity-0 group-hover:opacity-100 text-cream/20 hover:text-red-400 transition-all shrink-0"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Regular links */}
+      {regularLinks.length > 0 && (
         <div className="space-y-1.5 mb-3">
-          {item.artifact_links.map((link) => (
+          {regularLinks.map((link) => (
             <div key={link.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-basalt-50 border border-cream/8 group">
               <span className="text-[10px] text-cream/30 bg-cream/5 px-1.5 py-0.5 rounded">
                 {ARTIFACT_TYPE_LABELS[link.artifact_type]}
@@ -72,7 +113,7 @@ export function ArtifactLinkSection({ item, api }: Props) {
                 <button
                   type="button"
                   onClick={() => api.removeArtifactLink(item.id, link.id)}
-                  className="opacity-0 group-hover:opacity-100 text-cream/20 hover:text-red-400 transition-all"
+                  className="opacity-0 group-hover:opacity-100 text-cream/20 hover:text-red-400 transition-all shrink-0"
                 >
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
@@ -124,7 +165,6 @@ function AddLinkForm({ item, api, onClose }: { item: AlignmentItem; api: Alignme
             onChange={(e) => setArtifactType(e.target.value as ArtifactType)}
             className="w-full px-2.5 py-1.5 rounded-lg bg-basalt border border-cream/10 text-cream text-sm focus:outline-none"
           >
-            {/* Phase 1 priority: selection, fix_item, external_link, room */}
             <option value="selection">Selection</option>
             <option value="fix_item">Fix Item</option>
             <option value="external_link">External Link</option>
@@ -144,6 +184,11 @@ function AddLinkForm({ item, api, onClose }: { item: AlignmentItem; api: Alignme
           </select>
         </div>
       </div>
+      {relationship === 'source_of_truth' && (
+        <p className="text-[10px] text-blue-400/50 -mt-1">
+          Source of Truth links are shown prominently at the top of the item detail view.
+        </p>
+      )}
       <div>
         <label className="block text-[11px] text-cream/30 mb-1">Label *</label>
         <input
