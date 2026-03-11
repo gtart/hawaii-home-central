@@ -116,7 +116,10 @@ function IdeaCardTile({
   onToggleFinal,
   onComment,
   onMove,
+  onCopy,
+  onDelete,
   onVote,
+  onAddComment,
   commentCount,
   lastCommentAt,
   latestOptionComment,
@@ -129,7 +132,10 @@ function IdeaCardTile({
   onToggleFinal?: () => void
   onComment?: () => void
   onMove?: () => void
+  onCopy?: () => void
+  onDelete?: () => void
   onVote?: (type: 'love' | 'up' | 'down') => void
+  onAddComment?: (text: string) => void
   commentCount?: number
   lastCommentAt?: string | null
   latestOptionComment?: { authorName: string; text: string } | null
@@ -137,8 +143,108 @@ function IdeaCardTile({
   const hero = getHeroImage(option)
   const heroSrc = hero?.thumbnailUrl || hero?.url
   const linkPreview = !heroSrc && option.urls?.[0]?.linkImage
-
   const hasImage = !!(heroSrc || linkPreview)
+
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [commenting, setCommenting] = useState(false)
+  const [commentText, setCommentText] = useState('')
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Close menu on click outside
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
+
+  const handleSubmitComment = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!commentText.trim() || !onAddComment) return
+    onAddComment(commentText.trim())
+    setCommentText('')
+    setCommenting(false)
+  }
+
+  // Voting row JSX (reusable)
+  const votingRow = (() => {
+    const votes = option.votes ?? {}
+    const hasVotes = Object.keys(votes).length > 0
+    if (!onVote && !hasVotes) return null
+    return (
+      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        {(['love', 'up', 'down'] as const).map((type) => {
+          const emoji = type === 'love' ? '❤️' : type === 'up' ? '👍' : '👎'
+          const myVote = votes[userEmail]
+          const isActive = myVote === type
+          const count = Object.values(votes).filter(v => v === type).length
+          if (!onVote && count === 0) return null
+          return (
+            <button
+              key={type}
+              type="button"
+              onClick={() => onVote?.(type)}
+              disabled={!onVote}
+              className={`text-xs px-1.5 py-0.5 rounded-md transition-colors ${
+                isActive
+                  ? 'bg-sandstone/20 text-sandstone'
+                  : onVote
+                    ? 'bg-cream/5 text-cream/30 hover:bg-cream/10 hover:text-cream/50'
+                    : 'bg-cream/5 text-cream/30 cursor-default'
+              }`}
+            >
+              {emoji}{count > 0 ? ` ${count}` : ''}
+            </button>
+          )
+        })}
+      </div>
+    )
+  })()
+
+  // Three-dot menu
+  const overflowMenu = (!readOnly && (onMove || onCopy || onDelete)) ? (
+    <div className="relative ml-auto" ref={menuRef} onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        onClick={() => setMenuOpen(!menuOpen)}
+        className="p-1 text-cream/30 hover:text-cream/60 transition-colors rounded"
+        title="More actions"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="5" r="1.5" />
+          <circle cx="12" cy="12" r="1.5" />
+          <circle cx="12" cy="19" r="1.5" />
+        </svg>
+      </button>
+      {menuOpen && (
+        <div className="absolute right-0 top-full mt-1 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl overflow-hidden min-w-[120px] z-20">
+          {onMove && (
+            <button type="button" onClick={() => { setMenuOpen(false); onMove() }}
+              className="w-full px-3 py-2 text-left text-xs text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors">
+              Move
+            </button>
+          )}
+          {onCopy && (
+            <button type="button" onClick={() => { setMenuOpen(false); onCopy() }}
+              className="w-full px-3 py-2 text-left text-xs text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors">
+              Copy To
+            </button>
+          )}
+          {onDelete && (
+            <>
+              <div className="border-t border-cream/10" />
+              <button type="button" onClick={() => { setMenuOpen(false); onDelete() }}
+                className="w-full px-3 py-2 text-left text-xs text-red-400/70 hover:text-red-400 hover:bg-red-400/5 transition-colors">
+                Delete
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  ) : null
 
   return (
     <div
@@ -163,7 +269,6 @@ function IdeaCardTile({
               </div>
             }
           />
-
           {/* Final toggle — only overlay on the image */}
           {onToggleFinal && !readOnly ? (
             <button
@@ -185,8 +290,16 @@ function IdeaCardTile({
         </div>
       )}
 
-      {/* Content area — all meta below the image */}
+      {/* Content area */}
       <div className="p-2.5 space-y-1.5">
+        {/* Voting emojis + overflow menu (above title) */}
+        {(votingRow || overflowMenu) && (
+          <div className="flex items-center gap-1">
+            {votingRow}
+            {overflowMenu}
+          </div>
+        )}
+
         {/* Name */}
         <p className="text-sm text-cream font-medium leading-snug line-clamp-2">
           {option.name || <span className="text-cream/30 italic">Untitled</span>}
@@ -220,7 +333,7 @@ function IdeaCardTile({
           </span>
         </div>
 
-        {/* Latest comment preview — styled as a collaboration cue */}
+        {/* Latest comment preview */}
         {latestOptionComment && (
           <div className="border-l-2 border-sandstone/20 pl-2 py-0.5">
             <p className="text-[10px] text-cream/45 line-clamp-2 leading-relaxed">
@@ -230,86 +343,68 @@ function IdeaCardTile({
           </div>
         )}
 
-        {/* Voting row */}
-        {(() => {
-          const votes = option.votes ?? {}
-          const hasVotes = Object.keys(votes).length > 0
-          if (!onVote && !hasVotes) return null
-          return (
-            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-              {(['love', 'up', 'down'] as const).map((type) => {
-                const emoji = type === 'love' ? '❤️' : type === 'up' ? '👍' : '👎'
-                const myVote = votes[userEmail]
-                const isActive = myVote === type
-                const count = Object.values(votes).filter(v => v === type).length
-                if (!onVote && count === 0) return null
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => onVote?.(type)}
-                    disabled={!onVote}
-                    className={`text-xs px-1.5 py-0.5 rounded-md transition-colors ${
-                      isActive
-                        ? 'bg-sandstone/20 text-sandstone'
-                        : onVote
-                          ? 'bg-cream/5 text-cream/30 hover:bg-cream/10 hover:text-cream/50'
-                          : 'bg-cream/5 text-cream/30 cursor-default'
-                    }`}
-                  >
-                    {emoji}{count > 0 ? ` ${count}` : ''}
+        {/* Inline comment form */}
+        {onAddComment && (
+          <div onClick={(e) => e.stopPropagation()}>
+            {commenting ? (
+              <div className="space-y-1.5">
+                <textarea
+                  autoFocus
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment(e as unknown as React.MouseEvent) }
+                    if (e.key === 'Escape') { setCommenting(false); setCommentText('') }
+                  }}
+                  placeholder="Add a comment..."
+                  rows={2}
+                  className="w-full px-2.5 py-1.5 bg-cream/5 border border-cream/15 text-cream text-xs rounded-lg placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40 resize-none"
+                />
+                <div className="flex items-center gap-1.5 justify-end">
+                  <button type="button" onClick={() => { setCommenting(false); setCommentText('') }}
+                    className="text-[10px] text-cream/40 hover:text-cream/60 transition-colors px-2 py-0.5">
+                    Cancel
                   </button>
-                )
-              })}
-            </div>
-          )
-        })()}
+                  <button type="button" onClick={handleSubmitComment}
+                    disabled={!commentText.trim()}
+                    className="text-[10px] px-2.5 py-1 bg-sandstone/20 text-sandstone rounded-md hover:bg-sandstone/30 transition-colors disabled:opacity-30">
+                    Send
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCommenting(true)}
+                className="w-full text-left text-[10px] px-2.5 py-1.5 rounded-lg bg-cream/5 text-cream/30 hover:text-cream/50 hover:bg-cream/8 transition-colors"
+              >
+                Comment...
+              </button>
+            )}
+          </div>
+        )}
 
-        {/* Action row: move + comment */}
-        {(!readOnly || (onComment)) && (
-          <div className="flex items-center gap-1.5 pt-0.5">
-            {onMove && !readOnly && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onMove() }}
-                className="text-[10px] px-2 py-0.5 rounded-full bg-cream/8 text-cream/40 hover:text-cream/70 hover:bg-cream/15 transition-colors"
-              >
-                Move
-              </button>
-            )}
-            {onComment && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onComment() }}
-                className="text-[10px] px-2 py-0.5 rounded-full bg-cream/8 text-cream/40 hover:text-cream/70 hover:bg-cream/15 transition-colors inline-flex items-center gap-0.5"
-                title="Comment"
-              >
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Comment
-              </button>
-            )}
-
-            {/* Final toggle for text-only cards */}
-            {!hasImage && onToggleFinal && !readOnly && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onToggleFinal() }}
-                className={`text-[10px] px-2 py-0.5 rounded-full transition-colors ml-auto ${
-                  option.isSelected
-                    ? 'bg-sandstone text-basalt font-semibold'
-                    : 'bg-sandstone/10 text-sandstone/60 border border-sandstone/20 hover:bg-sandstone/20 hover:text-sandstone'
-                }`}
-              >
-                {option.isSelected ? '⭐ Final' : '☆ Final'}
-              </button>
-            )}
-            {!hasImage && !onToggleFinal && option.isSelected && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-sandstone text-basalt font-semibold ml-auto">
-                ⭐ Final
-              </span>
-            )}
+        {/* Final toggle for text-only cards */}
+        {!hasImage && onToggleFinal && !readOnly && (
+          <div className="flex justify-end pt-0.5">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onToggleFinal() }}
+              className={`text-[10px] px-2 py-0.5 rounded-full transition-colors ${
+                option.isSelected
+                  ? 'bg-sandstone text-basalt font-semibold'
+                  : 'bg-sandstone/10 text-sandstone/60 border border-sandstone/20 hover:bg-sandstone/20 hover:text-sandstone'
+              }`}
+            >
+              {option.isSelected ? '⭐ Final' : '☆ Final'}
+            </button>
+          </div>
+        )}
+        {!hasImage && !onToggleFinal && option.isSelected && (
+          <div className="flex justify-end pt-0.5">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-sandstone text-basalt font-semibold">
+              ⭐ Final
+            </span>
           </div>
         )}
       </div>
@@ -448,7 +543,7 @@ export function AddIdeaMenu({
                   <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
                   <path d="M12 11v6M9 14h6" strokeLinecap="round" />
                 </svg>
-                Add from Selection Pack
+                Add from Idea Pack
               </button>
             </>
           )}
@@ -714,7 +809,16 @@ export function IdeasBoard({
                         onClick={() => compareMode ? toggleCompareSelect(opt.id) : router.push(buildOptionHref({ decisionId: decision.id, optionId: opt.id }))}
                         onToggleFinal={compareMode || hideFinalize ? undefined : () => onSelectOption(opt.id)}
                         onMove={!compareMode && onMoveOption ? () => onMoveOption(opt.id) : undefined}
+                        onCopy={!compareMode && onCopyOption ? () => onCopyOption(opt.id) : undefined}
+                        onDelete={!compareMode && !readOnly ? () => onDeleteOption(opt.id) : undefined}
                         onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
+                        onAddComment={!compareMode && !readOnly ? (text: string) => onAddComment({
+                          text,
+                          authorName: userName,
+                          authorEmail: userEmail,
+                          refOptionId: opt.id,
+                          refOptionLabel: opt.name || 'Untitled',
+                        }) : undefined}
                         onVote={!compareMode && !readOnly ? (type) => {
                           const votes = { ...(opt.votes ?? {}) }
                           if (votes[userEmail] === type) delete votes[userEmail]
@@ -775,7 +879,16 @@ export function IdeasBoard({
                         onClick={() => compareMode ? toggleCompareSelect(opt.id) : router.push(buildOptionHref({ decisionId: decision.id, optionId: opt.id }))}
                         onToggleFinal={compareMode || hideFinalize ? undefined : () => onSelectOption(opt.id)}
                         onMove={!compareMode && onMoveOption ? () => onMoveOption(opt.id) : undefined}
+                        onCopy={!compareMode && onCopyOption ? () => onCopyOption(opt.id) : undefined}
+                        onDelete={!compareMode && !readOnly ? () => onDeleteOption(opt.id) : undefined}
                         onComment={compareMode ? undefined : onCommentOnOption ? () => onCommentOnOption(opt.id, opt.name || 'Untitled') : undefined}
+                        onAddComment={!compareMode && !readOnly ? (text: string) => onAddComment({
+                          text,
+                          authorName: userName,
+                          authorEmail: userEmail,
+                          refOptionId: opt.id,
+                          refOptionLabel: opt.name || 'Untitled',
+                        }) : undefined}
                         onVote={!compareMode && !readOnly ? (type) => {
                           const votes = { ...(opt.votes ?? {}) }
                           if (votes[userEmail] === type) delete votes[userEmail]

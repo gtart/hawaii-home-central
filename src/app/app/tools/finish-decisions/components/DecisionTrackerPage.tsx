@@ -755,7 +755,7 @@ export function DecisionTrackerPage({
                 <thead>
                   <tr className="text-[11px] text-cream/40 uppercase tracking-wider">
                     {!readOnly && (
-                      <th className="w-8 pb-2 pl-2">
+                      <th className="w-10 pb-2 pl-2 text-left">
                         <input
                           type="checkbox"
                           checked={selectedIds.size > 0 && selectedIds.size === sortedDecisions.length}
@@ -803,7 +803,7 @@ export function DecisionTrackerPage({
                     return (
                       <tr key={decision.id} className="group border-t border-cream/5 first:border-t-0 hover:bg-cream/[0.02] transition-colors">
                         {!readOnly && (
-                          <td className="py-2.5 pl-2">
+                          <td className="w-10 py-2.5 pl-2">
                             <input
                               type="checkbox"
                               checked={selectedIds.has(decision.id)}
@@ -827,7 +827,7 @@ export function DecisionTrackerPage({
                             )}
                           </Link>
                         </td>
-                        <td className="py-2.5 pr-3">
+                        <td className="py-2.5 pl-2 pr-3">
                           <Link href={buildDecisionHref({ decisionId: decision.id, collectionId })} className="block">
                             <span className="text-sm font-medium text-cream group-hover:text-sandstone transition-colors">{decision.title}</span>
                             {decision.options.length > 0 && (
@@ -1013,19 +1013,6 @@ export function DecisionTrackerPage({
                 })}
               </div>
 
-              {/* Bottom add selection — shown only when input is not open at top */}
-              {!readOnly && !addInputVisible && (
-                <button
-                  type="button"
-                  onClick={() => { setAddInputVisible(true); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 mt-2 bg-basalt-50/50 rounded-card border-2 border-dashed border-cream/15 hover:border-sandstone/40 transition-all cursor-pointer group"
-                >
-                  <svg className="w-4 h-4 text-cream/30 group-hover:text-sandstone transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                  </svg>
-                  <span className="text-sm font-medium text-cream/40 group-hover:text-sandstone transition-colors">Add a Selection</span>
-                </button>
-              )}
             </>
           )}
 

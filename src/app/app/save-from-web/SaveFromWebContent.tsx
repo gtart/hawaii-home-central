@@ -834,16 +834,6 @@ export function SaveFromWebContent() {
                   </div>
                 </>
               )}
-              <div>
-                <label className="block text-xs text-cream/50 mb-1">Notes (optional)</label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Why you like this, questions to ask..."
-                  rows={2}
-                  className="w-full px-3 py-2 bg-basalt-50 border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone resize-none"
-                />
-              </div>
             </div>
 
             {/* ══ Home Picker (shown when user has 2+ active homes) ══ */}

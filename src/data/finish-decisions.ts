@@ -160,7 +160,7 @@ export const ROOM_EMOJI_MAP: Record<RoomTypeV3, string> = {
 
 // Decision Statuses (simplified from V2)
 export const STATUS_CONFIG_V3 = {
-  deciding: { label: 'Deciding', variant: 'deciding' as const, pillClass: 'bg-cream/10 text-cream/60 border-cream/15' },
+  deciding: { label: 'Deciding', variant: 'deciding' as const, pillClass: 'bg-cream/10 text-cream border-cream/15' },
   selected: { label: 'Selected', variant: 'selected' as const, pillClass: 'bg-blue-500/15 text-blue-300 border-blue-400/25' },
   ordered: { label: 'Ordered', variant: 'ordered' as const, pillClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-400/25' },
   done: { label: 'Done', variant: 'done' as const, pillClass: 'bg-emerald-700/40 text-white border-emerald-600/40' },

@@ -22,12 +22,16 @@ export async function GET() {
 
     const cached = cacheGet<DashboardResponse>(cacheKey)
     if (cached) {
-      return NextResponse.json(cached)
+      return NextResponse.json(cached, {
+        headers: { 'Cache-Control': 'private, s-maxage=10, stale-while-revalidate=50' },
+      })
     }
 
     const data = await getDashboardData(userId, projectId)
     cacheSet(cacheKey, data, DASHBOARD_TTL_MS)
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: { 'Cache-Control': 'private, s-maxage=10, stale-while-revalidate=50' },
+    })
   } catch {
     return NextResponse.json({ error: 'No active projects' }, { status: 404 })
   }

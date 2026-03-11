@@ -334,7 +334,7 @@ export function DecisionDetailContent({
   }
 
   function handleCommentOnOption(optionId: string, optionLabel: string) {
-    router.push(buildOptionHref({ decisionId, optionId }))
+    router.push(buildOptionHref({ decisionId, optionId }) + '?comments=open')
   }
 
   const availableKits = foundDecision
@@ -703,7 +703,13 @@ export function DecisionDetailContent({
                 readOnly={readOnly}
               />
             </div>
-            {/* Desktop comment trigger — hidden on md since desktop uses sidebar tab */}
+            <CommentTriggerButton
+              commentCount={userComments.length}
+              onClick={() => {
+                commentSidebarRef.current?.toggle()
+              }}
+              className="shrink-0"
+            />
             {collectionId && (
               <button
                 type="button"
@@ -775,7 +781,8 @@ export function DecisionDetailContent({
               {foundDecision.title || <span className="text-cream/30">Untitled</span>}
             </h1>
           )}
-          <div className="flex items-center gap-2 mt-2">
+          {/* Row 2: Status + Priority + Due date + Comment trigger */}
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
             <select
               value={foundDecision.status}
               onChange={(e) => !readOnly && handleStatusChange(e.target.value as StatusV3)}
@@ -797,31 +804,60 @@ export function DecisionDetailContent({
                 <option key={key} value={key}>{config.label}</option>
               ))}
             </select>
+            {foundDecision.dueDate && (
+              <span className="text-[11px] text-cream/40">Due {formattedDue}</span>
+            )}
             <CommentTriggerButton
               commentCount={userComments.length}
               onClick={() => commentSidebarRef.current?.openMobileSheet()}
               className="ml-auto"
             />
           </div>
+          {/* Row 3: Location (always visible) */}
+          <div className="flex items-center gap-1.5 mt-2">
+            <svg className="w-3.5 h-3.5 text-cream/40 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            <input
+              type="text"
+              list="location-suggestions-mobile"
+              value={foundDecision.location || ''}
+              onChange={(e) => updateDecision({ location: e.target.value })}
+              placeholder="Location (e.g. Kitchen)"
+              readOnly={readOnly}
+              className="bg-transparent border-none text-sm text-cream/70 placeholder:text-cream/25 focus:outline-none focus:text-cream transition-colors flex-1 min-w-0 py-0.5 disabled:opacity-50"
+            />
+            <datalist id="location-suggestions-mobile">
+              {locationSuggestions.map((loc) => (
+                <option key={loc} value={loc} />
+              ))}
+            </datalist>
+          </div>
+          {/* Row 4: Due date (editable) + Labels */}
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            {!foundDecision.dueDate && (
+              <input
+                type="date"
+                value={foundDecision.dueDate || ''}
+                onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
+                disabled={readOnly}
+                className="bg-basalt-50 text-cream rounded-input px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50"
+              />
+            )}
+            <TagInput
+              tags={foundDecision.tags || []}
+              allTags={allTags}
+              onChange={(newTags) => updateDecision({ tags: newTags })}
+              readOnly={readOnly}
+              placeholder="+ Label"
+              compact
+            />
+          </div>
         </div>
 
-        {/* Guidance tips + warnings (keep visible) */}
+        {/* Warnings (keep visible) */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs mb-2">
-          {guidanceTipCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setGuidanceOpen(true)}
-              className="inline-flex items-center gap-1.5 bg-sandstone/10 hover:bg-sandstone/15 border border-sandstone/15 rounded-full px-2.5 py-1 transition-colors"
-            >
-              <svg className="w-3.5 h-3.5 text-sandstone/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
-              </svg>
-              <span className="text-xs text-sandstone font-medium">
-                {guidanceTipCount} tip{guidanceTipCount !== 1 ? 's' : ''}
-              </span>
-            </button>
-          )}
           {doneWithoutFinal && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/10 text-red-400 text-[10px] font-medium rounded-full border border-red-400/20">
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -848,7 +884,7 @@ export function DecisionDetailContent({
             const hero = getHeroImage(finalPick)
             const thumbUrl = hero ? displayUrl(hero.thumbnailUrl || hero.url) : null
             return (
-              <div className="bg-sandstone/10 border border-sandstone/25 rounded-xl p-4 flex items-center gap-4">
+              <div className="bg-sandstone/10 border border-sandstone/25 rounded-xl p-4 flex items-center gap-4 overflow-hidden">
                 {thumbUrl && (
                   <img src={thumbUrl} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
                 )}
@@ -862,7 +898,7 @@ export function DecisionDetailContent({
                   <button
                     type="button"
                     onClick={() => router.push(buildOptionHref({ decisionId, optionId: finalPick.id }))}
-                    className="text-sm font-medium text-cream hover:text-cream/80 transition-colors truncate block"
+                    className="text-sm font-medium text-cream hover:text-cream/80 transition-colors truncate block w-full max-w-full text-left"
                   >
                     {finalPick.name || 'Untitled'}
                   </button>
@@ -911,6 +947,21 @@ export function DecisionDetailContent({
                 {foundDecision.options.length}
               </span>
             </h2>
+            {guidanceTipCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setGuidanceOpen(true)}
+                className="inline-flex items-center gap-1.5 bg-sandstone/10 hover:bg-sandstone/15 border border-sandstone/15 rounded-full px-2.5 py-1 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5 text-sandstone/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
+                </svg>
+                <span className="text-xs text-sandstone font-medium">
+                  {guidanceTipCount} tip{guidanceTipCount !== 1 ? 's' : ''}
+                </span>
+              </button>
+            )}
             {!readOnly && (
               <AddIdeaMenu
                 onPhoto={() => addActionsRef.current?.triggerPhoto()}
@@ -956,8 +1007,8 @@ export function DecisionDetailContent({
           />
         </div>
 
-        {/* Collapsible Details — location, labels, due date, option count */}
-        <details className="group mb-6">
+        {/* Collapsible Details — location, labels, due date (desktop only — mobile shows in header) */}
+        <details className="group mb-6 hidden md:block">
           <summary className="flex items-center gap-2 cursor-pointer select-none text-sm text-cream/50 hover:text-cream/70 transition-colors py-1">
             <svg className="w-3.5 h-3.5 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -1005,8 +1056,8 @@ export function DecisionDetailContent({
                 placeholder="Optional: urgency, type, style, phase..."
               />
             </div>
-            {/* Due date (mobile — desktop shows in header row 2) */}
-            <div className="md:hidden">
+            {/* Due date (desktop only — mobile shows in header) */}
+            <div>
               <span className="text-[11px] uppercase tracking-wider text-cream/40 font-medium mb-1 block">Due date</span>
               <input
                 type="date"
@@ -1017,17 +1068,11 @@ export function DecisionDetailContent({
               />
             </div>
             {/* Meta */}
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-              {formattedDue && (
-                <>
-                  <span className="text-cream/40 hidden md:inline">Due {formattedDue}</span>
-                  <span className="text-cream/20 hidden md:inline">·</span>
-                </>
-              )}
-              <span className="text-cream/40">
-                {optionsCount} option{optionsCount !== 1 ? 's' : ''}
-              </span>
-            </div>
+            {formattedDue && (
+              <div className="text-xs text-cream/40">
+                Due {formattedDue}
+              </div>
+            )}
           </div>
         </details>
 
@@ -1058,8 +1103,9 @@ export function DecisionDetailContent({
 
       <CollapsibleCommentSidebar
         ref={commentSidebarRef}
-        title="Selection comments"
+        title="Comments"
         storageKey="selections_comments_collapsed"
+        hideCollapsedTab
         comments={userComments}
         isLoading={decisionComments.isLoading}
         readOnly={readOnly}

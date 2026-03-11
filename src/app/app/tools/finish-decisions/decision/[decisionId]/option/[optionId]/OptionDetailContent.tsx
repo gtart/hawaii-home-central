@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useCollectionState, type ActivityEventHint } from '@/hooks/useCollectionState'
@@ -38,6 +38,7 @@ export function OptionDetailContent({
 }) {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { data: session } = useSession()
   const decisionId = params.decisionId as string
   const optionId = params.optionId as string
@@ -46,6 +47,7 @@ export function OptionDetailContent({
   const [moveSheetOpen, setMoveSheetOpen] = useState(false)
   const [moveMode, setMoveMode] = useState<'move' | 'copy'>('move')
   const [assignToast, setAssignToast] = useState<string | null>(null)
+  const [savedToast, setSavedToast] = useState(false)
 
   // Inline editing state
   const [newUrl, setNewUrl] = useState('')
@@ -148,6 +150,33 @@ export function OptionDetailContent({
     localStorage.setItem(optionVisitedKey, String(optionComments.length))
     setHasUnreadComments(false)
   }, [optionVisitedKey, optionComments.length])
+
+  // Show toast if ?saved=1 (arriving from bookmarklet save)
+  useEffect(() => {
+    if (searchParams.get('saved') === '1') {
+      setSavedToast(true)
+      const timer = setTimeout(() => setSavedToast(false), 5000)
+      return () => clearTimeout(timer)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Open comments if ?comments=open (e.g. from "Comment" button on option card)
+  useEffect(() => {
+    if (searchParams.get('comments') === 'open') {
+      // Small delay to let refs mount
+      const timer = setTimeout(() => {
+        if (window.innerWidth >= 768) {
+          commentSidebarRef.current?.toggle()
+        } else {
+          commentSidebarRef.current?.openMobileSheet()
+        }
+        markOptionCommentsSeen()
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Carousel
   const currentIndex = foundDecision?.options.findIndex((o) => o.id === optionId) ?? -1
@@ -536,7 +565,16 @@ export function OptionDetailContent({
   const userName = session?.user?.name || 'Unknown'
 
   return (
-    <div className="pt-20 md:pt-20 pb-24 px-4 md:px-8">
+    <div className="pt-20 md:pt-20 pb-12 px-4 md:px-8">
+      {/* Saved from bookmarklet toast */}
+      {savedToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-4 py-2.5 rounded-lg shadow-xl flex items-center gap-3 text-sm animate-in fade-in slide-in-from-top-2 duration-300">
+          <span>Saved! Use the bookmarklet to add another idea.</span>
+          <button type="button" onClick={() => setSavedToast(false)} className="text-white/70 hover:text-white transition-colors shrink-0">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" /></svg>
+          </button>
+        </div>
+      )}
       <div className="max-w-5xl mx-auto">
 
         {/* ── Sticky breadcrumb header ── */}
@@ -969,9 +1007,14 @@ export function OptionDetailContent({
                 optionName={option.name}
               />
             )}
+          </div>
+        </div>{/* end 2-column grid */}
+
+        {/* ── Links + Files row (desktop: side-by-side 30/70, mobile: stacked) ── */}
+        <div className="mt-5 md:grid md:grid-cols-[30%_1fr] md:gap-5">
 
             {/* Links — compact favicon chips */}
-            {(option.urls.length > 0 || !readOnly) && (
+            {(option.urls.length > 0 || !readOnly) ? (
               <div>
                 <label className="text-[11px] text-cream/40 uppercase tracking-wider mb-2 block">Links</label>
                 <div className="flex flex-wrap items-center gap-2">
@@ -1051,7 +1094,7 @@ export function OptionDetailContent({
                 )}
                 {addLinkOpen && newUrl && !isValidUrl(newUrl) && <p className="text-yellow-500 text-xs mt-1">URL should start with http:// or https://</p>}
               </div>
-            )}
+            ) : <div />}
 
             {/* Files */}
             {(!readOnly || (option.documents && option.documents.length > 0)) && (
@@ -1114,47 +1157,43 @@ export function OptionDetailContent({
               </div>
             )}
 
-            {/* Done button (desktop) */}
-            <div className="hidden md:flex pt-3 border-t border-cream/10 justify-end">
-              <Link
-                href={`/app/tools/finish-decisions/decision/${decisionId}`}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  readOnly
-                    ? 'bg-cream/10 text-cream/60 hover:bg-cream/20'
-                    : 'bg-sandstone text-basalt hover:bg-sandstone-light'
-                }`}
-              >
-                Done
-              </Link>
-            </div>
-          </div>
+        </div>{/* end Links + Files grid */}
+
+        {/* Back to Selection (desktop) */}
+        <div className="hidden md:flex pt-3 mt-4 border-t border-cream/10 justify-end">
+          <Link
+            href={`/app/tools/finish-decisions/decision/${decisionId}`}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-colors bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80"
+          >
+            <span>←</span> Back to Selection
+          </Link>
         </div>
 
-        {/* Mobile-only footer: delete + done */}
+        {/* Mobile-only footer: delete + back */}
         <div className="md:hidden mt-6">
-            {!readOnly ? (
-              <div className="pt-3 border-t border-cream/10 flex items-center justify-between">
-                <button type="button" onClick={deleteOption} className="text-red-400/60 hover:text-red-400 text-sm transition-colors">
-                  Delete option
-                </button>
-                <Link
-                  href={`/app/tools/finish-decisions/decision/${decisionId}`}
-                  className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors"
-                >
-                  Done
-                </Link>
-              </div>
-            ) : (
-              <div className="pt-3 border-t border-cream/10 flex justify-end">
-                <Link
-                  href={`/app/tools/finish-decisions/decision/${decisionId}`}
-                  className="px-4 py-2 bg-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/20 transition-colors"
-                >
-                  Done
-                </Link>
-              </div>
-            )}
-          </div>
+          {!readOnly ? (
+            <div className="pt-3 border-t border-cream/10 flex items-center justify-between">
+              <button type="button" onClick={deleteOption} className="text-red-400/60 hover:text-red-400 text-sm transition-colors">
+                Delete option
+              </button>
+              <Link
+                href={`/app/tools/finish-decisions/decision/${decisionId}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-colors bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80"
+              >
+                <span>←</span> Back
+              </Link>
+            </div>
+          ) : (
+            <div className="pt-3 border-t border-cream/10 flex justify-end">
+              <Link
+                href={`/app/tools/finish-decisions/decision/${decisionId}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-colors bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80"
+              >
+                <span>←</span> Back
+              </Link>
+            </div>
+          )}
+        </div>
 
         </div>{/* end main content */}
 

@@ -82,13 +82,13 @@ export default function RootLayout({
         <Script
           src="https://umami-analytics-silk-seven.vercel.app/script.js"
           data-website-id="fbcc2bf8-76e1-46b6-b1ec-8c5d7c32534c"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-G64TMLBFEC"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
+        <Script id="google-analytics" strategy="lazyOnload">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}

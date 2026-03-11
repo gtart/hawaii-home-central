@@ -11,7 +11,7 @@ export function ExpandableSpecs({ value, readOnly, onChange, optionName }: { val
     const el = textareaRef.current
     if (!el) return
     el.style.height = 'auto'
-    el.style.height = Math.max(72, el.scrollHeight) + 'px'
+    el.style.height = Math.max(120, el.scrollHeight) + 'px'
   }, [])
 
   useEffect(() => { autoGrow() }, [value, autoGrow])
@@ -55,7 +55,7 @@ export function ExpandableSpecs({ value, readOnly, onChange, optionName }: { val
           onChange={(e) => { onChange(e.target.value); autoGrow() }}
           placeholder="Specs, dimensions, details..."
           className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 resize-y"
-          style={{ minHeight: '72px' }}
+          style={{ minHeight: '120px' }}
         />
       </div>
 

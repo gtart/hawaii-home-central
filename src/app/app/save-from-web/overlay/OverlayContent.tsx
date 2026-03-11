@@ -121,9 +121,6 @@ export function OverlayContent() {
         } else if (field === 'name') {
           setName(value)
           addCaptureLog(`Name: ${value.substring(0, 30)}`)
-        } else if (field === 'notes') {
-          setNotes((prev) => prev ? `${prev}\n${value}` : value)
-          addCaptureLog('Notes captured')
         }
         setSelectingField(null)
       }
@@ -180,6 +177,8 @@ export function OverlayContent() {
   const handleSave = () => {
     if (!capturedContent || !name.trim()) return
 
+    let navigateUrl = ''
+
     if (destination === 'mood_boards') {
       const newIdea = capturedToMoodBoardIdea(capturedContent, selectedUrls, { name, notes })
       let targetBoardId = selectedBoardId
@@ -198,11 +197,14 @@ export function OverlayContent() {
         return { ...p, boards }
       })
       setSavedName(currentBoards.find((b) => b.id === targetBoardId)?.name || 'Board')
+      navigateUrl = `/app/tools/mood-boards?board=${targetBoardId}&saved=1`
     } else {
       const newOption = capturedToSelectionOption(capturedContent, selectedUrls, { name, notes, price, specs })
       const currentSelections = (fdState as FinishDecisionsPayloadV4).selections || []
 
+      let targetSelId = ''
       if (selectedSelectionId && currentSelections.find((s) => s.id === selectedSelectionId)) {
+        targetSelId = selectedSelectionId
         const target = currentSelections.find((s) => s.id === selectedSelectionId)
         setSavedName(target?.title || 'Selection')
         setFdState((prev) => {
@@ -220,6 +222,7 @@ export function OverlayContent() {
       } else {
         const ts = new Date().toISOString()
         const newSelId = genId('sel')
+        targetSelId = newSelId
         const selName = name.trim() || 'New Selection'
         setSavedName(selName)
         const newSelection: SelectionV4 = {
@@ -237,9 +240,14 @@ export function OverlayContent() {
           return { ...payload, selections: [...(payload.selections || []), newSelection] }
         })
       }
+      navigateUrl = `/app/tools/finish-decisions/decision/${targetSelId}/option/${newOption.id}?saved=1`
     }
 
+    // Navigate parent page to the saved idea and close overlay
     setSaved(true)
+    setTimeout(() => {
+      window.parent.postMessage({ type: 'hhc:navigate', url: navigateUrl }, '*')
+    }, 400)
   }
 
   // ── Render ──
@@ -455,17 +463,6 @@ export function OverlayContent() {
                 </div>
               )}
 
-              {/* Notes */}
-              <div>
-                <label className="text-[10px] text-cream/40 uppercase tracking-wide block mb-1">Notes</label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Why you like this..."
-                  rows={2}
-                  className="w-full px-2.5 py-1.5 bg-cream/5 border border-cream/15 text-cream text-sm rounded placeholder:text-cream/25 focus:outline-none focus:border-sandstone resize-none"
-                />
-              </div>
             </div>
 
             {/* Destination */}

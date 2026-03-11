@@ -41,7 +41,9 @@ export async function GET() {
       ),
     }
 
-    return NextResponse.json(badges)
+    return NextResponse.json(badges, {
+      headers: { 'Cache-Control': 'private, s-maxage=10, stale-while-revalidate=50' },
+    })
   } catch {
     return NextResponse.json({ fixListOpen: 0, selectionsNeedDecisions: 0 })
   }

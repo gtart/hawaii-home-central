@@ -153,8 +153,8 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
           </button>
         </div>
       )}
-      {!collapsed && (
-        /* Expanded sidebar — inline fills parent width, standalone is fixed 320px sticky */
+      {!collapsed && !hideCollapsedTab && (
+        /* Expanded sidebar — in-flow (used by Selection detail) */
         <aside className={`hidden md:block shrink-0 ${
           inline
             ? 'w-full'
@@ -167,12 +167,24 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
           </div>
         </aside>
       )}
+      {/* Desktop overlay panel — slides from right, doesn't push content */}
+      {!collapsed && hideCollapsedTab && (
+        <div className="hidden md:block fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/40" onClick={toggle} />
+          <aside className="absolute right-0 top-0 h-full w-96 bg-basalt-50 border-l border-cream/15 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+            <CommentThread {...threadProps} onClose={toggle} />
+          </aside>
+        </div>
+      )}
 
       {/* ===== Mobile: bottom sheet (no floating bar — trigger is rendered by parent in header) ===== */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex items-end">
           <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
           <div className="relative bg-basalt-50 border-t border-cream/15 rounded-t-xl w-full max-h-[80vh] flex flex-col shadow-2xl">
+            <div className="flex justify-center pt-2 pb-1" onClick={() => setMobileOpen(false)}>
+              <div className="w-10 h-1 bg-cream/20 rounded-full" />
+            </div>
             <CommentThread {...threadProps} onClose={() => setMobileOpen(false)} />
             <div className="pb-[env(safe-area-inset-bottom)]" />
           </div>

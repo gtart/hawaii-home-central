@@ -45,7 +45,7 @@ export function BookmarkletButton({ compact = false }: { compact?: boolean }) {
       'if(isProd){',
       'pn=it.name?String(it.name).substring(0,200):"";',
       'if(it.brand){br=typeof it.brand==="string"?it.brand:(it.brand.name||"")}',
-      'if(it.description)sp=String(it.description).substring(0,2000);',
+      'if(it.description){sp=String(it.description).replace(/<[^>]*>/g,"").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,"\\"").replace(/&#39;/g,"\'").replace(/\\s+/g," ").trim().substring(0,2000)}',
       // Handle offers: direct, array, or AggregateOffer with nested offers[]
       'if(it.offers){var of2=it.offers;',
       'if(Array.isArray(of2))of2=of2[0];',
@@ -66,6 +66,9 @@ export function BookmarkletButton({ compact = false }: { compact?: boolean }) {
       'var pmc=d.querySelector("meta[property=\\"product:price:currency\\"]")||d.querySelector("meta[property=\\"og:price:currency\\"]");',
       'var cur=pmc?pmc.getAttribute("content")||"USD":"USD";',
       'if(pma)pr=(cur==="USD"?"$":cur+" ")+pma}}',
+      // Fallback specs from og:description or meta description
+      'if(!sp){var md=d.querySelector("meta[property=\\"og:description\\"]")||d.querySelector("meta[name=\\"description\\"]");',
+      'if(md){sp=(md.getAttribute("content")||"").substring(0,2000)}}',
 
       // ── Images (OG + page imgs) ──
       'if(o){var r=abs(o);if(r&&!s[r]){s[r]=1;i.push({url:r,label:"Primary"})}}',
@@ -166,6 +169,7 @@ export function BookmarkletButton({ compact = false }: { compact?: boolean }) {
       'if(ev.data&&ev.data.type==="hhc:stopPickMode"){pickMode=false;selField=null;rmPopup();if(hlEl)hlEl.style.outline="";d.body.style.cursor=""}',
       'if(ev.data&&ev.data.type==="hhc:cancelSelect"){selField=null;pickMode=false;rmPopup();if(hlEl)hlEl.style.outline="";d.body.style.cursor=""}',
       'if(ev.data&&ev.data.type==="hhc:close"){f.remove();cb.remove();rmPopup();if(window._hhcClickCleanup)window._hhcClickCleanup()}',
+      'if(ev.data&&ev.data.type==="hhc:navigate"&&ev.data.url){f.remove();cb.remove();rmPopup();if(window._hhcClickCleanup)window._hhcClickCleanup();window.open("' + origin + '"+ev.data.url,"_blank")}',
       '});',
       'd.addEventListener("mouseover",hlOn,true);',
       'd.addEventListener("click",hlClick,true);',

@@ -1,12 +1,12 @@
 'use client'
 
-import { Suspense, useState, useMemo, useCallback, useEffect } from 'react'
+import { Suspense, useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
 import { ActivityPanel } from '@/components/app/ActivityPanel'
 import { UnsortedBanner } from '@/components/app/UnsortedBanner'
-import { CollapsibleCommentSidebar } from '@/components/app/CollapsibleCommentSidebar'
+import { CollapsibleCommentSidebar, CommentTriggerButton, type CommentSidebarHandle } from '@/components/app/CollapsibleCommentSidebar'
 import type { RefEntity } from '@/components/app/CommentThread'
 import { useProject } from '@/contexts/ProjectContext'
 import { useComments } from '@/hooks/useComments'
@@ -25,6 +25,7 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
   const [titleOverride, setTitleOverride] = useState<string | null>(null)
   const [commentRef, setCommentRef] = useState<RefEntity | null>(null)
   const [forceExpandComments, setForceExpandComments] = useState(false)
+  const commentSidebarRef = useRef<CommentSidebarHandle>(null)
 
   // Collection-level comments
   const collComments = useComments({
@@ -88,6 +89,7 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
     if (ref) {
       setCommentRef(ref)
     }
+    // forceExpand triggers open in the sidebar component
     setForceExpandComments(true)
     setTimeout(() => setForceExpandComments(false), 100)
   }, [])
@@ -155,21 +157,27 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
         onRename={collectionId ? handleRename : undefined}
         onArchive={collectionId ? handleArchive : undefined}
         actions={collectionId ? (
-          <button
-            type="button"
-            onClick={() => { setActivityOpen(true); markActivitySeen() }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
-          >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Activity
-            {unseenActivity > 0 && (
-              <span className="bg-sandstone/20 text-sandstone text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
-                {unseenActivity > 98 ? '99+' : unseenActivity}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <CommentTriggerButton
+              commentCount={collComments.comments.length}
+              onClick={() => commentSidebarRef.current?.toggle()}
+            />
+            <button
+              type="button"
+              onClick={() => { setActivityOpen(true); markActivitySeen() }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Activity
+              {unseenActivity > 0 && (
+                <span className="bg-sandstone/20 text-sandstone text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
+                  {unseenActivity > 98 ? '99+' : unseenActivity}
+                </span>
+              )}
+            </button>
+          </div>
         ) : undefined}
       />
       {activityOpen && collectionId && (
@@ -206,6 +214,7 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
           </div>
           {collectionId && (
             <CollapsibleCommentSidebar
+              ref={commentSidebarRef}
               title="Comments"
               storageKey="punchlist_comments_collapsed"
               comments={collComments.comments}
@@ -219,6 +228,7 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
               initialRef={commentRef}
               onClearInitialRef={() => setCommentRef(null)}
               forceExpand={forceExpandComments}
+              hideCollapsedTab
             />
           )}
         </div>
