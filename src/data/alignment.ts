@@ -191,7 +191,7 @@ export interface PublicAlignmentItem {
   what_did_not_change?: string
   whats_still_open?: string
   photos: { url: string; thumbnailUrl?: string }[]
-  guest_responses: AlignmentGuestResponse[]
+  guest_responses: Omit<AlignmentGuestResponse, 'share_token'>[]
   created_at: string
   resolved_at?: string
   superseded: boolean
@@ -225,7 +225,7 @@ export function toPublicAlignmentItem(
     photos: opts.includePhotos
       ? item.photos.map((p) => ({ url: p.url, thumbnailUrl: p.thumbnailUrl }))
       : [],
-    guest_responses: item.guest_responses,
+    guest_responses: item.guest_responses.map(({ share_token: _, ...rest }) => rest),
     created_at: item.created_at,
     resolved_at: item.resolved_at,
     superseded: item.status === 'superseded',

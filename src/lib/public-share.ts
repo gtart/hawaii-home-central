@@ -361,11 +361,13 @@ export async function buildSanitizedShareResponse(resolution: ShareResolution) {
       items: items.map((it) =>
         toPublicAlignmentItem(it, { includeNotes, includePhotos })
       ),
-      allowResponses: (settings as Record<string, unknown>)?.allowResponses === true,
     }
   }
 
   const scope = settings?.scope as Record<string, unknown> | undefined
+
+  // Alignment-specific: surface allowResponses at top level (not inside payload)
+  const allowResponses = toolKey === 'project_alignment' && (settings as Record<string, unknown>)?.allowResponses === true
 
   return {
     body: {
@@ -379,6 +381,7 @@ export async function buildSanitizedShareResponse(resolution: ShareResolution) {
       boardId,
       scope: scope ?? null,
       filters: { locations: filterLocations, assignees: filterAssignees, statuses: filterStatuses, priorities: filterPriorities },
+      allowResponses,
     },
   }
 }

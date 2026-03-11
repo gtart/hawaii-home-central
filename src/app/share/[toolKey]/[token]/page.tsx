@@ -57,6 +57,7 @@ export default async function SharePage({ params }: Props) {
     boardId?: string | null
     scope?: Record<string, unknown> | null
     filters: { locations: string[]; assignees: string[] }
+    allowResponses?: boolean
   } | null = null
 
   try {
@@ -80,7 +81,7 @@ export default async function SharePage({ params }: Props) {
         payload={data.payload}
         projectName={data.projectName}
         token={token}
-        allowResponses={(data.payload as Record<string, unknown>).allowResponses === true}
+        allowResponses={data.allowResponses === true}
       />
     )
   }

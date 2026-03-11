@@ -37,6 +37,7 @@ import { useProject } from '@/contexts/ProjectContext'
 import { SelectionShareSheet } from '../../components/SelectionShareSheet'
 import { useSelectionLastVisited } from '@/hooks/useSelectionLastVisited'
 import type { SelectionVisibility, SelectionAccess } from '@/data/finish-decisions'
+import { AlignmentLinkBadge } from '@/components/app/AlignmentLinkBadge'
 
 function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
   if (!a) return null
@@ -876,6 +877,13 @@ export function DecisionDetailContent({
             Marked {(STATUS_CONFIG_V3[latestStatusLog.status] ?? STATUS_CONFIG_V3.deciding).label} by {latestStatusLog.markedBy} on{' '}
             {new Date(latestStatusLog.markedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
           </p>
+        )}
+
+        {/* Cross-tool: alignment items linked to this selection */}
+        {currentProject?.id && (
+          <div className="mb-4">
+            <AlignmentLinkBadge projectId={currentProject.id} entityId={decisionId} />
+          </div>
         )}
 
         {/* Final Decision */}

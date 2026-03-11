@@ -10,6 +10,7 @@ import { LOCATION_SEEDS, ASSIGNEE_SEEDS } from '../utils'
 import { PhotoLightbox } from './PhotoLightbox'
 import { uploadFile } from '../utils'
 import { DestinationPicker } from '@/components/app/DestinationPicker'
+import { AlignmentLinkBadge } from '@/components/app/AlignmentLinkBadge'
 import { useCollectionTransfer } from '@/hooks/useCollectionTransfer'
 
 type EditingField = 'title' | 'location' | 'assignee' | 'priority' | 'notes' | null
@@ -431,6 +432,11 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
               </p>
             )}
           </div>
+
+          {/* Cross-tool: alignment items linked to this fix item */}
+          {projectId && (
+            <AlignmentLinkBadge projectId={projectId} entityId={item.id} />
+          )}
 
           {/* Comments preview */}
           <ItemCommentsPreview

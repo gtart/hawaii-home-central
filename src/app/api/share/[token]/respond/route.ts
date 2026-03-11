@@ -107,6 +107,14 @@ export async function POST(
       return NextResponse.json({ error: 'Item not found or not accessible' }, { status: 404 })
     }
 
+    // Reject responses to superseded or fully resolved items
+    if (targetItem.status === 'superseded') {
+      return NextResponse.json({ error: 'This item has been superseded and no longer accepts responses' }, { status: 400 })
+    }
+    if (targetItem.status === 'implemented') {
+      return NextResponse.json({ error: 'This item has already been implemented and no longer accepts responses' }, { status: 400 })
+    }
+
     // Narrowest append-only mutation: only touch this item's guest_responses[]
     const updatedItems = items.map((item) => {
       if (item.id !== itemId) return item
