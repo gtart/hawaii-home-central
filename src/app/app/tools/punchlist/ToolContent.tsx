@@ -6,7 +6,7 @@ import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
 import { ActivityPanel } from '@/components/app/ActivityPanel'
 import { UnsortedBanner } from '@/components/app/UnsortedBanner'
-import { CollapsibleCommentSidebar, CommentTriggerButton, type CommentSidebarHandle } from '@/components/app/CollapsibleCommentSidebar'
+import { CollapsibleCommentSidebar, type CommentSidebarHandle } from '@/components/app/CollapsibleCommentSidebar'
 import type { RefEntity } from '@/components/app/CommentThread'
 import { useProject } from '@/contexts/ProjectContext'
 import { useComments } from '@/hooks/useComments'
@@ -158,16 +158,27 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
         onArchive={collectionId ? handleArchive : undefined}
         actions={collectionId ? (
           <div className="flex items-center gap-2">
-            <CommentTriggerButton
-              commentCount={collComments.comments.length}
+            <button
+              type="button"
               onClick={() => commentSidebarRef.current?.toggle()}
-            />
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 transition-colors"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Comments
+              {collComments.comments.length > 0 && (
+                <span className="bg-cream/10 text-cream/40 text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
+                  {collComments.comments.length}
+                </span>
+              )}
+            </button>
             <button
               type="button"
               onClick={() => { setActivityOpen(true); markActivitySeen() }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 transition-colors"
             >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Activity
