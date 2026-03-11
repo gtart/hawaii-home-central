@@ -435,7 +435,7 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
 
           {/* Cross-tool: alignment items linked to this fix item */}
           {projectId && (
-            <AlignmentLinkBadge projectId={projectId} entityId={item.id} />
+            <AlignmentLinkBadge projectId={projectId} entityId={item.id} artifactType="fix_item" />
           )}
 
           {/* Comments preview */}

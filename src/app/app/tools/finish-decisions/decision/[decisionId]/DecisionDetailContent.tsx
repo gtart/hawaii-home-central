@@ -882,7 +882,7 @@ export function DecisionDetailContent({
         {/* Cross-tool: alignment items linked to this selection */}
         {currentProject?.id && (
           <div className="mb-4">
-            <AlignmentLinkBadge projectId={currentProject.id} entityId={decisionId} />
+            <AlignmentLinkBadge projectId={currentProject.id} entityId={decisionId} artifactType="selection" />
           </div>
         )}
 

@@ -110,6 +110,7 @@ function PublicAlignmentItemCard({
   const [showResponseForm, setShowResponseForm] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const isSuperseded = item.superseded
+  const responseCount = (item as PublicAlignmentItem & { response_count?: number }).response_count ?? 0
 
   return (
     <div className={`rounded-xl border overflow-hidden ${isSuperseded ? 'border-cream/5 bg-basalt-50/50' : 'border-cream/10 bg-basalt-50'}`}>
@@ -230,22 +231,12 @@ function PublicAlignmentItemCard({
           </div>
         )}
 
-        {/* Existing responses */}
-        {item.guest_responses.length > 0 && (
+        {/* Response count (content hidden for privacy — full responses visible in authenticated view) */}
+        {responseCount > 0 && (
           <div className="border-t border-cream/8 pt-3 mt-3">
-            <p className="text-xs font-medium text-cream/40 mb-2">Previous Responses</p>
-            {item.guest_responses.map((resp) => (
-              <div key={resp.id} className="text-xs text-cream/50 mb-2 pl-3 border-l-2 border-cream/10">
-                <span className="font-medium text-cream/60">{resp.respondent_name}</span>
-                {resp.included_not_included_unsure && (
-                  <span className="ml-1 text-cream/40">
-                    ({resp.included_not_included_unsure === 'included' ? 'In scope' : resp.included_not_included_unsure === 'not_included' ? 'Not in scope' : 'Unsure'})
-                  </span>
-                )}
-                {resp.suggested_resolution && <span> — {resp.suggested_resolution}</span>}
-                {resp.note && <span> — {resp.note}</span>}
-              </div>
-            ))}
+            <p className="text-xs text-cream/30">
+              {responseCount} response{responseCount !== 1 ? 's' : ''} received
+            </p>
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import type { AlignmentItem, AlignmentItemStatus, AlignmentItemType } from '@/data/alignment'
 import { ACTIVE_STATUSES } from '@/data/alignment'
 import type { RefEntity } from '@/components/app/CommentThread'
@@ -40,6 +41,18 @@ export function AlignmentListPage({ api, collectionId, commentCounts, onOpenComm
   const [filter, setFilter] = useState<FilterMode>('all')
   const [areaFilter, setAreaFilter] = useState<string>('')
   const [sortBy, setSortBy] = useState<'updated' | 'created' | 'number'>('updated')
+
+  // Deep-link: auto-select item from ?itemId= query param (e.g. from AlignmentLinkBadge)
+  const searchParams = useSearchParams()
+  const deepLinkProcessed = useRef(false)
+  useEffect(() => {
+    if (deepLinkProcessed.current) return
+    const itemId = searchParams.get('itemId')
+    if (itemId && payload.items.some((i) => i.id === itemId)) {
+      deepLinkProcessed.current = true
+      setSelectedItemId(itemId)
+    }
+  }, [searchParams, payload.items])
 
   // Collect unique areas for filter dropdown
   const areas = useMemo(() => {

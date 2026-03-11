@@ -191,7 +191,8 @@ export interface PublicAlignmentItem {
   what_did_not_change?: string
   whats_still_open?: string
   photos: { url: string; thumbnailUrl?: string }[]
-  guest_responses: Omit<AlignmentGuestResponse, 'share_token'>[]
+  guest_responses: []          // always empty in public view (privacy)
+  response_count: number       // number of responses received (without content)
   created_at: string
   resolved_at?: string
   superseded: boolean
@@ -225,7 +226,11 @@ export function toPublicAlignmentItem(
     photos: opts.includePhotos
       ? item.photos.map((p) => ({ url: p.url, thumbnailUrl: p.thumbnailUrl }))
       : [],
-    guest_responses: item.guest_responses.map(({ share_token: _, ...rest }) => rest),
+    // Privacy: don't expose prior guest responses in public view.
+    // The homeowner sees all responses in the authenticated tool view.
+    // Each guest sees only their own submitted response (shown in-session after submit).
+    guest_responses: [],
+    response_count: item.guest_responses.length,
     created_at: item.created_at,
     resolved_at: item.resolved_at,
     superseded: item.status === 'superseded',
