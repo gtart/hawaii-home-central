@@ -8,6 +8,7 @@ import type {
   SummaryChange,
   SummaryDecision,
   SummaryLink,
+  ChangeAttachment,
   ChangeStatus,
   DecisionStatus,
 } from '@/data/project-summary'
@@ -272,6 +273,68 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
     [setState]
   )
 
+  // ── Change attachments and private notes ──
+
+  const addChangeAttachment = useCallback(
+    (changeId: string, attachment: Omit<ChangeAttachment, 'id'>) => {
+      const attachId = genId()
+      const events: ActivityEventHint[] = [{
+        action: 'created',
+        entityType: 'attachment',
+        entityId: attachId,
+        summaryText: `Added attachment: "${attachment.label}"`,
+        entityLabel: attachment.label,
+      }]
+      setState((prev) => {
+        const p = ensureShape(prev)
+        return {
+          ...p,
+          changes: p.changes.map((c) =>
+            c.id === changeId
+              ? { ...c, attachments: [...(c.attachments || []), { ...attachment, id: attachId }], updated_at: now() }
+              : c
+          ),
+        }
+      }, events)
+      return attachId
+    },
+    [setState]
+  )
+
+  const removeChangeAttachment = useCallback(
+    (changeId: string, attachmentId: string) => {
+      setState((prev) => {
+        const p = ensureShape(prev)
+        return {
+          ...p,
+          changes: p.changes.map((c) =>
+            c.id === changeId
+              ? { ...c, attachments: (c.attachments || []).filter((a) => a.id !== attachmentId), updated_at: now() }
+              : c
+          ),
+        }
+      })
+    },
+    [setState]
+  )
+
+  const updateChangePrivateNotes = useCallback(
+    (changeId: string, notes: string) => {
+      setState((prev) => {
+        const p = ensureShape(prev)
+        return {
+          ...p,
+          changes: p.changes.map((c) =>
+            c.id === changeId
+              ? { ...c, private_notes: notes || undefined, updated_at: now() }
+              : c
+          ),
+        }
+      })
+    },
+    [setState]
+  )
+
   // ── Links (on changes and decisions) ──
 
   const addLink = useCallback(
@@ -332,6 +395,9 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
     addChange,
     updateChange,
     deleteChange,
+    addChangeAttachment,
+    removeChangeAttachment,
+    updateChangePrivateNotes,
     // Decisions
     addDecision,
     updateDecision,

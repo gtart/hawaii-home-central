@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import type { ChangeStatus } from '@/data/project-summary'
 import { CHANGE_STATUS_CONFIG, CHANGE_STATUS_CYCLE } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
@@ -147,10 +148,29 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                   <span className="text-[10px] text-cream/35 shrink-0">{change.cost_impact}</span>
                 )}
 
+                {(change.attachments?.length || 0) > 0 && (
+                  <span className="text-[10px] text-cream/25 shrink-0 flex items-center gap-0.5">
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {change.attachments!.length}
+                  </span>
+                )}
+
                 {commentCount > 0 && (
                   <span className="text-[10px] text-cream/25 shrink-0">
                     {commentCount} comment{commentCount !== 1 ? 's' : ''}
                   </span>
+                )}
+
+                {api.collectionId && (
+                  <Link
+                    href={`/app/tools/project-summary/${api.collectionId}/change/${change.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0 text-[10px] text-sandstone/40 hover:text-sandstone transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    Details →
+                  </Link>
                 )}
 
                 {!readOnly && (

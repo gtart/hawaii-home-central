@@ -39,6 +39,18 @@ export interface SummaryDocument {
   updated_at: string
 }
 
+export interface ChangeAttachment {
+  id: string
+  type: 'file' | 'url'
+  url: string
+  label: string
+  fileName?: string
+  fileSize?: number
+  mimeType?: string
+  uploadedBy?: string
+  uploadedAt?: string
+}
+
 export interface SummaryChange {
   id: string
   title: string
@@ -48,7 +60,9 @@ export interface SummaryChange {
   cost_impact?: string
   schedule_impact?: string
   final_note?: string
+  private_notes?: string
   links: SummaryLink[]
+  attachments?: ChangeAttachment[]
   created_at: string
   updated_at: string
 }
@@ -164,6 +178,27 @@ function coerceDocument(raw: unknown): SummaryDocument | null {
   }
 }
 
+function coerceAttachment(raw: unknown): ChangeAttachment | null {
+  if (!isObject(raw)) return null
+  if (!isString(raw.id) || !isString(raw.url)) return null
+  return {
+    id: raw.id,
+    type: raw.type === 'url' ? 'url' : 'file',
+    url: raw.url,
+    label: isString(raw.label) ? raw.label : 'Untitled',
+    ...(isString(raw.fileName) ? { fileName: raw.fileName } : {}),
+    ...(typeof raw.fileSize === 'number' ? { fileSize: raw.fileSize } : {}),
+    ...(isString(raw.mimeType) ? { mimeType: raw.mimeType } : {}),
+    ...(isString(raw.uploadedBy) ? { uploadedBy: raw.uploadedBy } : {}),
+    ...(isString(raw.uploadedAt) ? { uploadedAt: raw.uploadedAt } : {}),
+  }
+}
+
+function coerceAttachments(raw: unknown): ChangeAttachment[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map(coerceAttachment).filter((a): a is ChangeAttachment => a !== null)
+}
+
 function coerceChange(raw: unknown): SummaryChange | null {
   if (!isObject(raw)) return null
   const ts = new Date().toISOString()
@@ -178,7 +213,9 @@ function coerceChange(raw: unknown): SummaryChange | null {
     ...(isString(raw.cost_impact) ? { cost_impact: raw.cost_impact } : {}),
     ...(isString(raw.schedule_impact) ? { schedule_impact: raw.schedule_impact } : {}),
     ...(isString(raw.final_note) ? { final_note: raw.final_note } : {}),
+    ...(isString(raw.private_notes) ? { private_notes: raw.private_notes } : {}),
     links: coerceLinks(raw.links),
+    attachments: coerceAttachments(raw.attachments),
     created_at: isString(raw.created_at) ? raw.created_at : ts,
     updated_at: isString(raw.updated_at) ? raw.updated_at : ts,
   }
