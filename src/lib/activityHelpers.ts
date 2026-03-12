@@ -14,7 +14,7 @@ export const TOOL_BASE: Record<string, string> = {
   finish_decisions: '/app/tools/finish-decisions',
   mood_boards: '/app/tools/mood-boards',
   before_you_sign: '/app/tools/before-you-sign',
-  project_alignment: '/app/tools/project-alignment',
+  project_alignment: '/app/tools/project-summary',
   project_summary: '/app/tools/project-summary',
 }
 
@@ -46,9 +46,9 @@ export function eventHref(event: ActivityFeedEvent): string {
     return `${collUrl}?highlight=${event.entityId}`
   }
 
-  // Alignment item deep link — open detail (historical PAT events)
-  if (event.toolKey === 'project_alignment' && event.entityType === 'item' && event.entityId) {
-    return `${collUrl}?item=${event.entityId}`
+  // Historical PAT events → redirect to Project Summary (PAT routes deleted in Phase E)
+  if (event.toolKey === 'project_alignment') {
+    return '/app/tools/project-summary'
   }
 
   // Project Summary — singleton, no collectionId in URL needed
