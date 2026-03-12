@@ -28,6 +28,12 @@ export interface SummaryDocument {
   replacedByDocId?: string
   url?: string
   note?: string
+  fileUrl?: string
+  fileName?: string
+  fileSize?: number
+  mimeType?: string
+  uploadedBy?: string
+  uploadedAt?: string
   sort_order: number
   created_at: string
   updated_at: string
@@ -146,6 +152,12 @@ function coerceDocument(raw: unknown): SummaryDocument | null {
     ...(isString(raw.replacedByDocId) ? { replacedByDocId: raw.replacedByDocId } : {}),
     ...(isString(raw.url) ? { url: raw.url } : {}),
     ...(isString(raw.note) ? { note: raw.note } : {}),
+    ...(isString(raw.fileUrl) ? { fileUrl: raw.fileUrl } : {}),
+    ...(isString(raw.fileName) ? { fileName: raw.fileName } : {}),
+    ...(typeof raw.fileSize === 'number' ? { fileSize: raw.fileSize } : {}),
+    ...(isString(raw.mimeType) ? { mimeType: raw.mimeType } : {}),
+    ...(isString(raw.uploadedBy) ? { uploadedBy: raw.uploadedBy } : {}),
+    ...(isString(raw.uploadedAt) ? { uploadedAt: raw.uploadedAt } : {}),
     sort_order: typeof raw.sort_order === 'number' ? raw.sort_order : 0,
     created_at: isString(raw.created_at) ? raw.created_at : ts,
     updated_at: isString(raw.updated_at) ? raw.updated_at : ts,
