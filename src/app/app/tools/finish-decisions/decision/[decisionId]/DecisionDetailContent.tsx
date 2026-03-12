@@ -37,8 +37,8 @@ import { useProject } from '@/contexts/ProjectContext'
 import { SelectionShareSheet } from '../../components/SelectionShareSheet'
 import { useSelectionLastVisited } from '@/hooks/useSelectionLastVisited'
 import type { SelectionVisibility, SelectionAccess } from '@/data/finish-decisions'
-import { AlignmentLinkBadge } from '@/components/app/AlignmentLinkBadge'
-import { CreateAlignmentIssueButton } from '@/components/app/CreateAlignmentIssueButton'
+import { ProjectSummaryLinkBadge } from '@/components/app/ProjectSummaryLinkBadge'
+import { CreateProjectSummaryEntryButton } from '@/components/app/CreateProjectSummaryEntryButton'
 
 function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
   if (!a) return null
@@ -880,12 +880,12 @@ export function DecisionDetailContent({
           </p>
         )}
 
-        {/* Cross-tool: alignment items linked to this selection */}
+        {/* Cross-tool: Project Summary entries linked to this selection */}
         {currentProject?.id && (
           <div className="mb-4 space-y-2">
-            <AlignmentLinkBadge projectId={currentProject.id} entityId={decisionId} artifactType="selection" />
+            <ProjectSummaryLinkBadge projectId={currentProject.id} entityId={decisionId} />
             {workspaceAccess !== 'VIEWER' && foundDecision && (
-              <CreateAlignmentIssueButton
+              <CreateProjectSummaryEntryButton
                 artifactType="selection"
                 entityId={decisionId}
                 entityLabel={foundDecision.title}

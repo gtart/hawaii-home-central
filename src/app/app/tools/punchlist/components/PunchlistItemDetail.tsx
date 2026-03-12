@@ -10,8 +10,8 @@ import { LOCATION_SEEDS, ASSIGNEE_SEEDS } from '../utils'
 import { PhotoLightbox } from './PhotoLightbox'
 import { uploadFile } from '../utils'
 import { DestinationPicker } from '@/components/app/DestinationPicker'
-import { AlignmentLinkBadge } from '@/components/app/AlignmentLinkBadge'
-import { CreateAlignmentIssueButton } from '@/components/app/CreateAlignmentIssueButton'
+import { ProjectSummaryLinkBadge } from '@/components/app/ProjectSummaryLinkBadge'
+import { CreateProjectSummaryEntryButton } from '@/components/app/CreateProjectSummaryEntryButton'
 import { useCollectionTransfer } from '@/hooks/useCollectionTransfer'
 
 type EditingField = 'title' | 'location' | 'assignee' | 'priority' | 'notes' | null
@@ -434,12 +434,12 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
             )}
           </div>
 
-          {/* Cross-tool: alignment items linked to this fix item */}
+          {/* Cross-tool: Project Summary entries linked to this fix item */}
           {projectId && (
             <div className="space-y-2">
-              <AlignmentLinkBadge projectId={projectId} entityId={item.id} artifactType="fix_item" />
+              <ProjectSummaryLinkBadge projectId={projectId} entityId={item.id} />
               {!readOnly && (
-                <CreateAlignmentIssueButton
+                <CreateProjectSummaryEntryButton
                   artifactType="fix_item"
                   entityId={item.id}
                   entityLabel={item.title}
