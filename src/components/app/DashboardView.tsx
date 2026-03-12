@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useProject } from '@/contexts/ProjectContext'
-import { TOOL_REGISTRY } from '@/lib/tool-registry'
+import { VISIBLE_TOOL_REGISTRY } from '@/lib/tool-registry'
 import type {
   DashboardResponse,
   SelectionListSummary,
@@ -119,10 +119,10 @@ export function DashboardView() {
 
   // Members: filter by explicit tool access. Owners: always see all tools.
   const visibleTools = currentProject?.role === 'MEMBER' && currentProject.toolAccess
-    ? TOOL_REGISTRY.filter((t) =>
+    ? VISIBLE_TOOL_REGISTRY.filter((t) =>
         currentProject.toolAccess!.some((a) => a.toolKey === t.toolKey)
       )
-    : TOOL_REGISTRY
+    : VISIBLE_TOOL_REGISTRY
 
   if (visibleTools.length === 0) {
     return (

@@ -10,6 +10,8 @@ export interface ToolRegistryEntry {
   description: string
   /** Which renovation stage this tool belongs to */
   stage: string
+  /** If true, tool is hidden from user-facing grids/nav but remains in TOOL_LABELS/TOOL_PATHS for backward compat */
+  hidden?: boolean
 }
 
 export const TOOL_REGISTRY: ToolRegistryEntry[] = [
@@ -52,6 +54,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     description:
       'Track scope questions, mismatches, and agreements between you and your contractor.',
     stage: 'Build',
+    hidden: true,
   },
   {
     toolKey: 'project_summary',
@@ -62,6 +65,9 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     stage: 'Build',
   },
 ]
+
+/** Visible (non-hidden) tools for user-facing grids and navigation */
+export const VISIBLE_TOOL_REGISTRY = TOOL_REGISTRY.filter((t) => !t.hidden)
 
 /** toolKey → user-facing title (e.g. "Fix List", "Selection Lists") */
 export const TOOL_LABELS: Record<string, string> = Object.fromEntries(

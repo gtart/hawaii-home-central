@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import { UserMenu } from '@/components/auth/UserMenu'
 import { ProjectSwitcher } from '@/components/app/ProjectSwitcher'
-import { TOOL_REGISTRY } from '@/lib/tool-registry'
+import { VISIBLE_TOOL_REGISTRY } from '@/lib/tool-registry'
 import { useProjectOptional } from '@/contexts/ProjectContext'
 
 interface NavLink {
@@ -67,8 +67,8 @@ export function Navigation() {
   // Filter tools by activation state (empty array = all tools active)
   const activeKeys = projectCtx?.currentProject?.activeToolKeys ?? []
   const navTools = activeKeys.length > 0
-    ? TOOL_REGISTRY.filter((t) => activeKeys.includes(t.toolKey))
-    : TOOL_REGISTRY
+    ? VISIBLE_TOOL_REGISTRY.filter((t) => activeKeys.includes(t.toolKey))
+    : VISIBLE_TOOL_REGISTRY
 
   // Marketing nav for visitors, app nav for logged-in users
   const primaryLinks: NavLink[] = isLoggedIn

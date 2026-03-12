@@ -83,18 +83,6 @@ const FINDING_PROS_ITEMS = [
     ),
   },
   {
-    href: '/app/tools/project-alignment',
-    label: 'Project Alignment',
-    matchMode: 'prefix' as const,
-    icon: (
-      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="8.5" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M20 8v6M23 11h-6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
     href: '/app/tools/project-summary',
     label: 'Project Summary',
     matchMode: 'prefix' as const,

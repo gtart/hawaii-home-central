@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useMemo, useCallback, useRef } from 'react'
+import { Suspense, useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { ActivityPanel } from '@/components/app/ActivityPanel'
 import { CollapsibleCommentSidebar, type CommentSidebarHandle } from '@/components/app/CollapsibleCommentSidebar'
@@ -47,6 +47,36 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
   const handleOpenComments = useCallback(() => {
     commentSidebarRef.current?.toggle()
   }, [])
+
+  // Handle incoming prefill link from CreateProjectSummaryEntryButton
+  useEffect(() => {
+    if (!isLoaded || readOnly) return
+    try {
+      const raw = sessionStorage.getItem('hhc_project_summary_create_link')
+      if (!raw) return
+      sessionStorage.removeItem('hhc_project_summary_create_link')
+      const data = JSON.parse(raw)
+      if (data?.entity_label && data?.artifact_type && data?.entity_id) {
+        // Create a new change entry with the artifact pre-linked
+        const linkType = data.artifact_type === 'selection' ? 'selection' as const : 'fix_item' as const
+        const changeId = api.addChange({
+          title: data.entity_label,
+          description: `Linked from ${linkType === 'selection' ? 'Selections' : 'Fix List'}`,
+        })
+        if (changeId) {
+          api.addLink('changes', changeId, {
+            linkType,
+            toolKey: data.tool_key,
+            collectionId: data.collection_id,
+            entityId: data.entity_id,
+            label: data.entity_label,
+          })
+        }
+      }
+    } catch {
+      // ignore malformed sessionStorage
+    }
+  }, [isLoaded, readOnly, api])
 
   if (!isLoaded) {
     return (

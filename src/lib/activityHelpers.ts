@@ -6,6 +6,7 @@ export const TOOL_LABEL: Record<string, string> = {
   mood_boards: 'Mood Boards',
   before_you_sign: 'Contract Checklist',
   project_alignment: 'Project Alignment',
+  project_summary: 'Project Summary',
 }
 
 export const TOOL_BASE: Record<string, string> = {
@@ -14,6 +15,7 @@ export const TOOL_BASE: Record<string, string> = {
   mood_boards: '/app/tools/mood-boards',
   before_you_sign: '/app/tools/before-you-sign',
   project_alignment: '/app/tools/project-alignment',
+  project_summary: '/app/tools/project-summary',
 }
 
 export function eventHref(event: ActivityFeedEvent): string {
@@ -44,9 +46,14 @@ export function eventHref(event: ActivityFeedEvent): string {
     return `${collUrl}?highlight=${event.entityId}`
   }
 
-  // Alignment item deep link — open detail
+  // Alignment item deep link — open detail (historical PAT events)
   if (event.toolKey === 'project_alignment' && event.entityType === 'item' && event.entityId) {
     return `${collUrl}?item=${event.entityId}`
+  }
+
+  // Project Summary — singleton, no collectionId in URL needed
+  if (event.toolKey === 'project_summary') {
+    return base
   }
 
   // Share token actions — open share modal
@@ -63,6 +70,7 @@ export const FILTER_CHIPS: { key: string | undefined; label: string }[] = [
   { key: 'finish_decisions', label: 'Selections' },
   { key: 'mood_boards', label: 'Mood Boards' },
   { key: 'before_you_sign', label: 'Contract Checklist' },
+  { key: 'project_summary', label: 'Project Summary' },
   { key: 'project_alignment', label: 'Project Alignment' },
 ]
 

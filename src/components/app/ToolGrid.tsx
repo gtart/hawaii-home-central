@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useProject } from '@/contexts/ProjectContext'
-import { TOOL_REGISTRY } from '@/lib/tool-registry'
+import { VISIBLE_TOOL_REGISTRY } from '@/lib/tool-registry'
 import { getDashboardStats, isToolEmpty } from '@/lib/tool-stats'
 
 interface ToolSummary {
@@ -64,10 +64,10 @@ export function ToolGrid() {
 
   // Members: filter by explicit tool access. Owners: always see all tools.
   const visibleTools = currentProject?.role === 'MEMBER' && currentProject.toolAccess
-    ? TOOL_REGISTRY.filter((t) =>
+    ? VISIBLE_TOOL_REGISTRY.filter((t) =>
         currentProject.toolAccess!.some((a) => a.toolKey === t.toolKey)
       )
-    : TOOL_REGISTRY
+    : VISIBLE_TOOL_REGISTRY
 
   const summaryMap = new Map(summaries.map((s) => [s.toolKey, s]))
 

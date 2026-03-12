@@ -8,6 +8,7 @@ import { SectionHeader } from './SectionHeader'
 import { InlineEdit } from './InlineEdit'
 import { StatusBadge } from './StatusBadge'
 import { LinkPills } from './LinkPills'
+import { AttachMenu } from './AttachMenu'
 
 interface ChangesSectionProps {
   api: ProjectSummaryStateAPI
@@ -15,7 +16,7 @@ interface ChangesSectionProps {
 }
 
 export function ChangesSection({ api, commentCounts }: ChangesSectionProps) {
-  const { payload, readOnly, addChange, updateChange, deleteChange, removeLink } = api
+  const { payload, readOnly, addChange, updateChange, deleteChange, addLink, removeLink } = api
   const { changes } = payload
   const [showAddForm, setShowAddForm] = useState(false)
   const [newTitle, setNewTitle] = useState('')
@@ -194,11 +195,17 @@ export function ChangesSection({ api, commentCounts }: ChangesSectionProps) {
                     </div>
                   )}
 
-                  <LinkPills
-                    links={change.links}
-                    onRemove={readOnly ? undefined : (linkId) => removeLink('changes', change.id, linkId)}
-                    readOnly={readOnly}
-                  />
+                  <div className="flex items-center gap-2">
+                    <LinkPills
+                      links={change.links}
+                      onRemove={readOnly ? undefined : (linkId) => removeLink('changes', change.id, linkId)}
+                      readOnly={readOnly}
+                    />
+                    <AttachMenu
+                      readOnly={readOnly}
+                      onAttach={(link) => addLink('changes', change.id, link)}
+                    />
+                  </div>
                 </div>
               )}
             </div>

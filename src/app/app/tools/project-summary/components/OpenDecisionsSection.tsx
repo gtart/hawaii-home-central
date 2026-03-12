@@ -8,6 +8,7 @@ import { SectionHeader } from './SectionHeader'
 import { InlineEdit } from './InlineEdit'
 import { StatusBadge } from './StatusBadge'
 import { LinkPills } from './LinkPills'
+import { AttachMenu } from './AttachMenu'
 
 interface OpenDecisionsSectionProps {
   api: ProjectSummaryStateAPI
@@ -15,7 +16,7 @@ interface OpenDecisionsSectionProps {
 }
 
 export function OpenDecisionsSection({ api, commentCounts }: OpenDecisionsSectionProps) {
-  const { payload, readOnly, addDecision, updateDecision, deleteDecision, removeLink } = api
+  const { payload, readOnly, addDecision, updateDecision, deleteDecision, addLink, removeLink } = api
   const { openDecisions } = payload
   const [showAddForm, setShowAddForm] = useState(false)
   const [newTitle, setNewTitle] = useState('')
@@ -166,11 +167,17 @@ export function OpenDecisionsSection({ api, commentCounts }: OpenDecisionsSectio
                     </div>
                   )}
 
-                  <LinkPills
-                    links={decision.links}
-                    onRemove={readOnly ? undefined : (linkId) => removeLink('openDecisions', decision.id, linkId)}
-                    readOnly={readOnly}
-                  />
+                  <div className="flex items-center gap-2">
+                    <LinkPills
+                      links={decision.links}
+                      onRemove={readOnly ? undefined : (linkId) => removeLink('openDecisions', decision.id, linkId)}
+                      readOnly={readOnly}
+                    />
+                    <AttachMenu
+                      readOnly={readOnly}
+                      onAttach={(link) => addLink('openDecisions', decision.id, link)}
+                    />
+                  </div>
                 </div>
               )}
             </div>
