@@ -248,6 +248,43 @@ function validateProjectAlignment(payload: Record<string, unknown>): ValidationR
   return { valid: true, payload: { ...payload, version: 1, items, nextItemNumber } }
 }
 
+// ── Project Summary (V1) ──
+
+const VALID_PS_CHANGE_STATUSES = ['proposed', 'approved', 'not_approved']
+const VALID_PS_DECISION_STATUSES = ['open', 'decided']
+
+function validateProjectSummary(payload: Record<string, unknown>): ValidationResult {
+  const summaryRaw = isObject(payload.summary) ? payload.summary : {}
+  const summary = {
+    text: isString(summaryRaw.text) ? summaryRaw.text : '',
+    ...(isString(summaryRaw.baseline_amount) ? { baseline_amount: summaryRaw.baseline_amount } : {}),
+    ...(isString(summaryRaw.approved_changes_total) ? { approved_changes_total: summaryRaw.approved_changes_total } : {}),
+    ...(isString(summaryRaw.current_total) ? { current_total: summaryRaw.current_total } : {}),
+    ...(isString(summaryRaw.budget_note) ? { budget_note: summaryRaw.budget_note } : {}),
+    updated_at: isString(summaryRaw.updated_at) ? summaryRaw.updated_at : new Date().toISOString(),
+  }
+
+  const documents = Array.isArray(payload.documents)
+    ? (payload.documents as unknown[]).filter(isObject)
+    : []
+  const changes = Array.isArray(payload.changes)
+    ? (payload.changes as unknown[]).filter(isObject).map((c) => ({
+      ...c,
+      status: isString(c.status) && VALID_PS_CHANGE_STATUSES.includes(c.status) ? c.status : 'proposed',
+      links: Array.isArray(c.links) ? c.links : [],
+    }))
+    : []
+  const openDecisions = Array.isArray(payload.openDecisions)
+    ? (payload.openDecisions as unknown[]).filter(isObject).map((d) => ({
+      ...d,
+      status: isString(d.status) && VALID_PS_DECISION_STATUSES.includes(d.status) ? d.status : 'open',
+      links: Array.isArray(d.links) ? d.links : [],
+    }))
+    : []
+
+  return { valid: true, payload: { version: 1, summary, documents, changes, openDecisions } }
+}
+
 // ── Main entry point ──
 
 const VALIDATORS: Record<string, (p: Record<string, unknown>) => ValidationResult> = {
@@ -256,6 +293,7 @@ const VALIDATORS: Record<string, (p: Record<string, unknown>) => ValidationResul
   punchlist: validatePunchlist,
   before_you_sign: validateBeforeYouSign,
   project_alignment: validateProjectAlignment,
+  project_summary: validateProjectSummary,
 }
 
 /**

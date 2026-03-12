@@ -53,6 +53,14 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
       'Track scope questions, mismatches, and agreements between you and your contractor.',
     stage: 'Build',
   },
+  {
+    toolKey: 'project_summary',
+    href: '/app/tools/project-summary',
+    title: 'Project Summary',
+    description:
+      'A quick snapshot of your project: what\'s included, what\'s changed, and what still needs a decision.',
+    stage: 'Build',
+  },
 ]
 
 /** toolKey → user-facing title (e.g. "Fix List", "Selection Lists") */
