@@ -19,16 +19,30 @@ export async function resolveCurrentProject(userId: string): Promise<string | nu
   })
 
   // Check if current project is still valid (ACTIVE)
+  // Accept both ProjectMember-based and legacy userId-based ownership.
   if (user.currentProjectId) {
     const project = await prisma.project.findFirst({
       where: {
         id: user.currentProjectId,
         status: 'ACTIVE',
-        members: { some: { userId } },
+        OR: [
+          { members: { some: { userId } } },
+          { userId },
+        ],
       },
-      select: { id: true },
+      select: { id: true, userId: true },
     })
-    if (project) return project.id
+    if (project) {
+      // Legacy repair: backfill ProjectMember if user owns via project.userId but has no member row
+      if (project.userId === userId) {
+        await prisma.projectMember.upsert({
+          where: { projectId_userId: { projectId: project.id, userId } },
+          create: { projectId: project.id, userId, role: 'OWNER' },
+          update: {},
+        })
+      }
+      return project.id
+    }
   }
 
   // currentProjectId is missing or points to a non-ACTIVE project.
@@ -48,6 +62,28 @@ export async function resolveCurrentProject(userId: string): Promise<string | nu
       data: { currentProjectId: fallback.projectId },
     })
     return fallback.projectId
+  }
+
+  // Legacy ownership fallback: check for projects where user is the creator
+  // (project.userId) but has no ProjectMember row yet.
+  const legacyOwned = await prisma.project.findFirst({
+    where: { userId, status: 'ACTIVE' },
+    select: { id: true },
+    orderBy: { createdAt: 'asc' },
+  })
+
+  if (legacyOwned) {
+    // Backfill the missing ProjectMember row
+    await prisma.projectMember.upsert({
+      where: { projectId_userId: { projectId: legacyOwned.id, userId } },
+      create: { projectId: legacyOwned.id, userId, role: 'OWNER' },
+      update: {},
+    })
+    await prisma.user.update({
+      where: { id: userId },
+      data: { currentProjectId: legacyOwned.id, hasBootstrappedProject: true },
+    })
+    return legacyOwned.id
   }
 
   // No ACTIVE projects at all.
@@ -73,11 +109,31 @@ export async function resolveCurrentProject(userId: string): Promise<string | nu
     // Another concurrent call already claimed the bootstrap slot.
     // Wait briefly and re-check for the newly created project.
     await new Promise((r) => setTimeout(r, 300))
+    // Check both ProjectMember and legacy ownership
     const retry = await prisma.projectMember.findFirst({
       where: { userId, project: { status: 'ACTIVE' } },
       select: { projectId: true },
       orderBy: { project: { createdAt: 'asc' } },
     })
+    if (!retry) {
+      const retryLegacy = await prisma.project.findFirst({
+        where: { userId, status: 'ACTIVE' },
+        select: { id: true },
+        orderBy: { createdAt: 'asc' },
+      })
+      if (retryLegacy) {
+        await prisma.projectMember.upsert({
+          where: { projectId_userId: { projectId: retryLegacy.id, userId } },
+          create: { projectId: retryLegacy.id, userId, role: 'OWNER' },
+          update: {},
+        })
+        await prisma.user.update({
+          where: { id: userId },
+          data: { currentProjectId: retryLegacy.id },
+        })
+        return retryLegacy.id
+      }
+    }
     if (retry) {
       await prisma.user.update({
         where: { id: userId },

@@ -103,14 +103,34 @@ export async function resolveShareToken(
     select: { payload: true },
   })
 
-  if (!instance) {
+  if (instance) {
+    return {
+      record: legacyRecord,
+      payloadData: instance.payload,
+      toolKey: expectedToolKey,
+    }
+  }
+
+  // Legacy fallback: if ToolInstance was migrated to ToolCollection, try finding
+  // the collection for this project+toolKey so legacy share links still work.
+  const collection = await prisma.toolCollection.findFirst({
+    where: {
+      projectId: legacyRecord.projectId,
+      toolKey: expectedToolKey,
+    },
+    select: { id: true, payload: true },
+    orderBy: { createdAt: 'asc' },
+  })
+
+  if (!collection) {
     return { error: 'No data found', status: 404 }
   }
 
   return {
     record: legacyRecord,
-    payloadData: instance.payload,
+    payloadData: collection.payload,
     toolKey: expectedToolKey,
+    collectionId: collection.id,
   }
 }
 

@@ -15,6 +15,29 @@ export async function GET() {
   // Resolve current project (bootstraps on first sign-in, returns null if all deleted)
   const currentProjectId = await resolveCurrentProject(userId)
 
+  // Backfill ProjectMember rows for any legacy-owned projects (project.userId)
+  // that don't yet have a ProjectMember entry. This ensures they appear in the
+  // membership query below.
+  const legacyOwned = await prisma.project.findMany({
+    where: {
+      userId,
+      status: 'ACTIVE',
+      members: { none: { userId } },
+    },
+    select: { id: true },
+  })
+  if (legacyOwned.length > 0) {
+    await Promise.all(
+      legacyOwned.map((p) =>
+        prisma.projectMember.upsert({
+          where: { projectId_userId: { projectId: p.id, userId } },
+          create: { projectId: p.id, userId, role: 'OWNER' },
+          update: {},
+        })
+      )
+    )
+  }
+
   const memberships = await prisma.projectMember.findMany({
     where: { userId },
     include: {

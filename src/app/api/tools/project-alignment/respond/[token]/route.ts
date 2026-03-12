@@ -10,7 +10,7 @@ const MAX_TEXT_LENGTH = 1000
 const MAX_NAME_LENGTH = 100
 
 /**
- * POST /api/share/[token]/respond
+ * POST /api/tools/project-alignment/respond/[token]
  *
  * Guest contractor response endpoint. Appends a structured response
  * to a single alignment item's guest_responses[] array.

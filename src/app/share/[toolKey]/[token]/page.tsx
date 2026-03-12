@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { validateShareToken } from '@/lib/share-tokens'
 import { TOOL_LABELS } from '@/lib/tool-registry'
+import { resolveShareToken, buildSanitizedShareResponse } from '@/lib/public-share'
 import { PublicPunchlistView } from './PublicPunchlistView'
 import { PublicMoodBoardView } from './PublicMoodBoardView'
 import { PublicFinishDecisionsView } from './PublicFinishDecisionsView'
@@ -44,8 +45,9 @@ interface Props {
 
 export default async function SharePage({ params }: Props) {
   const { toolKey, token } = await params
-  const baseUrl = process.env.NEXTAUTH_URL || process.env.AUTH_URL || 'https://www.hawaiihomecentral.com'
 
+  // Direct data access — avoids self-fetch anti-pattern that breaks when
+  // API routes are unavailable (same approach as Stories/Guides pages).
   let data: {
     payload: Record<string, unknown>
     projectName: string
@@ -61,11 +63,12 @@ export default async function SharePage({ params }: Props) {
   } | null = null
 
   try {
-    const res = await fetch(`${baseUrl}/api/share/${toolKey}/${token}`, {
-      cache: 'no-store',
-    })
-    if (res.ok) {
-      data = await res.json()
+    const resolution = await resolveShareToken(token, toolKey)
+    if (!('error' in resolution)) {
+      const result = await buildSanitizedShareResponse(resolution)
+      if (!('error' in result)) {
+        data = result.body
+      }
     }
   } catch {
     // will show invalid page
