@@ -7,10 +7,7 @@ import { toPublicBoard } from '@/data/mood-boards'
 import type { Board } from '@/data/mood-boards'
 import { toPublicRoom, toPublicSelection } from '@/data/finish-decisions'
 import type { RoomV3, SelectionV4 } from '@/data/finish-decisions'
-import { toPublicAlignmentItem } from '@/data/alignment'
-import type { AlignmentItem } from '@/data/alignment'
-
-const SUPPORTED_TOOLS = new Set(['punchlist', 'mood_boards', 'finish_decisions', 'project_alignment'])
+const SUPPORTED_TOOLS = new Set(['punchlist', 'mood_boards', 'finish_decisions'])
 
 interface ResolvedToken {
   id: string
@@ -367,27 +364,7 @@ export async function buildSanitizedShareResponse(resolution: ShareResolution) {
     }
   }
 
-  // Project Alignment: allowlist sanitization — strip internal fields, scope to shared items
-  if (toolKey === 'project_alignment' && Array.isArray(payload?.items)) {
-    let items = payload.items as AlignmentItem[]
-
-    const alScope = settings?.scope as { mode?: string; itemIds?: string[] } | undefined
-    if (alScope?.mode === 'selected' && Array.isArray(alScope.itemIds) && alScope.itemIds.length > 0) {
-      items = items.filter((it) => alScope.itemIds!.includes(it.id))
-    }
-
-    payload = {
-      version: 1,
-      items: items.map((it) =>
-        toPublicAlignmentItem(it, { includeNotes, includePhotos })
-      ),
-    }
-  }
-
   const scope = settings?.scope as Record<string, unknown> | undefined
-
-  // Alignment-specific: surface allowResponses at top level (not inside payload)
-  const allowResponses = toolKey === 'project_alignment' && (settings as Record<string, unknown>)?.allowResponses === true
 
   return {
     body: {
@@ -401,7 +378,6 @@ export async function buildSanitizedShareResponse(resolution: ShareResolution) {
       boardId,
       scope: scope ?? null,
       filters: { locations: filterLocations, assignees: filterAssignees, statuses: filterStatuses, priorities: filterPriorities },
-      allowResponses,
     },
   }
 }

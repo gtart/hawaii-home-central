@@ -5,7 +5,6 @@ import { resolveShareToken, buildSanitizedShareResponse } from '@/lib/public-sha
 import { PublicPunchlistView } from './PublicPunchlistView'
 import { PublicMoodBoardView } from './PublicMoodBoardView'
 import { PublicFinishDecisionsView } from './PublicFinishDecisionsView'
-import { PublicAlignmentView } from './PublicAlignmentView'
 import { InvalidTokenPage } from './InvalidTokenPage'
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -59,7 +58,6 @@ export default async function SharePage({ params }: Props) {
     boardId?: string | null
     scope?: Record<string, unknown> | null
     filters: { locations: string[]; assignees: string[] }
-    allowResponses?: boolean
   } | null = null
 
   try {
@@ -78,14 +76,19 @@ export default async function SharePage({ params }: Props) {
     return <InvalidTokenPage />
   }
 
+  // Legacy PAT share links: show friendly deprecation notice
   if (toolKey === 'project_alignment') {
     return (
-      <PublicAlignmentView
-        payload={data.payload}
-        projectName={data.projectName}
-        token={token}
-        allowResponses={data.allowResponses === true}
-      />
+      <div className="min-h-screen bg-[#0e0e0e] flex items-center justify-center px-6">
+        <div className="max-w-md text-center">
+          <h1 className="font-serif text-2xl text-cream mb-3">Link No Longer Available</h1>
+          <p className="text-cream/50 text-sm leading-relaxed">
+            This Project Alignment share link is no longer active.
+            The tool has been replaced by <strong className="text-cream/70">Project Summary</strong>.
+            Please ask the project owner for an updated link.
+          </p>
+        </div>
+      </div>
     )
   }
 

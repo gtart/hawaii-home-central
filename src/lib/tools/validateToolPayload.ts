@@ -184,68 +184,11 @@ function validateBeforeYouSign(payload: Record<string, unknown>): ValidationResu
   return { valid: true, payload }
 }
 
-// ── Project Alignment (V1) ──
-
-const VALID_AL_STATUSES = [
-  'open', 'waiting_on_homeowner', 'waiting_on_contractor', 'needs_pricing',
-  'needs_decision', 'accepted', 'rejected', 'implemented', 'superseded',
-]
-const VALID_AL_TYPES = [
-  'change_request', 'scope_clarification', 'scope_omission', 'plan_mismatch',
-  'design_correction', 'open_question', 'allowance_upgrade', 'site_condition',
-  'version_conflict',
-]
-const VALID_COST_SCHEDULE = ['none', 'possible', 'confirmed', 'unknown']
-const VALID_WAITING_ON = ['homeowner', 'contractor', 'designer', 'vendor', 'none']
-
-function coerceAlignmentItem(raw: unknown): Record<string, unknown> | null {
-  if (!isObject(raw)) return null
-  const ts = new Date().toISOString()
-  return {
-    ...raw,
-    id: isString(raw.id) ? raw.id : crypto.randomUUID(),
-    itemNumber: typeof raw.itemNumber === 'number' ? raw.itemNumber : 0,
-    title: isString(raw.title) ? raw.title : 'Untitled',
-    type: isString(raw.type) && VALID_AL_TYPES.includes(raw.type) ? raw.type : 'open_question',
-    status: isString(raw.status) && VALID_AL_STATUSES.includes(raw.status) ? raw.status : 'open',
-    area_label: isString(raw.area_label) ? raw.area_label : '',
-    summary: isString(raw.summary) ? raw.summary : '',
-    original_expectation: isString(raw.original_expectation) ? raw.original_expectation : '',
-    current_issue: isString(raw.current_issue) ? raw.current_issue : '',
-    proposed_resolution: isString(raw.proposed_resolution) ? raw.proposed_resolution : '',
-    current_agreed_answer: isString(raw.current_agreed_answer) ? raw.current_agreed_answer : '',
-    cost_impact_status: isString(raw.cost_impact_status) && VALID_COST_SCHEDULE.includes(raw.cost_impact_status) ? raw.cost_impact_status : 'unknown',
-    cost_impact_amount_text: isString(raw.cost_impact_amount_text) ? raw.cost_impact_amount_text : '',
-    schedule_impact_status: isString(raw.schedule_impact_status) && VALID_COST_SCHEDULE.includes(raw.schedule_impact_status) ? raw.schedule_impact_status : 'unknown',
-    schedule_impact_text: isString(raw.schedule_impact_text) ? raw.schedule_impact_text : '',
-    waiting_on_role: isString(raw.waiting_on_role) && VALID_WAITING_ON.includes(raw.waiting_on_role) ? raw.waiting_on_role : 'none',
-    artifact_links: Array.isArray(raw.artifact_links) ? raw.artifact_links : [],
-    photos: Array.isArray(raw.photos) ? raw.photos : [],
-    guest_responses: Array.isArray(raw.guest_responses) ? raw.guest_responses : [],
-    created_at: isString(raw.created_at) ? raw.created_at : ts,
-    updated_at: isString(raw.updated_at) ? raw.updated_at : ts,
-    // Optional fields — preserve if valid, omit if not
-    ...(isString(raw.resolved_at) ? { resolved_at: raw.resolved_at } : {}),
-    ...(isString(raw.answer_updated_at) ? { answer_updated_at: raw.answer_updated_at } : {}),
-    ...(isString(raw.answer_updated_by_name) ? { answer_updated_by_name: raw.answer_updated_by_name } : {}),
-    ...(isString(raw.what_changed) ? { what_changed: raw.what_changed } : {}),
-    ...(isString(raw.what_did_not_change) ? { what_did_not_change: raw.what_did_not_change } : {}),
-    ...(isString(raw.whats_still_open) ? { whats_still_open: raw.whats_still_open } : {}),
-    ...(isString(raw.superseded_by_id) ? { superseded_by_id: raw.superseded_by_id } : {}),
-    ...(isString(raw.supersedes_id) ? { supersedes_id: raw.supersedes_id } : {}),
-    ...(isString(raw.created_by_name) ? { created_by_name: raw.created_by_name } : {}),
-    ...(isString(raw.created_by_email) ? { created_by_email: raw.created_by_email } : {}),
-  }
-}
-
+// ── Project Alignment (legacy, passthrough only) ──
+// PAT has been replaced by Project Summary. This minimal passthrough keeps
+// legacy collections from failing if they're ever touched via the generic PUT.
 function validateProjectAlignment(payload: Record<string, unknown>): ValidationResult {
-  const items = Array.isArray(payload.items)
-    ? (payload.items as unknown[]).map(coerceAlignmentItem).filter(Boolean)
-    : []
-  const nextItemNumber = typeof payload.nextItemNumber === 'number'
-    ? payload.nextItemNumber
-    : items.length + 1
-  return { valid: true, payload: { ...payload, version: 1, items, nextItemNumber } }
+  return { valid: true, payload }
 }
 
 // ── Project Summary (V1) ──
