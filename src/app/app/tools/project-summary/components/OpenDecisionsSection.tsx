@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { DecisionStatus } from '@/data/project-summary'
 import { DECISION_STATUS_CONFIG, DECISION_STATUS_CYCLE } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
@@ -13,15 +13,30 @@ import { AttachMenu } from './AttachMenu'
 interface OpenDecisionsSectionProps {
   api: ProjectSummaryStateAPI
   commentCounts?: Map<string, number>
+  /** Entry ID to auto-expand and scroll to (from ?focus= query param) */
+  focusEntryId?: string
 }
 
-export function OpenDecisionsSection({ api, commentCounts }: OpenDecisionsSectionProps) {
+export function OpenDecisionsSection({ api, commentCounts, focusEntryId }: OpenDecisionsSectionProps) {
   const { payload, readOnly, addDecision, updateDecision, deleteDecision, addLink, removeLink } = api
   const { openDecisions } = payload
   const [showAddForm, setShowAddForm] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const focusRef = useRef<HTMLDivElement>(null)
+
+  // Auto-expand and scroll to focused entry
+  useEffect(() => {
+    if (!focusEntryId) return
+    const exists = openDecisions.some((d) => d.id === focusEntryId)
+    if (exists) {
+      setExpandedId(focusEntryId)
+      requestAnimationFrame(() => {
+        focusRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      })
+    }
+  }, [focusEntryId, openDecisions])
 
   // Show open first, then decided
   const sortedDecisions = [...openDecisions].sort((a, b) => {
@@ -66,10 +81,13 @@ export function OpenDecisionsSection({ api, commentCounts }: OpenDecisionsSectio
           return (
             <div
               key={decision.id}
+              ref={decision.id === focusEntryId ? focusRef : undefined}
               className={`rounded-lg border group ${
-                decision.status === 'decided'
-                  ? 'bg-cream/[0.01] border-cream/[0.03] opacity-70'
-                  : 'bg-cream/[0.02] border-cream/[0.04]'
+                decision.id === focusEntryId
+                  ? 'bg-cream/[0.02] border-sandstone/30 ring-1 ring-sandstone/20'
+                  : decision.status === 'decided'
+                    ? 'bg-cream/[0.01] border-cream/[0.03] opacity-70'
+                    : 'bg-cream/[0.02] border-cream/[0.04]'
               }`}
             >
               {/* Header row */}

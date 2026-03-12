@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { ActivityPanel } from '@/components/app/ActivityPanel'
 import { CollapsibleCommentSidebar, type CommentSidebarHandle } from '@/components/app/CollapsibleCommentSidebar'
@@ -12,12 +13,48 @@ import { SummarySection } from './components/SummarySection'
 import { DocumentsSection } from './components/DocumentsSection'
 import { ChangesSection } from './components/ChangesSection'
 import { OpenDecisionsSection } from './components/OpenDecisionsSection'
+import type { SummaryLinkType } from '@/data/project-summary'
+
+/** Draft data from CreateProjectSummaryEntryButton — local-only, not persisted until explicit save. */
+export interface PrefillDraft {
+  title: string
+  description: string
+  linkType: SummaryLinkType
+  toolKey?: string
+  collectionId?: string
+  entityId?: string
+  entityLabel: string
+}
+
+/** Parsed focus target from URL query param ?focus=change-<id> or ?focus=decision-<id> */
+export interface FocusTarget {
+  section: 'changes' | 'openDecisions'
+  entryId: string
+}
 
 function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
   const api = useProjectSummaryState({ collectionId })
   const { payload, isLoaded, isSyncing, access, readOnly, noAccess } = api
   const [activityOpen, setActivityOpen] = useState(false)
   const commentSidebarRef = useRef<CommentSidebarHandle>(null)
+  const searchParams = useSearchParams()
+
+  // Draft state from CreateProjectSummaryEntryButton — local only, no persistence until user saves
+  const [prefillDraft, setPrefillDraft] = useState<PrefillDraft | null>(null)
+
+  // Focus target from URL query param (e.g. ?focus=change-<id>)
+  const focusTarget = useMemo<FocusTarget | null>(() => {
+    const raw = searchParams.get('focus')
+    if (!raw) return null
+    const dashIdx = raw.indexOf('-')
+    if (dashIdx === -1) return null
+    const type = raw.slice(0, dashIdx)
+    const id = raw.slice(dashIdx + 1)
+    if (!id) return null
+    if (type === 'change') return { section: 'changes', entryId: id }
+    if (type === 'decision') return { section: 'openDecisions', entryId: id }
+    return null
+  }, [searchParams])
 
   const collComments = useComments({
     collectionId,
@@ -48,7 +85,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     commentSidebarRef.current?.toggle()
   }, [])
 
-  // Handle incoming prefill link from CreateProjectSummaryEntryButton
+  // Read prefill context from sessionStorage into draft state — NO writes, NO persistence
   useEffect(() => {
     if (!isLoaded || readOnly) return
     try {
@@ -57,26 +94,25 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       sessionStorage.removeItem('hhc_project_summary_create_link')
       const data = JSON.parse(raw)
       if (data?.entity_label && data?.artifact_type && data?.entity_id) {
-        // Create a new change entry with the artifact pre-linked
         const linkType = data.artifact_type === 'selection' ? 'selection' as const : 'fix_item' as const
-        const changeId = api.addChange({
+        setPrefillDraft({
           title: data.entity_label,
           description: `Linked from ${linkType === 'selection' ? 'Selections' : 'Fix List'}`,
+          linkType,
+          toolKey: data.tool_key,
+          collectionId: data.collection_id,
+          entityId: data.entity_id,
+          entityLabel: data.entity_label,
         })
-        if (changeId) {
-          api.addLink('changes', changeId, {
-            linkType,
-            toolKey: data.tool_key,
-            collectionId: data.collection_id,
-            entityId: data.entity_id,
-            label: data.entity_label,
-          })
-        }
       }
     } catch {
       // ignore malformed sessionStorage
     }
-  }, [isLoaded, readOnly, api])
+  }, [isLoaded, readOnly])
+
+  const handleDraftConsumed = useCallback(() => {
+    setPrefillDraft(null)
+  }, [])
 
   if (!isLoaded) {
     return (
@@ -163,8 +199,18 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
         <div className="flex-1 min-w-0 space-y-6">
           <SummarySection api={api} />
           <DocumentsSection api={api} />
-          <ChangesSection api={api} commentCounts={commentCounts} />
-          <OpenDecisionsSection api={api} commentCounts={commentCounts} />
+          <ChangesSection
+            api={api}
+            commentCounts={commentCounts}
+            prefillDraft={prefillDraft}
+            onDraftConsumed={handleDraftConsumed}
+            focusEntryId={focusTarget?.section === 'changes' ? focusTarget.entryId : undefined}
+          />
+          <OpenDecisionsSection
+            api={api}
+            commentCounts={commentCounts}
+            focusEntryId={focusTarget?.section === 'openDecisions' ? focusTarget.entryId : undefined}
+          />
         </div>
 
         <CollapsibleCommentSidebar

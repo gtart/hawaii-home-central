@@ -13,11 +13,12 @@ interface LinkedEntry {
 /**
  * GET /api/tools/project-summary/linked-entities?projectId=X&entityId=Y
  *
- * Scans all project_summary collections for the given project and returns
- * any changes or open decisions that link to the specified entityId.
+ * Finds the singleton Project Summary workspace for the given project and
+ * returns any changes or open decisions that link to the specified entityId.
+ * Response includes entryId and entryType so the badge can build deep-link
+ * URLs (e.g. ?focus=change-<id>) for entry-level navigation.
  *
- * This is a read-only lookup used by ProjectSummaryLinkBadge.
- * Does NOT modify any data in Project Summary, Fix List, or Selections.
+ * Read-only. Does NOT modify any data in Project Summary, Fix List, or Selections.
  */
 export async function GET(request: Request) {
   const session = await auth()
@@ -47,7 +48,8 @@ export async function GET(request: Request) {
     }
   }
 
-  // Find all project_summary collections for this project
+  // Find the singleton project_summary workspace for this project
+  // (ordered by updatedAt desc — uses most recent if multiple somehow exist)
   const collections = await prisma.toolCollection.findMany({
     where: {
       projectId,
@@ -58,6 +60,8 @@ export async function GET(request: Request) {
       id: true,
       payload: true,
     },
+    orderBy: { updatedAt: 'desc' },
+    take: 1,
   })
 
   const items: LinkedEntry[] = []

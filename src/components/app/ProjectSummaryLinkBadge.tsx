@@ -28,6 +28,12 @@ const TYPE_LABEL: Record<string, string> = {
   decision: 'Decision',
 }
 
+/** Build a deep-link URL to the specific entry in Project Summary */
+function entryHref(item: LinkedEntry): string {
+  const focusPrefix = item.entryType === 'change' ? 'change' : 'decision'
+  return `/app/tools/project-summary?focus=${focusPrefix}-${item.entryId}`
+}
+
 /**
  * Read-only badge showing Project Summary entries linked to a given entity
  * (e.g. a selection or fix item). Fetches from the linked-entities API on mount.
@@ -78,7 +84,7 @@ export function ProjectSummaryLinkBadge({ projectId, entityId }: Props) {
         {items.slice(0, 4).map((item) => (
           <Link
             key={item.entryId}
-            href="/app/tools/project-summary"
+            href={entryHref(item)}
             className="flex items-center gap-2 px-3 py-1.5 hover:bg-cream/[0.03] transition-colors group"
           >
             <span className={`text-[10px] font-medium ${STATUS_STYLE[item.status] || 'text-cream/40'}`}>
