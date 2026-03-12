@@ -8,6 +8,7 @@ interface LinkedEntry {
   entryTitle: string
   entryType: 'change' | 'decision'
   status: string
+  collectionId: string
 }
 
 interface Props {
@@ -31,7 +32,7 @@ const TYPE_LABEL: Record<string, string> = {
 /** Build a deep-link URL to the specific entry in Project Summary */
 function entryHref(item: LinkedEntry): string {
   const focusPrefix = item.entryType === 'change' ? 'change' : 'decision'
-  return `/app/tools/project-summary?focus=${focusPrefix}-${item.entryId}`
+  return `/app/tools/project-summary/${item.collectionId}?focus=${focusPrefix}-${item.entryId}`
 }
 
 /**

@@ -51,11 +51,6 @@ export function eventHref(event: ActivityFeedEvent): string {
     return '/app/tools/project-summary'
   }
 
-  // Project Summary — singleton, no collectionId in URL needed
-  if (event.toolKey === 'project_summary') {
-    return base
-  }
-
   // Share token actions — open share modal
   if (event.entityType === 'share_token') {
     return `${collUrl}?openShare=1`

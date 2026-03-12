@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
+import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
 import { ActivityPanel } from '@/components/app/ActivityPanel'
 import { CollapsibleCommentSidebar, type CommentSidebarHandle } from '@/components/app/CollapsibleCommentSidebar'
 import type { RefEntity } from '@/components/app/CommentThread'
@@ -147,6 +148,11 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
         toolLabel="Project Summary"
         actions={(
           <div className="flex items-center gap-2">
+            <InstanceSwitcher
+              toolKey="project_summary"
+              currentCollectionId={collectionId}
+              itemNoun="project"
+            />
             <button
               type="button"
               onClick={handleOpenComments}

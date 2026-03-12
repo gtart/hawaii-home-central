@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
-import { ProjectSummaryWorkspaceLoader } from './ProjectSummaryWorkspaceLoader'
+import { CollectionPickerWrapper } from './CollectionPickerWrapper'
 
 export const metadata: Metadata = {
   title: 'Project Summary',
 }
 
 export default function ProjectSummaryPage() {
-  return <ProjectSummaryWorkspaceLoader />
+  return <CollectionPickerWrapper />
 }

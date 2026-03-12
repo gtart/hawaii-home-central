@@ -8,15 +8,15 @@ interface LinkedEntry {
   entryTitle: string
   entryType: 'change' | 'decision'
   status: string
+  collectionId: string
 }
 
 /**
  * GET /api/tools/project-summary/linked-entities?projectId=X&entityId=Y
  *
- * Finds the singleton Project Summary workspace for the given project and
+ * Scans all Project Summary collections for the given project and
  * returns any changes or open decisions that link to the specified entityId.
- * Response includes entryId and entryType so the badge can build deep-link
- * URLs (e.g. ?focus=change-<id>) for entry-level navigation.
+ * Response includes collectionId so the badge can build deep-link URLs.
  *
  * Read-only. Does NOT modify any data in Project Summary, Fix List, or Selections.
  */
@@ -48,8 +48,7 @@ export async function GET(request: Request) {
     }
   }
 
-  // Find the singleton project_summary workspace for this project
-  // (ordered by updatedAt desc — uses most recent if multiple somehow exist)
+  // Scan all project_summary collections for this project
   const collections = await prisma.toolCollection.findMany({
     where: {
       projectId,
@@ -61,7 +60,6 @@ export async function GET(request: Request) {
       payload: true,
     },
     orderBy: { updatedAt: 'desc' },
-    take: 1,
   })
 
   const items: LinkedEntry[] = []
@@ -81,6 +79,7 @@ export async function GET(request: Request) {
               entryTitle: change.title || 'Untitled change',
               entryType: 'change',
               status: change.status || 'proposed',
+              collectionId: coll.id,
             })
           }
         }
@@ -98,6 +97,7 @@ export async function GET(request: Request) {
               entryTitle: decision.title || 'Untitled decision',
               entryType: 'decision',
               status: decision.status || 'open',
+              collectionId: coll.id,
             })
           }
         }
