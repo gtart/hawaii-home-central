@@ -20,7 +20,7 @@ export function StatusBadge({ label, color, bgColor, onClick, readOnly }: Status
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(e) => { e.stopPropagation(); onClick() }}
       className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${color} ${bgColor} hover:opacity-80 transition-opacity cursor-pointer`}
       title="Click to change status"
     >

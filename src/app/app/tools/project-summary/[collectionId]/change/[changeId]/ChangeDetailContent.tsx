@@ -19,6 +19,19 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+/** Normalize a cost string into dollar format if it looks like a number */
+function formatCost(raw: string): string {
+  const trimmed = raw.trim()
+  if (!trimmed) return trimmed
+  if (trimmed.includes('$')) return trimmed
+  const match = trimmed.match(/^([+-]?)\s*([0-9][0-9,]*\.?\d*)$/)
+  if (!match) return trimmed
+  const sign = match[1]
+  const num = parseFloat(match[2].replace(/,/g, ''))
+  if (isNaN(num)) return trimmed
+  return `${sign}$${num.toLocaleString()}`
+}
+
 function Content({ collectionId, changeId }: { collectionId: string; changeId: string }) {
   const api = useProjectSummaryState({ collectionId })
   const { payload, isLoaded, readOnly, updateChange, addChangeAttachment, removeChangeAttachment, updateChangePrivateNotes, addLink, removeLink } = api
@@ -184,7 +197,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                   <label className="text-[10px] text-cream/30 block mb-0.5">Cost Impact</label>
                   <InlineEdit
                     value={change.cost_impact || ''}
-                    onSave={(v) => updateChange(change.id, { cost_impact: v || undefined })}
+                    onSave={(v) => updateChange(change.id, { cost_impact: v ? formatCost(v) : undefined })}
                     placeholder="e.g. +$1,200"
                     readOnly={readOnly}
                     displayClassName="text-sm text-cream/60"

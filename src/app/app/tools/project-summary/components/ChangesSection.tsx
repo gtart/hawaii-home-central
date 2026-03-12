@@ -12,6 +12,21 @@ import { StatusBadge } from './StatusBadge'
 import { LinkPills } from './LinkPills'
 import { AttachMenu } from './AttachMenu'
 
+/** Normalize a cost string into dollar format if it looks like a number */
+function formatCost(raw: string): string {
+  const trimmed = raw.trim()
+  if (!trimmed) return trimmed
+  // Already has $ — leave it
+  if (trimmed.includes('$')) return trimmed
+  // Extract leading sign if present
+  const match = trimmed.match(/^([+-]?)\s*([0-9][0-9,]*\.?\d*)$/)
+  if (!match) return trimmed // not a clear number, leave as-is
+  const sign = match[1]
+  const num = parseFloat(match[2].replace(/,/g, ''))
+  if (isNaN(num)) return trimmed
+  return `${sign}$${num.toLocaleString()}`
+}
+
 interface ChangesSectionProps {
   api: ProjectSummaryStateAPI
   commentCounts?: Map<string, number>
@@ -238,7 +253,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                       <label className="text-[10px] text-cream/30 block mb-0.5">Cost Impact</label>
                       <InlineEdit
                         value={change.cost_impact || ''}
-                        onSave={(v) => updateChange(change.id, { cost_impact: v || undefined })}
+                        onSave={(v) => updateChange(change.id, { cost_impact: v ? formatCost(v) : undefined })}
                         placeholder="e.g. +$2,500"
                         readOnly={readOnly}
                         displayClassName="text-xs text-cream/50"
