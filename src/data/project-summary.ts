@@ -6,7 +6,7 @@
 // ── Types ──
 
 export type ChangeStatus = 'proposed' | 'approved' | 'not_approved'
-export type DecisionStatus = 'open' | 'decided'
+export type DecisionStatus = 'open' | 'pending_homeowner' | 'pending_contractor' | 'approved' | 'closed'
 export type DocType = 'plan' | 'contract' | 'spec' | 'permit' | 'pricing' | 'other'
 export type SummaryLinkType = 'selection' | 'fix_item' | 'document'
 
@@ -92,8 +92,9 @@ export const VALID_CHANGE_STATUSES: ReadonlySet<string> = new Set<ChangeStatus>(
   'proposed', 'approved', 'not_approved',
 ])
 
-export const VALID_DECISION_STATUSES: ReadonlySet<string> = new Set<DecisionStatus>([
-  'open', 'decided',
+export const VALID_DECISION_STATUSES: ReadonlySet<string> = new Set([
+  'open', 'pending_homeowner', 'pending_contractor', 'approved', 'closed',
+  'decided', // legacy alias → mapped to 'closed' in coerceDecision
 ])
 
 export const VALID_DOC_TYPES: ReadonlySet<string> = new Set<DocType>([
@@ -174,13 +175,16 @@ function coerceChange(raw: unknown): SummaryChange | null {
 function coerceDecision(raw: unknown): SummaryDecision | null {
   if (!isObject(raw)) return null
   const ts = new Date().toISOString()
+  let status: DecisionStatus = 'open'
+  if (isString(raw.status) && VALID_DECISION_STATUSES.has(raw.status)) {
+    // Map legacy 'decided' → 'closed'
+    status = raw.status === 'decided' ? 'closed' : raw.status as DecisionStatus
+  }
   return {
     id: isString(raw.id) ? raw.id : crypto.randomUUID(),
     title: isString(raw.title) ? raw.title : 'Untitled',
     ...(isString(raw.description) ? { description: raw.description } : {}),
-    status: isString(raw.status) && VALID_DECISION_STATUSES.has(raw.status)
-      ? raw.status as DecisionStatus
-      : 'open',
+    status,
     ...(isString(raw.resolution) ? { resolution: raw.resolution } : {}),
     links: coerceLinks(raw.links),
     created_at: isString(raw.created_at) ? raw.created_at : ts,

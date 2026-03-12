@@ -38,14 +38,19 @@ export function OpenDecisionsSection({ api, commentCounts, focusEntryId }: OpenD
     }
   }, [focusEntryId, openDecisions])
 
-  // Show open first, then decided
+  // Sort by status priority: active statuses first, closed last
+  const STATUS_SORT_ORDER: Record<DecisionStatus, number> = {
+    open: 0,
+    pending_homeowner: 1,
+    pending_contractor: 2,
+    approved: 3,
+    closed: 4,
+  }
   const sortedDecisions = [...openDecisions].sort((a, b) => {
-    if (a.status === 'open' && b.status === 'decided') return -1
-    if (a.status === 'decided' && b.status === 'open') return 1
-    return 0
+    return (STATUS_SORT_ORDER[a.status] ?? 99) - (STATUS_SORT_ORDER[b.status] ?? 99)
   })
 
-  const openCount = openDecisions.filter((d) => d.status === 'open').length
+  const activeCount = openDecisions.filter((d) => d.status !== 'closed' && d.status !== 'approved').length
 
   function handleAdd() {
     if (!newTitle.trim()) return
@@ -63,7 +68,7 @@ export function OpenDecisionsSection({ api, commentCounts, focusEntryId }: OpenD
   return (
     <SectionHeader
       title="Open Decisions"
-      count={openCount}
+      count={activeCount}
       onAdd={() => setShowAddForm(!showAddForm)}
       addLabel="Add Decision"
       readOnly={readOnly}
@@ -85,7 +90,7 @@ export function OpenDecisionsSection({ api, commentCounts, focusEntryId }: OpenD
               className={`rounded-lg border group ${
                 decision.id === focusEntryId
                   ? 'bg-cream/[0.02] border-sandstone/30 ring-1 ring-sandstone/20'
-                  : decision.status === 'decided'
+                  : decision.status === 'closed'
                     ? 'bg-cream/[0.01] border-cream/[0.03] opacity-70'
                     : 'bg-cream/[0.02] border-cream/[0.04]'
               }`}
@@ -103,7 +108,7 @@ export function OpenDecisionsSection({ api, commentCounts, focusEntryId }: OpenD
                 </svg>
 
                 <span className={`text-sm flex-1 truncate ${
-                  decision.status === 'decided' ? 'text-cream/40 line-through' : 'text-cream/70'
+                  decision.status === 'closed' ? 'text-cream/40 line-through' : 'text-cream/70'
                 }`}>
                   {decision.title}
                 </span>
@@ -171,7 +176,7 @@ export function OpenDecisionsSection({ api, commentCounts, focusEntryId }: OpenD
                     />
                   </div>
 
-                  {(decision.status === 'decided' || decision.resolution) && (
+                  {(decision.status === 'approved' || decision.status === 'closed' || decision.resolution) && (
                     <div>
                       <label className="text-[10px] text-cream/30 block mb-0.5">Resolution</label>
                       <InlineEdit

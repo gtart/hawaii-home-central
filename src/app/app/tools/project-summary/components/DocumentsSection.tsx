@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { DocType } from '@/data/project-summary'
 import { DOC_TYPE_LABELS } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
@@ -19,6 +19,20 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
   const [newDocType, setNewDocType] = useState<DocType | ''>('')
   const [newUrl, setNewUrl] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [docTypeOpen, setDocTypeOpen] = useState(false)
+  const docTypeRef = useRef<HTMLDivElement>(null)
+
+  // Close doc type dropdown on outside click
+  useEffect(() => {
+    if (!docTypeOpen) return
+    function handleClick(e: MouseEvent) {
+      if (docTypeRef.current && !docTypeRef.current.contains(e.target as Node)) {
+        setDocTypeOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [docTypeOpen])
 
   function handleAdd() {
     if (!newLabel.trim()) return
@@ -167,16 +181,39 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
             onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setShowAddForm(false) }}
           />
           <div className="flex gap-2">
-            <select
-              value={newDocType}
-              onChange={(e) => setNewDocType(e.target.value as DocType | '')}
-              className="bg-cream/5 border border-cream/10 rounded-md px-2 py-1.5 text-xs text-cream/60 outline-none focus:border-sandstone/30"
-            >
-              <option value="">Type (optional)</option>
-              {Object.entries(DOC_TYPE_LABELS).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
-              ))}
-            </select>
+            <div className="relative" ref={docTypeRef}>
+              <button
+                type="button"
+                onClick={() => setDocTypeOpen(!docTypeOpen)}
+                className="bg-cream/5 border border-cream/10 rounded-md px-2 py-1.5 text-xs text-cream/60 outline-none hover:border-cream/20 transition-colors flex items-center gap-1 whitespace-nowrap"
+              >
+                {newDocType ? DOC_TYPE_LABELS[newDocType] : 'Type (optional)'}
+                <svg className="w-3 h-3 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              {docTypeOpen && (
+                <div className="absolute left-0 top-8 z-50 w-36 rounded-lg border border-cream/10 bg-[#1a1a1a] shadow-xl py-1">
+                  <button
+                    type="button"
+                    onClick={() => { setNewDocType(''); setDocTypeOpen(false) }}
+                    className={`w-full px-3 py-1.5 text-left text-xs transition-colors ${!newDocType ? 'text-sandstone' : 'text-cream/60 hover:bg-cream/5'}`}
+                  >
+                    None
+                  </button>
+                  {Object.entries(DOC_TYPE_LABELS).map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => { setNewDocType(key as DocType); setDocTypeOpen(false) }}
+                      className={`w-full px-3 py-1.5 text-left text-xs transition-colors ${newDocType === key ? 'text-sandstone' : 'text-cream/60 hover:bg-cream/5'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <input
               type="url"
               value={newUrl}

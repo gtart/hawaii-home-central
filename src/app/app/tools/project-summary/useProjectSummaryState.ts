@@ -229,13 +229,19 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
       const existing = payload.openDecisions.find((d) => d.id === id)
 
       if (updates.status && updates.status !== existing?.status) {
+        const statusLabels: Record<string, string> = {
+          open: 'Reopened',
+          pending_homeowner: 'Pending Homeowner',
+          pending_contractor: 'Pending Contractor',
+          approved: 'Approved',
+          closed: 'Closed',
+        }
+        const label = statusLabels[updates.status] || updates.status
         events.push({
-          action: updates.status === 'decided' ? 'resolved' : 'reopened',
+          action: updates.status === 'closed' ? 'resolved' : updates.status === 'open' ? 'reopened' : 'status_changed',
           entityType: 'decision',
           entityId: id,
-          summaryText: updates.status === 'decided'
-            ? `Decided: "${existing?.title}"`
-            : `Reopened: "${existing?.title}"`,
+          summaryText: `${label}: "${existing?.title}"`,
           entityLabel: existing?.title || 'decision',
         })
       }

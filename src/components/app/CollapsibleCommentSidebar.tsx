@@ -40,6 +40,8 @@ interface Props {
   inline?: boolean
   /** Hide the collapsed tab — parent controls open/close via ref.toggle() */
   hideCollapsedTab?: boolean
+  /** Default collapsed state when no stored preference exists (default: false = expanded) */
+  defaultCollapsed?: boolean
 }
 
 export interface CommentSidebarHandle {
@@ -71,12 +73,13 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
   hasUnread: hasUnreadProp,
   inline,
   hideCollapsedTab,
+  defaultCollapsed = false,
 }: Props, ref: React.Ref<CommentSidebarHandle>) {
-  // Default expanded on first visit
+  // Use stored preference if available, otherwise respect defaultCollapsed prop
   const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false
+    if (typeof window === 'undefined') return defaultCollapsed
     const stored = localStorage.getItem(storageKey)
-    return stored === 'true'
+    return stored === null ? defaultCollapsed : stored === 'true'
   })
   const [mobileOpen, setMobileOpen] = useState(false)
 

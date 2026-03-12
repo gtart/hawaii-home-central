@@ -28,10 +28,25 @@ export const DECISION_STATUS_CONFIG: Record<DecisionStatus, { label: string; col
     color: 'text-amber-400',
     bgColor: 'bg-amber-400/10',
   },
-  decided: {
-    label: 'Decided',
+  pending_homeowner: {
+    label: 'Pending Homeowner',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-400/10',
+  },
+  pending_contractor: {
+    label: 'Pending Contractor',
+    color: 'text-violet-400',
+    bgColor: 'bg-violet-400/10',
+  },
+  approved: {
+    label: 'Approved',
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-400/10',
+  },
+  closed: {
+    label: 'Closed',
+    color: 'text-cream/40',
+    bgColor: 'bg-cream/5',
   },
 }
 
@@ -41,7 +56,7 @@ export const CHANGE_STATUS_CYCLE: ChangeStatus[] = ['proposed', 'approved', 'not
 
 // ── Decision status cycle ──
 
-export const DECISION_STATUS_CYCLE: DecisionStatus[] = ['open', 'decided']
+export const DECISION_STATUS_CYCLE: DecisionStatus[] = ['open', 'pending_homeowner', 'pending_contractor', 'approved', 'closed']
 
 // ── Document type labels ──
 

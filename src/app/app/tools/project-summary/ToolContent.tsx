@@ -37,6 +37,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
   const { payload, isLoaded, isSyncing, access, readOnly, noAccess } = api
   const [activityOpen, setActivityOpen] = useState(false)
   const commentSidebarRef = useRef<CommentSidebarHandle>(null)
+  const changesSectionRef = useRef<HTMLDivElement>(null)
   const searchParams = useSearchParams()
 
   // Draft state from CreateProjectSummaryEntryButton — local only, no persistence until user saves
@@ -197,8 +198,14 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
 
       <div className="md:flex md:gap-6 md:items-start">
         <div className="flex-1 min-w-0 space-y-6">
-          <SummarySection api={api} />
+          <SummarySection
+            api={api}
+            onScrollToChanges={() => {
+              changesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }}
+          />
           <DocumentsSection api={api} />
+          <div ref={changesSectionRef}>
           <ChangesSection
             api={api}
             commentCounts={commentCounts}
@@ -206,6 +213,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
             onDraftConsumed={handleDraftConsumed}
             focusEntryId={focusTarget?.section === 'changes' ? focusTarget.entryId : undefined}
           />
+          </div>
           <OpenDecisionsSection
             api={api}
             commentCounts={commentCounts}
@@ -226,6 +234,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
           refEntityType="entry"
           refPickerLabel="Tag an entry"
           hideCollapsedTab
+          defaultCollapsed
         />
       </div>
     </>

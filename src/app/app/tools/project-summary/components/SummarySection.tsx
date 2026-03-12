@@ -1,28 +1,51 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
 import { InlineEdit } from './InlineEdit'
 
 interface SummarySectionProps {
   api: ProjectSummaryStateAPI
+  /** Scroll to Changes section and open the add form */
+  onScrollToChanges?: () => void
 }
 
-export function SummarySection({ api }: SummarySectionProps) {
+export function SummarySection({ api, onScrollToChanges }: SummarySectionProps) {
   const { payload, readOnly, updateSummary } = api
   const { summary } = payload
   const [showBudget, setShowBudget] = useState(
-    Boolean(summary.baseline_amount || summary.approved_changes_total || summary.current_total || summary.budget_note)
+    Boolean(summary.baseline_amount || summary.current_total || summary.budget_note)
   )
+
+  const approvedChanges = useMemo(
+    () => payload.changes.filter((c) => c.status === 'approved'),
+    [payload.changes]
+  )
+
+  // Best-effort sum of parseable cost_impact values
+  const approvedCostSum = useMemo(() => {
+    let sum = 0
+    let hasParseable = false
+    for (const c of approvedChanges) {
+      if (c.cost_impact) {
+        const num = parseFloat(c.cost_impact.replace(/[^0-9.\-+]/g, ''))
+        if (!isNaN(num)) {
+          sum += num
+          hasParseable = true
+        }
+      }
+    }
+    return hasParseable ? sum : null
+  }, [approvedChanges])
 
   return (
     <div className="rounded-xl border border-cream/[0.06] bg-cream/[0.02] p-5">
-      <h2 className="text-sm font-semibold text-cream/80 mb-3">Current Project Summary</h2>
+      <h2 className="text-sm font-semibold text-cream/80 mb-3">Project Summary</h2>
 
       <InlineEdit
         value={summary.text}
         onSave={(text) => updateSummary({ text })}
-        placeholder="Describe the current state of your project in plain language..."
+        placeholder="Describe the renovation or project."
         readOnly={readOnly}
         multiline
         displayClassName="text-sm text-cream/70 leading-relaxed"
@@ -45,7 +68,7 @@ export function SummarySection({ api }: SummarySectionProps) {
         <div className="mt-4 pt-4 border-t border-cream/[0.06]">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] text-cream/40 uppercase tracking-wider font-medium">Budget Overview</span>
-            {!readOnly && !summary.baseline_amount && !summary.approved_changes_total && !summary.current_total && !summary.budget_note && (
+            {!readOnly && !summary.baseline_amount && !summary.current_total && !summary.budget_note && approvedChanges.length === 0 && (
               <button
                 type="button"
                 onClick={() => setShowBudget(false)}
@@ -69,14 +92,29 @@ export function SummarySection({ api }: SummarySectionProps) {
             </div>
             <div>
               <label className="text-[10px] text-cream/30 block mb-1">Approved Changes</label>
-              <InlineEdit
-                value={summary.approved_changes_total || ''}
-                onSave={(v) => updateSummary({ approved_changes_total: v || undefined })}
-                placeholder="e.g. +$4,200"
-                readOnly={readOnly}
-                displayClassName="text-sm text-cream/60"
-                className="text-sm"
-              />
+              <div className="flex items-baseline gap-2">
+                {approvedChanges.length > 0 ? (
+                  <span className="text-sm text-emerald-400/70">
+                    {approvedChanges.length} approved
+                    {approvedCostSum !== null && (
+                      <span className="text-cream/40 ml-1">
+                        ({approvedCostSum >= 0 ? '+' : ''}${Math.abs(approvedCostSum).toLocaleString()})
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  <span className="text-sm text-cream/30">None yet</span>
+                )}
+                {onScrollToChanges && (
+                  <button
+                    type="button"
+                    onClick={onScrollToChanges}
+                    className="text-[10px] text-sandstone/50 hover:text-sandstone transition-colors"
+                  >
+                    {approvedChanges.length > 0 ? 'See Changes' : '+ Add Change'}
+                  </button>
+                )}
+              </div>
             </div>
             <div>
               <label className="text-[10px] text-cream/30 block mb-1">Current Total</label>
