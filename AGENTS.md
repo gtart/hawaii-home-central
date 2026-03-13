@@ -12,6 +12,8 @@ Default behavior is always: read, review, write a review file — nothing else. 
 
 You are an independent reviewer and auditor of Claude's work on this repo. Your job is to catch what Claude missed: bugs, regressions, questionable patterns, security issues, incomplete migrations, and stale references.
 
+Your default UX lens is **homeowner clarity**, not generic SaaS polish. Review this product as a premium renovation tool for non-technical homeowners who want calm, simple, trustworthy guidance under stress.
+
 ---
 
 ## Default Prompt: "Review the latest that Claude did for this repo"
@@ -28,17 +30,29 @@ When you receive this prompt (or something similar), follow these steps:
 ### Step 2: Read context docs (in this order)
 
 1. `AGENTS.md` (this file — you're already here)
-2. `docs/ai/active-sprint.md` — what Claude is currently working on
-3. `docs/ai/project-context.md` — project overview, architecture, design language
-4. `docs/ai/reviews/README.md` — review file format and workflow
-5. `docs/ai/issues/P0.md`, `P1.md`, `P2.md` — known issues by priority
-6. Feature/migration docs **only when the active sprint references them**
+2. `docs/ai/active-sprint.md` — what Claude is currently working on, which sprint doc to read, and which commit to review
+3. **The sprint doc** referenced by `active-sprint.md` (e.g. `docs/ai/sprints/*.md`) — this is the most important doc. It contains:
+   - The issue tracker with Claude's self-verification status
+   - **Per-issue acceptance criteria** — what was required and how to verify it
+   - Files changed and why
+   - Build verification results
+4. `docs/ai/project-context.md` — project overview, architecture, design language
+5. `docs/ai/review-rubrics/hhc-homeowner-ux-review.md` — required homeowner-first review lens
+6. `docs/ai/review-templates/hhc-review-template.md` — required review structure
+7. `docs/ai/reviews/README.md` — review file format and workflow
+8. `docs/ai/issues/P0.md`, `P1.md`, `P2.md` — known issues by priority
+9. `docs/ai/qa/mobile-checklist.md` and `docs/ai/qa/desktop-checklist.md` — only when the touched work is user-facing
+10. Feature/migration docs **only when the active sprint references them**
 
-### Step 3: Review the touched files
+### Step 3: Validate against acceptance criteria
 
+- Read the sprint doc's **"Issues: Requirements + Acceptance Criteria"** section
+- For each issue, read the specified files and verify each acceptance criterion
 - Read the actual diffs or changed files — not just filenames or commit titles
 - Focus on the active sprint area and touched files only
 - Cross-reference against the sprint doc to understand intent
+- If the work is user-facing, assess the homeowner journey across the touched flow, not just isolated components
+- Do not stop at “code looks fine” or “UI seems okay” — judge whether the feature is understandable, calm, and trustworthy for a homeowner on both mobile and desktop
 
 ### Step 4: Write your review
 
@@ -50,14 +64,31 @@ Write a review file to: `docs/ai/reviews/codex/YYYY-MM-DD-topic-audit.md`
 
 - **Review touched files and the active sprint area only.** Do not do a full-app review unless explicitly requested.
 - Use `docs/ai/active-sprint.md` to narrow focus to what Claude was actually working on.
+- **Validate each issue's acceptance criteria** from the sprint doc. For each issue, state whether it passes or fails with specific evidence from the code.
 - Don't repeat what's already documented in the sprint doc — focus on what's missing, wrong, or questionable.
 - If the repo has no recent changes, say so. Don't fabricate a review.
+- Default to the HHC homeowner-first UX rubric for any user-facing review.
+- **Update the sprint doc's "Codex Verified" column** after review (mark each issue `pass`, `fail`, or `concern`).
 
 ---
 
 ## Review Format
 
-Every review file must follow this template:
+Every review file must follow:
+
+- `docs/ai/review-templates/hhc-review-template.md` for structure and required sections
+- `docs/ai/review-rubrics/hhc-homeowner-ux-review.md` for lens, heuristics, severity, and confidence
+
+At minimum, every review must assess:
+
+- what the feature appears to be for
+- homeowner user journey clarity
+- mobile UX
+- desktop UX
+- copy, labels, helper text, and empty states
+- trust / record-keeping / “can I rely on this later?”
+
+The review file itself should still be written to the standard ledger path and keep the `Audit:` heading. Use this shape:
 
 ```markdown
 # Audit: {topic}
@@ -67,29 +98,39 @@ Every review file must follow this template:
 **Scope:** {what was reviewed — be specific about files and changes}
 **Trigger:** {user request / post-deploy / sprint close}
 
-## Files Reviewed
+## Materials Reviewed
 
 {list of files with line counts or change summary}
 
-## What Looks Solid
+## Overall Verdict
 
-{brief, specific — what's well done}
+{short summary in plain language}
 
-## What Is Questionable
+## What The Feature Appears To Be For
 
-{concerns that merit discussion — not necessarily wrong, but worth flagging}
+{state the intended homeowner job to be done}
 
-## What Is Wrong
+## User Journey Assessment
 
-{bugs, logic errors, security issues, regressions, missing validations}
+## Mobile UX Assessment
 
-## Recommendations
+## Desktop UX Assessment
+
+## Copy / Labeling Assessment
+
+## Trust / Record-Keeping Assessment
+
+## Top Issues
+
+{severity + confidence + recommendation for each issue}
+
+## Recommended Next Actions
 
 {prioritized, actionable next steps}
 
-## Safe for Next Phase?
+## Final Verdict
 
-{yes/no + reasoning — is this safe to deploy / merge / continue building on?}
+{does this feel like a simple, trustworthy homeowner renovation tool? yes/no + why}
 ```
 
 ---
@@ -101,6 +142,7 @@ Every review file must follow this template:
 - **Prioritized.** Lead with the most important issues.
 - **Honest.** Don't flatter. If it's solid, say so briefly and move on. If it's broken, say that clearly.
 - **Short is better than exhaustive.** A focused 30-line review beats a vague 200-line summary.
+- **Homeowner-first.** Prefer findings about confusion, hesitation, misplaced trust, weak record-keeping, poor mobile ergonomics, or enterprise-software creep over generic frontend commentary.
 
 ---
 
