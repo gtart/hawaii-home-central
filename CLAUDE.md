@@ -53,11 +53,18 @@ Homeowners plan renovations, track selections, manage fix lists, and document pr
 - Payload validators: `src/lib/tools/validateToolPayload.ts`
 - Sidebar nav: `src/components/app/SidebarNav.tsx`
 
+### Issue Tracking
+- **All issues tracked in GitHub Issues** — use `gh issue list`, `gh issue create`, `gh issue close`
+- Labels: `P0: broken`, `P1: degraded`, `P2: cosmetic`, `P3: polish` for priority
+- Labels: `bug`, `feature`, `cleanup`, `review-finding` for category
+- Labels: `investigating`, `in-progress`, `blocked`, `deferred` for status
+- When fixing a bug or completing a feature, close the issue with `gh issue close <number> -c "reason"`
+- When finding new issues during work, create them immediately with `gh issue create`
+- See `BACKLOG_IDEAS.md` for detailed specs on deferred features (Guest Mode, Google Photos)
+
 ### Current Work
 - See `docs/ai/active-sprint.md` for current sprint
 - See `docs/ai/migrations/project-summary-to-plan-and-changes.md` for migration plan
-- See `docs/ai/issues/` for known issues by priority
-- See `BACKLOG_IDEAS.md` for deferred features (Guest Mode, Google Photos)
 
 ### AI Review & Logging System
 - **Codex instructions**: `AGENTS.md` at repo root — defines Codex's review-only role, "latest" definition, and audit format
@@ -69,7 +76,7 @@ Homeowners plan renovations, track selections, manage fix lists, and document pr
 - See `docs/ai/agent-logs/README.md` for log format and inspection commands
 
 ### Workflow Discipline
-- After meaningful findings: update issue docs in `docs/ai/issues/`
+- After meaningful findings: create or update GitHub Issues (`gh issue create` / `gh issue comment`)
 - After implementation: run issue-validator and qa-regression-checker agents
 - Before declaring "done": verify both desktop and mobile
 - When touching Plan & Changes files: check migration doc first
