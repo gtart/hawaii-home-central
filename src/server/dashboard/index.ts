@@ -55,11 +55,16 @@ export interface ProjectSummarySummary {
   updatedAt: string
   updatedByName?: string
   planStatus: PlanStatus
-  planItemCount: number
+  planScope: string
+  includedCount: number
+  notIncludedCount: number
   stillToDecideCount: number
+  planItemCount: number
   changeCount: number
   activeChangeCount: number
   hasBudget: boolean
+  budgetAmount?: string
+  documentCount: number
 }
 
 export type ToolKey = 'punchlist' | 'finish_decisions' | 'mood_boards' | 'before_you_sign' | 'project_summary'
@@ -176,7 +181,10 @@ function summarizeMoodBoard(id: string, title: string, updatedAt: Date, updatedB
 
 function summarizeProjectSummary(id: string, title: string, updatedAt: Date, updatedByName: string | undefined, raw: unknown): ProjectSummarySummary {
   const payload = ensureShape(raw)
-  const planItemCount = payload.plan.included.length + payload.plan.not_included.length + payload.plan.still_to_decide.length
+  const includedCount = payload.plan.included.length
+  const notIncludedCount = payload.plan.not_included.length
+  const stillToDecideCount = payload.plan.still_to_decide.length
+  const planItemCount = includedCount + notIncludedCount + stillToDecideCount
   const activeChangeCount = payload.changes.filter(c => c.status !== 'done' && c.status !== 'closed').length
   return {
     id,
@@ -184,11 +192,16 @@ function summarizeProjectSummary(id: string, title: string, updatedAt: Date, upd
     updatedAt: updatedAt.toISOString(),
     updatedByName,
     planStatus: payload.plan.status,
+    planScope: payload.plan.scope,
+    includedCount,
+    notIncludedCount,
+    stillToDecideCount,
     planItemCount,
-    stillToDecideCount: payload.plan.still_to_decide.length,
     changeCount: payload.changes.length,
     activeChangeCount,
     hasBudget: !!payload.budget.baseline_amount,
+    budgetAmount: payload.budget.baseline_amount || undefined,
+    documentCount: payload.documents.length,
   }
 }
 
