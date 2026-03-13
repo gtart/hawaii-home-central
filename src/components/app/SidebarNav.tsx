@@ -30,16 +30,16 @@ const NAV_ITEMS = [
   },
 ]
 
-const RENOVATION_ITEMS = [
+const MANAGE_ITEMS = [
   {
-    href: '/app/tools/mood-boards',
-    label: 'Mood Boards',
+    href: '/app/tools/project-summary',
+    label: 'Plan & Changes',
     matchMode: 'prefix' as const,
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="8.5" cy="8.5" r="1.5" />
-        <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="9" y="3" width="6" height="4" rx="1" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M8 12h8M8 16h5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -70,7 +70,19 @@ const RENOVATION_ITEMS = [
   },
 ]
 
-const FINDING_PROS_ITEMS = [
+const GETTING_STARTED_ITEMS = [
+  {
+    href: '/app/tools/mood-boards',
+    label: 'Mood Boards',
+    matchMode: 'prefix' as const,
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
   {
     href: '/app/tools/before-you-sign',
     label: 'Contract Checklist',
@@ -79,18 +91,6 @@ const FINDING_PROS_ITEMS = [
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    href: '/app/tools/project-summary',
-    label: 'Plan & Changes',
-    matchMode: 'prefix' as const,
-    icon: (
-      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" strokeLinecap="round" strokeLinejoin="round" />
-        <rect x="9" y="3" width="6" height="4" rx="1" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M8 12h8M8 16h5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -204,10 +204,10 @@ export function SidebarNav() {
 
           <div className="mx-4 my-3 border-t border-cream/8" />
 
-        <p className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-wider text-cream/20">
-          Manage your Renovation
+        <p className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-wider text-cream/40">
+          Manage Renovation
         </p>
-        {RENOVATION_ITEMS.map((item) => {
+        {MANAGE_ITEMS.map((item) => {
           const active = isActive(pathname, item.href, item.matchMode)
           const badgeKey = 'badgeKey' in item ? item.badgeKey : undefined
           const badgeCount = badgeKey && badges ? badges[badgeKey] : 0
@@ -232,10 +232,10 @@ export function SidebarNav() {
           )
         })}
 
-        <p className="px-4 pt-4 pb-1 text-[10px] uppercase tracking-wider text-cream/20">
-          Working with Pros
+        <p className="px-4 pt-4 pb-1 text-[10px] uppercase tracking-wider text-cream/40">
+          Getting Started
         </p>
-        {FINDING_PROS_ITEMS.map((item) => {
+        {GETTING_STARTED_ITEMS.map((item) => {
           const active = isActive(pathname, item.href, item.matchMode)
           return (
             <Link
@@ -252,14 +252,14 @@ export function SidebarNav() {
             </Link>
           )
         })}
-        {/* Pro Directory — coming soon */}
+        {/* Find Pros — coming soon */}
         <span className="flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm text-cream/20 cursor-default">
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
             <circle cx="9" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span className="flex-1">Pro Directory</span>
+          <span className="flex-1">Find Pros</span>
           <span className="text-[9px] text-cream/15">Soon</span>
         </span>
       </div>
