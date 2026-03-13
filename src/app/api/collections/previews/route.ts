@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { canListCollections } from '@/lib/collection-access'
+import { ensureShape } from '@/data/project-summary'
 
 /**
  * GET /api/collections/previews?projectId=X&toolKey=mood_boards&collectionIds=a,b,c
@@ -330,6 +331,38 @@ export async function GET(request: Request) {
       }
     }
 
+    // For project_summary: extract plan scope, status, item counts, changes, budget
+    let planScope: string | undefined
+    let planStatus: string | undefined
+    let includedCount = 0
+    let notIncludedCount = 0
+    let stillToDecideCount = 0
+    let planItemCount = 0
+    let changeCount = 0
+    let activeChangeCount = 0
+    let hasBudget = false
+    let budgetAmount: string | undefined
+    let documentCount = 0
+    if (toolKey === 'project_summary') {
+      try {
+        const payload = ensureShape(coll.payload)
+        planScope = payload.plan.scope || undefined
+        planStatus = payload.plan.status
+        includedCount = payload.plan.included.length
+        notIncludedCount = payload.plan.not_included.length
+        stillToDecideCount = payload.plan.still_to_decide.length
+        planItemCount = includedCount + notIncludedCount + stillToDecideCount
+        changeCount = payload.changes.length
+        activeChangeCount = payload.changes.filter(c => c.status !== 'done' && c.status !== 'closed').length
+        hasBudget = !!payload.budget.baseline_amount
+        budgetAmount = payload.budget.baseline_amount || undefined
+        documentCount = payload.documents.length
+        itemCount = planItemCount
+      } catch {
+        // ignore
+      }
+    }
+
     // Share metadata
     const collaboratorCount = memberCountMap.get(coll.id) ?? 0
     const shareLinkEnabled = (tokenCountMap.get(coll.id) ?? 0) > 0
@@ -351,6 +384,8 @@ export async function GET(request: Request) {
       collectionId: coll.id, imageUrls, ideaCount, commentCount, statuses,
       lastComment, decisionCount, lastActivity, itemCount,
       collaboratorCount, shareLinkEnabled, shareLinkCount, inviteCount, lastEvent,
+      planScope, planStatus, includedCount, notIncludedCount, stillToDecideCount,
+      planItemCount, changeCount, activeChangeCount, hasBudget, budgetAmount, documentCount,
     }
   })
 

@@ -35,6 +35,17 @@ interface PreviewData {
   shareLinkCount?: number
   inviteCount?: number
   lastEvent?: { summaryText: string; entityLabel: string | null; detailText: string | null; actorName: string | null; createdAt: string; action: string }
+  planScope?: string
+  planStatus?: string
+  includedCount?: number
+  notIncludedCount?: number
+  stillToDecideCount?: number
+  planItemCount?: number
+  changeCount?: number
+  activeChangeCount?: number
+  hasBudget?: boolean
+  budgetAmount?: string
+  documentCount?: number
 }
 
 interface CollectionsPickerViewProps {
@@ -49,6 +60,8 @@ interface CollectionsPickerViewProps {
   titleOverride?: string
   /** Action buttons rendered in the header row (right side, before grid/list toggle) */
   headerActions?: React.ReactNode
+  /** Hint text shown below the "Add a new ..." button to explain multi-collection use */
+  createHint?: string
 }
 
 function ThumbnailGrid({ imageUrls }: { imageUrls: string[] }) {
@@ -104,7 +117,7 @@ function ThumbnailGrid({ imageUrls }: { imageUrls: string[] }) {
   )
 }
 
-export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEmptyState, titleOverride, headerActions }: CollectionsPickerViewProps) {
+export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEmptyState, titleOverride, headerActions, createHint }: CollectionsPickerViewProps) {
   const { currentProject } = useProject()
   const router = useRouter()
   const [collections, setCollections] = useState<CollectionSummary[]>([])
@@ -521,9 +534,28 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         )}
                       </div>
                     </td>
-                    {/* Status — compact Decided/Done for Selections, original for punchlist */}
-                    <td className="py-3 pr-3 text-xs whitespace-nowrap" title={statusParts.join(', ')}>
-                      {toolKey === 'punchlist' ? (
+                    {/* Status — tool-specific display */}
+                    <td className="py-3 pr-3 text-xs whitespace-nowrap" title={toolKey === 'project_summary' ? `${preview.planItemCount ?? 0} plan items` : statusParts.join(', ')}>
+                      {toolKey === 'project_summary' ? (
+                        (preview.planItemCount ?? 0) > 0 ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-cream/50">{preview.planItemCount} items · {preview.includedCount ?? 0} included</span>
+                            <div className="flex items-center gap-1.5">
+                              {(preview.stillToDecideCount ?? 0) > 0 && <span className="text-amber-400/60">{preview.stillToDecideCount} to decide</span>}
+                              {(preview.activeChangeCount ?? 0) > 0 && <span className="text-cream/40">{preview.activeChangeCount} active change{preview.activeChangeCount !== 1 ? 's' : ''}</span>}
+                            </div>
+                            {preview.planStatus && (
+                              <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded w-fit ${
+                                preview.planStatus === 'confirmed' || preview.planStatus === 'acknowledged' ? 'bg-emerald-500/10 text-emerald-400/70'
+                                : preview.planStatus === 'shared' ? 'bg-blue-500/10 text-blue-400/70'
+                                : 'bg-cream/5 text-cream/30'
+                              }`}>{preview.planStatus.charAt(0).toUpperCase() + preview.planStatus.slice(1)}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-cream/20 italic">No items yet</span>
+                        )
+                      ) : toolKey === 'punchlist' ? (
                         statusParts.length > 0 ? (
                           <span className="text-cream/50">{statusParts.join(' · ')}</span>
                         ) : (
@@ -595,17 +627,20 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
             </tbody>
           </table>
           {/* + Add new row */}
-          <button
-            type="button"
-            onClick={() => setCreating(true)}
-            className="mt-3 flex items-center gap-2 text-sm text-cream/30 hover:text-cream/50 transition-colors"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Add a new {itemNoun}
-          </button>
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => setCreating(true)}
+              className="flex items-center gap-2 text-sm text-cream/30 hover:text-cream/50 transition-colors"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Add a new {itemNoun}
+            </button>
+            {createHint && <p className="text-[11px] text-cream/20 mt-1 ml-6">{createHint}</p>}
+          </div>
           {creating && (
             <div className="mt-2 flex items-center gap-2 max-w-sm">
               <input
@@ -667,7 +702,46 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                 )}
 
                 {/* Status counts — tool-aware */}
-                {toolKey === 'punchlist' && hasStatusCounts ? (
+                {toolKey === 'project_summary' && (preview.planItemCount ?? 0) > 0 ? (
+                  <div className="mt-1.5 space-y-1">
+                    {preview.planScope && (
+                      <p className="text-[11px] text-cream/35 leading-relaxed truncate">{preview.planScope.length > 80 ? preview.planScope.slice(0, 77) + '…' : preview.planScope}</p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-cream/50">
+                      <span>{preview.planItemCount} plan items</span>
+                      {(preview.includedCount ?? 0) > 0 && <span className="text-cream/35">{preview.includedCount} included</span>}
+                      {(preview.stillToDecideCount ?? 0) > 0 && <span className="text-amber-400/60">{preview.stillToDecideCount} to decide</span>}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]">
+                      {(preview.changeCount ?? 0) > 0 && (
+                        <span className="text-cream/40">
+                          {preview.changeCount} change{preview.changeCount !== 1 ? 's' : ''}
+                          {(preview.activeChangeCount ?? 0) > 0 && <span className="text-amber-400/60 ml-1">({preview.activeChangeCount} active)</span>}
+                        </span>
+                      )}
+                      {preview.hasBudget && preview.budgetAmount && (
+                        <span className="text-cream/30">Budget: {preview.budgetAmount}</span>
+                      )}
+                      {(preview.documentCount ?? 0) > 0 && (
+                        <span className="text-cream/25">{preview.documentCount} doc{preview.documentCount !== 1 ? 's' : ''}</span>
+                      )}
+                    </div>
+                    {preview.planStatus && (
+                      <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded ${
+                        preview.planStatus === 'confirmed' || preview.planStatus === 'acknowledged' ? 'bg-emerald-500/10 text-emerald-400/70'
+                        : preview.planStatus === 'shared' ? 'bg-blue-500/10 text-blue-400/70'
+                        : 'bg-cream/5 text-cream/30'
+                      }`}>{preview.planStatus.charAt(0).toUpperCase() + preview.planStatus.slice(1)}</span>
+                    )}
+                  </div>
+                ) : toolKey === 'project_summary' && (preview.planItemCount ?? 0) === 0 ? (
+                  <div className="mt-1.5">
+                    {preview.planScope && (
+                      <p className="text-[11px] text-cream/35 leading-relaxed truncate mb-1">{preview.planScope.length > 80 ? preview.planScope.slice(0, 77) + '…' : preview.planScope}</p>
+                    )}
+                    <p className="text-[11px] text-cream/35 italic">No plan items yet</p>
+                  </div>
+                ) : toolKey === 'punchlist' && hasStatusCounts ? (
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-[11px] text-cream/50">
                     {(preview.statuses!.open ?? 0) > 0 && <span>{preview.statuses!.open} open</span>}
                     {(preview.statuses!.high ?? 0) > 0 && <span className="text-amber-400/70">{preview.statuses!.high} high</span>}
@@ -678,7 +752,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                     Decided {(preview.statuses!.selected ?? 0) + (preview.statuses!.ordered ?? 0) + (preview.statuses!.done ?? 0)}/{preview.decisionCount ?? Object.values(preview.statuses!).reduce((s, v) => s + v, 0)} · Done {preview.statuses!.done ?? 0}/{preview.decisionCount ?? Object.values(preview.statuses!).reduce((s, v) => s + v, 0)}
                   </div>
                 ) : previewMode === 'statuses' && preview.decisionCount === 0 ? (
-                  <p className="mt-1.5 text-[11px] text-cream/35 italic">{toolKey === 'punchlist' ? '0 items' : '0 selections added'}</p>
+                  <p className="mt-1.5 text-[11px] text-cream/35 italic">{toolKey === 'punchlist' ? '0 items' : toolKey === 'project_summary' ? 'No plan items yet' : '0 selections added'}</p>
                 ) : null}
 
                 {/* Recent activity — prefer ActivityEvent */}
@@ -876,13 +950,14 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-cream/15 hover:border-sandstone/40 bg-basalt-50 transition-colors cursor-pointer min-h-[120px]"
+            className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-cream/15 hover:border-sandstone/40 bg-basalt-50 transition-colors cursor-pointer min-h-[120px] px-4"
           >
             <svg className="w-7 h-7 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             <span className="text-sm text-cream/40 font-medium">Add a new {itemNoun}</span>
+            {createHint && <span className="text-[10px] text-cream/20 text-center leading-snug">{createHint}</span>}
           </button>
         ) : (
           <div className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-sandstone/40 bg-basalt-50 p-4 min-h-[120px]">
