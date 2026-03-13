@@ -18,7 +18,7 @@ Migrate "Project Summary" tool to "Plan & Changes" — a full data model evoluti
 - [x] Post-implementation: migration-checker (7/7 PASS), mobile-ui (9/9 PASS), desktop-ui (8/8 PASS), QA regression (11/11 PASS)
 - [x] AI review & logging system: review ledger + subagent hooks
 - [x] Codex review workflow: `AGENTS.md` + review ledger + format templates
-- [ ] Deploy to production
+- [x] Deploy to production (2026-03-13)
 
 ### What Changed
 - **Data model**: v1 payloads silently migrate to v2 on load via `ensureShape()`
