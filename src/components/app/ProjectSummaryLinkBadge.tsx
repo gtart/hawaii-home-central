@@ -17,6 +17,13 @@ interface Props {
 }
 
 const STATUS_STYLE: Record<string, string> = {
+  requested: 'text-amber-400/60',
+  awaiting_homeowner: 'text-blue-400/60',
+  approved_by_homeowner: 'text-emerald-400/60',
+  accepted_by_contractor: 'text-teal-400/60',
+  done: 'text-cream/50',
+  closed: 'text-red-400/60',
+  // Legacy v1 statuses (for any cached/stale data)
   proposed: 'text-amber-400/60',
   approved: 'text-emerald-400/60',
   not_approved: 'text-red-400/60',
@@ -26,13 +33,11 @@ const STATUS_STYLE: Record<string, string> = {
 
 const TYPE_LABEL: Record<string, string> = {
   change: 'Change',
-  decision: 'Decision',
 }
 
-/** Build a deep-link URL to the specific entry in Project Summary */
+/** Build a deep-link URL to the specific entry in Plan & Changes */
 function entryHref(item: LinkedEntry): string {
-  const focusPrefix = item.entryType === 'change' ? 'change' : 'decision'
-  return `/app/tools/project-summary/${item.collectionId}?focus=${focusPrefix}-${item.entryId}`
+  return `/app/tools/project-summary/${item.collectionId}?focus=change-${item.entryId}`
 }
 
 /**
@@ -78,7 +83,7 @@ export function ProjectSummaryLinkBadge({ projectId, entityId }: Props) {
           <path d="M8 12h8M8 16h5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <span className="text-[11px] text-cream/50 font-medium">
-          {items.length} summary {items.length !== 1 ? 'entries' : 'entry'}
+          {items.length} plan {items.length !== 1 ? 'entries' : 'entry'}
         </span>
       </div>
       <div className="border-t border-cream/[0.04] divide-y divide-cream/[0.04]">

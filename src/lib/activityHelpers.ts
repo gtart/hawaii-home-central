@@ -6,7 +6,7 @@ export const TOOL_LABEL: Record<string, string> = {
   mood_boards: 'Mood Boards',
   before_you_sign: 'Contract Checklist',
   project_alignment: 'Project Alignment',
-  project_summary: 'Project Summary',
+  project_summary: 'Plan & Changes',
 }
 
 export const TOOL_BASE: Record<string, string> = {
@@ -65,7 +65,7 @@ export const FILTER_CHIPS: { key: string | undefined; label: string }[] = [
   { key: 'finish_decisions', label: 'Selections' },
   { key: 'mood_boards', label: 'Mood Boards' },
   { key: 'before_you_sign', label: 'Contract Checklist' },
-  { key: 'project_summary', label: 'Project Summary' },
+  { key: 'project_summary', label: 'Plan & Changes' },
   { key: 'project_alignment', label: 'Project Alignment' },
 ]
 

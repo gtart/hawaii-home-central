@@ -6,7 +6,7 @@ import type { ProjectSummaryPayload, SummaryLink } from '@/data/project-summary'
 interface LinkedEntry {
   entryId: string
   entryTitle: string
-  entryType: 'change' | 'decision'
+  entryType: 'change'
   status: string
   collectionId: string
 }
@@ -15,7 +15,7 @@ interface LinkedEntry {
  * GET /api/tools/project-summary/linked-entities?projectId=X&entityId=Y
  *
  * Scans all Project Summary collections for the given project and
- * returns any changes or open decisions that link to the specified entityId.
+ * returns any changes that link to the specified entityId.
  * Response includes collectionId so the badge can build deep-link URLs.
  *
  * Read-only. Does NOT modify any data in Project Summary, Fix List, or Selections.
@@ -78,7 +78,7 @@ export async function GET(request: Request) {
               entryId: change.id,
               entryTitle: change.title || 'Untitled change',
               entryType: 'change',
-              status: change.status || 'proposed',
+              status: change.status || 'requested',
               collectionId: coll.id,
             })
           }
@@ -86,23 +86,6 @@ export async function GET(request: Request) {
       }
     }
 
-    // Scan open decisions for links matching entityId
-    if (Array.isArray(payload.openDecisions)) {
-      for (const decision of payload.openDecisions) {
-        if (Array.isArray(decision.links)) {
-          const match = decision.links.find((l: SummaryLink) => l.entityId === entityId)
-          if (match) {
-            items.push({
-              entryId: decision.id,
-              entryTitle: decision.title || 'Untitled decision',
-              entryType: 'decision',
-              status: decision.status || 'open',
-              collectionId: coll.id,
-            })
-          }
-        }
-      }
-    }
   }
 
   return NextResponse.json({ items })

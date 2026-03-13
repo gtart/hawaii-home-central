@@ -84,7 +84,7 @@ const FINDING_PROS_ITEMS = [
   },
   {
     href: '/app/tools/project-summary',
-    label: 'Project Summary',
+    label: 'Plan & Changes',
     matchMode: 'prefix' as const,
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

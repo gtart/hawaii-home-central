@@ -1,9 +1,9 @@
 'use client'
 
-import { Suspense, useState, useRef, useMemo, useCallback } from 'react'
+import { Suspense, useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import { useProjectSummaryState } from '../../../useProjectSummaryState'
-import { CHANGE_STATUS_CONFIG, CHANGE_STATUS_CYCLE } from '../../../constants'
+import { CHANGE_STATUS_CONFIG, CHANGE_STATUS_ORDER } from '../../../constants'
 import { InlineEdit } from '../../../components/InlineEdit'
 import { StatusBadge } from '../../../components/StatusBadge'
 import { LinkPills } from '../../../components/LinkPills'
@@ -32,9 +32,72 @@ function formatCost(raw: string): string {
   return `${sign}$${num.toLocaleString()}`
 }
 
+/** Status dropdown — custom div-based, never native <select> */
+function StatusDropdown({
+  status,
+  onChange,
+  readOnly,
+}: {
+  status: ChangeStatus
+  onChange: (status: ChangeStatus) => void
+  readOnly?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  const config = CHANGE_STATUS_CONFIG[status]
+
+  return (
+    <div className="relative" ref={ref}>
+      <StatusBadge
+        label={config.label}
+        color={config.color}
+        bgColor={config.bgColor}
+        onClick={readOnly ? undefined : () => setOpen(!open)}
+        readOnly={readOnly}
+      />
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-cream/10 bg-[#1a1a1a] shadow-xl py-1">
+          {CHANGE_STATUS_ORDER.map((s) => {
+            const cfg = CHANGE_STATUS_CONFIG[s]
+            const isActive = s === status
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (s !== status) onChange(s)
+                  setOpen(false)
+                }}
+                className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors ${
+                  isActive ? 'bg-cream/5' : 'hover:bg-cream/5'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${cfg.bgColor} ${isActive ? 'ring-1 ring-cream/20' : ''}`} />
+                <span className={cfg.color}>{cfg.label}</span>
+                {isActive && <span className="text-cream/20 ml-auto text-[10px]">Current</span>}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Content({ collectionId, changeId }: { collectionId: string; changeId: string }) {
   const api = useProjectSummaryState({ collectionId })
-  const { payload, isLoaded, readOnly, updateChange, addChangeAttachment, removeChangeAttachment, updateChangePrivateNotes, addLink, removeLink } = api
+  const { payload, isLoaded, readOnly, updateChange, incorporateChange, addChangeAttachment, removeChangeAttachment, updateChangePrivateNotes, addLink, removeLink } = api
 
   const change = useMemo(
     () => payload.changes.find((c) => c.id === changeId),
@@ -59,13 +122,6 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
   const handleOpenComments = useCallback(() => {
     commentSidebarRef.current?.toggle()
   }, [])
-
-  function cycleStatus() {
-    if (!change || readOnly) return
-    const idx = CHANGE_STATUS_CYCLE.indexOf(change.status)
-    const next = CHANGE_STATUS_CYCLE[(idx + 1) % CHANGE_STATUS_CYCLE.length]
-    updateChange(change.id, { status: next })
-  }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -122,13 +178,13 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
           href={`/app/tools/project-summary/${collectionId}`}
           className="text-sandstone hover:text-sandstone-light text-sm transition-colors"
         >
-          Back to Project Summary
+          Back to Plan &amp; Changes
         </Link>
       </div>
     )
   }
 
-  const statusConfig = CHANGE_STATUS_CONFIG[change.status]
+  const canIncorporate = (change.status === 'accepted_by_contractor' || change.status === 'done') && !change.incorporated
   const attachments = change.attachments || []
 
   return (
@@ -142,7 +198,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Back to Project Summary
+          Back to Plan &amp; Changes
         </Link>
       </div>
 
@@ -158,14 +214,34 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 displayClassName="text-lg font-serif text-cream/90 font-medium"
                 className="text-lg font-serif font-medium"
               />
-              <StatusBadge
-                label={statusConfig.label}
-                color={statusConfig.color}
-                bgColor={statusConfig.bgColor}
-                onClick={readOnly ? undefined : cycleStatus}
+              <StatusDropdown
+                status={change.status}
+                onChange={(status) => updateChange(change.id, { status })}
                 readOnly={readOnly}
               />
             </div>
+
+            {/* Incorporation / changed-since indicators */}
+            {change.incorporated && change.incorporated_at && (
+              <div className="text-[10px] text-teal-400/50 bg-teal-400/5 rounded-md px-2.5 py-1.5 mb-3 flex items-center gap-1.5">
+                <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Incorporated on {new Date(change.incorporated_at).toLocaleDateString()}
+                {change.incorporated_by && ` by ${change.incorporated_by}`}
+              </div>
+            )}
+
+            {change.changed_since_accepted && (
+              <div className="text-[10px] text-amber-400/50 bg-amber-400/5 rounded-md px-2.5 py-1.5 mb-3 flex items-center gap-1.5">
+                <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" strokeLinecap="round" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" strokeLinecap="round" />
+                </svg>
+                Edited since contractor accepted
+              </div>
+            )}
 
             <div className="space-y-3">
               <div>
@@ -217,6 +293,20 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 </div>
               </div>
 
+              {/* Contractor Response */}
+              <div>
+                <label className="text-[10px] text-cream/30 block mb-0.5">Contractor Response</label>
+                <InlineEdit
+                  value={change.contractor_response || ''}
+                  onSave={(v) => updateChange(change.id, { contractor_response: v || undefined })}
+                  placeholder="Contractor's response to this change..."
+                  readOnly={readOnly}
+                  multiline
+                  displayClassName="text-sm text-cream/60 leading-relaxed"
+                  className="text-sm leading-relaxed"
+                />
+              </div>
+
               {(change.final_note || !readOnly) && (
                 <div>
                   <label className="text-[10px] text-cream/30 block mb-0.5">Final Note</label>
@@ -232,16 +322,30 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 </div>
               )}
 
+              {/* Incorporate action */}
+              {canIncorporate && !readOnly && (
+                <button
+                  type="button"
+                  onClick={() => incorporateChange(change.id)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-teal-400 bg-teal-400/10 hover:bg-teal-400/20 rounded-md transition-colors"
+                >
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                  </svg>
+                  Incorporate into Plan
+                </button>
+              )}
+
               {/* Links */}
               <div className="flex items-center gap-2">
                 <LinkPills
                   links={change.links}
-                  onRemove={readOnly ? undefined : (linkId) => removeLink('changes', change.id, linkId)}
+                  onRemove={readOnly ? undefined : (linkId) => removeLink(change.id, linkId)}
                   readOnly={readOnly}
                 />
                 <AttachMenu
                   readOnly={readOnly}
-                  onAttach={(link) => addLink('changes', change.id, link)}
+                  onAttach={(link) => addLink(change.id, link)}
                 />
               </div>
             </div>

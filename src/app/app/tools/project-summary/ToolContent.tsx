@@ -10,10 +10,10 @@ import type { RefEntity } from '@/components/app/CommentThread'
 import { useComments } from '@/hooks/useComments'
 import { useUnseenActivityCount } from '@/hooks/useUnseenActivityCount'
 import { useProjectSummaryState } from './useProjectSummaryState'
-import { SummarySection } from './components/SummarySection'
+import { CurrentPlanSection } from './components/CurrentPlanSection'
 import { DocumentsSection } from './components/DocumentsSection'
 import { ChangesSection } from './components/ChangesSection'
-import { OpenDecisionsSection } from './components/OpenDecisionsSection'
+import { MilestoneTimeline } from './components/MilestoneTimeline'
 import type { SummaryLinkType } from '@/data/project-summary'
 
 /** Draft data from CreateProjectSummaryEntryButton — local-only, not persisted until explicit save. */
@@ -27,9 +27,9 @@ export interface PrefillDraft {
   entityLabel: string
 }
 
-/** Parsed focus target from URL query param ?focus=change-<id> or ?focus=decision-<id> */
+/** Parsed focus target from URL query param ?focus=change-<id> */
 export interface FocusTarget {
-  section: 'changes' | 'openDecisions'
+  section: 'changes'
   entryId: string
 }
 
@@ -54,7 +54,6 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     const id = raw.slice(dashIdx + 1)
     if (!id) return null
     if (type === 'change') return { section: 'changes', entryId: id }
-    if (type === 'decision') return { section: 'openDecisions', entryId: id }
     return null
   }, [searchParams])
 
@@ -67,11 +66,10 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     { toolKey: 'project_summary', collectionId }
   )
 
-  // Build ref entities for comment tagging (changes + decisions)
+  // Build ref entities for comment tagging (changes only)
   const commentRefEntities: RefEntity[] = useMemo(() => [
     ...payload.changes.map((c) => ({ id: c.id, label: `Change: ${c.title}` })),
-    ...payload.openDecisions.map((d) => ({ id: d.id, label: `Decision: ${d.title}` })),
-  ], [payload.changes, payload.openDecisions])
+  ], [payload.changes])
 
   const commentCounts = useMemo(() => {
     const counts = new Map<string, number>()
@@ -129,7 +127,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       <div className="text-center py-24">
         <h2 className="font-serif text-2xl text-cream mb-2">No Access</h2>
         <p className="text-cream/50 text-sm">
-          You don&apos;t have access to this Project Summary.
+          You don&apos;t have access to this Plan &amp; Changes collection.
         </p>
       </div>
     )
@@ -139,13 +137,13 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     <>
       <ToolPageHeader
         toolKey="project_summary"
-        title="Project Summary"
-        description="A quick snapshot of your project: what's included, what's changed, and what still needs a decision."
+        title="Plan & Changes"
+        description="Your project plan, what's included and excluded, budget overview, and a record of every change along the way."
         accessLevel={access}
-        hasContent={payload.summary.text.length > 0 || payload.documents.length > 0 || payload.changes.length > 0 || payload.openDecisions.length > 0}
+        hasContent={payload.plan.scope.length > 0 || payload.documents.length > 0 || payload.changes.length > 0 || payload.plan.included.length > 0 || payload.plan.not_included.length > 0 || payload.plan.still_to_decide.length > 0}
         collectionId={collectionId}
-        eyebrowLabel="Project Summary"
-        toolLabel="Project Summary"
+        eyebrowLabel="Plan & Changes"
+        toolLabel="Plan & Changes"
         actions={(
           <div className="flex items-center gap-2">
             <InstanceSwitcher
@@ -204,7 +202,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
 
       <div className="md:flex md:gap-6 md:items-start">
         <div className="flex-1 min-w-0 space-y-6">
-          <SummarySection
+          <CurrentPlanSection
             api={api}
             onScrollToChanges={() => {
               changesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -220,11 +218,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
             focusEntryId={focusTarget?.section === 'changes' ? focusTarget.entryId : undefined}
           />
           </div>
-          <OpenDecisionsSection
-            api={api}
-            commentCounts={commentCounts}
-            focusEntryId={focusTarget?.section === 'openDecisions' ? focusTarget.entryId : undefined}
-          />
+          <MilestoneTimeline milestones={payload.milestones} />
         </div>
 
         <CollapsibleCommentSidebar

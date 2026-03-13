@@ -6,11 +6,13 @@ import type {
   ProjectSummaryPayload,
   SummaryDocument,
   SummaryChange,
-  SummaryDecision,
   SummaryLink,
   ChangeAttachment,
   ChangeStatus,
-  DecisionStatus,
+  PlanStatus,
+  PlanItemCategory,
+  PlanItem,
+  Milestone,
 } from '@/data/project-summary'
 import { DEFAULT_PROJECT_SUMMARY_PAYLOAD, ensureShape } from '@/data/project-summary'
 
@@ -43,20 +45,199 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
   const readOnly = access === 'VIEW'
   const payload = ensureShape(rawState)
 
-  // ── Summary ──
+  // ── Plan: Scope ──
 
-  const updateSummary = useCallback(
-    (updates: Partial<ProjectSummaryPayload['summary']>) => {
+  const updatePlanScope = useCallback(
+    (scope: string) => {
       const events: ActivityEventHint[] = [{
         action: 'updated',
         entityType: 'summary',
-        summaryText: 'Updated project summary',
+        summaryText: 'Updated plan scope',
       }]
       setState((prev) => {
         const p = ensureShape(prev)
         return {
           ...p,
-          summary: { ...p.summary, ...updates, updated_at: now() },
+          plan: { ...p.plan, scope, content_changed_since_status: true, updated_at: now() },
+        }
+      }, events)
+    },
+    [setState]
+  )
+
+  // ── Plan: Status ──
+
+  const updatePlanStatus = useCallback(
+    (status: PlanStatus, actor?: string, note?: string) => {
+      const events: ActivityEventHint[] = [{
+        action: 'status_changed',
+        entityType: 'summary',
+        summaryText: `Plan status changed to ${status}`,
+      }]
+      setState((prev) => {
+        const p = ensureShape(prev)
+        const milestone: Milestone = {
+          id: genId(),
+          event: `plan_${status}`,
+          label: `Plan marked as ${status}`,
+          ...(actor ? { actor } : {}),
+          ...(note ? { note } : {}),
+          timestamp: now(),
+        }
+        return {
+          ...p,
+          plan: {
+            ...p.plan,
+            status,
+            status_changed_at: now(),
+            content_changed_since_status: false,
+            updated_at: now(),
+          },
+          milestones: [...p.milestones, milestone],
+        }
+      }, events)
+    },
+    [setState]
+  )
+
+  // ── Plan: Items ──
+
+  const addPlanItem = useCallback(
+    (category: PlanItemCategory, text: string, createdBy?: string) => {
+      const id = genId()
+      const ts = now()
+      const events: ActivityEventHint[] = [{
+        action: 'created',
+        entityType: 'plan_item',
+        entityId: id,
+        summaryText: `Added ${category.replace(/_/g, ' ')} item: "${text}"`,
+        entityLabel: text,
+      }]
+      setState((prev) => {
+        const p = ensureShape(prev)
+        const newItem: PlanItem = {
+          id,
+          text,
+          category,
+          ...(createdBy ? { created_by: createdBy } : {}),
+          created_at: ts,
+          updated_at: ts,
+        }
+        return {
+          ...p,
+          plan: {
+            ...p.plan,
+            [category]: [...p.plan[category], newItem],
+            content_changed_since_status: true,
+            updated_at: ts,
+          },
+        }
+      }, events)
+      return id
+    },
+    [setState]
+  )
+
+  const updatePlanItem = useCallback(
+    (id: string, updates: { text?: string; category?: PlanItemCategory }, updatedBy?: string) => {
+      setState((prev) => {
+        const p = ensureShape(prev)
+        const ts = now()
+
+        // If category changed, move between lists
+        if (updates.category) {
+          const categories: PlanItemCategory[] = ['included', 'not_included', 'still_to_decide']
+          let item: PlanItem | undefined
+          let sourceCategory: PlanItemCategory | undefined
+
+          for (const cat of categories) {
+            const found = p.plan[cat].find((i) => i.id === id)
+            if (found) {
+              item = found
+              sourceCategory = cat
+              break
+            }
+          }
+
+          if (!item || !sourceCategory) return p
+
+          const updatedItem = {
+            ...item,
+            ...(updates.text !== undefined ? { text: updates.text } : {}),
+            category: updates.category,
+            ...(updatedBy ? { updated_by: updatedBy } : {}),
+            updated_at: ts,
+          }
+
+          const newPlan = { ...p.plan, content_changed_since_status: true, updated_at: ts }
+
+          if (sourceCategory === updates.category) {
+            // Same category, just update text
+            newPlan[sourceCategory] = newPlan[sourceCategory].map((i) =>
+              i.id === id ? updatedItem : i
+            )
+          } else {
+            // Move to new category
+            newPlan[sourceCategory] = newPlan[sourceCategory].filter((i) => i.id !== id)
+            newPlan[updates.category] = [...newPlan[updates.category], updatedItem]
+          }
+
+          return { ...p, plan: newPlan }
+        }
+
+        // No category change — update text in place
+        const categories: PlanItemCategory[] = ['included', 'not_included', 'still_to_decide']
+        const newPlan = { ...p.plan, content_changed_since_status: true, updated_at: ts }
+        for (const cat of categories) {
+          if (newPlan[cat].some((i) => i.id === id)) {
+            newPlan[cat] = newPlan[cat].map((i) =>
+              i.id === id ? { ...i, ...(updates.text !== undefined ? { text: updates.text } : {}), ...(updatedBy ? { updated_by: updatedBy } : {}), updated_at: ts } : i
+            )
+            break
+          }
+        }
+        return { ...p, plan: newPlan }
+      })
+    },
+    [setState]
+  )
+
+  const deletePlanItem = useCallback(
+    (id: string) => {
+      setState((prev) => {
+        const p = ensureShape(prev)
+        const ts = now()
+        return {
+          ...p,
+          plan: {
+            ...p.plan,
+            included: p.plan.included.filter((i) => i.id !== id),
+            not_included: p.plan.not_included.filter((i) => i.id !== id),
+            still_to_decide: p.plan.still_to_decide.filter((i) => i.id !== id),
+            content_changed_since_status: true,
+            updated_at: ts,
+          },
+        }
+      })
+    },
+    [setState]
+  )
+
+  // ── Budget ──
+
+  const updateBudget = useCallback(
+    (updates: Partial<ProjectSummaryPayload['budget']>) => {
+      const events: ActivityEventHint[] = [{
+        action: 'updated',
+        entityType: 'summary',
+        summaryText: 'Updated budget',
+      }]
+      setState((prev) => {
+        const p = ensureShape(prev)
+        return {
+          ...p,
+          budget: { ...p.budget, ...updates, updated_at: now() },
+          plan: { ...p.plan, content_changed_since_status: true },
         }
       }, events)
     },
@@ -138,7 +319,8 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
             title: change.title,
             description: change.description,
             requested_by: change.requested_by,
-            status: change.status || 'proposed',
+            status: change.status || 'requested',
+            incorporated: false,
             links: [],
             created_at: ts,
             updated_at: ts,
@@ -151,7 +333,7 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
   )
 
   const updateChange = useCallback(
-    (id: string, updates: Partial<Omit<SummaryChange, 'id' | 'created_at' | 'links'>>) => {
+    (id: string, updates: Partial<Omit<SummaryChange, 'id' | 'created_at' | 'links' | 'incorporated' | 'incorporated_at' | 'incorporated_by'>>) => {
       const events: ActivityEventHint[] = []
       const existing = payload.changes.find((c) => c.id === id)
 
@@ -167,10 +349,28 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
 
       setState((prev) => {
         const p = ensureShape(prev)
+        const change = p.changes.find((c) => c.id === id)
+        if (!change) return p
+
+        // Track if change was edited after contractor acceptance
+        let changedSinceAccepted = change.changed_since_accepted
+        if (change.status === 'accepted_by_contractor' && !updates.status) {
+          changedSinceAccepted = true
+        }
+        // Reset flag if status is changing
+        if (updates.status && updates.status !== change.status) {
+          changedSinceAccepted = undefined
+        }
+
         return {
           ...p,
           changes: p.changes.map((c) =>
-            c.id === id ? { ...c, ...updates, updated_at: now() } : c
+            c.id === id ? {
+              ...c,
+              ...updates,
+              ...(changedSinceAccepted !== undefined ? { changed_since_accepted: changedSinceAccepted } : {}),
+              updated_at: now(),
+            } : c
           ),
         }
       }, events.length > 0 ? events : undefined)
@@ -191,86 +391,46 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
     [setState]
   )
 
-  // ── Open Decisions ──
+  // ── Incorporate Change ──
 
-  const addDecision = useCallback(
-    (decision: { title: string; description?: string }) => {
-      const id = genId()
+  const incorporateChange = useCallback(
+    (changeId: string, actor?: string) => {
+      const existing = payload.changes.find((c) => c.id === changeId)
       const ts = now()
       const events: ActivityEventHint[] = [{
-        action: 'created',
-        entityType: 'decision',
-        entityId: id,
-        summaryText: `Added open decision: "${decision.title}"`,
-        entityLabel: decision.title,
+        action: 'updated',
+        entityType: 'change',
+        entityId: changeId,
+        summaryText: `Incorporated change: "${existing?.title}"`,
+        entityLabel: existing?.title || 'change',
       }]
+
       setState((prev) => {
         const p = ensureShape(prev)
+        const milestone: Milestone = {
+          id: genId(),
+          event: 'change_incorporated',
+          label: `Incorporated: ${existing?.title || 'change'}`,
+          ...(actor ? { actor } : {}),
+          timestamp: ts,
+          relatedEntityId: changeId,
+        }
         return {
           ...p,
-          openDecisions: [...p.openDecisions, {
-            id,
-            title: decision.title,
-            description: decision.description,
-            status: 'open' as const,
-            links: [],
-            created_at: ts,
-            updated_at: ts,
-          }],
+          changes: p.changes.map((c) =>
+            c.id === changeId ? {
+              ...c,
+              incorporated: true,
+              incorporated_at: ts,
+              ...(actor ? { incorporated_by: actor } : {}),
+              updated_at: ts,
+            } : c
+          ),
+          milestones: [...p.milestones, milestone],
         }
       }, events)
-      return id
     },
-    [setState]
-  )
-
-  const updateDecision = useCallback(
-    (id: string, updates: Partial<Omit<SummaryDecision, 'id' | 'created_at' | 'links'>>) => {
-      const events: ActivityEventHint[] = []
-      const existing = payload.openDecisions.find((d) => d.id === id)
-
-      if (updates.status && updates.status !== existing?.status) {
-        const statusLabels: Record<string, string> = {
-          open: 'Reopened',
-          pending_homeowner: 'Pending Homeowner',
-          pending_contractor: 'Pending Contractor',
-          approved: 'Approved',
-          closed: 'Closed',
-        }
-        const label = statusLabels[updates.status] || updates.status
-        events.push({
-          action: updates.status === 'closed' ? 'resolved' : updates.status === 'open' ? 'reopened' : 'status_changed',
-          entityType: 'decision',
-          entityId: id,
-          summaryText: `${label}: "${existing?.title}"`,
-          entityLabel: existing?.title || 'decision',
-        })
-      }
-
-      setState((prev) => {
-        const p = ensureShape(prev)
-        return {
-          ...p,
-          openDecisions: p.openDecisions.map((d) =>
-            d.id === id ? { ...d, ...updates, updated_at: now() } : d
-          ),
-        }
-      }, events.length > 0 ? events : undefined)
-    },
-    [setState, payload.openDecisions]
-  )
-
-  const deleteDecision = useCallback(
-    (id: string) => {
-      setState((prev) => {
-        const p = ensureShape(prev)
-        return {
-          ...p,
-          openDecisions: p.openDecisions.filter((d) => d.id !== id),
-        }
-      })
-    },
-    [setState]
+    [setState, payload.changes]
   )
 
   // ── Change attachments and private notes ──
@@ -335,16 +495,16 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
     [setState]
   )
 
-  // ── Links (on changes and decisions) ──
+  // ── Links (on changes only) ──
 
   const addLink = useCallback(
-    (section: 'changes' | 'openDecisions', entryId: string, link: Omit<SummaryLink, 'id'>) => {
+    (entryId: string, link: Omit<SummaryLink, 'id'>) => {
       const linkId = genId()
       setState((prev) => {
         const p = ensureShape(prev)
         return {
           ...p,
-          [section]: (p[section] as Array<SummaryChange | SummaryDecision>).map((entry) =>
+          changes: p.changes.map((entry) =>
             entry.id === entryId
               ? { ...entry, links: [...entry.links, { ...link, id: linkId }], updated_at: now() }
               : entry
@@ -357,16 +517,40 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
   )
 
   const removeLink = useCallback(
-    (section: 'changes' | 'openDecisions', entryId: string, linkId: string) => {
+    (entryId: string, linkId: string) => {
       setState((prev) => {
         const p = ensureShape(prev)
         return {
           ...p,
-          [section]: (p[section] as Array<SummaryChange | SummaryDecision>).map((entry) =>
+          changes: p.changes.map((entry) =>
             entry.id === entryId
               ? { ...entry, links: entry.links.filter((l) => l.id !== linkId), updated_at: now() }
               : entry
           ),
+        }
+      })
+    },
+    [setState]
+  )
+
+  // ── Milestones ──
+
+  const addMilestone = useCallback(
+    (event: string, label: string, actor?: string, note?: string, relatedEntityId?: string) => {
+      setState((prev) => {
+        const p = ensureShape(prev)
+        const milestone: Milestone = {
+          id: genId(),
+          event,
+          label,
+          ...(actor ? { actor } : {}),
+          ...(note ? { note } : {}),
+          timestamp: now(),
+          ...(relatedEntityId ? { relatedEntityId } : {}),
+        }
+        return {
+          ...p,
+          milestones: [...p.milestones, milestone],
         }
       })
     },
@@ -385,8 +569,14 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
     conflictBanner: collResult.conflictBanner,
     viewOnlyAttempt: collResult.viewOnlyAttempt,
     collectionId: collResult.collectionId,
-    // Summary
-    updateSummary,
+    // Plan
+    updatePlanScope,
+    updatePlanStatus,
+    addPlanItem,
+    updatePlanItem,
+    deletePlanItem,
+    // Budget
+    updateBudget,
     // Documents
     addDocument,
     updateDocument,
@@ -395,16 +585,15 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
     addChange,
     updateChange,
     deleteChange,
+    incorporateChange,
     addChangeAttachment,
     removeChangeAttachment,
     updateChangePrivateNotes,
-    // Decisions
-    addDecision,
-    updateDecision,
-    deleteDecision,
     // Links
     addLink,
     removeLink,
+    // Milestones
+    addMilestone,
   }
 }
 

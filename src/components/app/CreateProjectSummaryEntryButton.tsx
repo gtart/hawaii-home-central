@@ -18,9 +18,9 @@ interface Props {
 }
 
 /**
- * Button that navigates to Project Summary with pre-linked artifact context.
- * Stores link info in sessionStorage so the Project Summary page can pick it up
- * and pre-populate a new change or decision with the artifact already attached.
+ * Button that navigates to Plan & Changes with pre-linked artifact context.
+ * Stores link info in sessionStorage so the Plan & Changes page can pick it up
+ * and pre-populate a new change with the artifact already attached.
  *
  * If the project has exactly one PS collection, navigates directly to it.
  * Otherwise, navigates to the collection picker.
@@ -86,7 +86,7 @@ export function CreateProjectSummaryEntryButton({
           <path d="M12 5v14M5 12h14" strokeLinecap="round" />
         </svg>
       )}
-      Add to Project Summary
+      Add to Plan & Changes
     </button>
   )
 }

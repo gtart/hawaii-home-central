@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import type { ChangeStatus } from '@/data/project-summary'
-import { CHANGE_STATUS_CONFIG, CHANGE_STATUS_CYCLE } from '../constants'
+import { CHANGE_STATUS_CONFIG, CHANGE_STATUS_ORDER } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
 import type { PrefillDraft } from '../ToolContent'
 import { SectionHeader } from './SectionHeader'
@@ -16,11 +16,9 @@ import { AttachMenu } from './AttachMenu'
 function formatCost(raw: string): string {
   const trimmed = raw.trim()
   if (!trimmed) return trimmed
-  // Already has $ — leave it
   if (trimmed.includes('$')) return trimmed
-  // Extract leading sign if present
   const match = trimmed.match(/^([+-]?)\s*([0-9][0-9,]*\.?\d*)$/)
-  if (!match) return trimmed // not a clear number, leave as-is
+  if (!match) return trimmed
   const sign = match[1]
   const num = parseFloat(match[2].replace(/,/g, ''))
   if (isNaN(num)) return trimmed
@@ -30,27 +28,85 @@ function formatCost(raw: string): string {
 interface ChangesSectionProps {
   api: ProjectSummaryStateAPI
   commentCounts?: Map<string, number>
-  /** Draft from cross-tool navigation — displayed in form, NOT persisted until explicit save */
   prefillDraft?: PrefillDraft | null
-  /** Called when draft is saved or dismissed so parent can clear state */
   onDraftConsumed?: () => void
-  /** Entry ID to auto-expand and scroll to (from ?focus= query param) */
   focusEntryId?: string
 }
 
+/** Status dropdown for changes — custom div-based, never native <select> */
+function StatusDropdown({
+  status,
+  onChange,
+  readOnly,
+}: {
+  status: ChangeStatus
+  onChange: (status: ChangeStatus) => void
+  readOnly?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  const config = CHANGE_STATUS_CONFIG[status]
+
+  return (
+    <div className="relative" ref={ref}>
+      <StatusBadge
+        label={config.label}
+        color={config.color}
+        bgColor={config.bgColor}
+        onClick={readOnly ? undefined : () => setOpen(!open)}
+        readOnly={readOnly}
+      />
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-cream/10 bg-[#1a1a1a] shadow-xl py-1">
+          {CHANGE_STATUS_ORDER.map((s) => {
+            const cfg = CHANGE_STATUS_CONFIG[s]
+            const isActive = s === status
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (s !== status) onChange(s)
+                  setOpen(false)
+                }}
+                className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors ${
+                  isActive ? 'bg-cream/5' : 'hover:bg-cream/5'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${cfg.bgColor} ${isActive ? 'ring-1 ring-cream/20' : ''}`} />
+                <span className={cfg.color}>{cfg.label}</span>
+                {isActive && <span className="text-cream/20 ml-auto text-[10px]">Current</span>}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsumed, focusEntryId }: ChangesSectionProps) {
-  const { payload, readOnly, addChange, updateChange, deleteChange, addLink, removeLink } = api
+  const { payload, readOnly, addChange, updateChange, deleteChange, incorporateChange, addLink, removeLink } = api
   const { changes } = payload
   const [showAddForm, setShowAddForm] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newDescription, setNewDescription] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
-  // Draft link context from prefill — held locally until explicit save
   const [draftLink, setDraftLink] = useState<PrefillDraft | null>(null)
   const focusRef = useRef<HTMLDivElement>(null)
 
-  // When prefillDraft arrives, open the add form with prefilled values — no writes
   useEffect(() => {
     if (!prefillDraft) return
     setNewTitle(prefillDraft.title)
@@ -59,13 +115,11 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
     setShowAddForm(true)
   }, [prefillDraft])
 
-  // Auto-expand and scroll to focused entry
   useEffect(() => {
     if (!focusEntryId) return
     const exists = changes.some((c) => c.id === focusEntryId)
     if (exists) {
       setExpandedId(focusEntryId)
-      // Scroll after render
       requestAnimationFrame(() => {
         focusRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       })
@@ -78,9 +132,8 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
       title: newTitle.trim(),
       description: newDescription.trim() || undefined,
     })
-    // If we had a draft link from prefill, attach it now that user explicitly saved
     if (changeId && draftLink) {
-      addLink('changes', changeId, {
+      addLink(changeId, {
         linkType: draftLink.linkType,
         toolKey: draftLink.toolKey,
         collectionId: draftLink.collectionId,
@@ -105,12 +158,6 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
     }
   }
 
-  function cycleStatus(change: { id: string; status: ChangeStatus }) {
-    const idx = CHANGE_STATUS_CYCLE.indexOf(change.status)
-    const next = CHANGE_STATUS_CYCLE[(idx + 1) % CHANGE_STATUS_CYCLE.length]
-    updateChange(change.id, { status: next })
-  }
-
   return (
     <SectionHeader
       title="Changes"
@@ -125,9 +172,9 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
 
       <div className="space-y-2">
         {changes.map((change) => {
-          const config = CHANGE_STATUS_CONFIG[change.status]
           const isExpanded = expandedId === change.id
           const commentCount = commentCounts?.get(change.id) || 0
+          const canIncorporate = (change.status === 'accepted_by_contractor' || change.status === 'done') && !change.incorporated
 
           return (
             <div
@@ -151,13 +198,25 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
 
                 <span className="text-sm text-cream/70 flex-1 truncate">{change.title}</span>
 
-                <StatusBadge
-                  label={config.label}
-                  color={config.color}
-                  bgColor={config.bgColor}
-                  onClick={readOnly ? undefined : () => cycleStatus(change)}
-                  readOnly={readOnly}
-                />
+                {change.incorporated && (
+                  <span className="text-[9px] text-teal-400/50 bg-teal-400/5 px-1.5 py-0.5 rounded-full shrink-0">
+                    Incorporated
+                  </span>
+                )}
+
+                {change.changed_since_accepted && (
+                  <span className="text-[9px] text-amber-400/50 shrink-0" title="Edited since contractor accepted">
+                    Modified
+                  </span>
+                )}
+
+                <div onClick={(e) => e.stopPropagation()}>
+                  <StatusDropdown
+                    status={change.status}
+                    onChange={(status) => updateChange(change.id, { status })}
+                    readOnly={readOnly}
+                  />
+                </div>
 
                 {change.cost_impact && (
                   <span className="text-[10px] text-cream/35 shrink-0">{change.cost_impact}</span>
@@ -273,6 +332,20 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                     </div>
                   </div>
 
+                  {/* Contractor Response */}
+                  <div>
+                    <label className="text-[10px] text-cream/30 block mb-0.5">Contractor Response</label>
+                    <InlineEdit
+                      value={change.contractor_response || ''}
+                      onSave={(v) => updateChange(change.id, { contractor_response: v || undefined })}
+                      placeholder="Contractor's response to this change..."
+                      readOnly={readOnly}
+                      multiline
+                      displayClassName="text-xs text-cream/50"
+                      className="text-xs"
+                    />
+                  </div>
+
                   {(change.final_note || !readOnly) && (
                     <div>
                       <label className="text-[10px] text-cream/30 block mb-0.5">Note</label>
@@ -287,15 +360,49 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                     </div>
                   )}
 
+                  {/* Incorporate action */}
+                  {canIncorporate && !readOnly && (
+                    <button
+                      type="button"
+                      onClick={() => incorporateChange(change.id)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-teal-400 bg-teal-400/10 hover:bg-teal-400/20 rounded-md transition-colors"
+                    >
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                      </svg>
+                      Incorporate into Plan
+                    </button>
+                  )}
+
+                  {/* Incorporation traceability */}
+                  {change.incorporated && change.incorporated_at && (
+                    <div className="text-[10px] text-teal-400/40">
+                      Incorporated on {new Date(change.incorporated_at).toLocaleDateString()}
+                      {change.incorporated_by && ` by ${change.incorporated_by}`}
+                    </div>
+                  )}
+
+                  {/* Changed since accepted warning */}
+                  {change.changed_since_accepted && (
+                    <div className="text-[10px] text-amber-400/50 flex items-center gap-1">
+                      <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" strokeLinecap="round" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" strokeLinecap="round" />
+                      </svg>
+                      Edited since contractor accepted
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-2">
                     <LinkPills
                       links={change.links}
-                      onRemove={readOnly ? undefined : (linkId) => removeLink('changes', change.id, linkId)}
+                      onRemove={readOnly ? undefined : (linkId) => removeLink(change.id, linkId)}
                       readOnly={readOnly}
                     />
                     <AttachMenu
                       readOnly={readOnly}
-                      onAttach={(link) => addLink('changes', change.id, link)}
+                      onAttach={(link) => addLink(change.id, link)}
                     />
                   </div>
                 </div>

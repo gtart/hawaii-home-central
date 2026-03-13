@@ -84,7 +84,7 @@ export default async function SharePage({ params }: Props) {
           <h1 className="font-serif text-2xl text-cream mb-3">Link No Longer Available</h1>
           <p className="text-cream/50 text-sm leading-relaxed">
             This Project Alignment share link is no longer active.
-            The tool has been replaced by <strong className="text-cream/70">Project Summary</strong>.
+            The tool has been replaced by <strong className="text-cream/70">Plan &amp; Changes</strong>.
             Please ask the project owner for an updated link.
           </p>
         </div>

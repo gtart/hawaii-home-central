@@ -1,62 +1,71 @@
-import type { ChangeStatus, DecisionStatus, DocType } from '@/data/project-summary'
+import type { ChangeStatus, PlanStatus, DocType } from '@/data/project-summary'
 
-// ── Change status config ──
+// ── Change status config (v2 — 6 statuses) ──
 
 export const CHANGE_STATUS_CONFIG: Record<ChangeStatus, { label: string; color: string; bgColor: string }> = {
-  proposed: {
-    label: 'Proposed',
+  requested: {
+    label: 'Requested',
     color: 'text-amber-400',
     bgColor: 'bg-amber-400/10',
   },
-  approved: {
-    label: 'Approved',
+  awaiting_homeowner: {
+    label: 'Awaiting Homeowner',
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-400/10',
+  },
+  approved_by_homeowner: {
+    label: 'Approved by Homeowner',
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-400/10',
   },
-  not_approved: {
-    label: 'Not Approved',
+  accepted_by_contractor: {
+    label: 'Accepted by Contractor',
+    color: 'text-teal-400',
+    bgColor: 'bg-teal-400/10',
+  },
+  done: {
+    label: 'Done',
+    color: 'text-cream/60',
+    bgColor: 'bg-cream/5',
+  },
+  closed: {
+    label: 'Closed',
     color: 'text-red-400',
     bgColor: 'bg-red-400/10',
   },
 }
 
-// ── Decision status config ──
+// Ordered list for dropdown (not click-cycle)
+export const CHANGE_STATUS_ORDER: ChangeStatus[] = [
+  'requested', 'awaiting_homeowner', 'approved_by_homeowner', 'accepted_by_contractor', 'done', 'closed',
+]
 
-export const DECISION_STATUS_CONFIG: Record<DecisionStatus, { label: string; color: string; bgColor: string }> = {
-  open: {
-    label: 'Open',
-    color: 'text-amber-400',
-    bgColor: 'bg-amber-400/10',
+// ── Plan status config ──
+
+export const PLAN_STATUS_CONFIG: Record<PlanStatus, { label: string; color: string; bgColor: string }> = {
+  draft: {
+    label: 'Draft',
+    color: 'text-cream/50',
+    bgColor: 'bg-cream/5',
   },
-  pending_homeowner: {
-    label: 'Pending Homeowner',
+  shared: {
+    label: 'Shared',
     color: 'text-blue-400',
     bgColor: 'bg-blue-400/10',
   },
-  pending_contractor: {
-    label: 'Pending Contractor',
-    color: 'text-violet-400',
-    bgColor: 'bg-violet-400/10',
-  },
-  approved: {
-    label: 'Approved',
+  confirmed: {
+    label: 'Confirmed',
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-400/10',
   },
-  closed: {
-    label: 'Closed',
-    color: 'text-cream/40',
-    bgColor: 'bg-cream/5',
+  acknowledged: {
+    label: 'Acknowledged',
+    color: 'text-teal-400',
+    bgColor: 'bg-teal-400/10',
   },
 }
 
-// ── Change status cycle (click-to-toggle) ──
-
-export const CHANGE_STATUS_CYCLE: ChangeStatus[] = ['proposed', 'approved', 'not_approved']
-
-// ── Decision status cycle ──
-
-export const DECISION_STATUS_CYCLE: DecisionStatus[] = ['open', 'pending_homeowner', 'pending_contractor', 'approved', 'closed']
+export const PLAN_STATUS_ORDER: PlanStatus[] = ['draft', 'shared', 'confirmed', 'acknowledged']
 
 // ── Document type labels ──
 
