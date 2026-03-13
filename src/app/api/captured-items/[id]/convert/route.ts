@@ -3,13 +3,8 @@ import { auth } from '@/auth'
 import { ensureCurrentProject } from '@/lib/project'
 import { prisma } from '@/lib/prisma'
 import { writeActivityEvents } from '@/server/activity/writeActivityEvent'
+import { TOOL_LABELS } from '@/lib/tool-registry'
 import type { Prisma } from '@prisma/client'
-
-const TOOL_LABELS: Record<string, string> = {
-  finish_decisions: 'Selections',
-  punchlist: 'Fix List',
-  mood_boards: 'Mood Boards',
-}
 
 export async function POST(
   request: Request,

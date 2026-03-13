@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useProject } from '@/contexts/ProjectContext'
+import { TOOL_LABELS } from '@/lib/tool-registry'
 
 type ToolKey = 'finish_decisions' | 'punchlist' | 'mood_boards'
 type WizardStep = 'tool' | 'collection' | 'decision' | 'confirm'
@@ -33,9 +34,9 @@ interface SortWizardProps {
 }
 
 const TOOL_OPTIONS: { key: ToolKey; label: string; description: string }[] = [
-  { key: 'finish_decisions', label: 'Selections', description: 'Add as an option to a selection' },
-  { key: 'punchlist', label: 'Fix List', description: 'Add as a fix item' },
-  { key: 'mood_boards', label: 'Mood Boards', description: 'Add as an inspiration idea' },
+  { key: 'finish_decisions', label: TOOL_LABELS['finish_decisions'] ?? 'Selections', description: 'Add as an option to a selection' },
+  { key: 'punchlist', label: TOOL_LABELS['punchlist'] ?? 'Fix List', description: 'Add as a fix item' },
+  { key: 'mood_boards', label: TOOL_LABELS['mood_boards'] ?? 'Mood Boards', description: 'Add as an inspiration idea' },
 ]
 
 export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {

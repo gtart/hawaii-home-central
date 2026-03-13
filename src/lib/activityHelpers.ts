@@ -1,22 +1,11 @@
 import type { ActivityFeedEvent } from '@/hooks/useActivityFeed'
+import { TOOL_LABELS, TOOL_PATHS } from '@/lib/tool-registry'
 
-export const TOOL_LABEL: Record<string, string> = {
-  punchlist: 'Fix List',
-  finish_decisions: 'Selections',
-  mood_boards: 'Mood Boards',
-  before_you_sign: 'Contract Checklist',
-  project_alignment: 'Project Alignment',
-  project_summary: 'Plan & Changes',
-}
+/** Tool label lookup — delegates to TOOL_LABELS from tool-registry */
+export const TOOL_LABEL: Record<string, string> = TOOL_LABELS
 
-export const TOOL_BASE: Record<string, string> = {
-  punchlist: '/app/tools/punchlist',
-  finish_decisions: '/app/tools/finish-decisions',
-  mood_boards: '/app/tools/mood-boards',
-  before_you_sign: '/app/tools/before-you-sign',
-  project_alignment: '/app/tools/project-summary',
-  project_summary: '/app/tools/project-summary',
-}
+/** Tool base path lookup — delegates to TOOL_PATHS from tool-registry */
+export const TOOL_BASE: Record<string, string> = TOOL_PATHS
 
 export function eventHref(event: ActivityFeedEvent): string {
   const base = TOOL_BASE[event.toolKey] || '/app'
@@ -66,7 +55,7 @@ export const FILTER_CHIPS: { key: string | undefined; label: string }[] = [
   { key: 'mood_boards', label: 'Mood Boards' },
   { key: 'before_you_sign', label: 'Contract Checklist' },
   { key: 'project_summary', label: 'Plan & Changes' },
-  { key: 'project_alignment', label: 'Project Alignment' },
+  { key: 'project_alignment', label: 'Plan & Changes' },
 ]
 
 /** Group day label for activity list */

@@ -2,12 +2,7 @@
 
 import Link from 'next/link'
 import { useInboxCount } from '@/hooks/useInboxCount'
-
-const TOOL_LABELS: Record<string, string> = {
-  finish_decisions: 'Selections',
-  punchlist: 'Fix List',
-  mood_boards: 'Mood Boards',
-}
+import { TOOL_LABELS } from '@/lib/tool-registry'
 
 export function UnsortedBanner({ toolKey }: { toolKey: string }) {
   const { byTool } = useInboxCount()
@@ -15,7 +10,7 @@ export function UnsortedBanner({ toolKey }: { toolKey: string }) {
 
   if (count === 0) return null
 
-  const label = TOOL_LABELS[toolKey] || toolKey
+  const label = TOOL_LABELS[toolKey] ?? toolKey
 
   return (
     <Link

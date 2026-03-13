@@ -50,7 +50,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'project_alignment',
     href: '/app/tools/project-alignment',
-    title: 'Project Alignment',
+    title: 'Plan & Changes',
     description:
       'Track scope questions, mismatches, and agreements between you and your contractor.',
     stage: 'Build',

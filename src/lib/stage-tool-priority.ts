@@ -46,11 +46,11 @@ export const VALID_STAGE_IDS = STAGE_PICKER_OPTIONS.map((o) => o.id)
 
 /** Tool priority per stage — first tool is the primary recommendation. */
 export const STAGE_TOOL_PRIORITY: Record<string, string[]> = {
-  plan: ['mood_boards', 'finish_decisions', 'before_you_sign', 'punchlist'],
-  'hire-contract': ['before_you_sign', 'mood_boards', 'finish_decisions', 'punchlist'],
-  'permits-schedule': ['finish_decisions', 'before_you_sign', 'mood_boards', 'punchlist'],
-  'decide-order': ['finish_decisions', 'mood_boards', 'before_you_sign', 'punchlist'],
-  'build-closeout': ['punchlist', 'finish_decisions', 'mood_boards', 'before_you_sign'],
+  plan: ['project_summary', 'mood_boards', 'finish_decisions', 'before_you_sign', 'punchlist'],
+  'hire-contract': ['before_you_sign', 'project_summary', 'mood_boards', 'finish_decisions', 'punchlist'],
+  'permits-schedule': ['project_summary', 'finish_decisions', 'before_you_sign', 'mood_boards', 'punchlist'],
+  'decide-order': ['finish_decisions', 'project_summary', 'mood_boards', 'before_you_sign', 'punchlist'],
+  'build-closeout': ['punchlist', 'project_summary', 'finish_decisions', 'mood_boards', 'before_you_sign'],
 }
 
 /** Returns the tool priority order for a given stage, or null if stage is unknown. */
