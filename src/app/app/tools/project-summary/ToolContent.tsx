@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
 import { ActivityPanel } from '@/components/app/ActivityPanel'
@@ -36,10 +36,39 @@ export interface FocusTarget {
 function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
   const api = useProjectSummaryState({ collectionId })
   const { payload, isLoaded, isSyncing, access, readOnly, noAccess } = api
+  const router = useRouter()
   const [activityOpen, setActivityOpen] = useState(false)
+  const [titleOverride, setTitleOverride] = useState<string | null>(null)
   const commentSidebarRef = useRef<CommentSidebarHandle>(null)
   const changesSectionRef = useRef<HTMLDivElement>(null)
   const searchParams = useSearchParams()
+
+  const handleRename = useCallback(async (newTitle: string) => {
+    setTitleOverride(newTitle)
+    try {
+      await fetch(`/api/collections/${collectionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle }),
+      })
+    } catch {
+      // revert on failure
+      setTitleOverride(null)
+    }
+  }, [collectionId])
+
+  const handleArchive = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/collections/${collectionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archivedAt: true }),
+      })
+      if (res.ok) router.push('/app/tools/project-summary')
+    } catch {
+      // ignore
+    }
+  }, [collectionId, router])
 
   // Draft state from CreateProjectSummaryEntryButton — local only, no persistence until user saves
   const [prefillDraft, setPrefillDraft] = useState<PrefillDraft | null>(null)
@@ -142,14 +171,19 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
         accessLevel={access}
         hasContent={payload.plan.scope.length > 0 || payload.documents.length > 0 || payload.changes.length > 0 || payload.plan.included.length > 0 || payload.plan.not_included.length > 0 || payload.plan.still_to_decide.length > 0}
         collectionId={collectionId}
+        collectionName={titleOverride ?? undefined}
         eyebrowLabel="Plan & Changes"
         toolLabel="Plan & Changes"
+        backHref="/app/tools/project-summary"
+        backLabel="All Plans"
+        onRename={readOnly ? undefined : handleRename}
+        onArchive={readOnly ? undefined : handleArchive}
         actions={(
           <div className="flex items-center gap-2">
             <InstanceSwitcher
               toolKey="project_summary"
               currentCollectionId={collectionId}
-              itemNoun="project"
+              itemNoun="plan"
             />
             <button
               type="button"

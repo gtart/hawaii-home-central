@@ -196,6 +196,17 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
               shareLinkCount: p.shareLinkCount ?? undefined,
               inviteCount: p.inviteCount ?? undefined,
               lastEvent: p.lastEvent ?? undefined,
+              planScope: p.planScope ?? undefined,
+              planStatus: p.planStatus ?? undefined,
+              includedCount: p.includedCount ?? undefined,
+              notIncludedCount: p.notIncludedCount ?? undefined,
+              stillToDecideCount: p.stillToDecideCount ?? undefined,
+              planItemCount: p.planItemCount ?? undefined,
+              changeCount: p.changeCount ?? undefined,
+              activeChangeCount: p.activeChangeCount ?? undefined,
+              hasBudget: p.hasBudget ?? undefined,
+              budgetAmount: p.budgetAmount ?? undefined,
+              documentCount: p.documentCount ?? undefined,
             }
           }
           setPreviews(map)
