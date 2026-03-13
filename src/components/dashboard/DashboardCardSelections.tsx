@@ -3,8 +3,6 @@
 import Link from 'next/link'
 import type { DashboardResponse } from '@/server/dashboard'
 import { relativeTime } from '@/lib/relativeTime'
-import { ShareMetaLine } from './ShareMetaLine'
-import { ActivityEventRow } from '@/components/app/ActivityEventRow'
 
 export function DashboardCardSelections({
   data,
@@ -32,12 +30,12 @@ export function DashboardCardSelections({
   const hasItems = lists.length > 0
   const lastUpdated = lists.length > 0 ? lists[0].updatedAt : null
 
-  // No workspace or no selections at all
+  // Not started
   if (!hasItems || totalAll === 0) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Pick Selections</p>
-        <p className="text-sm text-cream/40 mb-4">No selections yet.</p>
+        <p className="text-sm font-medium text-cream/60 mb-2">Selections</p>
+        <p className="text-sm text-cream/35 mb-4">Track finishes, fixtures, and materials you need to pick.</p>
         <Link
           href="/app/tools/finish-decisions"
           className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
@@ -48,22 +46,18 @@ export function DashboardCardSelections({
     )
   }
 
-  // All caught up — every selection has progressed past 'deciding'
+  // All caught up
   if (totalActive === 0) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Pick Selections</p>
-        <p className="text-lg font-medium text-cream/60 mb-1">All caught up</p>
-        <p className="text-xs text-cream/35 mb-1">
-          All {totalDone} selection{totalDone !== 1 ? 's' : ''} have been decided
-        </p>
+        <p className="text-sm font-medium text-cream/60 mb-2">Selections</p>
+        <p className="text-sm text-cream/50 mb-1">All {totalDone} decided</p>
         {lastUpdated && (
-          <p className="text-[11px] text-cream/25 mb-1">Last activity: {relativeTime(lastUpdated)}</p>
+          <p className="text-[11px] text-cream/25 mb-3">Updated {relativeTime(lastUpdated)}</p>
         )}
-        <ShareMetaLine meta={data?.toolMeta?.finish_decisions} />
         <Link
           href="/app/tools/finish-decisions"
-          className="inline-flex items-center px-4 py-2 border border-sandstone/30 text-sandstone text-sm font-medium rounded-button hover:bg-sandstone/10 transition-colors mt-2"
+          className="inline-flex items-center px-4 py-2 border border-cream/10 text-cream/50 text-sm font-medium rounded-button hover:bg-cream/5 transition-colors"
         >
           View Selections
         </Link>
@@ -71,25 +65,22 @@ export function DashboardCardSelections({
     )
   }
 
-  // Has active items
-  let heuristic: string
+  // Active — has undecided items
+  let statusLine: string
   if (totalNotStarted > 0 && totalDeciding > 0) {
-    heuristic = `${totalNotStarted} not started, ${totalDeciding} in progress`
+    statusLine = `${totalNotStarted} need options, ${totalDeciding} in progress`
   } else if (totalNotStarted > 0) {
-    heuristic = `${totalNotStarted} selection${totalNotStarted !== 1 ? 's' : ''} not started yet`
+    statusLine = `${totalNotStarted} still need${totalNotStarted === 1 ? 's' : ''} options`
   } else {
-    heuristic = `${totalDeciding} selection${totalDeciding !== 1 ? 's' : ''} still in progress`
+    statusLine = `${totalDeciding} in progress`
   }
 
   return (
     <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-sm uppercase tracking-wider text-cream/40">Pick Selections</p>
-        <span className="text-[10px] text-cream/30 tabular-nums">{totalAll} total</span>
-      </div>
+      <p className="text-sm font-medium text-cream/60 mb-3">Selections</p>
       <div className="flex items-baseline gap-3 mb-1">
         <span className="text-2xl font-semibold text-cream tabular-nums">{totalActive}</span>
-        <span className="text-sm text-cream/40">still deciding</span>
+        <span className="text-sm text-cream/40">to decide</span>
         {totalDone > 0 && (
           <>
             <span className="text-cream/15">&middot;</span>
@@ -97,28 +88,11 @@ export function DashboardCardSelections({
           </>
         )}
       </div>
-      <p className="text-xs text-cream/35 mb-2">{heuristic}</p>
-      <ShareMetaLine meta={data?.toolMeta?.finish_decisions} />
-      {data?.recentActivity?.finish_decisions && data.recentActivity.finish_decisions.length > 0 ? (
-        <div className="mb-4 space-y-1">
-          {data.recentActivity.finish_decisions.slice(0, 2).map((evt, i) => (
-            <div key={i} className="flex items-center gap-1.5 text-[11px]">
-              {evt.actorName && (
-                <span className="shrink-0 w-4 h-4 rounded-full bg-sandstone/15 text-sandstone/70 flex items-center justify-center text-[8px] font-semibold" title={evt.actorName}>
-                  {evt.actorName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                </span>
-              )}
-              <ActivityEventRow event={evt} variant="compact" />
-              <span className="text-cream/15 shrink-0">{relativeTime(evt.createdAt)}</span>
-            </div>
-          ))}
-        </div>
-      ) : lastUpdated ? (
-        <p className="text-[11px] text-cream/25 mb-4 truncate">
-          Last updated {relativeTime(lastUpdated)}{lists[0].updatedByName ? ` by ${lists[0].updatedByName.split(' ')[0]}` : ''}
+      <p className="text-xs text-cream/35 mb-2">{statusLine}</p>
+      {lastUpdated && (
+        <p className="text-[11px] text-cream/25 mb-4">
+          Updated {relativeTime(lastUpdated)}{lists[0].updatedByName ? ` by ${lists[0].updatedByName.split(' ')[0]}` : ''}
         </p>
-      ) : (
-        <div className="mb-4" />
       )}
       <Link
         href="/app/tools/finish-decisions"

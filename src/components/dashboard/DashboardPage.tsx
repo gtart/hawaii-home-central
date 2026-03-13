@@ -7,7 +7,6 @@ import { useDashboard } from '@/hooks/useDashboard'
 import { useInboxCount } from '@/hooks/useInboxCount'
 import { useUnseenActivityCount } from '@/hooks/useUnseenActivityCount'
 import { DashboardToolGrid } from './DashboardToolGrid'
-import { QuietBanner } from './QuietBanner'
 import { DashboardNextActions } from './DashboardNextActions'
 import { QuickCaptureSheet } from '@/components/app/QuickCaptureSheet'
 import { SortWizard } from '@/components/app/SortWizard'
@@ -31,42 +30,62 @@ export function DashboardPage() {
   const [showActivity, setShowActivity] = useState(false)
   const { count: unseenCount, markSeen: markActivitySeen } = useUnseenActivityCount()
 
+  // Derive attention summary for hero
+  const attentionItems: string[] = []
+  if (data) {
+    const totalHigh = (data.fixLists ?? []).reduce((s, l) => s + l.highPriorityCount, 0)
+    const totalStale = (data.fixLists ?? []).reduce((s, l) => s + l.staleCount, 0)
+    const totalOpen = (data.fixLists ?? []).reduce((s, l) => s + l.openCount, 0)
+    const totalDeciding = (data.selectionLists ?? []).reduce((s, l) => s + l.notStartedCount + l.decidingCount, 0)
+    const totalActiveChanges = (data.projectSummaries ?? []).reduce((s, l) => s + l.activeChangeCount, 0)
+
+    if (totalHigh > 0) attentionItems.push(`${totalHigh} high-priority fix${totalHigh !== 1 ? 'es' : ''}`)
+    if (totalStale > 0) attentionItems.push(`${totalStale} stale issue${totalStale !== 1 ? 's' : ''}`)
+    if (totalDeciding > 0) attentionItems.push(`${totalDeciding} selection${totalDeciding !== 1 ? 's' : ''} to decide`)
+    if (totalActiveChanges > 0) attentionItems.push(`${totalActiveChanges} active change${totalActiveChanges !== 1 ? 's' : ''}`)
+    if (attentionItems.length === 0 && totalOpen > 0) attentionItems.push(`${totalOpen} open issue${totalOpen !== 1 ? 's' : ''}`)
+  }
+
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
+        {/* Hero — project identity + attention summary */}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-cream mb-1">
-            {currentProject?.name ?? 'Dashboard'}
+            {currentProject?.name ?? 'My Renovation'}
           </h1>
-          <p className="text-sm text-cream/40">Your renovation at a glance.</p>
+          {!isLoading && attentionItems.length > 0 ? (
+            <p className="text-sm text-cream/50">
+              {attentionItems.join(' \u00b7 ')}
+            </p>
+          ) : !isLoading && data?.noNews.isQuiet ? (
+            <p className="text-sm text-cream/50">Nothing needs your attention right now.</p>
+          ) : !isLoading ? (
+            <p className="text-sm text-cream/40">Everything looks good.</p>
+          ) : null}
         </div>
 
-        {/* Quick Capture + Inbox + Activity row */}
+        {/* Actions — Capture (primary), Inbox + Activity (secondary, lighter) */}
         <div className="flex items-center gap-2 sm:gap-3 mb-6">
           <button
             type="button"
             onClick={() => setShowCapture(true)}
-            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors shadow-sm whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors shadow-sm whitespace-nowrap"
           >
-            <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round" />
+              <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round" />
             </svg>
-            <svg className="w-3.5 h-3.5 shrink-0 -ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="flex flex-col items-start leading-tight">
-              <span>Quick Capture</span>
-              <span className="text-[9px] font-normal text-basalt/60 -mt-0.5">Capture now, sort later</span>
-            </span>
+            Capture
           </button>
           <Link
             href="/app/inbox"
-            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-cream/5 border border-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/10 hover:text-cream/80 transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 px-3 py-2.5 text-cream/50 text-sm rounded-lg hover:text-cream/70 hover:bg-cream/5 transition-colors whitespace-nowrap"
           >
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M22 12h-6l-2 3H10l-2-3H2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
             Inbox
             {inboxCount > 0 && (
               <span className="bg-sandstone/20 text-sandstone text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
@@ -77,32 +96,24 @@ export function DashboardPage() {
           <button
             type="button"
             onClick={() => { setShowActivity(true); markActivitySeen() }}
-            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-cream/5 border border-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/10 hover:text-cream/80 transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 px-3 py-2.5 text-cream/50 text-sm rounded-lg hover:text-cream/70 hover:bg-cream/5 transition-colors whitespace-nowrap"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" strokeLinecap="round" strokeLinejoin="round" />
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Activity
             {unseenCount > 0 && (
-              <span className="bg-sandstone/20 text-sandstone text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
-                {unseenCount > 98 ? '99+' : unseenCount}
-              </span>
+              <span className="w-2 h-2 rounded-full bg-sandstone shrink-0" />
             )}
           </button>
         </div>
 
-        {/* Quiet state */}
-        {data?.noNews.isQuiet && (
-          <QuietBanner lastActivityAt={data.noNews.lastActivityAt} data={data} />
-        )}
-
-        {/* Next actions */}
-        {!isLoading && !data?.noNews.isQuiet && (
+        {/* Next actions — what to do first */}
+        {!isLoading && (
           <DashboardNextActions data={data} />
         )}
 
-        {/* Tool grid — active tools first, then other tools */}
+        {/* Tool cards */}
         <DashboardToolGrid data={data} isLoading={isLoading} />
 
       </div>

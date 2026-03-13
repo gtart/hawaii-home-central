@@ -232,8 +232,8 @@ export function SidebarNav() {
           )
         })}
 
-        <p className="px-4 pt-4 pb-1 text-[10px] uppercase tracking-wider text-cream/40">
-          Getting Started
+        <p className="px-4 pt-4 pb-1 text-[10px] uppercase tracking-wider text-cream/30">
+          Preparation
         </p>
         {GETTING_STARTED_ITEMS.map((item) => {
           const active = isActive(pathname, item.href, item.matchMode)

@@ -27,7 +27,7 @@ function deriveActions(data: DashboardResponse): ActionItem[] {
     const staleList = fixLists.find((l) => l.staleCount > 0)
     const base = staleList ? `/app/tools/punchlist/${staleList.id}` : '/app/tools/punchlist'
     actions.push({
-      label: `${totalStale} stale fix${totalStale !== 1 ? 'es' : ''} need attention`,
+      label: `${totalStale} fix${totalStale !== 1 ? 'es' : ''} haven\u2019t been updated in 2+ weeks`,
       href: `${base}?status=OPEN`,
     })
   } else if (totalOpen > 0) {
@@ -42,16 +42,24 @@ function deriveActions(data: DashboardResponse): ActionItem[] {
   const totalNotStarted = selLists.reduce((s, l) => s + l.notStartedCount, 0)
   const totalDeciding = selLists.reduce((s, l) => s + l.decidingCount, 0)
   if (totalNotStarted > 0) {
-    const urgentList = selLists.find((l) => l.notStartedCount > 0)
-    const base = urgentList ? `/app/tools/finish-decisions/${urgentList.id}` : '/app/tools/finish-decisions'
     actions.push({
-      label: `Start ${totalNotStarted} selection${totalNotStarted !== 1 ? 's' : ''} (no options yet)`,
-      href: `${base}?status=deciding`,
+      label: `${totalNotStarted} selection${totalNotStarted !== 1 ? 's' : ''} still need${totalNotStarted === 1 ? 's' : ''} options`,
+      href: '/app/tools/finish-decisions',
     })
   } else if (totalDeciding > 0) {
     actions.push({
-      label: `${totalDeciding} selection${totalDeciding !== 1 ? 's' : ''} still deciding`,
-      href: '/app/tools/finish-decisions?status=deciding',
+      label: `${totalDeciding} selection${totalDeciding !== 1 ? 's' : ''} ready to finalize`,
+      href: '/app/tools/finish-decisions',
+    })
+  }
+
+  // Plan & Changes: active changes
+  const summaries = data.projectSummaries ?? []
+  const totalActiveChanges = summaries.reduce((s, l) => s + l.activeChangeCount, 0)
+  if (totalActiveChanges > 0) {
+    actions.push({
+      label: `${totalActiveChanges} active change${totalActiveChanges !== 1 ? 's' : ''} to review`,
+      href: '/app/tools/project-summary',
     })
   }
 
@@ -62,11 +70,10 @@ function deriveActions(data: DashboardResponse): ActionItem[] {
   if (totalContractors > 0 && totalSelected < totalContractors) {
     const remaining = totalContractors - totalSelected
     actions.push({
-      label: `Compare ${remaining} contractor${remaining !== 1 ? 's' : ''} to select`,
+      label: `Compare ${remaining} contractor${remaining !== 1 ? 's' : ''} before signing`,
       href: '/app/tools/before-you-sign',
     })
   }
-
 
   return actions.slice(0, 4)
 }
@@ -79,15 +86,15 @@ export function DashboardNextActions({ data }: { data: DashboardResponse | null 
 
   return (
     <div className="mb-6">
-      <h2 className="text-xs uppercase tracking-wider text-cream/30 mb-2">Next up</h2>
+      <h2 className="text-[11px] uppercase tracking-wider text-cream/30 mb-2">Needs attention</h2>
       <ul className="space-y-1">
         {actions.map((a, i) => (
           <li key={i}>
             <Link
               href={a.href}
-              className="group flex items-center gap-2 text-sm text-cream/50 hover:text-cream transition-colors py-0.5"
+              className="group flex items-center gap-2 text-sm text-cream/60 hover:text-cream transition-colors py-0.5"
             >
-              <span className="w-1 h-1 rounded-full bg-sandstone/50 group-hover:bg-sandstone shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-sandstone/50 group-hover:bg-sandstone shrink-0" />
               {a.label}
               <svg className="w-3 h-3 text-cream/20 group-hover:text-cream/40 transition-colors ml-auto shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
