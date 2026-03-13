@@ -12,20 +12,20 @@
 
 | ID | Title | Status | Claude Verified | Codex Verified |
 |----|-------|--------|-----------------|----------------|
-| HHP-001 | Homepage purpose: tool-first → action-first | done | yes | pending |
-| HHP-002 | Strengthen hero/top section | done | yes | pending |
-| HHP-003 | Audit and rewrite homepage copy | done | yes | pending |
-| HHP-004 | Remove weak metrics from cards | done | yes | pending |
-| HHP-005 | Refactor card content hierarchy | done | yes | pending |
-| HHP-006 | Demote secondary tools | done | yes | pending |
-| HHP-007 | Replace "Getting started" section framing | done | yes | pending |
-| HHP-008 | Improve visual hierarchy and contrast | done | yes | pending |
-| HHP-009 | Review naming for homeowner-natural language | done | yes | pending |
-| HHP-010 | Clarify Quick Capture / Inbox / Activity | done | yes | pending |
-| HHP-011 | Review activity badge noise | done | yes | pending |
-| HHP-012 | Align left nav with homepage framing | done | yes | pending |
-| HHP-013 | Demote non-live items (Find Pros) | done | yes | pending |
-| HHP-014 | Support varied project maturity states | done | yes | pending |
+| HHP-001 | Homepage purpose: tool-first → action-first | done | yes | concern — action links were generic, not collection-aware (fixed) |
+| HHP-002 | Strengthen hero/top section | done | yes | pass |
+| HHP-003 | Audit and rewrite homepage copy | done | yes | fail — "high-priority" not changed to "urgent" (fixed) |
+| HHP-004 | Remove weak metrics from cards | done | yes | pass |
+| HHP-005 | Refactor card content hierarchy | done | yes | pass |
+| HHP-006 | Demote secondary tools | done | yes | pass |
+| HHP-007 | Replace "Getting started" section framing | done | yes | pass |
+| HHP-008 | Improve visual hierarchy and contrast | done | yes | pass |
+| HHP-009 | Review naming for homeowner-natural language | done | yes | concern — "high-priority" remained (fixed) |
+| HHP-010 | Clarify Quick Capture / Inbox / Activity | done | yes | pass |
+| HHP-011 | Review activity badge noise | done | yes | pass |
+| HHP-012 | Align left nav with homepage framing | done | yes | pass |
+| HHP-013 | Demote non-live items (Find Pros) | done | yes | pass |
+| HHP-014 | Support varied project maturity states | done | yes | concern — quiet Plan card hid existing plan data (fixed) |
 
 ---
 
@@ -245,3 +245,19 @@
 - `npx tsc --noEmit` — passes
 - `npm run build` — passes
 - No broken imports (QuietBanner removed from DashboardPage, ProDirectory removed from grid)
+
+---
+
+## Codex Review Follow-Up (2026-03-13)
+
+**Codex audit:** `docs/ai/reviews/codex/2026-03-13-homeowner-homepage-design-audit.md`
+
+Three findings, all fixed:
+
+1. **"Needs attention" links not collection-aware** (HHP-001) — Selections and Plan & Changes actions now deep-link to the specific collection with work waiting, matching the pattern Fix List already used.
+2. **"high-priority" → "urgent" incomplete** (HHP-003, HHP-009) — Replaced remaining "high-priority" strings in `DashboardPage.tsx` hero and `DashboardNextActions.tsx` action label.
+3. **Plan & Changes quiet state hides existing plan** (HHP-014) — Card now shows "Plan documented · X plan items, budget set" when a plan exists but no changes are logged yet.
+
+**Post-fix build verification:**
+- `npx tsc --noEmit` — passes
+- `npm run build` — passes

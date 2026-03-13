@@ -44,12 +44,20 @@ export function DashboardCardPlanAndChanges({
   const totalChanges = summaries.reduce((s, l) => s + l.changeCount, 0)
   const primarySummary = summaries[0]
 
-  // All caught up — no active changes
+  // Plan exists but no changes yet — show plan signal
+  const planSignals: string[] = []
+  if (primarySummary.planItemCount > 0) planSignals.push(`${primarySummary.planItemCount} plan item${primarySummary.planItemCount !== 1 ? 's' : ''}`)
+  if (primarySummary.hasBudget) planSignals.push('budget set')
+
   if (totalActiveChanges === 0 && totalChanges === 0) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
         <p className="text-sm font-medium text-cream/60 mb-2">Plan & Changes</p>
-        <p className="text-sm text-cream/50 mb-1">No changes recorded yet.</p>
+        {planSignals.length > 0 ? (
+          <p className="text-sm text-cream/50 mb-1">Plan documented · {planSignals.join(', ')}. No changes yet.</p>
+        ) : (
+          <p className="text-sm text-cream/50 mb-1">No changes recorded yet.</p>
+        )}
         <p className="text-[11px] text-cream/25 mb-3">
           Updated {relativeTime(primarySummary.updatedAt)}
         </p>

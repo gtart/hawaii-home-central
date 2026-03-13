@@ -39,7 +39,7 @@ export function DashboardPage() {
     const totalDeciding = (data.selectionLists ?? []).reduce((s, l) => s + l.notStartedCount + l.decidingCount, 0)
     const totalActiveChanges = (data.projectSummaries ?? []).reduce((s, l) => s + l.activeChangeCount, 0)
 
-    if (totalHigh > 0) attentionItems.push(`${totalHigh} high-priority fix${totalHigh !== 1 ? 'es' : ''}`)
+    if (totalHigh > 0) attentionItems.push(`${totalHigh} urgent fix${totalHigh !== 1 ? 'es' : ''}`)
     if (totalStale > 0) attentionItems.push(`${totalStale} stale issue${totalStale !== 1 ? 's' : ''}`)
     if (totalDeciding > 0) attentionItems.push(`${totalDeciding} selection${totalDeciding !== 1 ? 's' : ''} to decide`)
     if (totalActiveChanges > 0) attentionItems.push(`${totalActiveChanges} active change${totalActiveChanges !== 1 ? 's' : ''}`)

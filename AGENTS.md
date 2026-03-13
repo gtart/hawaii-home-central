@@ -40,7 +40,7 @@ When you receive this prompt (or something similar), follow these steps:
 5. `docs/ai/review-rubrics/hhc-homeowner-ux-review.md` — required homeowner-first review lens
 6. `docs/ai/review-templates/hhc-review-template.md` — required review structure
 7. `docs/ai/reviews/README.md` — review file format and workflow
-8. `docs/ai/issues/P0.md`, `P1.md`, `P2.md` — known issues by priority
+8. **GitHub Issues** (`gh issue list`) — known bugs and backlog by priority label (P0–P3)
 9. `docs/ai/qa/mobile-checklist.md` and `docs/ai/qa/desktop-checklist.md` — only when the touched work is user-facing
 10. Feature/migration docs **only when the active sprint references them**
 

@@ -20,7 +20,7 @@ function deriveActions(data: DashboardResponse): ActionItem[] {
     const urgentList = fixLists.find((l) => l.highPriorityCount > 0)
     const base = urgentList ? `/app/tools/punchlist/${urgentList.id}` : '/app/tools/punchlist'
     actions.push({
-      label: `Review ${totalHigh} high-priority fix${totalHigh !== 1 ? 'es' : ''}`,
+      label: `Review ${totalHigh} urgent fix${totalHigh !== 1 ? 'es' : ''}`,
       href: `${base}?priority=HIGH`,
     })
   } else if (totalStale > 0) {
@@ -42,14 +42,18 @@ function deriveActions(data: DashboardResponse): ActionItem[] {
   const totalNotStarted = selLists.reduce((s, l) => s + l.notStartedCount, 0)
   const totalDeciding = selLists.reduce((s, l) => s + l.decidingCount, 0)
   if (totalNotStarted > 0) {
+    const targetList = selLists.find((l) => l.notStartedCount > 0)
+    const base = targetList ? `/app/tools/finish-decisions/${targetList.id}` : '/app/tools/finish-decisions'
     actions.push({
       label: `${totalNotStarted} selection${totalNotStarted !== 1 ? 's' : ''} still need${totalNotStarted === 1 ? 's' : ''} options`,
-      href: '/app/tools/finish-decisions',
+      href: base,
     })
   } else if (totalDeciding > 0) {
+    const targetList = selLists.find((l) => l.decidingCount > 0)
+    const base = targetList ? `/app/tools/finish-decisions/${targetList.id}` : '/app/tools/finish-decisions'
     actions.push({
       label: `${totalDeciding} selection${totalDeciding !== 1 ? 's' : ''} ready to finalize`,
-      href: '/app/tools/finish-decisions',
+      href: base,
     })
   }
 
@@ -57,9 +61,11 @@ function deriveActions(data: DashboardResponse): ActionItem[] {
   const summaries = data.projectSummaries ?? []
   const totalActiveChanges = summaries.reduce((s, l) => s + l.activeChangeCount, 0)
   if (totalActiveChanges > 0) {
+    const targetSummary = summaries.find((l) => l.activeChangeCount > 0)
+    const base = targetSummary ? `/app/tools/project-summary/${targetSummary.id}` : '/app/tools/project-summary'
     actions.push({
       label: `${totalActiveChanges} active change${totalActiveChanges !== 1 ? 's' : ''} to review`,
-      href: '/app/tools/project-summary',
+      href: base,
     })
   }
 

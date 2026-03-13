@@ -54,16 +54,17 @@ Homeowners plan renovations, track selections, manage fix lists, and document pr
 - Sidebar nav: `src/components/app/SidebarNav.tsx`
 
 ### Issue Tracking
-- **All issues tracked in GitHub Issues** — use `gh issue list`, `gh issue create`, `gh issue close`
+- **GitHub Issues is the single source of truth** for all bugs, tasks, and backlog — use `gh issue list`, `gh issue create`, `gh issue close`
 - Labels: `P0: broken`, `P1: degraded`, `P2: cosmetic`, `P3: polish` for priority
 - Labels: `bug`, `feature`, `cleanup`, `review-finding` for category
 - Labels: `investigating`, `in-progress`, `blocked`, `deferred` for status
 - When fixing a bug or completing a feature, close the issue with `gh issue close <number> -c "reason"`
 - When finding new issues during work, create them immediately with `gh issue create`
-- See `BACKLOG_IDEAS.md` for detailed specs on deferred features (Guest Mode, Google Photos)
+- **`BACKLOG_IDEAS.md`** holds deep specs for features too detailed for a GitHub Issue body (architecture, UX flows, integration plans). Update it when a conversation produces design decisions or implementation details worth preserving for a deferred feature. Don't use it for simple bugs or status tracking.
 
 ### Current Work
-- See `docs/ai/active-sprint.md` for current sprint
+- **Always read `docs/ai/active-sprint.md` first** — it points to the current sprint doc and lists what's in progress
+- Sprint docs live in `docs/ai/sprints/` — each contains issue tracker, acceptance criteria, and files changed
 - See `docs/ai/migrations/project-summary-to-plan-and-changes.md` for migration plan
 
 ### AI Review & Logging System
@@ -83,3 +84,31 @@ Homeowners plan renovations, track selections, manage fix lists, and document pr
 - Don't declare work complete until validation and issue updates are done
 - Use specialized agents (`/.claude/agents/`) for focused review tasks
 - After sprint completion: write a review into `docs/ai/reviews/claude/`
+
+### Sprint Handoff Workflow (Claude → Codex)
+
+Every sprint must maintain two handoff docs so Codex can review without guessing what changed.
+
+#### 1. Starting a sprint
+- Create a sprint doc in `docs/ai/sprints/{sprint-name}.md` with:
+  - Issue tracker table (ID, Title, Status, Claude Verified, Codex Verified)
+  - Per-issue **requirements + acceptance criteria** (what to check, which files, expected behavior)
+  - Files Changed table
+  - Build Verification section
+- Update `docs/ai/active-sprint.md` to point to the new sprint doc, list files changed, and set status checkboxes
+
+#### 2. During implementation
+- Update the sprint doc's issue tracker as each issue is completed (Status → done)
+- Add files to the Files Changed table as they are modified
+- Keep acceptance criteria specific: name exact files, line ranges, CSS classes, copy strings
+
+#### 3. Before committing / declaring done
+- Mark "Claude Verified: yes" for each issue after self-checking against acceptance criteria
+- Run `npx tsc --noEmit` and `npm run build` — record results in Build Verification
+- Update `docs/ai/active-sprint.md` with the commit hash and current status
+- Ensure all "Codex Verified" cells are set to "pending"
+
+#### 4. Handoff to Codex
+- The user says "review" or "hand off to Codex" — no further action needed from Claude
+- Codex reads `active-sprint.md` → sprint doc → validates each issue against acceptance criteria
+- Codex updates "Codex Verified" column and writes a review to `docs/ai/reviews/codex/`
