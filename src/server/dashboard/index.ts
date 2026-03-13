@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma'
 import { readSelectionsPayload, countSelectionStatuses } from '@/lib/selections-payload'
 import type { PunchlistPayload, PunchlistItem } from '@/app/app/tools/punchlist/types'
 import type { MoodBoardPayload } from '@/data/mood-boards'
+import { ensureShape } from '@/data/project-summary'
+import type { PlanStatus } from '@/data/project-summary'
 
 // ---------------------------------------------------------------------------
 // Response types
@@ -47,7 +49,20 @@ export interface BeforeYouSignSummary {
   selectedContractorCount: number
 }
 
-export type ToolKey = 'punchlist' | 'finish_decisions' | 'mood_boards' | 'before_you_sign'
+export interface ProjectSummarySummary {
+  id: string
+  title: string
+  updatedAt: string
+  updatedByName?: string
+  planStatus: PlanStatus
+  planItemCount: number
+  stillToDecideCount: number
+  changeCount: number
+  activeChangeCount: number
+  hasBudget: boolean
+}
+
+export type ToolKey = 'punchlist' | 'finish_decisions' | 'mood_boards' | 'before_you_sign' | 'project_summary'
 
 export interface ToolShareMeta {
   collectionCount: number
@@ -71,6 +86,7 @@ export interface DashboardResponse {
   fixLists: FixListSummary[]
   moodBoards: MoodBoardSummary[]
   beforeYouSign: BeforeYouSignSummary[]
+  projectSummaries: ProjectSummarySummary[]
   toolMeta: Record<ToolKey, ToolShareMeta>
   noNews: { isQuiet: boolean; lastActivityAt?: string }
   recentActivity: Partial<Record<ToolKey, RecentActivityExcerpt[]>>
@@ -158,6 +174,24 @@ function summarizeMoodBoard(id: string, title: string, updatedAt: Date, updatedB
   return { id, title, updatedAt: updatedAt.toISOString(), updatedByName, itemCount, thumbnailUrl: thumbnailUrl ?? undefined }
 }
 
+function summarizeProjectSummary(id: string, title: string, updatedAt: Date, updatedByName: string | undefined, raw: unknown): ProjectSummarySummary {
+  const payload = ensureShape(raw)
+  const planItemCount = payload.plan.included.length + payload.plan.not_included.length + payload.plan.still_to_decide.length
+  const activeChangeCount = payload.changes.filter(c => c.status !== 'done' && c.status !== 'closed').length
+  return {
+    id,
+    title,
+    updatedAt: updatedAt.toISOString(),
+    updatedByName,
+    planStatus: payload.plan.status,
+    planItemCount,
+    stillToDecideCount: payload.plan.still_to_decide.length,
+    changeCount: payload.changes.length,
+    activeChangeCount,
+    hasBudget: !!payload.budget.baseline_amount,
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Main function
 // ---------------------------------------------------------------------------
@@ -192,6 +226,7 @@ export async function getDashboardData(userId: string, projectId: string): Promi
   const fixLists: FixListSummary[] = []
   const moodBoards: MoodBoardSummary[] = []
   const beforeYouSign: BeforeYouSignSummary[] = []
+  const projectSummaries: ProjectSummarySummary[] = []
 
   for (const c of collections) {
     const byName = c.updatedBy?.name ?? undefined
@@ -212,6 +247,9 @@ export async function getDashboardData(userId: string, projectId: string): Promi
         beforeYouSign.push({ id: c.id, title: c.title, updatedAt: c.updatedAt.toISOString(), updatedByName: byName, contractorCount, selectedContractorCount })
         break
       }
+      case 'project_summary':
+        projectSummaries.push(summarizeProjectSummary(c.id, c.title, c.updatedAt, byName, c.payload))
+        break
     }
   }
 
@@ -255,7 +293,7 @@ export async function getDashboardData(userId: string, projectId: string): Promi
     collectionsByTool[c.toolKey].push(c)
   }
 
-  const TOOL_KEYS: ToolKey[] = ['punchlist', 'finish_decisions', 'mood_boards', 'before_you_sign']
+  const TOOL_KEYS: ToolKey[] = ['punchlist', 'finish_decisions', 'mood_boards', 'before_you_sign', 'project_summary']
   const toolMeta = {} as Record<ToolKey, ToolShareMeta>
   for (const tk of TOOL_KEYS) {
     const tc = collectionsByTool[tk] ?? []
@@ -323,6 +361,7 @@ export async function getDashboardData(userId: string, projectId: string): Promi
     fixLists,
     moodBoards,
     beforeYouSign,
+    projectSummaries,
     toolMeta,
     noNews: { isQuiet, lastActivityAt },
     recentActivity,

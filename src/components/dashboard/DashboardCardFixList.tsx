@@ -34,7 +34,7 @@ export function DashboardCardFixList({
   if (!hasItems) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Fix List</p>
+        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Fix Issues</p>
         <p className="text-sm text-cream/40 mb-4">No fix list yet.</p>
         <Link
           href="/app/tools/punchlist"
@@ -50,7 +50,7 @@ export function DashboardCardFixList({
   if (totalOpen === 0) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Fix List</p>
+        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Fix Issues</p>
         <p className="text-lg font-medium text-cream/60 mb-1">All caught up</p>
         {lastUpdated && (
           <p className="text-[11px] text-cream/25 mb-1">Last activity: {relativeTime(lastUpdated)}</p>
@@ -79,7 +79,7 @@ export function DashboardCardFixList({
   return (
     <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm uppercase tracking-wider text-cream/40">Fix List</p>
+        <p className="text-sm uppercase tracking-wider text-cream/40">Fix Issues</p>
         <span className="text-[10px] text-cream/30 tabular-nums">{lists.length} list{lists.length !== 1 ? 's' : ''}</span>
       </div>
       <div className="flex items-baseline gap-3 mb-1">

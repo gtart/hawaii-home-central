@@ -31,7 +31,7 @@ export function DashboardCardContractChecklist({
   if (checklists.length === 0) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Contract Checklist</p>
+        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Complete a Contract Checklist</p>
         <p className="text-sm text-cream/40 mb-4">Run this before signing anything.</p>
         <Link
           href="/app/tools/before-you-sign"
@@ -47,7 +47,7 @@ export function DashboardCardContractChecklist({
   if (allSelected) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Contract Checklist</p>
+        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Complete a Contract Checklist</p>
         <p className="text-lg font-medium text-cream/60 mb-1">Contractors selected</p>
         <p className="text-xs text-cream/35 mb-1">
           {totalSelected} contractor{totalSelected !== 1 ? 's' : ''} chosen across {checklists.length} comparison list{checklists.length !== 1 ? 's' : ''}
@@ -74,7 +74,7 @@ export function DashboardCardContractChecklist({
   return (
     <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm uppercase tracking-wider text-cream/40">Contract Checklist</p>
+        <p className="text-sm uppercase tracking-wider text-cream/40">Complete a Contract Checklist</p>
         <span className="text-[10px] text-cream/30 tabular-nums">{checklists.length} comparison list{checklists.length !== 1 ? 's' : ''}</span>
       </div>
       <div className="flex items-baseline gap-3 mb-1">

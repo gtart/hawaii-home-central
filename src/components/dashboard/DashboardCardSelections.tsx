@@ -36,7 +36,7 @@ export function DashboardCardSelections({
   if (!hasItems || totalAll === 0) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Selections</p>
+        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Pick Selections</p>
         <p className="text-sm text-cream/40 mb-4">No selections yet.</p>
         <Link
           href="/app/tools/finish-decisions"
@@ -52,7 +52,7 @@ export function DashboardCardSelections({
   if (totalActive === 0) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Selections</p>
+        <p className="text-sm uppercase tracking-wider text-cream/40 mb-3">Pick Selections</p>
         <p className="text-lg font-medium text-cream/60 mb-1">All caught up</p>
         <p className="text-xs text-cream/35 mb-1">
           All {totalDone} selection{totalDone !== 1 ? 's' : ''} have been decided
@@ -84,7 +84,7 @@ export function DashboardCardSelections({
   return (
     <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm uppercase tracking-wider text-cream/40">Selections</p>
+        <p className="text-sm uppercase tracking-wider text-cream/40">Pick Selections</p>
         <span className="text-[10px] text-cream/30 tabular-nums">{totalAll} total</span>
       </div>
       <div className="flex items-baseline gap-3 mb-1">
