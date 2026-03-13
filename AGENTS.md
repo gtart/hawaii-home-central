@@ -153,3 +153,11 @@ The review file itself should still be written to the standard ledger path and k
 - **Tools:** Mood Boards, Contract Checklist, Selections, Fix List, Plan & Changes
 - **Key pattern:** Payload-in-JSON — tool data stored as JSON in ToolCollection.payload, validated via ensureShape functions in `src/data/`
 - **Build rules:** See `CLAUDE.md` for full list (custom dropdowns, mobile+desktop, no native `<select>`, etc.)
+
+## UI Review Workflow
+
+- When the user explicitly asks for a UI review, use `docs/ai/ui-reviews/README.md`
+- Capture screenshots with `./scripts/run-ui-review.sh <scope> [desktop|mobile|both]`
+- Review both layout and copy through the homeowner-first rubric
+- Write screenshot-backed findings into `docs/ai/ui-reviews/findings/YYYY-MM-DD-<scope>-codex.md`
+- Reference the artifact folder or zip in the findings so Claude can inspect the same material later

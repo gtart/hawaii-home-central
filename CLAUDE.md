@@ -71,6 +71,8 @@ Homeowners plan renovations, track selections, manage fix lists, and document pr
 - **Codex instructions**: `AGENTS.md` at repo root — defines Codex's review-only role, "latest" definition, and audit format
 - **Review ledger**: `docs/ai/reviews/` — Codex writes audits into `codex/`, Claude writes responses into `claude/`
 - **When asked to respond to a Codex review**: read the latest file in `docs/ai/reviews/codex/`, act on findings, write response to `docs/ai/reviews/claude/`
+- **UI review workflow**: `docs/ai/ui-reviews/README.md` — screenshot capture, zip packaging, and findings handoff
+- **UI review findings**: `docs/ai/ui-reviews/findings/` — screenshot-backed UI audits written by Codex
 - **Subagent logs**: `docs/ai/agent-logs/subagents.jsonl` — auto-logged via Claude hooks on SubagentStart/SubagentStop
 - **Hook config**: `.claude/settings.json` — project-level hooks for subagent logging
 - See `docs/ai/reviews/README.md` for review/response format and workflow
