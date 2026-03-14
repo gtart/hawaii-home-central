@@ -11,7 +11,6 @@ import { useComments } from '@/hooks/useComments'
 import { useUnseenActivityCount } from '@/hooks/useUnseenActivityCount'
 import { useProjectSummaryState } from './useProjectSummaryState'
 import { CurrentPlanSection } from './components/CurrentPlanSection'
-import { DocumentsSection } from './components/DocumentsSection'
 import { ChangesSection } from './components/ChangesSection'
 import { MilestoneTimeline } from './components/MilestoneTimeline'
 import type { SummaryLinkType, SummaryChange, OpenItem } from '@/data/project-summary'
@@ -35,7 +34,8 @@ export interface FocusTarget {
 
 /** Compact Change Queue summary near top of page (PCV1-024) */
 function ChangeQueueSummary({ changes, openItems }: { changes: SummaryChange[]; openItems: OpenItem[] }) {
-  const pending = changes.filter((c) => c.status !== 'done' && c.status !== 'closed' && !c.incorporated)
+  const RESOLVED_STATUSES = new Set(['approved_by_homeowner', 'accepted_by_contractor', 'done', 'closed'])
+  const pending = changes.filter((c) => !RESOLVED_STATUSES.has(c.status) && !c.incorporated)
   const awaitingIncorporation = changes.filter((c) => (c.status === 'accepted_by_contractor' || c.status === 'done') && !c.incorporated)
   const unresolvedChangeItems = changes.reduce((sum, c) => sum + (c.open_items || []).filter((i) => i.status === 'open' || i.status === 'waiting').length, 0)
   const pendingCostImpact = pending.reduce((sum, c) => {
@@ -246,7 +246,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       <div className="text-center py-24">
         <h2 className="font-serif text-2xl text-cream mb-2">No Access</h2>
         <p className="text-cream/50 text-sm">
-          You don&apos;t have access to this Plan &amp; Changes collection.
+          You don&apos;t have access to this Official Plan collection.
         </p>
       </div>
     )
@@ -256,14 +256,14 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     <>
       <ToolPageHeader
         toolKey="project_summary"
-        title="Plan & Changes"
+        title="Official Plan"
         description="Your project plan, what's included and excluded, budget overview, and a record of every change along the way."
         accessLevel={access}
         hasContent={payload.plan.scope.length > 0 || payload.documents.length > 0 || payload.changes.length > 0 || payload.plan.included.length > 0 || payload.plan.not_included.length > 0 || payload.plan.open_items.length > 0}
         collectionId={collectionId}
         collectionName={titleOverride ?? undefined}
-        eyebrowLabel="Plan & Changes"
-        toolLabel="Plan & Changes"
+        eyebrowLabel="Official Plan"
+        toolLabel="Official Plan"
         backHref="/app/tools/project-summary"
         backLabel="All Plans"
         onRename={readOnly ? undefined : handleRename}
@@ -347,16 +347,13 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
         <div className="flex-1 min-w-0">
           {/* === PRIMARY ZONE: Official Plan Record (PCV1-026/028) === */}
           <div className="space-y-4 md:space-y-5">
-            {/* 1. Official Plan (PCV1-020) */}
+            {/* 1. Official Plan — includes Documents & Photos inline (PCV1-020) */}
             <CurrentPlanSection
               api={api}
               onScrollToChanges={() => {
                 changesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }}
             />
-
-            {/* 2. Plan Documents — under the plan (PCV1-022) */}
-            <DocumentsSection api={api} />
           </div>
 
           {/* Visual separator between plan record and change log (PCV1-026/028) */}

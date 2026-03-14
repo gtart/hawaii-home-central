@@ -65,7 +65,7 @@ export function AttachMenu({ onAttach, readOnly }: AttachMenuProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-6 z-50 w-56 rounded-lg border border-cream/10 bg-[#1a1a1a] shadow-xl">
+        <div className="absolute left-0 top-6 z-50 w-56 rounded-lg border border-cream/10 bg-[#1a1a1a] shadow-xl">
           {!mode ? (
             <div className="py-1">
               <button

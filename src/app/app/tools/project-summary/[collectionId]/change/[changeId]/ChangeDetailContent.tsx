@@ -226,7 +226,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
           href={`/app/tools/project-summary/${collectionId}`}
           className="text-sandstone hover:text-sandstone-light text-sm transition-colors"
         >
-          Back to Plan &amp; Changes
+          Back to Official Plan
         </Link>
       </div>
     )
@@ -246,7 +246,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Back to Plan &amp; Changes
+          Back to Official Plan
         </Link>
       </div>
 

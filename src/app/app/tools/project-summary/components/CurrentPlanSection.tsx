@@ -6,6 +6,7 @@ import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
 import { InlineEdit } from './InlineEdit'
 import { PlanItemList } from './PlanItemList'
 import { OpenItemsList } from './OpenItemsList'
+import { DocumentsSection } from './DocumentsSection'
 
 /** Normalize a cost string into dollar format if it looks like a number */
 function formatCost(raw: string): string {
@@ -458,7 +459,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
 
         <div>
           <label className="text-[10px] text-cream/30 uppercase tracking-wider font-medium block mb-1.5">
-            Plan Open Items
+            Open Items
           </label>
           <OpenItemsList
             items={plan.open_items}
@@ -525,13 +526,13 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
                 ) : (
                   <span className="text-sm text-cream/30">None yet</span>
                 )}
-                {onScrollToChanges && (
+                {onScrollToChanges && approvedChanges.length > 0 && (
                   <button
                     type="button"
                     onClick={onScrollToChanges}
                     className="text-[10px] text-sandstone/50 hover:text-sandstone transition-colors"
                   >
-                    {approvedChanges.length > 0 ? 'See Changes' : '+ Add Change'}
+                    See Changes
                   </button>
                 )}
               </div>
@@ -567,6 +568,9 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
           </div>
         </div>
       )}
+
+      {/* Documents & Photos — inline within the plan card */}
+      <DocumentsSection api={api} inline planApprovedAt={plan.approved_at} />
 
       {/* Primary CTA when approved — bias toward Create Change (PCV1-053) */}
       {isApproved && !readOnly && onScrollToChanges && (

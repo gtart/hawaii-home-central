@@ -25,7 +25,7 @@ Homeowners plan renovations, track selections, manage fix lists, and document pr
 | `before_you_sign` | `/app/tools/before-you-sign` | Contract Checklist |
 | `finish_decisions` | `/app/tools/finish-decisions` | Selections |
 | `punchlist` | `/app/tools/punchlist` | Fix List |
-| `project_summary` | `/app/tools/project-summary` | Plan & Changes |
+| `project_summary` | `/app/tools/project-summary` | Official Plan |
 | `project_alignment` | hidden, redirects to project_summary | — |
 
 ### Build Rules

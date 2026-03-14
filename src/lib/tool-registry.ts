@@ -50,7 +50,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'project_alignment',
     href: '/app/tools/project-alignment',
-    title: 'Plan & Changes',
+    title: 'Official Plan',
     description:
       'Track scope questions, mismatches, and agreements between you and your contractor.',
     stage: 'Build',
@@ -59,7 +59,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'project_summary',
     href: '/app/tools/project-summary',
-    title: 'Plan & Changes',
+    title: 'Official Plan',
     description:
       'Your project plan, what\'s included and excluded, budget overview, and a record of every change along the way.',
     stage: 'Build',

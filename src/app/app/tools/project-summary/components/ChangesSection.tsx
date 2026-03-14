@@ -290,8 +290,6 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
     <SectionHeader
       title="Change Log"
       count={changes.length}
-      onAdd={() => setShowAddForm(!showAddForm)}
-      addLabel="Add Change"
       readOnly={readOnly}
     >
       {/* Guided incorporation dialog (PCV1-007) */}
@@ -317,8 +315,9 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
 
       {/* Split: Pending Changes vs Change History (PCV1-023) */}
       {(() => {
-        const pendingChanges = changes.filter((c) => c.status !== 'done' && c.status !== 'closed' && !c.incorporated)
-        const historyChanges = changes.filter((c) => c.status === 'done' || c.status === 'closed' || c.incorporated)
+        const RESOLVED_STATUSES = new Set<ChangeStatus>(['approved_by_homeowner', 'accepted_by_contractor', 'done', 'closed'])
+        const pendingChanges = changes.filter((c) => !RESOLVED_STATUSES.has(c.status) && !c.incorporated)
+        const historyChanges = changes.filter((c) => RESOLVED_STATUSES.has(c.status) || c.incorporated)
 
         function renderChangeRow(change: typeof changes[0]) {
           const isExpanded = expandedId === change.id

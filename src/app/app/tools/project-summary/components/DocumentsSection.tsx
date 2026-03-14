@@ -10,6 +10,10 @@ import { InlineEdit } from './InlineEdit'
 
 interface DocumentsSectionProps {
   api: ProjectSummaryStateAPI
+  /** When true, renders content without the SectionHeader card wrapper (for embedding inside another card) */
+  inline?: boolean
+  /** Plan approval timestamp — used to show "Added after approval" badge */
+  planApprovedAt?: string | null
 }
 
 function formatFileSize(bytes: number): string {
@@ -25,7 +29,7 @@ function fileTypeIcon(mimeType?: string): string {
   return 'doc'
 }
 
-export function DocumentsSection({ api }: DocumentsSectionProps) {
+export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSectionProps) {
   const { payload, readOnly, addDocument, updateDocument, deleteDocument } = api
   const { documents } = payload
   const [showAddForm, setShowAddForm] = useState(false)
@@ -105,14 +109,8 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
   const planDocs = documents.filter((d) => !d.doc_scope || d.doc_scope === 'plan')
   const referenceDocs = documents.filter((d) => d.doc_scope === 'reference')
 
-  return (
-    <SectionHeader
-      title="Documents"
-      count={documents.length}
-      onAdd={() => setShowAddForm(!showAddForm)}
-      addLabel="Add Document"
-      readOnly={readOnly}
-    >
+  const content = (
+    <>
       {documents.length === 0 && !showAddForm && (
         <p className="text-sm text-cream/30 italic">No documents added yet.</p>
       )}
@@ -203,6 +201,13 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
                   <span className="text-[10px] text-cream/20 block mt-0.5">
                     Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
                     {doc.uploadedBy ? ` by ${doc.uploadedBy}` : ''}
+                  </span>
+                )}
+
+                {/* Post-approval indicator */}
+                {planApprovedAt && doc.uploadedAt && new Date(doc.uploadedAt) > new Date(planApprovedAt) && (
+                  <span className="text-[10px] text-sandstone/60 italic block mt-0.5">
+                    Added after approval
                   </span>
                 )}
 
@@ -497,6 +502,41 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
           </div>
         </div>
       )}
+    </>
+  )
+
+  if (inline) {
+    return (
+      <div className="pt-4 border-t border-cream/[0.06]">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">Documents &amp; Photos</span>
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="inline-flex items-center gap-1 text-[11px] text-sandstone/60 hover:text-sandstone transition-colors"
+            >
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+              </svg>
+              Add
+            </button>
+          )}
+        </div>
+        {content}
+      </div>
+    )
+  }
+
+  return (
+    <SectionHeader
+      title="Documents"
+      count={documents.length}
+      onAdd={() => setShowAddForm(!showAddForm)}
+      addLabel="Add Document"
+      readOnly={readOnly}
+    >
+      {content}
     </SectionHeader>
   )
 }
