@@ -17,7 +17,7 @@ const TABS = [
   },
   {
     href: '/app/tools/punchlist',
-    label: 'Fix List',
+    label: 'Fix Issues',
     matchMode: 'prefix' as const,
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -28,7 +28,7 @@ const TABS = [
   },
   {
     href: '/app/tools/finish-decisions',
-    label: 'Selections',
+    label: 'Choose Selections',
     matchMode: 'prefix' as const,
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

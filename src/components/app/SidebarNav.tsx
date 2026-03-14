@@ -33,7 +33,7 @@ const NAV_ITEMS = [
 const MANAGE_ITEMS = [
   {
     href: '/app/tools/project-summary',
-    label: 'Official Plan',
+    label: 'Track Plans',
     matchMode: 'prefix' as const,
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -45,7 +45,7 @@ const MANAGE_ITEMS = [
   },
   {
     href: '/app/tools/finish-decisions',
-    label: 'Selections',
+    label: 'Choose Selections',
     matchMode: 'prefix' as const,
     badgeKey: 'selectionsNeedDecisions' as const,
     icon: (
@@ -58,7 +58,7 @@ const MANAGE_ITEMS = [
   },
   {
     href: '/app/tools/punchlist',
-    label: 'Fix List',
+    label: 'Fix Issues',
     matchMode: 'prefix' as const,
     badgeKey: 'fixListOpen' as const,
     icon: (

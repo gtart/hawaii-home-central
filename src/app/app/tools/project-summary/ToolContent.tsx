@@ -77,7 +77,7 @@ function ChangeQueueSummary({ changes, openItems }: { changes: SummaryChange[]; 
 
 function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
   const api = useProjectSummaryState({ collectionId })
-  const { payload, isLoaded, isSyncing, access, readOnly, noAccess } = api
+  const { payload, isLoaded, isSyncing, access, readOnly, noAccess, title: collectionTitle } = api
   const router = useRouter()
   const [activityOpen, setActivityOpen] = useState(false)
   const [titleOverride, setTitleOverride] = useState<string | null>(null)
@@ -256,14 +256,14 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     <>
       <ToolPageHeader
         toolKey="project_summary"
-        title="Official Plan"
+        title="Track Your Plans"
         description="Your project plan, what's included and excluded, budget overview, and a record of every change along the way."
         accessLevel={access}
         hasContent={payload.plan.scope.length > 0 || payload.documents.length > 0 || payload.changes.length > 0 || payload.plan.included.length > 0 || payload.plan.not_included.length > 0 || payload.plan.open_items.length > 0}
         collectionId={collectionId}
-        collectionName={titleOverride ?? undefined}
-        eyebrowLabel="Official Plan"
-        toolLabel="Official Plan"
+        collectionName={titleOverride ?? collectionTitle ?? undefined}
+        eyebrowLabel="Track Your Plans"
+        toolLabel="Track Your Plans"
         backHref="/app/tools/project-summary"
         backLabel="All Plans"
         onRename={readOnly ? undefined : handleRename}

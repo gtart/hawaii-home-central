@@ -28,7 +28,7 @@ export function DashboardCardPlanAndChanges({
   if (!hasItems) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/60 mb-2">Plan & Changes</p>
+        <p className="text-sm font-medium text-cream/60 mb-2">Track Plans</p>
         <p className="text-sm text-cream/35 mb-4">Track your project plan and any changes along the way.</p>
         <Link
           href="/app/tools/project-summary"
@@ -43,6 +43,14 @@ export function DashboardCardPlanAndChanges({
   const totalActiveChanges = summaries.reduce((s, l) => s + l.activeChangeCount, 0)
   const totalChanges = summaries.reduce((s, l) => s + l.changeCount, 0)
   const primarySummary = summaries[0]
+  const planCount = summaries.length
+
+  // Meta line: "2 plans · 3 changes pending review"
+  const metaParts: string[] = []
+  metaParts.push(`${planCount} plan${planCount !== 1 ? 's' : ''}`)
+  if (totalActiveChanges > 0) {
+    metaParts.push(`${totalActiveChanges} change${totalActiveChanges !== 1 ? 's' : ''} pending review`)
+  }
 
   // Plan exists but no changes yet — show plan signal
   const planSignals: string[] = []
@@ -52,7 +60,8 @@ export function DashboardCardPlanAndChanges({
   if (totalActiveChanges === 0 && totalChanges === 0) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/60 mb-2">Plan & Changes</p>
+        <p className="text-sm font-medium text-cream/60 mb-2">Track Plans</p>
+        <p className="text-[11px] text-cream/30 mb-2">{metaParts.join(' · ')}</p>
         {planSignals.length > 0 ? (
           <p className="text-sm text-cream/50 mb-1">Plan documented · {planSignals.join(', ')}. No changes yet.</p>
         ) : (
@@ -74,7 +83,8 @@ export function DashboardCardPlanAndChanges({
   // Active state
   return (
     <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-      <p className="text-sm font-medium text-cream/60 mb-3">Plan & Changes</p>
+      <p className="text-sm font-medium text-cream/60 mb-1">Track Plans</p>
+      <p className="text-[11px] text-cream/30 mb-3">{metaParts.join(' · ')}</p>
       <div className="flex items-baseline gap-3 mb-1">
         {totalActiveChanges > 0 ? (
           <>

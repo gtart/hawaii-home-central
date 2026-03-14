@@ -34,7 +34,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'finish_decisions',
     href: '/app/tools/finish-decisions',
-    title: 'Selections',
+    title: 'Choose Selections',
     description:
       'Track the choices you need to make\u2014tile, countertops, hardware\u2014and what you picked.',
     stage: 'Choose Your Finishes',
@@ -42,7 +42,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'punchlist',
     href: '/app/tools/punchlist',
-    title: 'Fix List',
+    title: 'Fix Issues',
     description:
       'Track fixes and share with your contractor.',
     stage: 'Build',
@@ -59,7 +59,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'project_summary',
     href: '/app/tools/project-summary',
-    title: 'Official Plan',
+    title: 'Track Plans',
     description:
       'Your project plan, what\'s included and excluded, budget overview, and a record of every change along the way.',
     stage: 'Build',

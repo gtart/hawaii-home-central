@@ -32,13 +32,13 @@ export function DashboardCardFixList({
   if (!hasItems) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/60 mb-2">Fix List</p>
+        <p className="text-sm font-medium text-cream/60 mb-2">Fix Issues</p>
         <p className="text-sm text-cream/35 mb-4">Log issues as you find them during walkthrough or construction.</p>
         <Link
           href="/app/tools/punchlist"
           className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
         >
-          Start Fix List
+          Start Tracking
         </Link>
       </div>
     )
@@ -48,7 +48,7 @@ export function DashboardCardFixList({
   if (totalOpen === 0) {
     return (
       <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/60 mb-2">Fix List</p>
+        <p className="text-sm font-medium text-cream/60 mb-2">Fix Issues</p>
         <p className="text-sm text-cream/50 mb-1">All issues resolved</p>
         {lastUpdated && (
           <p className="text-[11px] text-cream/25 mb-3">Updated {relativeTime(lastUpdated)}</p>
@@ -57,7 +57,7 @@ export function DashboardCardFixList({
           href="/app/tools/punchlist"
           className="inline-flex items-center px-4 py-2 border border-cream/10 text-cream/50 text-sm font-medium rounded-button hover:bg-cream/5 transition-colors"
         >
-          View Fix List
+          View Issues
         </Link>
       </div>
     )
@@ -75,7 +75,7 @@ export function DashboardCardFixList({
 
   return (
     <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-      <p className="text-sm font-medium text-cream/60 mb-3">Fix List</p>
+      <p className="text-sm font-medium text-cream/60 mb-3">Fix Issues</p>
       <div className="flex items-baseline gap-3 mb-1">
         <span className="text-2xl font-semibold text-cream tabular-nums">{totalOpen}</span>
         <span className="text-sm text-cream/40">open</span>

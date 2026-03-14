@@ -50,12 +50,12 @@ export function eventHref(event: ActivityFeedEvent): string {
 
 export const FILTER_CHIPS: { key: string | undefined; label: string }[] = [
   { key: undefined, label: 'All' },
-  { key: 'punchlist', label: 'Fix List' },
-  { key: 'finish_decisions', label: 'Selections' },
+  { key: 'punchlist', label: 'Fix Issues' },
+  { key: 'finish_decisions', label: 'Choose Selections' },
   { key: 'mood_boards', label: 'Mood Boards' },
   { key: 'before_you_sign', label: 'Contract Checklist' },
-  { key: 'project_summary', label: 'Plan & Changes' },
-  { key: 'project_alignment', label: 'Plan & Changes' },
+  { key: 'project_summary', label: 'Track Plans' },
+  { key: 'project_alignment', label: 'Track Plans' },
 ]
 
 /** Group day label for activity list */

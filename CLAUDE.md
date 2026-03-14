@@ -23,9 +23,9 @@ Homeowners plan renovations, track selections, manage fix lists, and document pr
 |---------|-------|-----------------|
 | `mood_boards` | `/app/tools/mood-boards` | Mood Boards |
 | `before_you_sign` | `/app/tools/before-you-sign` | Contract Checklist |
-| `finish_decisions` | `/app/tools/finish-decisions` | Selections |
-| `punchlist` | `/app/tools/punchlist` | Fix List |
-| `project_summary` | `/app/tools/project-summary` | Official Plan |
+| `finish_decisions` | `/app/tools/finish-decisions` | Choose Selections |
+| `punchlist` | `/app/tools/punchlist` | Fix Issues |
+| `project_summary` | `/app/tools/project-summary` | Track Plans |
 | `project_alignment` | hidden, redirects to project_summary | — |
 
 ### Build Rules
