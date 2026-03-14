@@ -59,7 +59,7 @@ export function InlineEdit({
 
   if (readOnly) {
     return (
-      <div className={`${displayClassName} ${!value ? 'text-cream/20 italic' : ''}`}>
+      <div className={`${displayClassName} ${!value ? 'text-cream/35 italic' : ''}`}>
         {value || placeholder}
       </div>
     )
@@ -72,7 +72,7 @@ export function InlineEdit({
         tabIndex={0}
         onClick={() => setIsEditing(true)}
         onKeyDown={(e) => { if (e.key === 'Enter') setIsEditing(true) }}
-        className={`cursor-text rounded-md px-2 py-1 -mx-2 -my-1 hover:bg-cream/5 transition-colors ${displayClassName} ${!value ? 'text-cream/20 italic' : ''}`}
+        className={`cursor-text rounded-md px-2 py-1 -mx-2 -my-1 hover:bg-stone-hover transition-colors ${displayClassName} ${!value ? 'text-cream/35 italic' : ''}`}
       >
         {value || placeholder}
       </div>
@@ -92,7 +92,7 @@ export function InlineEdit({
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className={`w-full bg-cream/5 border border-cream/10 rounded-md px-2 py-1 text-cream/80 placeholder-cream/20 outline-none focus:border-sandstone/30 resize-none ${className}`}
+        className={`w-full bg-stone-200 border border-cream/15 rounded-md px-2 py-1 text-cream/90 placeholder-cream/35 outline-none focus:border-sandstone/30 resize-none ${className}`}
         rows={3}
       />
     )
@@ -107,7 +107,7 @@ export function InlineEdit({
       onBlur={handleSave}
       onKeyDown={handleKeyDown}
       placeholder={placeholder}
-      className={`w-full bg-cream/5 border border-cream/10 rounded-md px-2 py-1 text-cream/80 placeholder-cream/20 outline-none focus:border-sandstone/30 ${className}`}
+      className={`w-full bg-stone-200 border border-cream/15 rounded-md px-2 py-1 text-cream/90 placeholder-cream/35 outline-none focus:border-sandstone/30 ${className}`}
     />
   )
 }

@@ -13,10 +13,10 @@ export function DashboardCardPlanAndChanges({
 }) {
   if (isLoading) {
     return (
-      <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6 animate-pulse">
-        <div className="h-3 w-16 bg-cream/5 rounded mb-4" />
-        <div className="h-8 w-20 bg-cream/5 rounded mb-2" />
-        <div className="h-3 w-48 bg-cream/5 rounded" />
+      <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6 animate-pulse">
+        <div className="h-3 w-16 bg-stone-200 rounded mb-4" />
+        <div className="h-8 w-20 bg-stone-200 rounded mb-2" />
+        <div className="h-3 w-48 bg-stone-200 rounded" />
       </div>
     )
   }
@@ -27,9 +27,9 @@ export function DashboardCardPlanAndChanges({
   // Not started
   if (!hasItems) {
     return (
-      <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/60 mb-2">Track Plans</p>
-        <p className="text-sm text-cream/35 mb-4">Track your project plan and any changes along the way.</p>
+      <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
+        <p className="text-sm font-medium text-cream/70 mb-2">Track Plans</p>
+        <p className="text-sm text-cream/50 mb-4">Track your project plan and any changes along the way.</p>
         <Link
           href="/app/tools/project-summary"
           className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
@@ -59,20 +59,20 @@ export function DashboardCardPlanAndChanges({
 
   if (totalActiveChanges === 0 && totalChanges === 0) {
     return (
-      <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/60 mb-2">Track Plans</p>
-        <p className="text-[11px] text-cream/30 mb-2">{metaParts.join(' · ')}</p>
+      <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
+        <p className="text-sm font-medium text-cream/70 mb-2">Track Plans</p>
+        <p className="text-[11px] text-cream/45 mb-2">{metaParts.join(' · ')}</p>
         {planSignals.length > 0 ? (
-          <p className="text-sm text-cream/50 mb-1">Plan documented · {planSignals.join(', ')}. No changes yet.</p>
+          <p className="text-sm text-cream/65 mb-1">Plan documented · {planSignals.join(', ')}. No changes yet.</p>
         ) : (
-          <p className="text-sm text-cream/50 mb-1">No changes recorded yet.</p>
+          <p className="text-sm text-cream/65 mb-1">No changes recorded yet.</p>
         )}
-        <p className="text-[11px] text-cream/25 mb-3">
+        <p className="text-[11px] text-cream/40 mb-3">
           Updated {relativeTime(primarySummary.updatedAt)}
         </p>
         <Link
           href="/app/tools/project-summary"
-          className="inline-flex items-center px-4 py-2 border border-cream/10 text-cream/50 text-sm font-medium rounded-button hover:bg-cream/5 transition-colors"
+          className="inline-flex items-center px-4 py-2 border border-cream/15 text-cream/65 text-sm font-medium rounded-button hover:bg-stone-200 transition-colors"
         >
           View Plan
         </Link>
@@ -82,23 +82,23 @@ export function DashboardCardPlanAndChanges({
 
   // Active state
   return (
-    <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-      <p className="text-sm font-medium text-cream/60 mb-1">Track Plans</p>
-      <p className="text-[11px] text-cream/30 mb-3">{metaParts.join(' · ')}</p>
+    <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
+      <p className="text-sm font-medium text-cream/70 mb-1">Track Plans</p>
+      <p className="text-[11px] text-cream/45 mb-3">{metaParts.join(' · ')}</p>
       <div className="flex items-baseline gap-3 mb-1">
         {totalActiveChanges > 0 ? (
           <>
             <span className="text-2xl font-semibold text-cream tabular-nums">{totalActiveChanges}</span>
-            <span className="text-sm text-cream/40">active change{totalActiveChanges !== 1 ? 's' : ''}</span>
+            <span className="text-sm text-cream/55">active change{totalActiveChanges !== 1 ? 's' : ''}</span>
           </>
         ) : (
           <>
             <span className="text-2xl font-semibold text-cream tabular-nums">{totalChanges}</span>
-            <span className="text-sm text-cream/40">change{totalChanges !== 1 ? 's' : ''} recorded</span>
+            <span className="text-sm text-cream/55">change{totalChanges !== 1 ? 's' : ''} recorded</span>
           </>
         )}
       </div>
-      <p className="text-[11px] text-cream/25 mb-4">
+      <p className="text-[11px] text-cream/40 mb-4">
         Updated {relativeTime(primarySummary.updatedAt)}{primarySummary.updatedByName ? ` by ${primarySummary.updatedByName.split(' ')[0]}` : ''}
       </p>
       <Link

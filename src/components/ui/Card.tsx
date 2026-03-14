@@ -16,7 +16,7 @@ export function Card({ href, title, description, badge, meta, className }: CardP
     <Link
       href={href}
       className={cn(
-        'block p-6 bg-basalt-50 rounded-card card-hover',
+        'block p-6 bg-stone rounded-card card-hover',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sandstone focus-visible:ring-offset-2 focus-visible:ring-offset-basalt',
         className
       )}
@@ -25,8 +25,8 @@ export function Card({ href, title, description, badge, meta, className }: CardP
         <h3 className="font-serif text-xl text-sandstone">{title}</h3>
         {badge && <Badge>{badge}</Badge>}
       </div>
-      <p className="text-cream/70 text-sm leading-relaxed">{description}</p>
-      {meta && <div className="mt-3 pt-3 border-t border-cream/5">{meta}</div>}
+      <p className="text-cream/80 text-sm leading-relaxed">{description}</p>
+      {meta && <div className="mt-3 pt-3 border-t border-cream/10">{meta}</div>}
     </Link>
   )
 }

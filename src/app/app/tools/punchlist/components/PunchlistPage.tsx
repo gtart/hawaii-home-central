@@ -260,15 +260,15 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
     <>
       {/* Row 1: Summary stats + Share & Export */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
-        <div className="bg-basalt-50 rounded-lg px-4 py-2 flex items-center gap-2">
+        <div className="bg-stone rounded-lg px-4 py-2 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-red-400" />
           <span className="text-sm text-cream/70">{counts.OPEN} open</span>
         </div>
-        <div className="bg-basalt-50 rounded-lg px-4 py-2 flex items-center gap-2">
+        <div className="bg-stone rounded-lg px-4 py-2 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-amber-400" />
           <span className="text-sm text-cream/70">{counts.ACCEPTED} accepted</span>
         </div>
-        <div className="bg-basalt-50 rounded-lg px-4 py-2 flex items-center gap-2">
+        <div className="bg-stone rounded-lg px-4 py-2 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400" />
           <span className="text-sm text-cream/70">{counts.DONE} done</span>
         </div>
@@ -281,7 +281,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
           <button
             type="button"
             onClick={() => setDashboardOpen(!dashboardOpen)}
-            className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-cream/30 hover:text-cream/50 transition-colors mb-2"
+            className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-cream/45 hover:text-cream/65 transition-colors mb-2"
           >
             <svg
               className={`w-3 h-3 transition-transform ${dashboardOpen ? 'rotate-90' : ''}`}
@@ -298,26 +298,26 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
           {dashboardOpen && (
             <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs">
               {/* Last activity */}
-              <span className="text-cream/40">
-                Last updated <span className="text-cream/60">{insights.lastActivityLabel}</span>
+              <span className="text-cream/55">
+                Last updated <span className="text-cream/70">{insights.lastActivityLabel}</span>
               </span>
 
               {/* Added this week */}
               {insights.addedThisWeek > 0 && (
-                <span className="text-cream/40">
-                  <span className="text-cream/60">{insights.addedThisWeek}</span> added this week
+                <span className="text-cream/55">
+                  <span className="text-cream/70">{insights.addedThisWeek}</span> added this week
                 </span>
               )}
 
               {/* Completion rate */}
-              <span className="text-cream/40">
-                <span className="text-cream/60">{insights.completionPct}%</span> done
+              <span className="text-cream/55">
+                <span className="text-cream/70">{insights.completionPct}%</span> done
               </span>
 
               {/* Avg resolution */}
               {insights.avgResolutionDays !== null && (
-                <span className="text-cream/40">
-                  Avg <span className="text-cream/60">{insights.avgResolutionDays === 0 ? '<1' : insights.avgResolutionDays}d</span> to complete
+                <span className="text-cream/55">
+                  Avg <span className="text-cream/70">{insights.avgResolutionDays === 0 ? '<1' : insights.avgResolutionDays}d</span> to complete
                 </span>
               )}
 
@@ -343,7 +343,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
       <div className="flex flex-wrap items-center gap-2 mb-3">
         {/* Status pills */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Status</span>
+          <span className="text-[10px] uppercase tracking-wider text-cream/45 mr-0.5">Status</span>
           {STATUS_OPTIONS.map((opt) => {
             const active = filterStatuses.has(opt.key)
             return (
@@ -364,7 +364,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                 className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
                   active
                     ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
-                    : 'border-cream/20 text-cream/50 hover:border-cream/40'
+                    : 'border-cream/20 text-cream/65 hover:border-cream/40'
                 }`}
               >
                 {opt.label}
@@ -374,9 +374,9 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
         </div>
 
         {/* Priority pills */}
-        <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
+        <span className="hidden sm:block w-px h-5 bg-cream/20" aria-hidden="true" />
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Priority</span>
+          <span className="text-[10px] uppercase tracking-wider text-cream/45 mr-0.5">Priority</span>
           {PRIORITY_OPTIONS.map((opt) => {
             const active = filterPriorities.has(opt.key)
             return (
@@ -397,7 +397,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                 className={`text-xs px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
                   active
                     ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
-                    : 'border-cream/20 text-cream/50 hover:border-cream/40'
+                    : 'border-cream/20 text-cream/65 hover:border-cream/40'
                 }`}
               >
                 {opt.label}
@@ -407,7 +407,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
         </div>
 
         {/* Location pills (collapsible) */}
-        <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
+        <span className="hidden sm:block w-px h-5 bg-cream/20" aria-hidden="true" />
         {(() => {
           const MAX_VISIBLE = 5
           const activeLocs = uniqueLocations.filter((l) => filterLocations.has(l))
@@ -420,7 +420,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
 
           return (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Location</span>
+              <span className="text-[10px] uppercase tracking-wider text-cream/45 mr-0.5">Location</span>
               <button
                 type="button"
                 onClick={() => {
@@ -437,7 +437,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                 className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
                   filterLocations.has('__unassigned__')
                     ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
-                    : 'border-cream/15 text-cream/40 hover:border-cream/30'
+                    : 'border-cream/20 text-cream/55 hover:border-cream/30'
                 }`}
               >
                 Unassigned
@@ -462,7 +462,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                     className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
                       active
                         ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
-                        : 'border-cream/15 text-cream/40 hover:border-cream/30'
+                        : 'border-cream/20 text-cream/55 hover:border-cream/30'
                     }`}
                   >
                     {loc}
@@ -473,7 +473,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                 <button
                   type="button"
                   onClick={() => setExpandedLocations(true)}
-                  className="text-xs px-2.5 py-1 rounded-full border border-cream/15 text-cream/40 hover:border-cream/30 hover:text-cream/60 transition-colors cursor-pointer"
+                  className="text-xs px-2.5 py-1 rounded-full border border-cream/20 text-cream/55 hover:border-cream/30 hover:text-cream/70 transition-colors cursor-pointer"
                 >
                   +{hiddenCount} more
                 </button>
@@ -482,7 +482,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                 <button
                   type="button"
                   onClick={() => setExpandedLocations(false)}
-                  className="text-xs px-2.5 py-1 text-cream/30 hover:text-cream/50 transition-colors cursor-pointer"
+                  className="text-xs px-2.5 py-1 text-cream/45 hover:text-cream/65 transition-colors cursor-pointer"
                 >
                   Show less
                 </button>
@@ -492,7 +492,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
         })()}
 
         {/* Assignee pills (collapsible) */}
-        <span className="hidden sm:block w-px h-5 bg-cream/15" aria-hidden="true" />
+        <span className="hidden sm:block w-px h-5 bg-cream/20" aria-hidden="true" />
         {(() => {
           const MAX_VISIBLE = 5
           const activeAssignees = uniqueAssignees.filter((a) => filterAssignees.has(a))
@@ -505,7 +505,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
 
           return (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] uppercase tracking-wider text-cream/30 mr-0.5">Assignee</span>
+              <span className="text-[10px] uppercase tracking-wider text-cream/45 mr-0.5">Assignee</span>
               <button
                 type="button"
                 onClick={() => {
@@ -522,7 +522,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                 className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
                   filterAssignees.has('__unassigned__')
                     ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
-                    : 'border-cream/15 text-cream/40 hover:border-cream/30'
+                    : 'border-cream/20 text-cream/55 hover:border-cream/30'
                 }`}
               >
                 Unassigned
@@ -547,7 +547,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                     className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
                       active
                         ? 'bg-sandstone/20 border-sandstone/40 text-sandstone'
-                        : 'border-cream/15 text-cream/40 hover:border-cream/30'
+                        : 'border-cream/20 text-cream/55 hover:border-cream/30'
                     }`}
                   >
                     {a}
@@ -558,7 +558,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                 <button
                   type="button"
                   onClick={() => setExpandedAssignees(true)}
-                  className="text-xs px-2.5 py-1 rounded-full border border-cream/15 text-cream/40 hover:border-cream/30 hover:text-cream/60 transition-colors cursor-pointer"
+                  className="text-xs px-2.5 py-1 rounded-full border border-cream/20 text-cream/55 hover:border-cream/30 hover:text-cream/70 transition-colors cursor-pointer"
                 >
                   +{hiddenCount} more
                 </button>
@@ -567,7 +567,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                 <button
                   type="button"
                   onClick={() => setExpandedAssignees(false)}
-                  className="text-xs px-2.5 py-1 text-cream/30 hover:text-cream/50 transition-colors cursor-pointer"
+                  className="text-xs px-2.5 py-1 text-cream/45 hover:text-cream/65 transition-colors cursor-pointer"
                 >
                   Show less
                 </button>
@@ -585,7 +585,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
           onChange={(e) => { setSearch(e.target.value); setCurrentPage(0) }}
           placeholder="Search items..."
           aria-label="Search punchlist items"
-          className="flex-1 min-w-[140px] bg-basalt border border-cream/20 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+          className="flex-1 min-w-[140px] bg-stone-200 border border-cream/20 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
         />
 
         <select
@@ -616,10 +616,10 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
       <div className="flex flex-wrap items-center gap-2 mb-6">
         {(filterStatuses.size > 0 || filterPriorities.size > 0 || filterLocations.size > 0 || filterAssignees.size > 0 || search.trim()) && (
           <>
-            <span className="text-xs text-cream/40">
+            <span className="text-xs text-cream/55">
               Showing {filtered.length} of {payload.items.length}
             </span>
-            <span className="mx-0.5 text-cream/20" aria-hidden="true">&middot;</span>
+            <span className="mx-0.5 text-cream/35" aria-hidden="true">&middot;</span>
             <button
               type="button"
               onClick={() => { setFilterStatuses(new Set()); setFilterPriorities(new Set()); setFilterLocations(new Set()); setFilterAssignees(new Set()); setSearch(''); setCurrentPage(0) }}
@@ -645,15 +645,15 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
 
       {/* Item list */}
       {filtered.length === 0 ? (
-        <p className="text-cream/40 text-sm text-center py-8">
+        <p className="text-cream/55 text-sm text-center py-8">
           No items match your filters.
         </p>
       ) : (
         <>
           {/* Desktop: compact table */}
           <div className="hidden md:block">
-            <div className="bg-basalt-50 rounded-card border border-cream/8 overflow-hidden">
-              <div className={`grid ${!readOnly ? 'grid-cols-[1.5rem_2.5rem_1fr_8rem_8rem_4rem_5rem_3rem]' : 'grid-cols-[2.5rem_1fr_8rem_8rem_4rem_5rem_3rem]'} gap-2 px-4 py-2 border-b border-cream/8 text-[10px] uppercase tracking-wider text-cream/30`}>
+            <div className="bg-stone rounded-card border border-cream/12 overflow-hidden">
+              <div className={`grid ${!readOnly ? 'grid-cols-[1.5rem_2.5rem_1fr_8rem_8rem_4rem_5rem_3rem]' : 'grid-cols-[2.5rem_1fr_8rem_8rem_4rem_5rem_3rem]'} gap-2 px-4 py-2 border-b border-cream/12 text-[10px] uppercase tracking-wider text-cream/45`}>
                 {!readOnly && (
                   <label className="flex items-center justify-center">
                     <input
@@ -707,7 +707,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
           {filtered.length > 0 && (
             <div className="flex flex-wrap items-center justify-between gap-3 mt-4 text-sm">
               <div className="flex items-center gap-2">
-                <span className="text-cream/40 text-xs">
+                <span className="text-cream/55 text-xs">
                   {currentPage * pageSize + 1}–{Math.min((currentPage + 1) * pageSize, filtered.length)} of {filtered.length}
                 </span>
                 <select
@@ -729,7 +729,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                     type="button"
                     onClick={() => setCurrentPage(0)}
                     disabled={currentPage === 0}
-                    className="px-2 py-1 text-xs text-cream/50 hover:text-cream disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="px-2 py-1 text-xs text-cream/65 hover:text-cream disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     aria-label="First page"
                   >
                     ««
@@ -738,19 +738,19 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
                     disabled={currentPage === 0}
-                    className="px-2 py-1 text-xs text-cream/50 hover:text-cream disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="px-2 py-1 text-xs text-cream/65 hover:text-cream disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     aria-label="Previous page"
                   >
                     «
                   </button>
-                  <span className="px-3 py-1 text-xs text-cream/60">
+                  <span className="px-3 py-1 text-xs text-cream/70">
                     {currentPage + 1} / {totalPages}
                   </span>
                   <button
                     type="button"
                     onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
                     disabled={currentPage >= totalPages - 1}
-                    className="px-2 py-1 text-xs text-cream/50 hover:text-cream disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="px-2 py-1 text-xs text-cream/65 hover:text-cream disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     aria-label="Next page"
                   >
                     »
@@ -759,7 +759,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                     type="button"
                     onClick={() => setCurrentPage(totalPages - 1)}
                     disabled={currentPage >= totalPages - 1}
-                    className="px-2 py-1 text-xs text-cream/50 hover:text-cream disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="px-2 py-1 text-xs text-cream/65 hover:text-cream disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     aria-label="Last page"
                   >
                     »»
@@ -822,7 +822,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && !readOnly && (
         <div
-          className="fixed left-0 right-0 z-40 bg-basalt-50 border-t border-cream/15 shadow-2xl px-4 py-3"
+          className="fixed left-0 right-0 z-40 bg-stone border-t border-cream/20 shadow-2xl px-4 py-3"
           style={{ bottom: 'calc(var(--bottom-nav-offset, 0rem))' }}
         >
           <div className="max-w-4xl mx-auto flex items-center gap-3 flex-wrap">
@@ -836,14 +836,14 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                 <button
                   type="button"
                   onClick={() => setBulkMenuOpen(bulkMenuOpen === 'status' ? null : 'status')}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-lg bg-stone-50 text-cream/70 hover:bg-stone-hover hover:text-cream transition-colors"
                 >
                   Status
                 </button>
                 {bulkMenuOpen === 'status' && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
-                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 py-1 min-w-[120px]">
+                    <div className="absolute bottom-full mb-1 left-0 bg-stone-200 border border-cream/20 rounded-lg shadow-xl z-20 py-1 min-w-[120px]">
                       {(['OPEN', 'ACCEPTED', 'DONE'] as const).map((s) => (
                         <button
                           key={s}
@@ -853,7 +853,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                             ids.forEach((id) => api.setStatus(id, s))
                             deselectAll()
                           }}
-                          className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                          className="w-full text-left px-3 py-2 text-xs text-cream/80 hover:bg-stone-hover transition-colors"
                         >
                           {s === 'OPEN' ? 'Open' : s === 'ACCEPTED' ? 'In Progress' : 'Done'}
                         </button>
@@ -868,19 +868,19 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                 <button
                   type="button"
                   onClick={() => setBulkMenuOpen(bulkMenuOpen === 'assignee' ? null : 'assignee')}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-lg bg-stone-50 text-cream/70 hover:bg-stone-hover hover:text-cream transition-colors"
                 >
                   Assignee
                 </button>
                 {bulkMenuOpen === 'assignee' && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
-                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 min-w-[180px] max-h-56 overflow-y-auto">
-                      <div className="p-2 border-b border-cream/10">
+                    <div className="absolute bottom-full mb-1 left-0 bg-stone-200 border border-cream/20 rounded-lg shadow-xl z-20 min-w-[180px] max-h-56 overflow-y-auto">
+                      <div className="p-2 border-b border-cream/15">
                         <input
                           autoFocus
                           placeholder="Type name..."
-                          className="w-full bg-basalt border border-cream/20 rounded px-2 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                          className="w-full bg-stone-200 border border-cream/20 rounded px-2 py-1.5 text-xs text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                               api.bulkUpdateItems(Array.from(selectedIds), { assigneeLabel: e.currentTarget.value.trim() })
@@ -896,7 +896,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                             api.bulkUpdateItems(Array.from(selectedIds), { assigneeLabel: '' })
                             deselectAll()
                           }}
-                          className="w-full text-left px-3 py-2 text-xs text-cream/40 italic hover:bg-cream/5 transition-colors"
+                          className="w-full text-left px-3 py-2 text-xs text-cream/55 italic hover:bg-stone-hover transition-colors"
                         >
                           Unassigned
                         </button>
@@ -908,7 +908,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                               api.bulkUpdateItems(Array.from(selectedIds), { assigneeLabel: a })
                               deselectAll()
                             }}
-                            className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                            className="w-full text-left px-3 py-2 text-xs text-cream/80 hover:bg-stone-hover transition-colors"
                           >
                             {a}
                           </button>
@@ -924,19 +924,19 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                 <button
                   type="button"
                   onClick={() => setBulkMenuOpen(bulkMenuOpen === 'location' ? null : 'location')}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-lg bg-stone-50 text-cream/70 hover:bg-stone-hover hover:text-cream transition-colors"
                 >
                   Location
                 </button>
                 {bulkMenuOpen === 'location' && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
-                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 min-w-[180px] max-h-56 overflow-y-auto">
-                      <div className="p-2 border-b border-cream/10">
+                    <div className="absolute bottom-full mb-1 left-0 bg-stone-200 border border-cream/20 rounded-lg shadow-xl z-20 min-w-[180px] max-h-56 overflow-y-auto">
+                      <div className="p-2 border-b border-cream/15">
                         <input
                           autoFocus
                           placeholder="Type location..."
-                          className="w-full bg-basalt border border-cream/20 rounded px-2 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                          className="w-full bg-stone-200 border border-cream/20 rounded px-2 py-1.5 text-xs text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                               api.bulkUpdateItems(Array.from(selectedIds), { location: e.currentTarget.value.trim() })
@@ -952,7 +952,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                             api.bulkUpdateItems(Array.from(selectedIds), { location: '' })
                             deselectAll()
                           }}
-                          className="w-full text-left px-3 py-2 text-xs text-cream/40 italic hover:bg-cream/5 transition-colors"
+                          className="w-full text-left px-3 py-2 text-xs text-cream/55 italic hover:bg-stone-hover transition-colors"
                         >
                           Unassigned
                         </button>
@@ -964,7 +964,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                               api.bulkUpdateItems(Array.from(selectedIds), { location: loc })
                               deselectAll()
                             }}
-                            className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                            className="w-full text-left px-3 py-2 text-xs text-cream/80 hover:bg-stone-hover transition-colors"
                           >
                             {loc}
                           </button>
@@ -980,14 +980,14 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                 <button
                   type="button"
                   onClick={() => setBulkMenuOpen(bulkMenuOpen === 'priority' ? null : 'priority')}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-lg bg-stone-50 text-cream/70 hover:bg-stone-hover hover:text-cream transition-colors"
                 >
                   Priority
                 </button>
                 {bulkMenuOpen === 'priority' && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
-                    <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 py-1 min-w-[120px]">
+                    <div className="absolute bottom-full mb-1 left-0 bg-stone-200 border border-cream/20 rounded-lg shadow-xl z-20 py-1 min-w-[120px]">
                       {(['HIGH', 'MED', 'LOW'] as const).map((p) => (
                         <button
                           key={p}
@@ -996,19 +996,19 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                             api.bulkUpdateItems(Array.from(selectedIds), { priority: p })
                             deselectAll()
                           }}
-                          className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                          className="w-full text-left px-3 py-2 text-xs text-cream/80 hover:bg-stone-hover transition-colors"
                         >
                           {p === 'HIGH' ? 'High' : p === 'MED' ? 'Medium' : 'Low'}
                         </button>
                       ))}
-                      <div className="my-1 border-t border-cream/10" />
+                      <div className="my-1 border-t border-cream/15" />
                       <button
                         type="button"
                         onClick={() => {
                           api.bulkUpdateItems(Array.from(selectedIds), { priority: undefined })
                           deselectAll()
                         }}
-                        className="w-full text-left px-3 py-2 text-xs text-cream/40 hover:bg-cream/5 hover:text-cream/60 transition-colors"
+                        className="w-full text-left px-3 py-2 text-xs text-cream/55 hover:bg-stone-hover hover:text-cream/70 transition-colors"
                       >
                         No Priority
                       </button>
@@ -1030,7 +1030,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
                   type="button"
                   onClick={() => setBulkMoveOpen(true)}
                   disabled={isTransferring}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors disabled:opacity-50"
+                  className="text-xs px-3 py-1.5 rounded-lg bg-stone-50 text-cream/70 hover:bg-stone-hover hover:text-cream transition-colors disabled:opacity-50"
                 >
                   {isTransferring ? 'Moving...' : 'Move to...'}
                 </button>
@@ -1041,7 +1041,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
             <button
               type="button"
               onClick={deselectAll}
-              className="text-xs text-cream/30 hover:text-cream/50 transition-colors shrink-0"
+              className="text-xs text-cream/45 hover:text-cream/65 transition-colors shrink-0"
             >
               Deselect all
             </button>
@@ -1106,7 +1106,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
 
       {/* Bulk toast */}
       {bulkToast && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-basalt-50 border border-cream/15 rounded-lg px-4 py-2.5 text-sm text-cream shadow-xl">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-stone border border-cream/20 rounded-lg px-4 py-2.5 text-sm text-cream shadow-xl">
           {bulkToast}
         </div>
       )}

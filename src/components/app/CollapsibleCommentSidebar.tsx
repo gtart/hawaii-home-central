@@ -142,17 +142,17 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
           <button
             type="button"
             onClick={toggle}
-            className="sticky top-24 self-start w-10 h-auto flex flex-col items-center gap-2 py-3 bg-basalt-50 border border-cream/12 rounded-card hover:border-cream/20 transition-colors"
+            className="sticky top-24 self-start w-10 h-auto flex flex-col items-center gap-2 py-3 bg-stone border border-cream/15 rounded-card hover:border-cream/25 transition-colors"
             title="Open comments"
           >
-            <svg className="w-4 h-4 text-cream/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className="w-4 h-4 text-cream/55" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             {(commentCount > 0 || hasUnreadProp) && (
               <span className={`text-[10px] font-medium rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center ${
                 hasUnreadProp
                   ? 'bg-sandstone/20 text-sandstone'
-                  : 'bg-cream/10 text-cream/40'
+                  : 'bg-cream/15 text-cream/55'
               }`}>
                 {commentCount}
               </span>
@@ -167,7 +167,7 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
             ? 'w-full'
             : 'w-80 sticky top-24 self-start max-h-[calc(100vh-7rem)]'
         }`}>
-          <div className={`bg-basalt-50 border border-cream/15 rounded-card flex flex-col ${
+          <div className={`bg-stone border border-cream/20 rounded-card flex flex-col ${
             inline ? 'max-h-[60vh]' : 'h-full max-h-[calc(100vh-7rem)]'
           }`}>
             <CommentThread {...threadProps} onClose={toggle} />
@@ -178,7 +178,7 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
       {!collapsed && hideCollapsedTab && (
         <div className="hidden md:block fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/40" onClick={toggle} />
-          <aside className="absolute right-0 top-0 h-full w-96 bg-basalt-50 border-l border-cream/15 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+          <aside className="absolute right-0 top-0 h-full w-96 bg-stone border-l border-cream/20 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
             <CommentThread {...threadProps} onClose={toggle} />
           </aside>
         </div>
@@ -188,9 +188,9 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex items-end">
           <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
-          <div className="relative bg-basalt-50 border-t border-cream/15 rounded-t-xl w-full max-h-[80vh] flex flex-col shadow-2xl">
+          <div className="relative bg-stone border-t border-cream/20 rounded-t-xl w-full max-h-[80vh] flex flex-col shadow-2xl">
             <div className="flex justify-center pt-2 pb-1" onClick={() => setMobileOpen(false)}>
-              <div className="w-10 h-1 bg-cream/20 rounded-full" />
+              <div className="w-10 h-1 bg-cream/35 rounded-full" />
             </div>
             <CommentThread {...threadProps} onClose={() => setMobileOpen(false)} />
             <div className="pb-[env(safe-area-inset-bottom)]" />
@@ -223,7 +223,7 @@ export function CommentTriggerButton({
       className={`relative inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg transition-colors shrink-0 ${
         hasUnread
           ? 'bg-sandstone/15 text-sandstone border border-sandstone/25 hover:bg-sandstone/25'
-          : 'bg-cream/5 text-cream/50 hover:text-cream/70 hover:bg-cream/10'
+          : 'bg-stone-200 text-cream/65 hover:text-cream/80 hover:bg-stone-hover'
       } ${className}`}
       title="Comments"
     >
@@ -231,7 +231,7 @@ export function CommentTriggerButton({
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       {commentCount > 0 && (
-        <span className={`text-[10px] font-medium ${hasUnread ? 'text-sandstone' : 'text-cream/40'}`}>
+        <span className={`text-[10px] font-medium ${hasUnread ? 'text-sandstone' : 'text-cream/55'}`}>
           {commentCount}
         </span>
       )}

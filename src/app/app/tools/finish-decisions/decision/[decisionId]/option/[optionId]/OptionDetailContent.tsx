@@ -552,7 +552,7 @@ export function OptionDetailContent({
   if (!foundDecision || !foundOption) {
     return (
       <div className="pt-32 pb-24 px-6">
-        <div className="max-w-3xl mx-auto text-center py-12 text-cream/50">
+        <div className="max-w-3xl mx-auto text-center py-12 text-cream/65">
           <p>Redirecting...</p>
         </div>
       </div>
@@ -578,12 +578,12 @@ export function OptionDetailContent({
       <div className="max-w-5xl mx-auto">
 
         {/* ── Sticky breadcrumb header ── */}
-        <div className="sticky top-16 z-20 bg-basalt/95 backdrop-blur-sm -mx-4 md:-mx-8 px-4 md:px-8 py-3 border-b border-cream/8">
+        <div className="sticky top-16 z-20 bg-basalt/95 backdrop-blur-sm -mx-4 md:-mx-8 px-4 md:px-8 py-3 border-b border-cream/12">
           <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
             {/* Left: back link + selection name */}
             <Link
               href={`/app/tools/finish-decisions/decision/${decisionId}`}
-              className="flex items-center gap-2 text-cream/50 hover:text-cream transition-colors min-w-0"
+              className="flex items-center gap-2 text-cream/65 hover:text-cream transition-colors min-w-0"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -598,34 +598,34 @@ export function OptionDetailContent({
                   <Link
                     href={buildOptionHref({ decisionId, optionId: prevOptionId })}
                     prefetch
-                    className="w-7 h-7 flex items-center justify-center rounded-full bg-cream/8 text-cream/50 hover:bg-cream/15 hover:text-cream transition-colors"
+                    className="w-7 h-7 flex items-center justify-center rounded-full bg-cream/8 text-cream/65 hover:bg-cream/30 hover:text-cream transition-colors"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </Link>
                 ) : (
-                  <span className="w-7 h-7 flex items-center justify-center rounded-full bg-cream/8 text-cream/20">
+                  <span className="w-7 h-7 flex items-center justify-center rounded-full bg-cream/8 text-cream/35">
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
                 )}
-                <span className="text-[11px] text-cream/30 tabular-nums min-w-[40px] text-center">
+                <span className="text-[11px] text-cream/45 tabular-nums min-w-[40px] text-center">
                   {currentIndex + 1} of {totalOptions}
                 </span>
                 {nextOptionId ? (
                   <Link
                     href={buildOptionHref({ decisionId, optionId: nextOptionId })}
                     prefetch
-                    className="w-7 h-7 flex items-center justify-center rounded-full bg-cream/8 text-cream/50 hover:bg-cream/15 hover:text-cream transition-colors"
+                    className="w-7 h-7 flex items-center justify-center rounded-full bg-cream/8 text-cream/65 hover:bg-cream/30 hover:text-cream transition-colors"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </Link>
                 ) : (
-                  <span className="w-7 h-7 flex items-center justify-center rounded-full bg-cream/8 text-cream/20">
+                  <span className="w-7 h-7 flex items-center justify-center rounded-full bg-cream/8 text-cream/35">
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -635,11 +635,11 @@ export function OptionDetailContent({
             )}
 
             {/* Right: timestamps on desktop */}
-            <div className="hidden md:flex items-center gap-2 text-[11px] text-cream/40 shrink-0">
+            <div className="hidden md:flex items-center gap-2 text-[11px] text-cream/55 shrink-0">
               <span>Added {formatDate(option.createdAt)}</span>
               {option.updatedAt !== option.createdAt && (
                 <>
-                  <span className="text-cream/15">·</span>
+                  <span className="text-cream/30">·</span>
                   <span>Updated {formatDate(option.updatedAt)}</span>
                 </>
               )}
@@ -658,11 +658,11 @@ export function OptionDetailContent({
           {/* Origin badge */}
           {option.origin && (
             <div className="flex items-center gap-1.5 mb-2">
-              <svg className="w-3.5 h-3.5 text-cream/30 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="w-3.5 h-3.5 text-cream/45 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" strokeLinecap="round" strokeLinejoin="round" />
                 <line x1="7" y1="7" x2="7.01" y2="7" strokeLinecap="round" />
               </svg>
-              <span className="text-[11px] text-cream/40">Part of {option.origin.kitLabel}</span>
+              <span className="text-[11px] text-cream/55">Part of {option.origin.kitLabel}</span>
             </div>
           )}
 
@@ -677,7 +677,7 @@ export function OptionDetailContent({
                   value={option.name}
                   onChange={(e) => updateOption({ name: e.target.value })}
                   placeholder="Option name..."
-                  className="w-full min-w-0 bg-transparent text-cream text-xl font-medium placeholder:text-cream/30 focus:outline-none"
+                  className="w-full min-w-0 bg-transparent text-cream text-xl font-medium placeholder:text-cream/45 focus:outline-none"
                 />
               )}
             </div>
@@ -698,7 +698,7 @@ export function OptionDetailContent({
           </div>
 
           {/* Action row: Voting + Final Decision | Move/Copy/Delete */}
-          <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-cream/8">
+          <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-cream/12">
             {/* LEFT GROUP: Voting + Final Decision */}
             {!readOnly ? (
               <div className="flex items-center gap-1">
@@ -721,7 +721,7 @@ export function OptionDetailContent({
                       className={`text-xs px-2 py-1 rounded-full transition-colors ${
                         isActive
                           ? 'bg-sandstone/20 text-sandstone'
-                          : 'bg-cream/8 text-cream/40 hover:bg-cream/15'
+                          : 'bg-cream/8 text-cream/55 hover:bg-cream/30'
                       }`}
                     >
                       {emoji}{count > 0 ? ` ${count}` : ''}
@@ -740,7 +740,7 @@ export function OptionDetailContent({
                     const count = Object.values(votes).filter(v => v === type).length
                     if (count === 0) return null
                     return (
-                      <span key={type} className="text-xs px-2 py-1 rounded-full bg-cream/5 text-cream/30">
+                      <span key={type} className="text-xs px-2 py-1 rounded-full bg-stone-200 text-cream/45">
                         {emoji} {count}
                       </span>
                     )
@@ -775,7 +775,7 @@ export function OptionDetailContent({
                   <button
                     type="button"
                     onClick={() => { setMoveMode('move'); setMoveSheetOpen(true) }}
-                    className="px-2.5 py-1.5 rounded-full text-xs text-cream/40 hover:text-cream/60 hover:bg-cream/10 transition-colors"
+                    className="px-2.5 py-1.5 rounded-full text-xs text-cream/55 hover:text-cream/70 hover:bg-cream/10 transition-colors"
                   >
                     Move
                   </button>
@@ -783,7 +783,7 @@ export function OptionDetailContent({
                     <button
                       type="button"
                       onClick={() => { setMoveMode('copy'); setMoveSheetOpen(true) }}
-                      className="px-2.5 py-1.5 rounded-full text-xs text-cream/40 hover:text-cream/60 hover:bg-cream/10 transition-colors"
+                      className="px-2.5 py-1.5 rounded-full text-xs text-cream/55 hover:text-cream/70 hover:bg-cream/10 transition-colors"
                     >
                       Copy to...
                     </button>
@@ -803,7 +803,7 @@ export function OptionDetailContent({
                   <button
                     type="button"
                     onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-                    className="p-1.5 rounded-full text-cream/40 hover:text-cream/60 hover:bg-cream/10 transition-colors"
+                    className="p-1.5 rounded-full text-cream/55 hover:text-cream/70 hover:bg-cream/10 transition-colors"
                     aria-label="More actions"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -813,18 +813,18 @@ export function OptionDetailContent({
                   {moreMenuOpen && (
                     <>
                       <div className="fixed inset-0 z-30" onClick={() => setMoreMenuOpen(false)} />
-                      <div className="absolute right-0 top-full mt-1 z-40 w-40 bg-basalt-50 border border-cream/15 rounded-xl shadow-lg overflow-hidden">
+                      <div className="absolute right-0 top-full mt-1 z-40 w-40 bg-stone border border-cream/15 rounded-xl shadow-lg overflow-hidden">
                         <button type="button" onClick={() => { setMoveMode('move'); setMoveSheetOpen(true); setMoreMenuOpen(false) }}
-                          className="w-full text-left px-4 py-2.5 text-sm text-cream/70 hover:bg-cream/5 transition-colors">
+                          className="w-full text-left px-4 py-2.5 text-sm text-cream/80 hover:bg-stone-hover transition-colors">
                           Move
                         </button>
                         {v4State.selections.length > 1 && (
                           <button type="button" onClick={() => { setMoveMode('copy'); setMoveSheetOpen(true); setMoreMenuOpen(false) }}
-                            className="w-full text-left px-4 py-2.5 text-sm text-cream/70 hover:bg-cream/5 transition-colors">
+                            className="w-full text-left px-4 py-2.5 text-sm text-cream/80 hover:bg-stone-hover transition-colors">
                             Copy to...
                           </button>
                         )}
-                        <div className="border-t border-cream/10" />
+                        <div className="border-t border-cream/15" />
                         <button type="button" onClick={() => { deleteOption(); setMoreMenuOpen(false) }}
                           className="w-full text-left px-4 py-2.5 text-sm text-red-400/70 hover:bg-red-400/5 transition-colors">
                           Delete
@@ -885,13 +885,13 @@ export function OptionDetailContent({
                             Change photo
                           </button>
                           {showPhotoMenu && (
-                            <div className="absolute bottom-full right-0 mb-1.5 bg-basalt-50 border border-cream/15 rounded-xl shadow-xl overflow-hidden min-w-[200px]">
-                              <button type="button" onClick={() => { cameraInputRef.current?.click(); setShowPhotoMenu(false) }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors">
+                            <div className="absolute bottom-full right-0 mb-1.5 bg-stone border border-cream/15 rounded-xl shadow-xl overflow-hidden min-w-[200px]">
+                              <button type="button" onClick={() => { cameraInputRef.current?.click(); setShowPhotoMenu(false) }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/80 hover:text-cream hover:bg-stone-hover transition-colors">
                                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></svg>
                                 Take a photo
                               </button>
-                              <div className="border-t border-cream/10" />
-                              <button type="button" onClick={() => { galleryInputRef.current?.click(); setShowPhotoMenu(false) }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors">
+                              <div className="border-t border-cream/15" />
+                              <button type="button" onClick={() => { galleryInputRef.current?.click(); setShowPhotoMenu(false) }} className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/80 hover:text-cream hover:bg-stone-hover transition-colors">
                                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
                                 Photo library
                               </button>
@@ -913,7 +913,7 @@ export function OptionDetailContent({
                               className={`relative w-12 h-12 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${isHero ? 'border-sandstone' : 'border-transparent hover:border-cream/20'}`}
                               title={isHero ? 'Primary image' : 'Set as primary'}
                             >
-                              <ImageWithFallback src={displayUrl(img.thumbnailUrl || img.url)} alt={img.label || ''} className="w-full h-full object-cover" fallback={<div className="w-full h-full flex items-center justify-center bg-cream/5"><span className="text-xs opacity-30">🖼️</span></div>} />
+                              <ImageWithFallback src={displayUrl(img.thumbnailUrl || img.url)} alt={img.label || ''} className="w-full h-full object-cover" fallback={<div className="w-full h-full flex items-center justify-center bg-stone-200"><span className="text-xs opacity-30">🖼️</span></div>} />
                               {isHero && (
                                 <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-sandstone rounded-full flex items-center justify-center">
                                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="text-basalt"><polyline points="20 6 9 17 4 12" /></svg>
@@ -935,14 +935,14 @@ export function OptionDetailContent({
                     >
                       <div className="flex flex-col items-center justify-center gap-2 py-8">
                         {uploading ? (
-                          <div className="w-8 h-8 border-2 border-cream/20 border-t-cream/60 rounded-full animate-spin" />
+                          <div className="w-8 h-8 border-2 border-cream/20 border-t-cream/70 rounded-full animate-spin" />
                         ) : (
-                          <svg className="w-7 h-7 text-cream/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <svg className="w-7 h-7 text-cream/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                             <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
                             <circle cx="12" cy="13" r="4" />
                           </svg>
                         )}
-                        <span className="text-xs text-cream/30">{uploading ? 'Uploading...' : 'Add a photo'}</span>
+                        <span className="text-xs text-cream/45">{uploading ? 'Uploading...' : 'Add a photo'}</span>
                       </div>
                     </button>
                     <div className="mt-2 flex gap-2">
@@ -952,9 +952,9 @@ export function OptionDetailContent({
                         onChange={(e) => setPhotoUrlInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') handlePhotoUrl() }}
                         placeholder="Or paste a photo URL..."
-                        className="flex-1 bg-basalt border border-cream/15 rounded-lg px-2.5 py-1.5 text-xs text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
+                        className="flex-1 bg-basalt border border-cream/15 rounded-lg px-2.5 py-1.5 text-xs text-cream placeholder:text-cream/40 focus:outline-none focus:border-sandstone/40"
                       />
-                      <button type="button" onClick={handlePhotoUrl} disabled={!photoUrlInput.trim() || !isValidUrl(photoUrlInput)} className="px-2.5 py-1.5 bg-cream/10 text-cream/60 text-xs rounded-lg hover:bg-cream/20 transition-colors disabled:opacity-30">
+                      <button type="button" onClick={handlePhotoUrl} disabled={!photoUrlInput.trim() || !isValidUrl(photoUrlInput)} className="px-2.5 py-1.5 bg-cream/10 text-cream/70 text-xs rounded-lg hover:bg-cream/35 transition-colors disabled:opacity-30">
                         Use
                       </button>
                     </div>
@@ -984,7 +984,7 @@ export function OptionDetailContent({
             {/* Price */}
             {(!readOnly || option.price) && (
               <div>
-                <label className="text-[11px] text-cream/40 uppercase tracking-wider mb-1 block">Price</label>
+                <label className="text-[11px] text-cream/55 uppercase tracking-wider mb-1 block">Price</label>
                 {readOnly ? (
                   <p className="text-lg font-medium text-cream">{displayPrice(option.price)}</p>
                 ) : (
@@ -992,7 +992,7 @@ export function OptionDetailContent({
                     value={option.price || ''}
                     onChange={(e) => updateOption({ price: e.target.value })}
                     placeholder="e.g. $1,200"
-                    className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50"
+                    className="w-full bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/40 focus:outline-none focus:border-sandstone/50"
                   />
                 )}
               </div>
@@ -1016,7 +1016,7 @@ export function OptionDetailContent({
             {/* Links — compact favicon chips */}
             {(option.urls.length > 0 || !readOnly) ? (
               <div>
-                <label className="text-[11px] text-cream/40 uppercase tracking-wider mb-2 block">Links</label>
+                <label className="text-[11px] text-cream/55 uppercase tracking-wider mb-2 block">Links</label>
                 <div className="flex flex-wrap items-center gap-2">
                   {option.urls.map((u) => {
                     const hostname = linkHostname(u.url)
@@ -1027,7 +1027,7 @@ export function OptionDetailContent({
                           onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEditUrl(u.id); if (e.key === 'Escape') { setEditingUrlId(null); setEditingUrlValue('') } }}
                           className="flex-1 bg-basalt border border-sandstone/40 rounded-lg px-3 py-1.5 text-sm text-cream focus:outline-none" />
                         <button type="button" onClick={() => handleSaveEditUrl(u.id)} className="px-3 py-1.5 bg-sandstone/20 text-sandstone text-xs rounded-lg hover:bg-sandstone/30 transition-colors">Save</button>
-                        <button type="button" onClick={() => { setEditingUrlId(null); setEditingUrlValue('') }} className="px-2 py-1.5 text-cream/40 hover:text-cream/70 text-xs transition-colors">✕</button>
+                        <button type="button" onClick={() => { setEditingUrlId(null); setEditingUrlValue('') }} className="px-2 py-1.5 text-cream/55 hover:text-cream/80 text-xs transition-colors">✕</button>
                       </div>
                     ) : (
                       <div key={u.id} className="group relative flex items-center">
@@ -1035,7 +1035,7 @@ export function OptionDetailContent({
                           href={u.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 bg-cream/5 hover:bg-cream/10 border border-cream/10 rounded-lg px-2.5 py-1.5 transition-colors"
+                          className="flex items-center gap-1.5 bg-stone-200 hover:bg-cream/10 border border-cream/15 rounded-lg px-2.5 py-1.5 transition-colors"
                           title={u.url}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1044,19 +1044,19 @@ export function OptionDetailContent({
                             alt=""
                             className="w-4 h-4 rounded-sm shrink-0"
                           />
-                          <span className="text-sm text-cream/70 group-hover:text-sandstone transition-colors capitalize truncate max-w-[140px]">
+                          <span className="text-sm text-cream/80 group-hover:text-sandstone transition-colors capitalize truncate max-w-[140px]">
                             {displayName}
                           </span>
-                          <svg className="w-3 h-3 text-cream/25 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg className="w-3 h-3 text-cream/40 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" strokeLinecap="round" /><path d="M15 3h6v6" strokeLinecap="round" /><path d="M10 14L21 3" strokeLinecap="round" />
                           </svg>
                         </a>
                         {!readOnly && (
                           <div className="hidden group-hover:flex items-center gap-0.5 ml-1">
-                            <button type="button" onClick={(e) => { e.preventDefault(); setEditingUrlId(u.id); setEditingUrlValue(u.url) }} className="p-1 text-cream/30 hover:text-cream/60 transition-colors" title="Edit URL">
+                            <button type="button" onClick={(e) => { e.preventDefault(); setEditingUrlId(u.id); setEditingUrlValue(u.url) }} className="p-1 text-cream/45 hover:text-cream/70 transition-colors" title="Edit URL">
                               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" /></svg>
                             </button>
-                            <button type="button" onClick={(e) => { e.preventDefault(); handleRemoveUrl(u.id) }} className="p-1 text-cream/30 hover:text-red-400 transition-colors" title="Remove">
+                            <button type="button" onClick={(e) => { e.preventDefault(); handleRemoveUrl(u.id) }} className="p-1 text-cream/45 hover:text-red-400 transition-colors" title="Remove">
                               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" /></svg>
                             </button>
                           </div>
@@ -1070,7 +1070,7 @@ export function OptionDetailContent({
                     <button
                       type="button"
                       onClick={() => setAddLinkOpen(true)}
-                      className="flex items-center gap-1 px-2.5 py-1.5 border border-dashed border-cream/15 rounded-lg text-xs text-cream/40 hover:text-cream/60 hover:border-cream/25 transition-colors"
+                      className="flex items-center gap-1 px-2.5 py-1.5 border border-dashed border-cream/15 rounded-lg text-xs text-cream/55 hover:text-cream/70 hover:border-cream/25 transition-colors"
                     >
                       <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" strokeLinecap="round" /></svg>
                       Add Link
@@ -1088,8 +1088,8 @@ export function OptionDetailContent({
                       }}
                       onBlur={() => { if (!newUrl.trim()) setAddLinkOpen(false) }}
                       placeholder="https://..."
-                      className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50" />
-                    <button type="button" onClick={() => { handleAddUrl(); setAddLinkOpen(false) }} disabled={!newUrl.trim() || !isValidUrl(newUrl)} className="px-3 py-1.5 bg-cream/10 text-cream/60 text-xs rounded-lg hover:bg-cream/20 transition-colors disabled:opacity-30">Add</button>
+                      className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50" />
+                    <button type="button" onClick={() => { handleAddUrl(); setAddLinkOpen(false) }} disabled={!newUrl.trim() || !isValidUrl(newUrl)} className="px-3 py-1.5 bg-cream/10 text-cream/70 text-xs rounded-lg hover:bg-cream/35 transition-colors disabled:opacity-30">Add</button>
                   </div>
                 )}
                 {addLinkOpen && newUrl && !isValidUrl(newUrl) && <p className="text-yellow-500 text-xs mt-1">URL should start with http:// or https://</p>}
@@ -1100,12 +1100,12 @@ export function OptionDetailContent({
             {(!readOnly || (option.documents && option.documents.length > 0)) && (
               <div>
                 <input ref={docInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.jpg,.jpeg,.png,.webp,.heic,.heif" className="hidden" onChange={(e) => handleDocumentFile(e.target.files?.[0] ?? null)} />
-                <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-2 block">Files</label>
+                <label className="text-[11px] text-cream/45 uppercase tracking-wider mb-2 block">Files</label>
 
                 {(option.documents ?? []).length > 0 && (
                   <div className="space-y-2 mb-2">
                     {(option.documents ?? []).map((doc) => (
-                      <div key={doc.id} className="bg-basalt rounded-xl border border-cream/8 px-3 py-2.5">
+                      <div key={doc.id} className="bg-basalt rounded-xl border border-cream/12 px-3 py-2.5">
                         {editingDocId === doc.id ? (
                           <div className="flex gap-2">
                             <input autoFocus type="text" value={editingDocTitle} onChange={(e) => setEditingDocTitle(e.target.value)}
@@ -1117,19 +1117,19 @@ export function OptionDetailContent({
                           <div className="flex items-start gap-2.5">
                             <span className={`text-[10px] font-bold uppercase mt-0.5 shrink-0 ${docTypeColor(doc.mimeType)}`}>{docTypeLabel(doc.mimeType)}</span>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm text-cream/80 leading-snug truncate">{doc.title}</p>
-                              <p className="text-[11px] text-cream/30 mt-0.5">{formatFileSize(doc.fileSize)} · {doc.uploadedByName} · {formatDate(doc.uploadedAt)}</p>
+                              <p className="text-sm text-cream/90 leading-snug truncate">{doc.title}</p>
+                              <p className="text-[11px] text-cream/45 mt-0.5">{formatFileSize(doc.fileSize)} · {doc.uploadedByName} · {formatDate(doc.uploadedAt)}</p>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
-                              <a href={doc.url} download={doc.fileName} onClick={(e) => e.stopPropagation()} className="p-1.5 text-cream/40 hover:text-sandstone transition-colors" title="Download">
+                              <a href={doc.url} download={doc.fileName} onClick={(e) => e.stopPropagation()} className="p-1.5 text-cream/55 hover:text-sandstone transition-colors" title="Download">
                                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" strokeLinecap="round" /><polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" /><line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" /></svg>
                               </a>
                               {!readOnly && (
                                 <>
-                                  <button type="button" onClick={() => { setEditingDocId(doc.id); setEditingDocTitle(doc.title) }} className="p-1.5 text-cream/40 hover:text-cream/70 transition-colors" title="Rename">
+                                  <button type="button" onClick={() => { setEditingDocId(doc.id); setEditingDocTitle(doc.title) }} className="p-1.5 text-cream/55 hover:text-cream/80 transition-colors" title="Rename">
                                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" /></svg>
                                   </button>
-                                  <button type="button" onClick={() => handleRemoveDocument(doc.id)} className="p-1.5 text-cream/30 hover:text-red-400 transition-colors" title="Remove">
+                                  <button type="button" onClick={() => handleRemoveDocument(doc.id)} className="p-1.5 text-cream/45 hover:text-red-400 transition-colors" title="Remove">
                                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" /></svg>
                                   </button>
                                 </>
@@ -1144,9 +1144,9 @@ export function OptionDetailContent({
 
                 {!readOnly && (
                   <button type="button" onClick={() => docInputRef.current?.click()} disabled={docUploading}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-cream/5 hover:bg-cream/10 rounded-lg text-sm text-cream/40 hover:text-cream/60 transition-colors disabled:opacity-50">
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-stone-200 hover:bg-cream/10 rounded-lg text-sm text-cream/55 hover:text-cream/70 transition-colors disabled:opacity-50">
                     {docUploading ? (
-                      <><div className="w-4 h-4 border-2 border-cream/20 border-t-cream/60 rounded-full animate-spin" />Uploading...</>
+                      <><div className="w-4 h-4 border-2 border-cream/20 border-t-cream/70 rounded-full animate-spin" />Uploading...</>
                     ) : (
                       <><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" strokeLinecap="round" /></svg>Upload file</>
                     )}
@@ -1160,10 +1160,10 @@ export function OptionDetailContent({
         </div>{/* end Links + Files grid */}
 
         {/* Back to Selection (desktop) */}
-        <div className="hidden md:flex pt-3 mt-4 border-t border-cream/10 justify-end">
+        <div className="hidden md:flex pt-3 mt-4 border-t border-cream/15 justify-end">
           <Link
             href={`/app/tools/finish-decisions/decision/${decisionId}`}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-colors bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-colors bg-cream/10 text-cream/70 hover:bg-cream/30 hover:text-cream/90"
           >
             <span>←</span> Back to Selection
           </Link>
@@ -1172,22 +1172,22 @@ export function OptionDetailContent({
         {/* Mobile-only footer: delete + back */}
         <div className="md:hidden mt-6">
           {!readOnly ? (
-            <div className="pt-3 border-t border-cream/10 flex items-center justify-between">
+            <div className="pt-3 border-t border-cream/15 flex items-center justify-between">
               <button type="button" onClick={deleteOption} className="text-red-400/60 hover:text-red-400 text-sm transition-colors">
                 Delete option
               </button>
               <Link
                 href={`/app/tools/finish-decisions/decision/${decisionId}`}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-colors bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-colors bg-cream/10 text-cream/70 hover:bg-cream/30 hover:text-cream/90"
               >
                 <span>←</span> Back
               </Link>
             </div>
           ) : (
-            <div className="pt-3 border-t border-cream/10 flex justify-end">
+            <div className="pt-3 border-t border-cream/15 flex justify-end">
               <Link
                 href={`/app/tools/finish-decisions/decision/${decisionId}`}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-colors bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-colors bg-cream/10 text-cream/70 hover:bg-cream/30 hover:text-cream/90"
               >
                 <span>←</span> Back
               </Link>

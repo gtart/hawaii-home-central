@@ -561,7 +561,7 @@ export function DecisionDetailContent({
     // useEffect above handles the redirect
     return (
       <div className="pt-32 pb-24 px-6">
-        <div className="max-w-3xl mx-auto text-center py-12 text-cream/50">
+        <div className="max-w-3xl mx-auto text-center py-12 text-cream/65">
           <p>Redirecting...</p>
         </div>
       </div>
@@ -582,7 +582,7 @@ export function DecisionDetailContent({
         {/* Timing / Milestones */}
         {result.milestones.length > 0 && (
           <div>
-            <span className="text-xs text-cream/50 uppercase tracking-wide">Timing</span>
+            <span className="text-xs text-cream/65 uppercase tracking-wide">Timing</span>
             <div className="flex flex-wrap gap-2 mt-1.5">
               {result.milestones.map((m) => (
                 <span
@@ -605,19 +605,19 @@ export function DecisionDetailContent({
         {/* Coordination Impacts */}
         {result.impacts.length > 0 && (
           <div>
-            <span className="text-xs text-cream/50 uppercase tracking-wide">
+            <span className="text-xs text-cream/65 uppercase tracking-wide">
               Coordination watchouts
             </span>
             <ul className="mt-1.5 space-y-1">
               {result.impacts.map((i) => (
                 <li
                   key={i.id}
-                  className="flex items-center justify-between text-sm text-cream/70"
+                  className="flex items-center justify-between text-sm text-cream/80"
                 >
                   <span>• {i.label}</span>
                   <button
                     onClick={() => onDismiss(`i:${i.id}`)}
-                    className="text-cream/20 hover:text-cream/50 text-xs ml-2 shrink-0"
+                    className="text-cream/35 hover:text-cream/65 text-xs ml-2 shrink-0"
                   >
                     ×
                   </button>
@@ -630,17 +630,17 @@ export function DecisionDetailContent({
         {/* Advice */}
         {result.advice.length > 0 && (
           <div>
-            <span className="text-xs text-cream/50 uppercase tracking-wide">Advice</span>
+            <span className="text-xs text-cream/65 uppercase tracking-wide">Advice</span>
             <ul className="mt-1.5 space-y-1.5">
               {result.advice.map((a) => (
                 <li
                   key={a.key}
-                  className="flex items-start justify-between text-sm text-cream/60"
+                  className="flex items-start justify-between text-sm text-cream/70"
                 >
                   <span className="leading-relaxed">{a.text}</span>
                   <button
                     onClick={() => onDismiss(a.key)}
-                    className="text-cream/20 hover:text-cream/50 text-xs ml-2 shrink-0 mt-0.5"
+                    className="text-cream/35 hover:text-cream/65 text-xs ml-2 shrink-0 mt-0.5"
                   >
                     ×
                   </button>
@@ -716,7 +716,7 @@ export function DecisionDetailContent({
               <button
                 type="button"
                 onClick={() => setShareOpen(true)}
-                className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 rounded-lg transition-colors"
+                className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-cream/65 hover:text-cream/80 bg-stone-200 hover:bg-cream/10 rounded-lg transition-colors"
                 title="Share this selection"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -747,7 +747,7 @@ export function DecisionDetailContent({
               value={foundDecision.priority || ''}
               onChange={(e) => !readOnly && updateDecision({ priority: (e.target.value || undefined) as SelectionPriority | undefined })}
               disabled={readOnly}
-              className={`shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-basalt-50 text-cream/40 border-cream/10'}`}
+              className={`shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-stone text-cream/55 border-cream/15'}`}
             >
               <option value="">Priority</option>
               {Object.entries(SELECTION_PRIORITY_CONFIG).map(([key, config]) => (
@@ -759,7 +759,7 @@ export function DecisionDetailContent({
               value={foundDecision.dueDate || ''}
               onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
               disabled={readOnly}
-              className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50 shrink-0"
+              className="bg-stone text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50 shrink-0"
             />
           </div>
         </div>
@@ -780,7 +780,7 @@ export function DecisionDetailContent({
               className="text-2xl font-serif text-cream cursor-text"
               onClick={() => !readOnly && setEditingTitle(true)}
             >
-              {foundDecision.title || <span className="text-cream/30">Untitled</span>}
+              {foundDecision.title || <span className="text-cream/45">Untitled</span>}
             </h1>
           )}
           {/* Row 2: Status + Priority + Due date + Comment trigger */}
@@ -799,7 +799,7 @@ export function DecisionDetailContent({
               value={foundDecision.priority || ''}
               onChange={(e) => !readOnly && updateDecision({ priority: (e.target.value || undefined) as SelectionPriority | undefined })}
               disabled={readOnly}
-              className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-basalt-50 text-cream/40 border-cream/10'}`}
+              className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-stone text-cream/55 border-cream/15'}`}
             >
               <option value="">Priority</option>
               {Object.entries(SELECTION_PRIORITY_CONFIG).map(([key, config]) => (
@@ -807,7 +807,7 @@ export function DecisionDetailContent({
               ))}
             </select>
             {foundDecision.dueDate && (
-              <span className="text-[11px] text-cream/40">Due {formattedDue}</span>
+              <span className="text-[11px] text-cream/55">Due {formattedDue}</span>
             )}
             <CommentTriggerButton
               commentCount={userComments.length}
@@ -817,7 +817,7 @@ export function DecisionDetailContent({
           </div>
           {/* Row 3: Location (always visible) */}
           <div className="flex items-center gap-1.5 mt-2">
-            <svg className="w-3.5 h-3.5 text-cream/40 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className="w-3.5 h-3.5 text-cream/55 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
               <circle cx="12" cy="10" r="3" />
             </svg>
@@ -828,7 +828,7 @@ export function DecisionDetailContent({
               onChange={(e) => updateDecision({ location: e.target.value })}
               placeholder="Location (e.g. Kitchen)"
               readOnly={readOnly}
-              className="bg-transparent border-none text-sm text-cream/70 placeholder:text-cream/25 focus:outline-none focus:text-cream transition-colors flex-1 min-w-0 py-0.5 disabled:opacity-50"
+              className="bg-transparent border-none text-sm text-cream/80 placeholder:text-cream/40 focus:outline-none focus:text-cream transition-colors flex-1 min-w-0 py-0.5 disabled:opacity-50"
             />
             <datalist id="location-suggestions-mobile">
               {locationSuggestions.map((loc) => (
@@ -844,7 +844,7 @@ export function DecisionDetailContent({
                 value={foundDecision.dueDate || ''}
                 onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
                 disabled={readOnly}
-                className="bg-basalt-50 text-cream rounded-input px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50"
+                className="bg-stone text-cream rounded-input px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50"
               />
             )}
             <TagInput
@@ -874,7 +874,7 @@ export function DecisionDetailContent({
 
         {/* Status marked-by line */}
         {latestStatusLog && foundDecision.status !== 'deciding' && (
-          <p className="text-[11px] text-cream/30 mb-4">
+          <p className="text-[11px] text-cream/45 mb-4">
             Marked {(STATUS_CONFIG_V3[latestStatusLog.status] ?? STATUS_CONFIG_V3.deciding).label} by {latestStatusLog.markedBy} on{' '}
             {new Date(latestStatusLog.markedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
           </p>
@@ -916,12 +916,12 @@ export function DecisionDetailContent({
                   <button
                     type="button"
                     onClick={() => router.push(buildOptionHref({ decisionId, optionId: finalPick.id }))}
-                    className="text-sm font-medium text-cream hover:text-cream/80 transition-colors truncate block w-full max-w-full text-left"
+                    className="text-sm font-medium text-cream hover:text-cream/90 transition-colors truncate block w-full max-w-full text-left"
                   >
                     {finalPick.name || 'Untitled'}
                   </button>
                   {foundDecision.finalSelection && (
-                    <p className="text-[11px] text-cream/40">
+                    <p className="text-[11px] text-cream/55">
                       Chosen by {foundDecision.finalSelection.selectedBy} &middot;{' '}
                       {new Date(foundDecision.finalSelection.selectedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                     </p>
@@ -931,7 +931,7 @@ export function DecisionDetailContent({
                   <button
                     type="button"
                     onClick={() => selectOption(finalPick.id)}
-                    className="shrink-0 text-[10px] text-cream/30 hover:text-cream/50 transition-colors"
+                    className="shrink-0 text-[10px] text-cream/45 hover:text-cream/65 transition-colors"
                   >
                     Unselect
                   </button>
@@ -940,12 +940,12 @@ export function DecisionDetailContent({
             )
           })() : (
             <div className="border-2 border-dashed border-cream/15 rounded-xl p-6 text-center">
-              <svg className="w-8 h-8 text-cream/20 mx-auto mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <svg className="w-8 h-8 text-cream/35 mx-auto mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <circle cx="12" cy="12" r="10" />
                 <path d="M12 8v4l2 2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <p className="text-sm font-medium text-cream/40">No final decision yet</p>
-              <p className="text-xs text-cream/30">Choose from the options below</p>
+              <p className="text-sm font-medium text-cream/55">No final decision yet</p>
+              <p className="text-xs text-cream/45">Choose from the options below</p>
               {doneWithoutFinal && (
                 <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 bg-red-500/10 text-red-400 text-[10px] font-medium rounded-full border border-red-400/20">
                   Marked Done without a pick
@@ -960,8 +960,8 @@ export function DecisionDetailContent({
           <div className="flex items-center gap-3 mb-3">
             <h2 className="flex items-center gap-2 text-lg font-medium text-cream">
               Options
-              <span className="text-cream/30 font-normal">&middot;</span>
-              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-cream/10 text-cream/50 text-xs font-medium rounded-full">
+              <span className="text-cream/45 font-normal">&middot;</span>
+              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 bg-cream/10 text-cream/65 text-xs font-medium rounded-full">
                 {foundDecision.options.length}
               </span>
             </h2>
@@ -1027,13 +1027,13 @@ export function DecisionDetailContent({
 
         {/* Collapsible Details — location, labels, due date (desktop only — mobile shows in header) */}
         <details className="group mb-6 hidden md:block">
-          <summary className="flex items-center gap-2 cursor-pointer select-none text-sm text-cream/50 hover:text-cream/70 transition-colors py-1">
+          <summary className="flex items-center gap-2 cursor-pointer select-none text-sm text-cream/65 hover:text-cream/80 transition-colors py-1">
             <svg className="w-3.5 h-3.5 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span className="font-medium">Details</span>
             {(foundDecision.location || (foundDecision.tags && foundDecision.tags.length > 0) || formattedDue) && (
-              <span className="text-[10px] text-cream/30">
+              <span className="text-[10px] text-cream/45">
                 {[foundDecision.location, formattedDue ? `Due ${formattedDue}` : null, foundDecision.tags?.length ? `${foundDecision.tags.length} label${foundDecision.tags.length !== 1 ? 's' : ''}` : null].filter(Boolean).join(' · ')}
               </span>
             )}
@@ -1042,11 +1042,11 @@ export function DecisionDetailContent({
             {/* Location */}
             <div>
               <div className="flex items-center gap-1.5 mb-1">
-                <svg className="w-3.5 h-3.5 text-cream/40 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-3.5 h-3.5 text-cream/55 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
-                <span className="text-[11px] uppercase tracking-wider text-cream/40 font-medium">Location</span>
+                <span className="text-[11px] uppercase tracking-wider text-cream/55 font-medium">Location</span>
               </div>
               <input
                 type="text"
@@ -1055,7 +1055,7 @@ export function DecisionDetailContent({
                 onChange={(e) => updateDecision({ location: e.target.value })}
                 placeholder="Where in the home? e.g. Kitchen"
                 readOnly={readOnly}
-                className="bg-basalt border border-cream/12 rounded-lg px-3 py-1.5 text-sm text-cream/70 placeholder:text-cream/25 focus:outline-none focus:text-cream focus:border-sandstone/40 transition-colors w-full max-w-[280px] disabled:opacity-50"
+                className="bg-basalt border border-cream/12 rounded-lg px-3 py-1.5 text-sm text-cream/80 placeholder:text-cream/40 focus:outline-none focus:text-cream focus:border-sandstone/40 transition-colors w-full max-w-[280px] disabled:opacity-50"
               />
               <datalist id="location-suggestions">
                 {locationSuggestions.map((loc) => (
@@ -1065,7 +1065,7 @@ export function DecisionDetailContent({
             </div>
             {/* Labels */}
             <div>
-              <span className="text-[11px] uppercase tracking-wider text-cream/30 font-medium mb-1 block">Labels</span>
+              <span className="text-[11px] uppercase tracking-wider text-cream/45 font-medium mb-1 block">Labels</span>
               <TagInput
                 tags={foundDecision.tags || []}
                 allTags={allTags}
@@ -1076,18 +1076,18 @@ export function DecisionDetailContent({
             </div>
             {/* Due date (desktop only — mobile shows in header) */}
             <div>
-              <span className="text-[11px] uppercase tracking-wider text-cream/40 font-medium mb-1 block">Due date</span>
+              <span className="text-[11px] uppercase tracking-wider text-cream/55 font-medium mb-1 block">Due date</span>
               <input
                 type="date"
                 value={foundDecision.dueDate || ''}
                 onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
                 disabled={readOnly}
-                className="bg-basalt-50 text-cream rounded-input px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50"
+                className="bg-stone text-cream rounded-input px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50"
               />
             </div>
             {/* Meta */}
             {formattedDue && (
-              <div className="text-xs text-cream/40">
+              <div className="text-xs text-cream/55">
                 Due {formattedDue}
               </div>
             )}
@@ -1107,7 +1107,7 @@ export function DecisionDetailContent({
 
         {/* Actions */}
         {!readOnly && (
-          <div className="mt-8 pt-4 border-t border-cream/10 space-y-3">
+          <div className="mt-8 pt-4 border-t border-cream/15 space-y-3">
             <button
               type="button"
               onClick={() => setDeleteConfirmOpen(true)}
@@ -1152,10 +1152,10 @@ export function DecisionDetailContent({
           {/* Desktop: centered modal */}
           <div className="hidden md:flex fixed inset-0 z-50 items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/40" onClick={() => setGuidanceOpen(false)} />
-            <div className="relative bg-basalt-50 border border-cream/15 rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-y-auto">
-              <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 flex items-center justify-between px-5 py-4 z-10 rounded-t-xl">
+            <div className="relative bg-stone border border-cream/15 rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-y-auto">
+              <div className="sticky top-0 bg-stone border-b border-cream/15 flex items-center justify-between px-5 py-4 z-10 rounded-t-xl">
                 <h2 className="text-lg font-medium text-sandstone">Guidance</h2>
-                <button type="button" onClick={() => setGuidanceOpen(false)} className="text-cream/40 hover:text-cream transition-colors">
+                <button type="button" onClick={() => setGuidanceOpen(false)} className="text-cream/55 hover:text-cream transition-colors">
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" /></svg>
                 </button>
               </div>
@@ -1168,10 +1168,10 @@ export function DecisionDetailContent({
           {/* Mobile: bottom sheet */}
           <div className="md:hidden fixed inset-0 z-50 flex items-end">
             <div className="absolute inset-0 bg-black/60" onClick={() => setGuidanceOpen(false)} />
-            <div className="relative bg-basalt-50 border-t border-cream/10 rounded-t-xl w-full max-h-[80vh] overflow-y-auto">
-              <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 flex items-center justify-between px-5 py-3 z-10 rounded-t-xl">
+            <div className="relative bg-stone border-t border-cream/15 rounded-t-xl w-full max-h-[80vh] overflow-y-auto">
+              <div className="sticky top-0 bg-stone border-b border-cream/15 flex items-center justify-between px-5 py-3 z-10 rounded-t-xl">
                 <h2 className="text-lg font-medium text-sandstone">Guidance</h2>
-                <button type="button" onClick={() => setGuidanceOpen(false)} className="text-cream/40 hover:text-cream transition-colors">
+                <button type="button" onClick={() => setGuidanceOpen(false)} className="text-cream/55 hover:text-cream transition-colors">
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" /></svg>
                 </button>
               </div>
@@ -1236,7 +1236,7 @@ export function DecisionDetailContent({
 
       {/* Toast */}
       {assignToast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl text-sm text-cream/80">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-stone border border-cream/15 rounded-lg shadow-xl text-sm text-cream/90">
           {assignToast}
         </div>
       )}

@@ -221,14 +221,14 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
   const content = (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="shrink-0 border-b border-cream/10 px-5 py-4">
+      <div className="shrink-0 border-b border-cream/15 px-5 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {step !== 'tool' && !sortSuccess && (
               <button
                 type="button"
                 onClick={handleBack}
-                className="text-cream/40 hover:text-cream transition-colors -ml-1 p-1"
+                className="text-cream/55 hover:text-cream transition-colors -ml-1 p-1"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -242,7 +242,7 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
           <button
             type="button"
             onClick={onClose}
-            className="text-cream/40 hover:text-cream transition-colors shrink-0"
+            className="text-cream/55 hover:text-cream transition-colors shrink-0"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
@@ -259,7 +259,7 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
             <svg className="w-10 h-10 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <p className="text-sm text-cream/60">
+            <p className="text-sm text-cream/70">
               Added to {destinationSummary}
             </p>
           </div>
@@ -268,8 +268,8 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
         {/* Loading */}
         {loading && !sortSuccess && (
           <div className="flex items-center justify-center gap-3 py-8">
-            <div className="w-5 h-5 border-2 border-cream/20 border-t-sandstone rounded-full animate-spin" />
-            <span className="text-sm text-cream/50">
+            <div className="w-5 h-5 border-2 border-cream/35 border-t-sandstone rounded-full animate-spin" />
+            <span className="text-sm text-cream/65">
               {step === 'confirm' ? 'Sorting...' : 'Loading...'}
             </span>
           </div>
@@ -283,7 +283,7 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
                 key={tool.key}
                 type="button"
                 onClick={() => handleToolSelect(tool.key)}
-                className="w-full flex items-center gap-3 p-3.5 bg-cream/5 border border-cream/10 rounded-lg hover:bg-cream/8 transition-colors text-left"
+                className="w-full flex items-center gap-3 p-3.5 bg-stone-200 border border-cream/15 rounded-lg hover:bg-stone-hover transition-colors text-left"
               >
                 <div className="w-9 h-9 rounded-lg bg-sandstone/10 flex items-center justify-center shrink-0">
                   {tool.key === 'finish_decisions' && (
@@ -308,9 +308,9 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-cream font-medium">{tool.label}</p>
-                  <p className="text-[11px] text-cream/35 mt-0.5">{tool.description}</p>
+                  <p className="text-[11px] text-cream/50 mt-0.5">{tool.description}</p>
                 </div>
-                <svg className="w-4 h-4 text-cream/20 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-4 h-4 text-cream/35 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
@@ -322,7 +322,7 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
         {step === 'collection' && !loading && (
           <div className="space-y-2">
             {collections.length === 0 && !error && (
-              <p className="text-sm text-cream/40 text-center py-4">
+              <p className="text-sm text-cream/55 text-center py-4">
                 No {toolLabel} lists found. Create one first.
               </p>
             )}
@@ -331,10 +331,10 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
                 key={coll.id}
                 type="button"
                 onClick={() => handleCollectionSelect(coll.id, coll.title)}
-                className="w-full flex items-center justify-between p-3 bg-cream/5 border border-cream/10 rounded-lg hover:bg-cream/8 transition-colors text-left"
+                className="w-full flex items-center justify-between p-3 bg-stone-200 border border-cream/15 rounded-lg hover:bg-stone-hover transition-colors text-left"
               >
                 <span className="text-sm text-cream truncate">{coll.title}</span>
-                <svg className="w-4 h-4 text-cream/20 shrink-0 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-4 h-4 text-cream/35 shrink-0 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
@@ -346,7 +346,7 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
         {step === 'decision' && !loading && (
           <div className="space-y-2">
             {decisions.length === 0 && !error && (
-              <p className="text-sm text-cream/40 text-center py-4">
+              <p className="text-sm text-cream/55 text-center py-4">
                 No selections found in this list.
               </p>
             )}
@@ -355,13 +355,13 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
                 key={dec.id}
                 type="button"
                 onClick={() => handleDecisionSelect(dec.id, dec.title)}
-                className="w-full flex items-center justify-between p-3 bg-cream/5 border border-cream/10 rounded-lg hover:bg-cream/8 transition-colors text-left"
+                className="w-full flex items-center justify-between p-3 bg-stone-200 border border-cream/15 rounded-lg hover:bg-stone-hover transition-colors text-left"
               >
                 <div className="min-w-0">
                   <p className="text-sm text-cream truncate">{dec.title}</p>
-                  <p className="text-[11px] text-cream/30 mt-0.5 truncate">{dec.roomTitle}</p>
+                  <p className="text-[11px] text-cream/45 mt-0.5 truncate">{dec.roomTitle}</p>
                 </div>
-                <svg className="w-4 h-4 text-cream/20 shrink-0 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-4 h-4 text-cream/35 shrink-0 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
@@ -373,7 +373,7 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
         {step === 'confirm' && !loading && !sortSuccess && (
           <div>
             {/* Preview */}
-            <div className="flex items-start gap-3 p-3 bg-cream/5 rounded-lg mb-4">
+            <div className="flex items-start gap-3 p-3 bg-stone-200 rounded-lg mb-4">
               {(item.thumbnailUrl || item.imageUrl) && (
                 <img
                   src={item.thumbnailUrl || item.imageUrl || ''}
@@ -383,19 +383,19 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-cream truncate">{item.title || item.note || 'Captured item'}</p>
-                <p className="text-[11px] text-cream/30 mt-0.5 truncate">{destinationSummary}</p>
+                <p className="text-[11px] text-cream/45 mt-0.5 truncate">{destinationSummary}</p>
               </div>
             </div>
 
             {/* Title override */}
             <div className="mb-4">
-              <label className="text-[11px] text-cream/30 block mb-1">Title</label>
+              <label className="text-[11px] text-cream/45 block mb-1">Title</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Enter a title..."
-                className="w-full bg-cream/5 border border-cream/10 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/40"
+                className="w-full bg-stone-200 border border-cream/15 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/40"
               />
             </div>
 
@@ -429,7 +429,7 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
       {/* Desktop: centered modal */}
       <div className="hidden md:flex fixed inset-0 z-[56] items-center justify-center pointer-events-none">
         <div
-          className="w-full max-w-md bg-basalt-50 border border-cream/10 rounded-xl shadow-2xl pointer-events-auto"
+          className="w-full max-w-md bg-stone border border-cream/15 rounded-xl shadow-2xl pointer-events-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {content}
@@ -438,11 +438,11 @@ export function SortWizard({ item, onClose, onSorted }: SortWizardProps) {
 
       {/* Mobile: bottom sheet */}
       <div
-        className="md:hidden fixed inset-x-0 bottom-0 z-[56] bg-basalt-50 border-t border-cream/10 rounded-t-xl shadow-2xl"
+        className="md:hidden fixed inset-x-0 bottom-0 z-[56] bg-stone border-t border-cream/15 rounded-t-xl shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center pt-2 pb-1">
-          <div className="w-10 h-1 bg-cream/15 rounded-full" />
+          <div className="w-10 h-1 bg-cream/30 rounded-full" />
         </div>
         {content}
         <div className="pb-[env(safe-area-inset-bottom)]" />

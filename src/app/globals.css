@@ -18,6 +18,13 @@
   --color-sandstone-light: #d4bb96;
   --color-sandstone-dark: #b08d5b;
 
+  /* Work-mode surfaces — warm stone palette for legible tool pages */
+  --color-stone: #2b2725;
+  --color-stone-50: #332e2c;
+  --color-stone-100: #231f1d;
+  --color-stone-200: #1d1b19;
+  --color-stone-hover: #383432;
+
   /* Font families */
   --font-family-serif: var(--font-playfair), Georgia, serif;
   --font-family-sans: var(--font-inter), system-ui, sans-serif;
@@ -76,6 +83,12 @@
     #252018 75%,
     #1a1a1a 100%
   );
+
+  /* Work-mode text — warm neutrals with better contrast than cream/opacity */
+  --wm-text-primary: #ede8e0;
+  --wm-text-secondary: #b5ada3;
+  --wm-text-tertiary: #8a8079;
+  --wm-text-muted: #635b54;
 
   /* Shadows */
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3),
@@ -206,12 +219,12 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3a3a3a;
+  background: #3a3533;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4a4a4a;
+  background: #4a4442;
 }
 
 /* Link styles */

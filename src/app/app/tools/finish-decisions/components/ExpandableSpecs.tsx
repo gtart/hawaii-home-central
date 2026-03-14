@@ -20,7 +20,7 @@ export function ExpandableSpecs({ value, readOnly, onChange, optionName }: { val
     const isLong = value.split('\n').length > 10 || value.length > 400
     return (
       <div>
-        <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-1 block">Specs</label>
+        <label className="text-[11px] text-cream/45 uppercase tracking-wider mb-1 block">Specs</label>
         <p className={`text-sm text-cream whitespace-pre-wrap ${!readOnlyExpanded && isLong ? 'line-clamp-10' : ''}`}>
           {value}
         </p>
@@ -37,11 +37,11 @@ export function ExpandableSpecs({ value, readOnly, onChange, optionName }: { val
     <>
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label className="text-[11px] text-cream/30 uppercase tracking-wider">Specs</label>
+          <label className="text-[11px] text-cream/45 uppercase tracking-wider">Specs</label>
           <button
             type="button"
             onClick={() => setFullscreen(true)}
-            className="text-cream/25 hover:text-cream/50 transition-colors"
+            className="text-cream/40 hover:text-cream/65 transition-colors"
             title="Expand specs"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -54,7 +54,7 @@ export function ExpandableSpecs({ value, readOnly, onChange, optionName }: { val
           value={value}
           onChange={(e) => { onChange(e.target.value); autoGrow() }}
           placeholder="Specs, dimensions, details..."
-          className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 resize-y"
+          className="w-full bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/40 focus:outline-none focus:border-sandstone/50 resize-y"
           style={{ minHeight: '120px' }}
         />
       </div>
@@ -62,15 +62,15 @@ export function ExpandableSpecs({ value, readOnly, onChange, optionName }: { val
       {fullscreen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-8">
           <div className="absolute inset-0 bg-black/70" onClick={() => setFullscreen(false)} />
-          <div className="relative bg-basalt-50 border border-cream/15 rounded-xl shadow-xl w-full max-w-3xl flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-cream/10 shrink-0">
+          <div className="relative bg-stone border border-cream/15 rounded-xl shadow-xl w-full max-w-3xl flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-cream/15 shrink-0">
               <h2 className="text-sm font-medium text-cream truncate">
                 Specs{optionName ? ` — ${optionName}` : ''}
               </h2>
               <button
                 type="button"
                 onClick={() => setFullscreen(false)}
-                className="text-cream/40 hover:text-cream transition-colors"
+                className="text-cream/55 hover:text-cream transition-colors"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
@@ -83,11 +83,11 @@ export function ExpandableSpecs({ value, readOnly, onChange, optionName }: { val
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder="Specs, dimensions, details..."
-                className="w-full h-full bg-basalt border border-cream/10 rounded-lg px-4 py-3 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 resize-none"
+                className="w-full h-full bg-basalt border border-cream/15 rounded-lg px-4 py-3 text-sm text-cream placeholder:text-cream/40 focus:outline-none focus:border-sandstone/50 resize-none"
                 style={{ minHeight: '60vh' }}
               />
             </div>
-            <div className="flex justify-end px-5 py-3 border-t border-cream/10 shrink-0">
+            <div className="flex justify-end px-5 py-3 border-t border-cream/15 shrink-0">
               <button
                 type="button"
                 onClick={() => setFullscreen(false)}

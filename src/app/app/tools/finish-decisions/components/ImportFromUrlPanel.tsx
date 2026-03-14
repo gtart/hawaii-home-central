@@ -159,7 +159,7 @@ export function ImportFromUrlPanel({
             }
           }}
           placeholder="Paste a URL (e.g. homedepot.com/p/...)"
-          className="flex-1 px-3 py-2 bg-basalt-50 border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone"
+          className="flex-1 px-3 py-2 bg-stone border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/45 focus:outline-none focus:border-sandstone"
         />
         <button
           type="button"
@@ -187,9 +187,9 @@ export function ImportFromUrlPanel({
         <div className="space-y-4">
           {/* Page info */}
           {(preview.title || preview.siteName || preview.description) && (
-            <div className="bg-basalt-50 rounded-lg p-3 border border-cream/10">
+            <div className="bg-stone rounded-lg p-3 border border-cream/15">
               {preview.siteName && (
-                <p className="text-[11px] text-cream/40 uppercase tracking-wide mb-1">
+                <p className="text-[11px] text-cream/55 uppercase tracking-wide mb-1">
                   {preview.siteName}
                 </p>
               )}
@@ -199,7 +199,7 @@ export function ImportFromUrlPanel({
                 </p>
               )}
               {preview.description && (
-                <p className="text-xs text-cream/50 mt-1 line-clamp-2">
+                <p className="text-xs text-cream/65 mt-1 line-clamp-2">
                   {preview.description}
                 </p>
               )}
@@ -210,21 +210,21 @@ export function ImportFromUrlPanel({
           {hasImages && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-cream/50">
+                <p className="text-xs text-cream/65">
                   Select images (optional) · {selectedUrls.size} selected
                 </p>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setSelectedUrls(new Set(preview!.images!.map((i) => i.url)))}
-                    className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+                    className="text-[11px] text-cream/55 hover:text-cream/80 transition-colors"
                   >
                     All
                   </button>
                   <button
                     type="button"
                     onClick={() => setSelectedUrls(new Set())}
-                    className="text-[11px] text-cream/40 hover:text-cream/70 transition-colors"
+                    className="text-[11px] text-cream/55 hover:text-cream/80 transition-colors"
                   >
                     None
                   </button>
@@ -249,7 +249,7 @@ export function ImportFromUrlPanel({
                         alt={img.label || ''}
                         className="w-full h-full object-cover"
                         fallback={
-                          <div className="w-full h-full flex items-center justify-center bg-basalt-50">
+                          <div className="w-full h-full flex items-center justify-center bg-stone">
                             <span className="text-2xl opacity-30">🖼️</span>
                           </div>
                         }
@@ -278,12 +278,12 @@ export function ImportFromUrlPanel({
           {/* No images found / site blocked */}
           {!hasImages && (
             <div className="bg-basalt rounded-lg p-4 text-center">
-              <p className="text-xs text-cream/50 mb-1">
+              <p className="text-xs text-cream/65 mb-1">
                 {(preview as Record<string, unknown>)?._blocked
                   ? 'This site blocked our preview request.'
                   : 'No images found on this page.'}
               </p>
-              <p className="text-[11px] text-cream/30">
+              <p className="text-[11px] text-cream/45">
                 You can still save this URL as an idea — just enter a name below.
               </p>
             </div>
@@ -293,23 +293,23 @@ export function ImportFromUrlPanel({
           {mode === 'create-idea' && (
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-cream/50 mb-1">Idea name</label>
+                <label className="block text-xs text-cream/65 mb-1">Idea name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Name this idea..."
-                  className="w-full px-3 py-2 bg-basalt-50 border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone"
+                  className="w-full px-3 py-2 bg-stone border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/45 focus:outline-none focus:border-sandstone"
                 />
               </div>
               <div>
-                <label className="block text-xs text-cream/50 mb-1">Notes (optional)</label>
+                <label className="block text-xs text-cream/65 mb-1">Notes (optional)</label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Price, specs, or other details..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-basalt-50 border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone resize-none"
+                  className="w-full px-3 py-2 bg-stone border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/45 focus:outline-none focus:border-sandstone resize-none"
                 />
               </div>
             </div>
@@ -320,7 +320,7 @@ export function ImportFromUrlPanel({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-sm text-cream/60 hover:text-cream transition-colors"
+              className="px-4 py-2 text-sm text-cream/70 hover:text-cream transition-colors"
             >
               Cancel
             </button>

@@ -89,7 +89,7 @@ export function SelectionsBoardView({
 
   if (decisions.length === 0) {
     return (
-      <div data-testid="empty-state-selection" className="text-center py-8 text-cream/50 text-sm">
+      <div data-testid="empty-state-selection" className="text-center py-8 text-cream/65 text-sm">
         No decisions yet.
         {onAddSelection && !readOnly && (
           <>
@@ -129,7 +129,7 @@ export function SelectionsBoardView({
                 router.push(buildDecisionHref({ decisionId: decision.id, collectionId }))
               }
             }}
-            className="bg-basalt-50 rounded-xl overflow-hidden border border-cream/10 hover:border-cream/25 transition-all cursor-pointer group focus:outline-none focus:ring-2 focus:ring-sandstone/50"
+            className="bg-stone rounded-xl overflow-hidden border border-cream/15 hover:border-cream/25 transition-all cursor-pointer group focus:outline-none focus:ring-2 focus:ring-sandstone/50"
           >
             {/* Title row — above image */}
             <div className="px-3 pt-2.5 pb-1 flex items-center gap-1.5">
@@ -141,7 +141,7 @@ export function SelectionsBoardView({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onDeleteDecision(decision.id) }}
-                  className="p-1 text-cream/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                  className="p-1 text-cream/35 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
                   title="Delete"
                 >
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -198,10 +198,10 @@ export function SelectionsBoardView({
 
               {/* Meta row: options pill, open, comments */}
               <div className="flex items-center gap-1.5 text-[11px] text-cream/55 mt-1">
-                <span className="inline-flex items-center gap-1 px-1.5 h-[1.125rem] bg-cream/10 text-cream/50 text-[10px] font-medium rounded-full">
+                <span className="inline-flex items-center gap-1 px-1.5 h-[1.125rem] bg-cream/10 text-cream/65 text-[10px] font-medium rounded-full">
                   {decision.options.length} Option{decision.options.length !== 1 ? 's' : ''}
                 </span>
-                <span className="text-cream/20">·</span>
+                <span className="text-cream/35">·</span>
                 <button
                   type="button"
                   data-testid="selection-open"
@@ -216,13 +216,13 @@ export function SelectionsBoardView({
               </div>
 
               {/* Due date + updated */}
-              <div className="flex items-center gap-1.5 text-[10px] text-cream/40 mt-1">
+              <div className="flex items-center gap-1.5 text-[10px] text-cream/55 mt-1">
                 {decision.dueDate && (
                   <>
                     <span>
                       Due {new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>
-                    <span className="text-cream/20">·</span>
+                    <span className="text-cream/35">·</span>
                   </>
                 )}
                 <span>Updated {relativeTime(decision.updatedAt)}</span>
@@ -239,12 +239,12 @@ export function SelectionsBoardView({
           onClick={onAddSelection}
           className="rounded-xl border-2 border-dashed border-cream/15 hover:border-sandstone/40 bg-transparent hover:bg-sandstone/5 transition-all flex flex-col items-center justify-center gap-2 min-h-[200px] group/add focus:outline-none focus:ring-2 focus:ring-sandstone/50"
         >
-          <div className="w-10 h-10 rounded-full bg-cream/5 group-hover/add:bg-sandstone/10 flex items-center justify-center transition-colors">
-            <svg className="w-5 h-5 text-cream/30 group-hover/add:text-sandstone transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <div className="w-10 h-10 rounded-full bg-stone-200 group-hover/add:bg-sandstone/10 flex items-center justify-center transition-colors">
+            <svg className="w-5 h-5 text-cream/45 group-hover/add:text-sandstone transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
             </svg>
           </div>
-          <span className="text-xs text-cream/40 group-hover/add:text-cream/60 font-medium transition-colors">
+          <span className="text-xs text-cream/55 group-hover/add:text-cream/70 font-medium transition-colors">
             Add a selection
           </span>
         </button>

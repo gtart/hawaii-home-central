@@ -50,7 +50,7 @@ export function OptionEditor({
   }
 
   return (
-    <div className="bg-basalt-50 rounded-card p-4 mb-3">
+    <div className="bg-stone rounded-card p-4 mb-3">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           {!readOnly && (
@@ -61,7 +61,7 @@ export function OptionEditor({
                 'px-3 py-1 rounded-full text-xs font-medium transition-colors shrink-0',
                 option.isSelected
                   ? 'bg-sandstone text-basalt'
-                  : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                  : 'bg-cream/10 text-cream/70 hover:text-cream/90'
               )}
             >
               {option.isSelected ? 'Selected' : 'Select'}
@@ -94,7 +94,7 @@ export function OptionEditor({
 
         {/* URLs Section */}
         <div>
-          <label className="block text-sm text-cream/70 mb-2">URLs</label>
+          <label className="block text-sm text-cream/80 mb-2">URLs</label>
           {option.urls.length > 0 && (
             <div className="space-y-2 mb-3">
               {option.urls.map((url) => (
@@ -110,7 +110,7 @@ export function OptionEditor({
                   {!readOnly && (
                     <button
                       onClick={() => handleRemoveUrl(url.id)}
-                      className="text-cream/40 hover:text-cream/70 text-xs shrink-0"
+                      className="text-cream/55 hover:text-cream/80 text-xs shrink-0"
                     >
                       Remove
                     </button>
@@ -140,7 +140,7 @@ export function OptionEditor({
         </div>
 
         <div>
-          <label className="block text-sm text-cream/70 mb-1.5">Notes</label>
+          <label className="block text-sm text-cream/80 mb-1.5">Notes</label>
           <textarea
             value={option.notes}
             onChange={(e) => onUpdate({ notes: e.target.value })}

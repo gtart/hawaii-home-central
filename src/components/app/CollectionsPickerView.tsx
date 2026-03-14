@@ -73,7 +73,7 @@ function ThumbnailGrid({ imageUrls }: { imageUrls: string[] }) {
 
   if (count === 0) {
     return (
-      <div className="aspect-[16/9] bg-basalt flex items-center justify-center text-cream/20">
+      <div className="aspect-[16/9] bg-basalt flex items-center justify-center text-cream/65">
         <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <rect x="3" y="3" width="18" height="18" rx="2" />
           <circle cx="8.5" cy="8.5" r="1.5" />
@@ -340,14 +340,14 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
 
   const breadcrumb = (
     <nav className="flex items-center gap-1.5 text-xs mb-4">
-      <a href="/app" className="inline-flex items-center gap-1 text-cream/40 hover:text-cream/60 transition-colors">
+      <a href="/app" className="inline-flex items-center gap-1 text-cream/55 hover:text-cream/80 transition-colors">
         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <polyline points="15 18 9 12 15 6" />
         </svg>
         Tools
       </a>
-      <span className="text-cream/20">/</span>
-      <span className="text-cream/60">{toolLabel}</span>
+      <span className="text-cream/65">/</span>
+      <span className="text-cream/80">{toolLabel}</span>
     </nav>
   )
 
@@ -365,7 +365,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
       <div className="text-center py-24">
         <div className="text-left">{breadcrumb}</div>
         <h2 className="font-serif text-2xl text-cream mb-2">{toolLabel}</h2>
-        <p className="text-cream/50 text-sm mb-6">
+        <p className="text-cream/65 text-sm mb-6">
           Create your first {itemNoun} to get started.
         </p>
         <div className="max-w-xs mx-auto">
@@ -375,7 +375,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
             onChange={(e) => setNewTitle(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleCreate() }}
             placeholder={`${itemNoun.charAt(0).toUpperCase() + itemNoun.slice(1)} name...`}
-            className="w-full bg-basalt border border-cream/20 rounded px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50 mb-3"
+            className="w-full bg-basalt border border-cream/20 rounded px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50 mb-3"
           />
           <button
             type="button"
@@ -399,11 +399,11 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
         <div className="flex items-center gap-2">
           {headerActions}
           {previewMode && (
-            <div className="hidden md:flex items-center gap-1 bg-basalt border border-cream/10 rounded-lg p-0.5">
+            <div className="hidden md:flex items-center gap-1 bg-basalt border border-cream/20 rounded-lg p-0.5">
             <button
               type="button"
               onClick={() => { setViewMode('grid'); localStorage.setItem(`hhc-picker-view-${toolKey}`, 'grid') }}
-              className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-cream/10 text-cream' : 'text-cream/30 hover:text-cream/50'}`}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-cream/12 text-cream' : 'text-cream/45 hover:text-cream/65'}`}
               title="Grid view"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -416,7 +416,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
             <button
               type="button"
               onClick={() => { setViewMode('table'); localStorage.setItem(`hhc-picker-view-${toolKey}`, 'table') }}
-              className={`p-1.5 rounded-md transition-colors ${viewMode === 'table' ? 'bg-cream/10 text-cream' : 'text-cream/30 hover:text-cream/50'}`}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'table' ? 'bg-cream/12 text-cream' : 'text-cream/45 hover:text-cream/65'}`}
               title="Table view"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -435,7 +435,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
         <div className="hidden md:block mb-6">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider text-cream/30 border-b border-cream/10">
+              <tr className="text-left text-[11px] uppercase tracking-wider text-cream/45 border-b border-cream/20">
                 {toolKey !== 'project_summary' && <th className="pb-2 pr-3 w-12" />}
                 <th className="pb-2 pr-3">Name</th>
                 <th className="pb-2 pr-3 w-28">Shared</th>
@@ -480,14 +480,14 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                   <tr
                     key={coll.id}
                     onClick={() => router.push(`${toolPath}/${coll.id}`)}
-                    className="border-b border-cream/5 hover:bg-cream/[0.03] cursor-pointer transition-colors group"
+                    className="border-b border-cream/20 hover:bg-stone-hover cursor-pointer transition-colors group"
                   >
                     {toolKey !== 'project_summary' && (
                     <td className="py-3 pr-3">
                       {thumb ? (
                         <img src={`/api/image-proxy?url=${encodeURIComponent(thumb)}`} alt="" className="w-10 h-10 rounded-lg object-cover" loading="lazy" />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-basalt-50 flex items-center justify-center text-cream/15">
+                        <div className="w-10 h-10 rounded-lg bg-stone flex items-center justify-center text-cream/45">
                           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                             <rect x="3" y="3" width="18" height="18" rx="2" />
                             <circle cx="8.5" cy="8.5" r="1.5" />
@@ -516,7 +516,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         <div>
                           <span className="font-medium text-cream">{coll.title}</span>
                           {toolKey === 'project_summary' && (
-                            <span className="block text-[11px] text-cream/30 mt-0.5">Created {new Date(coll.createdAt).toLocaleDateString()}</span>
+                            <span className="block text-[11px] text-cream/45 mt-0.5">Created {new Date(coll.createdAt).toLocaleDateString()}</span>
                           )}
                         </div>
                       )}
@@ -529,7 +529,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                             {coll.members.slice(0, 3).map((m) => (
                               <div
                                 key={m.userId}
-                                className="w-6 h-6 rounded-full bg-sandstone/20 border border-basalt flex items-center justify-center text-[10px] text-cream/60"
+                                className="w-6 h-6 rounded-full bg-sandstone/20 border border-basalt flex items-center justify-center text-[10px] text-cream/80"
                                 title={m.user.name || 'Collaborator'}
                               >
                                 {m.user.image ? (
@@ -540,7 +540,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                               </div>
                             ))}
                             {coll.members.length > 3 && (
-                              <div className="w-6 h-6 rounded-full bg-cream/10 border border-basalt flex items-center justify-center text-[10px] text-cream/40">
+                              <div className="w-6 h-6 rounded-full bg-cream/12 border border-basalt flex items-center justify-center text-[10px] text-cream/55">
                                 +{coll.members.length - 3}
                               </div>
                             )}
@@ -555,7 +555,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                           <span className="text-[10px] text-amber-400/70 bg-amber-400/10 rounded-full px-1.5 py-0.5">{pendingInvites} pending</span>
                         )}
                         {coll.members.length === 0 && !hasLink && pendingInvites === 0 && (
-                          <span className="text-cream/20 text-xs">—</span>
+                          <span className="text-cream/65 text-xs">—</span>
                         )}
                       </div>
                     </td>
@@ -566,26 +566,26 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                           <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded w-fit ${
                             preview.planStatus === 'approved' || preview.planStatus === 'confirmed' || preview.planStatus === 'acknowledged' ? 'bg-emerald-500/10 text-emerald-400/70'
                             : preview.planStatus === 'unlocked' ? 'bg-amber-500/10 text-amber-400/70'
-                            : 'bg-cream/5 text-cream/30'
+                            : 'bg-stone-200 text-cream/45'
                           }`}>{preview.planStatus === 'working' ? 'Draft' : preview.planStatus === 'approved' ? 'Approved' : preview.planStatus === 'unlocked' ? 'Unlocked' : preview.planStatus.charAt(0).toUpperCase() + preview.planStatus.slice(1)}</span>
                         ) : (
-                          <span className="text-cream/20 italic">Not started</span>
+                          <span className="text-cream/65 italic">Not started</span>
                         )
                       ) : toolKey === 'punchlist' ? (
                         statusParts.length > 0 ? (
-                          <span className="text-cream/50">{statusParts.join(' · ')}</span>
+                          <span className="text-cream/65">{statusParts.join(' · ')}</span>
                         ) : (
-                          <span className="text-cream/20 italic">—</span>
+                          <span className="text-cream/65 italic">—</span>
                         )
                       ) : totalDecisions > 0 ? (
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-cream/50">Decided {decided}/{totalDecisions}</span>
-                          <span className="text-cream/30">Done {doneCount}/{totalDecisions}</span>
+                          <span className="text-cream/65">Decided {decided}/{totalDecisions}</span>
+                          <span className="text-cream/45">Done {doneCount}/{totalDecisions}</span>
                         </div>
                       ) : previewMode === 'thumbnails' && preview.ideaCount > 0 ? (
-                        <span className="text-cream/50">{preview.ideaCount} idea{preview.ideaCount !== 1 ? 's' : ''}</span>
+                        <span className="text-cream/65">{preview.ideaCount} idea{preview.ideaCount !== 1 ? 's' : ''}</span>
                       ) : (
-                        <span className="text-cream/20 italic">—</span>
+                        <span className="text-cream/65 italic">—</span>
                       )}
                     </td>
                     {/* Still to Decide — project_summary only */}
@@ -594,7 +594,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         {(preview.unresolvedOpenItemCount ?? 0) > 0 ? (
                           <span className="text-amber-400/70">{preview.unresolvedOpenItemCount} to decide</span>
                         ) : (
-                          <span className="text-cream/20">—</span>
+                          <span className="text-cream/65">—</span>
                         )}
                       </td>
                     )}
@@ -604,19 +604,19 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         {(preview.activeChangeCount ?? 0) > 0 ? (
                           <span className="text-amber-400/70">{preview.activeChangeCount} pending</span>
                         ) : (preview.changeCount ?? 0) > 0 ? (
-                          <span className="text-cream/40">{preview.changeCount} total</span>
+                          <span className="text-cream/55">{preview.changeCount} total</span>
                         ) : (
-                          <span className="text-cream/20">—</span>
+                          <span className="text-cream/65">—</span>
                         )}
                       </td>
                     )}
-                    <td className="py-3 pr-3 text-cream/40 text-xs whitespace-nowrap">
+                    <td className="py-3 pr-3 text-cream/55 text-xs whitespace-nowrap">
                       {new Date(coll.updatedAt).toLocaleDateString()}
                       {coll.updatedBy?.name && <span> by {coll.updatedBy.name.split(' ')[0]}</span>}
                     </td>
                     {/* Recent Activity — prefer ActivityEvent, fallback to lastComment/lastActivity (hidden for project_summary) */}
                     {toolKey !== 'project_summary' && (
-                    <td className="py-3 pr-3 text-cream/40 text-xs max-w-[200px] truncate">
+                    <td className="py-3 pr-3 text-cream/55 text-xs max-w-[200px] truncate">
                       {preview.lastEvent ? (
                         <ActivityEventRow event={preview.lastEvent} variant="inline" />
                       ) : preview.lastComment ? (
@@ -629,7 +629,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                       ) : preview.lastActivity ? (
                         <span>{preview.lastActivity}</span>
                       ) : (
-                        <span className="text-cream/20">—</span>
+                        <span className="text-cream/65">—</span>
                       )}
                     </td>
                     )}
@@ -642,7 +642,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                             e.preventDefault()
                             setMenuOpenId(menuOpenId === coll.id ? null : coll.id)
                           }}
-                          className="p-1 text-cream/30 hover:text-cream/60 transition-colors"
+                          className="p-1 text-cream/45 hover:text-cream/80 transition-colors"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="12" cy="5" r="1.5" />
@@ -651,12 +651,12 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                           </svg>
                         </button>
                         {menuOpenId === coll.id && (
-                          <div className="absolute right-0 top-full mt-1 w-40 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl z-50 overflow-hidden py-1">
-                            <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); setShareTarget({ collectionId: coll.id, collectionName: coll.title }) }} className="w-full text-left px-3 py-2 text-sm text-cream/70 hover:bg-cream/5 hover:text-cream transition-colors">Share</button>
-                            <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); window.open(`${toolPath}/${coll.id}/report`, '_blank') }} className="w-full text-left px-3 py-2 text-sm text-cream/70 hover:bg-cream/5 hover:text-cream transition-colors">Export / Print</button>
-                            <div className="border-t border-cream/10 my-1" />
-                            <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); setEditingId(coll.id); setEditTitle(coll.title) }} className="w-full text-left px-3 py-2 text-sm text-cream/70 hover:bg-cream/5 hover:text-cream transition-colors">Rename</button>
-                            <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); if (confirm(`Archive "${coll.title}"?`)) handleArchive(coll.id) }} className="w-full text-left px-3 py-2 text-sm text-red-400/70 hover:bg-cream/5 hover:text-red-400 transition-colors">Archive</button>
+                          <div className="absolute right-0 top-full mt-1 w-40 bg-stone border border-cream/20 rounded-lg shadow-xl z-50 overflow-hidden py-1">
+                            <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); setShareTarget({ collectionId: coll.id, collectionName: coll.title }) }} className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-stone-hover hover:text-cream transition-colors">Share</button>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); window.open(`${toolPath}/${coll.id}/report`, '_blank') }} className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-stone-hover hover:text-cream transition-colors">Export / Print</button>
+                            <div className="border-t border-cream/20 my-1" />
+                            <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); setEditingId(coll.id); setEditTitle(coll.title) }} className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-stone-hover hover:text-cream transition-colors">Rename</button>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpenId(null); if (confirm(`Archive "${coll.title}"?`)) handleArchive(coll.id) }} className="w-full text-left px-3 py-2 text-sm text-red-400/70 hover:bg-stone-hover hover:text-red-400 transition-colors">Archive</button>
                           </div>
                         )}
                       </div>
@@ -671,7 +671,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
             <button
               type="button"
               onClick={() => setCreating(true)}
-              className="flex items-center gap-2 text-sm text-cream/30 hover:text-cream/50 transition-colors"
+              className="flex items-center gap-2 text-sm text-cream/45 hover:text-cream/65 transition-colors"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <line x1="12" y1="5" x2="12" y2="19" />
@@ -679,7 +679,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
               </svg>
               Add a new {itemNoun}
             </button>
-            {createHint && <p className="text-[11px] text-cream/20 mt-1 ml-6">{createHint}</p>}
+            {createHint && <p className="text-[11px] text-cream/65 mt-1 ml-6">{createHint}</p>}
           </div>
           {creating && (
             <div className="mt-2 flex items-center gap-2 max-w-sm">
@@ -692,10 +692,10 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                   if (e.key === 'Escape') { setCreating(false); setNewTitle('') }
                 }}
                 placeholder={`${itemNoun.charAt(0).toUpperCase() + itemNoun.slice(1)} name...`}
-                className="flex-1 bg-basalt border border-cream/20 rounded px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                className="flex-1 bg-basalt border border-cream/20 rounded px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
               />
               <button type="button" onClick={handleCreate} disabled={!newTitle.trim()} className="text-xs font-medium text-basalt bg-sandstone rounded px-3 py-1.5 hover:bg-sandstone-light transition-colors disabled:opacity-40">Create</button>
-              <button type="button" onClick={() => { setCreating(false); setNewTitle('') }} className="text-xs text-cream/40 hover:text-cream/60 transition-colors">Cancel</button>
+              <button type="button" onClick={() => { setCreating(false); setNewTitle('') }} className="text-xs text-cream/55 hover:text-cream/80 transition-colors">Cancel</button>
             </div>
           )}
         </div>
@@ -717,7 +717,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
           return (
             <div
               key={coll.id}
-              className="group relative bg-basalt-50 border border-cream/10 rounded-lg hover:border-sandstone/30 transition-colors cursor-pointer"
+              className="group relative bg-stone border border-cream/20 rounded-lg hover:border-sandstone/30 transition-colors cursor-pointer"
               onClick={() => router.push(`${toolPath}/${coll.id}`)}
             >
               {/* Thumbnail grid */}
@@ -741,7 +741,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                   <h3 className="font-medium text-cream text-sm truncate">{coll.title}</h3>
                 )}
                 {toolKey === 'project_summary' && (
-                  <p className="text-[11px] text-cream/30 mt-0.5">Created {new Date(coll.createdAt).toLocaleDateString()}</p>
+                  <p className="text-[11px] text-cream/45 mt-0.5">Created {new Date(coll.createdAt).toLocaleDateString()}</p>
                 )}
 
                 {/* Status counts — tool-aware */}
@@ -753,7 +753,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded ${
                           preview.planStatus === 'approved' || preview.planStatus === 'confirmed' || preview.planStatus === 'acknowledged' ? 'bg-emerald-500/10 text-emerald-400/70'
                           : preview.planStatus === 'unlocked' ? 'bg-amber-500/10 text-amber-400/70'
-                          : 'bg-cream/5 text-cream/30'
+                          : 'bg-stone-200 text-cream/45'
                         }`}>{preview.planStatus === 'working' ? 'Draft' : preview.planStatus === 'approved' ? 'Approved' : preview.planStatus === 'unlocked' ? 'Unlocked' : preview.planStatus.charAt(0).toUpperCase() + preview.planStatus.slice(1)}</span>
                       )}
                       {(preview.unresolvedOpenItemCount ?? 0) > 0 && (
@@ -761,7 +761,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                       )}
                     </div>
                     {preview.planScope && (
-                      <p className="text-[11px] text-cream/35 leading-relaxed truncate">{preview.planScope.length > 80 ? preview.planScope.slice(0, 77) + '…' : preview.planScope}</p>
+                      <p className="text-[11px] text-cream/65 leading-relaxed truncate">{preview.planScope.length > 80 ? preview.planScope.slice(0, 77) + '…' : preview.planScope}</p>
                     )}
                     {/* Attention signals: changes needing action (PCV1-039) */}
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]">
@@ -769,49 +769,49 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         <span className="text-amber-400/60">{preview.activeChangeCount} pending change{preview.activeChangeCount !== 1 ? 's' : ''}</span>
                       )}
                       {(preview.changeCount ?? 0) > 0 && (preview.activeChangeCount ?? 0) === 0 && (
-                        <span className="text-cream/35">{preview.changeCount} change{preview.changeCount !== 1 ? 's' : ''}</span>
+                        <span className="text-cream/65">{preview.changeCount} change{preview.changeCount !== 1 ? 's' : ''}</span>
                       )}
                       {preview.hasBudget && preview.budgetAmount && (
-                        <span className="text-cream/30">{preview.budgetAmount}</span>
+                        <span className="text-cream/45">{preview.budgetAmount}</span>
                       )}
                     </div>
                   </div>
                 ) : toolKey === 'project_summary' && !((preview.planItemCount ?? 0) > 0 || !!preview.planScope || (preview.unresolvedOpenItemCount ?? 0) > 0 || !!preview.hasBudget || (preview.documentCount ?? 0) > 0 || (preview.changeCount ?? 0) > 0) ? (
                   <div className="mt-1.5">
-                    <p className="text-[11px] text-cream/35 italic">No plan details yet — start by describing your project scope</p>
+                    <p className="text-[11px] text-cream/65 italic">No plan details yet — start by describing your project scope</p>
                   </div>
                 ) : toolKey === 'punchlist' && hasStatusCounts ? (
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-[11px] text-cream/50">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-[11px] text-cream/65">
                     {(preview.statuses!.open ?? 0) > 0 && <span>{preview.statuses!.open} open</span>}
                     {(preview.statuses!.high ?? 0) > 0 && <span className="text-amber-400/70">{preview.statuses!.high} high</span>}
                     {(preview.statuses!.stale ?? 0) > 0 && <span className="text-red-400/60">{preview.statuses!.stale} stale</span>}
                   </div>
                 ) : hasStatusCounts ? (
-                  <div className="mt-1.5 text-[11px] text-cream/50">
+                  <div className="mt-1.5 text-[11px] text-cream/65">
                     Decided {(preview.statuses!.selected ?? 0) + (preview.statuses!.ordered ?? 0) + (preview.statuses!.done ?? 0)}/{preview.decisionCount ?? Object.values(preview.statuses!).reduce((s, v) => s + v, 0)} · Done {preview.statuses!.done ?? 0}/{preview.decisionCount ?? Object.values(preview.statuses!).reduce((s, v) => s + v, 0)}
                   </div>
                 ) : previewMode === 'statuses' && preview.decisionCount === 0 ? (
-                  <p className="mt-1.5 text-[11px] text-cream/35 italic">{toolKey === 'punchlist' ? '0 items' : toolKey === 'project_summary' ? 'No plan items yet' : '0 selections added'}</p>
+                  <p className="mt-1.5 text-[11px] text-cream/65 italic">{toolKey === 'punchlist' ? '0 items' : toolKey === 'project_summary' ? 'No plan items yet' : '0 selections added'}</p>
                 ) : null}
 
                 {/* Recent activity — prefer ActivityEvent */}
                 {preview.lastEvent ? (
-                  <p className="mt-1 text-[11px] text-cream/35 italic truncate">
+                  <p className="mt-1 text-[11px] text-cream/65 italic truncate">
                     <ActivityEventRow event={preview.lastEvent} variant="inline" />
                   </p>
                 ) : preview.lastComment ? (
-                  <p className="mt-1 text-[11px] text-cream/35 italic truncate">
+                  <p className="mt-1 text-[11px] text-cream/65 italic truncate">
                     {preview.lastComment.authorName.split(' ')[0]}: &ldquo;{preview.lastComment.text.length > 50 ? preview.lastComment.text.slice(0, 50) + '...' : preview.lastComment.text}&rdquo;
                   </p>
                 ) : preview.lastActivity ? (
-                  <p className="mt-1 text-[11px] text-cream/35 italic truncate">{preview.lastActivity}</p>
+                  <p className="mt-1 text-[11px] text-cream/65 italic truncate">{preview.lastActivity}</p>
                 ) : null}
 
                 {/* Stats row (mood boards only) */}
                 {previewMode === 'thumbnails' && (preview.ideaCount > 0 || preview.commentCount > 0) && (
                   <div className="flex items-center gap-3 mt-1.5">
                     {preview.ideaCount > 0 && (
-                      <span className="inline-flex items-center gap-1 text-xs text-cream/50">
+                      <span className="inline-flex items-center gap-1 text-xs text-cream/65">
                         <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <rect x="3" y="3" width="18" height="18" rx="2" />
                           <circle cx="8.5" cy="8.5" r="1.5" />
@@ -821,7 +821,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                       </span>
                     )}
                     {preview.commentCount > 0 && (
-                      <span className="inline-flex items-center gap-1 text-xs text-cream/50">
+                      <span className="inline-flex items-center gap-1 text-xs text-cream/65">
                         <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
@@ -833,7 +833,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
 
                 {/* Updated + shared */}
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <p className="text-[11px] text-cream/35">
+                  <p className="text-[11px] text-cream/65">
                     Updated {new Date(coll.updatedAt).toLocaleDateString()}
                     {coll.updatedBy?.name && (
                       <span> by {coll.updatedBy.name.split(' ')[0]}</span>
@@ -872,7 +872,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                     {coll.members.slice(0, 4).map((m) => (
                       <div
                         key={m.userId}
-                        className="w-6 h-6 rounded-full bg-sandstone/20 border border-basalt flex items-center justify-center text-[10px] text-cream/60"
+                        className="w-6 h-6 rounded-full bg-sandstone/20 border border-basalt flex items-center justify-center text-[10px] text-cream/80"
                         title={m.user.name || 'Collaborator'}
                       >
                         {m.user.image ? (
@@ -883,7 +883,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                       </div>
                     ))}
                     {coll.members.length > 4 && (
-                      <div className="w-6 h-6 rounded-full bg-cream/10 border border-basalt flex items-center justify-center text-[10px] text-cream/40">
+                      <div className="w-6 h-6 rounded-full bg-cream/12 border border-basalt flex items-center justify-center text-[10px] text-cream/55">
                         +{coll.members.length - 4}
                       </div>
                     )}
@@ -904,7 +904,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                     e.stopPropagation()
                     setMenuOpenId(menuOpenId === coll.id ? null : coll.id)
                   }}
-                  className="p-1.5 text-cream/40 hover:text-cream/70 transition-colors bg-basalt/80 rounded"
+                  className="p-1.5 text-cream/55 hover:text-cream/80 transition-colors bg-basalt/80 rounded"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <circle cx="12" cy="5" r="1.5" />
@@ -914,7 +914,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                 </button>
 
                 {menuOpenId === coll.id && (
-                  <div className="absolute right-0 top-full mt-1 w-40 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl z-50 overflow-hidden py-1">
+                  <div className="absolute right-0 top-full mt-1 w-40 bg-stone border border-cream/20 rounded-lg shadow-xl z-50 overflow-hidden py-1">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -922,7 +922,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         setMenuOpenId(null)
                         setShareTarget({ collectionId: coll.id, collectionName: coll.title })
                       }}
-                      className="w-full text-left px-3 py-2 text-sm text-cream/70 hover:bg-cream/5 hover:text-cream transition-colors flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-stone-hover hover:text-cream transition-colors flex items-center gap-2"
                     >
                       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
@@ -938,7 +938,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         setMenuOpenId(null)
                         window.open(`${toolPath}/${coll.id}/report`, '_blank')
                       }}
-                      className="w-full text-left px-3 py-2 text-sm text-cream/70 hover:bg-cream/5 hover:text-cream transition-colors flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-stone-hover hover:text-cream transition-colors flex items-center gap-2"
                     >
                       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
@@ -947,7 +947,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                       </svg>
                       Export / Print
                     </button>
-                    <div className="border-t border-cream/10 my-1" />
+                    <div className="border-t border-cream/20 my-1" />
                     <button
                       type="button"
                       onClick={(e) => {
@@ -956,7 +956,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         setEditingId(coll.id)
                         setEditTitle(coll.title)
                       }}
-                      className="w-full text-left px-3 py-2 text-sm text-cream/70 hover:bg-cream/5 hover:text-cream transition-colors flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-stone-hover hover:text-cream transition-colors flex items-center gap-2"
                     >
                       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" strokeLinecap="round" strokeLinejoin="round" />
@@ -970,7 +970,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         setMenuOpenId(null)
                         if (confirm(`Archive "${coll.title}"?`)) handleArchive(coll.id)
                       }}
-                      className="w-full text-left px-3 py-2 text-sm text-red-400/70 hover:bg-cream/5 hover:text-red-400 transition-colors flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 text-sm text-red-400/70 hover:bg-stone-hover hover:text-red-400 transition-colors flex items-center gap-2"
                     >
                       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <rect x="2" y="3" width="20" height="5" rx="1" />
@@ -989,17 +989,17 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-cream/15 hover:border-sandstone/40 bg-basalt-50 transition-colors cursor-pointer min-h-[120px] px-4"
+            className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-cream/20 hover:border-sandstone/40 bg-stone transition-colors cursor-pointer min-h-[120px] px-4"
           >
-            <svg className="w-7 h-7 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg className="w-7 h-7 text-cream/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span className="text-sm text-cream/40 font-medium">Add a new {itemNoun}</span>
-            {createHint && <span className="text-[10px] text-cream/20 text-center leading-snug">{createHint}</span>}
+            <span className="text-sm text-cream/55 font-medium">Add a new {itemNoun}</span>
+            {createHint && <span className="text-[10px] text-cream/65 text-center leading-snug">{createHint}</span>}
           </button>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-sandstone/40 bg-basalt-50 p-4 min-h-[120px]">
+          <div className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-sandstone/40 bg-stone p-4 min-h-[120px]">
             <input
               autoFocus
               value={newTitle}
@@ -1009,7 +1009,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                 if (e.key === 'Escape') { setCreating(false); setNewTitle('') }
               }}
               placeholder={`${itemNoun.charAt(0).toUpperCase() + itemNoun.slice(1)} name...`}
-              className="w-full bg-basalt border border-cream/20 rounded px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+              className="w-full bg-basalt border border-cream/20 rounded px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
             />
             <div className="flex items-center gap-2">
               <button
@@ -1023,7 +1023,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
               <button
                 type="button"
                 onClick={() => { setCreating(false); setNewTitle('') }}
-                className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
+                className="text-xs text-cream/55 hover:text-cream/80 transition-colors"
               >
                 Cancel
               </button>
@@ -1039,7 +1039,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
           <button
             type="button"
             onClick={() => setShowArchived(!showArchived)}
-            className="flex items-center gap-2 text-sm text-cream/40 hover:text-cream/60 transition-colors mb-3"
+            className="flex items-center gap-2 text-sm text-cream/55 hover:text-cream/80 transition-colors mb-3"
           >
             <svg
               className={`w-3 h-3 transition-transform ${showArchived ? 'rotate-90' : ''}`}
@@ -1057,11 +1057,11 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
               {archivedCollections.map((coll) => (
                 <div
                   key={coll.id}
-                  className="relative bg-basalt-50 border border-cream/5 rounded-lg overflow-hidden opacity-60"
+                  className="relative bg-stone border border-cream/20 rounded-lg overflow-hidden opacity-60"
                 >
                   <div className="p-4">
-                    <h3 className="font-medium text-cream/60 truncate">{coll.title}</h3>
-                    <p className="text-xs text-cream/30 mt-1">
+                    <h3 className="font-medium text-cream/80 truncate">{coll.title}</h3>
+                    <p className="text-xs text-cream/45 mt-1">
                       Archived {new Date(coll.updatedAt).toLocaleDateString()}
                     </p>
                     <button

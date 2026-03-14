@@ -89,13 +89,13 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
   const panelContent = (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="shrink-0 border-b border-cream/10 px-5 py-4">
+      <div className="shrink-0 border-b border-cream/15 px-5 py-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-medium text-cream truncate pr-3">{title}</h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-cream/40 hover:text-cream transition-colors shrink-0"
+            className="text-cream/55 hover:text-cream transition-colors shrink-0"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
@@ -105,7 +105,7 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
 
         {/* Search */}
         <div className="relative mb-3">
-          <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-cream/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
@@ -115,7 +115,7 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search activity..."
-            className="w-full bg-cream/5 border border-cream/10 rounded-lg pl-8 pr-3 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/40"
+            className="w-full bg-stone-200 border border-cream/15 rounded-lg pl-8 pr-3 py-1.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/40"
           />
         </div>
 
@@ -130,7 +130,7 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
                 className={`text-[11px] px-2.5 py-1 rounded-full whitespace-nowrap transition-colors ${
                   selectedTool === f.key
                     ? 'bg-sandstone/20 text-sandstone font-medium'
-                    : 'text-cream/40 hover:text-cream/60 bg-cream/5'
+                    : 'text-cream/55 hover:text-cream/70 bg-stone-200'
                 }`}
               >
                 {f.label}
@@ -163,16 +163,16 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
         {isLoading ? (
           <div className="space-y-3 animate-pulse py-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-4 bg-cream/5 rounded w-3/4" />
+              <div key={i} className="h-4 bg-stone-200 rounded w-3/4" />
             ))}
           </div>
         ) : events.length === 0 ? (
-          <p className="text-sm text-cream/25 text-center py-8">No activity yet</p>
+          <p className="text-sm text-cream/40 text-center py-8">No activity yet</p>
         ) : (
           <>
             {grouped.map((group) => (
               <div key={group.label} className="mb-4">
-                <p className="text-[10px] uppercase tracking-wider text-cream/25 mb-2">{group.label}</p>
+                <p className="text-[10px] uppercase tracking-wider text-cream/40 mb-2">{group.label}</p>
                 {group.events.map((evt) => {
                   const initials = evt.actorName
                     ? evt.actorName.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2)
@@ -183,7 +183,7 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
                       key={evt.id}
                       href={eventHref(evt)}
                       onClick={onClose}
-                      className="flex items-start gap-2 py-2 -mx-2 px-2 hover:bg-cream/5 rounded transition-colors"
+                      className="flex items-start gap-2 py-2 -mx-2 px-2 hover:bg-stone-hover rounded transition-colors"
                     >
                       {initials ? (
                         <span className="w-6 h-6 rounded-full bg-sandstone/15 text-sandstone text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
@@ -195,10 +195,10 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
                       <span className="flex-1 min-w-0">
                         <ActivityEventRow event={evt} variant="full" />
                       </span>
-                      <span className="text-[10px] text-cream/20 shrink-0 mt-0.5 whitespace-nowrap">
+                      <span className="text-[10px] text-cream/35 shrink-0 mt-0.5 whitespace-nowrap">
                         {relativeTime(evt.createdAt)}
                         {!toolKey && (
-                          <span className="ml-1.5 text-cream/15">{TOOL_LABEL[evt.toolKey] || evt.toolKey}</span>
+                          <span className="ml-1.5 text-cream/30">{TOOL_LABEL[evt.toolKey] || evt.toolKey}</span>
                         )}
                       </span>
                     </Link>
@@ -211,7 +211,7 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
               <button
                 type="button"
                 onClick={loadMore}
-                className="w-full text-xs text-cream/30 hover:text-cream/50 transition-colors py-2"
+                className="w-full text-xs text-cream/45 hover:text-cream/65 transition-colors py-2"
               >
                 Load more
               </button>
@@ -231,12 +231,12 @@ export function ActivityPanel({ onClose, toolKey, collectionId, collectionTitle 
       />
 
       {/* Desktop: right side panel */}
-      <div className="hidden md:flex fixed right-0 top-0 bottom-0 z-[56] w-96 bg-basalt-50 border-l border-cream/10 flex-col shadow-2xl">
+      <div className="hidden md:flex fixed right-0 top-0 bottom-0 z-[56] w-96 bg-stone border-l border-cream/15 flex-col shadow-2xl">
         {panelContent}
       </div>
 
       {/* Mobile: bottom sheet */}
-      <div className="md:hidden fixed inset-x-0 bottom-0 z-[56] bg-basalt-50 border-t border-cream/10 rounded-t-xl flex flex-col max-h-[80vh] shadow-2xl">
+      <div className="md:hidden fixed inset-x-0 bottom-0 z-[56] bg-stone border-t border-cream/15 rounded-t-xl flex flex-col max-h-[80vh] shadow-2xl">
         {panelContent}
       </div>
     </>

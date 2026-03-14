@@ -37,13 +37,13 @@ function formatDate(iso: string | undefined) {
 }
 
 function docTypeColor(mimeType: string | undefined): string {
-  if (!mimeType) return 'text-cream/40'
+  if (!mimeType) return 'text-cream/55'
   if (mimeType.startsWith('image/')) return 'text-purple-400'
   if (mimeType === 'application/pdf') return 'text-red-400'
   if (mimeType.includes('word') || mimeType === 'application/msword') return 'text-blue-400'
   if (mimeType.includes('sheet') || mimeType.includes('excel')) return 'text-green-400'
   if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'text-orange-400'
-  return 'text-cream/40'
+  return 'text-cream/55'
 }
 
 function docTypeLabel(mimeType: string | undefined): string {
@@ -211,17 +211,17 @@ export function DecisionFiles({
   }
 
   return (
-    <div className="mt-6 bg-basalt-50 border border-cream/8 rounded-xl overflow-hidden">
+    <div className="mt-6 bg-stone border border-cream/12 rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-cream/8 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-cream/12 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg className="w-4 h-4 text-cream/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
             <polyline points="14 2 14 8 20 8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span className="text-sm font-medium text-cream/60">All Files</span>
+          <span className="text-sm font-medium text-cream/70">All Files</span>
           {allFiles.length > 0 && (
-            <span className="text-[11px] text-cream/30">
+            <span className="text-[11px] text-cream/45">
               {allFiles.length} file{allFiles.length !== 1 ? 's' : ''}
             </span>
           )}
@@ -243,7 +243,7 @@ export function DecisionFiles({
 
       {/* Add File form */}
       {showAddForm && (
-        <div className="px-4 py-3 border-b border-cream/8 bg-basalt/50">
+        <div className="px-4 py-3 border-b border-cream/12 bg-basalt/50">
           <input
             ref={fileInputRef}
             type="file"
@@ -253,7 +253,7 @@ export function DecisionFiles({
           />
 
           <div className="flex items-center gap-3 mb-3">
-            <label className="text-xs text-cream/50">Attach to:</label>
+            <label className="text-xs text-cream/65">Attach to:</label>
             <select
               value={attachTo}
               onChange={(e) => setAttachTo(e.target.value)}
@@ -270,11 +270,11 @@ export function DecisionFiles({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="w-full flex items-center justify-center gap-2 py-2.5 bg-cream/5 hover:bg-cream/10 rounded-lg text-sm text-cream/40 hover:text-cream/60 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-2.5 bg-stone-200 hover:bg-cream/10 rounded-lg text-sm text-cream/55 hover:text-cream/70 transition-colors disabled:opacity-50"
           >
             {uploading ? (
               <>
-                <div className="w-4 h-4 border-2 border-cream/20 border-t-cream/60 rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-cream/20 border-t-cream/70 rounded-full animate-spin" />
                 Uploading...
               </>
             ) : (
@@ -299,7 +299,7 @@ export function DecisionFiles({
           {visibleFiles.map((entry) => (
             <div
               key={entry.id}
-              className="px-4 py-3 flex items-center gap-3 hover:bg-cream/3 transition-colors"
+              className="px-4 py-3 flex items-center gap-3 hover:bg-stone-hover transition-colors"
             >
               {/* Thumbnail or type badge */}
               {entry.fileType === 'image' && entry.thumbnailUrl ? (
@@ -316,8 +316,8 @@ export function DecisionFiles({
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-cream/80 truncate">{entry.title}</p>
-                <p className="text-[11px] text-cream/30 mt-0.5">
+                <p className="text-sm text-cream/90 truncate">{entry.title}</p>
+                <p className="text-[11px] text-cream/45 mt-0.5">
                   {entry.optionId && entry.optionName ? (
                     <button
                       type="button"
@@ -327,7 +327,7 @@ export function DecisionFiles({
                       {entry.optionName}
                     </button>
                   ) : (
-                    <span className="text-cream/20">Unattached</span>
+                    <span className="text-cream/35">Unattached</span>
                   )}
                   {' · '}{formatFileSize(entry.fileSize)}
                   {' · '}{entry.uploadedByName}
@@ -342,7 +342,7 @@ export function DecisionFiles({
                   href={entry.url}
                   download={entry.fileName}
                   onClick={(e) => e.stopPropagation()}
-                  className="p-2 text-cream/30 hover:text-sandstone transition-colors"
+                  className="p-2 text-cream/45 hover:text-sandstone transition-colors"
                   title="Download"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -358,7 +358,7 @@ export function DecisionFiles({
                     <button
                       type="button"
                       onClick={() => setMenuOpenId(menuOpenId === entry.id ? null : entry.id)}
-                      className="p-2 text-cream/30 hover:text-cream/60 transition-colors"
+                      className="p-2 text-cream/45 hover:text-cream/70 transition-colors"
                       title="More actions"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -369,12 +369,12 @@ export function DecisionFiles({
                     </button>
 
                     {menuOpenId === entry.id && (
-                      <div className="absolute right-0 top-full mt-1 z-30 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl py-1 min-w-[160px]">
+                      <div className="absolute right-0 top-full mt-1 z-30 bg-stone border border-cream/15 rounded-lg shadow-xl py-1 min-w-[160px]">
                         {entry.optionId ? (
                           <button
                             type="button"
                             onClick={() => handleDetach(entry.id)}
-                            className="w-full text-left px-3 py-1.5 text-xs text-cream/60 hover:bg-cream/5 transition-colors"
+                            className="w-full text-left px-3 py-1.5 text-xs text-cream/70 hover:bg-stone-hover transition-colors"
                           >
                             Detach from option
                           </button>
@@ -384,7 +384,7 @@ export function DecisionFiles({
                               key={opt.id}
                               type="button"
                               onClick={() => handleAttach(entry.id, opt.id)}
-                              className="w-full text-left px-3 py-1.5 text-xs text-cream/60 hover:bg-cream/5 transition-colors truncate"
+                              className="w-full text-left px-3 py-1.5 text-xs text-cream/70 hover:bg-stone-hover transition-colors truncate"
                             >
                               Attach to {opt.name || 'Untitled'}
                             </button>
@@ -403,17 +403,17 @@ export function DecisionFiles({
       {/* Empty state */}
       {allFiles.length === 0 && !showAddForm && (
         <div className="px-4 py-6 text-center">
-          <p className="text-xs text-cream/30">No files yet</p>
+          <p className="text-xs text-cream/45">No files yet</p>
         </div>
       )}
 
       {/* Show more */}
       {allFiles.length > 4 && (
-        <div className="px-4 py-2 border-t border-cream/5">
+        <div className="px-4 py-2 border-t border-cream/10">
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
+            className="text-xs text-cream/55 hover:text-cream/70 transition-colors"
           >
             {expanded ? 'Show less' : `Show all ${allFiles.length} files`}
           </button>

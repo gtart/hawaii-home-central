@@ -95,7 +95,7 @@ export function MobileBottomNav() {
   const moreActive = MORE_ITEMS.some((item) => pathname.startsWith(item.href))
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-basalt border-t border-cream/10 z-30 md:hidden pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 bg-basalt border-t border-cream/12 z-30 md:hidden pb-[env(safe-area-inset-bottom)]">
       <div className="flex items-center">
         {TABS.map((tab) => {
           const active = isActive(pathname, tab.href, tab.matchMode)
@@ -104,7 +104,7 @@ export function MobileBottomNav() {
               key={tab.href}
               href={tab.href}
               className={`flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] transition-colors ${
-                active ? 'text-sandstone' : 'text-cream/30'
+                active ? 'text-sandstone' : 'text-cream/40'
               }`}
             >
               {tab.icon}
@@ -119,7 +119,7 @@ export function MobileBottomNav() {
             type="button"
             onClick={() => setMoreOpen(!moreOpen)}
             className={`w-full flex flex-col items-center gap-0.5 py-2 text-[10px] transition-colors ${
-              moreActive ? 'text-sandstone' : 'text-cream/30'
+              moreActive ? 'text-sandstone' : 'text-cream/40'
             }`}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -131,15 +131,15 @@ export function MobileBottomNav() {
           </button>
 
           {moreOpen && (
-            <div className="absolute bottom-full right-1 mb-2 w-48 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl overflow-hidden py-1">
+            <div className="absolute bottom-full right-1 mb-2 w-48 bg-stone border border-cream/15 rounded-lg shadow-xl overflow-hidden py-1">
               {MORE_ITEMS.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={`flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ${
                     pathname.startsWith(item.href)
-                      ? 'text-sandstone bg-sandstone/5'
-                      : 'text-cream/70 hover:bg-cream/5 hover:text-cream'
+                      ? 'text-sandstone bg-sandstone/8'
+                      : 'text-cream/80 hover:bg-cream/5 hover:text-cream'
                   }`}
                 >
                   {item.icon}

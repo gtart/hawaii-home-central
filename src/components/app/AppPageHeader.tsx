@@ -11,7 +11,7 @@ export function AppPageHeader() {
       <h1 className="font-serif text-3xl md:text-4xl text-sandstone">
         {name}
       </h1>
-      <p className="text-cream/50 text-sm mt-2">
+      <p className="text-cream/65 text-sm mt-2">
         Your renovation tools — pick any and jump in.
       </p>
     </div>

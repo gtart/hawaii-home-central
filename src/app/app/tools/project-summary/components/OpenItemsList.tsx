@@ -4,10 +4,10 @@ import { useState, useRef, useEffect } from 'react'
 import type { OpenItem, OpenItemStatus } from '@/data/project-summary'
 
 const STATUS_CONFIG: Record<OpenItemStatus, { label: string; color: string; bgColor: string }> = {
-  open: { label: 'Open', color: 'text-cream/50', bgColor: 'bg-cream/5' },
-  waiting: { label: 'Waiting', color: 'text-amber-400', bgColor: 'bg-amber-400/10' },
-  resolved: { label: 'Resolved', color: 'text-emerald-400', bgColor: 'bg-emerald-400/10' },
-  closed: { label: 'Closed', color: 'text-cream/30', bgColor: 'bg-cream/[0.03]' },
+  open: { label: 'Open', color: 'text-cream/65', bgColor: 'bg-cream/8' },
+  waiting: { label: 'Waiting', color: 'text-amber-400', bgColor: 'bg-amber-400/12' },
+  resolved: { label: 'Resolved', color: 'text-emerald-400', bgColor: 'bg-emerald-400/12' },
+  closed: { label: 'Closed', color: 'text-cream/45', bgColor: 'bg-stone-50' },
 }
 
 interface OpenItemsListProps {
@@ -35,22 +35,22 @@ function ResolveDialog({
   const dialogContent = (
     <div className="space-y-3">
       <h3 className="text-sm font-semibold text-cream">Resolve Item</h3>
-      <p className="text-xs text-cream/50 leading-relaxed">{item.text}</p>
+      <p className="text-xs text-cream/65 leading-relaxed">{item.text}</p>
       <div>
-        <label className="text-[10px] text-cream/40 block mb-1">Resolution Note (optional)</label>
+        <label className="text-[10px] text-cream/55 block mb-1">Resolution Note (optional)</label>
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="How was this resolved?"
           rows={2}
-          className="w-full bg-cream/5 border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream/80 placeholder-cream/20 outline-none focus:border-sandstone/30 resize-none"
+          className="w-full bg-stone-200 border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream/90 placeholder-cream/35 outline-none focus:border-sandstone/30 resize-none"
         />
       </div>
       <div className="flex gap-2 justify-end">
         <button
           type="button"
           onClick={onDismiss}
-          className="text-xs text-cream/30 hover:text-cream/50 transition-colors px-3 py-1.5"
+          className="text-xs text-cream/45 hover:text-cream/65 transition-colors px-3 py-1.5"
         >
           Cancel
         </button>
@@ -72,15 +72,15 @@ function ResolveDialog({
 
       {/* Desktop: centered modal */}
       <div className="hidden md:flex fixed inset-0 z-[61] items-center justify-center px-4 pointer-events-none">
-        <div className="w-full max-w-sm rounded-xl border border-cream/10 bg-[#1a1a1a] p-5 shadow-2xl pointer-events-auto">
+        <div className="w-full max-w-sm rounded-xl border border-cream/15 bg-basalt p-5 shadow-2xl pointer-events-auto">
           {dialogContent}
         </div>
       </div>
 
       {/* Mobile: bottom sheet */}
-      <div className="md:hidden fixed inset-x-0 bottom-0 z-[61] bg-[#1a1a1a] border-t border-cream/[0.08] rounded-t-2xl shadow-2xl">
+      <div className="md:hidden fixed inset-x-0 bottom-0 z-[61] bg-basalt border-t border-cream/14 rounded-t-2xl shadow-2xl">
         <div className="flex justify-center pt-2 pb-1">
-          <div className="w-10 h-1 rounded-full bg-cream/15" />
+          <div className="w-10 h-1 rounded-full bg-cream/30" />
         </div>
         <div className="p-5 pb-8">
           {dialogContent}
@@ -147,7 +147,7 @@ export function OpenItemsList({
     return (
       <div
         key={item.id}
-        className={`group flex items-start gap-2 rounded-md px-2 py-1.5 -mx-2 hover:bg-cream/[0.03] transition-colors ${
+        className={`group flex items-start gap-2 rounded-md px-2 py-1.5 -mx-2 hover:bg-stone-hover transition-colors ${
           isResolved ? 'opacity-50' : ''
         }`}
       >
@@ -155,18 +155,18 @@ export function OpenItemsList({
         <button
           type="button"
           className={`mt-1 shrink-0 w-2 h-2 rounded-full ${
-            item.status === 'open' ? 'bg-cream/30' :
+            item.status === 'open' ? 'bg-cream/45' :
             item.status === 'waiting' ? 'bg-amber-400/60' :
             item.status === 'resolved' ? 'bg-emerald-400/60' :
-            'bg-cream/15'
-          } ${!readOnly ? 'cursor-pointer hover:ring-2 hover:ring-cream/20' : ''}`}
+            'bg-cream/30'
+          } ${!readOnly ? 'cursor-pointer hover:ring-2 hover:ring-cream/35' : ''}`}
           onClick={readOnly ? undefined : () => setStatusMenuId(statusMenuId === item.id ? null : item.id)}
           title={config.label}
         />
 
         {/* Status dropdown */}
         {statusMenuId === item.id && !readOnly && (
-          <div className="absolute z-50 mt-5 ml-0 w-44 rounded-lg border border-cream/10 bg-[#1a1a1a] shadow-xl py-1">
+          <div className="absolute z-50 mt-5 ml-0 w-44 rounded-lg border border-cream/15 bg-basalt shadow-xl py-1">
             {(Object.entries(STATUS_CONFIG) as [OpenItemStatus, typeof config][]).map(([status, cfg]) => (
               <button
                 key={status}
@@ -179,15 +179,15 @@ export function OpenItemsList({
                   }
                   setStatusMenuId(null)
                 }}
-                className={`w-full text-left px-3 py-1.5 text-xs hover:bg-cream/5 transition-colors ${
-                  item.status === status ? 'text-sandstone' : 'text-cream/60'
+                className={`w-full text-left px-3 py-1.5 text-xs hover:bg-stone-hover transition-colors ${
+                  item.status === status ? 'text-sandstone' : 'text-cream/70'
                 }`}
               >
                 <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
-                  status === 'open' ? 'bg-cream/30' :
+                  status === 'open' ? 'bg-cream/45' :
                   status === 'waiting' ? 'bg-amber-400/60' :
                   status === 'resolved' ? 'bg-emerald-400/60' :
-                  'bg-cream/15'
+                  'bg-cream/30'
                 }`} />
                 {cfg.label}
               </button>
@@ -207,12 +207,12 @@ export function OpenItemsList({
               if (e.key === 'Enter') saveEdit()
               if (e.key === 'Escape') setEditingId(null)
             }}
-            className="flex-1 bg-cream/5 border border-cream/10 rounded-md px-2 py-0.5 text-sm text-cream/80 placeholder-cream/20 outline-none focus:border-sandstone/30"
+            className="flex-1 bg-stone-200 border border-cream/15 rounded-md px-2 py-0.5 text-sm text-cream/90 placeholder-cream/35 outline-none focus:border-sandstone/30"
           />
         ) : (
           <div className="flex-1 min-w-0">
             <span
-              className={`text-sm ${isResolved ? 'text-cream/40 line-through' : 'text-cream/70'} ${!readOnly && !isResolved ? 'cursor-text' : ''}`}
+              className={`text-sm ${isResolved ? 'text-cream/55 line-through' : 'text-cream/80'} ${!readOnly && !isResolved ? 'cursor-text' : ''}`}
               onClick={readOnly || isResolved ? undefined : () => startEdit(item)}
             >
               {item.text}
@@ -222,13 +222,13 @@ export function OpenItemsList({
               <span className={`ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium ${config.color} ${config.bgColor}`}>
                 {config.label}
                 {item.status === 'waiting' && item.waiting_on && (
-                  <span className="ml-1 text-cream/30">on {item.waiting_on}</span>
+                  <span className="ml-1 text-cream/45">on {item.waiting_on}</span>
                 )}
               </span>
             )}
             {/* Resolution note */}
             {item.resolution_note && (
-              <p className="text-[10px] text-cream/35 mt-0.5 leading-tight">
+              <p className="text-[10px] text-cream/50 mt-0.5 leading-tight">
                 Resolved: {item.resolution_note}
                 {item.resolved_at && (
                   <span className="ml-1">({new Date(item.resolved_at).toLocaleDateString()})</span>
@@ -265,7 +265,7 @@ export function OpenItemsList({
                 <button
                   type="button"
                   onClick={() => setConfirmDeleteId(null)}
-                  className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors"
+                  className="text-[10px] text-cream/45 hover:text-cream/65 transition-colors"
                 >
                   Cancel
                 </button>
@@ -274,7 +274,7 @@ export function OpenItemsList({
               <button
                 type="button"
                 onClick={() => setConfirmDeleteId(item.id)}
-                className="text-cream/10 hover:text-red-400/50 transition-colors"
+                className="text-cream/25 hover:text-red-400/50 transition-colors"
                 title="Remove item"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -304,7 +304,7 @@ export function OpenItemsList({
 
       {/* Active items */}
       {activeItems.length === 0 && resolvedItems.length === 0 && readOnly && (
-        <p className="text-xs text-cream/35 italic py-1">{emptyMessage}</p>
+        <p className="text-xs text-cream/50 italic py-1">{emptyMessage}</p>
       )}
 
       {activeItems.map(renderItem)}
@@ -312,7 +312,7 @@ export function OpenItemsList({
       {/* Resolved/closed items (collapsed by default if there are active items) */}
       {resolvedItems.length > 0 && (
         <details className="mt-2" open={activeItems.length === 0}>
-          <summary className="text-[10px] text-cream/35 cursor-pointer hover:text-cream/50 transition-colors select-none">
+          <summary className="text-[10px] text-cream/50 cursor-pointer hover:text-cream/65 transition-colors select-none">
             {resolvedItems.length} resolved
           </summary>
           <div className="mt-1">
@@ -329,7 +329,7 @@ export function OpenItemsList({
             value={newText}
             onChange={(e) => setNewText(e.target.value)}
             placeholder={addPlaceholder}
-            className="flex-1 bg-transparent border-none text-sm text-cream/60 placeholder-cream/15 outline-none px-2 py-1"
+            className="flex-1 bg-transparent border-none text-sm text-cream/70 placeholder-cream/30 outline-none px-2 py-1"
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleAdd()
             }}

@@ -191,9 +191,9 @@ export function ShareToolModal({ projectId, toolKey, onClose, description, colle
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-basalt-50 border border-cream/10 rounded-xl w-full max-w-lg max-h-[80vh] overflow-y-auto">
+      <div className="relative bg-stone border border-cream/15 rounded-xl w-full max-w-lg max-h-[80vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-stone border-b border-cream/15 px-6 py-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-medium text-cream">
               {collectionId
@@ -201,21 +201,21 @@ export function ShareToolModal({ projectId, toolKey, onClose, description, colle
                 : `Invite people to ${toolLabel}`}
             </h2>
             {description && (
-              <p className="text-xs text-cream/40 mt-0.5">{description}</p>
+              <p className="text-xs text-cream/55 mt-0.5">{description}</p>
             )}
             {collectionId && !description && (
-              <p className="text-xs text-cream/40 mt-0.5">
+              <p className="text-xs text-cream/55 mt-0.5">
                 Access applies only to this {toolLabel}.
               </p>
             )}
-            <p className="text-[11px] text-cream/30 mt-0.5">
+            <p className="text-[11px] text-cream/45 mt-0.5">
               {editSeatsUsed} of {maxEditShares} edit seats used
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-cream/40 hover:text-cream transition-colors"
+            className="text-cream/55 hover:text-cream transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
@@ -226,7 +226,7 @@ export function ShareToolModal({ projectId, toolKey, onClose, description, colle
         <div className="px-6 py-5 space-y-5">
           {/* Invite form */}
           <div>
-            <label className="block text-sm text-cream/70 mb-2">Invite by email</label>
+            <label className="block text-sm text-cream/80 mb-2">Invite by email</label>
             <div className="flex gap-2">
               <input
                 type="email"
@@ -234,7 +234,7 @@ export function ShareToolModal({ projectId, toolKey, onClose, description, colle
                 onChange={(e) => { setEmail(e.target.value); setError('') }}
                 onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
                 placeholder="name@example.com"
-                className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
               />
               <select
                 value={level}
@@ -265,24 +265,24 @@ export function ShareToolModal({ projectId, toolKey, onClose, description, colle
 
           {/* Current access */}
           {isLoading ? (
-            <div className="text-sm text-cream/30 text-center py-4">Loading...</div>
+            <div className="text-sm text-cream/45 text-center py-4">Loading...</div>
           ) : (
             <>
               {access.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-medium text-cream/40 uppercase tracking-wider mb-2">
+                  <h3 className="text-xs font-medium text-cream/55 uppercase tracking-wider mb-2">
                     People with access
                   </h3>
                   <div className="space-y-1">
                     {access.map((a) => (
-                      <div key={a.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-cream/5">
-                        <div className="w-8 h-8 rounded-full bg-cream/10 flex items-center justify-center text-xs text-cream/50 shrink-0">
+                      <div key={a.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-stone-hover">
+                        <div className="w-8 h-8 rounded-full bg-cream/15 flex items-center justify-center text-xs text-cream/65 shrink-0">
                           {a.name?.charAt(0)?.toUpperCase() || a.email?.charAt(0)?.toUpperCase() || '?'}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-cream truncate">{a.name || a.email}</p>
                           {a.name && a.email && (
-                            <p className="text-xs text-cream/40 truncate">{a.email}</p>
+                            <p className="text-xs text-cream/55 truncate">{a.email}</p>
                           )}
                         </div>
                         <span className={cn(
@@ -294,7 +294,7 @@ export function ShareToolModal({ projectId, toolKey, onClose, description, colle
                         <button
                           type="button"
                           onClick={() => handleRevoke(a.userId)}
-                          className="text-cream/30 hover:text-red-400 transition-colors"
+                          className="text-cream/45 hover:text-red-400 transition-colors"
                           title="Remove access"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -309,7 +309,7 @@ export function ShareToolModal({ projectId, toolKey, onClose, description, colle
 
               {invites.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-medium text-cream/40 uppercase tracking-wider mb-2">
+                  <h3 className="text-xs font-medium text-cream/55 uppercase tracking-wider mb-2">
                     Pending invites
                   </h3>
                   <div className="space-y-2">
@@ -319,17 +319,17 @@ export function ShareToolModal({ projectId, toolKey, onClose, description, colle
                         : `/invite/${inv.token}`
 
                       return (
-                        <div key={inv.id} className="rounded-lg bg-cream/[0.03] border border-cream/8 overflow-hidden">
+                        <div key={inv.id} className="rounded-lg bg-stone-50 border border-cream/12 overflow-hidden">
                           <div className="flex items-center gap-3 px-3 py-2.5">
-                            <div className="w-8 h-8 rounded-full bg-cream/5 flex items-center justify-center text-xs text-cream/30 shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-xs text-cream/45 shrink-0">
                               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                                 <polyline points="22,6 12,13 2,6" />
                               </svg>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm text-cream/60 truncate">{inv.email}</p>
-                              <p className="text-xs text-cream/30">
+                              <p className="text-sm text-cream/70 truncate">{inv.email}</p>
+                              <p className="text-xs text-cream/45">
                                 Expires {new Date(inv.expiresAt).toLocaleDateString()}
                               </p>
                             </div>
@@ -342,7 +342,7 @@ export function ShareToolModal({ projectId, toolKey, onClose, description, colle
                             <button
                               type="button"
                               onClick={() => handleCancelInvite(inv.id)}
-                              className="text-cream/30 hover:text-red-400 transition-colors"
+                              className="text-cream/45 hover:text-red-400 transition-colors"
                               title="Cancel invite"
                             >
                               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -352,7 +352,7 @@ export function ShareToolModal({ projectId, toolKey, onClose, description, colle
                           </div>
                           {/* Persistent invite link */}
                           <div className="px-3 pb-2.5 flex items-center gap-2">
-                            <p className="text-[11px] text-cream/30 truncate flex-1 font-mono select-all">{inviteUrl}</p>
+                            <p className="text-[11px] text-cream/45 truncate flex-1 font-mono select-all">{inviteUrl}</p>
                             <button
                               type="button"
                               onClick={async () => {
@@ -375,7 +375,7 @@ export function ShareToolModal({ projectId, toolKey, onClose, description, colle
               )}
 
               {access.length === 0 && invites.length === 0 && (
-                <p className="text-sm text-cream/30 text-center py-3">
+                <p className="text-sm text-cream/45 text-center py-3" >
                   No one else has access yet
                 </p>
               )}

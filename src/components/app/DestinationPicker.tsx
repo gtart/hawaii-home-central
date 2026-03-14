@@ -226,14 +226,14 @@ export function DestinationPicker({
   const content = (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="shrink-0 border-b border-cream/10 px-5 py-4">
+      <div className="shrink-0 border-b border-cream/15 px-5 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {step !== 'collection' && (
               <button
                 type="button"
                 onClick={handleBack}
-                className="text-cream/40 hover:text-cream transition-colors -ml-1 p-1"
+                className="text-cream/55 hover:text-cream transition-colors -ml-1 p-1"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -245,7 +245,7 @@ export function DestinationPicker({
           <button
             type="button"
             onClick={onClose}
-            className="text-cream/40 hover:text-cream transition-colors shrink-0"
+            className="text-cream/55 hover:text-cream transition-colors shrink-0"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
@@ -258,8 +258,8 @@ export function DestinationPicker({
       <div className="px-5 py-4">
         {loading && (
           <div className="flex items-center justify-center gap-3 py-8">
-            <div className="w-5 h-5 border-2 border-cream/20 border-t-sandstone rounded-full animate-spin" />
-            <span className="text-sm text-cream/50">Loading...</span>
+            <div className="w-5 h-5 border-2 border-cream/35 border-t-sandstone rounded-full animate-spin" />
+            <span className="text-sm text-cream/65">Loading...</span>
           </div>
         )}
 
@@ -267,7 +267,7 @@ export function DestinationPicker({
         {step === 'collection' && !loading && (
           <div className="space-y-2">
             {collections.length === 0 && !error && !showCreateInput && (
-              <p className="text-sm text-cream/40 text-center py-4">
+              <p className="text-sm text-cream/55 text-center py-4">
                 No other lists found.
               </p>
             )}
@@ -276,10 +276,10 @@ export function DestinationPicker({
                 key={coll.id}
                 type="button"
                 onClick={() => handleCollectionSelect(coll)}
-                className="w-full flex items-center justify-between p-3 bg-cream/5 border border-cream/10 rounded-lg hover:bg-cream/8 transition-colors text-left"
+                className="w-full flex items-center justify-between p-3 bg-stone-200 border border-cream/15 rounded-lg hover:bg-stone-hover transition-colors text-left"
               >
                 <span className="text-sm text-cream truncate">{coll.title}</span>
-                <svg className="w-4 h-4 text-cream/20 shrink-0 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-4 h-4 text-cream/35 shrink-0 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
@@ -299,7 +299,7 @@ export function DestinationPicker({
                   }}
                   placeholder="New list name..."
                   disabled={creating}
-                  className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50 disabled:opacity-50"
+                  className="flex-1 bg-basalt border border-cream/25 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50 disabled:opacity-50"
                 />
                 <button
                   type="button"
@@ -314,12 +314,12 @@ export function DestinationPicker({
               <button
                 type="button"
                 onClick={() => setShowCreateInput(true)}
-                className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-cream/15 rounded-lg hover:border-sandstone/40 transition-colors group"
+                className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-cream/20 rounded-lg hover:border-sandstone/40 transition-colors group"
               >
-                <svg className="w-4 h-4 text-cream/30 group-hover:text-sandstone transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-4 h-4 text-cream/45 group-hover:text-sandstone transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                 </svg>
-                <span className="text-sm text-cream/40 group-hover:text-sandstone transition-colors">Create new list</span>
+                <span className="text-sm text-cream/55 group-hover:text-sandstone transition-colors">Create new list</span>
               </button>
             )}
           </div>
@@ -329,7 +329,7 @@ export function DestinationPicker({
         {step === 'room' && !loading && (
           <div className="space-y-2">
             {rooms.length === 0 && !error && (
-              <p className="text-sm text-cream/40 text-center py-4">
+              <p className="text-sm text-cream/55 text-center py-4">
                 No rooms found in this list.
               </p>
             )}
@@ -338,10 +338,10 @@ export function DestinationPicker({
                 key={room.id}
                 type="button"
                 onClick={() => handleRoomSelect(room)}
-                className="w-full flex items-center justify-between p-3 bg-cream/5 border border-cream/10 rounded-lg hover:bg-cream/8 transition-colors text-left"
+                className="w-full flex items-center justify-between p-3 bg-stone-200 border border-cream/15 rounded-lg hover:bg-stone-hover transition-colors text-left"
               >
                 <span className="text-sm text-cream truncate">{room.name}</span>
-                <svg className="w-4 h-4 text-cream/20 shrink-0 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-4 h-4 text-cream/35 shrink-0 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
@@ -353,7 +353,7 @@ export function DestinationPicker({
         {step === 'decision' && !loading && (
           <div className="space-y-2">
             {decisions.length === 0 && !error && (
-              <p className="text-sm text-cream/40 text-center py-4">
+              <p className="text-sm text-cream/55 text-center py-4">
                 No selections found in this room.
               </p>
             )}
@@ -362,10 +362,10 @@ export function DestinationPicker({
                 key={dec.id}
                 type="button"
                 onClick={() => handleDecisionSelect(dec)}
-                className="w-full flex items-center justify-between p-3 bg-cream/5 border border-cream/10 rounded-lg hover:bg-cream/8 transition-colors text-left"
+                className="w-full flex items-center justify-between p-3 bg-stone-200 border border-cream/15 rounded-lg hover:bg-stone-hover transition-colors text-left"
               >
                 <span className="text-sm text-cream truncate">{dec.title}</span>
-                <svg className="w-4 h-4 text-cream/20 shrink-0 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-4 h-4 text-cream/35 shrink-0 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
@@ -391,7 +391,7 @@ export function DestinationPicker({
       {/* Desktop: centered modal */}
       <div className="hidden md:flex fixed inset-0 z-[56] items-center justify-center pointer-events-none">
         <div
-          className="w-full max-w-md bg-basalt-50 border border-cream/10 rounded-xl shadow-2xl pointer-events-auto"
+          className="w-full max-w-md bg-stone border border-cream/15 rounded-xl shadow-2xl pointer-events-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {content}
@@ -400,11 +400,11 @@ export function DestinationPicker({
 
       {/* Mobile: bottom sheet */}
       <div
-        className="md:hidden fixed inset-x-0 bottom-0 z-[56] bg-basalt-50 border-t border-cream/10 rounded-t-xl shadow-2xl"
+        className="md:hidden fixed inset-x-0 bottom-0 z-[56] bg-stone border-t border-cream/15 rounded-t-xl shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center pt-2 pb-1">
-          <div className="w-10 h-1 bg-cream/15 rounded-full" />
+          <div className="w-10 h-1 bg-cream/30 rounded-full" />
         </div>
         {content}
         <div className="pb-[env(safe-area-inset-bottom)]" />

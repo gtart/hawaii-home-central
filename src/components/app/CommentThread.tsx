@@ -309,7 +309,7 @@ export function CommentThread({
   }
 
   const commentInput = !readOnly && (
-    <div className="border-t border-cream/12 p-4 space-y-2">
+    <div className="border-t border-cream/15 p-4 space-y-2">
       {/* Reference chip */}
       {selectedRef && (
         <div className="flex items-center gap-1.5">
@@ -342,7 +342,7 @@ export function CommentThread({
                   : 'Add a comment...'
               }
               rows={2}
-              className="w-full bg-basalt border border-cream/12 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/35 focus:outline-none focus:border-sandstone/40 resize-none"
+              className="w-full bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/50 focus:outline-none focus:border-sandstone/40 resize-none"
               onKeyDown={handleKeyDown}
             />
             {mentionActive && members.length > 0 && (
@@ -368,7 +368,7 @@ export function CommentThread({
                 type="button"
                 onClick={() => setShowPicker(!showPicker)}
                 className={`px-2 py-1 text-[10px] rounded-lg transition-colors ${
-                  showPicker ? 'bg-sandstone/20 text-sandstone' : 'text-cream/35 hover:text-cream/55 bg-cream/5'
+                  showPicker ? 'bg-sandstone/20 text-sandstone' : 'text-cream/50 hover:text-cream/65 bg-stone-200'
                 }`}
                 title={refPickerLabel}
               >
@@ -384,8 +384,8 @@ export function CommentThread({
 
       {/* Reference picker dropdown */}
       {showPicker && refEntities && (
-        <div className="bg-basalt border border-cream/12 rounded-lg p-2 max-h-32 overflow-y-auto space-y-0.5">
-          <p className="text-[10px] text-cream/35 px-1 mb-1">{refPickerLabel}:</p>
+        <div className="bg-basalt border border-cream/15 rounded-lg p-2 max-h-32 overflow-y-auto space-y-0.5">
+          <p className="text-[10px] text-cream/50 px-1 mb-1">{refPickerLabel}:</p>
           {refEntities.map((entity) => (
             <button
               key={entity.id}
@@ -397,7 +397,7 @@ export function CommentThread({
               className={`w-full text-left px-2 py-1 text-xs rounded transition-colors ${
                 selectedRef?.id === entity.id
                   ? 'bg-sandstone/20 text-sandstone'
-                  : 'text-cream/60 hover:text-cream/80 hover:bg-cream/5'
+                  : 'text-cream/70 hover:text-cream/90 hover:bg-stone-hover'
               }`}
             >
               {truncateLabel(entity.label, 50)}
@@ -406,7 +406,7 @@ export function CommentThread({
         </div>
       )}
 
-      <p className="text-[10px] text-cream/25 text-right">
+      <p className="text-[10px] text-cream/40 text-right">
         {draft.length > 0 && `${draft.length}/${MAX_COMMENT_LENGTH} · `}Ctrl+Enter to post
       </p>
     </div>
@@ -416,12 +416,12 @@ export function CommentThread({
     <div ref={listRef} className="flex-1 overflow-y-auto p-4 space-y-3">
       {isLoading ? (
         <div className="text-center py-12">
-          <p className="text-sm text-cream/40">Loading comments...</p>
+          <p className="text-sm text-cream/55">Loading comments...</p>
         </div>
       ) : sorted.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-sm text-cream/40">No comments yet.</p>
-          <p className="text-xs text-cream/30 mt-1">Be the first to leave a note.</p>
+          <p className="text-sm text-cream/55">No comments yet.</p>
+          <p className="text-xs text-cream/45 mt-1">Be the first to leave a note.</p>
         </div>
       ) : (
         <>
@@ -450,18 +450,18 @@ export function CommentThread({
                 type="button"
                 disabled={page === 0}
                 onClick={() => setPage((p) => p - 1)}
-                className="text-xs text-cream/40 hover:text-cream/60 disabled:opacity-30 transition-colors"
+                className="text-xs text-cream/55 hover:text-cream/70 disabled:opacity-30 transition-colors"
               >
                 ← Newer
               </button>
-              <span className="text-[10px] text-cream/35">
+              <span className="text-[10px] text-cream/50">
                 {page + 1} / {totalPages}
               </span>
               <button
                 type="button"
                 disabled={page >= totalPages - 1}
                 onClick={() => setPage((p) => p + 1)}
-                className="text-xs text-cream/40 hover:text-cream/60 disabled:opacity-30 transition-colors"
+                className="text-xs text-cream/55 hover:text-cream/70 disabled:opacity-30 transition-colors"
               >
                 Older →
               </button>
@@ -475,16 +475,16 @@ export function CommentThread({
   const header = (
     <div className="shrink-0">
       <div className="flex items-center justify-between px-4 py-3 border-b border-cream/12">
-        <h3 className="text-sm font-medium text-cream/80">
+        <h3 className="text-sm font-medium text-cream/90">
           {title}
           {sorted.length > 0 && (
-            <span className="ml-1.5 text-cream/35 text-xs">({sorted.length})</span>
+            <span className="ml-1.5 text-cream/65 text-xs">({sorted.length})</span>
           )}
         </h3>
         <button
           type="button"
           onClick={onClose}
-          className="w-7 h-7 rounded-md flex items-center justify-center text-cream/40 hover:text-cream/60 hover:bg-cream/5 transition-colors"
+          className="w-7 h-7 rounded-md flex items-center justify-center text-cream/55 hover:text-cream/70 hover:bg-stone-hover transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -493,9 +493,9 @@ export function CommentThread({
         </button>
       </div>
       {filterRefEntityLabel && onClearFilter ? (
-        <div className="px-4 py-2 border-b border-cream/8 bg-sandstone/5 flex items-center justify-between gap-2">
-          <span className="text-[11px] text-cream/60 truncate">
-            <span className="text-cream/40">on</span>{' '}
+        <div className="px-4 py-2 border-b border-cream/12 bg-sandstone/5 flex items-center justify-between gap-2">
+          <span className="text-[11px] text-cream/70 truncate">
+            <span className="text-cream/55">on</span>{' '}
             <span className="text-cream/75 font-medium">{truncateLabel(filterRefEntityLabel, 30)}</span>
           </span>
           <button
@@ -507,8 +507,8 @@ export function CommentThread({
           </button>
         </div>
       ) : comments.length > 0 && comments.some((c) => c.refEntityId) ? (
-        <div className="px-4 py-1.5 border-b border-cream/8">
-          <span className="text-[10px] text-cream/30">
+        <div className="px-4 py-1.5 border-b border-cream/12">
+          <span className="text-[10px] text-cream/45">
             All selection comments
           </span>
         </div>
@@ -537,29 +537,29 @@ export function CommentThread({
       />
 
       {/* Desktop: right side panel */}
-      <div className="hidden md:flex fixed right-0 top-0 bottom-0 z-[56] w-96 bg-basalt-50 border-l border-cream/15 flex-col shadow-2xl">
+      <div className="hidden md:flex fixed right-0 top-0 bottom-0 z-[56] w-96 bg-stone border-l border-cream/20 flex-col shadow-2xl">
         {header}
         {commentList}
         {commentInput}
       </div>
 
       {/* Mobile: bottom sheet */}
-      <div className="md:hidden fixed inset-x-0 bottom-0 z-[56] bg-basalt-50 border-t border-cream/15 rounded-t-xl flex flex-col max-h-[80vh] shadow-2xl">
+      <div className="md:hidden fixed inset-x-0 bottom-0 z-[56] bg-stone border-t border-cream/20 rounded-t-xl flex flex-col max-h-[80vh] shadow-2xl">
         {/* Handle */}
         <div className="flex justify-center pt-2 pb-1">
-          <div className="w-10 h-1 rounded-full bg-cream/20" />
+          <div className="w-10 h-1 rounded-full bg-cream/35" />
         </div>
         <div className="flex items-center justify-between px-4 py-2 border-b border-cream/12 shrink-0">
-          <h3 className="text-sm font-medium text-cream/80">
+          <h3 className="text-sm font-medium text-cream/90">
             {title}
             {sorted.length > 0 && (
-              <span className="ml-1.5 text-cream/35 text-xs">({sorted.length})</span>
+              <span className="ml-1.5 text-cream/65 text-xs">({sorted.length})</span>
             )}
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
+            className="text-xs text-cream/55 hover:text-cream/70 transition-colors"
           >
             Close
           </button>
@@ -633,7 +633,7 @@ function CommentCard({
       className={`border rounded-lg p-3 space-y-1.5 group transition-colors duration-1000 ${
       highlight
         ? 'bg-sandstone/10 border-sandstone/20'
-        : 'bg-cream/[0.04] border-cream/12'
+        : 'bg-stone-50 border-cream/15'
     }`}>
       {/* Reference chip */}
       {comment.refEntityLabel && onNavigateToRef && (
@@ -657,16 +657,16 @@ function CommentCard({
           {comment.authorName.charAt(0).toUpperCase() || '?'}
         </span>
         <span className="text-xs font-medium text-cream/85">{comment.authorName || 'Unknown'}</span>
-        <span className="text-[11px] text-cream/40">{relativeTime(comment.createdAt)}</span>
+        <span className="text-[11px] text-cream/55">{relativeTime(comment.createdAt)}</span>
         {comment.edited && (
-          <span className="text-[10px] text-cream/30 italic">(edited)</span>
+          <span className="text-[10px] text-cream/45 italic">(edited)</span>
         )}
         <span className="ml-auto flex items-center gap-1">
           {onEdit && isOwnComment && !editing && (
             <button
               type="button"
               onClick={() => { setEditDraft(comment.text); setEditing(true) }}
-              className="text-cream/15 hover:text-cream/50 opacity-0 group-hover:opacity-100 transition-all"
+              className="text-cream/30 hover:text-cream/65 opacity-0 group-hover:opacity-100 transition-all"
               title="Edit"
             >
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -679,7 +679,7 @@ function CommentCard({
             <button
               type="button"
               onClick={onDelete}
-              className="text-cream/15 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+              className="text-cream/30 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
               title="Delete"
             >
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -699,7 +699,7 @@ function CommentCard({
             onChange={(e) => setEditDraft(e.target.value.slice(0, MAX_COMMENT_LENGTH))}
             onKeyDown={handleEditKeyDown}
             rows={2}
-            className="w-full bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/35 focus:outline-none focus:border-sandstone/40 resize-none"
+            className="w-full bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/50 focus:outline-none focus:border-sandstone/40 resize-none"
           />
           <div className="flex items-center gap-2">
             <button
@@ -713,11 +713,11 @@ function CommentCard({
             <button
               type="button"
               onClick={() => { setEditing(false); setEditDraft(comment.text) }}
-              className="px-2.5 py-1 text-[11px] text-cream/40 hover:text-cream/60 transition-colors"
+              className="px-2.5 py-1 text-[11px] text-cream/55 hover:text-cream/70 transition-colors"
             >
               Cancel
             </button>
-            <span className="text-[10px] text-cream/25 ml-auto">Esc to cancel</span>
+            <span className="text-[10px] text-cream/40 ml-auto">Esc to cancel</span>
           </div>
         </div>
       ) : (

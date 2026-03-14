@@ -55,13 +55,13 @@ export function DashboardPage() {
             {currentProject?.name ?? 'My Renovation'}
           </h1>
           {!isLoading && attentionItems.length > 0 ? (
-            <p className="text-sm text-cream/50">
+            <p className="text-sm text-cream/65">
               {attentionItems.join(' \u00b7 ')}
             </p>
           ) : !isLoading && data?.noNews.isQuiet ? (
-            <p className="text-sm text-cream/50">Nothing needs your attention right now.</p>
+            <p className="text-sm text-cream/65">Nothing needs your attention right now.</p>
           ) : !isLoading ? (
-            <p className="text-sm text-cream/40">Everything looks good.</p>
+            <p className="text-sm text-cream/55">Everything looks good.</p>
           ) : null}
         </div>
 
@@ -80,7 +80,7 @@ export function DashboardPage() {
           </button>
           <Link
             href="/app/inbox"
-            className="inline-flex items-center gap-1.5 px-3 py-2.5 text-cream/50 text-sm rounded-lg hover:text-cream/70 hover:bg-cream/5 transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 px-3 py-2.5 text-cream/65 text-sm rounded-lg hover:text-cream/80 hover:bg-stone-hover transition-colors whitespace-nowrap"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M22 12h-6l-2 3H10l-2-3H2" strokeLinecap="round" strokeLinejoin="round" />
@@ -96,7 +96,7 @@ export function DashboardPage() {
           <button
             type="button"
             onClick={() => { setShowActivity(true); markActivitySeen() }}
-            className="inline-flex items-center gap-1.5 px-3 py-2.5 text-cream/50 text-sm rounded-lg hover:text-cream/70 hover:bg-cream/5 transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 px-3 py-2.5 text-cream/65 text-sm rounded-lg hover:text-cream/80 hover:bg-stone-hover transition-colors whitespace-nowrap"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />

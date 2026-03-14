@@ -38,9 +38,9 @@ function ApprovedPlanInterventionDialog({
 }) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-md rounded-xl border border-cream/10 bg-[#1a1a1a] p-6 shadow-2xl space-y-4">
+      <div className="w-full max-w-md rounded-xl border border-cream/15 bg-basalt p-6 shadow-2xl space-y-4">
         <h3 className="text-base font-semibold text-cream">This plan is approved</h3>
-        <p className="text-sm text-cream/60 leading-relaxed">
+        <p className="text-sm text-cream/70 leading-relaxed">
           Your plan is locked to protect the agreed-upon scope. To make changes, you can either
           unlock the plan for direct editing or create a formal change record.
         </p>
@@ -48,20 +48,20 @@ function ApprovedPlanInterventionDialog({
           <button
             type="button"
             onClick={onUnlock}
-            className="w-full text-left px-4 py-3 rounded-lg border border-amber-400/20 bg-amber-400/5 hover:bg-amber-400/10 transition-colors"
+            className="w-full text-left px-4 py-3 rounded-lg border border-amber-400/20 bg-amber-400/8 hover:bg-amber-400/12 transition-colors"
           >
             <div className="text-sm font-medium text-amber-400">Unlock Plan for Revision</div>
-            <div className="text-xs text-cream/40 mt-0.5">
+            <div className="text-xs text-cream/55 mt-0.5">
               Temporarily unlock the plan so you can edit it directly. You can re-approve it when done.
             </div>
           </button>
           <button
             type="button"
             onClick={onCreateChange}
-            className="w-full text-left px-4 py-3 rounded-lg border border-emerald-400/20 bg-emerald-400/5 hover:bg-emerald-400/10 transition-colors"
+            className="w-full text-left px-4 py-3 rounded-lg border border-emerald-400/20 bg-emerald-400/8 hover:bg-emerald-400/12 transition-colors"
           >
             <div className="text-sm font-medium text-emerald-400">Create a Change Instead</div>
-            <div className="text-xs text-cream/40 mt-0.5">
+            <div className="text-xs text-cream/55 mt-0.5">
               Log a formal change to the plan. The plan stays locked while the change is reviewed and approved.
             </div>
           </button>
@@ -69,7 +69,7 @@ function ApprovedPlanInterventionDialog({
         <button
           type="button"
           onClick={onDismiss}
-          className="w-full text-center text-xs text-cream/30 hover:text-cream/50 transition-colors py-1"
+          className="w-full text-center text-xs text-cream/45 hover:text-cream/65 transition-colors py-1"
         >
           Cancel
         </button>
@@ -90,7 +90,7 @@ function ApproveWithOpenItemsWarning({
 }) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-sm rounded-xl border border-cream/10 bg-[#1a1a1a] p-5 shadow-2xl space-y-3">
+      <div className="w-full max-w-sm rounded-xl border border-cream/15 bg-basalt p-5 shadow-2xl space-y-3">
         <h3 className="text-sm font-semibold text-cream flex items-center gap-2">
           <svg className="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" strokeLinecap="round" strokeLinejoin="round" />
@@ -99,7 +99,7 @@ function ApproveWithOpenItemsWarning({
           </svg>
           Items Still to Decide
         </h3>
-        <p className="text-xs text-cream/50 leading-relaxed">
+        <p className="text-xs text-cream/65 leading-relaxed">
           This plan has <strong className="text-amber-400">{unresolvedCount} item{unresolvedCount !== 1 ? 's' : ''} still to decide</strong>.
           You can still approve, but these items will remain visible and tracked.
         </p>
@@ -107,14 +107,14 @@ function ApproveWithOpenItemsWarning({
           <button
             type="button"
             onClick={onDismiss}
-            className="text-xs text-cream/30 hover:text-cream/50 transition-colors px-3 py-1.5"
+            className="text-xs text-cream/45 hover:text-cream/65 transition-colors px-3 py-1.5"
           >
             Go Back
           </button>
           <button
             type="button"
             onClick={onProceed}
-            className="text-xs font-medium text-cream/70 bg-cream/10 hover:bg-cream/15 border border-cream/10 transition-colors px-3 py-1.5 rounded-lg"
+            className="text-xs font-medium text-cream/80 bg-cream/15 hover:bg-cream/20 border border-cream/15 transition-colors px-3 py-1.5 rounded-lg"
           >
             Approve Anyway
           </button>
@@ -249,10 +249,10 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
   return (
     <div className={`rounded-xl border p-4 md:p-5 space-y-3 ${
       isApproved
-        ? 'border-emerald-400/20 bg-emerald-400/[0.02] shadow-[0_0_24px_rgba(52,211,153,0.03)]'
+        ? 'border-emerald-400/20 bg-emerald-400/[0.03] shadow-[0_0_24px_rgba(52,211,153,0.03)]'
         : isUnlocked
-          ? 'border-amber-400/20 bg-amber-400/[0.02]'
-          : 'border-cream/[0.08] bg-cream/[0.03]'
+          ? 'border-amber-400/20 bg-amber-400/[0.03]'
+          : 'border-cream/14 bg-stone-50'
     }`}>
       {/* Intervention dialog (PCV1-003) */}
       {showIntervention && (
@@ -278,7 +278,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
       {/* Unlock reason prompt */}
       {showUnlockPrompt && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-sm rounded-xl border border-cream/10 bg-[#1a1a1a] p-5 shadow-2xl space-y-3">
+          <div className="w-full max-w-sm rounded-xl border border-cream/15 bg-basalt p-5 shadow-2xl space-y-3">
             <h3 className="text-sm font-semibold text-cream flex items-center gap-2">
               <svg className="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -286,7 +286,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
               </svg>
               Unlock Plan
             </h3>
-            <p className="text-xs text-cream/50 leading-relaxed">
+            <p className="text-xs text-cream/65 leading-relaxed">
               Unlocking lets you edit the plan directly. Add a short note so you remember why you unlocked it.
             </p>
             <div>
@@ -295,12 +295,12 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
                 onChange={(e) => setUnlockReason(e.target.value)}
                 placeholder="Why are you unlocking? e.g. Contractor revised scope..."
                 rows={2}
-                className="w-full bg-cream/5 border border-cream/10 rounded-md px-3 py-2 text-xs text-cream/60 placeholder-cream/20 outline-none focus:border-sandstone/30 resize-none"
+                className="w-full bg-stone-200 border border-cream/15 rounded-md px-3 py-2 text-xs text-cream/70 placeholder-cream/35 outline-none focus:border-sandstone/30 resize-none"
                 autoFocus
               />
             </div>
             <div className="flex gap-2 justify-end pt-1">
-              <button type="button" onClick={() => setShowUnlockPrompt(false)} className="text-xs text-cream/30 hover:text-cream/50 transition-colors px-3 py-1.5">
+              <button type="button" onClick={() => setShowUnlockPrompt(false)} className="text-xs text-cream/45 hover:text-cream/65 transition-colors px-3 py-1.5">
                 Cancel
               </button>
               <button
@@ -318,7 +318,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
       {/* Header: title + status + actions — compact single line */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-cream/80">Your Plan</h2>
+          <h2 className="text-sm font-semibold text-cream/90">Your Plan</h2>
           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${statusConfig.color} ${statusConfig.bgColor}`}>
             {isApproved && (
               <svg className="w-2.5 h-2.5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -342,7 +342,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
                   approvePlan()
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-cream/80 bg-cream/10 hover:bg-cream/15 border border-cream/10 hover:border-cream/20 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-cream/90 bg-cream/15 hover:bg-cream/20 border border-cream/15 hover:border-cream/35 transition-colors"
             >
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
@@ -355,7 +355,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
             <button
               type="button"
               onClick={onScrollToChanges}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-cream/80 bg-cream/10 hover:bg-cream/15 border border-cream/10 hover:border-cream/20 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-cream/90 bg-cream/15 hover:bg-cream/20 border border-cream/15 hover:border-cream/35 transition-colors"
             >
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 5v14M5 12h14" strokeLinecap="round" />
@@ -374,7 +374,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
                   reapprovePlan()
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-cream/80 bg-cream/10 hover:bg-cream/15 border border-cream/10 hover:border-cream/20 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-cream/90 bg-cream/15 hover:bg-cream/20 border border-cream/15 hover:border-cream/35 transition-colors"
             >
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
@@ -388,7 +388,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
             <button
               type="button"
               onClick={() => { setUnlockReason(''); setShowUnlockPrompt(true) }}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium text-cream/40 hover:text-cream/60 transition-colors"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium text-cream/55 hover:text-cream/70 transition-colors"
             >
               Unlock
             </button>
@@ -397,7 +397,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
       </div>
 
       {/* Summary row — at-a-glance state of the plan */}
-      <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-cream/40">
+      <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-cream/55">
         {isApproved && (
           <span className="text-emerald-400/50">Locked — create a change to modify</span>
         )}
@@ -408,12 +408,12 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
           <span className="text-amber-400/50">
             {unresolvedOpenItems.length} still to decide
             {unresolvedOpenItems.filter((i) => i.status === 'waiting').length > 0 && (
-              <span className="text-cream/35"> ({unresolvedOpenItems.filter((i) => i.status === 'waiting').length} waiting)</span>
+              <span className="text-cream/50"> ({unresolvedOpenItems.filter((i) => i.status === 'waiting').length} waiting)</span>
             )}
           </span>
         )}
         {pendingChangeCount > 0 && (
-          <span className="text-cream/40">
+          <span className="text-cream/55">
             {pendingChangeCount} pending change{pendingChangeCount !== 1 ? 's' : ''}
           </span>
         )}
@@ -426,7 +426,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
           </span>
         )}
         {plan.approved_at && (
-          <span className="text-cream/30">
+          <span className="text-cream/45">
             {isApproved ? 'Approved' : 'Last approved'} {new Date(plan.approved_at).toLocaleDateString()}
           </span>
         )}
@@ -437,18 +437,18 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
 
       {/* Draft guidance — teach the workflow when plan is empty */}
       {plan.status === 'working' && !plan.scope && payload.documents.length === 0 && plan.open_items.length === 0 && !readOnly && (
-        <div className="rounded-lg bg-cream/[0.02] border border-cream/[0.05] px-4 py-3">
-          <p className="text-xs text-cream/50 leading-relaxed mb-2">
+        <div className="rounded-lg bg-stone-50 border border-cream/10 px-4 py-3">
+          <p className="text-xs text-cream/65 leading-relaxed mb-2">
             Start building your plan by filling in the sections below. When everything looks right, approve it to lock it in.
           </p>
-          <ol className="text-[11px] text-cream/45 space-y-1 list-decimal list-inside">
+          <ol className="text-[11px] text-cream/60 space-y-1 list-decimal list-inside">
             <li>Describe the scope of work</li>
             <li>Add files (contracts, specs, photos)</li>
             <li>Note anything still to decide</li>
             <li>Set a budget if you have one</li>
             <li>Approve the plan when ready</li>
           </ol>
-          <p className="text-[10px] text-cream/35 mt-2">
+          <p className="text-[10px] text-cream/50 mt-2">
             After approval, any changes are tracked separately. You can link related Selections or Fix Items to each change so everything stays connected.
           </p>
         </div>
@@ -456,14 +456,14 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
 
       {/* 1. Scope */}
       <div onClick={isApproved ? handleEditAttempt : undefined}>
-        <label className="text-[10px] text-cream/40 uppercase tracking-wider font-medium block mb-1">Scope</label>
+        <label className="text-[10px] text-cream/55 uppercase tracking-wider font-medium block mb-1">Scope</label>
         <InlineEdit
           value={plan.scope}
           onSave={(text) => updatePlanScope(text)}
           placeholder="What work is being done? Describe the overall project so everyone's on the same page."
           readOnly={readOnly || isApproved}
           multiline
-          displayClassName="text-sm text-cream/70 leading-relaxed"
+          displayClassName="text-sm text-cream/80 leading-relaxed"
           className="text-sm leading-relaxed"
         />
       </div>
@@ -473,8 +473,8 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
 
       {/* Linking hint — selections and fix items are linked on individual changes */}
       {!readOnly && changes.length === 0 && !isApproved && (
-        <div className="flex items-center gap-2 text-[10px] text-cream/35">
-          <svg className="w-3 h-3 text-cream/25 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <div className="flex items-center gap-2 text-[10px] text-cream/50">
+          <svg className="w-3 h-3 text-cream/40 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -484,7 +484,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
 
       {/* 3. Unresolved Items */}
       <div onClick={isApproved ? handleEditAttempt : undefined}>
-        <label className="text-[10px] text-cream/40 uppercase tracking-wider font-medium block mb-1">
+        <label className="text-[10px] text-cream/55 uppercase tracking-wider font-medium block mb-1">
           Still to Decide
         </label>
         <OpenItemsList
@@ -504,18 +504,18 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
         <button
           type="button"
           onClick={() => setShowBudget(true)}
-          className="text-[10px] text-cream/35 hover:text-cream/50 transition-colors"
+          className="text-[10px] text-cream/50 hover:text-cream/65 transition-colors"
         >
           + Add budget details
         </button>
       )}
 
       {showBudget && (
-        <div className="pt-3 border-t border-cream/[0.04]" onClick={isApproved ? handleEditAttempt : undefined}>
+        <div className="pt-3 border-t border-cream/10" onClick={isApproved ? handleEditAttempt : undefined}>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] text-cream/40 uppercase tracking-wider font-medium">Budget</span>
+            <span className="text-[10px] text-cream/55 uppercase tracking-wider font-medium">Budget</span>
             {!readOnly && !isApproved && !budget.baseline_amount && !budget.budget_note && approvedChanges.length === 0 && (
-              <button type="button" onClick={() => setShowBudget(false)} className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors">Hide</button>
+              <button type="button" onClick={() => setShowBudget(false)} className="text-[10px] text-cream/45 hover:text-cream/65 transition-colors">Hide</button>
             )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -526,7 +526,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
                 onSave={(v) => updateBudget({ baseline_amount: v ? formatCost(v) : undefined })}
                 placeholder="e.g. $85,000"
                 readOnly={readOnly || isApproved}
-                displayClassName="text-sm text-cream/70"
+                displayClassName="text-sm text-cream/80"
                 className="text-sm"
               />
             </div>
@@ -534,7 +534,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
               <label className="text-[10px] text-cream/40 block mb-0.5">Approved Changes</label>
               <div className="flex items-baseline gap-1.5">
                 {approvedChanges.length > 0 ? (
-                  <span className="text-sm text-cream/60">
+                  <span className="text-sm text-cream/70">
                     {approvedCostSum !== null ? (
                       <>{approvedCostSum >= 0 ? '+' : ''}${Math.abs(approvedCostSum).toLocaleString()}</>
                     ) : (
@@ -542,18 +542,18 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
                     )}
                   </span>
                 ) : (
-                  <span className="text-sm text-cream/30">—</span>
+                  <span className="text-sm text-cream/45">—</span>
                 )}
               </div>
             </div>
             <div>
               <label className="text-[10px] text-cream/40 block mb-0.5">Current Total</label>
               {computedTotal !== null ? (
-                <span className="text-sm text-cream/70 font-medium">
+                <span className="text-sm text-cream/80 font-medium">
                   ${computedTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </span>
               ) : (
-                <span className="text-sm text-cream/35 italic">
+                <span className="text-sm text-cream/50 italic">
                   {budget.baseline_amount ? 'Enter change amounts' : 'Set baseline first'}
                 </span>
               )}
@@ -566,7 +566,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
               <span className="text-amber-400/70 font-medium">
                 {pendingCostSum >= 0 ? '+' : ''}${Math.abs(pendingCostSum).toLocaleString()}
               </span>
-              <span className="text-cream/25">
+              <span className="text-cream/40">
                 from {pendingChangeCount} pending change{pendingChangeCount !== 1 ? 's' : ''}
               </span>
             </div>
@@ -579,7 +579,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
                 onSave={(v) => updateBudget({ budget_note: v || undefined })}
                 placeholder="Budget notes..."
                 readOnly={readOnly || isApproved}
-                displayClassName="text-xs text-cream/40"
+                displayClassName="text-xs text-cream/55"
                 className="text-xs"
               />
             </div>
@@ -589,27 +589,27 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
 
       {/* Legacy: included / not-included (read-only, shown only when data exists) */}
       {(plan.included.length > 0 || plan.not_included.length > 0) && (
-        <details className="pt-3 border-t border-cream/[0.04]">
-          <summary className="text-[10px] text-cream/35 cursor-pointer hover:text-cream/50 transition-colors select-none">
+        <details className="pt-3 border-t border-cream/10">
+          <summary className="text-[10px] text-cream/50 cursor-pointer hover:text-cream/65 transition-colors select-none">
             Legacy Plan Details ({plan.included.length + plan.not_included.length} items)
           </summary>
           <div className="mt-2 space-y-2">
             {plan.included.length > 0 && (
               <div>
-                <span className="text-[10px] text-cream/40 uppercase tracking-wider font-medium block mb-1">What&apos;s Included</span>
+                <span className="text-[10px] text-cream/55 uppercase tracking-wider font-medium block mb-1">What&apos;s Included</span>
                 <ul className="space-y-0.5">
                   {plan.included.map((item) => (
-                    <li key={item.id} className="text-xs text-cream/40 pl-2 border-l border-cream/10">{item.text}</li>
+                    <li key={item.id} className="text-xs text-cream/55 pl-2 border-l border-cream/15">{item.text}</li>
                   ))}
                 </ul>
               </div>
             )}
             {plan.not_included.length > 0 && (
               <div>
-                <span className="text-[10px] text-cream/40 uppercase tracking-wider font-medium block mb-1">Not Included</span>
+                <span className="text-[10px] text-cream/55 uppercase tracking-wider font-medium block mb-1">Not Included</span>
                 <ul className="space-y-0.5">
                   {plan.not_included.map((item) => (
-                    <li key={item.id} className="text-xs text-cream/40 pl-2 border-l border-cream/10">{item.text}</li>
+                    <li key={item.id} className="text-xs text-cream/55 pl-2 border-l border-cream/15">{item.text}</li>
                   ))}
                 </ul>
               </div>
@@ -620,22 +620,22 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
 
       {/* 5. Incorporated Changes — collapsed by default */}
       {incorporatedChanges.length > 0 && (
-        <div className="pt-3 border-t border-cream/[0.04]">
+        <div className="pt-3 border-t border-cream/10">
           <button
             type="button"
             onClick={() => setShowIncorporated(!showIncorporated)}
             className="flex items-center gap-2 w-full text-left"
           >
             <svg
-              className={`w-3 h-3 text-cream/30 transition-transform ${showIncorporated ? 'rotate-90' : ''}`}
+              className={`w-3 h-3 text-cream/45 transition-transform ${showIncorporated ? 'rotate-90' : ''}`}
               viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
             >
               <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">
+            <span className="text-[10px] text-cream/45 uppercase tracking-wider font-medium">
               Added to Plan
             </span>
-            <span className="text-[10px] text-cream/30">{incorporatedChanges.length}</span>
+            <span className="text-[10px] text-cream/45">{incorporatedChanges.length}</span>
           </button>
 
           {showIncorporated && (
@@ -645,12 +645,12 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
                   <svg className="w-3 h-3 text-teal-400/40 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <span className="text-xs text-cream/60 flex-1 truncate">{c.title}</span>
+                  <span className="text-xs text-cream/70 flex-1 truncate">{c.title}</span>
                   {c.cost_impact && (
-                    <span className="text-[10px] text-cream/30 shrink-0">{c.cost_impact}</span>
+                    <span className="text-[10px] text-cream/45 shrink-0">{c.cost_impact}</span>
                   )}
                   {c.incorporated_at && (
-                    <span className="text-[10px] text-cream/30 shrink-0 hidden md:inline">
+                    <span className="text-[10px] text-cream/45 shrink-0 hidden md:inline">
                       {new Date(c.incorporated_at).toLocaleDateString()}
                     </span>
                   )}
@@ -671,7 +671,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
 
       {/* Approval metadata */}
       {plan.approved_at && (
-        <div className="text-[10px] text-cream/30 pt-2 border-t border-cream/[0.04]">
+        <div className="text-[10px] text-cream/45 pt-2 border-t border-cream/10">
           {isApproved ? 'Approved' : 'Last approved'} {new Date(plan.approved_at).toLocaleDateString()}
           {plan.approved_by && ` by ${plan.approved_by}`}
           {plan.revision_number != null && plan.revision_number > 0 && ` (rev ${plan.revision_number})`}

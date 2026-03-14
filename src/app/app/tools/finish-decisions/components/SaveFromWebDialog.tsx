@@ -91,15 +91,15 @@ export function SaveFromWebDialog({
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       {/* Dialog */}
-      <div className="relative bg-basalt-50 border-t sm:border border-cream/15 rounded-t-xl sm:rounded-xl shadow-2xl w-full sm:max-w-lg max-h-[85vh] overflow-y-auto">
+      <div className="relative bg-stone border-t sm:border border-cream/15 rounded-t-xl sm:rounded-xl shadow-2xl w-full sm:max-w-lg max-h-[85vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 flex items-center justify-between px-5 py-4 z-10 rounded-t-xl">
+        <div className="sticky top-0 bg-stone border-b border-cream/15 flex items-center justify-between px-5 py-4 z-10 rounded-t-xl">
           <div>
             <h2 className="text-lg font-medium text-cream">
               {step === 'placement' ? 'Save to...' : 'Save to HHC'}
             </h2>
             {step === 'placement' && capturedResult && (
-              <p className="text-xs text-cream/40 mt-0.5 truncate max-w-[280px]">
+              <p className="text-xs text-cream/55 mt-0.5 truncate max-w-[280px]">
                 {capturedResult.name}
               </p>
             )}
@@ -107,7 +107,7 @@ export function SaveFromWebDialog({
           <button
             type="button"
             onClick={onClose}
-            className="text-cream/40 hover:text-cream transition-colors shrink-0 ml-4"
+            className="text-cream/55 hover:text-cream transition-colors shrink-0 ml-4"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
@@ -125,20 +125,20 @@ export function SaveFromWebDialog({
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xs font-semibold uppercase tracking-wide text-sandstone">Recommended</span>
                 </div>
-                <p className="text-sm text-cream/70 mb-3">
+                <p className="text-sm text-cream/80 mb-3">
                   Captures images from any site — even ones that block automated fetching.
                 </p>
                 <div className="space-y-3">
                   <div className="flex gap-3">
                     <span className="flex-shrink-0 w-5 h-5 bg-sandstone/20 text-sandstone text-[10px] font-bold rounded-full flex items-center justify-center mt-0.5">1</span>
                     <div>
-                      <p className="text-xs text-cream/60 mb-1.5">Drag to your bookmarks bar:</p>
+                      <p className="text-xs text-cream/70 mb-1.5">Drag to your bookmarks bar:</p>
                       <BookmarkletButton compact />
                     </div>
                   </div>
                   <div className="flex gap-3">
                     <span className="flex-shrink-0 w-5 h-5 bg-sandstone/20 text-sandstone text-[10px] font-bold rounded-full flex items-center justify-center mt-0.5">2</span>
-                    <p className="text-xs text-cream/60">
+                    <p className="text-xs text-cream/70">
                       Visit a product page and click it — images come back here automatically
                     </p>
                   </div>
@@ -150,11 +150,11 @@ export function SaveFromWebDialog({
                 <button
                   type="button"
                   onClick={() => setUrlSectionOpen(!urlSectionOpen)}
-                  className="flex items-center gap-2 text-sm text-cream/50 hover:text-cream/70 transition-colors w-full"
+                  className="flex items-center gap-2 text-sm text-cream/65 hover:text-cream/80 transition-colors w-full"
                 >
-                  <span className="text-xs text-cream/30">{urlSectionOpen ? '▼' : '▶'}</span>
+                  <span className="text-xs text-cream/45">{urlSectionOpen ? '▼' : '▶'}</span>
                   Quick Import — Paste URL
-                  <span className="text-[10px] text-cream/25 ml-auto">Some sites may block this</span>
+                  <span className="text-[10px] text-cream/40 ml-auto">Some sites may block this</span>
                 </button>
 
                 {urlSectionOpen && (
@@ -165,7 +165,7 @@ export function SaveFromWebDialog({
                         <p className="text-xs text-amber-400 font-medium mb-1">
                           This site blocked automated fetching.
                         </p>
-                        <p className="text-[11px] text-cream/40">
+                        <p className="text-[11px] text-cream/55">
                           Use the bookmarklet above to capture what you see — it works on any page.
                         </p>
                       </div>
@@ -188,11 +188,11 @@ export function SaveFromWebDialog({
             <div className="space-y-4">
               {/* Default destination summary (when invoked from a selection page) */}
               {hasDefaultDestination && defaultSelection && (
-                <div className="bg-basalt rounded-lg p-3 border border-cream/10">
+                <div className="bg-basalt rounded-lg p-3 border border-cream/15">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-cream/40">Destination</p>
-                      <p className="text-sm text-cream/80 mt-0.5">
+                      <p className="text-xs text-cream/55">Destination</p>
+                      <p className="text-sm text-cream/90 mt-0.5">
                         {defaultSelection.title}
                       </p>
                     </div>
@@ -212,7 +212,7 @@ export function SaveFromWebDialog({
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <label className="block text-xs text-cream/50">
+                      <label className="block text-xs text-cream/65">
                         Selection
                       </label>
                       <div className="flex gap-2">
@@ -222,7 +222,7 @@ export function SaveFromWebDialog({
                           className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
                             placementMode === 'existing'
                               ? 'bg-sandstone/20 text-sandstone'
-                              : 'bg-cream/10 text-cream/50 hover:text-cream/70'
+                              : 'bg-cream/10 text-cream/65 hover:text-cream/80'
                           }`}
                         >
                           Existing
@@ -233,7 +233,7 @@ export function SaveFromWebDialog({
                           className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
                             placementMode === 'new'
                               ? 'bg-sandstone/20 text-sandstone'
-                              : 'bg-cream/10 text-cream/50 hover:text-cream/70'
+                              : 'bg-cream/10 text-cream/65 hover:text-cream/80'
                           }`}
                         >
                           + New
@@ -253,13 +253,13 @@ export function SaveFromWebDialog({
                               className={`px-3 py-2 rounded-lg border-2 text-left transition-all ${
                                 isActive
                                   ? 'border-sandstone bg-sandstone/10'
-                                  : 'border-cream/10 hover:border-cream/25 bg-basalt'
+                                  : 'border-cream/15 hover:border-cream/25 bg-basalt'
                               }`}
                             >
                               <p className={`text-xs font-medium truncate ${isActive ? 'text-sandstone' : 'text-cream'}`}>
                                 {s.title}
                               </p>
-                              <p className="text-[10px] text-cream/30">{s.options.length} options</p>
+                              <p className="text-[10px] text-cream/45">{s.options.length} options</p>
                             </button>
                           )
                         })}
@@ -271,7 +271,7 @@ export function SaveFromWebDialog({
                         onChange={(e) => setNewSelectionTitle(e.target.value)}
                         placeholder="e.g. Vanity, Backsplash..."
                         autoFocus
-                        className="w-full px-3 py-2 bg-basalt border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-sandstone"
+                        className="w-full px-3 py-2 bg-basalt border border-cream/20 text-cream text-sm rounded-lg placeholder:text-cream/45 focus:outline-none focus:border-sandstone"
                       />
                     )}
                   </div>
@@ -283,7 +283,7 @@ export function SaveFromWebDialog({
                 <button
                   type="button"
                   onClick={() => { setStep('choose-method'); setCapturedResult(null) }}
-                  className="px-4 py-2 text-sm text-cream/60 hover:text-cream transition-colors"
+                  className="px-4 py-2 text-sm text-cream/70 hover:text-cream transition-colors"
                 >
                   Back
                 </button>

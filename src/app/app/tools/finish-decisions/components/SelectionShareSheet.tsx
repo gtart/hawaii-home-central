@@ -178,12 +178,12 @@ export function SelectionShareSheet({
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-basalt-50 border border-cream/15 rounded-t-xl md:rounded-xl shadow-xl w-full max-w-md mx-0 md:mx-4 max-h-[85vh] flex flex-col">
+      <div className="relative bg-stone border border-cream/15 rounded-t-xl md:rounded-xl shadow-xl w-full max-w-md mx-0 md:mx-4 max-h-[85vh] flex flex-col">
         {/* Header */}
-        <div className="px-5 pt-4 pb-3 border-b border-cream/10 shrink-0">
+        <div className="px-5 pt-4 pb-3 border-b border-cream/15 shrink-0">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-medium text-cream">Share &ldquo;{selection.title}&rdquo;</h3>
-            <button type="button" onClick={onClose} className="text-cream/30 hover:text-cream/60 transition-colors text-xl leading-none">&times;</button>
+            <button type="button" onClick={onClose} className="text-cream/45 hover:text-cream/70 transition-colors text-xl leading-none">&times;</button>
           </div>
           {/* Tabs */}
           <div className="flex gap-1">
@@ -191,7 +191,7 @@ export function SelectionShareSheet({
               type="button"
               onClick={() => setTab('access')}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                tab === 'access' ? 'bg-cream/10 text-cream' : 'text-cream/40 hover:text-cream/60'
+                tab === 'access' ? 'bg-cream/10 text-cream' : 'text-cream/55 hover:text-cream/70'
               }`}
             >
               Access
@@ -200,7 +200,7 @@ export function SelectionShareSheet({
               type="button"
               onClick={() => setTab('links')}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                tab === 'links' ? 'bg-cream/10 text-cream' : 'text-cream/40 hover:text-cream/60'
+                tab === 'links' ? 'bg-cream/10 text-cream' : 'text-cream/55 hover:text-cream/70'
               }`}
             >
               Public links{shareTokens.length > 0 ? ` (${shareTokens.length})` : ''}
@@ -215,7 +215,7 @@ export function SelectionShareSheet({
               {/* Visibility toggle */}
               {isOwner && (
                 <div>
-                  <label className="block text-sm text-cream/70 mb-2">Who can see this selection</label>
+                  <label className="block text-sm text-cream/80 mb-2">Who can see this selection</label>
                   <div className="space-y-2">
                     <label className="flex items-start gap-3 cursor-pointer">
                       <input
@@ -227,7 +227,7 @@ export function SelectionShareSheet({
                       />
                       <div>
                         <p className="text-sm text-cream">All workspace collaborators</p>
-                        <p className="text-xs text-cream/40">Anyone with access to this Selections workspace can view</p>
+                        <p className="text-xs text-cream/55">Anyone with access to this Selections workspace can view</p>
                       </div>
                     </label>
                     <label className="flex items-start gap-3 cursor-pointer">
@@ -240,7 +240,7 @@ export function SelectionShareSheet({
                       />
                       <div>
                         <p className="text-sm text-cream">Restricted</p>
-                        <p className="text-xs text-cream/40">Only you and people you add below can see this selection</p>
+                        <p className="text-xs text-cream/55">Only you and people you add below can see this selection</p>
                       </div>
                     </label>
                   </div>
@@ -250,8 +250,8 @@ export function SelectionShareSheet({
               {/* Read-only visibility label for non-owners */}
               {!isOwner && (
                 <div>
-                  <label className="block text-sm text-cream/70 mb-1">Visibility</label>
-                  <p className="text-sm text-cream/50">
+                  <label className="block text-sm text-cream/80 mb-1">Visibility</label>
+                  <p className="text-sm text-cream/65">
                     {visibility === 'restricted' ? 'Restricted — only invited collaborators' : 'Shared with all workspace collaborators'}
                   </p>
                 </div>
@@ -260,23 +260,23 @@ export function SelectionShareSheet({
               {/* Collaborator list (when restricted) */}
               {visibility === 'restricted' && (
                 <div>
-                  <label className="block text-sm text-cream/70 mb-2">People with access</label>
+                  <label className="block text-sm text-cream/80 mb-2">People with access</label>
 
                   {/* Current user (creator/owner — always listed) */}
-                  <div className="flex items-center gap-3 py-2 border-b border-cream/5">
+                  <div className="flex items-center gap-3 py-2 border-b border-cream/10">
                     <div className="w-7 h-7 rounded-full bg-sandstone/20 flex items-center justify-center text-xs text-sandstone font-medium shrink-0">
                       {currentUserEmail.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-cream truncate">{currentUserEmail}</p>
                     </div>
-                    <span className="text-[10px] text-cream/30 uppercase">Owner</span>
+                    <span className="text-[10px] text-cream/45 uppercase">Owner</span>
                   </div>
 
                   {/* Access list */}
                   {accessList.map((entry) => (
-                    <div key={entry.email} className="flex items-center gap-3 py-2 border-b border-cream/5">
-                      <div className="w-7 h-7 rounded-full bg-cream/10 flex items-center justify-center text-xs text-cream/50 font-medium shrink-0">
+                    <div key={entry.email} className="flex items-center gap-3 py-2 border-b border-cream/10">
+                      <div className="w-7 h-7 rounded-full bg-cream/10 flex items-center justify-center text-xs text-cream/65 font-medium shrink-0">
                         {entry.email.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -287,7 +287,7 @@ export function SelectionShareSheet({
                           <select
                             value={entry.level}
                             onChange={(e) => updateCollaboratorLevel(entry.email, e.target.value as 'edit' | 'view')}
-                            className="text-[10px] bg-basalt border border-cream/15 rounded px-1.5 py-0.5 text-cream/60 focus:outline-none"
+                            className="text-[10px] bg-basalt border border-cream/15 rounded px-1.5 py-0.5 text-cream/70 focus:outline-none"
                           >
                             <option value="view">View</option>
                             <option value="edit">Edit</option>
@@ -295,14 +295,14 @@ export function SelectionShareSheet({
                           <button
                             type="button"
                             onClick={() => removeCollaborator(entry.email)}
-                            className="text-cream/20 hover:text-red-400 transition-colors text-sm"
+                            className="text-cream/35 hover:text-red-400 transition-colors text-sm"
                           >
                             &times;
                           </button>
                         </>
                       )}
                       {!isOwner && (
-                        <span className="text-[10px] text-cream/30 uppercase">{entry.level}</span>
+                        <span className="text-[10px] text-cream/45 uppercase">{entry.level}</span>
                       )}
                     </div>
                   ))}
@@ -312,14 +312,14 @@ export function SelectionShareSheet({
                     <div className="mt-3">
                       {availableMembers.length > 0 && (
                         <div className="mb-2">
-                          <p className="text-[10px] text-cream/30 uppercase tracking-wider mb-1">Workspace members</p>
+                          <p className="text-[10px] text-cream/45 uppercase tracking-wider mb-1">Workspace members</p>
                           <div className="flex flex-wrap gap-1">
                             {availableMembers.map((m) => (
                               <button
                                 key={m.email}
                                 type="button"
                                 onClick={() => addCollaborator(m.email)}
-                                className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-cream/5 hover:bg-cream/10 text-cream/50 hover:text-cream/70 rounded-lg transition-colors"
+                                className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-stone-200 hover:bg-cream/10 text-cream/65 hover:text-cream/80 rounded-lg transition-colors"
                               >
                                 <span className="text-sandstone">+</span>
                                 {m.name || m.email.split('@')[0]}
@@ -337,7 +337,7 @@ export function SelectionShareSheet({
                             if (e.key === 'Enter') { e.preventDefault(); addCollaborator(addEmail) }
                           }}
                           placeholder="Add by email..."
-                          className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
+                          className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/40 focus:outline-none focus:border-sandstone/40"
                         />
                         <button
                           type="button"
@@ -357,7 +357,7 @@ export function SelectionShareSheet({
 
           {tab === 'links' && (
             <div className="space-y-4">
-              <p className="text-sm text-cream/50">
+              <p className="text-sm text-cream/65">
                 Public links let anyone view this selection without signing in. Links are read-only.
               </p>
 
@@ -366,8 +366,8 @@ export function SelectionShareSheet({
                 const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/share/finish_decisions/${t.token}`
                 return (
                   <div key={t.id} className="bg-basalt border border-cream/15 rounded-lg p-3 space-y-2">
-                    <p className="text-xs text-cream/70 break-all font-mono">{url}</p>
-                    <div className="flex items-center gap-2 text-[10px] text-cream/30">
+                    <p className="text-xs text-cream/80 break-all font-mono">{url}</p>
+                    <div className="flex items-center gap-2 text-[10px] text-cream/45">
                       {t.includePhotos && <span>Photos</span>}
                       {t.includeComments && <span>Comments</span>}
                       {t.includeNotes && <span>Notes</span>}
@@ -379,7 +379,7 @@ export function SelectionShareSheet({
                       <button
                         type="button"
                         onClick={() => copyLink(t.token, t.id)}
-                        className="flex-1 py-1.5 text-xs bg-cream/5 hover:bg-cream/10 text-cream/60 rounded-lg transition-colors"
+                        className="flex-1 py-1.5 text-xs bg-stone-200 hover:bg-cream/10 text-cream/70 rounded-lg transition-colors"
                       >
                         {copiedId === t.id ? 'Copied!' : 'Copy link'}
                       </button>
@@ -400,7 +400,7 @@ export function SelectionShareSheet({
                 type="button"
                 onClick={createPublicLink}
                 disabled={linkCreating}
-                className="w-full py-2.5 text-sm bg-cream/5 hover:bg-cream/10 text-cream/60 hover:text-cream/80 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-2.5 text-sm bg-stone-200 hover:bg-cream/10 text-cream/70 hover:text-cream/90 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round" />

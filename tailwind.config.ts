@@ -27,6 +27,14 @@ const config: Config = {
           light: '#d4bb96',
           dark: '#b08d5b',
         },
+        // Work-mode surfaces — warm stone palette for legible tool pages
+        stone: {
+          DEFAULT: '#2b2725',   // Primary card surface — warm charcoal
+          50: '#332e2c',        // Nested/secondary surface within card
+          100: '#231f1d',       // Slightly elevated from basalt
+          200: '#1d1b19',       // Input recessed surface
+          hover: '#383432',     // Row/item hover state
+        },
       },
       fontFamily: {
         serif: ['var(--font-playfair)', 'Georgia', 'serif'],

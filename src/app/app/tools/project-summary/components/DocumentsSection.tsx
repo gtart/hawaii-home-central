@@ -143,13 +143,13 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
   const content = (
     <>
       {documents.length === 0 && !showAddForm && (
-        <p className="text-sm text-cream/40 italic">No documents added yet.</p>
+        <p className="text-sm text-cream/55 italic">No documents added yet.</p>
       )}
 
       {/* Plan Documents */}
       {planDocs.length > 0 && (
         <div className="mb-1">
-          <span className="text-[10px] text-cream/35 uppercase tracking-wider font-medium">Plan Documents</span>
+          <span className="text-[10px] text-cream/50 uppercase tracking-wider font-medium">Plan Documents</span>
         </div>
       )}
       <div className="space-y-2">
@@ -158,7 +158,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
           return (
             <div
               key={doc.id}
-              className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-cream/[0.02] border border-cream/[0.06] group cursor-pointer hover:border-cream/10 transition-colors"
+              className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-stone-50 border border-cream/12 group cursor-pointer hover:border-cream/15 transition-colors"
               onClick={() => setSelectedDocId(doc.id)}
             >
               {/* Doc icon — varies by file type */}
@@ -175,7 +175,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                   <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               ) : (
-                <svg className="w-4 h-4 text-cream/25 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg className="w-4 h-4 text-cream/40 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -187,16 +187,16 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                     value={doc.label}
                     onSave={(label) => updateDocument(doc.id, { label })}
                     readOnly={readOnly}
-                    displayClassName="text-sm text-cream/70 font-medium"
+                    displayClassName="text-sm text-cream/80 font-medium"
                     className="text-sm font-medium"
                   />
                   {doc.docType && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-cream/5 text-cream/35">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-200 text-cream/50">
                       {DOC_TYPE_LABELS[doc.docType]}
                     </span>
                   )}
                   {doc.isCurrent && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-400/10 text-emerald-400/70">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-400/12 text-emerald-400/70">
                       Current
                     </span>
                   )}
@@ -230,7 +230,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
 
                 {/* Upload metadata */}
                 {doc.uploadedAt && (
-                  <span className="text-[10px] text-cream/30 block mt-0.5">
+                  <span className="text-[10px] text-cream/45 block mt-0.5">
                     Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
                     {doc.uploadedBy ? ` by ${doc.uploadedBy}` : ''}
                   </span>
@@ -249,7 +249,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                     onSave={(note) => updateDocument(doc.id, { note: note || undefined })}
                     placeholder="Add a note..."
                     readOnly={readOnly}
-                    displayClassName="text-xs text-cream/40 mt-1"
+                    displayClassName="text-xs text-cream/55 mt-1"
                     className="text-xs mt-1"
                   />
                 )}
@@ -260,7 +260,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { doc_scope: 'reference' }) }}
-                  className="shrink-0 text-[10px] text-cream/15 hover:text-cream/30 transition-colors opacity-0 group-hover:opacity-100"
+                  className="shrink-0 text-[10px] text-cream/30 hover:text-cream/45 transition-colors opacity-0 group-hover:opacity-100"
                   title="Move to Reference Documents"
                 >
                   Ref
@@ -272,8 +272,8 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                   onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { isCurrent: !doc.isCurrent }) }}
                   className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded transition-colors ${
                     doc.isCurrent
-                      ? 'bg-emerald-400/10 text-emerald-400/70 hover:bg-emerald-400/20'
-                      : 'bg-cream/5 text-cream/25 hover:text-cream/40'
+                      ? 'bg-emerald-400/12 text-emerald-400/70 hover:bg-emerald-400/20'
+                      : 'bg-stone-200 text-cream/40 hover:text-cream/55'
                   }`}
                   title={doc.isCurrent ? 'Mark as outdated' : 'Mark as current'}
                 >
@@ -295,7 +295,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }}
-                      className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors"
+                      className="text-[10px] text-cream/45 hover:text-cream/50 transition-colors"
                     >
                       Cancel
                     </button>
@@ -304,7 +304,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }}
-                    className="shrink-0 text-cream/15 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100"
+                    className="shrink-0 text-cream/30 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100"
                     title="Delete document"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -322,8 +322,8 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
       {referenceDocs.length > 0 && (
         <>
           <div className="mt-4 mb-1">
-            <span className="text-[10px] text-cream/35 uppercase tracking-wider font-medium">Reference Documents</span>
-            <span className="text-[10px] text-cream/15 ml-2">Shared across plan and changes</span>
+            <span className="text-[10px] text-cream/50 uppercase tracking-wider font-medium">Reference Documents</span>
+            <span className="text-[10px] text-cream/30 ml-2">Shared across plan and changes</span>
           </div>
           <div className="space-y-2">
             {referenceDocs.map((doc) => {
@@ -331,7 +331,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
               return (
                 <div
                   key={doc.id}
-                  className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-cream/[0.02] border border-cream/[0.06] group cursor-pointer hover:border-cream/10 transition-colors"
+                  className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-stone-50 border border-cream/12 group cursor-pointer hover:border-cream/15 transition-colors"
                   onClick={() => setSelectedDocId(doc.id)}
                 >
                   {iconType === 'pdf' ? (
@@ -347,7 +347,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                       <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ) : (
-                    <svg className="w-4 h-4 text-cream/25 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <svg className="w-4 h-4 text-cream/40 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
                       <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -357,7 +357,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                       value={doc.label}
                       onSave={(label) => updateDocument(doc.id, { label })}
                       readOnly={readOnly}
-                      displayClassName="text-sm text-cream/70 font-medium"
+                      displayClassName="text-sm text-cream/80 font-medium"
                       className="text-sm font-medium"
                     />
                     {doc.fileUrl && (
@@ -379,7 +379,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { doc_scope: 'plan' }) }}
-                      className="shrink-0 text-[10px] text-cream/20 hover:text-cream/40 transition-colors"
+                      className="shrink-0 text-[10px] text-cream/35 hover:text-cream/55 transition-colors"
                       title="Move to Plan Documents"
                     >
                       Move to Plan
@@ -389,10 +389,10 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                     confirmDelete === doc.id ? (
                       <div className="flex items-center gap-1 shrink-0">
                         <button type="button" onClick={(e) => { e.stopPropagation(); deleteDocument(doc.id); setConfirmDelete(null) }} className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors">Delete</button>
-                        <button type="button" onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }} className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors">Cancel</button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }} className="text-[10px] text-cream/45 hover:text-cream/50 transition-colors">Cancel</button>
                       </div>
                     ) : (
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }} className="shrink-0 text-cream/15 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100" title="Delete document">
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }} className="shrink-0 text-cream/30 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100" title="Delete document">
                         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
@@ -408,13 +408,13 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
 
       {/* Add form */}
       {showAddForm && !readOnly && (
-        <div className="mt-3 p-3 rounded-lg border border-cream/10 bg-cream/[0.03] space-y-2">
+        <div className="mt-3 p-3 rounded-lg border border-cream/15 bg-stone-50 space-y-2">
           <input
             type="text"
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
             placeholder="Document name"
-            className="w-full bg-cream/5 border border-cream/10 rounded-md px-3 py-2 text-sm text-cream/80 placeholder-cream/20 outline-none focus:border-sandstone/30"
+            className="w-full bg-stone-200 border border-cream/15 rounded-md px-3 py-2 text-sm text-cream/90 placeholder-cream/35 outline-none focus:border-sandstone/30"
             autoFocus
             onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setShowAddForm(false) }}
           />
@@ -423,19 +423,19 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
               <button
                 type="button"
                 onClick={() => setDocTypeOpen(!docTypeOpen)}
-                className="bg-cream/5 border border-cream/10 rounded-md px-2 py-1.5 text-xs text-cream/60 outline-none hover:border-cream/20 transition-colors flex items-center gap-1 whitespace-nowrap"
+                className="bg-stone-200 border border-cream/15 rounded-md px-2 py-1.5 text-xs text-cream/70 outline-none hover:border-cream/35 transition-colors flex items-center gap-1 whitespace-nowrap"
               >
                 {newDocType ? DOC_TYPE_LABELS[newDocType] : 'Type (optional)'}
-                <svg className="w-3 h-3 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-3 h-3 text-cream/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
               {docTypeOpen && (
-                <div className="absolute left-0 top-8 z-50 w-36 rounded-lg border border-cream/10 bg-[#1a1a1a] shadow-xl py-1">
+                <div className="absolute left-0 top-8 z-50 w-36 rounded-lg border border-cream/15 bg-basalt shadow-xl py-1">
                   <button
                     type="button"
                     onClick={() => { setNewDocType(''); setDocTypeOpen(false) }}
-                    className={`w-full px-3 py-1.5 text-left text-xs transition-colors ${!newDocType ? 'text-sandstone' : 'text-cream/60 hover:bg-cream/5'}`}
+                    className={`w-full px-3 py-1.5 text-left text-xs transition-colors ${!newDocType ? 'text-sandstone' : 'text-cream/70 hover:bg-stone-hover'}`}
                   >
                     None
                   </button>
@@ -444,7 +444,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                       key={key}
                       type="button"
                       onClick={() => { setNewDocType(key as DocType); setDocTypeOpen(false) }}
-                      className={`w-full px-3 py-1.5 text-left text-xs transition-colors ${newDocType === key ? 'text-sandstone' : 'text-cream/60 hover:bg-cream/5'}`}
+                      className={`w-full px-3 py-1.5 text-left text-xs transition-colors ${newDocType === key ? 'text-sandstone' : 'text-cream/70 hover:bg-stone-hover'}`}
                     >
                       {label}
                     </button>
@@ -457,18 +457,18 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
               value={newUrl}
               onChange={(e) => setNewUrl(e.target.value)}
               placeholder="URL (optional)"
-              className="flex-1 bg-cream/5 border border-cream/10 rounded-md px-2 py-1.5 text-xs text-cream/60 placeholder-cream/20 outline-none focus:border-sandstone/30"
+              className="flex-1 bg-stone-200 border border-cream/15 rounded-md px-2 py-1.5 text-xs text-cream/70 placeholder-cream/35 outline-none focus:border-sandstone/30"
             />
           </div>
 
           {/* Document scope toggle (PCV1-015, PCV1-018) */}
           <div className="flex items-center gap-3">
-            <span className="text-[10px] text-cream/30">Belongs to:</span>
+            <span className="text-[10px] text-cream/45">Belongs to:</span>
             <button
               type="button"
               onClick={() => setNewDocScope('plan')}
               className={`text-[10px] px-2 py-1 rounded transition-colors ${
-                newDocScope === 'plan' ? 'bg-cream/10 text-cream/60' : 'text-cream/25 hover:text-cream/40'
+                newDocScope === 'plan' ? 'bg-cream/15 text-cream/80' : 'text-cream/40 hover:text-cream/55'
               }`}
             >
               Plan
@@ -477,7 +477,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
               type="button"
               onClick={() => setNewDocScope('reference')}
               className={`text-[10px] px-2 py-1 rounded transition-colors ${
-                newDocScope === 'reference' ? 'bg-cream/10 text-cream/60' : 'text-cream/25 hover:text-cream/40'
+                newDocScope === 'reference' ? 'bg-cream/15 text-cream/80' : 'text-cream/40 hover:text-cream/55'
               }`}
             >
               Reference (shared)
@@ -498,7 +498,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-cream/40 hover:text-cream/60 bg-cream/5 hover:bg-cream/8 border border-cream/10 rounded-md transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-cream/55 hover:text-cream/70 bg-stone-200 hover:bg-stone-hover border border-cream/15 rounded-md transition-colors disabled:opacity-50"
             >
               {isUploading ? (
                 <div className="w-3 h-3 border border-cream/20 border-t-cream/50 rounded-full animate-spin" />
@@ -509,7 +509,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
               )}
               {isUploading ? 'Uploading...' : 'Upload File'}
             </button>
-            <span className="text-[10px] text-cream/20">PDF, DOC, DOCX, images — max 20MB</span>
+            <span className="text-[10px] text-cream/35">PDF, DOC, DOCX, images — max 20MB</span>
           </div>
 
           {uploadError && (
@@ -520,7 +520,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
             <button
               type="button"
               onClick={() => { setShowAddForm(false); setUploadError(null) }}
-              className="px-3 py-1.5 text-xs text-cream/40 hover:text-cream/60 transition-colors"
+              className="px-3 py-1.5 text-xs text-cream/55 hover:text-cream/70 transition-colors"
             >
               Cancel
             </button>
@@ -552,7 +552,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
 
   if (inline) {
     return (
-      <div className="pt-4 border-t border-cream/[0.06]">
+      <div className="pt-4 border-t border-cream/12">
         {/* Hidden quick-upload input */}
         <input
           ref={quickUploadRef}
@@ -563,13 +563,13 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
           disabled={isUploading}
         />
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[10px] text-cream/40 uppercase tracking-wider font-medium">Documents &amp; Files</span>
+          <span className="text-[10px] text-cream/55 uppercase tracking-wider font-medium">Documents &amp; Files</span>
           {!readOnly && (
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="text-[10px] text-cream/20 hover:text-cream/40 transition-colors"
+                className="text-[10px] text-cream/35 hover:text-cream/55 transition-colors"
               >
                 Link URL
               </button>
@@ -577,7 +577,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                 type="button"
                 onClick={() => quickUploadRef.current?.click()}
                 disabled={isUploading}
-                className="inline-flex items-center gap-1 text-[10px] text-cream/40 hover:text-cream/60 bg-cream/5 hover:bg-cream/8 border border-cream/10 rounded-md px-2 py-1 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1 text-[10px] text-cream/55 hover:text-cream/70 bg-stone-200 hover:bg-stone-hover border border-cream/15 rounded-md px-2 py-1 transition-colors disabled:opacity-50"
                 title="Upload file"
               >
                 {isUploading ? (
@@ -612,7 +612,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
         <button
           type="button"
           onClick={() => setShowAddForm(!showAddForm)}
-          className="text-[10px] text-cream/20 hover:text-cream/40 transition-colors"
+          className="text-[10px] text-cream/35 hover:text-cream/55 transition-colors"
         >
           Link URL
         </button>

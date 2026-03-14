@@ -75,7 +75,7 @@ export function DecisionDetailLoader({
   if (isResolving) {
     return (
       <div className="pt-32 pb-24 px-6">
-        <div className="max-w-4xl mx-auto text-center py-12 text-cream/50">
+        <div className="max-w-4xl mx-auto text-center py-12 text-cream/65">
           <p>Loading...</p>
         </div>
       </div>

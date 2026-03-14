@@ -33,7 +33,7 @@ function PencilButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="p-1 text-cream/20 hover:text-sandstone transition-colors shrink-0"
+      className="p-1 text-cream/35 hover:text-sandstone transition-colors shrink-0"
       aria-label="Edit"
     >
       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -173,13 +173,13 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-basalt-50 border-t sm:border border-cream/10 rounded-t-xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-stone border-t sm:border border-cream/15 rounded-t-xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Sticky header */}
-        <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 px-5 py-3 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-stone border-b border-cream/15 px-5 py-3 flex items-center justify-between z-10">
           <button
             type="button"
             onClick={onClose}
-            className="text-cream/40 hover:text-cream transition-colors p-1"
+            className="text-cream/55 hover:text-cream transition-colors p-1"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -195,19 +195,19 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
                 onKeyDown={handleFieldKeyDown}
                 onBlur={saveField}
                 autoFocus
-                className="w-full bg-basalt border border-sandstone/40 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/60"
+                className="w-full bg-stone-200 border border-sandstone/40 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/60"
                 placeholder="Item title..."
               />
             </div>
           ) : (
             <h2 className="text-base font-medium text-cream truncate flex-1 mx-3 text-center group/title">
-              <span className="text-cream/30">#{item.itemNumber}</span>{' '}
-              {item.title || <span className="text-cream/40 italic font-normal">Untitled</span>}
+              <span className="text-cream/45">#{item.itemNumber}</span>{' '}
+              {item.title || <span className="text-cream/55 italic font-normal">Untitled</span>}
               {!readOnly && (
                 <button
                   type="button"
                   onClick={() => startEditing('title')}
-                  className="inline-block ml-1.5 align-middle p-0.5 text-cream/15 hover:text-sandstone transition-colors"
+                  className="inline-block ml-1.5 align-middle p-0.5 text-cream/30 hover:text-sandstone transition-colors"
                   aria-label="Edit title"
                 >
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -271,10 +271,10 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
                   type="button"
                   onClick={() => detailCameraRef.current?.click()}
                   disabled={photoUploading}
-                  className="flex items-center gap-1.5 text-xs text-cream/40 hover:text-cream/60 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-cream/55 hover:text-cream/70 disabled:opacity-50 transition-colors"
                 >
                   {photoUploading ? (
-                    <div className="w-3.5 h-3.5 border border-cream/20 border-t-sandstone rounded-full animate-spin" />
+                    <div className="w-3.5 h-3.5 border border-cream/35 border-t-sandstone rounded-full animate-spin" />
                   ) : (
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
@@ -283,12 +283,12 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
                   )}
                   Camera
                 </button>
-                <span className="text-cream/15">|</span>
+                <span className="text-cream/30">|</span>
                 <button
                   type="button"
                   onClick={() => detailGalleryRef.current?.click()}
                   disabled={photoUploading}
-                  className="flex items-center gap-1.5 text-xs text-cream/40 hover:text-cream/60 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-cream/55 hover:text-cream/70 disabled:opacity-50 transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -323,7 +323,7 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
               disabled={readOnly}
               className={`text-[10px] font-medium uppercase tracking-wider px-2 py-1 rounded transition-colors ${
                 readOnly ? 'cursor-default' : 'cursor-pointer hover:opacity-80'
-              } ${priorityCfg ? priorityCfg.className : 'bg-cream/5 text-cream/25'}`}
+              } ${priorityCfg ? priorityCfg.className : 'bg-stone-200 text-cream/40'}`}
             >
               {priorityCfg ? priorityCfg.label : 'No priority'}
             </button>
@@ -367,13 +367,13 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
 
             {/* Due Date */}
             <div className="flex items-center justify-between py-1.5">
-              <span className="text-xs text-cream/30 w-20 shrink-0">Due date</span>
+              <span className="text-xs text-cream/45 w-20 shrink-0">Due date</span>
               <input
                 type="date"
                 value={item.dueDate || ''}
                 onChange={(e) => updateItem(item.id, { dueDate: e.target.value || null })}
                 disabled={readOnly}
-                className="bg-transparent text-sm text-cream/60 focus:outline-none focus:text-cream [color-scheme:dark] disabled:opacity-50 cursor-pointer"
+                className="bg-transparent text-sm text-cream/70 focus:outline-none focus:text-cream [color-scheme:dark] disabled:opacity-50 cursor-pointer"
               />
             </div>
 
@@ -394,7 +394,7 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
           {/* Additional Information section — inline editable */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs uppercase tracking-wider text-cream/30">Additional Information</h3>
+              <h3 className="text-xs uppercase tracking-wider text-cream/45">Additional Information</h3>
               {!readOnly && editingField !== 'notes' && (
                 <PencilButton onClick={() => startEditing('notes')} />
               )}
@@ -408,7 +408,7 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
                   rows={3}
                   autoFocus
                   placeholder="Optional additional details…"
-                  className="w-full bg-basalt border border-sandstone/40 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/60 resize-none"
+                  className="w-full bg-stone-200 border border-sandstone/40 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/60 resize-none"
                 />
                 <div className="flex items-center gap-2 mt-2">
                   <button
@@ -421,15 +421,15 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
                   <button
                     type="button"
                     onClick={cancelEditing}
-                    className="text-xs px-3 py-1 text-cream/40 hover:text-cream/60 transition-colors"
+                    className="text-xs px-3 py-1 text-cream/55 hover:text-cream/70 transition-colors"
                   >
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-cream/60 whitespace-pre-wrap leading-relaxed">
-                {item.notes || <span className="text-cream/20 italic">None</span>}
+              <p className="text-sm text-cream/70 whitespace-pre-wrap leading-relaxed">
+                {item.notes || <span className="text-cream/35 italic">None</span>}
               </p>
             )}
           </div>
@@ -462,13 +462,13 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
 
           {/* Actions */}
           {!readOnly && (
-            <div className="pt-3 border-t border-cream/5 space-y-3">
+            <div className="pt-3 border-t border-cream/10 space-y-3">
               {collectionId && projectId && (
                 <button
                   type="button"
                   onClick={() => setMoveOpen(true)}
                   disabled={isTransferring}
-                  className="flex items-center gap-2 text-xs text-cream/40 hover:text-cream/60 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 text-xs text-cream/55 hover:text-cream/70 disabled:opacity-50 transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
@@ -482,7 +482,7 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
                 className={`text-xs transition-colors ${
                   confirmDelete
                     ? 'text-red-400 font-medium'
-                    : 'text-cream/30 hover:text-red-400'
+                    : 'text-cream/45 hover:text-red-400'
                 }`}
               >
                 {confirmDelete ? 'Tap again to delete this item' : 'Delete item'}
@@ -535,8 +535,8 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-xs text-cream/40">{label}</span>
-      <span className="text-sm text-cream/70">{value}</span>
+      <span className="text-xs text-cream/55">{label}</span>
+      <span className="text-sm text-cream/80">{value}</span>
     </div>
   )
 }
@@ -574,7 +574,7 @@ function EditableDetailRow({
   if (isEditing) {
     return (
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs text-cream/40 shrink-0">{label}</span>
+        <span className="text-xs text-cream/55 shrink-0">{label}</span>
         <div className="flex items-center gap-1.5">
           <input
             type="text"
@@ -585,7 +585,7 @@ function EditableDetailRow({
             autoFocus
             placeholder={placeholder}
             list={datalistId}
-            className="w-40 sm:w-48 bg-basalt border border-sandstone/40 rounded-lg px-2.5 py-1 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/60 text-right"
+            className="w-40 sm:w-48 bg-stone-200 border border-sandstone/40 rounded-lg px-2.5 py-1 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/60 text-right"
           />
           {datalistId && datalistOptions && (
             <datalist id={datalistId}>
@@ -601,8 +601,8 @@ function EditableDetailRow({
 
   return (
     <div className="flex items-center justify-between group/row">
-      <span className="text-xs text-cream/40">{label}</span>
-      <span className="flex items-center gap-1 text-sm text-cream/70">
+      <span className="text-xs text-cream/55">{label}</span>
+      <span className="flex items-center gap-1 text-sm text-cream/80">
         {value}
         {canEdit && <PencilButton onClick={onStartEdit} />}
       </span>
@@ -662,7 +662,7 @@ function ItemCommentsPreview({
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs uppercase tracking-wider text-cream/30">
+        <h3 className="text-xs uppercase tracking-wider text-cream/45">
           Comments {totalCount > 0 && `(${totalCount})`}
         </h3>
         <button
@@ -677,26 +677,26 @@ function ItemCommentsPreview({
       {itemComments.length > 0 ? (
         <div className="space-y-2">
           {itemComments.map((comment) => (
-            <div key={comment.id} className="pb-2 border-b border-cream/5 last:border-0">
+            <div key={comment.id} className="pb-2 border-b border-cream/10 last:border-0">
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-xs font-medium text-cream/70">{comment.authorName || 'Unknown'}</span>
-                <span className="text-[10px] text-cream/25">{relativeTime(comment.createdAt)}</span>
+                <span className="text-xs font-medium text-cream/80">{comment.authorName || 'Unknown'}</span>
+                <span className="text-[10px] text-cream/40">{relativeTime(comment.createdAt)}</span>
               </div>
-              <p className="text-sm text-cream/50 whitespace-pre-wrap line-clamp-2">{comment.text}</p>
+              <p className="text-sm text-cream/65 whitespace-pre-wrap line-clamp-2">{comment.text}</p>
             </div>
           ))}
           {totalCount > 3 && (
             <button
               type="button"
               onClick={handleOpenSidebar}
-              className="text-xs text-cream/30 hover:text-cream/50 transition-colors"
+              className="text-xs text-cream/45 hover:text-cream/65 transition-colors"
             >
               +{totalCount - 3} more comment{totalCount - 3 !== 1 ? 's' : ''}
             </button>
           )}
         </div>
       ) : (
-        <p className="text-xs text-cream/20">No comments on this fix yet.</p>
+        <p className="text-xs text-cream/35">No comments on this fix yet.</p>
       )}
     </div>
   )

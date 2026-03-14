@@ -109,7 +109,7 @@ export function TagInput({
         {tags.map((tag) => (
           <span
             key={tag}
-            className={`inline-flex items-center rounded-full bg-cream/8 text-cream/50 ${compact ? 'text-[9px] px-1.5 py-0.5' : 'text-[11px] px-2 py-0.5'}`}
+            className={`inline-flex items-center rounded-full bg-cream/8 text-cream/65 ${compact ? 'text-[9px] px-1.5 py-0.5' : 'text-[11px] px-2 py-0.5'}`}
           >
             {tag}
           </span>
@@ -127,13 +127,13 @@ export function TagInput({
         {tags.map((tag) => (
           <span
             key={tag}
-            className={`inline-flex items-center gap-1 rounded-full bg-cream/10 text-cream/60 ${compact ? 'text-[10px] px-1.5 py-0.5' : 'text-[11px] px-2 py-0.5'}`}
+            className={`inline-flex items-center gap-1 rounded-full bg-cream/10 text-cream/70 ${compact ? 'text-[10px] px-1.5 py-0.5' : 'text-[11px] px-2 py-0.5'}`}
           >
             {tag}
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); removeTag(tag) }}
-              className="text-cream/30 hover:text-cream/60 transition-colors leading-none"
+              className="text-cream/45 hover:text-cream/70 transition-colors leading-none"
             >
               ×
             </button>
@@ -147,13 +147,13 @@ export function TagInput({
           onFocus={() => setShowSuggestions(true)}
           onKeyDown={handleKeyDown}
           placeholder={tags.length === 0 ? placeholder : ''}
-          className={`flex-1 min-w-[80px] bg-transparent text-cream placeholder:text-cream/25 outline-none ${compact ? 'text-xs py-0.5' : 'text-sm py-0.5'}`}
+          className={`flex-1 min-w-[80px] bg-transparent text-cream placeholder:text-cream/40 outline-none ${compact ? 'text-xs py-0.5' : 'text-sm py-0.5'}`}
         />
       </div>
 
       {/* Suggestions dropdown */}
       {showSuggestions && (filtered.length > 0 || showCreate) && (
-        <div className="absolute z-30 mt-1 w-full max-h-[180px] overflow-y-auto bg-basalt-50 border border-cream/15 rounded-lg shadow-lg">
+        <div className="absolute z-30 mt-1 w-full max-h-[180px] overflow-y-auto bg-stone border border-cream/15 rounded-lg shadow-lg">
           {filtered.slice(0, 12).map((tag, idx) => (
             <button
               key={tag}
@@ -163,7 +163,7 @@ export function TagInput({
               className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
                 idx === highlightIdx
                   ? 'bg-sandstone/15 text-sandstone'
-                  : 'text-cream/60 hover:bg-cream/5'
+                  : 'text-cream/70 hover:bg-stone-hover'
               }`}
             >
               {tag}
@@ -174,10 +174,10 @@ export function TagInput({
               type="button"
               onMouseDown={(e) => { e.preventDefault(); addTag(input.trim()) }}
               onMouseEnter={() => setHighlightIdx(filtered.length)}
-              className={`w-full text-left px-3 py-1.5 text-xs transition-colors border-t border-cream/10 ${
+              className={`w-full text-left px-3 py-1.5 text-xs transition-colors border-t border-cream/15 ${
                 highlightIdx === filtered.length
                   ? 'bg-sandstone/15 text-sandstone'
-                  : 'text-cream/50 hover:bg-cream/5'
+                  : 'text-cream/65 hover:bg-stone-hover'
               }`}
             >
               Create label &ldquo;{input.trim()}&rdquo;

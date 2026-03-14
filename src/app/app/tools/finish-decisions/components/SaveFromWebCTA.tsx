@@ -78,7 +78,7 @@ export function SaveFromWebCTA({ className = '' }: { className?: string }) {
       {/* Expanded content */}
       {expanded && (
         <div className="px-4 pb-4 space-y-3 border-t border-sandstone/10">
-          <p className="text-xs text-cream/50 pt-3">
+          <p className="text-xs text-cream/65 pt-3">
             Drag the button below to your bookmarks bar. Then click it on any website to capture images
             and save them directly to your Selections.
           </p>
@@ -95,7 +95,7 @@ export function SaveFromWebCTA({ className = '' }: { className?: string }) {
             <button
               type="button"
               onClick={handleDismiss}
-              className="text-[11px] text-cream/25 hover:text-cream/40 transition-colors ml-auto"
+              className="text-[11px] text-cream/40 hover:text-cream/55 transition-colors ml-auto"
             >
               Dismiss tip
             </button>

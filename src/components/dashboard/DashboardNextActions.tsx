@@ -92,17 +92,17 @@ export function DashboardNextActions({ data }: { data: DashboardResponse | null 
 
   return (
     <div className="mb-6">
-      <h2 className="text-[11px] uppercase tracking-wider text-cream/30 mb-2">Needs attention</h2>
+      <h2 className="text-[11px] uppercase tracking-wider text-cream/45 mb-2">Needs attention</h2>
       <ul className="space-y-1">
         {actions.map((a, i) => (
           <li key={i}>
             <Link
               href={a.href}
-              className="group flex items-center gap-2 text-sm text-cream/60 hover:text-cream transition-colors py-0.5"
+              className="group flex items-center gap-2 text-sm text-cream/70 hover:text-cream transition-colors py-0.5"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-sandstone/50 group-hover:bg-sandstone shrink-0" />
               {a.label}
-              <svg className="w-3 h-3 text-cream/20 group-hover:text-cream/40 transition-colors ml-auto shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="w-3 h-3 text-cream/35 group-hover:text-cream/55 transition-colors ml-auto shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Link>

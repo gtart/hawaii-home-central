@@ -195,31 +195,31 @@ export function ToolPageHeader({
       <div className="flex items-center gap-1.5 mb-4 text-sm">
         <Link
           href="/app"
-          className="inline-flex items-center gap-1 text-cream/40 hover:text-cream/60 transition-colors"
+          className="inline-flex items-center gap-1 text-cream/55 hover:text-cream/70 transition-colors"
         >
           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="15 18 9 12 15 6" />
           </svg>
           Tools
         </Link>
-        <span className="text-cream/20">/</span>
+        <span className="text-cream/35">/</span>
         {backHref ? (
-          <Link href={backHref} className="text-cream/40 hover:text-cream/60 transition-colors">
+          <Link href={backHref} className="text-cream/55 hover:text-cream/70 transition-colors">
             {toolLabel || backLabel || title}
           </Link>
         ) : (
-          <span className="text-cream/60">{toolLabel || title}</span>
+          <span className="text-cream/70">{toolLabel || title}</span>
         )}
       </div>
 
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 mb-4">
         <div className="min-w-0">
           {collectionName ? (
-            <p className="text-xs text-cream/40 uppercase tracking-wider mb-1">
+            <p className="text-xs text-cream/55 uppercase tracking-wider mb-1">
               {eyebrowLabel || title}
             </p>
           ) : currentProject ? (
-            <p className="text-xs text-cream/40 uppercase tracking-wider mb-1">{currentProject.name}</p>
+            <p className="text-xs text-cream/55 uppercase tracking-wider mb-1">{currentProject.name}</p>
           ) : null}
           <div className="flex items-center gap-3">
             {renaming ? (
@@ -250,7 +250,7 @@ export function ToolPageHeader({
         </div>
         <div className="flex items-center gap-2 shrink-0 pt-1 sm:pt-2">
           {accessLevel === 'VIEW' && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-cream/10 text-cream/50">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-cream/15 text-cream/65">
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" strokeLinejoin="round" />
                 <circle cx="12" cy="12" r="3" />
@@ -275,7 +275,7 @@ export function ToolPageHeader({
                 'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                 hasContent
                   ? 'bg-sandstone text-basalt hover:bg-sandstone-light'
-                  : 'text-cream/40 hover:text-cream/70'
+                  : 'text-cream/55 hover:text-cream/80'
               )}
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -293,7 +293,7 @@ export function ToolPageHeader({
       {/* Collaborator pills */}
       {isOwner && totalPeople > 0 && (
         <div className="flex items-center gap-2 mb-4 flex-wrap">
-          <span className="text-xs text-cream/40 uppercase tracking-wider">Shared with</span>
+          <span className="text-xs text-cream/55 uppercase tracking-wider">Shared with</span>
 
           {collaborators.map((c) => (
             <div
@@ -303,7 +303,7 @@ export function ToolPageHeader({
                 'group relative inline-flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-full text-xs font-medium cursor-default',
                 c.level === 'EDIT'
                   ? 'bg-sandstone/15 text-sandstone'
-                  : 'bg-cream/10 text-cream/60'
+                  : 'bg-cream/15 text-cream/70'
               )}
             >
               {c.image ? (
@@ -319,16 +319,16 @@ export function ToolPageHeader({
                   'w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] font-semibold',
                   c.level === 'EDIT'
                     ? 'bg-sandstone/25 text-sandstone'
-                    : 'bg-cream/15 text-cream/50'
+                    : 'bg-cream/20 text-cream/65'
                 )}>
                   {getInitials(c.name, c.email)}
                 </span>
               )}
               <span className="leading-none">{getInitials(c.name, c.email)}</span>
 
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-md bg-basalt-50 border border-cream/15 text-xs text-cream whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-10">
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-md bg-stone border border-cream/20 text-xs text-cream whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-10">
                 {c.name || c.email}
-                <span className="text-cream/40 ml-1">
+                <span className="text-cream/55 ml-1">
                   ({c.level === 'EDIT' ? 'Can edit' : 'View only'})
                 </span>
               </span>
@@ -339,16 +339,16 @@ export function ToolPageHeader({
             <div
               key={inv.id}
               title={`${inv.email} — Pending invite (${inv.level === 'EDIT' ? 'Can edit' : 'View only'})`}
-              className="group relative inline-flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-full text-xs font-medium bg-cream/5 text-cream/35 border border-dashed border-cream/15 cursor-default"
+              className="group relative inline-flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-full text-xs font-medium bg-stone-200 text-cream/50 border border-dashed border-cream/20 cursor-default"
             >
-              <span className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] font-semibold bg-cream/8 text-cream/30">
+              <span className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] font-semibold bg-stone-50 text-cream/45">
                 {inv.email.slice(0, 2).toUpperCase()}
               </span>
               <span className="leading-none">{inv.email.split('@')[0]}</span>
 
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-md bg-basalt-50 border border-cream/15 text-xs text-cream whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-10">
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-md bg-stone border border-cream/20 text-xs text-cream whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg z-10">
                 {inv.email}
-                <span className="text-cream/40 ml-1">(Pending)</span>
+                <span className="text-cream/55 ml-1">(Pending)</span>
               </span>
             </div>
           ))}
@@ -356,7 +356,7 @@ export function ToolPageHeader({
       )}
 
       {!collectionName && (
-        <p className="text-cream/70 text-lg mb-8 leading-relaxed">
+        <p className="text-cream/80 text-lg mb-8 leading-relaxed">
           {description}
         </p>
       )}

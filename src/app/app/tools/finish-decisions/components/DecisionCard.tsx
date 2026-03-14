@@ -55,7 +55,7 @@ export function DecisionCard({
 
   return (
     <div
-      className="bg-basalt-50 rounded-card p-4 cursor-pointer hover:bg-basalt-50/80 transition-colors"
+      className="bg-stone rounded-card p-4 cursor-pointer hover:bg-stone-hover transition-colors"
       onClick={() => router.push(buildDecisionHref({ decisionId: decision.id, collectionId }))}
     >
       {/* Top row: thumbnail + title + kebab */}
@@ -89,7 +89,7 @@ export function DecisionCard({
                   e.stopPropagation()
                   setMenuOpen(!menuOpen)
                 }}
-                className="p-1 text-cream/30 hover:text-cream/60 transition-colors"
+                className="p-1 text-cream/45 hover:text-cream/70 transition-colors"
                 aria-label="Selection options"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -99,7 +99,7 @@ export function DecisionCard({
                 </svg>
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-full mt-1 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg py-1 min-w-[140px]">
+                <div className="absolute right-0 top-full mt-1 z-50 bg-stone border border-cream/15 rounded-lg shadow-lg py-1 min-w-[140px]">
                   {onMove && (
                     <button
                       type="button"
@@ -108,7 +108,7 @@ export function DecisionCard({
                         setMenuOpen(false)
                         onMove()
                       }}
-                      className="w-full text-left px-3 py-2 text-sm text-cream/70 hover:bg-cream/5 transition-colors"
+                      className="w-full text-left px-3 py-2 text-sm text-cream/80 hover:bg-stone-hover transition-colors"
                     >
                       Move to...
                     </button>
@@ -120,7 +120,7 @@ export function DecisionCard({
                       setMenuOpen(false)
                       onDelete()
                     }}
-                    className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-cream/5 transition-colors"
+                    className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-stone-hover transition-colors"
                   >
                     Delete
                   </button>
@@ -141,7 +141,7 @@ export function DecisionCard({
           <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
         )}
         {decision.dueDate ? (
-          <span className="text-[11px] text-cream/50">
+          <span className="text-[11px] text-cream/65">
             Due{' '}
             {new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', {
               month: 'short',
@@ -149,16 +149,16 @@ export function DecisionCard({
             })}
           </span>
         ) : (
-          <span className="text-[11px] text-cream/20">No due date</span>
+          <span className="text-[11px] text-cream/35">No due date</span>
         )}
       </div>
 
       {/* Meta line */}
-      <div className="flex items-center gap-2 text-[11px] text-cream/40">
+      <div className="flex items-center gap-2 text-[11px] text-cream/55">
         <span>
           {decision.options.length} option{decision.options.length !== 1 ? 's' : ''}
         </span>
-        <span className="text-cream/15">·</span>
+        <span className="text-cream/30">·</span>
         <span>{formatRelativeDate(decision.updatedAt)}</span>
       </div>
     </div>

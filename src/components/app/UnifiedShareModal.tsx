@@ -87,12 +87,12 @@ export function UnifiedShareModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
-      <div className="relative bg-basalt-50 border border-cream/10 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-stone border border-cream/15 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header with tabs */}
-        <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 px-6 py-4 z-10">
+        <div className="sticky top-0 bg-stone border-b border-cream/15 px-6 py-4 z-10">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-medium text-cream">{title}</h2>
-            <button type="button" onClick={onClose} className="text-cream/40 hover:text-cream transition-colors">
+            <button type="button" onClick={onClose} className="text-cream/55 hover:text-cream transition-colors">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
               </svg>
@@ -107,7 +107,7 @@ export function UnifiedShareModal({
               className={`flex-1 px-3 py-2 text-sm rounded-md transition-colors ${
                 tab === 'people'
                   ? 'bg-sandstone/20 text-sandstone font-medium'
-                  : 'text-cream/50 hover:text-cream/70'
+                  : 'text-cream/65 hover:text-cream/80'
               }`}
             >
               People
@@ -119,7 +119,7 @@ export function UnifiedShareModal({
                 className={`flex-1 px-3 py-2 text-sm rounded-md transition-colors ${
                   tab === 'link'
                     ? 'bg-sandstone/20 text-sandstone font-medium'
-                    : 'text-cream/50 hover:text-cream/70'
+                    : 'text-cream/65 hover:text-cream/80'
                 }`}
               >
                 Read-Only Link
@@ -131,7 +131,7 @@ export function UnifiedShareModal({
               className={`flex-1 px-3 py-2 text-sm rounded-md transition-colors ${
                 tab === 'export'
                   ? 'bg-sandstone/20 text-sandstone font-medium'
-                  : 'text-cream/50 hover:text-cream/70'
+                  : 'text-cream/65 hover:text-cream/80'
               }`}
             >
               Export PDF
@@ -337,7 +337,7 @@ function PeopleTab({
   return (
     <div className="space-y-5">
       {collectionId && (
-        <p className="text-xs text-cream/40">
+        <p className="text-xs text-cream/55">
           Access applies only to this {toolLabel}{collectionName ? `: ${collectionName}` : ''}.
         </p>
       )}
@@ -345,7 +345,7 @@ function PeopleTab({
       {/* Invite form (owner only) */}
       {isOwner && (
         <div>
-          <label className="block text-sm text-cream/70 mb-2">Invite by email</label>
+          <label className="block text-sm text-cream/80 mb-2">Invite by email</label>
           <div className="flex gap-2">
             <input
               type="email"
@@ -353,7 +353,7 @@ function PeopleTab({
               onChange={(e) => { setEmail(e.target.value); setError('') }}
               onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
               placeholder="name@example.com"
-              className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+              className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
             />
             <select
               value={level}
@@ -374,7 +374,7 @@ function PeopleTab({
           </div>
           {error && <p className="text-sm text-red-400 mt-1.5">{error}</p>}
           {successMsg && <p className="text-sm text-emerald-400 mt-1.5">{successMsg}</p>}
-          <p className="text-[11px] text-cream/30 mt-1.5">
+          <p className="text-[11px] text-cream/45 mt-1.5">
             {editSeatsUsed} of {maxEditShares} edit seats used
           </p>
         </div>
@@ -382,29 +382,29 @@ function PeopleTab({
 
       {/* Current access */}
       {isLoading ? (
-        <div className="text-sm text-cream/30 text-center py-4">Loading...</div>
+        <div className="text-sm text-cream/45 text-center py-4">Loading...</div>
       ) : (
         <>
           {access.length > 0 && (
             <div>
-              <h3 className="text-xs font-medium text-cream/40 uppercase tracking-wider mb-2">
+              <h3 className="text-xs font-medium text-cream/55 uppercase tracking-wider mb-2">
                 People with access
               </h3>
               <div className="space-y-1">
                 {access.map((a) => (
-                  <div key={a.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-cream/5">
-                    <div className="w-8 h-8 rounded-full bg-cream/10 flex items-center justify-center text-xs text-cream/50 shrink-0">
+                  <div key={a.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-stone-hover">
+                    <div className="w-8 h-8 rounded-full bg-cream/15 flex items-center justify-center text-xs text-cream/65 shrink-0">
                       {a.name?.charAt(0)?.toUpperCase() || a.email?.charAt(0)?.toUpperCase() || '?'}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-cream truncate">{a.name || a.email}</p>
                       {a.name && a.email && (
-                        <p className="text-xs text-cream/40 truncate">{a.email}</p>
+                        <p className="text-xs text-cream/55 truncate">{a.email}</p>
                       )}
                     </div>
                     <span className={cn(
                       'text-xs px-2 py-0.5 rounded-full',
-                      a.level === 'EDIT' ? 'bg-sandstone/15 text-sandstone' : 'bg-cream/10 text-cream/50'
+                      a.level === 'EDIT' ? 'bg-sandstone/15 text-sandstone' : 'bg-cream/15 text-cream/65'
                     )}>
                       {a.level === 'EDIT' ? 'Can edit' : 'View only'}
                     </span>
@@ -412,7 +412,7 @@ function PeopleTab({
                       <button
                         type="button"
                         onClick={() => handleRevoke(a.userId)}
-                        className="text-cream/30 hover:text-red-400 transition-colors"
+                        className="text-cream/45 hover:text-red-400 transition-colors"
                         title="Remove access"
                       >
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -428,27 +428,27 @@ function PeopleTab({
 
           {invites.length > 0 && (
             <div>
-              <h3 className="text-xs font-medium text-cream/40 uppercase tracking-wider mb-2">
+              <h3 className="text-xs font-medium text-cream/55 uppercase tracking-wider mb-2">
                 Pending invites
               </h3>
               <div className="space-y-2">
                 {invites.map((inv) => (
-                  <div key={inv.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-cream/[0.03] border border-cream/8">
-                    <div className="w-8 h-8 rounded-full bg-cream/5 flex items-center justify-center text-xs text-cream/30 shrink-0">
+                  <div key={inv.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-stone-50 border border-cream/12">
+                    <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-xs text-cream/45 shrink-0">
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                         <polyline points="22,6 12,13 2,6" />
                       </svg>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-cream/60 truncate">{inv.email}</p>
-                      <p className="text-xs text-cream/30">
+                      <p className="text-sm text-cream/70 truncate">{inv.email}</p>
+                      <p className="text-xs text-cream/45">
                         Expires {new Date(inv.expiresAt).toLocaleDateString()}
                       </p>
                     </div>
                     <span className={cn(
                       'text-xs px-2 py-0.5 rounded-full',
-                      inv.level === 'EDIT' ? 'bg-sandstone/15 text-sandstone' : 'bg-cream/10 text-cream/50'
+                      inv.level === 'EDIT' ? 'bg-sandstone/15 text-sandstone' : 'bg-cream/15 text-cream/65'
                     )}>
                       {inv.level === 'EDIT' ? 'Can edit' : 'View only'}
                     </span>
@@ -456,7 +456,7 @@ function PeopleTab({
                       <button
                         type="button"
                         onClick={() => handleCancelInvite(inv.id)}
-                        className="text-cream/30 hover:text-red-400 transition-colors"
+                        className="text-cream/45 hover:text-red-400 transition-colors"
                         title="Cancel invite"
                       >
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -471,7 +471,7 @@ function PeopleTab({
           )}
 
           {access.length === 0 && invites.length === 0 && (
-            <p className="text-sm text-cream/30 text-center py-3">
+            <p className="text-sm text-cream/45 text-center py-3">
               No one else has access yet
             </p>
           )}
@@ -540,7 +540,7 @@ function LinkTab({
         collectionId={collectionId}
       />
 
-      <p className="text-xs text-cream/30 text-center">
+      <p className="text-xs text-cream/45 text-center">
         Public links expire after 14 days. Anyone with a link can view a read-only version.
       </p>
     </div>
@@ -610,25 +610,25 @@ function ExportTab({
 
       {extraExportControls}
 
-      <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
+      <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/15 cursor-pointer transition-colors hover:bg-stone-hover">
         <input type="checkbox" checked={includeNotes} onChange={(e) => setIncludeNotes(e.target.checked)} className="accent-sandstone" />
         <div>
           <p className="text-sm text-cream">Include notes</p>
-          <p className="text-xs text-cream/40">Private notes on each item</p>
+          <p className="text-xs text-cream/55">Private notes on each item</p>
         </div>
       </label>
-      <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
+      <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/15 cursor-pointer transition-colors hover:bg-stone-hover">
         <input type="checkbox" checked={includeComments} onChange={(e) => setIncludeComments(e.target.checked)} className="accent-sandstone" />
         <div>
           <p className="text-sm text-cream">Include comments</p>
-          <p className="text-xs text-cream/40">Discussion threads</p>
+          <p className="text-xs text-cream/55">Discussion threads</p>
         </div>
       </label>
-      <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/10 cursor-pointer transition-colors hover:bg-cream/5">
+      <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-cream/15 cursor-pointer transition-colors hover:bg-stone-hover">
         <input type="checkbox" checked={includePhotos} onChange={(e) => setIncludePhotos(e.target.checked)} className="accent-sandstone" />
         <div>
           <p className="text-sm text-cream">Include photos</p>
-          <p className="text-xs text-cream/40">Photo thumbnails</p>
+          <p className="text-xs text-cream/55">Photo thumbnails</p>
         </div>
       </label>
 
@@ -640,7 +640,7 @@ function ExportTab({
         Open Print Preview
       </button>
 
-      <p className="text-xs text-cream/30 text-center">
+      <p className="text-xs text-cream/45 text-center">
         Tip: In the print dialog, disable &ldquo;Headers and footers&rdquo; to remove the URL from the PDF.
       </p>
     </div>
@@ -716,8 +716,8 @@ function CreateShareLinkForm({
   }
 
   return (
-    <div className="p-3 rounded-lg bg-basalt border border-cream/10 space-y-3">
-      <p className="text-xs text-cream/50">Configure the new public link:</p>
+    <div className="p-3 rounded-lg bg-basalt border border-cream/15 space-y-3">
+      <p className="text-xs text-cream/65">Configure the new public link:</p>
 
       <ScopePicker
         label={scopeLabel}
@@ -737,15 +737,15 @@ function CreateShareLinkForm({
       <div className="space-y-2">
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={includeNotes} onChange={(e) => setIncludeNotes(e.target.checked)} className="rounded border-cream/20 bg-basalt text-sandstone focus:ring-sandstone/50 w-3.5 h-3.5" />
-          <span className="text-xs text-cream/70">Notes</span>
+          <span className="text-xs text-cream/80">Notes</span>
         </label>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={includeComments} onChange={(e) => setIncludeComments(e.target.checked)} className="rounded border-cream/20 bg-basalt text-sandstone focus:ring-sandstone/50 w-3.5 h-3.5" />
-          <span className="text-xs text-cream/70">Comments</span>
+          <span className="text-xs text-cream/80">Comments</span>
         </label>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={includePhotos} onChange={(e) => setIncludePhotos(e.target.checked)} className="rounded border-cream/20 bg-basalt text-sandstone focus:ring-sandstone/50 w-3.5 h-3.5" />
-          <span className="text-xs text-cream/70">Photos</span>
+          <span className="text-xs text-cream/80">Photos</span>
         </label>
       </div>
 
@@ -762,13 +762,13 @@ function CreateShareLinkForm({
             value={shareConfirmText}
             onChange={(e) => setShareConfirmText(e.target.value)}
             placeholder="Type SHARE to confirm"
-            className="w-full px-3 py-2 bg-basalt border border-red-400/30 text-cream text-sm rounded-lg placeholder:text-cream/30 focus:outline-none focus:border-red-400/50"
+            className="w-full px-3 py-2 bg-basalt border border-red-400/30 text-cream text-sm rounded-lg placeholder:text-cream/45 focus:outline-none focus:border-red-400/50"
           />
         </div>
       ) : (
         <label className="flex items-start gap-3 cursor-pointer">
           <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 accent-sandstone" />
-          <span className="text-xs text-cream/60">I understand this creates a public link that anyone can view</span>
+          <span className="text-xs text-cream/70">I understand this creates a public link that anyone can view</span>
         </label>
       )}
 
@@ -784,7 +784,7 @@ function CreateShareLinkForm({
         <button
           type="button"
           onClick={onCancel}
-          className="text-xs px-3 py-1.5 text-cream/40 hover:text-cream/60 transition-colors"
+          className="text-xs px-3 py-1.5 text-cream/55 hover:text-cream/70 transition-colors"
         >
           Cancel
         </button>

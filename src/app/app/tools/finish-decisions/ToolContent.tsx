@@ -330,7 +330,7 @@ export function ToolContent({
               <button
                 type="button"
                 onClick={() => { setActivityOpen(true); markActivitySeen() }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cream/65 hover:text-cream/80 bg-stone-200 hover:bg-cream/10 transition-colors"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
@@ -361,8 +361,8 @@ export function ToolContent({
         )}
         <UnsortedBanner toolKey="finish_decisions" />
         {noAccess ? (
-          <div className="bg-basalt-50 rounded-card p-8 text-center">
-            <p className="text-cream/50 mb-2">You don&apos;t have access to Selections for this home.</p>
+          <div className="bg-stone rounded-card p-8 text-center">
+            <p className="text-cream/65 mb-2">You don&apos;t have access to Selections for this home.</p>
             <a href="/app" className="text-sandstone hover:text-sandstone-light text-sm">Back to Tools</a>
           </div>
         ) : isLoaded && state.version === 4 ? (
@@ -384,17 +384,17 @@ export function ToolContent({
             selectionVisited={selectionVisited}
           />
         ) : !isLoaded ? (
-          <div className="text-center py-12 text-cream/50">
+          <div className="text-center py-12 text-cream/65">
             <p>Loading...</p>
           </div>
         ) : (
-          <div className="text-center py-12 text-cream/50">
+          <div className="text-center py-12 text-cream/65">
             <p>Migrating to new format...</p>
           </div>
         )}
 
         {isSyncing && (
-          <div className="fixed bottom-4 right-4 bg-basalt-50 rounded-card px-3 py-2 text-xs text-cream/30">
+          <div className="fixed bottom-4 right-4 bg-stone rounded-card px-3 py-2 text-xs text-cream/45">
             Saving...
           </div>
         )}

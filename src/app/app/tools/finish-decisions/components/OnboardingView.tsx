@@ -28,13 +28,13 @@ export function OnboardingView({
         Add your first selection to make
       </h2>
 
-      <p className="text-sm text-cream/50 leading-relaxed mb-6">
+      <p className="text-sm text-cream/65 leading-relaxed mb-6">
         Add the things you need to decide on — countertops, flooring, fixtures — and track your picks.
       </p>
 
       {/* Add selection input */}
-      <div className="bg-basalt-50 rounded-xl p-5 border border-cream/10 mb-5">
-        <label className="block text-sm font-medium text-cream/70 mb-2">
+      <div className="bg-stone rounded-xl p-5 border border-cream/15 mb-5">
+        <label className="block text-sm font-medium text-cream/80 mb-2">
           What do you need to choose?
         </label>
         <div className="flex gap-2">
@@ -44,7 +44,7 @@ export function OnboardingView({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
             placeholder="e.g. Countertop, Faucet, Cabinet color"
-            className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+            className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
           />
           <button
             type="button"
@@ -60,7 +60,7 @@ export function OnboardingView({
       {/* Divider */}
       <div className="flex items-center gap-3 mb-5">
         <div className="flex-1 h-px bg-cream/10" />
-        <span className="text-xs text-cream/30">or</span>
+        <span className="text-xs text-cream/45">or</span>
         <div className="flex-1 h-px bg-cream/10" />
       </div>
 
@@ -68,12 +68,12 @@ export function OnboardingView({
       <button
         type="button"
         onClick={onOpenPackChooser}
-        className="w-full text-left px-5 py-4 bg-basalt-50 rounded-xl border border-cream/10 hover:border-sandstone/30 transition-colors group"
+        className="w-full text-left px-5 py-4 bg-stone rounded-xl border border-cream/15 hover:border-sandstone/30 transition-colors group"
       >
         <span className="text-sm font-medium text-cream group-hover:text-sandstone transition-colors">
           Add a Selection Pack
         </span>
-        <p className="text-xs text-cream/40 mt-1 leading-relaxed">
+        <p className="text-xs text-cream/55 mt-1 leading-relaxed">
           Packs add common selections and curated options — so you don&apos;t miss anything.
         </p>
       </button>

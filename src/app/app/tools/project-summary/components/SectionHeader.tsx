@@ -26,14 +26,14 @@ export function SectionHeader({
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="rounded-xl border border-cream/[0.06] bg-cream/[0.02]">
+    <div className="rounded-xl border border-cream/12 bg-stone">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-3 w-full px-5 py-4 text-left"
       >
         <svg
-          className={`w-4 h-4 text-cream/30 transition-transform ${isOpen ? 'rotate-90' : ''}`}
+          className={`w-4 h-4 text-cream/40 transition-transform ${isOpen ? 'rotate-90' : ''}`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -41,9 +41,9 @@ export function SectionHeader({
         >
           <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <h2 className="text-sm font-semibold text-cream/80 flex-1">{title}</h2>
+        <h2 className="text-sm font-semibold text-cream/90 flex-1">{title}</h2>
         {typeof count === 'number' && (
-          <span className="text-[11px] text-cream/30 tabular-nums">{count}</span>
+          <span className="text-[11px] text-cream/45 tabular-nums">{count}</span>
         )}
         {!readOnly && onAdd && (
           <span

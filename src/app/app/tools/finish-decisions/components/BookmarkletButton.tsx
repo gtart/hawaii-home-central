@@ -216,7 +216,7 @@ export function BookmarkletButton({ compact = false }: { compact?: boolean }) {
           } ${
             ready
               ? 'bg-sandstone text-basalt'
-              : 'bg-cream/20 text-cream/40'
+              : 'bg-cream/35 text-cream/55'
           }`}
           title="Drag me to your bookmarks bar"
         >
@@ -229,7 +229,7 @@ export function BookmarkletButton({ compact = false }: { compact?: boolean }) {
           <button
             type="button"
             onClick={handleCopyBookmarklet}
-            className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors"
+            className="text-[11px] text-cream/45 hover:text-cream/65 transition-colors"
             title="Copy bookmarklet URL"
           >
             Copy link
@@ -242,12 +242,12 @@ export function BookmarkletButton({ compact = false }: { compact?: boolean }) {
         </p>
       )}
       {!showHint && ready && (
-        <p className="text-[11px] text-cream/30 mt-1.5">
+        <p className="text-[11px] text-cream/45 mt-1.5">
           On Safari: right-click the button, select &quot;Add to Bookmarks&quot;
         </p>
       )}
       {!ready && (
-        <p className="text-[11px] text-cream/40 mt-1.5">Loading bookmarklet...</p>
+        <p className="text-[11px] text-cream/55 mt-1.5">Loading bookmarklet...</p>
       )}
     </div>
   )

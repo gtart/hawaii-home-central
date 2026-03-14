@@ -85,35 +85,35 @@ export function MilestoneView({ selections }: { selections: SelectionV4[] }) {
         const isExpanded = expandedMilestones.has(milestone.id)
 
         return (
-          <div key={milestone.id} className="bg-basalt-50 rounded-card overflow-hidden">
+          <div key={milestone.id} className="bg-stone rounded-card overflow-hidden">
             <div
-              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-basalt-50/80 transition-colors"
+              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-stone-hover transition-colors"
               onClick={() => toggleMilestone(milestone.id)}
             >
-              <span className="text-cream/50 text-sm select-none">
+              <span className="text-cream/65 text-sm select-none">
                 {isExpanded ? '▼' : '▶'}
               </span>
               <h3 className="text-cream font-medium flex-1">{milestone.label}</h3>
-              <span className="text-xs text-cream/50">
+              <span className="text-xs text-cream/65">
                 {milestoneSelections.length} selection{milestoneSelections.length !== 1 ? 's' : ''}
               </span>
             </div>
 
             {isExpanded && (
-              <div className="border-t border-cream/10">
+              <div className="border-t border-cream/15">
                 <table className="w-full">
-                  <thead className="border-b border-cream/5">
+                  <thead className="border-b border-cream/10">
                     <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/65 uppercase tracking-wide">
                         Selection
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/65 uppercase tracking-wide">
                         Tags
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/65 uppercase tracking-wide">
                         Status
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide hidden md:table-cell">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/65 uppercase tracking-wide hidden md:table-cell">
                         Selected
                       </th>
                     </tr>
@@ -124,7 +124,7 @@ export function MilestoneView({ selections }: { selections: SelectionV4[] }) {
                       return (
                         <tr
                           key={s.id}
-                          className="border-b border-cream/5 hover:bg-basalt/50 cursor-pointer transition-colors"
+                          className="border-b border-cream/10 hover:bg-basalt/50 cursor-pointer transition-colors"
                           onClick={() =>
                             router.push(buildDecisionHref({ decisionId: s.id }))
                           }
@@ -132,7 +132,7 @@ export function MilestoneView({ selections }: { selections: SelectionV4[] }) {
                           <td className="px-4 py-2.5 text-sm text-cream font-medium">
                             {s.title}
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-cream/60">
+                          <td className="px-4 py-2.5 text-sm text-cream/70">
                             {s.tags.length > 0 ? s.tags.join(', ') : '—'}
                           </td>
                           <td className="px-4 py-2.5">
@@ -146,7 +146,7 @@ export function MilestoneView({ selections }: { selections: SelectionV4[] }) {
                                 → {selectedOption.name}
                               </span>
                             ) : (
-                              <span className="text-xs text-cream/20">—</span>
+                              <span className="text-xs text-cream/35">—</span>
                             )}
                           </td>
                         </tr>
@@ -168,35 +168,35 @@ export function MilestoneView({ selections }: { selections: SelectionV4[] }) {
         const isExpanded = expandedMilestones.has('other')
 
         return (
-          <div className="bg-basalt-50 rounded-card overflow-hidden">
+          <div className="bg-stone rounded-card overflow-hidden">
             <div
-              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-basalt-50/80 transition-colors"
+              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-stone-hover transition-colors"
               onClick={() => toggleMilestone('other')}
             >
-              <span className="text-cream/50 text-sm select-none">
+              <span className="text-cream/65 text-sm select-none">
                 {isExpanded ? '▼' : '▶'}
               </span>
-              <h3 className="text-cream/60 font-medium flex-1">Other</h3>
-              <span className="text-xs text-cream/40">
+              <h3 className="text-cream/70 font-medium flex-1">Other</h3>
+              <span className="text-xs text-cream/55">
                 {otherSelections.length} selection{otherSelections.length !== 1 ? 's' : ''}
               </span>
             </div>
 
             {isExpanded && (
-              <div className="border-t border-cream/10">
+              <div className="border-t border-cream/15">
                 <table className="w-full">
-                  <thead className="border-b border-cream/5">
+                  <thead className="border-b border-cream/10">
                     <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/65 uppercase tracking-wide">
                         Selection
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/65 uppercase tracking-wide">
                         Tags
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/65 uppercase tracking-wide">
                         Status
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/50 uppercase tracking-wide hidden md:table-cell">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-cream/65 uppercase tracking-wide hidden md:table-cell">
                         Selected
                       </th>
                     </tr>
@@ -207,7 +207,7 @@ export function MilestoneView({ selections }: { selections: SelectionV4[] }) {
                       return (
                         <tr
                           key={s.id}
-                          className="border-b border-cream/5 hover:bg-basalt/50 cursor-pointer transition-colors"
+                          className="border-b border-cream/10 hover:bg-basalt/50 cursor-pointer transition-colors"
                           onClick={() =>
                             router.push(buildDecisionHref({ decisionId: s.id }))
                           }
@@ -215,7 +215,7 @@ export function MilestoneView({ selections }: { selections: SelectionV4[] }) {
                           <td className="px-4 py-2.5 text-sm text-cream font-medium">
                             {s.title}
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-cream/60">
+                          <td className="px-4 py-2.5 text-sm text-cream/70">
                             {s.tags.length > 0 ? s.tags.join(', ') : '—'}
                           </td>
                           <td className="px-4 py-2.5">
@@ -229,7 +229,7 @@ export function MilestoneView({ selections }: { selections: SelectionV4[] }) {
                                 → {selectedOption.name}
                               </span>
                             ) : (
-                              <span className="text-xs text-cream/20">—</span>
+                              <span className="text-xs text-cream/35">—</span>
                             )}
                           </td>
                         </tr>

@@ -95,7 +95,7 @@ function ExpandableSpecs({ value, readOnly, onChange, optionName }: { value: str
     const isLong = value.split('\n').length > 10 || value.length > 400
     return (
       <div>
-        <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-1 block">Specs</label>
+        <label className="text-[11px] text-cream/45 uppercase tracking-wider mb-1 block">Specs</label>
         <p className={`text-sm text-cream whitespace-pre-wrap ${!readOnlyExpanded && isLong ? 'line-clamp-10' : ''}`}>
           {value}
         </p>
@@ -112,11 +112,11 @@ function ExpandableSpecs({ value, readOnly, onChange, optionName }: { value: str
     <>
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label className="text-[11px] text-cream/30 uppercase tracking-wider">Specs</label>
+          <label className="text-[11px] text-cream/45 uppercase tracking-wider">Specs</label>
           <button
             type="button"
             onClick={() => setFullscreen(true)}
-            className="text-cream/25 hover:text-cream/50 transition-colors"
+            className="text-cream/40 hover:text-cream/65 transition-colors"
             title="Expand specs"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -129,7 +129,7 @@ function ExpandableSpecs({ value, readOnly, onChange, optionName }: { value: str
           value={value}
           onChange={(e) => { onChange(e.target.value); autoGrow() }}
           placeholder="Specs, dimensions, details..."
-          className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 resize-y"
+          className="w-full bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/40 focus:outline-none focus:border-sandstone/50 resize-y"
           style={{ minHeight: '72px' }}
         />
       </div>
@@ -138,15 +138,15 @@ function ExpandableSpecs({ value, readOnly, onChange, optionName }: { value: str
       {fullscreen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-8">
           <div className="absolute inset-0 bg-black/70" onClick={() => setFullscreen(false)} />
-          <div className="relative bg-basalt-50 border border-cream/15 rounded-xl shadow-xl w-full max-w-3xl flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-cream/10 shrink-0">
+          <div className="relative bg-stone border border-cream/15 rounded-xl shadow-xl w-full max-w-3xl flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-cream/15 shrink-0">
               <h2 className="text-sm font-medium text-cream truncate">
                 Specs{optionName ? ` — ${optionName}` : ''}
               </h2>
               <button
                 type="button"
                 onClick={() => setFullscreen(false)}
-                className="text-cream/40 hover:text-cream transition-colors"
+                className="text-cream/55 hover:text-cream transition-colors"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
@@ -159,11 +159,11 @@ function ExpandableSpecs({ value, readOnly, onChange, optionName }: { value: str
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder="Specs, dimensions, details..."
-                className="w-full h-full bg-basalt border border-cream/10 rounded-lg px-4 py-3 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50 resize-none"
+                className="w-full h-full bg-basalt border border-cream/15 rounded-lg px-4 py-3 text-sm text-cream placeholder:text-cream/40 focus:outline-none focus:border-sandstone/50 resize-none"
                 style={{ minHeight: '60vh' }}
               />
             </div>
-            <div className="flex justify-end px-5 py-3 border-t border-cream/10 shrink-0">
+            <div className="flex justify-end px-5 py-3 border-t border-cream/15 shrink-0">
               <button
                 type="button"
                 onClick={() => setFullscreen(false)}
@@ -453,13 +453,13 @@ export function IdeaCardModal({
   }
 
   function docTypeColor(mimeType: string | undefined): string {
-    if (!mimeType) return 'text-cream/40'
+    if (!mimeType) return 'text-cream/55'
     if (mimeType.startsWith('image/')) return 'text-purple-400'
     if (mimeType === 'application/pdf') return 'text-red-400'
     if (mimeType.includes('word') || mimeType === 'application/msword') return 'text-blue-400'
     if (mimeType.includes('sheet') || mimeType.includes('excel')) return 'text-green-400'
     if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'text-orange-400'
-    return 'text-cream/40'
+    return 'text-cream/55'
   }
 
   function docTypeLabel(mimeType: string | undefined): string {
@@ -482,10 +482,10 @@ export function IdeaCardModal({
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
       {/* Sheet / Modal */}
-      <div className="relative bg-basalt-50 border-t sm:border border-cream/10 rounded-t-xl sm:rounded-xl w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-stone border-t sm:border border-cream/15 rounded-t-xl sm:rounded-xl w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto">
 
         {/* ── Sticky header ── */}
-        <div className="sticky top-0 bg-basalt-50 border-b border-cream/10 px-5 pt-3 pb-0 z-10">
+        <div className="sticky top-0 bg-stone border-b border-cream/15 px-5 pt-3 pb-0 z-10">
           {/* Nav + date + close */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -496,18 +496,18 @@ export function IdeaCardModal({
                     type="button"
                     onClick={() => hasPrev && onNavigate(decision.options[currentIndex - 1].id)}
                     disabled={!hasPrev}
-                    className="w-7 h-7 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-cream/8 text-cream/50 hover:bg-cream/15 hover:text-cream transition-colors disabled:opacity-20 disabled:pointer-events-none"
+                    className="w-7 h-7 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-cream/8 text-cream/65 hover:bg-cream/30 hover:text-cream transition-colors disabled:opacity-20 disabled:pointer-events-none"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
-                  <span className="text-[10px] text-cream/30 tabular-nums min-w-[32px] text-center">{currentIndex + 1} / {totalOptions}</span>
+                  <span className="text-[10px] text-cream/45 tabular-nums min-w-[32px] text-center">{currentIndex + 1} / {totalOptions}</span>
                   <button
                     type="button"
                     onClick={() => hasNext && onNavigate(decision.options[currentIndex + 1].id)}
                     disabled={!hasNext}
-                    className="w-7 h-7 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-cream/8 text-cream/50 hover:bg-cream/15 hover:text-cream transition-colors disabled:opacity-20 disabled:pointer-events-none"
+                    className="w-7 h-7 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-cream/8 text-cream/65 hover:bg-cream/30 hover:text-cream transition-colors disabled:opacity-20 disabled:pointer-events-none"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -515,11 +515,11 @@ export function IdeaCardModal({
                   </button>
                 </div>
               )}
-              <div className="flex items-center gap-2 text-[11px] text-cream/30">
+              <div className="flex items-center gap-2 text-[11px] text-cream/45">
                 <span>Added {formatDate(option.createdAt)}</span>
                 {option.updatedAt !== option.createdAt && (
                   <>
-                    <span className="text-cream/15">·</span>
+                    <span className="text-cream/30">·</span>
                     <span>Updated {formatDate(option.updatedAt)}</span>
                   </>
                 )}
@@ -528,7 +528,7 @@ export function IdeaCardModal({
             <button
               type="button"
               onClick={onClose}
-              className="text-cream/40 hover:text-cream transition-colors"
+              className="text-cream/55 hover:text-cream transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
@@ -539,21 +539,21 @@ export function IdeaCardModal({
           {/* Origin badge — shows which Decision Pack this came from */}
           {option.origin && (
             <div className="flex items-center gap-1.5 pb-2">
-              <svg className="w-3.5 h-3.5 text-cream/30 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="w-3.5 h-3.5 text-cream/45 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" strokeLinecap="round" strokeLinejoin="round" />
                 <line x1="7" y1="7" x2="7.01" y2="7" strokeLinecap="round" />
               </svg>
-              <span className="text-[11px] text-cream/40">Part of {option.origin.kitLabel}</span>
+              <span className="text-[11px] text-cream/55">Part of {option.origin.kitLabel}</span>
             </div>
           )}
 
           {/* Action row: Assign / Final + Votes */}
-          <div className="flex flex-wrap items-center gap-2 pb-2.5 border-b border-cream/8">
+          <div className="flex flex-wrap items-center gap-2 pb-2.5 border-b border-cream/12">
             {onMove && !readOnly && (
               <button
                 type="button"
                 onClick={onMove}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-cream/10 text-cream/60 hover:bg-cream/20 transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-cream/10 text-cream/70 hover:bg-cream/35 transition-colors"
               >
                 Move
               </button>
@@ -566,8 +566,8 @@ export function IdeaCardModal({
                 title={copyDisabledReason}
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   onCopy
-                    ? 'bg-cream/10 text-cream/60 hover:bg-cream/20'
-                    : 'bg-cream/5 text-cream/25 cursor-not-allowed'
+                    ? 'bg-cream/10 text-cream/70 hover:bg-cream/35'
+                    : 'bg-stone-200 text-cream/40 cursor-not-allowed'
                 }`}
               >
                 Copy to...
@@ -580,7 +580,7 @@ export function IdeaCardModal({
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   option.isSelected
                     ? 'bg-sandstone text-basalt'
-                    : 'bg-cream/10 text-cream/60 hover:bg-cream/20'
+                    : 'bg-cream/10 text-cream/70 hover:bg-cream/35'
                 }`}
               >
                 {option.isSelected ? 'Final Decision' : 'Mark as Final Decision'}
@@ -613,7 +613,7 @@ export function IdeaCardModal({
                       className={`text-xs px-2 py-1 rounded-full transition-colors ${
                         isActive
                           ? 'bg-sandstone/20 text-sandstone'
-                          : 'bg-cream/8 text-cream/40 hover:bg-cream/15'
+                          : 'bg-cream/8 text-cream/55 hover:bg-cream/30'
                       }`}
                     >
                       {emoji}{count > 0 ? ` ${count}` : ''}
@@ -632,7 +632,7 @@ export function IdeaCardModal({
                     const count = Object.values(votes).filter(v => v === type).length
                     if (count === 0) return null
                     return (
-                      <span key={type} className="text-xs px-2 py-1 rounded-full bg-cream/5 text-cream/30">
+                      <span key={type} className="text-xs px-2 py-1 rounded-full bg-stone-200 text-cream/45">
                         {emoji} {count}
                       </span>
                     )
@@ -650,24 +650,24 @@ export function IdeaCardModal({
               onChange={(e) => onUpdate({ name: e.target.value })}
               readOnly={readOnly}
               placeholder="Option name..."
-              className="w-full bg-transparent text-cream text-lg font-medium placeholder:text-cream/30 focus:outline-none"
+              className="w-full bg-transparent text-cream text-lg font-medium placeholder:text-cream/45 focus:outline-none"
             />
           </div>
         </div>
 
         {/* Mobile tab bar */}
-        <div className="sm:hidden flex border-b border-cream/10">
+        <div className="sm:hidden flex border-b border-cream/15">
           <button
             type="button"
             onClick={() => setMobileTab('details')}
-            className={`flex-1 py-2.5 text-xs font-medium text-center transition-colors ${mobileTab === 'details' ? 'text-sandstone border-b-2 border-sandstone' : 'text-cream/40'}`}
+            className={`flex-1 py-2.5 text-xs font-medium text-center transition-colors ${mobileTab === 'details' ? 'text-sandstone border-b-2 border-sandstone' : 'text-cream/55'}`}
           >
             Details
           </button>
           <button
             type="button"
             onClick={() => setMobileTab('comments')}
-            className={`flex-1 py-2.5 text-xs font-medium text-center transition-colors ${mobileTab === 'comments' ? 'text-sandstone border-b-2 border-sandstone' : 'text-cream/40'}`}
+            className={`flex-1 py-2.5 text-xs font-medium text-center transition-colors ${mobileTab === 'comments' ? 'text-sandstone border-b-2 border-sandstone' : 'text-cream/55'}`}
           >
             Comments{ideaComments.length > 0 ? ` (${ideaComments.length})` : ''}
           </button>
@@ -738,11 +738,11 @@ export function IdeaCardModal({
                           Change photo
                         </button>
                         {showPhotoMenu && (
-                          <div className="absolute bottom-full right-0 mb-1.5 bg-basalt-50 border border-cream/15 rounded-xl shadow-xl overflow-hidden min-w-[200px]">
+                          <div className="absolute bottom-full right-0 mb-1.5 bg-stone border border-cream/15 rounded-xl shadow-xl overflow-hidden min-w-[200px]">
                             <button
                               type="button"
                               onClick={() => { cameraInputRef.current?.click(); setShowPhotoMenu(false) }}
-                              className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+                              className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/80 hover:text-cream hover:bg-stone-hover transition-colors"
                             >
                               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
@@ -750,11 +750,11 @@ export function IdeaCardModal({
                               </svg>
                               Take a photo
                             </button>
-                            <div className="border-t border-cream/10" />
+                            <div className="border-t border-cream/15" />
                             <button
                               type="button"
                               onClick={() => { galleryInputRef.current?.click(); setShowPhotoMenu(false) }}
-                              className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+                              className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/80 hover:text-cream hover:bg-stone-hover transition-colors"
                             >
                               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -784,7 +784,7 @@ export function IdeaCardModal({
                             }`}
                             title={isHero ? 'Primary image' : 'Set as primary'}
                           >
-                            <ImageWithFallback src={displayUrl(img.thumbnailUrl || img.url)} alt={img.label || ''} className="w-full h-full object-cover" fallback={<div className="w-full h-full flex items-center justify-center bg-cream/5"><span className="text-xs opacity-30">🖼️</span></div>} />
+                            <ImageWithFallback src={displayUrl(img.thumbnailUrl || img.url)} alt={img.label || ''} className="w-full h-full object-cover" fallback={<div className="w-full h-full flex items-center justify-center bg-stone-200"><span className="text-xs opacity-30">🖼️</span></div>} />
                             {isHero && (
                               <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-sandstone rounded-full flex items-center justify-center">
                                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="text-basalt">
@@ -809,14 +809,14 @@ export function IdeaCardModal({
                   >
                     <div className="flex flex-col items-center justify-center gap-2 py-10">
                       {uploading ? (
-                        <div className="w-8 h-8 border-2 border-cream/20 border-t-cream/60 rounded-full animate-spin" />
+                        <div className="w-8 h-8 border-2 border-cream/20 border-t-cream/70 rounded-full animate-spin" />
                       ) : (
-                        <svg className="w-8 h-8 text-cream/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <svg className="w-8 h-8 text-cream/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                           <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
                           <circle cx="12" cy="13" r="4" />
                         </svg>
                       )}
-                      <span className="text-sm text-cream/30">
+                      <span className="text-sm text-cream/45">
                         {uploading ? 'Uploading...' : 'Tap to add a photo'}
                       </span>
                     </div>
@@ -829,13 +829,13 @@ export function IdeaCardModal({
                       onChange={(e) => setPhotoUrlInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') handlePhotoUrl() }}
                       placeholder="Or paste a photo URL..."
-                      className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
+                      className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/40 focus:outline-none focus:border-sandstone/40"
                     />
                     <button
                       type="button"
                       onClick={handlePhotoUrl}
                       disabled={!photoUrlInput.trim() || !isValidUrl(photoUrlInput)}
-                      className="px-3 py-2 bg-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/20 transition-colors disabled:opacity-30"
+                      className="px-3 py-2 bg-cream/10 text-cream/70 text-sm rounded-lg hover:bg-cream/35 transition-colors disabled:opacity-30"
                     >
                       Use
                     </button>
@@ -850,7 +850,7 @@ export function IdeaCardModal({
           {/* ── Price ── */}
           {(!readOnly || option.price) && (
             <div>
-              <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-1 block">Price</label>
+              <label className="text-[11px] text-cream/45 uppercase tracking-wider mb-1 block">Price</label>
               {readOnly ? (
                 <p className="text-sm text-cream">{displayPrice(option.price)}</p>
               ) : (
@@ -858,7 +858,7 @@ export function IdeaCardModal({
                   value={option.price || ''}
                   onChange={(e) => onUpdate({ price: e.target.value })}
                   placeholder="e.g. $1,200"
-                  className="w-full bg-basalt border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/50"
+                  className="w-full bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/40 focus:outline-none focus:border-sandstone/50"
                 />
               )}
             </div>
@@ -905,39 +905,39 @@ export function IdeaCardModal({
                         <button
                           type="button"
                           onClick={() => { setEditingUrlId(null); setEditingUrlValue('') }}
-                          className="px-2 py-2 text-cream/40 hover:text-cream/70 text-sm transition-colors"
+                          className="px-2 py-2 text-cream/55 hover:text-cream/80 text-sm transition-colors"
                         >
                           ✕
                         </button>
                       </div>
                     ) : (
                       /* Display mode */
-                      <div className="bg-basalt rounded-xl overflow-hidden border border-cream/8">
+                      <div className="bg-basalt rounded-xl overflow-hidden border border-cream/12">
                         {/* Preview image */}
                         {u.linkImage && (
                           <ImageWithFallback
                             src={`/api/image-proxy?url=${encodeURIComponent(u.linkImage)}`}
                             alt=""
                             className="w-full h-28 object-cover"
-                            fallback={<div className="w-full h-28 bg-cream/5" />}
+                            fallback={<div className="w-full h-28 bg-stone-200" />}
                           />
                         )}
                         <div className="px-3 py-2.5 flex items-start gap-2">
                           <div className="flex-1 min-w-0">
                             {u.linkTitle ? (
                               <>
-                                <p className="text-sm font-medium text-cream/80 leading-snug line-clamp-1">
+                                <p className="text-sm font-medium text-cream/90 leading-snug line-clamp-1">
                                   {u.linkTitle}
                                 </p>
                                 {u.linkDescription && (
-                                  <p className="text-xs text-cream/40 line-clamp-1 mt-0.5">
+                                  <p className="text-xs text-cream/55 line-clamp-1 mt-0.5">
                                     {u.linkDescription}
                                   </p>
                                 )}
-                                <p className="text-[11px] text-cream/30 mt-1">{linkHostname(u.url)}</p>
+                                <p className="text-[11px] text-cream/45 mt-1">{linkHostname(u.url)}</p>
                               </>
                             ) : (
-                              <p className="text-sm text-cream/60 font-mono truncate">{u.url}</p>
+                              <p className="text-sm text-cream/70 font-mono truncate">{u.url}</p>
                             )}
                           </div>
                           {/* Actions */}
@@ -947,7 +947,7 @@ export function IdeaCardModal({
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="p-1.5 text-cream/40 hover:text-sandstone transition-colors"
+                              className="p-1.5 text-cream/55 hover:text-sandstone transition-colors"
                               title="Open link"
                             >
                               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -961,7 +961,7 @@ export function IdeaCardModal({
                                 <button
                                   type="button"
                                   onClick={() => { setEditingUrlId(u.id); setEditingUrlValue(u.url) }}
-                                  className="p-1.5 text-cream/40 hover:text-cream/70 transition-colors"
+                                  className="p-1.5 text-cream/55 hover:text-cream/80 transition-colors"
                                   title="Edit URL"
                                 >
                                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -972,7 +972,7 @@ export function IdeaCardModal({
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveUrl(u.id)}
-                                  className="p-1.5 text-cream/30 hover:text-red-400 transition-colors"
+                                  className="p-1.5 text-cream/45 hover:text-red-400 transition-colors"
                                   title="Remove"
                                 >
                                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -999,13 +999,13 @@ export function IdeaCardModal({
                   onChange={(e) => setNewUrl(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleAddUrl() }}
                   placeholder="https://..."
-                  className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                  className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
                 />
                 <button
                   type="button"
                   onClick={handleAddUrl}
                   disabled={!newUrl.trim() || !isValidUrl(newUrl)}
-                  className="px-3 py-2 bg-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/20 transition-colors disabled:opacity-30"
+                  className="px-3 py-2 bg-cream/10 text-cream/70 text-sm rounded-lg hover:bg-cream/35 transition-colors disabled:opacity-30"
                 >
                   Add
                 </button>
@@ -1028,12 +1028,12 @@ export function IdeaCardModal({
                 onChange={(e) => handleDocumentFile(e.target.files?.[0] ?? null)}
               />
 
-              <label className="text-[11px] text-cream/30 uppercase tracking-wider mb-2 block">Files</label>
+              <label className="text-[11px] text-cream/45 uppercase tracking-wider mb-2 block">Files</label>
 
               {(option.documents ?? []).length > 0 && (
                 <div className="space-y-2 mb-2">
                   {(option.documents ?? []).map((doc) => (
-                    <div key={doc.id} className="bg-basalt rounded-xl border border-cream/8 px-3 py-2.5">
+                    <div key={doc.id} className="bg-basalt rounded-xl border border-cream/12 px-3 py-2.5">
                       {editingDocId === doc.id ? (
                         <div className="flex gap-2">
                           <input
@@ -1063,8 +1063,8 @@ export function IdeaCardModal({
                           </span>
 
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-cream/80 leading-snug truncate">{doc.title}</p>
-                            <p className="text-[11px] text-cream/30 mt-0.5">
+                            <p className="text-sm text-cream/90 leading-snug truncate">{doc.title}</p>
+                            <p className="text-[11px] text-cream/45 mt-0.5">
                               {formatFileSize(doc.fileSize)} · {doc.uploadedByName} · {formatDate(doc.uploadedAt)}
                             </p>
                           </div>
@@ -1075,7 +1075,7 @@ export function IdeaCardModal({
                               href={doc.url}
                               download={doc.fileName}
                               onClick={(e) => e.stopPropagation()}
-                              className="p-1.5 text-cream/40 hover:text-sandstone transition-colors"
+                              className="p-1.5 text-cream/55 hover:text-sandstone transition-colors"
                               title="Download"
                             >
                               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1089,7 +1089,7 @@ export function IdeaCardModal({
                                 <button
                                   type="button"
                                   onClick={() => { setEditingDocId(doc.id); setEditingDocTitle(doc.title) }}
-                                  className="p-1.5 text-cream/40 hover:text-cream/70 transition-colors"
+                                  className="p-1.5 text-cream/55 hover:text-cream/80 transition-colors"
                                   title="Rename"
                                 >
                                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1100,7 +1100,7 @@ export function IdeaCardModal({
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveDocument(doc.id)}
-                                  className="p-1.5 text-cream/30 hover:text-red-400 transition-colors"
+                                  className="p-1.5 text-cream/45 hover:text-red-400 transition-colors"
                                   title="Remove"
                                 >
                                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1122,11 +1122,11 @@ export function IdeaCardModal({
                   type="button"
                   onClick={() => docInputRef.current?.click()}
                   disabled={docUploading}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-cream/5 hover:bg-cream/10 rounded-lg text-sm text-cream/40 hover:text-cream/60 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-stone-200 hover:bg-cream/10 rounded-lg text-sm text-cream/55 hover:text-cream/70 transition-colors disabled:opacity-50"
                 >
                   {docUploading ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-cream/20 border-t-cream/60 rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-cream/20 border-t-cream/70 rounded-full animate-spin" />
                       Uploading...
                     </>
                   ) : (
@@ -1146,7 +1146,7 @@ export function IdeaCardModal({
 
           {/* ── Footer: Delete + Save (left column) ── */}
           {!readOnly && (
-            <div className="pt-1 border-t border-cream/10 flex items-center justify-between">
+            <div className="pt-1 border-t border-cream/15 flex items-center justify-between">
               <button
                 type="button"
                 onClick={handleDelete}
@@ -1165,11 +1165,11 @@ export function IdeaCardModal({
           )}
 
           {readOnly && (
-            <div className="pt-1 border-t border-cream/10 flex justify-end">
+            <div className="pt-1 border-t border-cream/15 flex justify-end">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 bg-cream/10 text-cream/60 text-sm rounded-lg hover:bg-cream/20 transition-colors"
+                className="px-4 py-2 bg-cream/10 text-cream/70 text-sm rounded-lg hover:bg-cream/35 transition-colors"
               >
                 Done
               </button>
@@ -1178,17 +1178,17 @@ export function IdeaCardModal({
         </div>
 
         {/* ── Right column: Comments ── */}
-        <div className={`sm:border-l sm:border-cream/10 flex flex-col ${mobileTab !== 'comments' ? 'hidden sm:flex' : 'flex'}`}>
+        <div className={`sm:border-l sm:border-cream/15 flex flex-col ${mobileTab !== 'comments' ? 'hidden sm:flex' : 'flex'}`}>
           <div className="flex-1 overflow-y-auto px-4 py-4 sm:max-h-[calc(90vh-140px)]">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-4 h-4 text-cream/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span className="text-xs text-cream/50 font-medium">
+                <span className="text-xs text-cream/65 font-medium">
                   Option comments
                   {ideaComments.length > 0 && (
-                    <span className="ml-1 text-cream/35 font-normal">({ideaComments.length})</span>
+                    <span className="ml-1 text-cream/50 font-normal">({ideaComments.length})</span>
                   )}
                 </span>
               </div>
@@ -1206,15 +1206,15 @@ export function IdeaCardModal({
             {ideaComments.length > 0 && (
               <div className="space-y-2.5 mb-3">
                 {[...ideaComments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((c) => (
-                  <div key={c.id} className="group border border-cream/8 rounded-lg p-2.5 bg-cream/[0.03]">
+                  <div key={c.id} className="group border border-cream/12 rounded-lg p-2.5 bg-stone-50">
                     <div className="flex items-center gap-2 mb-1">
                       <div className="w-5 h-5 rounded-full bg-sandstone/20 text-sandstone text-[10px] font-bold flex items-center justify-center shrink-0">
                         {c.authorName.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-xs font-medium text-cream/70">{c.authorName}</span>
-                      <span className="text-[10px] text-cream/30">{relativeTime(c.createdAt)}</span>
+                      <span className="text-xs font-medium text-cream/80">{c.authorName}</span>
+                      <span className="text-[10px] text-cream/45">{relativeTime(c.createdAt)}</span>
                       {c.edited && (
-                        <span className="text-[10px] text-cream/25 italic">(edited)</span>
+                        <span className="text-[10px] text-cream/40 italic">(edited)</span>
                       )}
                       <span className="ml-auto flex items-center gap-1">
                         {onEditComment && currentUserId && c.authorUserId === currentUserId && (
@@ -1237,20 +1237,20 @@ export function IdeaCardModal({
                         )}
                       </span>
                     </div>
-                    <p className="text-sm text-cream/70 whitespace-pre-wrap pl-7">{c.text}</p>
+                    <p className="text-sm text-cream/80 whitespace-pre-wrap pl-7">{c.text}</p>
                   </div>
                 ))}
               </div>
             )}
 
             {ideaComments.length === 0 && (
-              <p className="text-xs text-cream/30 mb-3">No comments on this option yet.</p>
+              <p className="text-xs text-cream/45 mb-3">No comments on this option yet.</p>
             )}
           </div>
 
           {/* Sticky comment input */}
           {!readOnly && (
-            <div className="sticky bottom-0 bg-basalt-50 border-t border-cream/10 px-4 py-3">
+            <div className="sticky bottom-0 bg-stone border-t border-cream/15 px-4 py-3">
               <div className="flex gap-2">
                 <textarea
                   rows={1}
@@ -1264,7 +1264,7 @@ export function IdeaCardModal({
                   }}
                   placeholder="Add a comment..."
                   maxLength={400}
-                  className="flex-1 bg-basalt border border-cream/12 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/40 resize-none"
+                  className="flex-1 bg-basalt border border-cream/12 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/40 resize-none"
                 />
                 <button
                   type="button"
@@ -1276,7 +1276,7 @@ export function IdeaCardModal({
                 </button>
               </div>
               {inlineCommentText.length > 0 && (
-                <p className={`text-[10px] mt-1 text-right ${inlineCommentText.length >= 400 ? 'text-red-400' : 'text-cream/25'}`}>
+                <p className={`text-[10px] mt-1 text-right ${inlineCommentText.length >= 400 ? 'text-red-400' : 'text-cream/40'}`}>
                   {inlineCommentText.length}/400
                 </p>
               )}
@@ -1341,7 +1341,7 @@ function ModalCommentEditButton({
         <button
           type="button"
           onClick={() => { setEditing(false); setDraft(comment.text) }}
-          className="text-[10px] text-cream/30 hover:text-cream/50"
+          className="text-[10px] text-cream/45 hover:text-cream/65"
         >
           ×
         </button>
@@ -1353,7 +1353,7 @@ function ModalCommentEditButton({
     <button
       type="button"
       onClick={(e) => { e.stopPropagation(); setDraft(comment.text); setEditing(true) }}
-      className="text-cream/10 hover:text-cream/50 opacity-0 group-hover:opacity-100 transition-all"
+      className="text-cream/10 hover:text-cream/65 opacity-0 group-hover:opacity-100 transition-all"
       title="Edit"
     >
       <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

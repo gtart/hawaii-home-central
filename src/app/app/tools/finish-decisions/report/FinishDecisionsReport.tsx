@@ -210,12 +210,12 @@ function ReportInner({ requiredProjectId, collectionIdOverride }: { requiredProj
         <div className="no-print bg-basalt text-cream px-6 py-3 flex items-center justify-between">
           <a
             href="/app/tools/finish-decisions"
-            className="text-sm text-cream/60 hover:text-cream transition-colors"
+            className="text-sm text-cream/70 hover:text-cream transition-colors"
           >
             &larr; Back to Selections
           </a>
           <div className="flex items-center gap-4">
-            <span className="text-xs text-cream/40">
+            <span className="text-xs text-cream/55">
               Tip: Disable &ldquo;Headers and footers&rdquo; in print dialog to remove the URL
             </span>
             <button

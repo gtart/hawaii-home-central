@@ -419,8 +419,8 @@ export function DecisionTrackerPage({
 
       {/* Empty state for read-only */}
       {!hasDecisions && readOnly && (
-        <div className="bg-basalt-50 rounded-card p-8 text-center">
-          <p className="text-cream/50">This list doesn&apos;t have any selections yet.</p>
+        <div className="bg-stone rounded-card p-8 text-center">
+          <p className="text-cream/65">This list doesn&apos;t have any selections yet.</p>
         </div>
       )}
 
@@ -438,7 +438,7 @@ export function DecisionTrackerPage({
             </div>
             {/* Search match count */}
             {searchQuery.trim() && (
-              <span className="hidden md:inline text-[11px] text-cream/50 shrink-0">
+              <span className="hidden md:inline text-[11px] text-cream/65 shrink-0">
                 {filteredDecisions.length} match{filteredDecisions.length !== 1 ? 'es' : ''}
               </span>
             )}
@@ -449,7 +449,7 @@ export function DecisionTrackerPage({
               className={`hidden md:inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium rounded-lg border transition-colors shrink-0 ${
                 filtersExpanded || activeFilterCount > 0
                   ? 'bg-sandstone/10 text-sandstone border-sandstone/30'
-                  : 'bg-cream/5 text-cream/50 hover:text-cream/70 border-cream/10'
+                  : 'bg-stone-200 text-cream/65 hover:text-cream/80 border-cream/15'
               }`}
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -480,7 +480,7 @@ export function DecisionTrackerPage({
               <button
                 type="button"
                 onClick={() => setViewMenuOpen(!viewMenuOpen)}
-                className="inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium rounded-lg border bg-cream/5 text-cream/50 hover:text-cream/70 border-cream/10 transition-colors"
+                className="inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium rounded-lg border bg-stone-200 text-cream/65 hover:text-cream/80 border-cream/15 transition-colors"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="4" y1="21" x2="4" y2="14" strokeLinecap="round" />
@@ -498,16 +498,16 @@ export function DecisionTrackerPage({
               {viewMenuOpen && (
                 <>
                   <div className="fixed inset-0 z-30" onClick={() => setViewMenuOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-40 w-52 bg-basalt-50 border border-cream/15 rounded-xl shadow-lg p-3 space-y-3">
+                  <div className="absolute right-0 top-full mt-1 z-40 w-52 bg-stone border border-cream/15 rounded-xl shadow-lg p-3 space-y-3">
                     <div>
-                      <span className="text-[10px] uppercase tracking-wider text-cream/40 font-medium">Sort by</span>
+                      <span className="text-[10px] uppercase tracking-wider text-cream/55 font-medium">Sort by</span>
                       <div className="mt-1.5 space-y-0.5">
                         {SORT_OPTIONS.map((opt) => (
                           <button
                             key={opt.key}
                             onClick={() => { setSortKey(opt.key); setViewMenuOpen(false) }}
                             className={`w-full text-left px-2 py-1 text-xs rounded transition-colors ${
-                              sortKey === opt.key ? 'bg-sandstone/15 text-sandstone font-medium' : 'text-cream/60 hover:text-cream/80 hover:bg-cream/5'
+                              sortKey === opt.key ? 'bg-sandstone/15 text-sandstone font-medium' : 'text-cream/70 hover:text-cream/90 hover:bg-stone-hover'
                             }`}
                           >
                             {opt.label}
@@ -515,8 +515,8 @@ export function DecisionTrackerPage({
                         ))}
                       </div>
                     </div>
-                    <div className="border-t border-cream/10 pt-2">
-                      <span className="text-[10px] uppercase tracking-wider text-cream/40 font-medium">Group by</span>
+                    <div className="border-t border-cream/15 pt-2">
+                      <span className="text-[10px] uppercase tracking-wider text-cream/55 font-medium">Group by</span>
                       <div className="mt-1.5 space-y-0.5">
                         {[
                           { key: 'none', label: 'None' },
@@ -529,7 +529,7 @@ export function DecisionTrackerPage({
                             key={opt.key}
                             onClick={() => { setGroupBy(opt.key as typeof groupBy); setViewMenuOpen(false) }}
                             className={`w-full text-left px-2 py-1 text-xs rounded transition-colors ${
-                              groupBy === opt.key ? 'bg-sandstone/15 text-sandstone font-medium' : 'text-cream/60 hover:text-cream/80 hover:bg-cream/5'
+                              groupBy === opt.key ? 'bg-sandstone/15 text-sandstone font-medium' : 'text-cream/70 hover:text-cream/90 hover:bg-stone-hover'
                             }`}
                           >
                             {opt.label}
@@ -559,7 +559,7 @@ export function DecisionTrackerPage({
                   if (!addInputValue.trim()) { setAddInputVisible(false) }
                 }}
                 placeholder="e.g. Countertop, Faucet, Cabinet color"
-                className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
               />
               <button
                 type="button"
@@ -574,10 +574,10 @@ export function DecisionTrackerPage({
 
           {/* Summary strip */}
           {selections.length > 0 && (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-cream/50 mb-3">
-              {isFiltering && <span className="text-cream/30 italic">Filtered:</span>}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-cream/65 mb-3">
+              {isFiltering && <span className="text-cream/45 italic">Filtered:</span>}
               {summaryStats.deciding + summaryStats.selected + summaryStats.ordered > 0 && (
-                <span className="text-cream/70 font-medium">
+                <span className="text-cream/80 font-medium">
                   {summaryStats.deciding + summaryStats.selected + summaryStats.ordered} Selections Needed
                 </span>
               )}
@@ -604,7 +604,7 @@ export function DecisionTrackerPage({
           <div className="flex md:hidden items-center gap-2 mb-4">
             <button
               onClick={() => setFilterSheetOpen(true)}
-              className="relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 rounded-lg text-xs text-cream/70 hover:text-cream transition-colors"
+              className="relative inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 rounded-lg text-xs text-cream/80 hover:text-cream transition-colors"
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
@@ -618,7 +618,7 @@ export function DecisionTrackerPage({
             </button>
             <div className="flex-1" />
             {isFiltering && (
-              <span className="text-[11px] text-cream/50">
+              <span className="text-[11px] text-cream/65">
                 {filteredDecisions.length}/{selections.length}
               </span>
             )}
@@ -628,7 +628,7 @@ export function DecisionTrackerPage({
           {(filtersExpanded || activeFilterCount > 0) && (
             <>
               <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
-                <span className="text-[11px] text-cream/30 mr-1">Status</span>
+                <span className="text-[11px] text-cream/45 mr-1">Status</span>
                 {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, (typeof STATUS_CONFIG_V3)[StatusV3]][]).map(
                   ([status, config]) => {
                     const isActive = statusFilters.includes(status)
@@ -642,7 +642,7 @@ export function DecisionTrackerPage({
                         className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                           isActive
                             ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
-                            : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                            : 'bg-cream/10 text-cream/70 hover:text-cream/90'
                         }`}
                       >
                         {config.label}
@@ -652,7 +652,7 @@ export function DecisionTrackerPage({
                   }
                 )}
                 {isFiltering && (
-                  <span className="text-[11px] text-cream/50 ml-auto">
+                  <span className="text-[11px] text-cream/65 ml-auto">
                     {filteredDecisions.length}/{selections.length}
                   </span>
                 )}
@@ -661,7 +661,7 @@ export function DecisionTrackerPage({
               {/* Desktop tag filter row */}
               {allTags.length > 0 && (
                 <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
-                  <span className="text-[11px] text-cream/30 mr-1">Labels</span>
+                  <span className="text-[11px] text-cream/45 mr-1">Labels</span>
                   {allTags.map((tag) => {
                     const isActive = tagFilters.includes(tag)
                     return (
@@ -671,7 +671,7 @@ export function DecisionTrackerPage({
                         className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                           isActive
                             ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
-                            : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                            : 'bg-cream/10 text-cream/70 hover:text-cream/90'
                         }`}
                       >
                         {tag}
@@ -682,7 +682,7 @@ export function DecisionTrackerPage({
                   {tagFilters.length > 0 && (
                     <button
                       onClick={() => setTagFilters([])}
-                      className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors ml-1"
+                      className="text-[11px] text-cream/45 hover:text-cream/65 transition-colors ml-1"
                     >
                       Clear labels
                     </button>
@@ -693,7 +693,7 @@ export function DecisionTrackerPage({
               {/* Desktop location filter row */}
               {usedLocations.length > 0 && (
                 <div className="hidden md:flex flex-wrap items-center gap-1.5 mb-4">
-                  <span className="inline-flex items-center gap-1 text-[11px] text-cream/30 mr-1">
+                  <span className="inline-flex items-center gap-1 text-[11px] text-cream/45 mr-1">
                     <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
                       <circle cx="12" cy="10" r="3" />
@@ -709,7 +709,7 @@ export function DecisionTrackerPage({
                         className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                           isActive
                             ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
-                            : 'bg-cream/10 text-cream/60 hover:text-cream/80'
+                            : 'bg-cream/10 text-cream/70 hover:text-cream/90'
                         }`}
                       >
                         {loc}
@@ -720,7 +720,7 @@ export function DecisionTrackerPage({
                   {locationFilters.length > 0 && (
                     <button
                       onClick={() => setLocationFilters([])}
-                      className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors ml-1"
+                      className="text-[11px] text-cream/45 hover:text-cream/65 transition-colors ml-1"
                     >
                       Clear locations
                     </button>
@@ -732,8 +732,8 @@ export function DecisionTrackerPage({
 
           {/* Decision list */}
           {sortedDecisions.length === 0 ? (
-            <div className="bg-basalt-50 rounded-card p-8 text-center">
-              <p className="text-cream/50">
+            <div className="bg-stone rounded-card p-8 text-center">
+              <p className="text-cream/65">
                 No selections match your {searchQuery ? 'search' : 'filters'}.
               </p>
               <button
@@ -753,7 +753,7 @@ export function DecisionTrackerPage({
               {/* ── Desktop: table layout ── */}
               <table className="hidden md:table w-full border-collapse">
                 <thead>
-                  <tr className="text-[11px] text-cream/40 uppercase tracking-wider">
+                  <tr className="text-[11px] text-cream/55 uppercase tracking-wider">
                     {!readOnly && (
                       <th className="w-10 pb-2 pl-2 text-left">
                         <input
@@ -788,9 +788,9 @@ export function DecisionTrackerPage({
                         {groupedSections && (
                           <tr>
                             <td colSpan={100} className="pt-4 pb-1">
-                              <div className="flex items-center gap-2 border-b border-cream/10 pb-1">
-                                <span className="text-xs font-medium text-cream/60">{groupLabel}</span>
-                                <span className="text-[10px] text-cream/30">{items.length}</span>
+                              <div className="flex items-center gap-2 border-b border-cream/15 pb-1">
+                                <span className="text-xs font-medium text-cream/70">{groupLabel}</span>
+                                <span className="text-[10px] text-cream/45">{items.length}</span>
                               </div>
                             </td>
                           </tr>
@@ -801,7 +801,7 @@ export function DecisionTrackerPage({
                     const selectedOption = decision.options.find((o) => o.isSelected)
 
                     return (
-                      <tr key={decision.id} className="group border-t border-cream/5 first:border-t-0 hover:bg-cream/[0.02] transition-colors">
+                      <tr key={decision.id} className="group border-t border-cream/10 first:border-t-0 hover:bg-stone-50 transition-colors">
                         {!readOnly && (
                           <td className="w-10 py-2.5 pl-2">
                             <input
@@ -817,8 +817,8 @@ export function DecisionTrackerPage({
                             {thumbUrl ? (
                               <img src={thumbUrl} alt="" className="w-9 h-9 rounded object-cover" loading="lazy" />
                             ) : (
-                              <div className="w-9 h-9 rounded bg-cream/5 flex items-center justify-center">
-                                <svg className="w-4 h-4 text-cream/15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <div className="w-9 h-9 rounded bg-stone-200 flex items-center justify-center">
+                                <svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                                   <rect x="3" y="3" width="18" height="18" rx="2" />
                                   <circle cx="8.5" cy="8.5" r="1.5" />
                                   <path d="M21 15l-5-5L5 21" />
@@ -831,13 +831,13 @@ export function DecisionTrackerPage({
                           <Link href={buildDecisionHref({ decisionId: decision.id, collectionId })} className="block">
                             <span className="text-sm font-medium text-cream group-hover:text-sandstone transition-colors">{decision.title}</span>
                             {decision.options.length > 0 && (
-                              <span className="text-[11px] text-cream/30 ml-2">{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
+                              <span className="text-[11px] text-cream/45 ml-2">{decision.options.length} option{decision.options.length !== 1 ? 's' : ''}</span>
                             )}
                             {commentCounts && (commentCounts.get(decision.id) || 0) > 0 && (() => {
                               const count = commentCounts.get(decision.id) || 0
                               const unread = selectionVisited?.hasUnread(decision.id, commentLatestAt?.get(decision.id))
                               return (
-                                <span className={`relative inline-flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded-full text-[11px] ${unread ? 'bg-sandstone/15 text-sandstone' : 'bg-cream/8 text-cream/50'}`}>
+                                <span className={`relative inline-flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded-full text-[11px] ${unread ? 'bg-sandstone/15 text-sandstone' : 'bg-cream/8 text-cream/65'}`}>
                                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
                                   </svg>
@@ -849,24 +849,24 @@ export function DecisionTrackerPage({
                             {decision.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-0.5">
                                 {decision.tags.slice(0, 3).map((tag) => (
-                                  <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-cream/8 text-cream/35">{tag}</span>
+                                  <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-cream/8 text-cream/50">{tag}</span>
                                 ))}
-                                {decision.tags.length > 3 && <span className="text-[9px] text-cream/25">+{decision.tags.length - 3}</span>}
+                                {decision.tags.length > 3 && <span className="text-[9px] text-cream/40">+{decision.tags.length - 3}</span>}
                               </div>
                             )}
                           </Link>
                         </td>
                         <td className="py-2.5 pr-3 text-[11px] max-w-[120px]">
                           {decision.location ? (
-                            <span className="inline-flex items-center gap-1 text-cream/50">
-                              <svg className="w-3 h-3 text-cream/25 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <span className="inline-flex items-center gap-1 text-cream/65">
+                              <svg className="w-3 h-3 text-cream/40 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
                                 <circle cx="12" cy="10" r="3" />
                               </svg>
                               <span className="truncate">{decision.location}</span>
                             </span>
                           ) : (
-                            <span className="text-cream/15 italic">Set location</span>
+                            <span className="text-cream/30 italic">Set location</span>
                           )}
                         </td>
                         <td className="py-2.5 pr-3">
@@ -880,22 +880,22 @@ export function DecisionTrackerPage({
                               {SELECTION_PRIORITY_CONFIG[decision.priority].label}
                             </span>
                           ) : (
-                            <span className="text-[11px] text-cream/20">—</span>
+                            <span className="text-[11px] text-cream/35">—</span>
                           )}
                         </td>
-                        <td className="py-2.5 pr-3 text-[11px] text-cream/40 max-w-[200px]">
+                        <td className="py-2.5 pr-3 text-[11px] text-cream/55 max-w-[200px]">
                           {selectedOption?.notes ? (
                             <span className="line-clamp-2 whitespace-pre-wrap">{selectedOption.notes}</span>
                           ) : (
-                            <span className="text-cream/20">—</span>
+                            <span className="text-cream/35">—</span>
                           )}
                         </td>
-                        <td className="py-2.5 pr-3 text-[11px] text-cream/40">
+                        <td className="py-2.5 pr-3 text-[11px] text-cream/55">
                           {relativeTime(decision.updatedAt)}
                         </td>
                         <td className="py-2.5 pr-2">
                           <Link href={buildDecisionHref({ decisionId: decision.id, collectionId })}>
-                            <svg className="w-4 h-4 text-cream/15 group-hover:text-cream/40 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <svg className="w-4 h-4 text-cream/30 group-hover:text-cream/55 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           </Link>
@@ -916,9 +916,9 @@ export function DecisionTrackerPage({
                   return (
                     <React.Fragment key={groupLabel || '__ungrouped_mobile'}>
                       {groupedSections && (
-                        <div className="flex items-center gap-2 pt-3 pb-1 border-b border-cream/10 mb-1.5">
-                          <span className="text-xs font-medium text-cream/60">{groupLabel}</span>
-                          <span className="text-[10px] text-cream/30">{mobileItems.length}</span>
+                        <div className="flex items-center gap-2 pt-3 pb-1 border-b border-cream/15 mb-1.5">
+                          <span className="text-xs font-medium text-cream/70">{groupLabel}</span>
+                          <span className="text-[10px] text-cream/45">{mobileItems.length}</span>
                         </div>
                       )}
                 {mobileItems.map((decision) => {
@@ -929,7 +929,7 @@ export function DecisionTrackerPage({
                   const isOverdue = decision.dueDate && decision.dueDate < today && decision.status !== 'done'
 
                   return (
-                    <div key={decision.id} className="bg-basalt-50 rounded-lg border border-cream/10 hover:border-sandstone/30 transition-colors">
+                    <div key={decision.id} className="bg-stone rounded-lg border border-cream/15 hover:border-sandstone/30 transition-colors">
                       <div className="flex items-center gap-0">
                         {!readOnly && (
                           <div className="pl-3 py-3 shrink-0">
@@ -948,8 +948,8 @@ export function DecisionTrackerPage({
                         {thumbUrl ? (
                           <img src={thumbUrl} alt="" className="w-10 h-10 rounded object-cover shrink-0" loading="lazy" />
                         ) : (
-                          <div className="w-10 h-10 rounded bg-cream/5 shrink-0 flex items-center justify-center">
-                            <svg className="w-4 h-4 text-cream/15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <div className="w-10 h-10 rounded bg-stone-200 shrink-0 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                               <rect x="3" y="3" width="18" height="18" rx="2" />
                               <circle cx="8.5" cy="8.5" r="1.5" />
                               <path d="M21 15l-5-5L5 21" />
@@ -969,7 +969,7 @@ export function DecisionTrackerPage({
                               {selectedOption.price ? ` · ${selectedOption.price}` : ''}
                             </p>
                           )}
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-cream/40 mt-0.5">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-cream/55 mt-0.5">
                             {decision.priority && (
                               <span className={`text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded ${SELECTION_PRIORITY_CONFIG[decision.priority].className}`}>
                                 {SELECTION_PRIORITY_CONFIG[decision.priority].label}
@@ -989,7 +989,7 @@ export function DecisionTrackerPage({
                               const count = commentCounts.get(decision.id) || 0
                               const unread = selectionVisited?.hasUnread(decision.id, commentLatestAt?.get(decision.id))
                               return (
-                                <span className={`relative inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] ${unread ? 'bg-sandstone/15 text-sandstone' : 'bg-cream/8 text-cream/50'}`}>
+                                <span className={`relative inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] ${unread ? 'bg-sandstone/15 text-sandstone' : 'bg-cream/8 text-cream/65'}`}>
                                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
                                   </svg>
@@ -1000,7 +1000,7 @@ export function DecisionTrackerPage({
                             })()}
                           </div>
                         </div>
-                        <svg className="w-4 h-4 text-cream/20 group-hover:text-cream/40 transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg className="w-4 h-4 text-cream/35 group-hover:text-cream/55 transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </Link>
@@ -1022,11 +1022,11 @@ export function DecisionTrackerPage({
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && !readOnly && (
         <div
-          className="fixed left-0 right-0 z-40 bg-basalt-50 border-t border-cream/15 shadow-2xl px-4 py-3"
+          className="fixed left-0 right-0 z-40 bg-stone border-t border-cream/15 shadow-2xl px-4 py-3"
           style={{ bottom: 'calc(var(--bottom-nav-offset, 0rem))' }}
         >
           <div className="max-w-4xl mx-auto flex items-center gap-3 flex-wrap">
-            <span className="text-sm text-cream/70 font-medium shrink-0">
+            <span className="text-sm text-cream/80 font-medium shrink-0">
               {selectedIds.size} selected
             </span>
 
@@ -1036,7 +1036,7 @@ export function DecisionTrackerPage({
                 <button
                   type="button"
                   onClick={() => setBulkMenuOpen(bulkMenuOpen === 'status' ? null : 'status')}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/70 hover:bg-cream/12 hover:text-cream transition-colors"
                 >
                   Status
                 </button>
@@ -1058,7 +1058,7 @@ export function DecisionTrackerPage({
                               onUpdateSelections(updated)
                               deselectAll()
                             }}
-                            className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                            className="w-full text-left px-3 py-2 text-xs text-cream/80 hover:bg-stone-hover transition-colors"
                           >
                             {cfg.label}
                           </button>
@@ -1074,7 +1074,7 @@ export function DecisionTrackerPage({
                 <button
                   type="button"
                   onClick={() => setBulkMenuOpen(bulkMenuOpen === 'location' ? null : 'location')}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/70 hover:bg-cream/12 hover:text-cream transition-colors"
                 >
                   Location
                 </button>
@@ -1082,11 +1082,11 @@ export function DecisionTrackerPage({
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
                     <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 min-w-[180px] max-h-56 overflow-y-auto">
-                      <div className="p-2 border-b border-cream/10">
+                      <div className="p-2 border-b border-cream/15">
                         <input
                           autoFocus
                           placeholder="Type location..."
-                          className="w-full bg-basalt border border-cream/20 rounded px-2 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                          className="w-full bg-basalt border border-cream/20 rounded px-2 py-1.5 text-xs text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                               const val = e.currentTarget.value.trim()
@@ -1111,7 +1111,7 @@ export function DecisionTrackerPage({
                             onUpdateSelections(updated)
                             deselectAll()
                           }}
-                          className="w-full text-left px-3 py-2 text-xs text-cream/40 italic hover:bg-cream/5 transition-colors"
+                          className="w-full text-left px-3 py-2 text-xs text-cream/55 italic hover:bg-stone-hover transition-colors"
                         >
                           Unassigned
                         </button>
@@ -1127,7 +1127,7 @@ export function DecisionTrackerPage({
                               onUpdateSelections(updated)
                               deselectAll()
                             }}
-                            className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                            className="w-full text-left px-3 py-2 text-xs text-cream/80 hover:bg-stone-hover transition-colors"
                           >
                             {loc}
                           </button>
@@ -1143,7 +1143,7 @@ export function DecisionTrackerPage({
                 <button
                   type="button"
                   onClick={() => { setBulkMenuOpen(bulkMenuOpen === 'tags' ? null : 'tags'); setBulkTagInput('') }}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/70 hover:bg-cream/12 hover:text-cream transition-colors"
                 >
                   Labels
                 </button>
@@ -1151,7 +1151,7 @@ export function DecisionTrackerPage({
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setBulkMenuOpen(null)} />
                     <div className="absolute bottom-full mb-1 left-0 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 min-w-[200px] max-h-64 flex flex-col">
-                      <div className="p-2 border-b border-cream/10">
+                      <div className="p-2 border-b border-cream/15">
                         <input
                           autoFocus
                           placeholder="Type to add label..."
@@ -1170,7 +1170,7 @@ export function DecisionTrackerPage({
                               setBulkTagInput('')
                             }
                           }}
-                          className="w-full bg-basalt border border-cream/20 rounded px-2 py-1.5 text-xs text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                          className="w-full bg-basalt border border-cream/20 rounded px-2 py-1.5 text-xs text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
                         />
                       </div>
                       <div className="py-1 overflow-y-auto">
@@ -1220,7 +1220,7 @@ export function DecisionTrackerPage({
                                         onUpdateSelections(updated)
                                       }
                                     }}
-                                    className="w-full text-left px-3 py-1.5 text-xs text-cream/70 hover:bg-cream/5 transition-colors flex items-center gap-2"
+                                    className="w-full text-left px-3 py-1.5 text-xs text-cream/80 hover:bg-stone-hover transition-colors flex items-center gap-2"
                                   >
                                     <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center text-[9px] shrink-0 ${
                                       isAll ? 'bg-sandstone/80 border-sandstone text-basalt' : isSome ? 'border-sandstone/50 bg-sandstone/20 text-sandstone' : 'border-cream/20'
@@ -1245,13 +1245,13 @@ export function DecisionTrackerPage({
                                     onUpdateSelections(updated)
                                     setBulkTagInput('')
                                   }}
-                                  className="w-full text-left px-3 py-1.5 text-xs text-cream/50 hover:bg-cream/5 transition-colors border-t border-cream/10"
+                                  className="w-full text-left px-3 py-1.5 text-xs text-cream/65 hover:bg-stone-hover transition-colors border-t border-cream/15"
                                 >
                                   Create &ldquo;{bulkTagInput.trim()}&rdquo;
                                 </button>
                               )}
                               {filtered.length === 0 && !showCreate && (
-                                <div className="px-3 py-2 text-xs text-cream/30 italic">No labels</div>
+                                <div className="px-3 py-2 text-xs text-cream/45 italic">No labels</div>
                               )}
                             </>
                           )
@@ -1267,7 +1267,7 @@ export function DecisionTrackerPage({
                 <button
                   type="button"
                   onClick={() => setBulkMenuOpen(bulkMenuOpen === 'priority' ? null : 'priority')}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/60 hover:bg-cream/12 hover:text-cream transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-lg bg-cream/8 text-cream/70 hover:bg-cream/12 hover:text-cream transition-colors"
                 >
                   Priority
                 </button>
@@ -1285,7 +1285,7 @@ export function DecisionTrackerPage({
                           onUpdateSelections(updated)
                           deselectAll()
                         }}
-                        className="w-full text-left px-3 py-2 text-xs text-cream/40 italic hover:bg-cream/5 transition-colors"
+                        className="w-full text-left px-3 py-2 text-xs text-cream/55 italic hover:bg-stone-hover transition-colors"
                       >
                         None
                       </button>
@@ -1301,7 +1301,7 @@ export function DecisionTrackerPage({
                             onUpdateSelections(updated)
                             deselectAll()
                           }}
-                          className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors"
+                          className="w-full text-left px-3 py-2 text-xs text-cream/80 hover:bg-stone-hover transition-colors"
                         >
                           <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${cfg.className}`}>{cfg.label}</span>
                         </button>
@@ -1324,7 +1324,7 @@ export function DecisionTrackerPage({
             <button
               type="button"
               onClick={deselectAll}
-              className="text-xs text-cream/30 hover:text-cream/50 transition-colors shrink-0"
+              className="text-xs text-cream/45 hover:text-cream/65 transition-colors shrink-0"
             >
               Deselect all
             </button>
@@ -1352,7 +1352,7 @@ export function DecisionTrackerPage({
 
       {/* Bulk toast */}
       {bulkToast && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-basalt-50 border border-cream/15 rounded-lg px-4 py-2.5 text-sm text-cream shadow-xl">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-stone border border-cream/15 rounded-lg px-4 py-2.5 text-sm text-cream shadow-xl">
           {bulkToast}
         </div>
       )}
@@ -1376,7 +1376,7 @@ export function DecisionTrackerPage({
       {filterSheetOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex items-end">
           <div className="absolute inset-0 bg-black/60" onClick={() => setFilterSheetOpen(false)} />
-          <div className="relative bg-basalt-50 border-t border-cream/10 rounded-t-xl w-full max-h-[70vh] overflow-y-auto">
+          <div className="relative bg-stone border-t border-cream/15 rounded-t-xl w-full max-h-[70vh] overflow-y-auto">
             <div className="flex items-center justify-between px-5 pt-4 pb-2">
               <h2 className="text-lg font-medium text-cream">Filters</h2>
               {activeFilterCount > 0 && (
@@ -1392,7 +1392,7 @@ export function DecisionTrackerPage({
             <div className="px-5 pb-5 space-y-5">
               {/* Status section */}
               <div>
-                <label className="block text-sm text-cream/70 mb-2">Status</label>
+                <label className="block text-sm text-cream/80 mb-2">Status</label>
                 <div className="flex flex-wrap gap-2">
                   {(Object.entries(STATUS_CONFIG_V3) as [StatusV3, (typeof STATUS_CONFIG_V3)[StatusV3]][]).map(
                     ([status, config]) => {
@@ -1407,7 +1407,7 @@ export function DecisionTrackerPage({
                           className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                             isActive
                               ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
-                              : 'bg-cream/10 text-cream/60'
+                              : 'bg-cream/10 text-cream/70'
                           }`}
                         >
                           {config.label}
@@ -1422,7 +1422,7 @@ export function DecisionTrackerPage({
               {/* Location */}
               {usedLocations.length > 0 && (
                 <div>
-                  <label className="block text-sm text-cream/70 mb-2">Location</label>
+                  <label className="block text-sm text-cream/80 mb-2">Location</label>
                   <div className="flex flex-wrap gap-2">
                     {usedLocations.map((loc) => {
                       const isActive = locationFilters.includes(loc)
@@ -1433,7 +1433,7 @@ export function DecisionTrackerPage({
                           className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                             isActive
                               ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
-                              : 'bg-cream/10 text-cream/60'
+                              : 'bg-cream/10 text-cream/70'
                           }`}
                         >
                           {loc}
@@ -1448,7 +1448,7 @@ export function DecisionTrackerPage({
               {/* Labels */}
               {allTags.length > 0 && (
                 <div>
-                  <label className="block text-sm text-cream/70 mb-2">Labels</label>
+                  <label className="block text-sm text-cream/80 mb-2">Labels</label>
                   <div className="flex flex-wrap gap-2">
                     {allTags.map((tag) => {
                       const isActive = tagFilters.includes(tag)
@@ -1459,7 +1459,7 @@ export function DecisionTrackerPage({
                           className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                             isActive
                               ? 'bg-sandstone/30 text-sandstone ring-1 ring-sandstone/50'
-                              : 'bg-cream/10 text-cream/60'
+                              : 'bg-cream/10 text-cream/70'
                           }`}
                         >
                           {tag}
@@ -1473,11 +1473,11 @@ export function DecisionTrackerPage({
 
               {/* Sort */}
               <div>
-                <label className="block text-sm text-cream/70 mb-2">Sort by</label>
+                <label className="block text-sm text-cream/80 mb-2">Sort by</label>
                 <select
                   value={sortKey}
                   onChange={(e) => setSortKey(e.target.value as SortKey)}
-                  className="w-full bg-basalt text-cream/60 text-sm rounded-lg border border-cream/10 px-3 py-2 focus:outline-none focus:border-sandstone/40"
+                  className="w-full bg-basalt text-cream/70 text-sm rounded-lg border border-cream/15 px-3 py-2 focus:outline-none focus:border-sandstone/40"
                 >
                   {SORT_OPTIONS.map((opt) => (
                     <option key={opt.key} value={opt.key}>{opt.label}</option>
@@ -1487,11 +1487,11 @@ export function DecisionTrackerPage({
 
               {/* Group by */}
               <div>
-                <label className="block text-sm text-cream/70 mb-2">Group by</label>
+                <label className="block text-sm text-cream/80 mb-2">Group by</label>
                 <select
                   value={groupBy}
                   onChange={(e) => setGroupBy(e.target.value as typeof groupBy)}
-                  className="w-full bg-basalt text-cream/60 text-sm rounded-lg border border-cream/10 px-3 py-2 focus:outline-none focus:border-sandstone/40"
+                  className="w-full bg-basalt text-cream/70 text-sm rounded-lg border border-cream/15 px-3 py-2 focus:outline-none focus:border-sandstone/40"
                 >
                   <option value="none">None</option>
                   <option value="location">By Location</option>
@@ -1507,7 +1507,7 @@ export function DecisionTrackerPage({
                   <button
                     type="button"
                     onClick={() => { setFilterSheetOpen(false); setIdeasModalOpen(true) }}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-cream/70 bg-cream/5 rounded-lg transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-cream/80 bg-stone-200 rounded-lg transition-colors"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                     Add an Idea Pack
@@ -1542,8 +1542,8 @@ export function DecisionTrackerPage({
 
       {/* Toast with undo */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg px-4 py-3 flex items-center gap-3 max-w-sm">
-          <span className="text-sm text-cream/70">{toast.message}</span>
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-stone border border-cream/15 rounded-lg shadow-lg px-4 py-3 flex items-center gap-3 max-w-sm">
+          <span className="text-sm text-cream/80">{toast.message}</span>
           <button
             type="button"
             onClick={handleUndoKit}
@@ -1554,7 +1554,7 @@ export function DecisionTrackerPage({
           <button
             type="button"
             onClick={() => setToast(null)}
-            className="text-cream/30 hover:text-cream/60 transition-colors"
+            className="text-cream/45 hover:text-cream/70 transition-colors"
           >
             ×
           </button>
@@ -1563,11 +1563,11 @@ export function DecisionTrackerPage({
 
       {/* Simple toast (no undo) */}
       {simpleToast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-basalt-50 border border-cream/15 rounded-lg shadow-lg px-4 py-2.5 flex items-center gap-2 max-w-xs">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-stone border border-cream/15 rounded-lg shadow-lg px-4 py-2.5 flex items-center gap-2 max-w-xs">
           <svg className="w-4 h-4 text-green-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span className="text-sm text-cream/70">{simpleToast}</span>
+          <span className="text-sm text-cream/80">{simpleToast}</span>
         </div>
       )}
     </>

@@ -126,10 +126,10 @@ export function MultiCollectionBanner({
             <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-cream/70 font-medium">
+            <p className="text-sm text-cream/80 font-medium">
               Workspace combined successfully
             </p>
-            <p className="text-xs text-cream/50 mt-1">
+            <p className="text-xs text-cream/65 mt-1">
               {mergeResult.selectionsMerged} selection{mergeResult.selectionsMerged !== 1 ? 's' : ''} merged from {mergeResult.sourcesArchived} list{mergeResult.sourcesArchived !== 1 ? 's' : ''}.
               {mergeResult.commentsReassigned > 0 && ` ${mergeResult.commentsReassigned} comment${mergeResult.commentsReassigned !== 1 ? 's' : ''} moved.`}
               {mergeResult.duplicatesFound > 0 && ` ${mergeResult.duplicatesFound} duplicate title${mergeResult.duplicatesFound !== 1 ? 's' : ''} renamed.`}
@@ -168,7 +168,7 @@ export function MultiCollectionBanner({
           </svg>
 
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-cream/70">
+            <p className="text-sm text-cream/80">
               You have{' '}
               <span className="text-cream font-medium">
                 {collectionCount} selection lists
@@ -201,15 +201,15 @@ export function MultiCollectionBanner({
             {expanded && (
               <div className="mt-2 space-y-1">
                 {loadingPreview && (
-                  <p className="text-xs text-cream/40">Loading...</p>
+                  <p className="text-xs text-cream/55">Loading...</p>
                 )}
                 {preview && preview.map((c) => (
                   <div
                     key={c.id}
                     className={`flex items-center gap-2 text-xs px-2 py-1 rounded ${
                       c.isPrimary
-                        ? 'bg-cream/5 text-cream/70'
-                        : 'text-cream/40'
+                        ? 'bg-stone-200 text-cream/80'
+                        : 'text-cream/55'
                     }`}
                   >
                     <span className="flex-1 truncate">
@@ -230,7 +230,7 @@ export function MultiCollectionBanner({
           <button
             type="button"
             onClick={handleDismiss}
-            className="text-cream/30 hover:text-cream/50 transition-colors shrink-0"
+            className="text-cream/45 hover:text-cream/65 transition-colors shrink-0"
             title="Dismiss for 30 days"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -245,35 +245,35 @@ export function MultiCollectionBanner({
       {confirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => !merging && setConfirmOpen(false)} />
-          <div className="relative bg-basalt-50 border border-cream/15 rounded-xl shadow-xl w-full max-w-md p-6">
+          <div className="relative bg-stone border border-cream/15 rounded-xl shadow-xl w-full max-w-md p-6">
             <h3 className="text-lg font-medium text-cream mb-2">
               Combine selection lists?
             </h3>
-            <p className="text-sm text-cream/50 mb-4">
+            <p className="text-sm text-cream/65 mb-4">
               This will merge all your selection lists into one workspace. Former list names will become tags on the merged selections.
             </p>
 
             {preview && (
-              <div className="bg-cream/5 rounded-lg p-3 mb-4 space-y-1.5">
+              <div className="bg-stone-200 rounded-lg p-3 mb-4 space-y-1.5">
                 {preview.map((c) => (
                   <div key={c.id} className="flex items-center justify-between text-xs">
-                    <span className={c.isPrimary ? 'text-cream/70 font-medium' : 'text-cream/50'}>
+                    <span className={c.isPrimary ? 'text-cream/80 font-medium' : 'text-cream/65'}>
                       {c.title}
                       {c.isPrimary && <span className="text-sandstone ml-1">(workspace anchor)</span>}
                     </span>
-                    <span className="text-cream/40 tabular-nums">
+                    <span className="text-cream/55 tabular-nums">
                       {c.selectionCount} selection{c.selectionCount !== 1 ? 's' : ''}
                     </span>
                   </div>
                 ))}
-                <div className="border-t border-cream/10 pt-1.5 mt-1.5 flex items-center justify-between text-xs font-medium text-cream/60">
+                <div className="border-t border-cream/15 pt-1.5 mt-1.5 flex items-center justify-between text-xs font-medium text-cream/70">
                   <span>Total after merge</span>
                   <span className="tabular-nums">{preview.reduce((sum, c) => sum + c.selectionCount, 0)} selections</span>
                 </div>
               </div>
             )}
 
-            <p className="text-xs text-cream/40 mb-4">
+            <p className="text-xs text-cream/55 mb-4">
               Comments, activity, sharing, and collaboration will all be preserved and moved to the combined workspace. Source lists will be archived (not deleted).
             </p>
 
@@ -286,7 +286,7 @@ export function MultiCollectionBanner({
                 type="button"
                 onClick={() => setConfirmOpen(false)}
                 disabled={merging}
-                className="px-4 py-2 text-sm text-cream/50 hover:text-cream/70 transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-sm text-cream/65 hover:text-cream/80 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>

@@ -111,7 +111,7 @@ function decompose(evt: { action: string; summaryText: string; entityLabel?: str
 function EntityPill({ label, className = '' }: { label: string; className?: string }) {
   return (
     <span
-      className={`inline-block bg-cream/8 text-cream/55 px-2 py-0.5 rounded-md truncate ${className}`}
+      className={`inline-block bg-stone-50 text-cream/65 px-2 py-0.5 rounded-md truncate ${className}`}
       title={label}
     >
       {label}
@@ -126,7 +126,7 @@ function FullRow({ evt }: { evt: ActivityFeedEvent }) {
 
   // Fallback: render raw summaryText if nothing structured
   if (!entityLabel && !detailText && !verb) {
-    return <span className="text-sm text-cream/60 leading-snug">{evt.summaryText}</span>
+    return <span className="text-sm text-cream/70 leading-snug">{evt.summaryText}</span>
   }
 
   // Extract comment context using metadata-first approach
@@ -139,7 +139,7 @@ function FullRow({ evt }: { evt: ActivityFeedEvent }) {
     const snippet = commentCtx.commentSnippet || detailText || ''
     const hasContent = displaySelection || commentCtx.optionTitle || snippet
     if (!hasContent) {
-      return <span className="text-sm text-cream/60 leading-snug">{evt.summaryText}</span>
+      return <span className="text-sm text-cream/70 leading-snug">{evt.summaryText}</span>
     }
     return (
       <span className="flex flex-wrap items-center gap-1 text-sm leading-snug min-w-0">
@@ -148,16 +148,16 @@ function FullRow({ evt }: { evt: ActivityFeedEvent }) {
         )}
         {commentCtx.optionTitle && (
           <>
-            <span className="text-cream/30 shrink-0">·</span>
-            <span className="text-cream/50 text-xs truncate max-w-[120px] md:max-w-[160px]" title={commentCtx.optionTitle}>
+            <span className="text-cream/45 shrink-0">·</span>
+            <span className="text-cream/65 text-xs truncate max-w-[120px] md:max-w-[160px]" title={commentCtx.optionTitle}>
               {commentCtx.optionTitle}
             </span>
           </>
         )}
         {snippet && (
           <>
-            <span className="text-cream/30 shrink-0">·</span>
-            <span className="text-cream/40 italic truncate min-w-0">
+            <span className="text-cream/45 shrink-0">·</span>
+            <span className="text-cream/55 italic truncate min-w-0">
               &ldquo;{snippet}&rdquo;
             </span>
           </>
@@ -169,7 +169,7 @@ function FullRow({ evt }: { evt: ActivityFeedEvent }) {
   return (
     <span className="flex flex-wrap items-center gap-1 text-sm leading-snug min-w-0">
       {/* Action verb */}
-      {verb && <span className="text-cream/40 shrink-0">{verb}</span>}
+      {verb && <span className="text-cream/55 shrink-0">{verb}</span>}
 
       {/* Entity pill (selection title) */}
       {entityLabel && (
@@ -178,17 +178,17 @@ function FullRow({ evt }: { evt: ActivityFeedEvent }) {
 
       {/* Status change arrow */}
       {isStatusChange && detailText && (
-        <span className="text-cream/50">→ {detailText}</span>
+        <span className="text-cream/65">→ {detailText}</span>
       )}
 
       {/* Detail text for moves/copies (not comment, not status) */}
       {!isStatusChange && detailText && (
-        <span className="text-cream/30 text-xs truncate">{detailText}</span>
+        <span className="text-cream/45 text-xs truncate">{detailText}</span>
       )}
 
       {/* No entity or detail — just show raw text */}
       {!entityLabel && !detailText && (
-        <span className="text-cream/50">{evt.summaryText}</span>
+        <span className="text-cream/65">{evt.summaryText}</span>
       )}
     </span>
   )
@@ -200,7 +200,7 @@ function CompactRow({ evt }: { evt: ActivityFeedEvent | { action: string; summar
   const { verb, entityLabel, detailText, isComment, isStatusChange } = decompose(evt)
 
   if (!entityLabel && !detailText && !verb) {
-    return <span className="text-cream/30 truncate">{evt.summaryText}</span>
+    return <span className="text-cream/45 truncate">{evt.summaryText}</span>
   }
 
   const commentCtx = isComment ? extractCommentContext(evt as { entityLabel?: string | null; detailText?: string | null; metadata?: Record<string, unknown> | null }) : null
@@ -210,7 +210,7 @@ function CompactRow({ evt }: { evt: ActivityFeedEvent | { action: string; summar
     const snippet = commentCtx.commentSnippet || detailText || ''
     const hasContent = displaySelection || commentCtx.optionTitle || snippet
     if (!hasContent) {
-      return <span className="text-cream/30 truncate">{evt.summaryText}</span>
+      return <span className="text-cream/45 truncate">{evt.summaryText}</span>
     }
     return (
       <span className="flex items-center gap-1 min-w-0 text-[11px]">
@@ -218,12 +218,12 @@ function CompactRow({ evt }: { evt: ActivityFeedEvent | { action: string; summar
           <EntityPill label={displaySelection} className="text-[11px] max-w-[120px]" />
         )}
         {commentCtx.optionTitle && (
-          <span className="text-cream/35 truncate max-w-[80px]" title={commentCtx.optionTitle}>
+          <span className="text-cream/50 truncate max-w-[80px]" title={commentCtx.optionTitle}>
             · {commentCtx.optionTitle}
           </span>
         )}
         {snippet && (
-          <span className="text-cream/30 italic truncate min-w-0">&ldquo;{snippet}&rdquo;</span>
+          <span className="text-cream/45 italic truncate min-w-0">&ldquo;{snippet}&rdquo;</span>
         )}
       </span>
     )
@@ -231,15 +231,15 @@ function CompactRow({ evt }: { evt: ActivityFeedEvent | { action: string; summar
 
   return (
     <span className="flex items-center gap-1 min-w-0 text-[11px]">
-      {verb && <span className="text-cream/35 shrink-0">{verb}</span>}
+      {verb && <span className="text-cream/50 shrink-0">{verb}</span>}
       {entityLabel && (
         <EntityPill label={entityLabel} className="text-[11px] max-w-[120px]" />
       )}
       {isStatusChange && detailText && (
-        <span className="text-cream/40">→ {detailText}</span>
+        <span className="text-cream/55">→ {detailText}</span>
       )}
       {!isStatusChange && detailText && (
-        <span className="text-cream/25 truncate">{detailText}</span>
+        <span className="text-cream/40 truncate">{detailText}</span>
       )}
       {!entityLabel && !detailText && (
         <span className="text-cream/30 truncate">{evt.summaryText}</span>

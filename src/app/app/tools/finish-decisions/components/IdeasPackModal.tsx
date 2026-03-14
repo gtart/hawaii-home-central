@@ -38,7 +38,7 @@ const DISCLOSURE_BADGES: Record<string, { label: string; micro?: string; classNa
 function DisclosureBadge({ author }: { author: string }) {
   const badge = DISCLOSURE_BADGES[author] || {
     label: author,
-    className: 'bg-cream/10 text-cream/50',
+    className: 'bg-cream/10 text-cream/65',
   }
   return (
     <span
@@ -180,7 +180,7 @@ export function IdeasPackModal({
       {/* Modal */}
       <div className="relative bg-basalt border-t sm:border border-cream/15 rounded-t-xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="px-5 pt-5 pb-3 border-b border-cream/10">
+        <div className="px-5 pt-5 pb-3 border-b border-cream/15">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium text-cream">
               {decisionTitle ? `Options for \u201c${decisionTitle}\u201d` : 'Add an Idea Pack'}
@@ -188,14 +188,14 @@ export function IdeasPackModal({
             <button
               type="button"
               onClick={onClose}
-              className="text-cream/40 hover:text-cream transition-colors p-1 -mr-1"
+              className="text-cream/55 hover:text-cream transition-colors p-1 -mr-1"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
               </svg>
             </button>
           </div>
-          <p className="text-xs text-cream/40 mt-1">
+          <p className="text-xs text-cream/55 mt-1">
             {decisionTitle
               ? 'Adds curated options to this selection so you have more to compare.'
               : 'Quick-start your room with selections you\u2019ll likely need\u2014plus curated options to compare.'}
@@ -204,7 +204,7 @@ export function IdeasPackModal({
 
         {/* Tabs */}
         {TABS.length > 1 && (
-          <div className="px-5 pt-2 flex gap-1 border-b border-cream/10">
+          <div className="px-5 pt-2 flex gap-1 border-b border-cream/15">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
@@ -218,7 +218,7 @@ export function IdeasPackModal({
                   'px-3 py-2 text-xs font-medium border-b-2 transition-colors -mb-px',
                   activeTab === tab.key
                     ? 'border-sandstone text-sandstone'
-                    : 'border-transparent text-cream/50 hover:text-cream/70'
+                    : 'border-transparent text-cream/65 hover:text-cream/80'
                 )}
               >
                 {tab.label}
@@ -236,7 +236,7 @@ export function IdeasPackModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search packs by name or selection..."
-              className="w-full bg-basalt border border-cream/15 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40"
+              className="w-full bg-basalt border border-cream/15 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/40 focus:outline-none focus:border-sandstone/40"
             />
             {availableRoomTypes.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
@@ -247,7 +247,7 @@ export function IdeasPackModal({
                     'px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors',
                     !roomFilter
                       ? 'bg-sandstone/25 text-sandstone ring-1 ring-sandstone/40'
-                      : 'bg-cream/8 text-cream/50 hover:text-cream/70'
+                      : 'bg-cream/8 text-cream/65 hover:text-cream/80'
                   )}
                 >
                   All rooms
@@ -261,7 +261,7 @@ export function IdeasPackModal({
                       'px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors',
                       roomFilter === rt.value
                         ? 'bg-sandstone/25 text-sandstone ring-1 ring-sandstone/40'
-                        : 'bg-cream/8 text-cream/50 hover:text-cream/70'
+                        : 'bg-cream/8 text-cream/65 hover:text-cream/80'
                     )}
                   >
                     {rt.label}
@@ -276,7 +276,7 @@ export function IdeasPackModal({
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
           {tabKits.length === 0 ? (
             <div className="py-8 text-center">
-              <p className="text-cream/40 text-sm">
+              <p className="text-cream/55 text-sm">
                 {activeTab === 'my-packs'
                   ? "You don\u2019t own any Idea Packs yet."
                   : `No Idea Packs available${decisionTitle ? ' for this selection' : ''}.`}
@@ -293,7 +293,7 @@ export function IdeasPackModal({
                   <Link
                     href="/app/packs"
                     onClick={onClose}
-                    className="text-xs text-cream/40 hover:text-cream/60 transition-colors"
+                    className="text-xs text-cream/55 hover:text-cream/70 transition-colors"
                   >
                     Visit the Packs marketplace
                   </Link>
@@ -315,7 +315,7 @@ export function IdeasPackModal({
                     'w-full text-left p-4 rounded-lg border-2 transition-all',
                     isSelected
                       ? 'border-sandstone bg-sandstone/5'
-                      : 'border-transparent bg-basalt-50 hover:border-cream/15'
+                      : 'border-transparent bg-stone hover:border-cream/15'
                   )}
                 >
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -327,14 +327,14 @@ export function IdeasPackModal({
                       </span>
                     )}
                     {isOwned && !isApplied && (
-                      <span className="px-1.5 py-0.5 bg-cream/10 rounded text-[10px] text-cream/40">
+                      <span className="px-1.5 py-0.5 bg-cream/10 rounded text-[10px] text-cream/55">
                         Owned
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-cream/50 leading-relaxed">{kit.description}</p>
+                  <p className="text-xs text-cream/65 leading-relaxed">{kit.description}</p>
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                    <p className="text-[11px] text-cream/30">
+                    <p className="text-[11px] text-cream/45">
                       {kit.decisions.length} selection{kit.decisions.length !== 1 ? 's' : ''},{' '}
                       {kit.decisions.reduce((s, d) => s + d.options.length, 0)} option
                       {kit.decisions.reduce((s, d) => s + d.options.length, 0) !== 1 ? 's' : ''}
@@ -344,7 +344,7 @@ export function IdeasPackModal({
                         {kit.roomTypes.map((rt) => {
                           const label = ROOM_TYPE_OPTIONS_V3.find((r) => r.value === rt)?.label
                           return label ? (
-                            <span key={rt} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cream/6 text-[10px] text-cream/40">
+                            <span key={rt} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-cream/6 text-[10px] text-cream/55">
                               <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
                                 <circle cx="12" cy="10" r="3" />
@@ -371,7 +371,7 @@ export function IdeasPackModal({
                       : kit.decisions
 
                     return (
-                      <div className="mt-3 pt-3 border-t border-cream/10 space-y-2">
+                      <div className="mt-3 pt-3 border-t border-cream/15 space-y-2">
                         {sortedDecs.map((dec) => {
                           const isMatchingDec = isDecisionMode && matchTitle && dec.title.toLowerCase().trim() === matchTitle
                           return (
@@ -383,7 +383,7 @@ export function IdeasPackModal({
                             >
                               <span className={cn(
                                 'text-xs font-medium',
-                                isMatchingDec ? 'text-sandstone' : 'text-cream/60'
+                                isMatchingDec ? 'text-sandstone' : 'text-cream/70'
                               )}>
                                 {dec.title}
                                 {isMatchingDec && (
@@ -398,7 +398,7 @@ export function IdeasPackModal({
                                     key={opt.name}
                                     className={cn(
                                       'inline-block px-2 py-0.5 rounded text-[11px]',
-                                      isMatchingDec ? 'bg-sandstone/15 text-sandstone/70' : 'bg-cream/10 text-cream/50'
+                                      isMatchingDec ? 'bg-sandstone/15 text-sandstone/70' : 'bg-cream/10 text-cream/65'
                                     )}
                                   >
                                     {opt.name}
@@ -421,7 +421,7 @@ export function IdeasPackModal({
             <button
               type="button"
               onClick={() => setShowAllInRecommended(true)}
-              className="w-full text-center py-2 text-xs text-cream/40 hover:text-cream/60 transition-colors"
+              className="w-full text-center py-2 text-xs text-cream/55 hover:text-cream/70 transition-colors"
             >
               Show all packs ({allKits.length})
             </button>
@@ -429,7 +429,7 @@ export function IdeasPackModal({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-cream/10">
+        <div className="px-5 py-4 border-t border-cream/15">
           {/* Get pack + Remove row (when kit selected) */}
           {selectedKit && !isDecisionMode && (
             <div className="flex items-center gap-2 mb-3">
@@ -458,7 +458,7 @@ export function IdeasPackModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm text-cream/60 hover:text-cream transition-colors"
+              className="px-4 py-2 text-sm text-cream/70 hover:text-cream transition-colors"
             >
               Cancel
             </button>

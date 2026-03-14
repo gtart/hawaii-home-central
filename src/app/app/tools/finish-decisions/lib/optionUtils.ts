@@ -43,13 +43,13 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function docTypeColor(mimeType: string | undefined): string {
-  if (!mimeType) return 'text-cream/40'
+  if (!mimeType) return 'text-cream/55'
   if (mimeType.startsWith('image/')) return 'text-purple-400'
   if (mimeType === 'application/pdf') return 'text-red-400'
   if (mimeType.includes('word') || mimeType === 'application/msword') return 'text-blue-400'
   if (mimeType.includes('sheet') || mimeType.includes('excel')) return 'text-green-400'
   if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'text-orange-400'
-  return 'text-cream/40'
+  return 'text-cream/55'
 }
 
 export function docTypeLabel(mimeType: string | undefined): string {

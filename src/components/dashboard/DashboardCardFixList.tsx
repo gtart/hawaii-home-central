@@ -13,10 +13,10 @@ export function DashboardCardFixList({
 }) {
   if (isLoading) {
     return (
-      <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6 animate-pulse">
-        <div className="h-3 w-16 bg-cream/5 rounded mb-4" />
-        <div className="h-8 w-20 bg-cream/5 rounded mb-2" />
-        <div className="h-3 w-48 bg-cream/5 rounded" />
+      <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6 animate-pulse">
+        <div className="h-3 w-16 bg-stone-200 rounded mb-4" />
+        <div className="h-8 w-20 bg-stone-200 rounded mb-2" />
+        <div className="h-3 w-48 bg-stone-200 rounded" />
       </div>
     )
   }
@@ -31,9 +31,9 @@ export function DashboardCardFixList({
   // Not started
   if (!hasItems) {
     return (
-      <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/60 mb-2">Fix Issues</p>
-        <p className="text-sm text-cream/35 mb-4">Log issues as you find them during walkthrough or construction.</p>
+      <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
+        <p className="text-sm font-medium text-cream/70 mb-2">Fix Issues</p>
+        <p className="text-sm text-cream/50 mb-4">Log issues as you find them during walkthrough or construction.</p>
         <Link
           href="/app/tools/punchlist"
           className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
@@ -47,15 +47,15 @@ export function DashboardCardFixList({
   // All caught up
   if (totalOpen === 0) {
     return (
-      <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/60 mb-2">Fix Issues</p>
-        <p className="text-sm text-cream/50 mb-1">All issues resolved</p>
+      <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
+        <p className="text-sm font-medium text-cream/70 mb-2">Fix Issues</p>
+        <p className="text-sm text-cream/65 mb-1">All issues resolved</p>
         {lastUpdated && (
-          <p className="text-[11px] text-cream/25 mb-3">Updated {relativeTime(lastUpdated)}</p>
+          <p className="text-[11px] text-cream/40 mb-3">Updated {relativeTime(lastUpdated)}</p>
         )}
         <Link
           href="/app/tools/punchlist"
-          className="inline-flex items-center px-4 py-2 border border-cream/10 text-cream/50 text-sm font-medium rounded-button hover:bg-cream/5 transition-colors"
+          className="inline-flex items-center px-4 py-2 border border-cream/15 text-cream/65 text-sm font-medium rounded-button hover:bg-stone-200 transition-colors"
         >
           View Issues
         </Link>
@@ -74,27 +74,27 @@ export function DashboardCardFixList({
   }
 
   return (
-    <div className="bg-basalt-50 rounded-card border border-cream/10 p-5 md:p-6">
-      <p className="text-sm font-medium text-cream/60 mb-3">Fix Issues</p>
+    <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
+      <p className="text-sm font-medium text-cream/70 mb-3">Fix Issues</p>
       <div className="flex items-baseline gap-3 mb-1">
         <span className="text-2xl font-semibold text-cream tabular-nums">{totalOpen}</span>
-        <span className="text-sm text-cream/40">open</span>
+        <span className="text-sm text-cream/55">open</span>
         {totalStale > 0 && (
           <>
-            <span className="text-cream/15">&middot;</span>
+            <span className="text-cream/30">&middot;</span>
             <span className="text-sm text-amber-400/70">{totalStale} stale</span>
           </>
         )}
         {totalHigh > 0 && (
           <>
-            <span className="text-cream/15">&middot;</span>
+            <span className="text-cream/30">&middot;</span>
             <span className="text-sm text-red-400/70">{totalHigh} urgent</span>
           </>
         )}
       </div>
-      <p className="text-xs text-cream/35 mb-2">{statusLine}</p>
+      <p className="text-xs text-cream/50 mb-2">{statusLine}</p>
       {lastUpdated && (
-        <p className="text-[11px] text-cream/25 mb-4">
+        <p className="text-[11px] text-cream/40 mb-4">
           Updated {relativeTime(lastUpdated)}{lists[0].updatedByName ? ` by ${lists[0].updatedByName.split(' ')[0]}` : ''}
         </p>
       )}

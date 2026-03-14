@@ -35,7 +35,7 @@ export function CollectionPickerWrapper() {
             <button
               type="button"
               onClick={() => { setActivityOpen(true); markActivitySeen() }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cream/65 hover:text-cream/80 bg-stone-200 hover:bg-cream/10 transition-colors"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
@@ -63,7 +63,7 @@ function SelectionListsEmptyState({ onCreate }: { onCreate: (title: string) => v
   return (
     <div className="max-w-lg mx-auto text-center">
       <h2 className="font-serif text-3xl text-sandstone mb-2">Start your Selections</h2>
-      <p className="text-cream/50 text-sm leading-relaxed mb-8">
+      <p className="text-cream/65 text-sm leading-relaxed mb-8">
         Organize your choices however makes sense&mdash;by room, by category, or by
         trade. Track what you need to decide and what you picked.
       </p>
@@ -74,7 +74,7 @@ function SelectionListsEmptyState({ onCreate }: { onCreate: (title: string) => v
             key={b.label}
             type="button"
             onClick={() => onCreate(b.label)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-basalt-50 border border-cream/15 hover:border-sandstone/40 rounded-lg text-sm font-medium text-cream hover:text-sandstone transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-stone border border-cream/15 hover:border-sandstone/40 rounded-lg text-sm font-medium text-cream hover:text-sandstone transition-colors"
           >
             <span>{b.emoji}</span>
             {b.label}
@@ -88,7 +88,7 @@ function SelectionListsEmptyState({ onCreate }: { onCreate: (title: string) => v
           onChange={(e) => setCustomName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && customName.trim()) onCreate(customName) }}
           placeholder="Custom list name..."
-          className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+          className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
         />
         <button
           type="button"
@@ -100,7 +100,7 @@ function SelectionListsEmptyState({ onCreate }: { onCreate: (title: string) => v
         </button>
       </div>
 
-      <p className="text-[11px] text-cream/30">
+      <p className="text-[11px] text-cream/45">
         You can also apply a Selection Pack inside any list to add curated selections.
       </p>
     </div>

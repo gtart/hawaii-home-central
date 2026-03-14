@@ -50,17 +50,17 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
     return (
       <div key={milestone.id} className="relative pl-6 pb-4 last:pb-0">
         {/* Dot on timeline */}
-        <div className="absolute left-[-5px] top-1 w-2.5 h-2.5 rounded-full bg-cream/10 border border-cream/20" />
+        <div className="absolute left-[-5px] top-1 w-2.5 h-2.5 rounded-full bg-cream/15 border border-cream/35" />
 
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
-            <svg className="w-3 h-3 text-cream/30 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="w-3 h-3 text-cream/45 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d={getEventIcon(milestone.event)} />
             </svg>
-            <span className="text-xs text-cream/60">{milestone.label}</span>
+            <span className="text-xs text-cream/70">{milestone.label}</span>
           </div>
 
-          <div className="flex items-center gap-2 text-[10px] text-cream/35">
+          <div className="flex items-center gap-2 text-[10px] text-cream/50">
             <span>{new Date(milestone.timestamp).toLocaleDateString()}</span>
             <span>{new Date(milestone.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             {milestone.actor && (
@@ -72,7 +72,7 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
           </div>
 
           {milestone.note && (
-            <p className="text-[10px] text-cream/40 mt-0.5">{milestone.note}</p>
+            <p className="text-[10px] text-cream/55 mt-0.5">{milestone.note}</p>
           )}
         </div>
       </div>
@@ -80,18 +80,18 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
   }
 
   return (
-    <div className="rounded-xl border border-cream/[0.08] bg-cream/[0.03]">
+    <div className="rounded-xl border border-cream/14 bg-stone-50">
       <div className="flex items-center gap-3 px-5 py-4">
-        <svg className="w-4 h-4 text-cream/30 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg className="w-4 h-4 text-cream/45 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <h2 className="text-sm font-semibold text-cream/80 flex-1">History</h2>
-        <span className="text-[11px] text-cream/35 tabular-nums">{majorMilestones.length} event{majorMilestones.length !== 1 ? 's' : ''}</span>
+        <h2 className="text-sm font-semibold text-cream/90 flex-1">History</h2>
+        <span className="text-[11px] text-cream/50 tabular-nums">{majorMilestones.length} event{majorMilestones.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Always show recent preview */}
       <div className="px-5 pb-4">
-        <div className="relative ml-3 border-l border-cream/[0.08]">
+        <div className="relative ml-3 border-l border-cream/14">
           {(isExpanded ? sorted : previewItems).map(renderEvent)}
         </div>
 

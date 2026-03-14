@@ -56,7 +56,7 @@ export function PunchlistItemRow({ item, onTap, onStatusChange, onRename, select
 
   if (renaming) {
     return (
-      <div className="px-4 py-2.5 border-b border-cream/5 last:border-0" onClick={(e) => e.stopPropagation()}>
+      <div className="px-4 py-2.5 border-b border-cream/10 last:border-0" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -64,9 +64,9 @@ export function PunchlistItemRow({ item, onTap, onStatusChange, onRename, select
             onChange={(e) => setRenameValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') submitRename(); if (e.key === 'Escape') setRenaming(false) }}
             autoFocus
-            className="flex-1 bg-basalt border border-cream/20 rounded-lg px-3 py-1.5 text-sm text-cream focus:outline-none focus:border-sandstone/50"
+            className="flex-1 bg-stone-200 border border-cream/20 rounded-lg px-3 py-1.5 text-sm text-cream focus:outline-none focus:border-sandstone/50"
           />
-          <button type="button" onClick={() => setRenaming(false)} className="text-xs text-cream/40 hover:text-cream/60 px-2 py-1 transition-colors">Cancel</button>
+          <button type="button" onClick={() => setRenaming(false)} className="text-xs text-cream/55 hover:text-cream/70 px-2 py-1 transition-colors">Cancel</button>
           <button type="button" onClick={submitRename} className="text-xs bg-sandstone text-basalt font-medium px-2.5 py-1 rounded-lg hover:bg-sandstone-light transition-colors">Save</button>
         </div>
       </div>
@@ -75,7 +75,7 @@ export function PunchlistItemRow({ item, onTap, onStatusChange, onRename, select
 
   return (
     <div
-      className={`grid ${onToggleSelect ? 'grid-cols-[1.5rem_2.5rem_1fr_8rem_8rem_4rem_5rem_3rem]' : 'grid-cols-[2.5rem_1fr_8rem_8rem_4rem_5rem_3rem]'} gap-2 items-center px-4 py-2.5 border-b border-cream/5 last:border-0 cursor-pointer hover:bg-cream/3 transition-colors relative ${selected ? 'bg-sandstone/5' : ''}`}
+      className={`grid ${onToggleSelect ? 'grid-cols-[1.5rem_2.5rem_1fr_8rem_8rem_4rem_5rem_3rem]' : 'grid-cols-[2.5rem_1fr_8rem_8rem_4rem_5rem_3rem]'} gap-2 items-center px-4 py-2.5 border-b border-cream/10 last:border-0 cursor-pointer hover:bg-stone-hover transition-colors relative ${selected ? 'bg-sandstone/5' : ''}`}
       onClick={onTap}
     >
       {/* Checkbox */}
@@ -100,8 +100,8 @@ export function PunchlistItemRow({ item, onTap, onStatusChange, onRename, select
             loading="lazy"
           />
         ) : (
-          <div className="w-9 h-9 rounded bg-cream/5 flex items-center justify-center">
-            <svg className="w-4 h-4 text-cream/15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <div className="w-9 h-9 rounded bg-stone-200 flex items-center justify-center">
+            <svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <rect x="3" y="3" width="18" height="18" rx="2" />
               <circle cx="8.5" cy="8.5" r="1.5" />
               <path d="M21 15l-5-5L5 21" />
@@ -112,22 +112,22 @@ export function PunchlistItemRow({ item, onTap, onStatusChange, onRename, select
           <button
             type="button"
             onClick={cycleStatus}
-            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${statusCfg.dot} ring-2 ring-basalt-50 hover:ring-cream/20 transition-all`}
+            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${statusCfg.dot} ring-2 ring-stone hover:ring-cream/20 transition-all`}
             title={statusCfg.label}
           />
         ) : (
-          <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${statusCfg.dot} ring-2 ring-basalt-50`} title={statusCfg.label} />
+          <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${statusCfg.dot} ring-2 ring-stone`} title={statusCfg.label} />
         )}
       </div>
 
       {/* #N Title */}
       <div className="truncate text-sm text-cream flex items-center gap-1.5">
         <span className="truncate">
-          <span className="text-cream/30 text-xs">#{item.itemNumber}</span>{' '}
-          {item.title || <span className="text-cream/40 italic">Untitled</span>}
+          <span className="text-cream/45 text-xs">#{item.itemNumber}</span>{' '}
+          {item.title || <span className="text-cream/55 italic">Untitled</span>}
         </span>
         {commentCount && commentCount > 0 ? (
-          <span className="inline-flex items-center gap-0.5 text-[10px] text-cream/30 shrink-0">
+          <span className="inline-flex items-center gap-0.5 text-[10px] text-cream/45 shrink-0">
             <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -137,10 +137,10 @@ export function PunchlistItemRow({ item, onTap, onStatusChange, onRename, select
       </div>
 
       {/* Location */}
-      <span className="text-xs text-cream/50 truncate">{item.location || '—'}</span>
+      <span className="text-xs text-cream/65 truncate">{item.location || '—'}</span>
 
       {/* Assignee */}
-      <span className="text-xs text-cream/50 truncate">{item.assigneeLabel || '—'}</span>
+      <span className="text-xs text-cream/65 truncate">{item.assigneeLabel || '—'}</span>
 
       {/* Priority */}
       {priorityCfg ? (
@@ -148,11 +148,11 @@ export function PunchlistItemRow({ item, onTap, onStatusChange, onRename, select
           {priorityCfg.label}
         </span>
       ) : (
-        <span className="text-cream/20 text-xs text-center">—</span>
+        <span className="text-cream/35 text-xs text-center">—</span>
       )}
 
       {/* Due */}
-      <span className={`text-[11px] tabular-nums ${item.dueDate && item.dueDate < new Date().toISOString().slice(0, 10) && item.status !== 'DONE' ? 'text-red-400' : 'text-cream/30'}`}>
+      <span className={`text-[11px] tabular-nums ${item.dueDate && item.dueDate < new Date().toISOString().slice(0, 10) && item.status !== 'DONE' ? 'text-red-400' : 'text-cream/45'}`}>
         {item.dueDate ? shortDate(item.dueDate + 'T00:00:00') : '—'}
       </span>
 
@@ -163,7 +163,7 @@ export function PunchlistItemRow({ item, onTap, onStatusChange, onRename, select
             <button
               type="button"
               onClick={handleMenuToggle}
-              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-cream/10 transition-colors text-cream/20 hover:text-cream/40"
+              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-stone-hover transition-colors text-cream/35 hover:text-cream/55"
               aria-label="Item actions"
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" /></svg>
@@ -171,9 +171,9 @@ export function PunchlistItemRow({ item, onTap, onStatusChange, onRename, select
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); setMenuOpen(false) }} />
-                <div className="absolute right-0 top-7 bg-basalt border border-cream/15 rounded-lg shadow-xl z-20 py-1 min-w-[140px]">
-                  <button type="button" onClick={startRename} className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors">Rename</button>
-                  <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onTap() }} className="w-full text-left px-3 py-2 text-xs text-cream/70 hover:bg-cream/5 transition-colors">Edit details</button>
+                <div className="absolute right-0 top-7 bg-stone-200 border border-cream/20 rounded-lg shadow-xl z-20 py-1 min-w-[140px]">
+                  <button type="button" onClick={startRename} className="w-full text-left px-3 py-2 text-xs text-cream/80 hover:bg-stone-hover transition-colors">Rename</button>
+                  <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onTap() }} className="w-full text-left px-3 py-2 text-xs text-cream/80 hover:bg-stone-hover transition-colors">Edit details</button>
                 </div>
               </>
             )}

@@ -133,7 +133,7 @@ export function SidebarNav() {
         />
       )}
 
-      <nav className="hidden md:flex fixed left-0 top-16 bottom-0 w-56 border-r border-cream/10 bg-basalt flex-col z-30">
+      <nav className="hidden md:flex fixed left-0 top-16 bottom-0 w-56 border-r border-cream/12 bg-basalt flex-col z-30">
         <div className="flex-1 py-4 space-y-1">
           {/* Quick Capture button */}
           <button
@@ -172,7 +172,7 @@ export function SidebarNav() {
                 className={`flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm transition-colors ${
                   active
                     ? 'bg-sandstone/10 text-sandstone'
-                    : 'text-cream/40 hover:text-cream/60 hover:bg-cream/5'
+                    : 'text-cream/50 hover:text-cream/70 hover:bg-cream/5'
                 }`}
               >
                 {item.icon}
@@ -187,7 +187,7 @@ export function SidebarNav() {
             className={`flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm transition-colors ${
               pathname === '/app/inbox'
                 ? 'bg-sandstone/10 text-sandstone'
-                : 'text-cream/40 hover:text-cream/60 hover:bg-cream/5'
+                : 'text-cream/50 hover:text-cream/70 hover:bg-cream/5'
             }`}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -196,15 +196,15 @@ export function SidebarNav() {
             </svg>
             <span className="flex-1">Inbox</span>
             {inboxCount > 0 && (
-              <span className="bg-cream/15 text-cream/50 text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
+              <span className="bg-cream/12 text-cream/60 text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
                 {inboxCount}
               </span>
             )}
           </Link>
 
-          <div className="mx-4 my-3 border-t border-cream/8" />
+          <div className="mx-4 my-3 border-t border-cream/10" />
 
-        <p className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-wider text-cream/40">
+        <p className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-wider text-cream/45">
           Manage Renovation
         </p>
         {MANAGE_ITEMS.map((item) => {
@@ -218,13 +218,13 @@ export function SidebarNav() {
               className={`flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm transition-colors ${
                 active
                   ? 'bg-sandstone/10 text-sandstone'
-                  : 'text-cream/40 hover:text-cream/60 hover:bg-cream/5'
+                  : 'text-cream/50 hover:text-cream/70 hover:bg-cream/5'
               }`}
             >
               {item.icon}
               <span className="flex-1">{item.label}</span>
               {badgeCount > 0 && (
-                <span className="ml-auto bg-cream/15 text-cream/50 text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
+                <span className="ml-auto bg-cream/12 text-cream/60 text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
                   {badgeCount}
                 </span>
               )}
@@ -232,7 +232,7 @@ export function SidebarNav() {
           )
         })}
 
-        <p className="px-4 pt-4 pb-1 text-[10px] uppercase tracking-wider text-cream/30">
+        <p className="px-4 pt-4 pb-1 text-[10px] uppercase tracking-wider text-cream/40">
           Preparation
         </p>
         {GETTING_STARTED_ITEMS.map((item) => {
@@ -244,7 +244,7 @@ export function SidebarNav() {
               className={`flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm transition-colors ${
                 active
                   ? 'bg-sandstone/10 text-sandstone'
-                  : 'text-cream/40 hover:text-cream/60 hover:bg-cream/5'
+                  : 'text-cream/50 hover:text-cream/70 hover:bg-cream/5'
               }`}
             >
               {item.icon}

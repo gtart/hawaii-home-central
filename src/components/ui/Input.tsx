@@ -28,7 +28,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           className={cn(
             'w-full px-4 py-3 rounded-input',
-            'bg-basalt-50 border border-cream/20 text-cream placeholder:text-cream/40',
+            'bg-stone-200 border border-cream/15 text-cream placeholder:text-cream/40',
             'transition-colors duration-200',
             'hover:border-cream/30',
             'focus:outline-none focus:border-sandstone focus:ring-1 focus:ring-sandstone',

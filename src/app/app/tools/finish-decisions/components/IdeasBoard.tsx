@@ -191,8 +191,8 @@ function IdeaCardTile({
                 isActive
                   ? 'bg-sandstone/20 text-sandstone'
                   : onVote
-                    ? 'bg-cream/5 text-cream/30 hover:bg-cream/10 hover:text-cream/50'
-                    : 'bg-cream/5 text-cream/30 cursor-default'
+                    ? 'bg-stone-200 text-cream/45 hover:bg-cream/10 hover:text-cream/65'
+                    : 'bg-stone-200 text-cream/45 cursor-default'
               }`}
             >
               {emoji}{count > 0 ? ` ${count}` : ''}
@@ -209,7 +209,7 @@ function IdeaCardTile({
       <button
         type="button"
         onClick={() => setMenuOpen(!menuOpen)}
-        className="p-1 text-cream/30 hover:text-cream/60 transition-colors rounded"
+        className="p-1 text-cream/45 hover:text-cream/70 transition-colors rounded"
         title="More actions"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -219,22 +219,22 @@ function IdeaCardTile({
         </svg>
       </button>
       {menuOpen && (
-        <div className="absolute right-0 top-full mt-1 bg-basalt-50 border border-cream/15 rounded-lg shadow-xl overflow-hidden min-w-[120px] z-20">
+        <div className="absolute right-0 top-full mt-1 bg-stone border border-cream/15 rounded-lg shadow-xl overflow-hidden min-w-[120px] z-20">
           {onMove && (
             <button type="button" onClick={() => { setMenuOpen(false); onMove() }}
-              className="w-full px-3 py-2 text-left text-xs text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors">
+              className="w-full px-3 py-2 text-left text-xs text-cream/80 hover:text-cream hover:bg-stone-hover transition-colors">
               Move
             </button>
           )}
           {onCopy && (
             <button type="button" onClick={() => { setMenuOpen(false); onCopy() }}
-              className="w-full px-3 py-2 text-left text-xs text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors">
+              className="w-full px-3 py-2 text-left text-xs text-cream/80 hover:text-cream hover:bg-stone-hover transition-colors">
               Copy To
             </button>
           )}
           {onDelete && (
             <>
-              <div className="border-t border-cream/10" />
+              <div className="border-t border-cream/15" />
               <button type="button" onClick={() => { setMenuOpen(false); onDelete() }}
                 className="w-full px-3 py-2 text-left text-xs text-red-400/70 hover:text-red-400 hover:bg-red-400/5 transition-colors">
                 Delete
@@ -254,7 +254,7 @@ function IdeaCardTile({
       aria-label={`Open option: ${option.name || 'Untitled'}`}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
-      className="w-full rounded-xl overflow-hidden bg-basalt border border-cream/10 hover:border-cream/30 transition-colors text-left group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/50"
+      className="w-full rounded-xl overflow-hidden bg-basalt border border-cream/15 hover:border-cream/30 transition-colors text-left group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/50"
     >
       {/* Image area — only Final pill overlays here */}
       {hasImage && (
@@ -302,7 +302,7 @@ function IdeaCardTile({
 
         {/* Name */}
         <p className="text-sm text-cream font-medium leading-snug line-clamp-2">
-          {option.name || <span className="text-cream/30 italic">Untitled</span>}
+          {option.name || <span className="text-cream/45 italic">Untitled</span>}
         </p>
 
         {/* Price */}
@@ -312,7 +312,7 @@ function IdeaCardTile({
 
         {/* Notes/Specs preview */}
         {(option.specs || option.notes) && (
-          <p className="text-[11px] text-cream/35 line-clamp-1">{option.specs || option.notes}</p>
+          <p className="text-[11px] text-cream/50 line-clamp-1">{option.specs || option.notes}</p>
         )}
 
         {/* Meta row: origin, time, comments */}
@@ -323,12 +323,12 @@ function IdeaCardTile({
             </span>
           ) : null}
           {(option.documents?.length ?? 0) > 0 && (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-cream/10 text-cream/40 text-[10px] font-medium">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-cream/10 text-cream/55 text-[10px] font-medium">
               📎 {option.documents!.length}
             </span>
           )}
-          <span className="text-[10px] text-cream/35">
-            {option.origin && <span className="text-cream/40">{option.origin.kitLabel} · </span>}
+          <span className="text-[10px] text-cream/50">
+            {option.origin && <span className="text-cream/55">{option.origin.kitLabel} · </span>}
             {relativeTime(lastCommentAt || option.updatedAt)}
           </span>
         </div>
@@ -337,7 +337,7 @@ function IdeaCardTile({
         {latestOptionComment && (
           <div className="border-l-2 border-sandstone/20 pl-2 py-0.5">
             <p className="text-xs text-cream/55 line-clamp-2 leading-relaxed">
-              <span className="font-medium text-cream/70">{latestOptionComment.authorName.split(' ')[0]}:</span>{' '}
+              <span className="font-medium text-cream/80">{latestOptionComment.authorName.split(' ')[0]}:</span>{' '}
               <span className="italic">{latestOptionComment.text.length > 60 ? latestOptionComment.text.slice(0, 60) + '...' : latestOptionComment.text}</span>
             </p>
           </div>
@@ -358,11 +358,11 @@ function IdeaCardTile({
                   }}
                   placeholder="Add a comment..."
                   rows={2}
-                  className="w-full px-2.5 py-1.5 bg-cream/5 border border-cream/15 text-cream text-sm rounded-lg placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40 resize-none"
+                  className="w-full px-2.5 py-1.5 bg-stone-200 border border-cream/15 text-cream text-sm rounded-lg placeholder:text-cream/40 focus:outline-none focus:border-sandstone/40 resize-none"
                 />
                 <div className="flex items-center gap-1.5 justify-end">
                   <button type="button" onClick={() => { setCommenting(false); setCommentText('') }}
-                    className="text-[11px] text-cream/40 hover:text-cream/60 transition-colors px-2 py-0.5">
+                    className="text-[11px] text-cream/55 hover:text-cream/70 transition-colors px-2 py-0.5">
                     Cancel
                   </button>
                   <button type="button" onClick={handleSubmitComment}
@@ -376,7 +376,7 @@ function IdeaCardTile({
               <button
                 type="button"
                 onClick={() => setCommenting(true)}
-                className="w-full text-left text-xs px-2.5 py-1.5 rounded-lg bg-cream/5 text-cream/30 hover:text-cream/50 hover:bg-cream/8 transition-colors"
+                className="w-full text-left text-xs px-2.5 py-1.5 rounded-lg bg-stone-200 text-cream/45 hover:text-cream/65 hover:bg-cream/8 transition-colors"
               >
                 Comment...
               </button>
@@ -452,7 +452,7 @@ export function AddIdeaMenu({
         className={`flex items-center justify-center w-9 h-9 rounded-full transition-all ${
           open
             ? 'bg-sandstone text-basalt rotate-45'
-            : 'bg-cream/10 text-cream/60 hover:bg-cream/20 hover:text-cream/80'
+            : 'bg-cream/10 text-cream/70 hover:bg-cream/35 hover:text-cream/90'
         } disabled:opacity-50`}
         title="Add option"
       >
@@ -466,11 +466,11 @@ export function AddIdeaMenu({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1.5 bg-basalt-50 border border-cream/15 rounded-xl shadow-xl overflow-hidden min-w-[180px] z-50">
+        <div className="absolute right-0 top-full mt-1.5 bg-stone border border-cream/15 rounded-xl shadow-xl overflow-hidden min-w-[180px] z-50">
           <button
             type="button"
             onClick={() => { onPhoto(); setOpen(false) }}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/80 hover:text-cream hover:bg-stone-hover transition-colors"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
@@ -478,23 +478,23 @@ export function AddIdeaMenu({
             </svg>
             Add from Photos
           </button>
-          <div className="border-t border-cream/8" />
+          <div className="border-t border-cream/12" />
           <button
             type="button"
             onClick={() => { onNote(); setOpen(false) }}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/80 hover:text-cream hover:bg-stone-hover transition-colors"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
             </svg>
             Add as Text
           </button>
-          <div className="border-t border-cream/8" />
+          <div className="border-t border-cream/12" />
           {/* Desktop: functional import button */}
           <button
             type="button"
             onClick={() => { onWeb(); setOpen(false) }}
-            className="hidden sm:flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+            className="hidden sm:flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/80 hover:text-cream hover:bg-stone-hover transition-colors"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
@@ -503,24 +503,24 @@ export function AddIdeaMenu({
           </button>
           {/* Mobile: desktop-only note */}
           <div className="sm:hidden px-4 py-3">
-            <div className="flex items-center gap-3 text-sm text-cream/35">
+            <div className="flex items-center gap-3 text-sm text-cream/50">
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Save to HHC
             </div>
-            <p className="text-[11px] text-cream/40 mt-1 ml-7">
+            <p className="text-[11px] text-cream/55 mt-1 ml-7">
               Web import is available on desktop via the bookmarklet.{' '}
               <a href="/app/save-from-web" className="text-sandstone/60 hover:text-sandstone underline">Learn how</a>
             </p>
           </div>
           {onImageUrl && (
             <>
-              <div className="border-t border-cream/8" />
+              <div className="border-t border-cream/12" />
               <button
                 type="button"
                 onClick={() => { onImageUrl(); setOpen(false) }}
-                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/80 hover:text-cream hover:bg-stone-hover transition-colors"
               >
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" />
@@ -532,11 +532,11 @@ export function AddIdeaMenu({
           )}
           {onPack && (
             <>
-              <div className="border-t border-cream/8" />
+              <div className="border-t border-cream/12" />
               <button
                 type="button"
                 onClick={() => { onPack(); setOpen(false) }}
-                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/70 hover:text-cream hover:bg-cream/5 transition-colors"
+                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-cream/80 hover:text-cream hover:bg-stone-hover transition-colors"
               >
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="2" y="7" width="20" height="14" rx="2" />
@@ -761,7 +761,7 @@ export function IdeasBoard({
                     className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
                       compareMode
                         ? 'bg-sandstone/20 text-sandstone'
-                        : 'bg-cream/10 text-cream/50 hover:text-cream/70'
+                        : 'bg-cream/10 text-cream/65 hover:text-cream/80'
                     }`}
                   >
                     {compareMode ? 'Cancel' : 'Compare'}
@@ -778,7 +778,7 @@ export function IdeasBoard({
                 ref={noteInputRef}
                 type="text"
                 placeholder="Option name..."
-                className="w-full bg-basalt-50 border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+                className="w-full bg-stone border border-cream/20 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleNoteSubmit((e.target as HTMLInputElement).value)
                   if (e.key === 'Escape') setShowNoteInput(false)
@@ -852,13 +852,13 @@ export function IdeasBoard({
                       <button
                         type="button"
                         onClick={() => addActionsRef?.current?.triggerNote()}
-                        className="w-full min-h-[120px] border-2 border-dashed border-cream/15 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-sandstone/40 hover:bg-cream/[0.02] transition-all"
+                        className="w-full min-h-[120px] border-2 border-dashed border-cream/15 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-sandstone/40 hover:bg-stone-50 transition-all"
                       >
-                        <svg className="w-6 h-6 text-cream/25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg className="w-6 h-6 text-cream/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round" />
                           <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round" />
                         </svg>
-                        <span className="text-sm text-cream/30">Add option</span>
+                        <span className="text-sm text-cream/45">Add option</span>
                       </button>
                     </div>
                   )}
@@ -922,13 +922,13 @@ export function IdeasBoard({
                     <button
                       type="button"
                       onClick={() => addActionsRef?.current?.triggerNote()}
-                      className="min-h-[100px] border-2 border-dashed border-cream/15 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-sandstone/40 hover:bg-cream/[0.02] transition-all"
+                      className="min-h-[100px] border-2 border-dashed border-cream/15 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-sandstone/40 hover:bg-stone-50 transition-all"
                     >
-                      <svg className="w-6 h-6 text-cream/25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg className="w-6 h-6 text-cream/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round" />
                         <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round" />
                       </svg>
-                      <span className="text-sm text-cream/30">Add option</span>
+                      <span className="text-sm text-cream/45">Add option</span>
                     </button>
                   )}
                 </div>
@@ -937,7 +937,7 @@ export function IdeasBoard({
                   <button
                     type="button"
                     onClick={() => setExpanded(true)}
-                    className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors md:hidden"
+                    className="w-full py-2 text-sm text-cream/65 hover:text-cream/90 transition-colors md:hidden"
                   >
                     Show {hiddenCount} more option{hiddenCount !== 1 ? 's' : ''}
                   </button>
@@ -946,7 +946,7 @@ export function IdeasBoard({
                   <button
                     type="button"
                     onClick={() => setExpanded(false)}
-                    className="w-full py-2 text-sm text-cream/50 hover:text-cream/80 transition-colors md:hidden"
+                    className="w-full py-2 text-sm text-cream/65 hover:text-cream/90 transition-colors md:hidden"
                   >
                     Show less
                   </button>
@@ -970,9 +970,9 @@ export function IdeasBoard({
 
           {/* Empty state */}
           {decision.options.length === 0 && (
-            <div className="bg-basalt-50 rounded-card p-8 text-center mb-4">
-              <p className="text-cream/60 text-sm font-medium mb-1">No options yet</p>
-              <p className="text-cream/35 text-xs mb-4">
+            <div className="bg-stone rounded-card p-8 text-center mb-4">
+              <p className="text-cream/70 text-sm font-medium mb-1">No options yet</p>
+              <p className="text-cream/50 text-xs mb-4">
                 Add photos, text, or save from the web to start comparing options.
               </p>
               {!readOnly && (
@@ -980,7 +980,7 @@ export function IdeasBoard({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80 rounded-full text-xs transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/70 hover:bg-cream/30 hover:text-cream/90 rounded-full text-xs transition-colors"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></svg>
                     Add from Photos
@@ -988,7 +988,7 @@ export function IdeasBoard({
                   <button
                     type="button"
                     onClick={handleAddTextCard}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80 rounded-full text-xs transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/70 hover:bg-cream/30 hover:text-cream/90 rounded-full text-xs transition-colors"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" /></svg>
                     Add as Text
@@ -997,13 +997,13 @@ export function IdeasBoard({
                   <button
                     type="button"
                     onClick={() => setShowWebDialog(true)}
-                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/60 hover:bg-cream/15 hover:text-cream/80 rounded-full text-xs transition-colors"
+                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/10 text-cream/70 hover:bg-cream/30 hover:text-cream/90 rounded-full text-xs transition-colors"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     Save to HHC
                   </button>
                   {/* Mobile: desktop-only note */}
-                  <span className="sm:hidden inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream/5 text-cream/30 rounded-full text-xs">
+                  <span className="sm:hidden inline-flex items-center gap-1.5 px-3 py-1.5 bg-stone-200 text-cream/45 rounded-full text-xs">
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     Desktop only · <a href="/app/save-from-web" className="text-sandstone/60 underline">Learn how</a>
                   </span>
@@ -1103,11 +1103,11 @@ function ImageUrlModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-basalt-50 border border-cream/15 rounded-xl shadow-xl w-full max-w-md p-5">
+      <div className="relative bg-stone border border-cream/15 rounded-xl shadow-xl w-full max-w-md p-5">
         <h3 className="text-lg font-medium text-cream mb-4">Add Image URL</h3>
         <div className="space-y-3">
           <div>
-            <label className="block text-xs text-cream/50 mb-1">Image URL</label>
+            <label className="block text-xs text-cream/65 mb-1">Image URL</label>
             <input
               autoFocus
               type="url"
@@ -1115,18 +1115,18 @@ function ImageUrlModal({
               onChange={(e) => { setUrl(e.target.value); setError('') }}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
               placeholder="https://example.com/photo.jpg"
-              className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+              className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
             />
           </div>
           <div>
-            <label className="block text-xs text-cream/50 mb-1">Title (optional)</label>
+            <label className="block text-xs text-cream/65 mb-1">Title (optional)</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
               placeholder="e.g. Marble countertop"
-              className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+              className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
             />
           </div>
           {error && <p className="text-xs text-red-400">{error}</p>}
@@ -1135,7 +1135,7 @@ function ImageUrlModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm text-cream/50 hover:text-cream transition-colors"
+            className="px-4 py-2 text-sm text-cream/65 hover:text-cream transition-colors"
           >
             Cancel
           </button>

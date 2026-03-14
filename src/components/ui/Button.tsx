@@ -19,7 +19,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           {
             'bg-sandstone text-basalt hover:bg-sandstone-light active:bg-sandstone-dark':
               variant === 'primary',
-            'bg-basalt-50 text-cream border border-cream/20 hover:border-cream/40 hover:bg-basalt-100':
+            'bg-stone text-cream border border-cream/15 hover:border-cream/30 hover:bg-stone-hover':
               variant === 'secondary',
             'text-cream hover:text-sandstone':
               variant === 'ghost',

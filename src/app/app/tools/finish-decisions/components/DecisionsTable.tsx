@@ -106,8 +106,8 @@ export function DecisionsTable({
 
   if (decisions.length === 0) {
     return (
-      <div className="text-center py-8 text-cream/50 text-sm">
-        No selections yet. Use <strong className="text-cream/60">+ Selection</strong> to get started.
+      <div className="text-center py-8 text-cream/65 text-sm">
+        No selections yet. Use <strong className="text-cream/70">+ Selection</strong> to get started.
       </div>
     )
   }
@@ -132,37 +132,37 @@ export function DecisionsTable({
       {/* Desktop: table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full">
-          <thead className="border-b border-cream/10">
+          <thead className="border-b border-cream/15">
             <tr>
               <th className="px-3 py-2 w-14"></th>
               <th
                 onClick={() => toggleSort('title')}
-                className="px-3 py-2 text-left text-xs font-medium text-cream/60 cursor-pointer hover:text-cream uppercase tracking-wide"
+                className="px-3 py-2 text-left text-xs font-medium text-cream/70 cursor-pointer hover:text-cream uppercase tracking-wide"
               >
                 Selection{arrow('title')}
               </th>
               <th
                 onClick={() => toggleSort('status')}
-                className="px-3 py-2 text-left text-xs font-medium text-cream/60 cursor-pointer hover:text-cream uppercase tracking-wide"
+                className="px-3 py-2 text-left text-xs font-medium text-cream/70 cursor-pointer hover:text-cream uppercase tracking-wide"
               >
                 Status{arrow('status')}
               </th>
               <th
                 onClick={() => toggleSort('dueDate')}
-                className="px-3 py-2 text-left text-xs font-medium text-cream/60 cursor-pointer hover:text-cream uppercase tracking-wide"
+                className="px-3 py-2 text-left text-xs font-medium text-cream/70 cursor-pointer hover:text-cream uppercase tracking-wide"
               >
                 Due{arrow('dueDate')}
               </th>
               <th
                 onClick={() => toggleSort('updated')}
-                className="px-3 py-2 text-left text-xs font-medium text-cream/60 cursor-pointer hover:text-cream uppercase tracking-wide"
+                className="px-3 py-2 text-left text-xs font-medium text-cream/70 cursor-pointer hover:text-cream uppercase tracking-wide"
               >
                 Updated{arrow('updated')}
               </th>
-              <th className="px-3 py-2 text-center text-xs font-medium text-cream/60 uppercase tracking-wide">
+              <th className="px-3 py-2 text-center text-xs font-medium text-cream/70 uppercase tracking-wide">
                 Options
               </th>
-              <th className="px-3 py-2 text-left text-xs font-medium text-cream/60 uppercase tracking-wide">
+              <th className="px-3 py-2 text-left text-xs font-medium text-cream/70 uppercase tracking-wide">
                 Notes
               </th>
               {!readOnly && <th className="px-3 py-2 w-12"></th>}
@@ -176,7 +176,7 @@ export function DecisionsTable({
               return (
                 <tr
                   key={decision.id}
-                  className="border-b border-cream/5 hover:bg-basalt/50 transition-colors cursor-pointer"
+                  className="border-b border-cream/10 hover:bg-basalt/50 transition-colors cursor-pointer"
                   onClick={() =>
                     router.push(buildDecisionHref({ decisionId: decision.id, collectionId }))
                   }
@@ -217,31 +217,31 @@ export function DecisionsTable({
                   </td>
                   <td className="px-3 py-2.5">
                     {decision.dueDate ? (
-                      <span className="text-xs text-cream/60">
+                      <span className="text-xs text-cream/70">
                         {new Date(decision.dueDate + 'T00:00:00').toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
                         })}
                       </span>
                     ) : (
-                      <span className="text-xs text-cream/20">TBD</span>
+                      <span className="text-xs text-cream/35">TBD</span>
                     )}
                   </td>
                   <td className="px-3 py-2.5">
-                    <span className="text-xs text-cream/40">
+                    <span className="text-xs text-cream/55">
                       {formatRelativeDate(decision.updatedAt)}
                     </span>
                   </td>
                   <td className="px-3 py-2.5 text-center">
-                    <span className="text-xs text-cream/40">
+                    <span className="text-xs text-cream/55">
                       {decision.options.length}
                     </span>
                   </td>
                   <td className="px-3 py-2.5 max-w-[200px]">
                     {decision.notes ? (
-                      <span className="text-xs text-cream/50 truncate block">{decision.notes}</span>
+                      <span className="text-xs text-cream/65 truncate block">{decision.notes}</span>
                     ) : (
-                      <span className="text-xs text-cream/20">&mdash;</span>
+                      <span className="text-xs text-cream/35">&mdash;</span>
                     )}
                   </td>
                   {!readOnly && (

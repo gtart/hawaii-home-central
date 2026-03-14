@@ -179,16 +179,16 @@ export function QuickCaptureSheet({
   const sheetContent = (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="shrink-0 border-b border-cream/10 px-5 py-4">
+      <div className="shrink-0 border-b border-cream/15 px-5 py-4">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-lg font-medium text-cream">Quick Capture</h2>
-            <p className="text-xs text-cream/35 mt-0.5">Capture now, sort later.</p>
+            <p className="text-xs text-cream/50 mt-0.5">Capture now, sort later.</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-cream/40 hover:text-cream transition-colors shrink-0"
+            className="text-cream/55 hover:text-cream transition-colors shrink-0"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
@@ -228,7 +228,7 @@ export function QuickCaptureSheet({
                 className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors ${
                   mode === tab.key
                     ? 'bg-sandstone/20 text-sandstone font-medium'
-                    : 'text-cream/40 hover:text-cream/60 bg-cream/5'
+                    : 'text-cream/55 hover:text-cream/70 bg-stone-200'
                 }`}
               >
                 {tab.icon}
@@ -262,15 +262,15 @@ export function QuickCaptureSheet({
 
         {captureState === 'loading' && (
           <div className="flex items-center justify-center gap-3 py-8">
-            <div className="w-5 h-5 border-2 border-cream/20 border-t-sandstone rounded-full animate-spin" />
-            <span className="text-sm text-cream/50">Capturing...</span>
+            <div className="w-5 h-5 border-2 border-cream/35 border-t-sandstone rounded-full animate-spin" />
+            <span className="text-sm text-cream/65">Capturing...</span>
           </div>
         )}
 
         {captureState === 'success' && result && (
           <div>
             {/* Preview */}
-            <div className="flex items-start gap-3 p-3 bg-cream/5 rounded-lg mb-4">
+            <div className="flex items-start gap-3 p-3 bg-stone-200 rounded-lg mb-4">
               {(result.thumbnailUrl || result.imageUrl) && (
                 <img
                   src={result.thumbnailUrl || result.imageUrl || ''}
@@ -280,7 +280,7 @@ export function QuickCaptureSheet({
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-cream truncate">{result.title || 'Captured'}</p>
-                <p className="text-[11px] text-cream/30 mt-0.5">
+                <p className="text-[11px] text-cream/45 mt-0.5">
                   {result.type === 'IMAGE' ? 'Image' : result.type === 'PAGE' ? 'Page' : 'Note'} saved to inbox
                 </p>
               </div>
@@ -303,14 +303,14 @@ export function QuickCaptureSheet({
               <button
                 type="button"
                 onClick={resetForAnother}
-                className="flex-1 px-4 py-2.5 bg-cream/5 text-cream/60 text-sm rounded-lg hover:bg-cream/10 transition-colors"
+                className="flex-1 px-4 py-2.5 bg-stone-200 text-cream/70 text-sm rounded-lg hover:bg-stone-hover transition-colors"
               >
                 Capture another
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 text-cream/40 text-sm rounded-lg hover:text-cream/60 transition-colors"
+                className="px-4 py-2.5 text-cream/55 text-sm rounded-lg hover:text-cream/70 transition-colors"
               >
                 Done
               </button>
@@ -331,7 +331,7 @@ export function QuickCaptureSheet({
                     onChange={(e) => { setUrl(e.target.value); setError('') }}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleUrlCapture() }}
                     placeholder="Paste a URL..."
-                    className="flex-1 bg-cream/5 border border-cream/10 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/40"
+                    className="flex-1 bg-stone-200 border border-cream/15 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/40"
                   />
                   <button
                     type="button"
@@ -342,7 +342,7 @@ export function QuickCaptureSheet({
                     Capture
                   </button>
                 </div>
-                <p className="text-[11px] text-cream/25 mt-2">
+                <p className="text-[11px] text-cream/40 mt-2">
                   Paste a product page, image, or any URL
                 </p>
               </div>
@@ -354,25 +354,25 @@ export function QuickCaptureSheet({
                 <button
                   type="button"
                   onClick={() => cameraRef.current?.click()}
-                  className="flex-1 flex flex-col items-center gap-2 py-6 bg-cream/5 border border-cream/10 rounded-xl hover:bg-cream/8 transition-colors"
+                  className="flex-1 flex flex-col items-center gap-2 py-6 bg-stone-200 border border-cream/15 rounded-xl hover:bg-stone-hover transition-colors"
                 >
-                  <svg className="w-8 h-8 text-cream/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <svg className="w-8 h-8 text-cream/55" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
                     <circle cx="12" cy="13" r="4" />
                   </svg>
-                  <span className="text-xs text-cream/50">Camera</span>
+                  <span className="text-xs text-cream/65">Camera</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => galleryRef.current?.click()}
-                  className="flex-1 flex flex-col items-center gap-2 py-6 bg-cream/5 border border-cream/10 rounded-xl hover:bg-cream/8 transition-colors"
+                  className="flex-1 flex flex-col items-center gap-2 py-6 bg-stone-200 border border-cream/15 rounded-xl hover:bg-stone-hover transition-colors"
                 >
-                  <svg className="w-8 h-8 text-cream/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <svg className="w-8 h-8 text-cream/55" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <rect x="3" y="3" width="18" height="18" rx="2" />
                     <circle cx="8.5" cy="8.5" r="1.5" />
                     <path d="M21 15l-5-5L5 21" />
                   </svg>
-                  <span className="text-xs text-cream/50">Gallery</span>
+                  <span className="text-xs text-cream/65">Gallery</span>
                 </button>
               </div>
             )}
@@ -385,10 +385,10 @@ export function QuickCaptureSheet({
                   onChange={(e) => { setNote(e.target.value); setError('') }}
                   placeholder="Type a note..."
                   rows={3}
-                  className="w-full bg-cream/5 border border-cream/10 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/40 resize-none"
+                  className="w-full bg-stone-200 border border-cream/15 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/40 resize-none"
                 />
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-[11px] text-cream/20">{note.length}/2000</span>
+                  <span className="text-[11px] text-cream/35">{note.length}/2000</span>
                   <button
                     type="button"
                     onClick={handleNoteCapture}
@@ -422,7 +422,7 @@ export function QuickCaptureSheet({
       {/* Desktop: centered modal */}
       <div className="hidden md:flex fixed inset-0 z-[56] items-center justify-center pointer-events-none">
         <div
-          className="w-full max-w-md bg-basalt-50 border border-cream/10 rounded-xl shadow-2xl pointer-events-auto"
+          className="w-full max-w-md bg-stone border border-cream/15 rounded-xl shadow-2xl pointer-events-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {sheetContent}
@@ -431,11 +431,11 @@ export function QuickCaptureSheet({
 
       {/* Mobile: bottom sheet */}
       <div
-        className="md:hidden fixed inset-x-0 bottom-0 z-[56] bg-basalt-50 border-t border-cream/10 rounded-t-xl shadow-2xl"
+        className="md:hidden fixed inset-x-0 bottom-0 z-[56] bg-stone border-t border-cream/15 rounded-t-xl shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center pt-2 pb-1">
-          <div className="w-10 h-1 bg-cream/15 rounded-full" />
+          <div className="w-10 h-1 bg-cream/30 rounded-full" />
         </div>
         {sheetContent}
         <div className="pb-[env(safe-area-inset-bottom)]" />

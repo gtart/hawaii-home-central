@@ -11,7 +11,7 @@ export default function DecisionDetailError({
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-md mx-auto text-center">
         <h2 className="text-lg font-medium text-cream mb-2">Something went wrong</h2>
-        <p className="text-sm text-cream/50 mb-4">
+        <p className="text-sm text-cream/65 mb-4">
           {error.message || 'An unexpected error occurred while loading this decision.'}
         </p>
         <button

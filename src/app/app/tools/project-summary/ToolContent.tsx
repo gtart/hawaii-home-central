@@ -198,7 +198,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     return (
       <div className="text-center py-24">
         <h2 className="font-serif text-2xl text-cream mb-2">No Access</h2>
-        <p className="text-cream/50 text-sm">
+        <p className="text-cream/65 text-sm">
           You don&apos;t have access to this plan.
         </p>
       </div>
@@ -232,7 +232,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
             <button
               type="button"
               onClick={handleCopySummary}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cream/65 hover:text-cream/80 bg-stone-200 hover:bg-stone-hover transition-colors"
               title="Copy plan summary to clipboard"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -250,14 +250,14 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
             <button
               type="button"
               onClick={handleOpenComments}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cream/65 hover:text-cream/80 bg-stone-200 hover:bg-stone-hover transition-colors"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Comments
               {collComments.comments.length > 0 && (
-                <span className="bg-cream/10 text-cream/40 text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
+                <span className="bg-cream/15 text-cream/55 text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
                   {collComments.comments.length}
                 </span>
               )}
@@ -267,8 +267,8 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       />
 
       {isSyncing && (
-        <div className="flex items-center gap-2 text-xs text-cream/30 mb-4">
-          <div className="w-3 h-3 border border-cream/20 border-t-cream/50 rounded-full animate-spin" />
+        <div className="flex items-center gap-2 text-xs text-cream/45 mb-4">
+          <div className="w-3 h-3 border border-cream/35 border-t-cream/65 rounded-full animate-spin" />
           Saving...
         </div>
       )}

@@ -69,7 +69,7 @@ export function SelectionsWorkspaceLoader({
   if (!currentProject) {
     return (
       <div className="pt-32 pb-24 px-6">
-        <div className="max-w-4xl mx-auto text-center py-12 text-cream/50">
+        <div className="max-w-4xl mx-auto text-center py-12 text-cream/65">
           <p>No project selected.</p>
         </div>
       </div>
@@ -79,7 +79,7 @@ export function SelectionsWorkspaceLoader({
   if (isLoading) {
     return (
       <div className="pt-32 pb-24 px-6">
-        <div className="max-w-4xl mx-auto text-center py-12 text-cream/50">
+        <div className="max-w-4xl mx-auto text-center py-12 text-cream/65">
           <p>Loading...</p>
         </div>
       </div>
@@ -90,7 +90,7 @@ export function SelectionsWorkspaceLoader({
     return (
       <div className="pt-32 pb-24 px-6">
         <div className="max-w-4xl mx-auto text-center py-12">
-          <p className="text-cream/50 mb-4">{error || 'Could not load Selections.'}</p>
+          <p className="text-cream/65 mb-4">{error || 'Could not load Selections.'}</p>
           <button
             type="button"
             onClick={() => window.location.reload()}

@@ -93,7 +93,7 @@ export function QuickAddDecisionModal({ onAdd, onClose, triggerRef, allTags }: P
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative bg-basalt-50 border-t sm:border border-cream/10 rounded-t-xl sm:rounded-xl w-full sm:max-w-md"
+        className="relative bg-stone border-t sm:border border-cream/15 rounded-t-xl sm:rounded-xl w-full sm:max-w-md"
         role="dialog"
         aria-modal="true"
       >
@@ -103,7 +103,7 @@ export function QuickAddDecisionModal({ onAdd, onClose, triggerRef, allTags }: P
           <button
             type="button"
             onClick={handleClose}
-            className="text-cream/40 hover:text-cream transition-colors"
+            className="text-cream/55 hover:text-cream transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
@@ -114,7 +114,7 @@ export function QuickAddDecisionModal({ onAdd, onClose, triggerRef, allTags }: P
         <div className="px-5 pb-5 space-y-4">
           {/* Title input */}
           <div>
-            <label className="block text-sm text-cream/70 mb-1.5">Selection name</label>
+            <label className="block text-sm text-cream/80 mb-1.5">Selection name</label>
             <input
               ref={inputRef}
               type="text"
@@ -122,13 +122,13 @@ export function QuickAddDecisionModal({ onAdd, onClose, triggerRef, allTags }: P
               onChange={(e) => { setTitle(e.target.value); setError('') }}
               onKeyDown={handleKeyDown}
               placeholder="e.g. Countertop, Faucet, Tile..."
-              className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/30 focus:outline-none focus:border-sandstone/50"
+              className="w-full bg-basalt border border-cream/20 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
             />
           </div>
 
           {/* Labels */}
           <div>
-            <label className="block text-sm text-cream/70 mb-1.5">Labels</label>
+            <label className="block text-sm text-cream/80 mb-1.5">Labels</label>
             <TagInput
               tags={tags}
               onChange={setTags}
