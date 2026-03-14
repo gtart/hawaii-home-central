@@ -101,7 +101,7 @@ function StatusDropdown({
               >
                 <span className={`w-2 h-2 rounded-full ${cfg.bgColor} ${isActive ? 'ring-1 ring-cream/20' : ''}`} />
                 <span className={cfg.color}>{cfg.label}</span>
-                {isActive && <span className="text-cream/20 ml-auto text-[10px]">Current</span>}
+                {isActive && <span className="text-cream/30 ml-auto text-[10px]">Current</span>}
               </button>
             )
           })}
@@ -117,10 +117,10 @@ function StatusDropdown({
                 <line x1="12" y1="9" x2="12" y2="13" strokeLinecap="round" />
                 <line x1="12" y1="17" x2="12.01" y2="17" strokeLinecap="round" />
               </svg>
-              Unresolved Items
+              Items Still to Decide
             </h3>
             <p className="text-xs text-cream/50 leading-relaxed">
-              This change has <strong className="text-amber-400">{unresolvedItemCount} unresolved item{unresolvedItemCount !== 1 ? 's' : ''}</strong>.
+              This change has <strong className="text-amber-400">{unresolvedItemCount} item{unresolvedItemCount !== 1 ? 's' : ''} still to decide</strong>.
               You can still proceed, but the items will remain tracked.
             </p>
             <div className="flex gap-2 justify-end pt-1">
@@ -159,9 +159,9 @@ function IncorporateDialog({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
       <div className="w-full max-w-md rounded-xl border border-cream/10 bg-[#1a1a1a] p-6 shadow-2xl space-y-4">
-        <h3 className="text-base font-semibold text-cream">Add to Official Plan</h3>
+        <h3 className="text-base font-semibold text-cream">Add to Your Plan</h3>
         <p className="text-sm text-cream/60 leading-relaxed">
-          This will mark <span className="text-cream/80">&ldquo;{change.title}&rdquo;</span> as part of the official plan record.
+          This will mark <span className="text-cream/80">&ldquo;{change.title}&rdquo;</span> as part of your plan.
         </p>
 
         {/* Impact summary */}
@@ -185,7 +185,7 @@ function IncorporateDialog({
               <line x1="12" y1="8" x2="12" y2="12" strokeLinecap="round" />
               <line x1="12" y1="16" x2="12.01" y2="16" strokeLinecap="round" />
             </svg>
-            {openItemCount} unresolved item{openItemCount !== 1 ? 's' : ''} in the plan
+            {openItemCount} item{openItemCount !== 1 ? 's' : ''} still to decide in the plan
           </div>
         )}
 
@@ -195,7 +195,7 @@ function IncorporateDialog({
           <textarea
             value={mergeNote}
             onChange={(e) => setMergeNote(e.target.value)}
-            placeholder="Any notes about this incorporation..."
+            placeholder="Any notes about adding this to the plan..."
             rows={2}
             className="w-full bg-cream/5 border border-cream/10 rounded-md px-3 py-2 text-xs text-cream/60 placeholder-cream/20 outline-none focus:border-sandstone/30 resize-none"
           />
@@ -214,7 +214,7 @@ function IncorporateDialog({
             onClick={() => onConfirm(mergeNote.trim())}
             className="px-3 py-1.5 text-xs bg-teal-400/20 text-teal-400 hover:bg-teal-400/30 rounded-md transition-colors"
           >
-            Add to Official Plan
+            Add to Your Plan
           </button>
         </div>
       </div>
@@ -298,7 +298,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
 
   return (
     <SectionHeader
-      title="Change Log"
+      title="Changes"
       count={changes.length}
       readOnly={readOnly}
     >
@@ -349,7 +349,10 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
       })()}
 
       {changes.length === 0 && !showAddForm && (
-        <p className="text-sm text-cream/30 italic">No changes yet. When something changes from the original plan — a new material, extra work, or a removed item — add it here so you have a record of what changed and why.</p>
+        <div className="text-sm text-cream/40 space-y-1.5">
+          <p>No changes yet.</p>
+          <p className="text-xs text-cream/35">When something deviates from the approved plan — a new material, added work, or a removed scope item — add it here. Each change is tracked separately so the original plan stays intact. You can also link related Selections or Fix Items to each change.</p>
+        </div>
       )}
 
       {/* Tab bar: Accepted / Pending Review / Not Approved */}
@@ -376,7 +379,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
               key={change.id}
               ref={change.id === focusEntryId ? focusRef : undefined}
               className={`rounded-lg bg-cream/[0.02] border group ${
-                change.id === focusEntryId ? 'border-sandstone/30 ring-1 ring-sandstone/20' : 'border-cream/[0.04]'
+                change.id === focusEntryId ? 'border-sandstone/30 ring-1 ring-sandstone/20' : 'border-cream/[0.06]'
               }`}
             >
               {/* Header row */}
@@ -385,7 +388,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                 onClick={() => setExpandedId(isExpanded ? null : change.id)}
               >
                 <svg
-                  className={`w-3 h-3 text-cream/20 transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
+                  className={`w-3 h-3 text-cream/30 transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
                   viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
                 >
                   <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
@@ -395,7 +398,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
 
                 {change.incorporated && (
                   <span className="text-[9px] text-teal-400/50 bg-teal-400/5 px-1.5 py-0.5 rounded-full shrink-0 hidden md:inline-flex">
-                    Incorporated
+                    In Plan
                   </span>
                 )}
 
@@ -415,11 +418,11 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                 </div>
 
                 {change.cost_impact && (
-                  <span className="text-[10px] text-cream/35 shrink-0 hidden md:inline">{change.cost_impact}</span>
+                  <span className="text-[10px] text-cream/45 shrink-0 hidden md:inline">{change.cost_impact}</span>
                 )}
 
                 {(change.attachments?.length || 0) > 0 && (
-                  <span className="text-[10px] text-cream/25 shrink-0 hidden md:flex items-center gap-0.5">
+                  <span className="text-[10px] text-cream/35 shrink-0 hidden md:flex items-center gap-0.5">
                     <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -428,7 +431,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                 )}
 
                 {commentCount > 0 && (
-                  <span className="text-[10px] text-cream/25 shrink-0 hidden md:inline">
+                  <span className="text-[10px] text-cream/35 shrink-0 hidden md:inline">
                     {commentCount} comment{commentCount !== 1 ? 's' : ''}
                   </span>
                 )}
@@ -478,86 +481,105 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
 
               {/* Expanded detail */}
               {isExpanded && (
-                <div className="px-3 pb-3 pt-1 border-t border-cream/[0.04] space-y-2">
+                <div className="px-3 pb-3 pt-1 border-t border-cream/[0.06] space-y-2">
                   <div>
-                    <label className="text-[10px] text-cream/30 block mb-0.5">Scope / What&apos;s Changed</label>
+                    <label className="text-[10px] text-cream/40 block mb-0.5">What Changed</label>
                     <InlineEdit
                       value={change.description || ''}
                       onSave={(v) => updateChange(change.id, { description: v || undefined })}
                       placeholder="What changed?"
                       readOnly={readOnly}
                       multiline
-                      displayClassName="text-xs text-cream/50"
+                      displayClassName="text-xs text-cream/60"
                       className="text-xs"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[10px] text-cream/30 block mb-0.5">Reason (optional)</label>
+                    <label className="text-[10px] text-cream/40 block mb-0.5">Reason (optional)</label>
                     <InlineEdit
                       value={change.rationale || ''}
                       onSave={(v) => updateChange(change.id, { rationale: v || undefined })}
                       placeholder="Why was this change needed?"
                       readOnly={readOnly}
                       multiline
-                      displayClassName="text-xs text-cream/50"
+                      displayClassName="text-xs text-cream/60"
                       className="text-xs"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div>
-                      <label className="text-[10px] text-cream/30 block mb-0.5">Requested By</label>
+                      <label className="text-[10px] text-cream/40 block mb-0.5">Requested By</label>
                       <InlineEdit
                         value={change.requested_by || ''}
                         onSave={(v) => updateChange(change.id, { requested_by: v || undefined })}
                         placeholder="Who requested?"
                         readOnly={readOnly}
-                        displayClassName="text-xs text-cream/50"
+                        displayClassName="text-xs text-cream/60"
                         className="text-xs"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-cream/30 block mb-0.5">Cost Impact</label>
+                      <label className="text-[10px] text-cream/40 block mb-0.5">Cost Impact</label>
                       <InlineEdit
                         value={change.cost_impact || ''}
                         onSave={(v) => updateChange(change.id, { cost_impact: v ? formatCost(v) : undefined })}
                         placeholder="e.g. +$2,500"
                         readOnly={readOnly}
-                        displayClassName="text-xs text-cream/50"
+                        displayClassName="text-xs text-cream/60"
                         className="text-xs"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-cream/30 block mb-0.5">Schedule Impact</label>
+                      <label className="text-[10px] text-cream/40 block mb-0.5">Schedule Impact</label>
                       <InlineEdit
                         value={change.schedule_impact || ''}
                         onSave={(v) => updateChange(change.id, { schedule_impact: v || undefined })}
                         placeholder="e.g. adds 1 week"
                         readOnly={readOnly}
-                        displayClassName="text-xs text-cream/50"
+                        displayClassName="text-xs text-cream/60"
                         className="text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Linked Selections & Fix Items — shown early for discoverability */}
+                  <div>
+                    {(change.links.length > 0 || !readOnly) && (
+                      <label className="text-[10px] text-cream/40 uppercase tracking-wider font-medium block mb-1">Linked Selections &amp; Fix Items</label>
+                    )}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <LinkPills
+                        links={change.links}
+                        onRemove={readOnly ? undefined : (linkId) => removeLink(change.id, linkId)}
+                        readOnly={readOnly}
+                      />
+                      <AttachMenu
+                        readOnly={readOnly}
+                        onAttach={(link) => addLink(change.id, link)}
+                        projectId={api.projectId}
                       />
                     </div>
                   </div>
 
                   {/* Contractor Response */}
                   <div>
-                    <label className="text-[10px] text-cream/30 block mb-0.5">Note from Contractor (optional)</label>
+                    <label className="text-[10px] text-cream/40 block mb-0.5">Note from Contractor (optional)</label>
                     <InlineEdit
                       value={change.contractor_response || ''}
                       onSave={(v) => updateChange(change.id, { contractor_response: v || undefined })}
                       placeholder="Contractor's response to this change..."
                       readOnly={readOnly}
                       multiline
-                      displayClassName="text-xs text-cream/50"
+                      displayClassName="text-xs text-cream/60"
                       className="text-xs"
                     />
                   </div>
 
                   {(change.final_note || !readOnly) && (
                     <div>
-                      <label className="text-[10px] text-cream/30 block mb-0.5">Additional Notes (optional)</label>
+                      <label className="text-[10px] text-cream/40 block mb-0.5">Additional Notes (optional)</label>
                       <InlineEdit
                         value={change.final_note || ''}
                         onSave={(v) => updateChange(change.id, { final_note: v || undefined })}
@@ -579,14 +601,14 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                       <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                       </svg>
-                      Add to Official Plan
+                      Add to Your Plan
                     </button>
                   )}
 
                   {/* Incorporation traceability */}
                   {change.incorporated && change.incorporated_at && (
                     <div className="text-[10px] text-teal-400/40">
-                      Incorporated on {new Date(change.incorporated_at).toLocaleDateString()}
+                      Added to plan on {new Date(change.incorporated_at).toLocaleDateString()}
                       {change.incorporated_by && ` by ${change.incorporated_by}`}
                     </div>
                   )}
@@ -607,7 +629,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                   {((change.attachments?.length || 0) > 0 || !readOnly) && (
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] text-cream/30">Attachments</span>
+                        <span className="text-[10px] text-cream/40">Attachments</span>
                         {!readOnly && (
                           <button
                             type="button"
@@ -616,7 +638,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                               setTimeout(() => changeFileInputRef.current?.click(), 0)
                             }}
                             disabled={uploadingChangeId === change.id}
-                            className="inline-flex items-center gap-1 text-[10px] text-cream/25 hover:text-cream/50 transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-1 text-[10px] text-cream/35 hover:text-cream/50 transition-colors disabled:opacity-50"
                           >
                             {uploadingChangeId === change.id ? (
                               <div className="w-2.5 h-2.5 border border-cream/20 border-t-cream/50 rounded-full animate-spin" />
@@ -631,7 +653,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                       </div>
                       {(change.attachments || []).map((att) => (
                         <div key={att.id} className="flex items-center gap-1.5 text-[10px] text-cream/40 ml-1">
-                          <svg className="w-2.5 h-2.5 text-cream/20 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <svg className="w-2.5 h-2.5 text-cream/30 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                             <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                           <a href={att.url} target="_blank" rel="noopener noreferrer" className="hover:text-cream/60 truncate">{att.label}</a>
@@ -640,18 +662,6 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2">
-                    <LinkPills
-                      links={change.links}
-                      onRemove={readOnly ? undefined : (linkId) => removeLink(change.id, linkId)}
-                      readOnly={readOnly}
-                    />
-                    <AttachMenu
-                      readOnly={readOnly}
-                      onAttach={(link) => addLink(change.id, link)}
-                      projectId={api.projectId}
-                    />
-                  </div>
                 </div>
               )}
             </div>
@@ -688,7 +698,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
 
             {/* Tab content */}
             {currentItems.length === 0 && (
-              <p className="text-xs text-cream/20 italic py-2">
+              <p className="text-xs text-cream/30 italic py-2">
                 {activeTab === 'accepted' && 'No accepted changes yet.'}
                 {activeTab === 'pending' && 'No changes pending review.'}
                 {activeTab === 'not_approved' && 'No rejected changes.'}

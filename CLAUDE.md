@@ -53,22 +53,24 @@ Homeowners plan renovations, track selections, manage fix lists, and document pr
 - Payload validators: `src/lib/tools/validateToolPayload.ts`
 - Sidebar nav: `src/components/app/SidebarNav.tsx`
 
-### Issue Tracking
-- **GitHub Issues is the single source of truth** for all bugs, tasks, and backlog — use `gh issue list`, `gh issue create`, `gh issue close`
+### Issue Tracking & Source of Truth
+- **During an active sprint**, the sprint doc in `docs/ai/sprints/` is the live source of truth for in-scope work. Track issue-by-issue progress there, not in GitHub Issues.
+- **GitHub Issues** is the source of truth for backlog, out-of-sprint discoveries, deferred work, and cross-sprint issues. Use `gh issue list`, `gh issue create`, `gh issue close`.
 - Labels: `P0: broken`, `P1: degraded`, `P2: cosmetic`, `P3: polish` for priority
 - Labels: `bug`, `feature`, `cleanup`, `review-finding` for category
 - Labels: `investigating`, `in-progress`, `blocked`, `deferred` for status
-- When fixing a bug or completing a feature, close the issue with `gh issue close <number> -c "reason"`
-- When finding new issues during work, create them immediately with `gh issue create`
-- **`BACKLOG_IDEAS.md`** holds deep specs for features too detailed for a GitHub Issue body (architecture, UX flows, integration plans). Update it when a conversation produces design decisions or implementation details worth preserving for a deferred feature. Don't use it for simple bugs or status tracking.
+- When fixing a bug or completing a feature outside a sprint, close the issue with `gh issue close <number> -c "reason"`
+- When finding new issues during sprint work, classify them (see Mid-Sprint Issue Rule below)
+- **`BACKLOG_IDEAS.md`** holds deep specs for features too detailed for a GitHub Issue body. Don't use it for status tracking.
 
 ### Current Work
-- **Always read `docs/ai/active-sprint.md` first** — it points to the current sprint doc and lists what's in progress
-- Sprint docs live in `docs/ai/sprints/` — each contains issue tracker, acceptance criteria, and files changed
+- **Always read `docs/ai/active-sprint.md` first** — it is the pointer to the active sprint and its handoff state
+- Sprint docs live in `docs/ai/sprints/` — each contains the issue ledger, acceptance criteria, and files changed
+- See `docs/ai/workflows/sprint-ledger-workflow.md` for the full sprint lifecycle
 - See `docs/ai/migrations/project-summary-to-plan-and-changes.md` for migration plan
 
 ### AI Review & Logging System
-- **Codex instructions**: `AGENTS.md` at repo root — defines Codex's review-only role, "latest" definition, and audit format
+- **Codex instructions**: `AGENTS.md` at repo root — defines Codex's review-only role (with sprint ledger update exception), "latest" definition, and audit format
 - **Review ledger**: `docs/ai/reviews/` — Codex writes audits into `codex/`, Claude writes responses into `claude/`
 - **When asked to respond to a Codex review**: read the latest file in `docs/ai/reviews/codex/`, act on findings, write response to `docs/ai/reviews/claude/`
 - **UI review workflow**: `docs/ai/ui-reviews/README.md` — screenshot capture, zip packaging, and findings handoff
@@ -79,38 +81,89 @@ Homeowners plan renovations, track selections, manage fix lists, and document pr
 - See `docs/ai/agent-logs/README.md` for log format and inspection commands
 
 ### Workflow Discipline
-- After meaningful findings: create or update GitHub Issues (`gh issue create` / `gh issue comment`)
 - After implementation: run issue-validator and qa-regression-checker agents
 - Before declaring "done": verify both desktop and mobile
 - When touching Plan & Changes files: check migration doc first
-- Don't declare work complete until validation and issue updates are done
 - Use specialized agents (`/.claude/agents/`) for focused review tasks
-- After sprint completion: write a review into `docs/ai/reviews/claude/`
+- Out-of-sprint discoveries: create GitHub Issues (`gh issue create`)
 
-### Sprint Handoff Workflow (Claude → Codex)
+### Sprint-First Rule
 
-Every sprint must maintain two handoff docs so Codex can review without guessing what changed.
+Unless a request is a tiny isolated fix (single file, no review needed), treat it as sprint-based work.
+
+**A sprint is required when the request:**
+- includes multiple issues or changes
+- affects UI/UX, workflows, information architecture, or architecture
+- spans multiple files or implementation steps
+- should be reviewed by Codex
+- should be tracked to completion
+
+**Do not begin substantial implementation** until you have either:
+1. created a new sprint doc and updated `docs/ai/active-sprint.md`, or
+2. updated the existing active sprint ledger with the new work
+
+### Sprint Lifecycle
+
+See `docs/ai/workflows/sprint-ledger-workflow.md` for full details. Summary:
 
 #### 1. Starting a sprint
-- Create a sprint doc in `docs/ai/sprints/{sprint-name}.md` with:
-  - Issue tracker table (ID, Title, Status, Claude Verified, Codex Verified)
-  - Per-issue **requirements + acceptance criteria** (what to check, which files, expected behavior)
-  - Files Changed table
-  - Build Verification section
-- Update `docs/ai/active-sprint.md` to point to the new sprint doc, list files changed, and set status checkboxes
+A sprint is officially started only when ALL of these are true:
+- A sprint doc exists in `docs/ai/sprints/` using the standard template (`docs/ai/sprints/_template.md`)
+- The sprint has a clear name and goal
+- The issue ledger is populated with IDs, priorities, statuses, and acceptance criteria
+- `docs/ai/active-sprint.md` points to that sprint with status `implementation`
 
-#### 2. During implementation
-- Update the sprint doc's issue tracker as each issue is completed (Status → done)
-- Add files to the Files Changed table as they are modified
-- Keep acceptance criteria specific: name exact files, line ranges, CSS classes, copy strings
+#### 2. Issue-by-issue implementation
+- Read `docs/ai/active-sprint.md` → open the active sprint doc
+- Work issues in priority order
+- Update the ledger as work progresses (Status, Files)
+- Mark `Claude Verified: pass` only after self-checking acceptance criteria
+- Keep acceptance criteria specific: exact files, CSS classes, copy strings, behavior
 
-#### 3. Before committing / declaring done
-- Mark "Claude Verified: yes" for each issue after self-checking against acceptance criteria
+#### 3. Handoff to Codex
 - Run `npx tsc --noEmit` and `npm run build` — record results in Build Verification
-- Update `docs/ai/active-sprint.md` with the commit hash and current status
-- Ensure all "Codex Verified" cells are set to "pending"
+- Set all `Codex Verified` to `pending`
+- Update `docs/ai/active-sprint.md`: status → `ready_for_codex`, add commit hash
+- Codex reads the sprint doc, validates each issue, updates `Codex Verified` + `Codex Notes` + `Follow-up`
+- Codex writes a narrative audit to `docs/ai/reviews/codex/`
 
-#### 4. Handoff to Codex
-- The user says "review" or "hand off to Codex" — no further action needed from Claude
-- Codex reads `active-sprint.md` → sprint doc → validates each issue against acceptance criteria
-- Codex updates "Codex Verified" column and writes a review to `docs/ai/reviews/codex/`
+#### 4. Claude follow-up
+- Read Codex audit and sprint ledger notes
+- Fix issues marked `Follow-up: claude_fix`
+- Update ledger: re-verify, update `Claude Verified`
+- Write response to `docs/ai/reviews/claude/`
+- Update `docs/ai/active-sprint.md`: status → `followup_in_progress` then `ready_for_codex` again if needed
+
+#### 5. Sprint closure
+A sprint is closed only when:
+- Every in-scope issue is `done` or explicitly moved out of sprint
+- Every completed issue has `Claude Verified: pass` and `Codex Verified: pass`
+- Every issue's `Follow-up` state is explicit
+- Build/typecheck results are recorded
+- Latest Codex audit and Claude response are linked in the sprint doc
+- `docs/ai/active-sprint.md` status is set to `complete`
+
+### Mid-Sprint Issue Rule
+
+If a new issue surfaces during a sprint, classify it immediately:
+1. **In-scope** → add to the current sprint ledger with full fields
+2. **Out-of-scope** → log as `Follow-up: new_issue` or create a GitHub Issue
+3. **Too large** → requires a separate sprint
+
+Log the classification in the sprint doc's Scope Change Log. Never let issues drift untracked in chat.
+
+### Sprint Ledger Fields
+
+Every issue in the sprint ledger must use these fields:
+
+| Field | Values |
+|-------|--------|
+| ID | Sprint-prefixed (e.g., PLAN-001) |
+| Title | Short description |
+| Priority | P0, P1, P2, P3 |
+| Status | `todo`, `in_progress`, `blocked`, `done`, `needs_followup` |
+| Claude Verified | `pending`, `pass`, `fail` |
+| Codex Verified | `pending`, `pass`, `concern`, `fail` |
+| Codex Notes | Short review note (Codex fills this) |
+| Follow-up | `none`, `claude_fix`, `new_issue`, `deferred` |
+| Files | Key files touched |

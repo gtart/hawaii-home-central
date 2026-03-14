@@ -1,10 +1,17 @@
 # AGENTS.md — Codex Instructions
 
-## Hard Rule: Review Only
+## Hard Rule: Review Only (with Sprint Ledger Exception)
 
-**Do NOT modify code, docs, issues, or backlog unless the user explicitly asks you to.**
+**Do NOT modify product code, feature docs, issues, or backlog unless the user explicitly asks you to.**
 
-Default behavior is always: read, review, write a review file — nothing else. You are an independent reviewer, not an implementer.
+Default behavior is: read, review, write a review file — nothing else. You are an independent reviewer, not an implementer.
+
+**Exception — Sprint ledger updates:** You ARE expected to update the active sprint doc's issue ledger as part of every review. Specifically, you must update these fields per issue:
+- `Codex Verified` → `pass`, `concern`, or `fail`
+- `Codex Notes` → short review finding (1-2 sentences)
+- `Follow-up` → `none`, `claude_fix`, `new_issue`, or `deferred`
+
+This is not a code change — it is part of the review workflow. Do it every time you review a sprint.
 
 ---
 
@@ -44,19 +51,19 @@ When you receive this prompt (or something similar), follow these steps:
 9. `docs/ai/qa/mobile-checklist.md` and `docs/ai/qa/desktop-checklist.md` — only when the touched work is user-facing
 10. Feature/migration docs **only when the active sprint references them**
 
-### Step 3: Validate against acceptance criteria
+### Step 3: Validate and update the sprint ledger
 
-- Read the sprint doc's **"Issues: Requirements + Acceptance Criteria"** section
-- For each issue, read the specified files and verify each acceptance criterion
-- Read the actual diffs or changed files — not just filenames or commit titles
+- Follow the **Issue-by-Issue Validation** process (see section below)
+- For each issue: read acceptance criteria → read code → verify → update ledger fields
 - Focus on the active sprint area and touched files only
-- Cross-reference against the sprint doc to understand intent
 - If the work is user-facing, assess the homeowner journey across the touched flow, not just isolated components
 - Do not stop at “code looks fine” or “UI seems okay” — judge whether the feature is understandable, calm, and trustworthy for a homeowner on both mobile and desktop
 
-### Step 4: Write your review
+### Step 4: Write your narrative audit
 
-Write a review file to: `docs/ai/reviews/codex/YYYY-MM-DD-topic-audit.md`
+After updating the sprint ledger, write a narrative audit file to: `docs/ai/reviews/codex/YYYY-MM-DD-topic-audit.md`
+
+The audit file provides context and reasoning beyond what fits in the ledger's `Codex Notes` column. The ledger is the checklist; the audit is the narrative.
 
 ---
 
@@ -64,11 +71,22 @@ Write a review file to: `docs/ai/reviews/codex/YYYY-MM-DD-topic-audit.md`
 
 - **Review touched files and the active sprint area only.** Do not do a full-app review unless explicitly requested.
 - Use `docs/ai/active-sprint.md` to narrow focus to what Claude was actually working on.
-- **Validate each issue's acceptance criteria** from the sprint doc. For each issue, state whether it passes or fails with specific evidence from the code.
-- Don't repeat what's already documented in the sprint doc — focus on what's missing, wrong, or questionable.
 - If the repo has no recent changes, say so. Don't fabricate a review.
 - Default to the HHC homeowner-first UX rubric for any user-facing review.
-- **Update the sprint doc's "Codex Verified" column** after review (mark each issue `pass`, `fail`, or `concern`).
+
+## Issue-by-Issue Validation (Required)
+
+For every sprint review, you must validate each issue in the sprint ledger individually:
+
+1. Read the issue's acceptance criteria from the sprint doc
+2. Read the actual code in the specified files — not just filenames or commit titles
+3. Determine if each acceptance criterion is met with specific evidence
+4. **Update the sprint ledger** for each issue:
+   - `Codex Verified`: `pass` if all criteria met, `concern` if mostly met with minor issues, `fail` if criteria not met
+   - `Codex Notes`: 1-2 sentence finding (what passed, what's wrong, what's questionable)
+   - `Follow-up`: `none` if clean, `claude_fix` if Claude needs to address, `new_issue` if it needs a separate ticket, `deferred` if not blocking
+5. Don't repeat what's already documented — focus on what's missing, wrong, or questionable
+6. After updating the ledger, write a narrative audit file (see Review Format below)
 
 ---
 

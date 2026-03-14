@@ -1,42 +1,46 @@
 # Active Sprint
 
-## Current: Track Plans UI Redesign (March 13, 2026)
+## Current Sprint
 
-### Sprint Doc
-`docs/ai/sprints/track-plans-ui-redesign.md`
+| Field | Value |
+|-------|-------|
+| **Sprint** | Track Plans — Mental Model Simplification + Usability Fixes |
+| **Sprint Doc** | `docs/ai/sprints/track-plans-mental-model-simplification.md` |
+| **Status** | `ready_for_codex` |
+| **Owner** | Claude |
+| **Last Updated** | 2026-03-13 |
+| **Commits** | pending |
 
-### Objective
-Major UI overhaul of Track Plans — compact plan card, file management improvements, change order tabs, field redesign, and cross-tool entity picker.
+## Handoff State
 
-### Commits
-- `d202610`
+| Field | Value |
+|-------|-------|
+| **Current Handoff** | All Codex findings addressed — 5 fails fixed, 4 concerns resolved — awaiting re-review |
+| **Latest Codex Audit** | `docs/ai/reviews/codex/2026-03-13-track-plans-mental-model-simplification-audit.md` |
+| **Latest Claude Response** | `docs/ai/reviews/claude/2026-03-13-track-plans-followup-response.md` |
 
-### Files Changed (Sprint)
-- `src/app/app/tools/project-summary/components/CurrentPlanSection.tsx`
-- `src/app/app/tools/project-summary/components/ChangesSection.tsx`
-- `src/app/app/tools/project-summary/components/DocumentsSection.tsx`
-- `src/app/app/tools/project-summary/ToolContent.tsx`
-- `src/app/app/tools/project-summary/[collectionId]/change/[changeId]/ChangeDetailContent.tsx`
-- `src/app/app/tools/project-summary/components/AttachMenu.tsx`
-- `src/app/app/tools/project-summary/components/FileDetailPanel.tsx` (new)
-- `src/app/app/tools/project-summary/components/EntityPickerModal.tsx` (new)
-- `src/app/app/tools/project-summary/components/OpenItemsList.tsx`
-- `src/app/app/tools/project-summary/components/SectionHeader.tsx`
-- `src/app/api/collections/[id]/entities/route.ts` (new)
-- `src/app/api/tools/entities/route.ts` (new)
+## Reading Order
 
-### Status
-- [x] Phase 1: Plan Card Cleanup (PLAN-001, 002, 003)
-- [x] Phase 2: File Management (PLAN-004, 005)
-- [x] Phase 3: Change Order Redesign (PLAN-006, 007, 008, 009)
-- [x] Phase 4: Cross-Tool + Polish (PLAN-010, 011)
-- [x] TypeScript passes
-- [x] Production build passes
-- [ ] Codex review
+When entering this repo, read in this order:
+1. This file (`docs/ai/active-sprint.md`) — what sprint is active, what state it's in
+2. The sprint doc above — issue ledger, acceptance criteria, verification status
+3. Latest Codex audit (if status is `codex_reviewed` or `followup_in_progress`)
+4. Latest Claude response (if one exists for this sprint)
+
+## Sprint Status Values
+
+| Status | Meaning |
+|--------|---------|
+| `implementation` | Claude is actively implementing issues |
+| `ready_for_codex` | Implementation complete, awaiting Codex review |
+| `codex_reviewed` | Codex has reviewed and updated the ledger |
+| `followup_in_progress` | Claude is addressing Codex findings |
+| `complete` | Sprint closed — all issues verified or explicitly moved out |
 
 ---
 
 ## Previous Sprints (Completed)
+- Track Plans UI Redesign (March 13, 2026) — `d202610`
 - Comment Readability + Email Notifications (March 13, 2026) — `d202610`
 - Plan & Changes Rebuild v1 (March 13, 2026) — `e78b17e`, `6888bdc`
 - UX Fixes: Track Plans/Choose Selections/Fix Issues (March 13, 2026) — `c61237e`

@@ -116,10 +116,10 @@ function StatusDropdown({
                 <line x1="12" y1="9" x2="12" y2="13" strokeLinecap="round" />
                 <line x1="12" y1="17" x2="12.01" y2="17" strokeLinecap="round" />
               </svg>
-              Unresolved Items
+              Items Still to Decide
             </h3>
             <p className="text-xs text-cream/50 leading-relaxed">
-              This change has <strong className="text-amber-400">{unresolvedItemCount} unresolved item{unresolvedItemCount !== 1 ? 's' : ''}</strong>.
+              This change has <strong className="text-amber-400">{unresolvedItemCount} item{unresolvedItemCount !== 1 ? 's' : ''} still to decide</strong>.
               You can still proceed, but the items will remain tracked.
             </p>
             <div className="flex gap-2 justify-end pt-1">
@@ -226,7 +226,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
           href={`/app/tools/project-summary/${collectionId}`}
           className="text-sandstone hover:text-sandstone-light text-sm transition-colors"
         >
-          Back to Official Plan
+          Back to Your Plan
         </Link>
       </div>
     )
@@ -246,7 +246,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Back to Official Plan
+          Back to Your Plan
         </Link>
       </div>
 
@@ -289,7 +289,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                Incorporated on {new Date(change.incorporated_at).toLocaleDateString()}
+                Added to plan on {new Date(change.incorporated_at).toLocaleDateString()}
                 {change.incorporated_by && ` by ${change.incorporated_by}`}
               </div>
             )}
@@ -427,10 +427,10 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 </div>
               )}
 
-              {/* Change Unresolved Items (PCV1-009) */}
+              {/* Change — Still to Decide (PCV1-009) */}
               <div>
                 <label className="text-[10px] text-cream/30 uppercase tracking-wider font-medium block mb-1.5">
-                  Unresolved Items
+                  Still to Decide
                 </label>
                 <OpenItemsList
                   items={change.open_items || []}
@@ -439,8 +439,8 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                   onResolve={(id, note) => updateChangeOpenItem(change.id, id, { status: 'resolved', resolution_note: note })}
                   onDelete={(id) => deleteChangeOpenItem(change.id, id)}
                   readOnly={readOnly}
-                  emptyMessage="No unresolved items for this change."
-                  addPlaceholder="Add an unresolved item for this change..."
+                  emptyMessage="Nothing left to decide for this change."
+                  addPlaceholder="Add something that needs deciding for this change..."
                 />
               </div>
 
@@ -455,14 +455,14 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                     <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                     </svg>
-                    Add to Official Plan
+                    Add to Your Plan
                   </button>
                   {showIncorporateDialog && (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
                       <div className="w-full max-w-md rounded-xl border border-cream/10 bg-[#1a1a1a] p-6 shadow-2xl space-y-4">
-                        <h3 className="text-base font-semibold text-cream">Add to Official Plan</h3>
+                        <h3 className="text-base font-semibold text-cream">Add to Your Plan</h3>
                         <p className="text-sm text-cream/60 leading-relaxed">
-                          This will mark <span className="text-cream/80">&ldquo;{change.title}&rdquo;</span> as part of the official plan record.
+                          This will mark <span className="text-cream/80">&ldquo;{change.title}&rdquo;</span> as part of your plan.
                         </p>
                         {(change.cost_impact || change.schedule_impact) && (
                           <div className="rounded-lg bg-cream/[0.03] border border-cream/[0.06] px-3 py-2 space-y-1">
@@ -476,7 +476,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                           <textarea
                             value={incorporateNote}
                             onChange={(e) => setIncorporateNote(e.target.value)}
-                            placeholder="Any notes about this incorporation..."
+                            placeholder="Any notes about adding this to the plan..."
                             rows={2}
                             className="w-full bg-cream/5 border border-cream/10 rounded-md px-3 py-2 text-xs text-cream/60 placeholder-cream/20 outline-none focus:border-sandstone/30 resize-none"
                           />
@@ -488,7 +488,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                             onClick={() => { incorporateChange(change.id, undefined, incorporateNote.trim() || undefined); setShowIncorporateDialog(false) }}
                             className="px-3 py-1.5 text-xs bg-teal-400/20 text-teal-400 hover:bg-teal-400/30 rounded-md transition-colors"
                           >
-                            Add to Official Plan
+                            Add to Your Plan
                           </button>
                         </div>
                       </div>

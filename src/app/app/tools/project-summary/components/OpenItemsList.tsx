@@ -37,7 +37,7 @@ function ResolveDialog({
       <h3 className="text-sm font-semibold text-cream">Resolve Item</h3>
       <p className="text-xs text-cream/50 leading-relaxed">{item.text}</p>
       <div>
-        <label className="text-[10px] text-cream/30 block mb-1">Resolution Note (optional)</label>
+        <label className="text-[10px] text-cream/40 block mb-1">Resolution Note (optional)</label>
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
@@ -212,7 +212,7 @@ export function OpenItemsList({
         ) : (
           <div className="flex-1 min-w-0">
             <span
-              className={`text-sm ${isResolved ? 'text-cream/40 line-through' : 'text-cream/60'} ${!readOnly && !isResolved ? 'cursor-text' : ''}`}
+              className={`text-sm ${isResolved ? 'text-cream/40 line-through' : 'text-cream/70'} ${!readOnly && !isResolved ? 'cursor-text' : ''}`}
               onClick={readOnly || isResolved ? undefined : () => startEdit(item)}
             >
               {item.text}
@@ -228,7 +228,7 @@ export function OpenItemsList({
             )}
             {/* Resolution note */}
             {item.resolution_note && (
-              <p className="text-[10px] text-cream/25 mt-0.5 leading-tight">
+              <p className="text-[10px] text-cream/35 mt-0.5 leading-tight">
                 Resolved: {item.resolution_note}
                 {item.resolved_at && (
                   <span className="ml-1">({new Date(item.resolved_at).toLocaleDateString()})</span>
@@ -304,7 +304,7 @@ export function OpenItemsList({
 
       {/* Active items */}
       {activeItems.length === 0 && resolvedItems.length === 0 && readOnly && (
-        <p className="text-xs text-cream/25 italic py-1">{emptyMessage}</p>
+        <p className="text-xs text-cream/35 italic py-1">{emptyMessage}</p>
       )}
 
       {activeItems.map(renderItem)}
@@ -312,7 +312,7 @@ export function OpenItemsList({
       {/* Resolved/closed items (collapsed by default if there are active items) */}
       {resolvedItems.length > 0 && (
         <details className="mt-2" open={activeItems.length === 0}>
-          <summary className="text-[10px] text-cream/25 cursor-pointer hover:text-cream/40 transition-colors select-none">
+          <summary className="text-[10px] text-cream/35 cursor-pointer hover:text-cream/50 transition-colors select-none">
             {resolvedItems.length} resolved
           </summary>
           <div className="mt-1">

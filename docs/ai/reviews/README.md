@@ -1,12 +1,24 @@
 # AI Review Ledger
 
-Cross-AI review system for Hawaii Home Central. Codex writes structured review files; Claude reads and responds to them.
+Cross-AI review system for Hawaii Home Central. Codex validates issues in the sprint ledger and writes narrative audit files; Claude reads findings and responds.
+
+## How Reviews Fit the Sprint Workflow
+
+Reviews are part of the sprint lifecycle, not a standalone process:
+
+1. **Sprint ledger** = the live checklist (Codex updates `Codex Verified`, `Codex Notes`, `Follow-up` per issue)
+2. **Codex audit file** = narrative review artifact with reasoning, journey assessment, and recommendations
+3. **Claude response file** = what Claude did about Codex's findings
+
+The sprint ledger is the source of truth for issue-by-issue pass/fail. The audit file adds context.
+
+See `docs/ai/workflows/sprint-ledger-workflow.md` for the full lifecycle.
 
 ## Directory Structure
 
 ```
 docs/ai/reviews/
-  codex/       # Audit reviews written by Codex
+  codex/       # Narrative audit reviews written by Codex
   claude/      # Responses written by Claude
 ```
 
@@ -15,38 +27,11 @@ docs/ai/reviews/
 - Codex audits: `codex/YYYY-MM-DD-topic-audit.md`
 - Claude responses: `claude/YYYY-MM-DD-topic-response.md`
 
-Examples:
-- `codex/2026-03-13-plan-changes-migration-audit.md`
-- `claude/2026-03-13-plan-changes-migration-response.md`
-
 ## Codex Audit Format
 
-```markdown
-# Audit: {topic}
+Audit files follow `docs/ai/review-templates/hhc-review-template.md` for structure and `docs/ai/review-rubrics/hhc-homeowner-ux-review.md` for lens.
 
-**Date:** YYYY-MM-DD
-**Reviewer:** Codex
-**Scope:** {what was reviewed — be specific about files and changes}
-**Trigger:** {user request / post-deploy / sprint close}
-
-## Files Reviewed
-{list of files with line counts or change summary}
-
-## What Looks Solid
-{brief, specific}
-
-## What Is Questionable
-{concerns that merit discussion}
-
-## What Is Wrong
-{bugs, logic errors, security issues, regressions}
-
-## Recommendations
-{prioritized, actionable}
-
-## Safe for Next Phase?
-{yes/no + reasoning}
-```
+See `AGENTS.md` for the full required format.
 
 ## Claude Response Format
 
@@ -69,13 +54,12 @@ Examples:
 
 ## Workflow
 
-1. **User prompts Codex:** "Review the latest that Claude did for this repo."
-2. **Codex reads** `AGENTS.md`, sprint docs, and touched files — writes an audit into `codex/`
-3. **User prompts Claude:** "Go check out what Codex said about the app."
-4. **Claude reads** the Codex audit from `codex/` — acts on findings and/or writes a response into `claude/`
-5. **Reviews persist** in the repo for future sessions
+1. **Claude finishes implementation** → updates sprint ledger, sets `active-sprint.md` status to `ready_for_codex`
+2. **User prompts Codex** → Codex reads `active-sprint.md` → sprint doc → validates each issue → updates sprint ledger fields → writes audit to `codex/`
+3. **User prompts Claude** → Claude reads Codex audit + sprint ledger notes → fixes `claude_fix` items → writes response to `claude/`
+4. **Reviews persist** in the repo for future sessions
 
 ## Instructions
 
-- **Codex:** See `AGENTS.md` at repo root for full review instructions
-- **Claude:** When asked to respond to a Codex review, read the latest file in `docs/ai/reviews/codex/`, act on findings, and write a response to `docs/ai/reviews/claude/`
+- **Codex:** See `AGENTS.md` for full review instructions. Update the sprint ledger first, then write the narrative audit.
+- **Claude:** When asked to respond to a Codex review, read `active-sprint.md` → sprint doc ledger → latest Codex audit → act on findings → write response.

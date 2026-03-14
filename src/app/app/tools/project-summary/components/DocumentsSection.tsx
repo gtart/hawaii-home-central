@@ -143,13 +143,13 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
   const content = (
     <>
       {documents.length === 0 && !showAddForm && (
-        <p className="text-sm text-cream/30 italic">No documents added yet.</p>
+        <p className="text-sm text-cream/40 italic">No documents added yet.</p>
       )}
 
       {/* Plan Documents */}
       {planDocs.length > 0 && (
         <div className="mb-1">
-          <span className="text-[10px] text-cream/25 uppercase tracking-wider font-medium">Plan Documents</span>
+          <span className="text-[10px] text-cream/35 uppercase tracking-wider font-medium">Plan Documents</span>
         </div>
       )}
       <div className="space-y-2">
@@ -158,7 +158,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
           return (
             <div
               key={doc.id}
-              className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-cream/[0.02] border border-cream/[0.04] group cursor-pointer hover:border-cream/10 transition-colors"
+              className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-cream/[0.02] border border-cream/[0.06] group cursor-pointer hover:border-cream/10 transition-colors"
               onClick={() => setSelectedDocId(doc.id)}
             >
               {/* Doc icon — varies by file type */}
@@ -230,7 +230,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
 
                 {/* Upload metadata */}
                 {doc.uploadedAt && (
-                  <span className="text-[10px] text-cream/20 block mt-0.5">
+                  <span className="text-[10px] text-cream/30 block mt-0.5">
                     Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
                     {doc.uploadedBy ? ` by ${doc.uploadedBy}` : ''}
                   </span>
@@ -322,7 +322,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
       {referenceDocs.length > 0 && (
         <>
           <div className="mt-4 mb-1">
-            <span className="text-[10px] text-cream/25 uppercase tracking-wider font-medium">Reference Documents</span>
+            <span className="text-[10px] text-cream/35 uppercase tracking-wider font-medium">Reference Documents</span>
             <span className="text-[10px] text-cream/15 ml-2">Shared across plan and changes</span>
           </div>
           <div className="space-y-2">
@@ -331,7 +331,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
               return (
                 <div
                   key={doc.id}
-                  className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-cream/[0.02] border border-cream/[0.04] group cursor-pointer hover:border-cream/10 transition-colors"
+                  className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-cream/[0.02] border border-cream/[0.06] group cursor-pointer hover:border-cream/10 transition-colors"
                   onClick={() => setSelectedDocId(doc.id)}
                 >
                   {iconType === 'pdf' ? (
@@ -563,13 +563,13 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
           disabled={isUploading}
         />
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">Documents &amp; Files</span>
+          <span className="text-[10px] text-cream/40 uppercase tracking-wider font-medium">Documents &amp; Files</span>
           {!readOnly && (
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="text-[10px] text-cream/25 hover:text-cream/50 transition-colors"
+                className="text-[10px] text-cream/20 hover:text-cream/40 transition-colors"
               >
                 Link URL
               </button>
@@ -577,16 +577,17 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                 type="button"
                 onClick={() => quickUploadRef.current?.click()}
                 disabled={isUploading}
-                className="w-6 h-6 rounded-full bg-sandstone/20 hover:bg-sandstone/30 text-sandstone flex items-center justify-center transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1 text-[10px] text-cream/40 hover:text-cream/60 bg-cream/5 hover:bg-cream/8 border border-cream/10 rounded-md px-2 py-1 transition-colors disabled:opacity-50"
                 title="Upload file"
               >
                 {isUploading ? (
-                  <div className="w-3 h-3 border border-sandstone/30 border-t-sandstone rounded-full animate-spin" />
+                  <div className="w-3 h-3 border border-cream/20 border-t-cream/50 rounded-full animate-spin" />
                 ) : (
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
+                {isUploading ? 'Uploading...' : 'Upload File'}
               </button>
             </div>
           )}
@@ -604,24 +605,16 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
     <SectionHeader
       title="Documents"
       count={documents.length}
-      onAdd={() => setShowAddForm(!showAddForm)}
-      addLabel="Link URL"
+      onAdd={!readOnly ? () => quickUploadRef.current?.click() : undefined}
+      addLabel="Upload File"
       readOnly={readOnly}
       extraActions={!readOnly ? (
         <button
           type="button"
-          onClick={() => quickUploadRef.current?.click()}
-          disabled={isUploading}
-          className="w-6 h-6 rounded-full bg-sandstone/20 hover:bg-sandstone/30 text-sandstone flex items-center justify-center transition-colors disabled:opacity-50"
-          title="Upload file"
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="text-[10px] text-cream/20 hover:text-cream/40 transition-colors"
         >
-          {isUploading ? (
-            <div className="w-3 h-3 border border-sandstone/30 border-t-sandstone rounded-full animate-spin" />
-          ) : (
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-            </svg>
-          )}
+          Link URL
         </button>
       ) : undefined}
     >

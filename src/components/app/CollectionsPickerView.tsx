@@ -63,6 +63,8 @@ interface CollectionsPickerViewProps {
   headerActions?: React.ReactNode
   /** Hint text shown below the "Add a new ..." button to explain multi-collection use */
   createHint?: string
+  /** Default view mode when no user preference exists in localStorage */
+  defaultView?: 'grid' | 'table'
 }
 
 function ThumbnailGrid({ imageUrls }: { imageUrls: string[] }) {
@@ -118,7 +120,7 @@ function ThumbnailGrid({ imageUrls }: { imageUrls: string[] }) {
   )
 }
 
-export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEmptyState, titleOverride, headerActions, createHint }: CollectionsPickerViewProps) {
+export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEmptyState, titleOverride, headerActions, createHint, defaultView }: CollectionsPickerViewProps) {
   const { currentProject } = useProject()
   const router = useRouter()
   const [collections, setCollections] = useState<CollectionSummary[]>([])
@@ -133,8 +135,9 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
   const [shareTarget, setShareTarget] = useState<{ collectionId: string; collectionName: string } | null>(null)
   const [previews, setPreviews] = useState<Record<string, PreviewData>>({})
   const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
-    if (typeof window === 'undefined') return previewMode ? 'grid' : 'table'
-    return (localStorage.getItem(`hhc-picker-view-${toolKey}`) as 'grid' | 'table') || (previewMode ? 'grid' : 'table')
+    const fallback = defaultView ?? (previewMode ? 'grid' : 'table')
+    if (typeof window === 'undefined') return fallback
+    return (localStorage.getItem(`hhc-picker-view-${toolKey}`) as 'grid' | 'table') || fallback
   })
   const [hasExplicitPref] = useState(() => {
     if (typeof window === 'undefined') return false
@@ -433,12 +436,14 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-[11px] uppercase tracking-wider text-cream/30 border-b border-cream/10">
-                <th className="pb-2 pr-3 w-12" />
+                {toolKey !== 'project_summary' && <th className="pb-2 pr-3 w-12" />}
                 <th className="pb-2 pr-3">Name</th>
                 <th className="pb-2 pr-3 w-28">Shared</th>
                 <th className="pb-2 pr-3">Status</th>
+                {toolKey === 'project_summary' && <th className="pb-2 pr-3 w-24">Still to Decide</th>}
+                {toolKey === 'project_summary' && <th className="pb-2 pr-3 w-24">Changes</th>}
                 <th className="pb-2 pr-3">Updated</th>
-                <th className="pb-2 pr-3 max-w-[200px]">Recent Activity</th>
+                {toolKey !== 'project_summary' && <th className="pb-2 pr-3 max-w-[200px]">Recent Activity</th>}
                 <th className="pb-2 w-10" />
               </tr>
             </thead>
@@ -477,6 +482,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                     onClick={() => router.push(`${toolPath}/${coll.id}`)}
                     className="border-b border-cream/5 hover:bg-cream/[0.03] cursor-pointer transition-colors group"
                   >
+                    {toolKey !== 'project_summary' && (
                     <td className="py-3 pr-3">
                       {thumb ? (
                         <img src={`/api/image-proxy?url=${encodeURIComponent(thumb)}`} alt="" className="w-10 h-10 rounded-lg object-cover" loading="lazy" />
@@ -490,6 +496,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         </div>
                       )}
                     </td>
+                    )}
                     {/* Name — clean, no inline sharing badges */}
                     <td className="py-3 pr-3">
                       {editingId === coll.id ? (
@@ -506,7 +513,12 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                           className="bg-basalt border border-cream/20 rounded px-2 py-1 text-sm text-cream focus:outline-none focus:border-sandstone/50"
                         />
                       ) : (
-                        <span className="font-medium text-cream">{coll.title}</span>
+                        <div>
+                          <span className="font-medium text-cream">{coll.title}</span>
+                          {toolKey === 'project_summary' && (
+                            <span className="block text-[11px] text-cream/30 mt-0.5">Created {new Date(coll.createdAt).toLocaleDateString()}</span>
+                          )}
+                        </div>
                       )}
                     </td>
                     {/* Shared — avatar stack + Link badge + pending invites */}
@@ -550,22 +562,12 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                     {/* Status — tool-specific display */}
                     <td className="py-3 pr-3 text-xs whitespace-nowrap" title={toolKey === 'project_summary' ? `${preview.planItemCount ?? 0} plan items` : statusParts.join(', ')}>
                       {toolKey === 'project_summary' ? (
-                        ((preview.planItemCount ?? 0) > 0 || !!preview.planScope || (preview.unresolvedOpenItemCount ?? 0) > 0 || !!preview.hasBudget || (preview.documentCount ?? 0) > 0 || (preview.changeCount ?? 0) > 0) ? (
-                          <div className="flex flex-col gap-0.5">
-                            {/* Lead with plan status (PCV1-041) */}
-                            <div className="flex items-center gap-1.5">
-                              {preview.planStatus && (
-                                <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded w-fit ${
-                                  preview.planStatus === 'approved' || preview.planStatus === 'confirmed' || preview.planStatus === 'acknowledged' ? 'bg-emerald-500/10 text-emerald-400/70'
-                                  : preview.planStatus === 'unlocked' ? 'bg-amber-500/10 text-amber-400/70'
-                                  : 'bg-cream/5 text-cream/30'
-                                }`}>{preview.planStatus === 'working' ? 'Draft' : preview.planStatus === 'approved' ? 'Approved' : preview.planStatus === 'unlocked' ? 'Unlocked' : preview.planStatus.charAt(0).toUpperCase() + preview.planStatus.slice(1)}</span>
-                              )}
-                              {(preview.unresolvedOpenItemCount ?? 0) > 0 && <span className="text-amber-400/60 text-[10px]">{preview.unresolvedOpenItemCount} open</span>}
-                            </div>
-                            {/* Attention signals */}
-                            {(preview.activeChangeCount ?? 0) > 0 && <span className="text-amber-400/50 text-[10px]">{preview.activeChangeCount} pending change{preview.activeChangeCount !== 1 ? 's' : ''}</span>}
-                          </div>
+                        preview.planStatus ? (
+                          <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded w-fit ${
+                            preview.planStatus === 'approved' || preview.planStatus === 'confirmed' || preview.planStatus === 'acknowledged' ? 'bg-emerald-500/10 text-emerald-400/70'
+                            : preview.planStatus === 'unlocked' ? 'bg-amber-500/10 text-amber-400/70'
+                            : 'bg-cream/5 text-cream/30'
+                          }`}>{preview.planStatus === 'working' ? 'Draft' : preview.planStatus === 'approved' ? 'Approved' : preview.planStatus === 'unlocked' ? 'Unlocked' : preview.planStatus.charAt(0).toUpperCase() + preview.planStatus.slice(1)}</span>
                         ) : (
                           <span className="text-cream/20 italic">Not started</span>
                         )
@@ -586,11 +588,34 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         <span className="text-cream/20 italic">—</span>
                       )}
                     </td>
+                    {/* Still to Decide — project_summary only */}
+                    {toolKey === 'project_summary' && (
+                      <td className="py-3 pr-3 text-xs whitespace-nowrap">
+                        {(preview.unresolvedOpenItemCount ?? 0) > 0 ? (
+                          <span className="text-amber-400/70">{preview.unresolvedOpenItemCount} to decide</span>
+                        ) : (
+                          <span className="text-cream/20">—</span>
+                        )}
+                      </td>
+                    )}
+                    {/* Pending Changes — project_summary only */}
+                    {toolKey === 'project_summary' && (
+                      <td className="py-3 pr-3 text-xs whitespace-nowrap">
+                        {(preview.activeChangeCount ?? 0) > 0 ? (
+                          <span className="text-amber-400/70">{preview.activeChangeCount} pending</span>
+                        ) : (preview.changeCount ?? 0) > 0 ? (
+                          <span className="text-cream/40">{preview.changeCount} total</span>
+                        ) : (
+                          <span className="text-cream/20">—</span>
+                        )}
+                      </td>
+                    )}
                     <td className="py-3 pr-3 text-cream/40 text-xs whitespace-nowrap">
                       {new Date(coll.updatedAt).toLocaleDateString()}
                       {coll.updatedBy?.name && <span> by {coll.updatedBy.name.split(' ')[0]}</span>}
                     </td>
-                    {/* Recent Activity — prefer ActivityEvent, fallback to lastComment/lastActivity */}
+                    {/* Recent Activity — prefer ActivityEvent, fallback to lastComment/lastActivity (hidden for project_summary) */}
+                    {toolKey !== 'project_summary' && (
                     <td className="py-3 pr-3 text-cream/40 text-xs max-w-[200px] truncate">
                       {preview.lastEvent ? (
                         <ActivityEventRow event={preview.lastEvent} variant="inline" />
@@ -607,6 +632,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         <span className="text-cream/20">—</span>
                       )}
                     </td>
+                    )}
                     <td className="py-3 relative" onClick={(e) => e.stopPropagation()}>
                       <div ref={menuOpenId === coll.id ? menuRef : undefined}>
                         <button
@@ -714,6 +740,9 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                 ) : (
                   <h3 className="font-medium text-cream text-sm truncate">{coll.title}</h3>
                 )}
+                {toolKey === 'project_summary' && (
+                  <p className="text-[11px] text-cream/30 mt-0.5">Created {new Date(coll.createdAt).toLocaleDateString()}</p>
+                )}
 
                 {/* Status counts — tool-aware */}
                 {toolKey === 'project_summary' && ((preview.planItemCount ?? 0) > 0 || !!preview.planScope || (preview.unresolvedOpenItemCount ?? 0) > 0 || !!preview.hasBudget || (preview.documentCount ?? 0) > 0 || (preview.changeCount ?? 0) > 0) ? (
@@ -728,7 +757,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                         }`}>{preview.planStatus === 'working' ? 'Draft' : preview.planStatus === 'approved' ? 'Approved' : preview.planStatus === 'unlocked' ? 'Unlocked' : preview.planStatus.charAt(0).toUpperCase() + preview.planStatus.slice(1)}</span>
                       )}
                       {(preview.unresolvedOpenItemCount ?? 0) > 0 && (
-                        <span className="text-[10px] text-amber-400/60">{preview.unresolvedOpenItemCount} open item{preview.unresolvedOpenItemCount !== 1 ? 's' : ''}</span>
+                        <span className="text-[10px] text-amber-400/60">{preview.unresolvedOpenItemCount} still to decide</span>
                       )}
                     </div>
                     {preview.planScope && (

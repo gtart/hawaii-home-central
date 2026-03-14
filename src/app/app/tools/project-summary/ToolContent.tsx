@@ -4,16 +4,14 @@ import { Suspense, useState, useEffect, useMemo, useCallback, useRef } from 'rea
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
-import { ActivityPanel } from '@/components/app/ActivityPanel'
 import { CollapsibleCommentSidebar, type CommentSidebarHandle } from '@/components/app/CollapsibleCommentSidebar'
 import type { RefEntity } from '@/components/app/CommentThread'
 import { useComments } from '@/hooks/useComments'
-import { useUnseenActivityCount } from '@/hooks/useUnseenActivityCount'
 import { useProjectSummaryState } from './useProjectSummaryState'
 import { CurrentPlanSection } from './components/CurrentPlanSection'
 import { ChangesSection } from './components/ChangesSection'
 import { MilestoneTimeline } from './components/MilestoneTimeline'
-import type { SummaryLinkType, SummaryChange, OpenItem } from '@/data/project-summary'
+import type { SummaryLinkType } from '@/data/project-summary'
 
 /** Draft data from CreateProjectSummaryEntryButton — local-only, not persisted until explicit save. */
 export interface PrefillDraft {
@@ -32,54 +30,10 @@ export interface FocusTarget {
   entryId: string
 }
 
-/** Compact Change Queue summary near top of page (PCV1-024) */
-function ChangeQueueSummary({ changes, openItems }: { changes: SummaryChange[]; openItems: OpenItem[] }) {
-  const RESOLVED_STATUSES = new Set(['approved_by_homeowner', 'accepted_by_contractor', 'done', 'closed'])
-  const pending = changes.filter((c) => !RESOLVED_STATUSES.has(c.status) && !c.incorporated)
-  const awaitingIncorporation = changes.filter((c) => (c.status === 'accepted_by_contractor' || c.status === 'done') && !c.incorporated)
-  const unresolvedChangeItems = changes.reduce((sum, c) => sum + (c.open_items || []).filter((i) => i.status === 'open' || i.status === 'waiting').length, 0)
-  const pendingCostImpact = pending.reduce((sum, c) => {
-    if (!c.cost_impact) return sum
-    const num = parseFloat(c.cost_impact.replace(/[^0-9.\-+]/g, ''))
-    return isNaN(num) ? sum : sum + num
-  }, 0)
-
-  if (pending.length === 0 && awaitingIncorporation.length === 0) return null
-
-  return (
-    <div className="rounded-lg border border-cream/[0.06] bg-cream/[0.02] px-4 py-3">
-      <div className="text-[10px] text-cream/30 uppercase tracking-wider font-medium mb-2">Change Queue</div>
-      <div className="flex flex-wrap gap-x-6 gap-y-1">
-        {pending.length > 0 && (
-          <div className="text-xs text-cream/50">
-            <span className="text-cream/70 font-medium">{pending.length}</span> pending
-          </div>
-        )}
-        {awaitingIncorporation.length > 0 && (
-          <div className="text-xs text-teal-400/60">
-            <span className="text-teal-400/80 font-medium">{awaitingIncorporation.length}</span> awaiting incorporation
-          </div>
-        )}
-        {unresolvedChangeItems > 0 && (
-          <div className="text-xs text-amber-400/60">
-            <span className="text-amber-400/80 font-medium">{unresolvedChangeItems}</span> unresolved change item{unresolvedChangeItems !== 1 ? 's' : ''}
-          </div>
-        )}
-        {pendingCostImpact !== 0 && (
-          <div className="text-xs text-cream/40">
-            Pending cost: <span className="text-cream/60">{pendingCostImpact >= 0 ? '+' : ''}${Math.abs(pendingCostImpact).toLocaleString()}</span>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
 function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
   const api = useProjectSummaryState({ collectionId })
   const { payload, isLoaded, isSyncing, access, readOnly, noAccess, title: collectionTitle } = api
   const router = useRouter()
-  const [activityOpen, setActivityOpen] = useState(false)
   const [titleOverride, setTitleOverride] = useState<string | null>(null)
   const [copiedSummary, setCopiedSummary] = useState(false)
   const commentSidebarRef = useRef<CommentSidebarHandle>(null)
@@ -134,8 +88,11 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     }
     const openItems = plan.open_items.filter((i) => i.status === 'open' || i.status === 'waiting')
     if (openItems.length > 0) {
-      lines.push('UNRESOLVED ITEMS')
-      openItems.forEach((i) => lines.push(`  - [${i.status}] ${i.text}`))
+      lines.push('STILL TO DECIDE')
+      openItems.forEach((i) => {
+        const statusLabel = i.status === 'waiting' ? 'Waiting on someone' : 'Open'
+        lines.push(`  - ${i.text} (${statusLabel})`)
+      })
       lines.push('')
     }
     if (budget.baseline_amount) {
@@ -181,10 +138,6 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     targetType: 'collection',
     targetId: collectionId,
   })
-  const { count: unseenActivity, markSeen: markActivitySeen } = useUnseenActivityCount(
-    { toolKey: 'project_summary', collectionId }
-  )
-
   // Build ref entities for comment tagging (changes only)
   const commentRefEntities: RefEntity[] = useMemo(() => [
     ...payload.changes.map((c) => ({ id: c.id, label: `Change: ${c.title}` })),
@@ -246,7 +199,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       <div className="text-center py-24">
         <h2 className="font-serif text-2xl text-cream mb-2">No Access</h2>
         <p className="text-cream/50 text-sm">
-          You don&apos;t have access to this Official Plan collection.
+          You don&apos;t have access to this plan.
         </p>
       </div>
     )
@@ -309,32 +262,9 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
                 </span>
               )}
             </button>
-            <button
-              type="button"
-              onClick={() => { setActivityOpen(true); markActivitySeen() }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cream/50 hover:text-cream/70 bg-cream/5 hover:bg-cream/10 transition-colors"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Activity
-              {unseenActivity > 0 && (
-                <span className="bg-sandstone/20 text-sandstone text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
-                  {unseenActivity > 98 ? '99+' : unseenActivity}
-                </span>
-              )}
-            </button>
           </div>
         )}
       />
-
-      {activityOpen && (
-        <ActivityPanel
-          onClose={() => setActivityOpen(false)}
-          toolKey="project_summary"
-          collectionId={collectionId}
-        />
-      )}
 
       {isSyncing && (
         <div className="flex items-center gap-2 text-xs text-cream/30 mb-4">
@@ -344,40 +274,28 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       )}
 
       <div className="md:flex md:gap-6 md:items-start">
-        <div className="flex-1 min-w-0">
-          {/* === PRIMARY ZONE: Official Plan Record (PCV1-026/028) === */}
-          <div className="space-y-4 md:space-y-5">
-            {/* 1. Official Plan — includes Documents & Photos inline (PCV1-020) */}
-            <CurrentPlanSection
+        <div className="flex-1 min-w-0 space-y-6 md:space-y-8">
+          {/* 1. Current Plan — the baseline record */}
+          <CurrentPlanSection
+            api={api}
+            onScrollToChanges={() => {
+              changesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }}
+          />
+
+          {/* 2. Changes — everything that happened after approval */}
+          <div ref={changesSectionRef}>
+            <ChangesSection
               api={api}
-              onScrollToChanges={() => {
-                changesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }}
+              commentCounts={commentCounts}
+              prefillDraft={prefillDraft}
+              onDraftConsumed={handleDraftConsumed}
+              focusEntryId={focusTarget?.section === 'changes' ? focusTarget.entryId : undefined}
             />
           </div>
 
-          {/* Visual separator between plan record and change log (PCV1-026/028) */}
-          <div className="my-6 md:my-8 border-t border-cream/[0.06]" />
-
-          {/* === SECONDARY ZONE: Changes & Activity === */}
-          <div className="space-y-4 md:space-y-5">
-            {/* 3. Change Queue Summary (PCV1-024) */}
-            <ChangeQueueSummary changes={payload.changes} openItems={payload.plan.open_items} />
-
-            {/* 4. Changes — Pending then History (PCV1-023) */}
-            <div ref={changesSectionRef}>
-              <ChangesSection
-                api={api}
-                commentCounts={commentCounts}
-                prefillDraft={prefillDraft}
-                onDraftConsumed={handleDraftConsumed}
-                focusEntryId={focusTarget?.section === 'changes' ? focusTarget.entryId : undefined}
-              />
-            </div>
-
-            {/* 5. Timeline & History (PCV1-025) */}
-            <MilestoneTimeline milestones={payload.milestones} />
-          </div>
+          {/* 3. History — concise milestone record */}
+          <MilestoneTimeline milestones={payload.milestones} />
         </div>
 
         <CollapsibleCommentSidebar

@@ -32,10 +32,14 @@ const PREVIEW_COUNT = 3
 export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
-  if (milestones.length === 0) return null
+  // Filter to major milestones only — exclude noise events like sharing
+  const NOISE_EVENTS = new Set(['plan_shared'])
+  const majorMilestones = milestones.filter((m) => !NOISE_EVENTS.has(m.event))
+
+  if (majorMilestones.length === 0) return null
 
   // Show most recent first
-  const sorted = [...milestones].sort((a, b) =>
+  const sorted = [...majorMilestones].sort((a, b) =>
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   )
 
@@ -56,7 +60,7 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
             <span className="text-xs text-cream/60">{milestone.label}</span>
           </div>
 
-          <div className="flex items-center gap-2 text-[10px] text-cream/25">
+          <div className="flex items-center gap-2 text-[10px] text-cream/35">
             <span>{new Date(milestone.timestamp).toLocaleDateString()}</span>
             <span>{new Date(milestone.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             {milestone.actor && (
@@ -68,7 +72,7 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
           </div>
 
           {milestone.note && (
-            <p className="text-[10px] text-cream/30 mt-0.5">{milestone.note}</p>
+            <p className="text-[10px] text-cream/40 mt-0.5">{milestone.note}</p>
           )}
         </div>
       </div>
@@ -76,13 +80,13 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
   }
 
   return (
-    <div className="rounded-xl border border-cream/[0.06] bg-cream/[0.02]">
+    <div className="rounded-xl border border-cream/[0.08] bg-cream/[0.03]">
       <div className="flex items-center gap-3 px-5 py-4">
         <svg className="w-4 h-4 text-cream/30 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <h2 className="text-sm font-semibold text-cream/80 flex-1">Timeline &amp; History</h2>
-        <span className="text-[11px] text-cream/30 tabular-nums">{milestones.length} event{milestones.length !== 1 ? 's' : ''}</span>
+        <h2 className="text-sm font-semibold text-cream/80 flex-1">History</h2>
+        <span className="text-[11px] text-cream/35 tabular-nums">{majorMilestones.length} event{majorMilestones.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Always show recent preview */}
