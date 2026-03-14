@@ -31,6 +31,7 @@ const PREVIEW_COUNT = 3
 
 export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [showAll, setShowAll] = useState(false)
 
   // Filter to major milestones only — exclude noise events like sharing
   const NOISE_EVENTS = new Set(['plan_shared'])
@@ -81,30 +82,39 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
 
   return (
     <div className="rounded-xl border border-cream/14 bg-stone-50">
-      <div className="flex items-center gap-3 px-5 py-4">
-        <svg className="w-4 h-4 text-cream/45 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
+      <button
+        type="button"
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center gap-3 px-5 py-4 w-full text-left"
+      >
+        <svg
+          className={`w-3 h-3 text-cream/45 transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+        >
+          <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <h2 className="text-sm font-semibold text-cream/90 flex-1">History</h2>
+        <h2 className="text-sm font-semibold text-cream/90 flex-1">Changelog</h2>
         <span className="text-[11px] text-cream/50 tabular-nums">{majorMilestones.length} event{majorMilestones.length !== 1 ? 's' : ''}</span>
-      </div>
+      </button>
 
-      {/* Always show recent preview */}
-      <div className="px-5 pb-4">
-        <div className="relative ml-3 border-l border-cream/14">
-          {(isExpanded ? sorted : previewItems).map(renderEvent)}
+      {/* Show content when expanded */}
+      {isExpanded && (
+        <div className="px-5 pb-4">
+          <div className="relative ml-3 border-l border-cream/14">
+            {(showAll ? sorted : previewItems).map(renderEvent)}
+          </div>
+
+          {hasMore && (
+            <button
+              type="button"
+              onClick={() => setShowAll(!showAll)}
+              className="mt-2 ml-3 text-[11px] text-sandstone/50 hover:text-sandstone transition-colors"
+            >
+              {showAll ? 'Show less' : `Show all ${sorted.length} events`}
+            </button>
+          )}
         </div>
-
-        {hasMore && (
-          <button
-            type="button"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="mt-2 ml-3 text-[11px] text-sandstone/50 hover:text-sandstone transition-colors"
-          >
-            {isExpanded ? 'Show less' : `Show all ${sorted.length} events`}
-          </button>
-        )}
-      </div>
+      )}
     </div>
   )
 }

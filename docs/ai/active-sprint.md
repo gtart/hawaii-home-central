@@ -4,20 +4,20 @@
 
 | Field | Value |
 |-------|-------|
-| **Sprint** | Track Plans — Mental Model Simplification + Usability Fixes |
-| **Sprint Doc** | `docs/ai/sprints/track-plans-mental-model-simplification.md` |
+| **Sprint** | Living Plan Refactor (Track Plans / Project Summary) |
+| **Sprint Doc** | `docs/ai/sprints/living-plan-refactor.md` |
 | **Status** | `ready_for_codex` |
 | **Owner** | Claude |
-| **Last Updated** | 2026-03-13 |
+| **Last Updated** | 2026-03-14 |
 | **Commits** | pending |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | All Codex findings addressed — 5 fails fixed, 4 concerns resolved — awaiting re-review |
-| **Latest Codex Audit** | `docs/ai/reviews/codex/2026-03-13-track-plans-mental-model-simplification-audit.md` |
-| **Latest Claude Response** | `docs/ai/reviews/claude/2026-03-13-track-plans-followup-response.md` |
+| **Current Handoff** | All 14 issues implemented — awaiting Codex review |
+| **Latest Codex Audit** | — |
+| **Latest Claude Response** | — |
 
 ## Reading Order
 
@@ -40,6 +40,7 @@ When entering this repo, read in this order:
 ---
 
 ## Previous Sprints (Completed)
+- Track Plans — Mental Model Simplification + Usability Fixes (March 13, 2026) — `ready_for_codex`
 - Track Plans UI Redesign (March 13, 2026) — `d202610`
 - Comment Readability + Email Notifications (March 13, 2026) — `d202610`
 - Plan & Changes Rebuild v1 (March 13, 2026) — `e78b17e`, `6888bdc`

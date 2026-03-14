@@ -3,16 +3,14 @@
 import { Suspense, useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import { useProjectSummaryState } from '../../../useProjectSummaryState'
-import { CHANGE_STATUS_CONFIG, CHANGE_STATUS_ORDER } from '../../../constants'
+import { SIMPLE_STATUS_CONFIG, SIMPLE_STATUS_ORDER, toSimpleStatus } from '../../../constants'
+import type { SimpleChangeStatus } from '../../../constants'
 import { InlineEdit } from '../../../components/InlineEdit'
 import { StatusBadge } from '../../../components/StatusBadge'
-import { LinkPills } from '../../../components/LinkPills'
-import { AttachMenu } from '../../../components/AttachMenu'
 import { uploadProjectSummaryFile } from '../../../uploadProjectSummaryFile'
 import { CollapsibleCommentSidebar, type CommentSidebarHandle } from '@/components/app/CollapsibleCommentSidebar'
 import { useComments } from '@/hooks/useComments'
 import { OpenItemsList } from '../../../components/OpenItemsList'
-import type { ChangeStatus } from '@/data/project-summary'
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -33,24 +31,17 @@ function formatCost(raw: string): string {
   return `${sign}$${num.toLocaleString()}`
 }
 
-/** Statuses that count as "approval" — warn if change has unresolved open items (PCV1-055) */
-const APPROVAL_STATUSES = new Set<ChangeStatus>(['approved_by_homeowner', 'accepted_by_contractor', 'done'])
-
-/** Status dropdown — custom div-based, never native <select> */
+/** Simplified status dropdown — 3 statuses for v1 self-tracking */
 function StatusDropdown({
   status,
   onChange,
   readOnly,
-  unresolvedItemCount,
 }: {
-  status: ChangeStatus
-  onChange: (status: ChangeStatus) => void
+  status: SimpleChangeStatus
+  onChange: (status: SimpleChangeStatus) => void
   readOnly?: boolean
-  /** Number of unresolved open items on this change (PCV1-055) */
-  unresolvedItemCount?: number
 }) {
   const [open, setOpen] = useState(false)
-  const [pendingStatus, setPendingStatus] = useState<ChangeStatus | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -62,7 +53,7 @@ function StatusDropdown({
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
-  const config = CHANGE_STATUS_CONFIG[status]
+  const config = SIMPLE_STATUS_CONFIG[status]
 
   return (
     <div className="relative" ref={ref}>
@@ -74,9 +65,9 @@ function StatusDropdown({
         readOnly={readOnly}
       />
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-cream/15 bg-basalt shadow-xl py-1">
-          {CHANGE_STATUS_ORDER.map((s) => {
-            const cfg = CHANGE_STATUS_CONFIG[s]
+        <div className="absolute right-0 top-full mt-1 z-50 min-w-[150px] rounded-lg border border-cream/15 bg-basalt shadow-xl py-1">
+          {SIMPLE_STATUS_ORDER.map((s) => {
+            const cfg = SIMPLE_STATUS_CONFIG[s]
             const isActive = s === status
             return (
               <button
@@ -84,14 +75,7 @@ function StatusDropdown({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  if (s === status) { setOpen(false); return }
-                  // PCV1-055: warn when approving with unresolved items
-                  if (APPROVAL_STATUSES.has(s) && (unresolvedItemCount ?? 0) > 0) {
-                    setPendingStatus(s)
-                    setOpen(false)
-                    return
-                  }
-                  onChange(s)
+                  if (s !== status) onChange(s)
                   setOpen(false)
                 }}
                 className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors ${
@@ -106,44 +90,13 @@ function StatusDropdown({
           })}
         </div>
       )}
-      {/* PCV1-055: Unresolved items warning before approval */}
-      {pendingStatus && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4" onClick={(e) => e.stopPropagation()}>
-          <div className="w-full max-w-sm rounded-xl border border-cream/15 bg-basalt p-5 shadow-2xl space-y-3">
-            <h3 className="text-sm font-semibold text-cream flex items-center gap-2">
-              <svg className="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" strokeLinecap="round" strokeLinejoin="round" />
-                <line x1="12" y1="9" x2="12" y2="13" strokeLinecap="round" />
-                <line x1="12" y1="17" x2="12.01" y2="17" strokeLinecap="round" />
-              </svg>
-              Items Still to Decide
-            </h3>
-            <p className="text-xs text-cream/65 leading-relaxed">
-              This change has <strong className="text-amber-400">{unresolvedItemCount} item{unresolvedItemCount !== 1 ? 's' : ''} still to decide</strong>.
-              You can still proceed, but the items will remain tracked.
-            </p>
-            <div className="flex gap-2 justify-end pt-1">
-              <button type="button" onClick={() => setPendingStatus(null)} className="text-xs text-cream/45 hover:text-cream/65 transition-colors px-3 py-1.5">
-                Go Back
-              </button>
-              <button
-                type="button"
-                onClick={() => { onChange(pendingStatus); setPendingStatus(null) }}
-                className="text-xs font-medium text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 transition-colors px-3 py-1.5 rounded-lg"
-              >
-                Proceed Anyway
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
 
 function Content({ collectionId, changeId }: { collectionId: string; changeId: string }) {
   const api = useProjectSummaryState({ collectionId })
-  const { payload, isLoaded, readOnly, updateChange, incorporateChange, addChangeAttachment, removeChangeAttachment, updateChangePrivateNotes, addChangeOpenItem, updateChangeOpenItem, deleteChangeOpenItem, addLink, removeLink } = api
+  const { payload, isLoaded, readOnly, updateChange, incorporateChange, addChangeAttachment, removeChangeAttachment, updateChangePrivateNotes, addChangeOpenItem, updateChangeOpenItem, deleteChangeOpenItem } = api
 
   const change = useMemo(
     () => payload.changes.find((c) => c.id === changeId),
@@ -226,7 +179,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
           href={`/app/tools/project-summary/${collectionId}`}
           className="text-sandstone hover:text-sandstone-light text-sm transition-colors"
         >
-          Back to Your Plan
+          Back to Plan
         </Link>
       </div>
     )
@@ -246,7 +199,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Back to Your Plan
+          Back to Plan
         </Link>
       </div>
 
@@ -263,10 +216,12 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 className="text-lg font-serif font-medium"
               />
               <StatusDropdown
-                status={change.status}
-                onChange={(status) => updateChange(change.id, { status })}
+                status={toSimpleStatus(change.status)}
+                onChange={(s) => {
+                  const storageStatus = SIMPLE_STATUS_CONFIG[s].storageStatus
+                  updateChange(change.id, { status: storageStatus })
+                }}
                 readOnly={readOnly}
-                unresolvedItemCount={(change.open_items || []).filter((i) => i.status === 'open' || i.status === 'waiting').length}
               />
             </div>
 
@@ -427,10 +382,10 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 </div>
               )}
 
-              {/* Change — Still to Decide (PCV1-009) */}
+              {/* Change — Open Questions */}
               <div>
                 <label className="text-[10px] text-cream/45 uppercase tracking-wider font-medium block mb-1.5">
-                  Still to Decide
+                  Open Questions
                 </label>
                 <OpenItemsList
                   items={change.open_items || []}
@@ -497,19 +452,12 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 </>
               )}
 
-              {/* Links */}
-              <div className="flex items-center gap-2">
-                <LinkPills
-                  links={change.links}
-                  onRemove={readOnly ? undefined : (linkId) => removeLink(change.id, linkId)}
-                  readOnly={readOnly}
-                />
-                <AttachMenu
-                  readOnly={readOnly}
-                  onAttach={(link) => addLink(change.id, link)}
-                  projectId={api.projectId}
-                />
-              </div>
+              {/* Links — hidden for v1 self-tracking, data preserved */}
+              {change.links.length > 0 && (
+                <div className="text-[10px] text-cream/35">
+                  {change.links.length} linked item{change.links.length !== 1 ? 's' : ''}
+                </div>
+              )}
             </div>
           </div>
 

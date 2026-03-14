@@ -67,43 +67,24 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     }
   }, [collectionId, router])
 
-  /** Copy plan summary to clipboard as formatted text (PCV1-057) */
+  /** Copy plan summary to clipboard as formatted text */
   const handleCopySummary = useCallback(() => {
     const { plan, budget, changes } = payload
     const lines: string[] = []
-    lines.push('OFFICIAL PLAN SUMMARY')
-    lines.push(`Status: ${plan.status === 'approved' ? 'Approved' : plan.status === 'unlocked' ? 'Unlocked for Revision' : 'Draft'}`)
+    lines.push('PLAN SUMMARY')
+    lines.push(`Status: ${plan.status === 'approved' ? 'Locked' : plan.status === 'unlocked' ? 'Unlocked for Revision' : 'Draft'}`)
     if (plan.approved_at) lines.push(`Approved: ${new Date(plan.approved_at).toLocaleDateString()}`)
     lines.push('')
     if (plan.scope) { lines.push('SCOPE'); lines.push(plan.scope); lines.push('') }
-    if (plan.included.length > 0) {
-      lines.push('INCLUDED')
-      plan.included.forEach((i) => lines.push(`  - ${i.text}`))
-      lines.push('')
-    }
-    if (plan.not_included.length > 0) {
-      lines.push('NOT INCLUDED')
-      plan.not_included.forEach((i) => lines.push(`  - ${i.text}`))
-      lines.push('')
-    }
-    const openItems = plan.open_items.filter((i) => i.status === 'open' || i.status === 'waiting')
-    if (openItems.length > 0) {
-      lines.push('STILL TO DECIDE')
-      openItems.forEach((i) => {
-        const statusLabel = i.status === 'waiting' ? 'Waiting on someone' : 'Open'
-        lines.push(`  - ${i.text} (${statusLabel})`)
-      })
-      lines.push('')
-    }
     if (budget.baseline_amount) {
       lines.push('BUDGET')
       lines.push(`  Baseline: ${budget.baseline_amount}`)
       if (budget.budget_note) lines.push(`  Note: ${budget.budget_note}`)
       lines.push('')
     }
-    const activeChanges = changes.filter((c) => c.status !== 'done' && c.status !== 'closed')
+    const activeChanges = changes.filter((c) => c.status !== 'closed')
     if (activeChanges.length > 0) {
-      lines.push('PENDING CHANGES')
+      lines.push('CHANGE ORDERS')
       activeChanges.forEach((c) => {
         const parts = [`  - ${c.title}`]
         if (c.cost_impact) parts.push(`(${c.cost_impact})`)
@@ -186,6 +167,10 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     setPrefillDraft(null)
   }, [])
 
+  const handleScrollToChanges = useCallback(() => {
+    changesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
+
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -209,10 +194,10 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     <>
       <ToolPageHeader
         toolKey="project_summary"
-        title="Track Your Plans"
-        description="Your project plan, scope, budget overview, and a record of every change along the way."
+        title="Your Plan"
+        description="Your source of truth for scope, documents, and project changes."
         accessLevel={access}
-        hasContent={payload.plan.scope.length > 0 || payload.documents.length > 0 || payload.changes.length > 0 || payload.plan.open_items.length > 0 || payload.plan.included.length > 0 || payload.plan.not_included.length > 0}
+        hasContent={payload.plan.scope.length > 0 || payload.documents.length > 0 || payload.changes.length > 0}
         collectionId={collectionId}
         collectionName={titleOverride ?? collectionTitle ?? undefined}
         eyebrowLabel="Track Your Plans"
@@ -228,7 +213,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
               currentCollectionId={collectionId}
               itemNoun="plan"
             />
-            {/* Copy Summary — shareable text snapshot (PCV1-057) */}
+            {/* Copy Summary */}
             <button
               type="button"
               onClick={handleCopySummary}
@@ -274,16 +259,14 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       )}
 
       <div className="md:flex md:gap-6 md:items-start">
-        <div className="flex-1 min-w-0 space-y-6 md:space-y-8">
-          {/* 1. Current Plan — the baseline record */}
+        <div className="flex-1 min-w-0 space-y-8">
+          {/* The plan — flows as document content, not a boxed widget */}
           <CurrentPlanSection
             api={api}
-            onScrollToChanges={() => {
-              changesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }}
+            onScrollToChanges={handleScrollToChanges}
           />
 
-          {/* 2. Changes — everything that happened after approval */}
+          {/* Change Orders — amendments beneath the plan */}
           <div ref={changesSectionRef}>
             <ChangesSection
               api={api}
@@ -294,7 +277,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
             />
           </div>
 
-          {/* 3. History — concise milestone record */}
+          {/* History — concise changelog */}
           <MilestoneTimeline milestones={payload.milestones} />
         </div>
 

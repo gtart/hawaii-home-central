@@ -1,47 +1,89 @@
 import type { ChangeStatus, PlanStatus, DocType } from '@/data/project-summary'
 
-// ── Change status config (v2 — 6 statuses) ──
+// ── Change status config (v2 — 6 statuses, underlying data model) ──
 
 export const CHANGE_STATUS_CONFIG: Record<ChangeStatus, { label: string; shortLabel: string; color: string; bgColor: string }> = {
   requested: {
-    label: 'Proposed Change',
-    shortLabel: 'Proposed',
+    label: 'Under Review',
+    shortLabel: 'Review',
     color: 'text-amber-400',
     bgColor: 'bg-amber-400/12',
   },
   awaiting_homeowner: {
-    label: 'Needs Your Review',
+    label: 'Under Review',
     shortLabel: 'Review',
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-400/12',
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-400/12',
   },
   approved_by_homeowner: {
-    label: 'Approved Change',
-    shortLabel: 'Approved',
+    label: 'Accepted',
+    shortLabel: 'Accepted',
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-400/12',
   },
   accepted_by_contractor: {
-    label: 'Accepted by Contractor',
+    label: 'Accepted',
     shortLabel: 'Accepted',
-    color: 'text-teal-400',
-    bgColor: 'bg-teal-400/12',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-400/12',
   },
   done: {
-    label: 'Added to Plan',
-    shortLabel: 'In Plan',
-    color: 'text-cream/70',
-    bgColor: 'bg-cream/8',
+    label: 'Accepted',
+    shortLabel: 'Accepted',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-400/12',
   },
   closed: {
-    label: 'Not Moving Forward',
-    shortLabel: 'Closed',
+    label: 'Canceled',
+    shortLabel: 'Canceled',
     color: 'text-red-400',
     bgColor: 'bg-red-400/12',
   },
 }
 
-// Ordered list for dropdown (not click-cycle)
+// ── Simplified v1 status model ──
+// Maps the 3 user-facing statuses to underlying storage statuses
+export type SimpleChangeStatus = 'under_review' | 'accepted' | 'canceled'
+
+export const SIMPLE_STATUS_CONFIG: Record<SimpleChangeStatus, { label: string; color: string; bgColor: string; storageStatus: ChangeStatus }> = {
+  under_review: {
+    label: 'Under Review',
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-400/12',
+    storageStatus: 'requested',
+  },
+  accepted: {
+    label: 'Accepted',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-400/12',
+    storageStatus: 'accepted_by_contractor',
+  },
+  canceled: {
+    label: 'Canceled',
+    color: 'text-red-400',
+    bgColor: 'bg-red-400/12',
+    storageStatus: 'closed',
+  },
+}
+
+export const SIMPLE_STATUS_ORDER: SimpleChangeStatus[] = ['under_review', 'accepted', 'canceled']
+
+/** Map a storage ChangeStatus to the simplified user-facing status */
+export function toSimpleStatus(status: ChangeStatus): SimpleChangeStatus {
+  switch (status) {
+    case 'requested':
+    case 'awaiting_homeowner':
+      return 'under_review'
+    case 'approved_by_homeowner':
+    case 'accepted_by_contractor':
+    case 'done':
+      return 'accepted'
+    case 'closed':
+      return 'canceled'
+  }
+}
+
+// Ordered list for dropdown (not click-cycle) — kept for compatibility
 export const CHANGE_STATUS_ORDER: ChangeStatus[] = [
   'requested', 'awaiting_homeowner', 'approved_by_homeowner', 'accepted_by_contractor', 'done', 'closed',
 ]
