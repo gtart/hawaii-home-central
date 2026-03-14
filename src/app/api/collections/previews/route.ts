@@ -359,7 +359,7 @@ export async function GET(request: Request) {
         hasBudget = !!payload.budget.baseline_amount
         budgetAmount = payload.budget.baseline_amount || undefined
         documentCount = payload.documents.length
-        itemCount = planItemCount
+        itemCount = planItemCount || (planScope ? 1 : 0) || unresolvedOpenItemCount || documentCount || (hasBudget ? 1 : 0) || changeCount
       } catch {
         // ignore
       }

@@ -33,17 +33,24 @@ function formatCost(raw: string): string {
   return `${sign}$${num.toLocaleString()}`
 }
 
+/** Statuses that count as "approval" — warn if change has unresolved open items (PCV1-055) */
+const APPROVAL_STATUSES = new Set<ChangeStatus>(['approved_by_homeowner', 'accepted_by_contractor', 'done'])
+
 /** Status dropdown — custom div-based, never native <select> */
 function StatusDropdown({
   status,
   onChange,
   readOnly,
+  unresolvedItemCount,
 }: {
   status: ChangeStatus
   onChange: (status: ChangeStatus) => void
   readOnly?: boolean
+  /** Number of unresolved open items on this change (PCV1-055) */
+  unresolvedItemCount?: number
 }) {
   const [open, setOpen] = useState(false)
+  const [pendingStatus, setPendingStatus] = useState<ChangeStatus | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -77,7 +84,14 @@ function StatusDropdown({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  if (s !== status) onChange(s)
+                  if (s === status) { setOpen(false); return }
+                  // PCV1-055: warn when approving with unresolved items
+                  if (APPROVAL_STATUSES.has(s) && (unresolvedItemCount ?? 0) > 0) {
+                    setPendingStatus(s)
+                    setOpen(false)
+                    return
+                  }
+                  onChange(s)
                   setOpen(false)
                 }}
                 className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors ${
@@ -90,6 +104,37 @@ function StatusDropdown({
               </button>
             )
           })}
+        </div>
+      )}
+      {/* PCV1-055: Unresolved items warning before approval */}
+      {pendingStatus && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-xl border border-cream/10 bg-[#1a1a1a] p-5 shadow-2xl space-y-3">
+            <h3 className="text-sm font-semibold text-cream flex items-center gap-2">
+              <svg className="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" strokeLinecap="round" strokeLinejoin="round" />
+                <line x1="12" y1="9" x2="12" y2="13" strokeLinecap="round" />
+                <line x1="12" y1="17" x2="12.01" y2="17" strokeLinecap="round" />
+              </svg>
+              Unresolved Items
+            </h3>
+            <p className="text-xs text-cream/50 leading-relaxed">
+              This change has <strong className="text-amber-400">{unresolvedItemCount} unresolved open item{unresolvedItemCount !== 1 ? 's' : ''}</strong>.
+              You can still proceed, but the items will remain tracked.
+            </p>
+            <div className="flex gap-2 justify-end pt-1">
+              <button type="button" onClick={() => setPendingStatus(null)} className="text-xs text-cream/30 hover:text-cream/50 transition-colors px-3 py-1.5">
+                Go Back
+              </button>
+              <button
+                type="button"
+                onClick={() => { onChange(pendingStatus); setPendingStatus(null) }}
+                className="text-xs font-medium text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 transition-colors px-3 py-1.5 rounded-lg"
+              >
+                Proceed Anyway
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -113,6 +158,8 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
   const [urlLabelInput, setUrlLabelInput] = useState('')
   const [showUrlForm, setShowUrlForm] = useState(false)
   const [confirmDeleteAttachment, setConfirmDeleteAttachment] = useState<string | null>(null)
+  const [showIncorporateDialog, setShowIncorporateDialog] = useState(false)
+  const [incorporateNote, setIncorporateNote] = useState('')
 
   const changeComments = useComments({
     collectionId,
@@ -219,6 +266,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 status={change.status}
                 onChange={(status) => updateChange(change.id, { status })}
                 readOnly={readOnly}
+                unresolvedItemCount={(change.open_items || []).filter((i) => i.status === 'open' || i.status === 'waiting').length}
               />
             </div>
 
@@ -420,18 +468,57 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 />
               </div>
 
-              {/* Incorporate action */}
+              {/* Incorporate action — guided dialog with merge note */}
               {canIncorporate && !readOnly && (
-                <button
-                  type="button"
-                  onClick={() => incorporateChange(change.id)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-teal-400 bg-teal-400/10 hover:bg-teal-400/20 rounded-md transition-colors"
-                >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                  </svg>
-                  Add to Official Plan
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => { setShowIncorporateDialog(true); setIncorporateNote('') }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-teal-400 bg-teal-400/10 hover:bg-teal-400/20 rounded-md transition-colors"
+                  >
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                    </svg>
+                    Add to Official Plan
+                  </button>
+                  {showIncorporateDialog && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+                      <div className="w-full max-w-md rounded-xl border border-cream/10 bg-[#1a1a1a] p-6 shadow-2xl space-y-4">
+                        <h3 className="text-base font-semibold text-cream">Add to Official Plan</h3>
+                        <p className="text-sm text-cream/60 leading-relaxed">
+                          This will mark <span className="text-cream/80">&ldquo;{change.title}&rdquo;</span> as part of the official plan record.
+                        </p>
+                        {(change.cost_impact || change.schedule_impact) && (
+                          <div className="rounded-lg bg-cream/[0.03] border border-cream/[0.06] px-3 py-2 space-y-1">
+                            <div className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">Impact</div>
+                            {change.cost_impact && <div className="text-xs text-cream/60">Cost: <span className="text-cream/80">{change.cost_impact}</span></div>}
+                            {change.schedule_impact && <div className="text-xs text-cream/60">Schedule: <span className="text-cream/80">{change.schedule_impact}</span></div>}
+                          </div>
+                        )}
+                        <div>
+                          <label className="text-[10px] text-cream/30 block mb-1">Note (optional)</label>
+                          <textarea
+                            value={incorporateNote}
+                            onChange={(e) => setIncorporateNote(e.target.value)}
+                            placeholder="Any notes about this incorporation..."
+                            rows={2}
+                            className="w-full bg-cream/5 border border-cream/10 rounded-md px-3 py-2 text-xs text-cream/60 placeholder-cream/20 outline-none focus:border-sandstone/30 resize-none"
+                          />
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                          <button type="button" onClick={() => setShowIncorporateDialog(false)} className="px-3 py-1.5 text-xs text-cream/40 hover:text-cream/60 transition-colors">Cancel</button>
+                          <button
+                            type="button"
+                            onClick={() => { incorporateChange(change.id, undefined, incorporateNote.trim() || undefined); setShowIncorporateDialog(false) }}
+                            className="px-3 py-1.5 text-xs bg-teal-400/20 text-teal-400 hover:bg-teal-400/30 rounded-md transition-colors"
+                          >
+                            Add to Official Plan
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Links */}

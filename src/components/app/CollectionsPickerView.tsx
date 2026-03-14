@@ -550,7 +550,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                     {/* Status — tool-specific display */}
                     <td className="py-3 pr-3 text-xs whitespace-nowrap" title={toolKey === 'project_summary' ? `${preview.planItemCount ?? 0} plan items` : statusParts.join(', ')}>
                       {toolKey === 'project_summary' ? (
-                        (preview.planItemCount ?? 0) > 0 ? (
+                        ((preview.planItemCount ?? 0) > 0 || !!preview.planScope || (preview.unresolvedOpenItemCount ?? 0) > 0 || !!preview.hasBudget || (preview.documentCount ?? 0) > 0 || (preview.changeCount ?? 0) > 0) ? (
                           <div className="flex flex-col gap-0.5">
                             {/* Lead with plan status (PCV1-041) */}
                             <div className="flex items-center gap-1.5">
@@ -716,7 +716,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                 )}
 
                 {/* Status counts — tool-aware */}
-                {toolKey === 'project_summary' && (preview.planItemCount ?? 0) > 0 ? (
+                {toolKey === 'project_summary' && ((preview.planItemCount ?? 0) > 0 || !!preview.planScope || (preview.unresolvedOpenItemCount ?? 0) > 0 || !!preview.hasBudget || (preview.documentCount ?? 0) > 0 || (preview.changeCount ?? 0) > 0) ? (
                   <div className="mt-1.5 space-y-1">
                     {/* Plan status badge — lead with confidence signal (PCV1-038/041) */}
                     <div className="flex items-center gap-2">
@@ -747,11 +747,8 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                       )}
                     </div>
                   </div>
-                ) : toolKey === 'project_summary' && (preview.planItemCount ?? 0) === 0 ? (
+                ) : toolKey === 'project_summary' && !((preview.planItemCount ?? 0) > 0 || !!preview.planScope || (preview.unresolvedOpenItemCount ?? 0) > 0 || !!preview.hasBudget || (preview.documentCount ?? 0) > 0 || (preview.changeCount ?? 0) > 0) ? (
                   <div className="mt-1.5">
-                    {preview.planScope && (
-                      <p className="text-[11px] text-cream/35 leading-relaxed truncate mb-1">{preview.planScope.length > 80 ? preview.planScope.slice(0, 77) + '…' : preview.planScope}</p>
-                    )}
                     <p className="text-[11px] text-cream/35 italic">No plan details yet — start by describing your project scope</p>
                   </div>
                 ) : toolKey === 'punchlist' && hasStatusCounts ? (

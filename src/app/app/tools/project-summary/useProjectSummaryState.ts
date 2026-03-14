@@ -739,7 +739,7 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
   // ── Incorporate Change ──
 
   const incorporateChange = useCallback(
-    (changeId: string, actor?: string) => {
+    (changeId: string, actor?: string, note?: string) => {
       const existing = payload.changes.find((c) => c.id === changeId)
       const ts = now()
       const events: ActivityEventHint[] = [{
@@ -757,6 +757,7 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
           event: 'change_incorporated',
           label: `Incorporated: ${existing?.title || 'change'}`,
           ...(actor ? { actor } : {}),
+          ...(note ? { note } : {}),
           timestamp: ts,
           relatedEntityId: changeId,
         }

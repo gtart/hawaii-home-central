@@ -33,3 +33,13 @@
 
 Phases must execute A → B → C → D → E → F in order.
 Partial overlap is allowed if architecturally necessary, but must be logged in ledger.
+
+---
+
+## Codex Review Status
+
+- **Codex audit:** `docs/ai/reviews/codex/2026-03-13-plan-changes-v1-audit.md`
+- **Follow-up verification:** `docs/ai/reviews/codex/2026-03-13-plan-changes-v1-fix-verification-audit.md`
+- **Verdict:** pass after follow-up fixes
+- **Originally blocked issues:** PCV1-004, PCV1-007, PCV1-041, PCV1-055
+- **Notes:** The active sprint pointer has been corrected, and the four blocking issues from the first Codex audit now appear resolved in the working tree.

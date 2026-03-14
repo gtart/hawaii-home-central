@@ -303,11 +303,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
             change={change}
             openItemCount={openItemCount}
             onConfirm={(note) => {
-              incorporateChange(change.id, undefined)
-              if (note) {
-                // Note is recorded via the milestone event's note field
-                // The incorporateChange function handles the milestone
-              }
+              incorporateChange(change.id, undefined, note || undefined)
               setIncorporatingChangeId(null)
             }}
             onDismiss={() => setIncorporatingChangeId(null)}
