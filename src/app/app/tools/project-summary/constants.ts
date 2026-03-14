@@ -2,34 +2,40 @@ import type { ChangeStatus, PlanStatus, DocType } from '@/data/project-summary'
 
 // ── Change status config (v2 — 6 statuses) ──
 
-export const CHANGE_STATUS_CONFIG: Record<ChangeStatus, { label: string; color: string; bgColor: string }> = {
+export const CHANGE_STATUS_CONFIG: Record<ChangeStatus, { label: string; shortLabel: string; color: string; bgColor: string }> = {
   requested: {
-    label: 'Requested',
+    label: 'Proposed Change',
+    shortLabel: 'Proposed',
     color: 'text-amber-400',
     bgColor: 'bg-amber-400/10',
   },
   awaiting_homeowner: {
-    label: 'Awaiting Homeowner',
+    label: 'Needs Your Review',
+    shortLabel: 'Review',
     color: 'text-blue-400',
     bgColor: 'bg-blue-400/10',
   },
   approved_by_homeowner: {
-    label: 'Approved by Homeowner',
+    label: 'Approved Change',
+    shortLabel: 'Approved',
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-400/10',
   },
   accepted_by_contractor: {
     label: 'Accepted by Contractor',
+    shortLabel: 'Accepted',
     color: 'text-teal-400',
     bgColor: 'bg-teal-400/10',
   },
   done: {
-    label: 'Done',
+    label: 'Added to Plan',
+    shortLabel: 'In Plan',
     color: 'text-cream/60',
     bgColor: 'bg-cream/5',
   },
   closed: {
-    label: 'Closed',
+    label: 'Not Moving Forward',
+    shortLabel: 'Closed',
     color: 'text-red-400',
     bgColor: 'bg-red-400/10',
   },
@@ -42,30 +48,28 @@ export const CHANGE_STATUS_ORDER: ChangeStatus[] = [
 
 // ── Plan status config ──
 
-export const PLAN_STATUS_CONFIG: Record<PlanStatus, { label: string; color: string; bgColor: string }> = {
-  draft: {
+export const PLAN_STATUS_CONFIG: Record<PlanStatus, { label: string; color: string; bgColor: string; description: string }> = {
+  working: {
     label: 'Draft',
     color: 'text-cream/50',
     bgColor: 'bg-cream/5',
+    description: 'Your plan is still being put together. Edit freely until you\'re ready to lock it in.',
   },
-  shared: {
-    label: 'Shared',
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-400/10',
-  },
-  confirmed: {
-    label: 'Confirmed',
+  approved: {
+    label: 'Approved',
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-400/10',
+    description: 'Your plan is locked. Any changes should go through the change log so you have a record.',
   },
-  acknowledged: {
-    label: 'Acknowledged',
-    color: 'text-teal-400',
-    bgColor: 'bg-teal-400/10',
+  unlocked: {
+    label: 'Unlocked',
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-400/10',
+    description: 'Your plan is temporarily unlocked for direct edits. Re-approve when done.',
   },
 }
 
-export const PLAN_STATUS_ORDER: PlanStatus[] = ['draft', 'shared', 'confirmed', 'acknowledged']
+export const PLAN_STATUS_ORDER: PlanStatus[] = ['working', 'approved', 'unlocked']
 
 // ── Document type labels ──
 

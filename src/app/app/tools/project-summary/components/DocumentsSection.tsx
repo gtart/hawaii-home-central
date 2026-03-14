@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import type { DocType } from '@/data/project-summary'
+import type { DocType, DocScope } from '@/data/project-summary'
 import { DOC_TYPE_LABELS } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
 import { uploadProjectSummaryFile } from '../uploadProjectSummaryFile'
@@ -31,6 +31,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
   const [showAddForm, setShowAddForm] = useState(false)
   const [newLabel, setNewLabel] = useState('')
   const [newDocType, setNewDocType] = useState<DocType | ''>('')
+  const [newDocScope, setNewDocScope] = useState<DocScope>('plan')
   const [newUrl, setNewUrl] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [docTypeOpen, setDocTypeOpen] = useState(false)
@@ -56,11 +57,13 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
     addDocument({
       label: newLabel.trim(),
       ...(newDocType ? { docType: newDocType } : {}),
+      doc_scope: newDocScope,
       ...(newUrl.trim() ? { url: newUrl.trim() } : {}),
       isCurrent: true,
     })
     setNewLabel('')
     setNewDocType('')
+    setNewDocScope('plan')
     setNewUrl('')
     setShowAddForm(false)
   }
@@ -77,6 +80,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
       addDocument({
         label: newLabel.trim() || file.name.replace(/\.[^.]+$/, ''),
         ...(newDocType ? { docType: newDocType } : {}),
+        doc_scope: newDocScope,
         fileUrl: result.url,
         fileName: result.fileName,
         fileSize: result.fileSize,
@@ -97,9 +101,13 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
     }
   }
 
+  // Split documents by scope (PCV1-015, PCV1-017, PCV1-018)
+  const planDocs = documents.filter((d) => !d.doc_scope || d.doc_scope === 'plan')
+  const referenceDocs = documents.filter((d) => d.doc_scope === 'reference')
+
   return (
     <SectionHeader
-      title="Key Plan Documents"
+      title="Documents"
       count={documents.length}
       onAdd={() => setShowAddForm(!showAddForm)}
       addLabel="Add Document"
@@ -109,8 +117,14 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
         <p className="text-sm text-cream/30 italic">No documents added yet.</p>
       )}
 
+      {/* Plan Documents */}
+      {planDocs.length > 0 && (
+        <div className="mb-1">
+          <span className="text-[10px] text-cream/25 uppercase tracking-wider font-medium">Plan Documents</span>
+        </div>
+      )}
       <div className="space-y-2">
-        {documents.map((doc) => {
+        {planDocs.map((doc) => {
           const iconType = fileTypeIcon(doc.mimeType)
           return (
             <div
@@ -204,7 +218,17 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
                 )}
               </div>
 
-              {/* Current toggle */}
+              {/* Scope + Current toggles */}
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => updateDocument(doc.id, { doc_scope: 'reference' })}
+                  className="shrink-0 text-[10px] text-cream/15 hover:text-cream/30 transition-colors opacity-0 group-hover:opacity-100"
+                  title="Move to Reference Documents"
+                >
+                  Ref
+                </button>
+              )}
               {!readOnly && (
                 <button
                   type="button"
@@ -256,6 +280,93 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
           )
         })}
       </div>
+
+      {/* Reference Documents (PCV1-018) */}
+      {referenceDocs.length > 0 && (
+        <>
+          <div className="mt-4 mb-1">
+            <span className="text-[10px] text-cream/25 uppercase tracking-wider font-medium">Reference Documents</span>
+            <span className="text-[10px] text-cream/15 ml-2">Shared across plan and changes</span>
+          </div>
+          <div className="space-y-2">
+            {referenceDocs.map((doc) => {
+              const iconType = fileTypeIcon(doc.mimeType)
+              return (
+                <div
+                  key={doc.id}
+                  className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-cream/[0.02] border border-cream/[0.04] group"
+                >
+                  {iconType === 'pdf' ? (
+                    <svg className="w-4 h-4 text-red-400/40 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
+                      <text x="7" y="18" fontSize="6" fill="currentColor" stroke="none" fontWeight="bold">PDF</text>
+                    </svg>
+                  ) : iconType === 'image' ? (
+                    <svg className="w-4 h-4 text-blue-400/40 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 text-cream/25 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <InlineEdit
+                      value={doc.label}
+                      onSave={(label) => updateDocument(doc.id, { label })}
+                      readOnly={readOnly}
+                      displayClassName="text-sm text-cream/70 font-medium"
+                      className="text-sm font-medium"
+                    />
+                    {doc.fileUrl && (
+                      <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-sandstone/50 hover:text-sandstone transition-colors flex items-center gap-1 mt-0.5">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        {doc.fileName || 'Download'}
+                        {doc.fileSize ? ` (${formatFileSize(doc.fileSize)})` : ''}
+                      </a>
+                    )}
+                    {doc.url && !doc.fileUrl && (
+                      <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-sandstone/50 hover:text-sandstone transition-colors truncate block mt-0.5">
+                        {doc.url}
+                      </a>
+                    )}
+                  </div>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={() => updateDocument(doc.id, { doc_scope: 'plan' })}
+                      className="shrink-0 text-[10px] text-cream/20 hover:text-cream/40 transition-colors"
+                      title="Move to Plan Documents"
+                    >
+                      Move to Plan
+                    </button>
+                  )}
+                  {!readOnly && (
+                    confirmDelete === doc.id ? (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button type="button" onClick={() => { deleteDocument(doc.id); setConfirmDelete(null) }} className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors">Delete</button>
+                        <button type="button" onClick={() => setConfirmDelete(null)} className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors">Cancel</button>
+                      </div>
+                    ) : (
+                      <button type="button" onClick={() => setConfirmDelete(doc.id)} className="shrink-0 text-cream/15 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100" title="Delete document">
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                    )
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
 
       {/* Add form */}
       {showAddForm && !readOnly && (
@@ -310,6 +421,29 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               placeholder="URL (optional)"
               className="flex-1 bg-cream/5 border border-cream/10 rounded-md px-2 py-1.5 text-xs text-cream/60 placeholder-cream/20 outline-none focus:border-sandstone/30"
             />
+          </div>
+
+          {/* Document scope toggle (PCV1-015, PCV1-018) */}
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-cream/30">Belongs to:</span>
+            <button
+              type="button"
+              onClick={() => setNewDocScope('plan')}
+              className={`text-[10px] px-2 py-1 rounded transition-colors ${
+                newDocScope === 'plan' ? 'bg-cream/10 text-cream/60' : 'text-cream/25 hover:text-cream/40'
+              }`}
+            >
+              Plan
+            </button>
+            <button
+              type="button"
+              onClick={() => setNewDocScope('reference')}
+              className={`text-[10px] px-2 py-1 rounded transition-colors ${
+                newDocScope === 'reference' ? 'bg-cream/10 text-cream/60' : 'text-cream/25 hover:text-cream/40'
+              }`}
+            >
+              Reference (shared)
+            </button>
           </div>
 
           {/* File upload */}

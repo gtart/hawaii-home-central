@@ -337,6 +337,7 @@ export async function GET(request: Request) {
     let includedCount = 0
     let notIncludedCount = 0
     let stillToDecideCount = 0
+    let unresolvedOpenItemCount = 0
     let planItemCount = 0
     let changeCount = 0
     let activeChangeCount = 0
@@ -351,6 +352,7 @@ export async function GET(request: Request) {
         includedCount = payload.plan.included.length
         notIncludedCount = payload.plan.not_included.length
         stillToDecideCount = payload.plan.still_to_decide.length
+        unresolvedOpenItemCount = payload.plan.open_items.filter(i => i.status === 'open' || i.status === 'waiting').length
         planItemCount = includedCount + notIncludedCount + stillToDecideCount
         changeCount = payload.changes.length
         activeChangeCount = payload.changes.filter(c => c.status !== 'done' && c.status !== 'closed').length
@@ -384,7 +386,7 @@ export async function GET(request: Request) {
       collectionId: coll.id, imageUrls, ideaCount, commentCount, statuses,
       lastComment, decisionCount, lastActivity, itemCount,
       collaboratorCount, shareLinkEnabled, shareLinkCount, inviteCount, lastEvent,
-      planScope, planStatus, includedCount, notIncludedCount, stillToDecideCount,
+      planScope, planStatus, includedCount, notIncludedCount, stillToDecideCount, unresolvedOpenItemCount,
       planItemCount, changeCount, activeChangeCount, hasBudget, budgetAmount, documentCount,
     }
   })

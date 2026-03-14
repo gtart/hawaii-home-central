@@ -11,6 +11,7 @@ import { AttachMenu } from '../../../components/AttachMenu'
 import { uploadProjectSummaryFile } from '../../../uploadProjectSummaryFile'
 import { CollapsibleCommentSidebar, type CommentSidebarHandle } from '@/components/app/CollapsibleCommentSidebar'
 import { useComments } from '@/hooks/useComments'
+import { OpenItemsList } from '../../../components/OpenItemsList'
 import type { ChangeStatus } from '@/data/project-summary'
 
 function formatFileSize(bytes: number): string {
@@ -97,7 +98,7 @@ function StatusDropdown({
 
 function Content({ collectionId, changeId }: { collectionId: string; changeId: string }) {
   const api = useProjectSummaryState({ collectionId })
-  const { payload, isLoaded, readOnly, updateChange, incorporateChange, addChangeAttachment, removeChangeAttachment, updateChangePrivateNotes, addLink, removeLink } = api
+  const { payload, isLoaded, readOnly, updateChange, incorporateChange, addChangeAttachment, removeChangeAttachment, updateChangePrivateNotes, addChangeOpenItem, updateChangeOpenItem, deleteChangeOpenItem, addLink, removeLink } = api
 
   const change = useMemo(
     () => payload.changes.find((c) => c.id === changeId),
@@ -257,6 +258,20 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 />
               </div>
 
+              {/* Rationale — why this change happened (PCV1-043) */}
+              <div>
+                <label className="text-[10px] text-cream/30 block mb-0.5">Why This Changed</label>
+                <InlineEdit
+                  value={change.rationale || ''}
+                  onSave={(v) => updateChange(change.id, { rationale: v || undefined })}
+                  placeholder="Why did this change happen? What prompted it?"
+                  readOnly={readOnly}
+                  multiline
+                  displayClassName="text-sm text-cream/60 leading-relaxed"
+                  className="text-sm leading-relaxed"
+                />
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="text-[10px] text-cream/30 block mb-0.5">Requested By</label>
@@ -270,26 +285,92 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-cream/30 block mb-0.5">Cost Impact</label>
+                  <label className="text-[10px] text-cream/30 block mb-0.5">Estimated Cost</label>
                   <InlineEdit
-                    value={change.cost_impact || ''}
-                    onSave={(v) => updateChange(change.id, { cost_impact: v ? formatCost(v) : undefined })}
+                    value={change.proposed_cost_impact || ''}
+                    onSave={(v) => updateChange(change.id, { proposed_cost_impact: v ? formatCost(v) : undefined })}
                     placeholder="e.g. +$1,200"
                     readOnly={readOnly}
-                    displayClassName="text-sm text-cream/60"
+                    displayClassName="text-sm text-cream/50"
                     className="text-sm"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-cream/30 block mb-0.5">Schedule Impact</label>
+                  <label className="text-[10px] text-cream/30 block mb-0.5">Estimated Schedule</label>
                   <InlineEdit
-                    value={change.schedule_impact || ''}
-                    onSave={(v) => updateChange(change.id, { schedule_impact: v || undefined })}
+                    value={change.proposed_schedule_impact || ''}
+                    onSave={(v) => updateChange(change.id, { proposed_schedule_impact: v || undefined })}
                     placeholder="e.g. +2 weeks"
                     readOnly={readOnly}
-                    displayClassName="text-sm text-cream/60"
+                    displayClassName="text-sm text-cream/50"
                     className="text-sm"
                   />
+                </div>
+              </div>
+
+              {/* Final agreed impact — shown when different from proposed or when populated (PCV1-044) */}
+              {(change.cost_impact || change.schedule_impact || !readOnly) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] text-cream/30 block mb-0.5">Final Cost</label>
+                    <InlineEdit
+                      value={change.cost_impact || ''}
+                      onSave={(v) => updateChange(change.id, { cost_impact: v ? formatCost(v) : undefined })}
+                      placeholder="Agreed cost impact"
+                      readOnly={readOnly}
+                      displayClassName="text-sm text-cream/60"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-cream/30 block mb-0.5">Final Schedule</label>
+                    <InlineEdit
+                      value={change.schedule_impact || ''}
+                      onSave={(v) => updateChange(change.id, { schedule_impact: v || undefined })}
+                      placeholder="Agreed schedule impact"
+                      readOnly={readOnly}
+                      displayClassName="text-sm text-cream/60"
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Affects Plan Sections (PCV1-019) */}
+              <div>
+                <label className="text-[10px] text-cream/30 block mb-1">Affects Plan Sections</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {['scope', 'included', 'not_included', 'budget', 'open_items'].map((section) => {
+                    const labels: Record<string, string> = {
+                      scope: 'Scope',
+                      included: 'Included',
+                      not_included: 'Not Included',
+                      budget: 'Budget',
+                      open_items: 'Open Items',
+                    }
+                    const isActive = (change.affects_sections || []).includes(section)
+                    return (
+                      <button
+                        key={section}
+                        type="button"
+                        disabled={readOnly}
+                        onClick={() => {
+                          const current = change.affects_sections || []
+                          const next = isActive
+                            ? current.filter((s) => s !== section)
+                            : [...current, section]
+                          updateChange(change.id, { affects_sections: next.length > 0 ? next : undefined })
+                        }}
+                        className={`text-[10px] px-2 py-1 rounded-md transition-colors ${
+                          isActive
+                            ? 'bg-sandstone/15 text-sandstone/80'
+                            : 'bg-cream/[0.03] text-cream/25 hover:text-cream/40 hover:bg-cream/5'
+                        } ${readOnly ? 'cursor-default' : ''}`}
+                      >
+                        {labels[section]}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -322,6 +403,23 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 </div>
               )}
 
+              {/* Change Open Items (PCV1-009) */}
+              <div>
+                <label className="text-[10px] text-cream/30 uppercase tracking-wider font-medium block mb-1.5">
+                  Open Items
+                </label>
+                <OpenItemsList
+                  items={change.open_items || []}
+                  onAdd={(text) => addChangeOpenItem(change.id, text)}
+                  onUpdate={(id, updates) => updateChangeOpenItem(change.id, id, updates)}
+                  onResolve={(id, note) => updateChangeOpenItem(change.id, id, { status: 'resolved', resolution_note: note })}
+                  onDelete={(id) => deleteChangeOpenItem(change.id, id)}
+                  readOnly={readOnly}
+                  emptyMessage="No open items for this change."
+                  addPlaceholder="Add an open item for this change..."
+                />
+              </div>
+
               {/* Incorporate action */}
               {canIncorporate && !readOnly && (
                 <button
@@ -332,7 +430,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                   </svg>
-                  Incorporate into Plan
+                  Add to Official Plan
                 </button>
               )}
 

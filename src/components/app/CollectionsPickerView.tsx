@@ -40,6 +40,7 @@ interface PreviewData {
   includedCount?: number
   notIncludedCount?: number
   stillToDecideCount?: number
+  unresolvedOpenItemCount?: number
   planItemCount?: number
   changeCount?: number
   activeChangeCount?: number
@@ -201,6 +202,7 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
               includedCount: p.includedCount ?? undefined,
               notIncludedCount: p.notIncludedCount ?? undefined,
               stillToDecideCount: p.stillToDecideCount ?? undefined,
+              unresolvedOpenItemCount: p.unresolvedOpenItemCount ?? undefined,
               planItemCount: p.planItemCount ?? undefined,
               changeCount: p.changeCount ?? undefined,
               activeChangeCount: p.activeChangeCount ?? undefined,
@@ -550,21 +552,22 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                       {toolKey === 'project_summary' ? (
                         (preview.planItemCount ?? 0) > 0 ? (
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-cream/50">{preview.planItemCount} items · {preview.includedCount ?? 0} included</span>
+                            {/* Lead with plan status (PCV1-041) */}
                             <div className="flex items-center gap-1.5">
-                              {(preview.stillToDecideCount ?? 0) > 0 && <span className="text-amber-400/60">{preview.stillToDecideCount} to decide</span>}
-                              {(preview.activeChangeCount ?? 0) > 0 && <span className="text-cream/40">{preview.activeChangeCount} active change{preview.activeChangeCount !== 1 ? 's' : ''}</span>}
+                              {preview.planStatus && (
+                                <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded w-fit ${
+                                  preview.planStatus === 'approved' || preview.planStatus === 'confirmed' || preview.planStatus === 'acknowledged' ? 'bg-emerald-500/10 text-emerald-400/70'
+                                  : preview.planStatus === 'unlocked' ? 'bg-amber-500/10 text-amber-400/70'
+                                  : 'bg-cream/5 text-cream/30'
+                                }`}>{preview.planStatus === 'working' ? 'Draft' : preview.planStatus === 'approved' ? 'Approved' : preview.planStatus === 'unlocked' ? 'Unlocked' : preview.planStatus.charAt(0).toUpperCase() + preview.planStatus.slice(1)}</span>
+                              )}
+                              {(preview.unresolvedOpenItemCount ?? 0) > 0 && <span className="text-amber-400/60 text-[10px]">{preview.unresolvedOpenItemCount} open</span>}
                             </div>
-                            {preview.planStatus && (
-                              <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded w-fit ${
-                                preview.planStatus === 'confirmed' || preview.planStatus === 'acknowledged' ? 'bg-emerald-500/10 text-emerald-400/70'
-                                : preview.planStatus === 'shared' ? 'bg-blue-500/10 text-blue-400/70'
-                                : 'bg-cream/5 text-cream/30'
-                              }`}>{preview.planStatus.charAt(0).toUpperCase() + preview.planStatus.slice(1)}</span>
-                            )}
+                            {/* Attention signals */}
+                            {(preview.activeChangeCount ?? 0) > 0 && <span className="text-amber-400/50 text-[10px]">{preview.activeChangeCount} pending change{preview.activeChangeCount !== 1 ? 's' : ''}</span>}
                           </div>
                         ) : (
-                          <span className="text-cream/20 italic">No items yet</span>
+                          <span className="text-cream/20 italic">Not started</span>
                         )
                       ) : toolKey === 'punchlist' ? (
                         statusParts.length > 0 ? (
@@ -715,42 +718,41 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
                 {/* Status counts — tool-aware */}
                 {toolKey === 'project_summary' && (preview.planItemCount ?? 0) > 0 ? (
                   <div className="mt-1.5 space-y-1">
+                    {/* Plan status badge — lead with confidence signal (PCV1-038/041) */}
+                    <div className="flex items-center gap-2">
+                      {preview.planStatus && (
+                        <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded ${
+                          preview.planStatus === 'approved' || preview.planStatus === 'confirmed' || preview.planStatus === 'acknowledged' ? 'bg-emerald-500/10 text-emerald-400/70'
+                          : preview.planStatus === 'unlocked' ? 'bg-amber-500/10 text-amber-400/70'
+                          : 'bg-cream/5 text-cream/30'
+                        }`}>{preview.planStatus === 'working' ? 'Draft' : preview.planStatus === 'approved' ? 'Approved' : preview.planStatus === 'unlocked' ? 'Unlocked' : preview.planStatus.charAt(0).toUpperCase() + preview.planStatus.slice(1)}</span>
+                      )}
+                      {(preview.unresolvedOpenItemCount ?? 0) > 0 && (
+                        <span className="text-[10px] text-amber-400/60">{preview.unresolvedOpenItemCount} open item{preview.unresolvedOpenItemCount !== 1 ? 's' : ''}</span>
+                      )}
+                    </div>
                     {preview.planScope && (
                       <p className="text-[11px] text-cream/35 leading-relaxed truncate">{preview.planScope.length > 80 ? preview.planScope.slice(0, 77) + '…' : preview.planScope}</p>
                     )}
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-cream/50">
-                      <span>{preview.planItemCount} plan items</span>
-                      {(preview.includedCount ?? 0) > 0 && <span className="text-cream/35">{preview.includedCount} included</span>}
-                      {(preview.stillToDecideCount ?? 0) > 0 && <span className="text-amber-400/60">{preview.stillToDecideCount} to decide</span>}
-                    </div>
+                    {/* Attention signals: changes needing action (PCV1-039) */}
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]">
-                      {(preview.changeCount ?? 0) > 0 && (
-                        <span className="text-cream/40">
-                          {preview.changeCount} change{preview.changeCount !== 1 ? 's' : ''}
-                          {(preview.activeChangeCount ?? 0) > 0 && <span className="text-amber-400/60 ml-1">({preview.activeChangeCount} active)</span>}
-                        </span>
+                      {(preview.activeChangeCount ?? 0) > 0 && (
+                        <span className="text-amber-400/60">{preview.activeChangeCount} pending change{preview.activeChangeCount !== 1 ? 's' : ''}</span>
+                      )}
+                      {(preview.changeCount ?? 0) > 0 && (preview.activeChangeCount ?? 0) === 0 && (
+                        <span className="text-cream/35">{preview.changeCount} change{preview.changeCount !== 1 ? 's' : ''}</span>
                       )}
                       {preview.hasBudget && preview.budgetAmount && (
-                        <span className="text-cream/30">Budget: {preview.budgetAmount}</span>
-                      )}
-                      {(preview.documentCount ?? 0) > 0 && (
-                        <span className="text-cream/25">{preview.documentCount} doc{preview.documentCount !== 1 ? 's' : ''}</span>
+                        <span className="text-cream/30">{preview.budgetAmount}</span>
                       )}
                     </div>
-                    {preview.planStatus && (
-                      <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded ${
-                        preview.planStatus === 'confirmed' || preview.planStatus === 'acknowledged' ? 'bg-emerald-500/10 text-emerald-400/70'
-                        : preview.planStatus === 'shared' ? 'bg-blue-500/10 text-blue-400/70'
-                        : 'bg-cream/5 text-cream/30'
-                      }`}>{preview.planStatus.charAt(0).toUpperCase() + preview.planStatus.slice(1)}</span>
-                    )}
                   </div>
                 ) : toolKey === 'project_summary' && (preview.planItemCount ?? 0) === 0 ? (
                   <div className="mt-1.5">
                     {preview.planScope && (
                       <p className="text-[11px] text-cream/35 leading-relaxed truncate mb-1">{preview.planScope.length > 80 ? preview.planScope.slice(0, 77) + '…' : preview.planScope}</p>
                     )}
-                    <p className="text-[11px] text-cream/35 italic">No plan items yet</p>
+                    <p className="text-[11px] text-cream/35 italic">No plan details yet — start by describing your project scope</p>
                   </div>
                 ) : toolKey === 'punchlist' && hasStatusCounts ? (
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-[11px] text-cream/50">

@@ -14,9 +14,14 @@ export type DecisionStatus = 'open' | 'pending_homeowner' | 'pending_contractor'
 // ── v2 Types ──
 
 export type ChangeStatus = 'requested' | 'awaiting_homeowner' | 'approved_by_homeowner' | 'accepted_by_contractor' | 'done' | 'closed'
-export type PlanStatus = 'draft' | 'shared' | 'confirmed' | 'acknowledged'
+export type PlanStatus = 'working' | 'approved' | 'unlocked'
+
+/** Legacy plan statuses — kept for v2→v3 migration */
+export type PlanStatusLegacy = 'draft' | 'shared' | 'confirmed' | 'acknowledged'
 export type PlanItemCategory = 'included' | 'not_included' | 'still_to_decide'
+export type OpenItemStatus = 'open' | 'waiting' | 'resolved' | 'closed'
 export type DocType = 'plan' | 'contract' | 'spec' | 'permit' | 'pricing' | 'other'
+export type DocScope = 'plan' | 'reference'
 export type SummaryLinkType = 'selection' | 'fix_item' | 'document'
 
 export interface SummaryLink {
@@ -32,6 +37,7 @@ export interface SummaryDocument {
   id: string
   label: string
   docType?: DocType
+  doc_scope?: DocScope
   date?: string
   isCurrent: boolean
   replacedByDocId?: string
@@ -70,6 +76,23 @@ export interface PlanItem {
   updated_at: string
 }
 
+export interface OpenItem {
+  id: string
+  text: string
+  status: OpenItemStatus
+  // Resolution metadata (PCV1-011)
+  resolved_at?: string
+  resolved_by?: string
+  resolution_note?: string
+  // Waiting metadata
+  waiting_on?: string
+  // General audit fields
+  created_by?: string
+  updated_by?: string
+  created_at: string
+  updated_at: string
+}
+
 export interface Milestone {
   id: string
   event: string   // 'plan_shared' | 'plan_confirmed' | 'plan_acknowledged' | 'change_approved' | 'change_incorporated' | etc.
@@ -84,10 +107,21 @@ export interface CurrentPlan {
   scope: string
   included: PlanItem[]
   not_included: PlanItem[]
+  /** @deprecated Use open_items instead. Kept for backward-compatible migration. */
   still_to_decide: PlanItem[]
+  open_items: OpenItem[]
   status: PlanStatus
   status_changed_at?: string
   content_changed_since_status?: boolean
+  // Approval metadata (PCV1-004, PCV1-008)
+  approved_at?: string
+  approved_by?: string
+  // Unlock metadata (PCV1-004)
+  unlocked_at?: string
+  unlocked_by?: string
+  unlock_reason?: string
+  // Revision tracking (PCV1-008)
+  revision_number?: number
   updated_at: string
 }
 
@@ -95,9 +129,17 @@ export interface SummaryChange {
   id: string
   title: string
   description?: string
+  /** Why this change happened — context for future reference (PCV1-043) */
+  rationale?: string
   requested_by?: string
   status: ChangeStatus
+  /** Proposed cost impact — initial estimate before final agreement (PCV1-044) */
+  proposed_cost_impact?: string
+  /** Proposed schedule impact — initial estimate (PCV1-044) */
+  proposed_schedule_impact?: string
+  /** Final agreed cost impact (PCV1-044) */
   cost_impact?: string
+  /** Final agreed schedule impact (PCV1-044) */
   schedule_impact?: string
   contractor_response?: string
   final_note?: string
@@ -106,6 +148,8 @@ export interface SummaryChange {
   incorporated_at?: string
   incorporated_by?: string
   changed_since_accepted?: boolean
+  affects_sections?: string[]
+  open_items?: OpenItem[]
   links: SummaryLink[]
   attachments?: ChangeAttachment[]
   created_at: string
@@ -134,7 +178,8 @@ export const DEFAULT_PROJECT_SUMMARY_PAYLOAD: ProjectSummaryPayload = {
     included: [],
     not_included: [],
     still_to_decide: [],
-    status: 'draft',
+    open_items: [],
+    status: 'working',
     content_changed_since_status: false,
     updated_at: new Date().toISOString(),
   },
@@ -158,11 +203,24 @@ const LEGACY_CHANGE_STATUSES: ReadonlySet<string> = new Set<ChangeStatusV1>([
 ])
 
 export const VALID_PLAN_STATUSES: ReadonlySet<string> = new Set<PlanStatus>([
+  'working', 'approved', 'unlocked',
+])
+
+/** Legacy plan statuses — used during v2→v3 migration */
+const LEGACY_PLAN_STATUSES: ReadonlySet<string> = new Set<PlanStatusLegacy>([
   'draft', 'shared', 'confirmed', 'acknowledged',
+])
+
+export const VALID_OPEN_ITEM_STATUSES: ReadonlySet<string> = new Set<OpenItemStatus>([
+  'open', 'waiting', 'resolved', 'closed',
 ])
 
 export const VALID_DOC_TYPES: ReadonlySet<string> = new Set<DocType>([
   'plan', 'contract', 'spec', 'permit', 'pricing', 'other',
+])
+
+export const VALID_DOC_SCOPES: ReadonlySet<string> = new Set<DocScope>([
+  'plan', 'reference',
 ])
 
 export const VALID_LINK_TYPES: ReadonlySet<string> = new Set<SummaryLinkType>([
@@ -209,6 +267,7 @@ function coerceDocument(raw: unknown): SummaryDocument | null {
     id: isString(raw.id) ? raw.id : crypto.randomUUID(),
     label: isString(raw.label) ? raw.label : 'Untitled',
     ...(isString(raw.docType) && VALID_DOC_TYPES.has(raw.docType) ? { docType: raw.docType as DocType } : {}),
+    ...(isString(raw.doc_scope) && VALID_DOC_SCOPES.has(raw.doc_scope) ? { doc_scope: raw.doc_scope as DocScope } : {}),
     ...(isString(raw.date) ? { date: raw.date } : {}),
     isCurrent: raw.isCurrent === true,
     ...(isString(raw.replacedByDocId) ? { replacedByDocId: raw.replacedByDocId } : {}),
@@ -269,6 +328,46 @@ function coercePlanItems(raw: unknown): PlanItem[] {
   return raw.map(coercePlanItem).filter((i): i is PlanItem => i !== null)
 }
 
+function coerceOpenItem(raw: unknown): OpenItem | null {
+  if (!isObject(raw)) return null
+  const ts = new Date().toISOString()
+  let status: OpenItemStatus = 'open'
+  if (isString(raw.status) && VALID_OPEN_ITEM_STATUSES.has(raw.status)) {
+    status = raw.status as OpenItemStatus
+  }
+  return {
+    id: isString(raw.id) ? raw.id : crypto.randomUUID(),
+    text: isString(raw.text) ? raw.text : '',
+    status,
+    ...(isString(raw.resolved_at) ? { resolved_at: raw.resolved_at } : {}),
+    ...(isString(raw.resolved_by) ? { resolved_by: raw.resolved_by } : {}),
+    ...(isString(raw.resolution_note) ? { resolution_note: raw.resolution_note } : {}),
+    ...(isString(raw.waiting_on) ? { waiting_on: raw.waiting_on } : {}),
+    ...(isString(raw.created_by) ? { created_by: raw.created_by } : {}),
+    ...(isString(raw.updated_by) ? { updated_by: raw.updated_by } : {}),
+    created_at: isString(raw.created_at) ? raw.created_at : ts,
+    updated_at: isString(raw.updated_at) ? raw.updated_at : ts,
+  }
+}
+
+function coerceOpenItems(raw: unknown): OpenItem[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map(coerceOpenItem).filter((i): i is OpenItem => i !== null)
+}
+
+/** Migrate a PlanItem from still_to_decide to an OpenItem with status 'open' */
+function migratePlanItemToOpenItem(item: PlanItem): OpenItem {
+  return {
+    id: item.id,
+    text: item.text,
+    status: 'open',
+    ...(item.created_by ? { created_by: item.created_by } : {}),
+    ...(item.updated_by ? { updated_by: item.updated_by } : {}),
+    created_at: item.created_at,
+    updated_at: item.updated_at,
+  }
+}
+
 function coerceMilestone(raw: unknown): Milestone | null {
   if (!isObject(raw)) return null
   if (!isString(raw.id) || !isString(raw.event)) return null
@@ -286,6 +385,19 @@ function coerceMilestone(raw: unknown): Milestone | null {
 function coerceMilestones(raw: unknown): Milestone[] {
   if (!Array.isArray(raw)) return []
   return raw.map(coerceMilestone).filter((m): m is Milestone => m !== null)
+}
+
+/** Map legacy plan status to current */
+function migratePlanStatus(status: string): PlanStatus {
+  switch (status) {
+    case 'draft': return 'working'
+    case 'shared': return 'working'
+    case 'confirmed': return 'approved'
+    case 'acknowledged': return 'approved'
+    default:
+      if (VALID_PLAN_STATUSES.has(status)) return status as PlanStatus
+      return 'working'
+  }
 }
 
 /** Map v1 change status to v2 */
@@ -318,8 +430,11 @@ function coerceChange(raw: unknown): SummaryChange | null {
     id: isString(raw.id) ? raw.id : crypto.randomUUID(),
     title: isString(raw.title) ? raw.title : 'Untitled',
     ...(isString(raw.description) ? { description: raw.description } : {}),
+    ...(isString(raw.rationale) ? { rationale: raw.rationale } : {}),
     ...(isString(raw.requested_by) ? { requested_by: raw.requested_by } : {}),
     status,
+    ...(isString(raw.proposed_cost_impact) ? { proposed_cost_impact: raw.proposed_cost_impact } : {}),
+    ...(isString(raw.proposed_schedule_impact) ? { proposed_schedule_impact: raw.proposed_schedule_impact } : {}),
     ...(isString(raw.cost_impact) ? { cost_impact: raw.cost_impact } : {}),
     ...(isString(raw.schedule_impact) ? { schedule_impact: raw.schedule_impact } : {}),
     ...(isString(raw.contractor_response) ? { contractor_response: raw.contractor_response } : {}),
@@ -329,6 +444,8 @@ function coerceChange(raw: unknown): SummaryChange | null {
     ...(isString(raw.incorporated_at) ? { incorporated_at: raw.incorporated_at } : {}),
     ...(isString(raw.incorporated_by) ? { incorporated_by: raw.incorporated_by } : {}),
     ...(typeof raw.changed_since_accepted === 'boolean' ? { changed_since_accepted: raw.changed_since_accepted } : {}),
+    ...(Array.isArray(raw.affects_sections) ? { affects_sections: raw.affects_sections.filter((s: unknown): s is string => typeof s === 'string') } : {}),
+    ...(Array.isArray(raw.open_items) && raw.open_items.length > 0 ? { open_items: coerceOpenItems(raw.open_items) } : {}),
     links: coerceLinks(raw.links),
     attachments: coerceAttachments(raw.attachments),
     created_at: isString(raw.created_at) ? raw.created_at : ts,
@@ -386,8 +503,9 @@ function migrateV1toV2(obj: Record<string, unknown>): ProjectSummaryPayload {
       scope: isString(summaryRaw.text) ? summaryRaw.text : '',
       included: [],
       not_included: [],
-      still_to_decide: stillToDecide,
-      status: 'draft',
+      still_to_decide: [],
+      open_items: stillToDecide.map(migratePlanItemToOpenItem),
+      status: 'working',
       content_changed_since_status: false,
       updated_at: isString(summaryRaw.updated_at) ? summaryRaw.updated_at : ts,
     },
@@ -412,9 +530,25 @@ function coerceV2(obj: Record<string, unknown>): ProjectSummaryPayload {
   const budgetRaw = isObject(obj.budget) ? obj.budget : {}
   const ts = new Date().toISOString()
 
-  const planStatus = isString(planRaw.status) && VALID_PLAN_STATUSES.has(planRaw.status)
-    ? planRaw.status as PlanStatus
-    : 'draft'
+  // Handle both current and legacy plan statuses
+  let planStatus: PlanStatus = 'working'
+  if (isString(planRaw.status)) {
+    if (VALID_PLAN_STATUSES.has(planRaw.status)) {
+      planStatus = planRaw.status as PlanStatus
+    } else if (LEGACY_PLAN_STATUSES.has(planRaw.status)) {
+      planStatus = migratePlanStatus(planRaw.status)
+    }
+  }
+
+  // Migrate still_to_decide items into open_items if open_items doesn't exist yet
+  const existingOpenItems = coerceOpenItems(planRaw.open_items)
+  const legacyStillToDecide = coercePlanItems(planRaw.still_to_decide)
+  // If we have still_to_decide items but no open_items, migrate them
+  const migratedOpenItems = existingOpenItems.length > 0
+    ? existingOpenItems
+    : legacyStillToDecide.map(migratePlanItemToOpenItem)
+  // Keep still_to_decide empty after migration — open_items is now authoritative
+  const remainingStillToDecide = existingOpenItems.length > 0 ? legacyStillToDecide : []
 
   return {
     version: 2,
@@ -422,12 +556,19 @@ function coerceV2(obj: Record<string, unknown>): ProjectSummaryPayload {
       scope: isString(planRaw.scope) ? planRaw.scope : '',
       included: coercePlanItems(planRaw.included),
       not_included: coercePlanItems(planRaw.not_included),
-      still_to_decide: coercePlanItems(planRaw.still_to_decide),
+      still_to_decide: remainingStillToDecide,
+      open_items: migratedOpenItems,
       status: planStatus,
       ...(isString(planRaw.status_changed_at) ? { status_changed_at: planRaw.status_changed_at } : {}),
       ...(typeof planRaw.content_changed_since_status === 'boolean'
         ? { content_changed_since_status: planRaw.content_changed_since_status }
         : { content_changed_since_status: false }),
+      ...(isString(planRaw.approved_at) ? { approved_at: planRaw.approved_at } : {}),
+      ...(isString(planRaw.approved_by) ? { approved_by: planRaw.approved_by } : {}),
+      ...(isString(planRaw.unlocked_at) ? { unlocked_at: planRaw.unlocked_at } : {}),
+      ...(isString(planRaw.unlocked_by) ? { unlocked_by: planRaw.unlocked_by } : {}),
+      ...(isString(planRaw.unlock_reason) ? { unlock_reason: planRaw.unlock_reason } : {}),
+      ...(typeof planRaw.revision_number === 'number' ? { revision_number: planRaw.revision_number } : {}),
       updated_at: isString(planRaw.updated_at) ? planRaw.updated_at : ts,
     },
     budget: {
