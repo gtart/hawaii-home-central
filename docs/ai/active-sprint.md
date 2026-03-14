@@ -9,7 +9,7 @@
 Major UI overhaul of Track Plans — compact plan card, file management improvements, change order tabs, field redesign, and cross-tool entity picker.
 
 ### Commits
-- *(pending)*
+- `d202610`
 
 ### Files Changed (Sprint)
 - `src/app/app/tools/project-summary/components/CurrentPlanSection.tsx`
@@ -37,7 +37,7 @@ Major UI overhaul of Track Plans — compact plan card, file management improvem
 ---
 
 ## Previous Sprints (Completed)
-- Comment Readability + Email Notifications (March 13, 2026) — *(pending commit)*
+- Comment Readability + Email Notifications (March 13, 2026) — `d202610`
 - Plan & Changes Rebuild v1 (March 13, 2026) — `e78b17e`, `6888bdc`
 - UX Fixes: Track Plans/Choose Selections/Fix Issues (March 13, 2026) — `c61237e`
 - Homeowner Homepage Design Sprint (March 13, 2026) — `6076c0a`
