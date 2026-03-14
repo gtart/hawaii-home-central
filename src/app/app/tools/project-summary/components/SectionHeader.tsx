@@ -9,6 +9,7 @@ interface SectionHeaderProps {
   onAdd?: () => void
   addLabel?: string
   readOnly?: boolean
+  extraActions?: React.ReactNode
   children: React.ReactNode
 }
 
@@ -19,6 +20,7 @@ export function SectionHeader({
   onAdd,
   addLabel = 'Add',
   readOnly,
+  extraActions,
   children,
 }: SectionHeaderProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
@@ -55,6 +57,11 @@ export function SectionHeader({
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
             </svg>
             {addLabel}
+          </span>
+        )}
+        {extraActions && (
+          <span onClick={(e) => e.stopPropagation()} className="flex items-center">
+            {extraActions}
           </span>
         )}
       </button>

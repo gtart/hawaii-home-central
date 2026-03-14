@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
+import { useSession } from 'next-auth/react'
 import { useCollectionState, type ActivityEventHint } from '@/hooks/useCollectionState'
 import type {
   ProjectSummaryPayload,
@@ -27,6 +28,9 @@ function now() {
 }
 
 export function useProjectSummaryState(opts?: { collectionId?: string | null }) {
+  const { data: session } = useSession()
+  const currentUserName = session?.user?.name ?? undefined
+
   const collResult = useCollectionState<ProjectSummaryPayload>({
     collectionId: opts?.collectionId ?? null,
     toolKey: 'project_summary',
@@ -715,6 +719,7 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
               ...updates,
               ...(changedSinceAccepted !== undefined ? { changed_since_accepted: changedSinceAccepted } : {}),
               updated_at: now(),
+              updated_by: currentUserName,
             } : c
           ),
         }

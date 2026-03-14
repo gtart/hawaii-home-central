@@ -31,39 +31,62 @@ function ResolveDialog({
   onDismiss: () => void
 }) {
   const [note, setNote] = useState('')
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-sm rounded-xl border border-cream/10 bg-[#1a1a1a] p-5 shadow-2xl space-y-3">
-        <h3 className="text-sm font-semibold text-cream">Resolve Open Item</h3>
-        <p className="text-xs text-cream/50 leading-relaxed">{item.text}</p>
-        <div>
-          <label className="text-[10px] text-cream/30 block mb-1">Resolution Note (optional)</label>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="How was this resolved?"
-            rows={2}
-            className="w-full bg-cream/5 border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream/80 placeholder-cream/20 outline-none focus:border-sandstone/30 resize-none"
-          />
-        </div>
-        <div className="flex gap-2 justify-end">
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="text-xs text-cream/30 hover:text-cream/50 transition-colors px-3 py-1.5"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => onResolve(note.trim() || undefined)}
-            className="text-xs font-medium text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 transition-colors px-3 py-1.5 rounded-lg"
-          >
-            Mark Resolved
-          </button>
-        </div>
+
+  const dialogContent = (
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold text-cream">Resolve Item</h3>
+      <p className="text-xs text-cream/50 leading-relaxed">{item.text}</p>
+      <div>
+        <label className="text-[10px] text-cream/30 block mb-1">Resolution Note (optional)</label>
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="How was this resolved?"
+          rows={2}
+          className="w-full bg-cream/5 border border-cream/10 rounded-lg px-3 py-2 text-sm text-cream/80 placeholder-cream/20 outline-none focus:border-sandstone/30 resize-none"
+        />
+      </div>
+      <div className="flex gap-2 justify-end">
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="text-xs text-cream/30 hover:text-cream/50 transition-colors px-3 py-1.5"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={() => onResolve(note.trim() || undefined)}
+          className="text-xs font-medium text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 transition-colors px-3 py-1.5 rounded-lg"
+        >
+          Mark Resolved
+        </button>
       </div>
     </div>
+  )
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 z-[60] bg-black/50" onClick={onDismiss} />
+
+      {/* Desktop: centered modal */}
+      <div className="hidden md:flex fixed inset-0 z-[61] items-center justify-center px-4 pointer-events-none">
+        <div className="w-full max-w-sm rounded-xl border border-cream/10 bg-[#1a1a1a] p-5 shadow-2xl pointer-events-auto">
+          {dialogContent}
+        </div>
+      </div>
+
+      {/* Mobile: bottom sheet */}
+      <div className="md:hidden fixed inset-x-0 bottom-0 z-[61] bg-[#1a1a1a] border-t border-cream/[0.08] rounded-t-2xl shadow-2xl">
+        <div className="flex justify-center pt-2 pb-1">
+          <div className="w-10 h-1 rounded-full bg-cream/15" />
+        </div>
+        <div className="p-5 pb-8">
+          {dialogContent}
+        </div>
+      </div>
+    </>
   )
 }
 
@@ -74,8 +97,8 @@ export function OpenItemsList({
   onResolve,
   onDelete,
   readOnly,
-  emptyMessage = 'No open items.',
-  addPlaceholder = 'Add an open item...',
+  emptyMessage = 'No unresolved items.',
+  addPlaceholder = 'Add an unresolved item...',
 }: OpenItemsListProps) {
   const [newText, setNewText] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)

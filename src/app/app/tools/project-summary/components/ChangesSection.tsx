@@ -11,6 +11,7 @@ import { InlineEdit } from './InlineEdit'
 import { StatusBadge } from './StatusBadge'
 import { LinkPills } from './LinkPills'
 import { AttachMenu } from './AttachMenu'
+import { uploadProjectSummaryFile } from '../uploadProjectSummaryFile'
 
 /** Normalize a cost string into dollar format if it looks like a number */
 function formatCost(raw: string): string {
@@ -119,7 +120,7 @@ function StatusDropdown({
               Unresolved Items
             </h3>
             <p className="text-xs text-cream/50 leading-relaxed">
-              This change has <strong className="text-amber-400">{unresolvedItemCount} unresolved open item{unresolvedItemCount !== 1 ? 's' : ''}</strong>.
+              This change has <strong className="text-amber-400">{unresolvedItemCount} unresolved item{unresolvedItemCount !== 1 ? 's' : ''}</strong>.
               You can still proceed, but the items will remain tracked.
             </p>
             <div className="flex gap-2 justify-end pt-1">
@@ -184,7 +185,7 @@ function IncorporateDialog({
               <line x1="12" y1="8" x2="12" y2="12" strokeLinecap="round" />
               <line x1="12" y1="16" x2="12.01" y2="16" strokeLinecap="round" />
             </svg>
-            {openItemCount} open item{openItemCount !== 1 ? 's' : ''} still unresolved in the plan
+            {openItemCount} unresolved item{openItemCount !== 1 ? 's' : ''} in the plan
           </div>
         )}
 
@@ -221,14 +222,23 @@ function IncorporateDialog({
   )
 }
 
+type ChangeTab = 'accepted' | 'pending' | 'not_approved'
+
+const ACCEPTED_STATUSES = new Set<ChangeStatus>(['approved_by_homeowner', 'accepted_by_contractor', 'done'])
+const PENDING_STATUSES = new Set<ChangeStatus>(['requested', 'awaiting_homeowner'])
+const NOT_APPROVED_STATUSES = new Set<ChangeStatus>(['closed'])
+
 export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsumed, focusEntryId }: ChangesSectionProps) {
-  const { payload, readOnly, addChange, updateChange, deleteChange, incorporateChange, addLink, removeLink } = api
+  const { payload, readOnly, addChange, updateChange, deleteChange, incorporateChange, addChangeAttachment, addLink, removeLink } = api
   const { changes } = payload
+  const [activeTab, setActiveTab] = useState<ChangeTab>('accepted')
   const [showAddForm, setShowAddForm] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newDescription, setNewDescription] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [uploadingChangeId, setUploadingChangeId] = useState<string | null>(null)
+  const changeFileInputRef = useRef<HTMLInputElement>(null)
   const [draftLink, setDraftLink] = useState<PrefillDraft | null>(null)
   const [incorporatingChangeId, setIncorporatingChangeId] = useState<string | null>(null)
   const focusRef = useRef<HTMLDivElement>(null)
@@ -292,6 +302,35 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
       count={changes.length}
       readOnly={readOnly}
     >
+      {/* Hidden file input for inline change uploads */}
+      <input
+        ref={changeFileInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.heic,.heif,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf"
+        className="hidden"
+        onChange={async (e) => {
+          const file = e.target.files?.[0]
+          if (!file || !uploadingChangeId) return
+          try {
+            const result = await uploadProjectSummaryFile(file)
+            addChangeAttachment(uploadingChangeId, {
+              type: 'file',
+              url: result.url,
+              label: file.name.replace(/\.[^.]+$/, ''),
+              fileName: result.fileName,
+              fileSize: result.fileSize,
+              mimeType: result.mimeType,
+              uploadedAt: new Date().toISOString(),
+            })
+          } catch {
+            // Upload error — silently fail for inline (detail page has error display)
+          } finally {
+            setUploadingChangeId(null)
+            if (changeFileInputRef.current) changeFileInputRef.current.value = ''
+          }
+        }}
+      />
+
       {/* Guided incorporation dialog (PCV1-007) */}
       {incorporatingChangeId && (() => {
         const change = changes.find((c) => c.id === incorporatingChangeId)
@@ -313,11 +352,19 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
         <p className="text-sm text-cream/30 italic">No changes yet. When something changes from the original plan — a new material, extra work, or a removed item — add it here so you have a record of what changed and why.</p>
       )}
 
-      {/* Split: Pending Changes vs Change History (PCV1-023) */}
-      {(() => {
-        const RESOLVED_STATUSES = new Set<ChangeStatus>(['approved_by_homeowner', 'accepted_by_contractor', 'done', 'closed'])
-        const pendingChanges = changes.filter((c) => !RESOLVED_STATUSES.has(c.status) && !c.incorporated)
-        const historyChanges = changes.filter((c) => RESOLVED_STATUSES.has(c.status) || c.incorporated)
+      {/* Tab bar: Accepted / Pending Review / Not Approved */}
+      {changes.length > 0 && (() => {
+        const acceptedChanges = changes.filter((c) => ACCEPTED_STATUSES.has(c.status) || c.incorporated)
+        const pendingChanges = changes.filter((c) => PENDING_STATUSES.has(c.status) && !c.incorporated)
+        const notApprovedChanges = changes.filter((c) => NOT_APPROVED_STATUSES.has(c.status) && !c.incorporated)
+
+        const tabs: { key: ChangeTab; label: string; count: number; items: typeof changes }[] = [
+          { key: 'accepted', label: 'Accepted', count: acceptedChanges.length, items: acceptedChanges },
+          { key: 'pending', label: 'Pending Review', count: pendingChanges.length, items: pendingChanges },
+          { key: 'not_approved', label: 'Not Approved', count: notApprovedChanges.length, items: notApprovedChanges },
+        ]
+
+        const currentItems = tabs.find((t) => t.key === activeTab)?.items ?? []
 
         function renderChangeRow(change: typeof changes[0]) {
           const isExpanded = expandedId === change.id
@@ -367,7 +414,6 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                   />
                 </div>
 
-                {/* Secondary metadata — hidden on mobile to reduce density (PCV1-029) */}
                 {change.cost_impact && (
                   <span className="text-[10px] text-cream/35 shrink-0 hidden md:inline">{change.cost_impact}</span>
                 )}
@@ -434,11 +480,24 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
               {isExpanded && (
                 <div className="px-3 pb-3 pt-1 border-t border-cream/[0.04] space-y-2">
                   <div>
-                    <label className="text-[10px] text-cream/30 block mb-0.5">Description</label>
+                    <label className="text-[10px] text-cream/30 block mb-0.5">Scope / What&apos;s Changed</label>
                     <InlineEdit
                       value={change.description || ''}
                       onSave={(v) => updateChange(change.id, { description: v || undefined })}
                       placeholder="What changed?"
+                      readOnly={readOnly}
+                      multiline
+                      displayClassName="text-xs text-cream/50"
+                      className="text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] text-cream/30 block mb-0.5">Reason (optional)</label>
+                    <InlineEdit
+                      value={change.rationale || ''}
+                      onSave={(v) => updateChange(change.id, { rationale: v || undefined })}
+                      placeholder="Why was this change needed?"
                       readOnly={readOnly}
                       multiline
                       displayClassName="text-xs text-cream/50"
@@ -484,7 +543,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
 
                   {/* Contractor Response */}
                   <div>
-                    <label className="text-[10px] text-cream/30 block mb-0.5">Contractor Response</label>
+                    <label className="text-[10px] text-cream/30 block mb-0.5">Note from Contractor (optional)</label>
                     <InlineEdit
                       value={change.contractor_response || ''}
                       onSave={(v) => updateChange(change.id, { contractor_response: v || undefined })}
@@ -498,7 +557,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
 
                   {(change.final_note || !readOnly) && (
                     <div>
-                      <label className="text-[10px] text-cream/30 block mb-0.5">Note</label>
+                      <label className="text-[10px] text-cream/30 block mb-0.5">Additional Notes (optional)</label>
                       <InlineEdit
                         value={change.final_note || ''}
                         onSave={(v) => updateChange(change.id, { final_note: v || undefined })}
@@ -544,6 +603,43 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                     </div>
                   )}
 
+                  {/* Attachments + inline upload */}
+                  {((change.attachments?.length || 0) > 0 || !readOnly) && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] text-cream/30">Attachments</span>
+                        {!readOnly && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setUploadingChangeId(change.id)
+                              setTimeout(() => changeFileInputRef.current?.click(), 0)
+                            }}
+                            disabled={uploadingChangeId === change.id}
+                            className="inline-flex items-center gap-1 text-[10px] text-cream/25 hover:text-cream/50 transition-colors disabled:opacity-50"
+                          >
+                            {uploadingChangeId === change.id ? (
+                              <div className="w-2.5 h-2.5 border border-cream/20 border-t-cream/50 rounded-full animate-spin" />
+                            ) : (
+                              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                              </svg>
+                            )}
+                            {uploadingChangeId === change.id ? 'Uploading...' : 'Upload'}
+                          </button>
+                        )}
+                      </div>
+                      {(change.attachments || []).map((att) => (
+                        <div key={att.id} className="flex items-center gap-1.5 text-[10px] text-cream/40 ml-1">
+                          <svg className="w-2.5 h-2.5 text-cream/20 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <a href={att.url} target="_blank" rel="noopener noreferrer" className="hover:text-cream/60 truncate">{att.label}</a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-2">
                     <LinkPills
                       links={change.links}
@@ -553,6 +649,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                     <AttachMenu
                       readOnly={readOnly}
                       onAttach={(link) => addLink(change.id, link)}
+                      projectId={api.projectId}
                     />
                   </div>
                 </div>
@@ -563,26 +660,44 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
 
         return (
           <>
-            {pendingChanges.length > 0 && (
-              <div className="mb-1">
-                <span className="text-[10px] text-cream/25 uppercase tracking-wider font-medium">Pending Changes</span>
-              </div>
+            {/* Tabs */}
+            <div className="flex gap-0 border-b border-cream/[0.06] mb-3 overflow-x-auto">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`relative px-3 py-2 text-xs whitespace-nowrap transition-colors ${
+                    activeTab === tab.key
+                      ? 'text-cream/80'
+                      : 'text-cream/30 hover:text-cream/50'
+                  }`}
+                >
+                  {tab.label}
+                  {tab.key === 'pending' && tab.count > 0 && (
+                    <span className="ml-1.5 inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-sandstone/20 text-sandstone text-[10px] font-medium">
+                      {tab.count}
+                    </span>
+                  )}
+                  {activeTab === tab.key && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-sandstone/60 rounded-full" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab content */}
+            {currentItems.length === 0 && (
+              <p className="text-xs text-cream/20 italic py-2">
+                {activeTab === 'accepted' && 'No accepted changes yet.'}
+                {activeTab === 'pending' && 'No changes pending review.'}
+                {activeTab === 'not_approved' && 'No rejected changes.'}
+              </p>
             )}
-            {pendingChanges.length > 0 && (
-              <div className="space-y-2">
-                {pendingChanges.map((change) => renderChangeRow(change))}
-              </div>
-            )}
-            {historyChanges.length > 0 && (
-              <>
-                <div className={`${pendingChanges.length > 0 ? 'mt-4' : ''} mb-1`}>
-                  <span className="text-[10px] text-cream/25 uppercase tracking-wider font-medium">Change History</span>
-                </div>
-                <div className="space-y-2">
-                  {historyChanges.map((change) => renderChangeRow(change))}
-                </div>
-              </>
-            )}
+
+            <div className="space-y-2">
+              {currentItems.map((change) => renderChangeRow(change))}
+            </div>
           </>
         )
       })()}

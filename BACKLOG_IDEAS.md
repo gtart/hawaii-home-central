@@ -45,6 +45,43 @@ Allow outside collaborators (contractors, subs, cabinet shops, vendors, designer
 - Should there be a "guest has viewed this" read receipt for the owner?
 - Rate limiting / abuse prevention for anonymous guest endpoints
 
+## Account Storage Limits & File Manager (DEFERRED)
+
+**Status**: Deferred. Add after current Track Plans redesign sprint.
+**Date discussed**: 2026-03-13
+
+### Feature Summary
+
+Give each user a storage quota for files uploaded across all tools (Vercel Blob). Provide a simple file manager so users can see all their uploaded files in one place and easily delete old ones to free up space.
+
+### Key Decisions Made
+
+1. **Per-user storage limit** — each account gets an allotment (e.g., 500MB or 1GB). Limit enforced at upload time across all tools (mood boards, punchlist photos, plan documents, selection files, change order attachments).
+2. **Cross-tool file browser** — a settings or account page showing all uploaded files grouped by tool, with file size, upload date, and a delete button. Deleting removes the file from Vercel Blob and updates the tool's JSON payload.
+3. **Usage bar** — show current usage vs. quota on the file manager page and in settings. Show a warning when approaching the limit (e.g., 80%).
+4. **Upload rejection** — when quota is exceeded, the upload helper returns a clear error message ("Storage limit reached. Delete old files to free up space.") rather than silently failing.
+5. **All uploads go through client-side `@vercel/blob/client`** — the token handler (`handleUpload` in each tool's upload route) is the enforcement point. Check current usage before issuing a token.
+
+### Recommended Implementation Order
+
+- **Phase 1**: Add `storageUsedBytes` column to User model. Create a utility that sums blob sizes across all collections for a user. Wire into upload token handlers to reject when over quota.
+- **Phase 2**: Build file manager page at `/app/settings/storage` — lists all blobs by tool with sizes, dates, delete buttons. Show usage bar.
+- **Phase 3**: Add warning banners to upload UIs when approaching quota. Add quota info to settings page.
+
+### Architecture Notes
+
+- All upload routes now use `handleUpload` from `@vercel/blob/client` (converted March 2026). The `onBeforeGenerateToken` callback is the natural enforcement point.
+- Blob URLs are stored in JSON payloads: `SummaryDocument.fileUrl`, `ChangeAttachment.url`, punchlist item photos, mood board images, selection files.
+- Deleting a blob requires `del()` from `@vercel/blob` with the blob URL.
+- Need to handle orphaned blobs (uploaded but never saved to payload) — consider a cleanup cron.
+
+### Open Questions for Later
+
+- What should the default quota be? (500MB? 1GB? Unlimited during beta?)
+- Should there be paid tier upgrades for more storage?
+- How to handle existing users who already exceed the quota when it's introduced?
+- Should we track per-blob metadata in a DB table (BlobRecord) for faster queries, or scan payloads on demand?
+
 ## Google Photos Picker Integration (DEFERRED)
 
 **Status**: Not implementing. Revisit later.

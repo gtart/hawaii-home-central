@@ -7,6 +7,7 @@ import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
 import { uploadProjectSummaryFile } from '../uploadProjectSummaryFile'
 import { SectionHeader } from './SectionHeader'
 import { InlineEdit } from './InlineEdit'
+import { FileDetailPanel } from './FileDetailPanel'
 
 interface DocumentsSectionProps {
   api: ProjectSummaryStateAPI
@@ -30,8 +31,9 @@ function fileTypeIcon(mimeType?: string): string {
 }
 
 export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSectionProps) {
-  const { payload, readOnly, addDocument, updateDocument, deleteDocument } = api
+  const { payload, readOnly, addDocument, updateDocument, deleteDocument, collectionId } = api
   const { documents } = payload
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newLabel, setNewLabel] = useState('')
   const [newDocType, setNewDocType] = useState<DocType | ''>('')
@@ -43,6 +45,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
   const [uploadError, setUploadError] = useState<string | null>(null)
   const docTypeRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const quickUploadRef = useRef<HTMLInputElement>(null)
 
   // Close doc type dropdown on outside click
   useEffect(() => {
@@ -105,6 +108,34 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
     }
   }
 
+  /** Quick upload — bypasses the add form, uses filename as label */
+  async function handleQuickUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    setUploadError(null)
+
+    try {
+      const result = await uploadProjectSummaryFile(file)
+      addDocument({
+        label: file.name.replace(/\.[^.]+$/, ''),
+        doc_scope: 'plan',
+        fileUrl: result.url,
+        fileName: result.fileName,
+        fileSize: result.fileSize,
+        mimeType: result.mimeType,
+        uploadedAt: new Date().toISOString(),
+        isCurrent: true,
+      })
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setIsUploading(false)
+      if (quickUploadRef.current) quickUploadRef.current.value = ''
+    }
+  }
+
   // Split documents by scope (PCV1-015, PCV1-017, PCV1-018)
   const planDocs = documents.filter((d) => !d.doc_scope || d.doc_scope === 'plan')
   const referenceDocs = documents.filter((d) => d.doc_scope === 'reference')
@@ -127,7 +158,8 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
           return (
             <div
               key={doc.id}
-              className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-cream/[0.02] border border-cream/[0.04] group"
+              className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-cream/[0.02] border border-cream/[0.04] group cursor-pointer hover:border-cream/10 transition-colors"
+              onClick={() => setSelectedDocId(doc.id)}
             >
               {/* Doc icon — varies by file type */}
               {iconType === 'pdf' ? (
@@ -227,7 +259,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
               {!readOnly && (
                 <button
                   type="button"
-                  onClick={() => updateDocument(doc.id, { doc_scope: 'reference' })}
+                  onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { doc_scope: 'reference' }) }}
                   className="shrink-0 text-[10px] text-cream/15 hover:text-cream/30 transition-colors opacity-0 group-hover:opacity-100"
                   title="Move to Reference Documents"
                 >
@@ -237,7 +269,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
               {!readOnly && (
                 <button
                   type="button"
-                  onClick={() => updateDocument(doc.id, { isCurrent: !doc.isCurrent })}
+                  onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { isCurrent: !doc.isCurrent }) }}
                   className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded transition-colors ${
                     doc.isCurrent
                       ? 'bg-emerald-400/10 text-emerald-400/70 hover:bg-emerald-400/20'
@@ -255,14 +287,14 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       type="button"
-                      onClick={() => { deleteDocument(doc.id); setConfirmDelete(null) }}
+                      onClick={(e) => { e.stopPropagation(); deleteDocument(doc.id); setConfirmDelete(null) }}
                       className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors"
                     >
                       Delete
                     </button>
                     <button
                       type="button"
-                      onClick={() => setConfirmDelete(null)}
+                      onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }}
                       className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors"
                     >
                       Cancel
@@ -271,7 +303,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                 ) : (
                   <button
                     type="button"
-                    onClick={() => setConfirmDelete(doc.id)}
+                    onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }}
                     className="shrink-0 text-cream/15 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100"
                     title="Delete document"
                   >
@@ -299,7 +331,8 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
               return (
                 <div
                   key={doc.id}
-                  className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-cream/[0.02] border border-cream/[0.04] group"
+                  className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-cream/[0.02] border border-cream/[0.04] group cursor-pointer hover:border-cream/10 transition-colors"
+                  onClick={() => setSelectedDocId(doc.id)}
                 >
                   {iconType === 'pdf' ? (
                     <svg className="w-4 h-4 text-red-400/40 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -345,7 +378,7 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                   {!readOnly && (
                     <button
                       type="button"
-                      onClick={() => updateDocument(doc.id, { doc_scope: 'plan' })}
+                      onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { doc_scope: 'plan' }) }}
                       className="shrink-0 text-[10px] text-cream/20 hover:text-cream/40 transition-colors"
                       title="Move to Plan Documents"
                     >
@@ -355,11 +388,11 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
                   {!readOnly && (
                     confirmDelete === doc.id ? (
                       <div className="flex items-center gap-1 shrink-0">
-                        <button type="button" onClick={() => { deleteDocument(doc.id); setConfirmDelete(null) }} className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors">Delete</button>
-                        <button type="button" onClick={() => setConfirmDelete(null)} className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors">Cancel</button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); deleteDocument(doc.id); setConfirmDelete(null) }} className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors">Delete</button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }} className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors">Cancel</button>
                       </div>
                     ) : (
-                      <button type="button" onClick={() => setConfirmDelete(doc.id)} className="shrink-0 text-cream/15 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100" title="Delete document">
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }} className="shrink-0 text-cream/15 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100" title="Delete document">
                         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
@@ -505,25 +538,64 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
     </>
   )
 
+  const selectedDoc = selectedDocId ? documents.find((d) => d.id === selectedDocId) : null
+
+  const detailPanel = selectedDoc && collectionId ? (
+    <FileDetailPanel
+      document={selectedDoc}
+      collectionId={collectionId}
+      onClose={() => setSelectedDocId(null)}
+      onUpdateNote={(note) => updateDocument(selectedDoc.id, { note: note || undefined })}
+      readOnly={readOnly}
+    />
+  ) : null
+
   if (inline) {
     return (
       <div className="pt-4 border-t border-cream/[0.06]">
+        {/* Hidden quick-upload input */}
+        <input
+          ref={quickUploadRef}
+          type="file"
+          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.heic,.heif,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf"
+          onChange={handleQuickUpload}
+          className="hidden"
+          disabled={isUploading}
+        />
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">Documents &amp; Photos</span>
+          <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">Documents &amp; Files</span>
           {!readOnly && (
-            <button
-              type="button"
-              onClick={() => setShowAddForm(!showAddForm)}
-              className="inline-flex items-center gap-1 text-[11px] text-sandstone/60 hover:text-sandstone transition-colors"
-            >
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-              </svg>
-              Add
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowAddForm(!showAddForm)}
+                className="text-[10px] text-cream/25 hover:text-cream/50 transition-colors"
+              >
+                Link URL
+              </button>
+              <button
+                type="button"
+                onClick={() => quickUploadRef.current?.click()}
+                disabled={isUploading}
+                className="w-6 h-6 rounded-full bg-sandstone/20 hover:bg-sandstone/30 text-sandstone flex items-center justify-center transition-colors disabled:opacity-50"
+                title="Upload file"
+              >
+                {isUploading ? (
+                  <div className="w-3 h-3 border border-sandstone/30 border-t-sandstone rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                  </svg>
+                )}
+              </button>
+            </div>
           )}
         </div>
+        {uploadError && (
+          <p className="text-[11px] text-red-400/70 mb-2">{uploadError}</p>
+        )}
         {content}
+        {detailPanel}
       </div>
     )
   }
@@ -533,10 +605,39 @@ export function DocumentsSection({ api, inline, planApprovedAt }: DocumentsSecti
       title="Documents"
       count={documents.length}
       onAdd={() => setShowAddForm(!showAddForm)}
-      addLabel="Add Document"
+      addLabel="Link URL"
       readOnly={readOnly}
+      extraActions={!readOnly ? (
+        <button
+          type="button"
+          onClick={() => quickUploadRef.current?.click()}
+          disabled={isUploading}
+          className="w-6 h-6 rounded-full bg-sandstone/20 hover:bg-sandstone/30 text-sandstone flex items-center justify-center transition-colors disabled:opacity-50"
+          title="Upload file"
+        >
+          {isUploading ? (
+            <div className="w-3 h-3 border border-sandstone/30 border-t-sandstone rounded-full animate-spin" />
+          ) : (
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+            </svg>
+          )}
+        </button>
+      ) : undefined}
     >
+      <input
+        ref={quickUploadRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.heic,.heif,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf"
+        onChange={handleQuickUpload}
+        className="hidden"
+        disabled={isUploading}
+      />
+      {uploadError && (
+        <p className="text-[11px] text-red-400/70 mb-2">{uploadError}</p>
+      )}
       {content}
+      {detailPanel}
     </SectionHeader>
   )
 }

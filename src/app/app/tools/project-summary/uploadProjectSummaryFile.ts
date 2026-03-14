@@ -1,3 +1,5 @@
+import { upload } from '@vercel/blob/client'
+
 export interface UploadResult {
   url: string
   fileName: string
@@ -6,41 +8,48 @@ export interface UploadResult {
   id: string
 }
 
+const ALLOWED_EXTENSIONS = new Set([
+  '.jpg', '.jpeg', '.png', '.webp',
+  '.pdf', '.doc', '.docx',
+])
+
+const MAX_SIZE = 40 * 1024 * 1024 // 40MB
+
+function getFileExt(name: string): string | undefined {
+  return name.toLowerCase().match(/\.[^.]+$/)?.[0]
+}
+
 export async function uploadProjectSummaryFile(
   file: File
 ): Promise<UploadResult> {
-  const formData = new FormData()
-  formData.append('file', file)
-
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 60_000)
-
-  let res: Response
-  try {
-    res = await fetch('/api/tools/project-summary/upload', {
-      method: 'POST',
-      body: formData,
-      signal: controller.signal,
-    })
-  } catch (err) {
-    clearTimeout(timeout)
-    if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error('Upload timed out. Check your connection and try again.')
-    }
-    throw err
-  }
-  clearTimeout(timeout)
-
-  if (!res.ok) {
-    let msg = `Upload failed (${res.status})`
-    try {
-      const data = await res.json()
-      if (data.error) msg = data.error
-    } catch {
-      /* non-JSON */
-    }
-    throw new Error(msg)
+  // Client-side validation before uploading
+  if (file.size === 0) {
+    throw new Error('Empty file received — please try again.')
   }
 
-  return res.json()
+  if (file.size > MAX_SIZE) {
+    throw new Error('File too large. Max 40MB')
+  }
+
+  const ext = getFileExt(file.name)
+  if (ext && !ALLOWED_EXTENSIONS.has(ext)) {
+    throw new Error('Invalid file type. Allowed: JPEG, PNG, WebP, PDF, DOC, DOCX')
+  }
+
+  // Upload directly to Vercel Blob from the browser.
+  // The handleUploadUrl validates auth + access and returns a client token.
+  const blob = await upload(file.name, file, {
+    access: 'public',
+    handleUploadUrl: '/api/tools/project-summary/upload',
+  })
+
+  const id = `ps_doc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+
+  return {
+    url: blob.url,
+    fileName: file.name,
+    fileSize: file.size,
+    mimeType: blob.contentType || file.type || 'application/octet-stream',
+    id,
+  }
 }

@@ -1,38 +1,40 @@
+import { upload } from '@vercel/blob/client'
+
+const MAX_SIZE = 40 * 1024 * 1024 // 40MB
+
 export async function uploadMoodBoardFile(
   file: File
 ): Promise<{ url: string; thumbnailUrl: string; id: string }> {
-  const formData = new FormData()
-  formData.append('file', file)
+  if (file.size === 0) {
+    throw new Error('Empty file received — please try again.')
+  }
+  if (file.size > MAX_SIZE) {
+    throw new Error('File too large. Max 40MB')
+  }
 
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 30_000)
+  // Step 1: Upload directly to Vercel Blob
+  const blob = await upload(file.name, file, {
+    access: 'public',
+    handleUploadUrl: '/api/tools/mood-boards/upload',
+  })
 
-  let res: Response
+  const id = `mb_img_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+
+  // Step 2: Generate thumbnail via server (fetches from blob URL, no body limit)
+  let thumbnailUrl = blob.url
   try {
-    res = await fetch('/api/tools/mood-boards/upload', {
+    const thumbRes = await fetch('/api/generate-thumbnail', {
       method: 'POST',
-      body: formData,
-      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageUrl: blob.url, prefix: 'mood-boards' }),
     })
-  } catch (err) {
-    clearTimeout(timeout)
-    if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error('Upload timed out. Check your connection and try again.')
+    if (thumbRes.ok) {
+      const thumbData = await thumbRes.json()
+      if (thumbData.thumbnailUrl) thumbnailUrl = thumbData.thumbnailUrl
     }
-    throw err
-  }
-  clearTimeout(timeout)
-
-  if (!res.ok) {
-    let msg = `Upload failed (${res.status})`
-    try {
-      const data = await res.json()
-      if (data.error) msg = data.error
-    } catch {
-      /* non-JSON */
-    }
-    throw new Error(msg)
+  } catch {
+    // Fall back to full-size URL if thumbnail generation fails
   }
 
-  return res.json()
+  return { url: blob.url, thumbnailUrl, id }
 }

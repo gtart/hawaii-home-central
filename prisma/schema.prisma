@@ -149,6 +149,13 @@ model User {
   activityEvents      ActivityEvent[]            @relation("ActivityActor")
   capturedItems       CapturedItem[]             @relation("CapturedItems")
   comments            Comment[]                  @relation("CommentAuthor")
+  mentions            CommentMention[]           @relation("UserMentions")
+  emailNotifications  EmailNotification[]        @relation("UserEmailNotifications")
+
+  // Notification preferences
+  notifyOnMention        Boolean   @default(true)
+  notifyDailyDigest      Boolean   @default(true)
+  notificationUnsubToken String?   @unique @default(cuid())
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -439,11 +446,45 @@ model Comment {
 
   collection      ToolCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
   author          User?          @relation("CommentAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+  mentions        CommentMention[] @relation("CommentMentions")
 
   @@index([collectionId, targetType, targetId, createdAt])
   @@index([collectionId, createdAt])
   @@index([authorUserId])
   @@index([parentCommentId])
+}
+
+// ─── Comment Mentions & Email Notifications ────────────
+
+model CommentMention {
+  id        String   @id @default(cuid())
+  commentId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  comment   Comment  @relation("CommentMentions", fields: [commentId], references: [id], onDelete: Cascade)
+  user      User     @relation("UserMentions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([userId, createdAt])
+}
+
+enum NotificationType {
+  MENTION
+  DIGEST
+}
+
+model EmailNotification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  commentId String?
+  sentAt    DateTime         @default(now())
+
+  user      User             @relation("UserEmailNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, sentAt])
+  @@index([commentId])
 }
 
 // ─── Rate Limiting ────────────────────────────────────

@@ -2,9 +2,38 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import type { CommentRow } from '@/hooks/useComments'
+import { useCollectionMembers } from '@/hooks/useCollectionMembers'
+import { MentionPicker } from './MentionPicker'
 
 function truncateLabel(s: string, max = 40): string {
   return s.length > max ? s.slice(0, max).trimEnd() + '…' : s
+}
+
+/** Parse comment text containing @[Name](userId) mentions into React nodes */
+function renderTextWithMentions(text: string): React.ReactNode {
+  const re = /@\[([^\]]+)\]\(([^)]+)\)/g
+  const parts: React.ReactNode[] = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index))
+    }
+    const name = match[1]
+    parts.push(
+      <span key={match.index} className="inline-flex items-center px-1 py-0 rounded text-sandstone bg-sandstone/10 text-xs font-medium">
+        @{name}
+      </span>
+    )
+    lastIndex = match.index + match[0].length
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex))
+  }
+
+  return parts.length > 0 ? parts : text
 }
 
 function relativeTime(iso: string): string {
@@ -63,6 +92,8 @@ interface Props {
   currentUserId?: string | null
   /** Comment ID to auto-scroll to and highlight (deep link) */
   highlightCommentId?: string | null
+  /** Collection ID for fetching members (enables @mention picker) */
+  collectionId?: string
 }
 
 const MAX_COMMENT_LENGTH = 400
@@ -90,6 +121,7 @@ export function CommentThread({
   onClearFilter,
   currentUserId,
   highlightCommentId,
+  collectionId,
 }: Props) {
   const [page, setPage] = useState(0)
   const [draft, setDraft] = useState('')
@@ -98,6 +130,12 @@ export function CommentThread({
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const prevCountRef = useRef(comments.length)
+
+  // @mention state
+  const { members } = useCollectionMembers(collectionId)
+  const [mentionActive, setMentionActive] = useState(false)
+  const [mentionFilter, setMentionFilter] = useState('')
+  const mentionStartRef = useRef<number | null>(null)
   const [highlightIds, setHighlightIds] = useState<Set<string>>(new Set())
   const deepLinkScrolled = useRef(false)
 
@@ -211,6 +249,63 @@ export function CommentThread({
       e.preventDefault()
       handleSubmit()
     }
+    if (mentionActive && e.key === 'Escape') {
+      e.preventDefault()
+      setMentionActive(false)
+      mentionStartRef.current = null
+    }
+  }
+
+  function handleDraftChange(value: string) {
+    const clamped = value.slice(0, MAX_COMMENT_LENGTH)
+    setDraft(clamped)
+
+    if (!collectionId || members.length === 0) return
+
+    const textarea = inputRef.current
+    if (!textarea) return
+    const cursorPos = textarea.selectionStart
+
+    // Check if we're in a mention context by looking backwards from cursor
+    const textBefore = clamped.slice(0, cursorPos)
+    const atIdx = textBefore.lastIndexOf('@')
+    if (atIdx >= 0) {
+      const charBeforeAt = atIdx > 0 ? textBefore[atIdx - 1] : ' '
+      const textAfterAt = textBefore.slice(atIdx + 1)
+      // Activate if @ is at start or preceded by whitespace, and no spaces in filter
+      if ((charBeforeAt === ' ' || charBeforeAt === '\n' || atIdx === 0) && !/\s/.test(textAfterAt)) {
+        setMentionActive(true)
+        setMentionFilter(textAfterAt)
+        mentionStartRef.current = atIdx
+        return
+      }
+    }
+    setMentionActive(false)
+    mentionStartRef.current = null
+  }
+
+  function handleMentionSelect(member: { id: string; name: string | null }) {
+    const startIdx = mentionStartRef.current
+    if (startIdx === null) return
+
+    const name = member.name || 'Unknown'
+    const mentionText = `@[${name}](${member.id}) `
+    const before = draft.slice(0, startIdx)
+    const after = draft.slice(inputRef.current?.selectionStart ?? draft.length)
+    const newDraft = (before + mentionText + after).slice(0, MAX_COMMENT_LENGTH)
+    setDraft(newDraft)
+    setMentionActive(false)
+    mentionStartRef.current = null
+
+    // Refocus and set cursor after the inserted mention
+    requestAnimationFrame(() => {
+      const textarea = inputRef.current
+      if (textarea) {
+        textarea.focus()
+        const pos = before.length + mentionText.length
+        textarea.setSelectionRange(pos, pos)
+      }
+    })
   }
 
   const commentInput = !readOnly && (
@@ -236,19 +331,29 @@ export function CommentThread({
 
       <div className="relative">
         <div className="flex gap-2">
-          <textarea
-            ref={inputRef}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value.slice(0, MAX_COMMENT_LENGTH))}
-            placeholder={
-              selectedRef
-                ? `Comment on ${truncateLabel(selectedRef.label)}...`
-                : 'Add a comment...'
-            }
-            rows={2}
-            className="flex-1 bg-basalt border border-cream/12 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/35 focus:outline-none focus:border-sandstone/40 resize-none"
-            onKeyDown={handleKeyDown}
-          />
+          <div className="flex-1 relative">
+            <textarea
+              ref={inputRef}
+              value={draft}
+              onChange={(e) => handleDraftChange(e.target.value)}
+              placeholder={
+                selectedRef
+                  ? `Comment on ${truncateLabel(selectedRef.label)}...`
+                  : 'Add a comment...'
+              }
+              rows={2}
+              className="w-full bg-basalt border border-cream/12 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/35 focus:outline-none focus:border-sandstone/40 resize-none"
+              onKeyDown={handleKeyDown}
+            />
+            {mentionActive && members.length > 0 && (
+              <MentionPicker
+                members={members}
+                filter={mentionFilter}
+                onSelect={handleMentionSelect}
+                onClose={() => { setMentionActive(false); mentionStartRef.current = null }}
+              />
+            )}
+          </div>
           <div className="flex flex-col gap-1">
             <button
               type="button"
@@ -548,11 +653,11 @@ function CommentCard({
 
       {/* Author + time + actions */}
       <div className="flex items-center gap-2">
-        <span className="w-5 h-5 rounded-full bg-sandstone/20 text-sandstone text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+        <span className="w-6 h-6 rounded-full bg-sandstone/20 text-sandstone text-[11px] font-bold flex items-center justify-center flex-shrink-0">
           {comment.authorName.charAt(0).toUpperCase() || '?'}
         </span>
-        <span className="text-xs font-medium text-cream/75">{comment.authorName || 'Unknown'}</span>
-        <span className="text-[10px] text-cream/35">{relativeTime(comment.createdAt)}</span>
+        <span className="text-xs font-medium text-cream/85">{comment.authorName || 'Unknown'}</span>
+        <span className="text-[11px] text-cream/40">{relativeTime(comment.createdAt)}</span>
         {comment.edited && (
           <span className="text-[10px] text-cream/30 italic">(edited)</span>
         )}
@@ -587,7 +692,7 @@ function CommentCard({
 
       {/* Comment text or edit mode */}
       {editing ? (
-        <div className="pl-7 space-y-1.5">
+        <div className="pl-8 space-y-1.5">
           <textarea
             ref={editRef}
             value={editDraft}
@@ -616,8 +721,8 @@ function CommentCard({
           </div>
         </div>
       ) : (
-        <p className="text-sm text-cream/80 whitespace-pre-wrap line-clamp-5 pl-7">
-          {comment.text}
+        <p className="text-sm text-cream/90 whitespace-pre-wrap pl-8">
+          {renderTextWithMentions(comment.text)}
         </p>
       )}
     </div>

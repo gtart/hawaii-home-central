@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'
+import Link from 'next/link'
 import { PLAN_STATUS_CONFIG } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
 import { InlineEdit } from './InlineEdit'
-import { PlanItemList } from './PlanItemList'
 import { OpenItemsList } from './OpenItemsList'
 import { DocumentsSection } from './DocumentsSection'
 
@@ -97,10 +97,10 @@ function ApproveWithOpenItemsWarning({
             <line x1="12" y1="9" x2="12" y2="13" strokeLinecap="round" />
             <line x1="12" y1="17" x2="12.01" y2="17" strokeLinecap="round" />
           </svg>
-          Unresolved Open Items
+          Unresolved Items
         </h3>
         <p className="text-xs text-cream/50 leading-relaxed">
-          This plan has <strong className="text-amber-400">{unresolvedCount} unresolved open item{unresolvedCount !== 1 ? 's' : ''}</strong>.
+          This plan has <strong className="text-amber-400">{unresolvedCount} unresolved item{unresolvedCount !== 1 ? 's' : ''}</strong>.
           You can still approve, but these items will remain visible and tracked.
         </p>
         <div className="flex gap-2 justify-end pt-1">
@@ -129,7 +129,6 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
     payload, readOnly,
     updatePlanScope,
     approvePlan, unlockPlan, reapprovePlan,
-    addPlanItem, updatePlanItem, deletePlanItem,
     addOpenItem, updateOpenItem, resolveOpenItem, deleteOpenItem,
     updateBudget,
   } = api
@@ -138,6 +137,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
   const [showBudget, setShowBudget] = useState(
     Boolean(budget.baseline_amount || budget.budget_note)
   )
+  const [showIncorporated, setShowIncorporated] = useState(false)
   const [showIntervention, setShowIntervention] = useState(false)
   const [showUnlockPrompt, setShowUnlockPrompt] = useState(false)
   const [unlockReason, setUnlockReason] = useState('')
@@ -178,6 +178,12 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
     return baselineNum + (approvedCostSum ?? 0)
   }, [baselineNum, approvedCostSum])
 
+  // Incorporated changes — shown inline in plan card
+  const incorporatedChanges = useMemo(
+    () => changes.filter((c) => c.incorporated),
+    [changes]
+  )
+
   // Unincorporated accepted changes
   const unincorporatedCount = useMemo(
     () => changes.filter((c) =>
@@ -215,7 +221,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
   }, [onScrollToChanges])
 
   return (
-    <div className={`rounded-xl border p-5 md:p-6 space-y-5 ${
+    <div className={`rounded-xl border p-4 md:p-5 space-y-3 ${
       isApproved
         ? 'border-emerald-400/20 bg-emerald-400/[0.02] shadow-[0_0_24px_rgba(52,211,153,0.03)]'
         : isUnlocked
@@ -243,7 +249,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
         />
       )}
 
-      {/* Unlock reason prompt (Codex audit issue #3) */}
+      {/* Unlock reason prompt */}
       {showUnlockPrompt && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-sm rounded-xl border border-cream/10 bg-[#1a1a1a] p-5 shadow-2xl space-y-3">
@@ -283,20 +289,22 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
         </div>
       )}
 
-      {/* Header with plan status */}
+      {/* Header: title + status + actions — compact single line */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <h2 className={`font-semibold ${isApproved ? 'text-base text-cream' : 'text-sm text-cream/80'}`}>Official Plan</h2>
-          {isApproved && (
-            <svg className="w-4 h-4 text-emerald-400/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M7 11V7a5 5 0 0110 0v4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
+          <h2 className="text-sm font-semibold text-cream/80">Official Plan</h2>
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${statusConfig.color} ${statusConfig.bgColor}`}>
+            {isApproved && (
+              <svg className="w-2.5 h-2.5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M7 11V7a5 5 0 0110 0v4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+            {statusConfig.label}
+          </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Approve / Re-approve button (PCV1-013: checks unresolved items) */}
+        <div className="flex items-center gap-1.5">
           {!readOnly && (plan.status === 'working' || plan.status === 'unlocked') && (
             <button
               type="button"
@@ -307,113 +315,74 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
                   plan.status === 'unlocked' ? reapprovePlan() : approvePlan()
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 transition-colors"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 transition-colors"
             >
               <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              {plan.status === 'unlocked' ? 'Re-approve Plan' : 'Approve Plan'}
+              {plan.status === 'unlocked' ? 'Re-approve' : 'Approve'}
             </button>
           )}
 
-          {/* Unlock button (when approved) */}
           {!readOnly && isApproved && (
             <button
               type="button"
               onClick={() => { setUnlockReason(''); setShowUnlockPrompt(true) }}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium text-amber-400/70 bg-amber-400/5 hover:bg-amber-400/10 transition-colors"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium text-amber-400/70 bg-amber-400/5 hover:bg-amber-400/10 transition-colors"
             >
-              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M7 11V7a5 5 0 019.9-1" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
               Unlock
             </button>
           )}
 
-          {/* Status badge */}
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium ${statusConfig.color} ${statusConfig.bgColor}`}>
-            {statusConfig.label}
-          </span>
-        </div>
-      </div>
-
-      {/* Approved plan banner */}
-      {isApproved && (
-        <div className="text-[11px] text-emerald-400/60 bg-emerald-400/5 rounded-lg px-3 py-2 flex items-center gap-2">
-          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span>
-            Your plan is approved and locked. If something changes, create a change record below so you have a clear paper trail. You can also unlock the plan if you need to edit it directly.
-          </span>
-        </div>
-      )}
-
-      {/* Unlocked banner */}
-      {isUnlocked && (
-        <div className="text-[11px] text-amber-400/60 bg-amber-400/5 rounded-lg px-3 py-2 flex items-center gap-2">
-          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M7 11V7a5 5 0 019.9-1" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span>Your plan is unlocked so you can make edits. When you&apos;re done, re-approve it to lock things back in place.</span>
-        </div>
-      )}
-
-      {/* Unresolved open items readiness indicator (PCV1-014) */}
-      {unresolvedOpenItems.length > 0 && (
-        <div className="text-[11px] text-amber-400/50 bg-amber-400/5 rounded-lg px-3 py-2 flex items-center gap-2">
-          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" strokeLinecap="round" />
-            <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
-            <line x1="12" y1="17" x2="12.01" y2="17" strokeLinecap="round" />
-          </svg>
-          <span>
-            {unresolvedOpenItems.length} open item{unresolvedOpenItems.length !== 1 ? 's' : ''} still unresolved
-            {unresolvedOpenItems.filter((i) => i.status === 'waiting').length > 0 && (
-              <span className="text-cream/30">
-                {' '}({unresolvedOpenItems.filter((i) => i.status === 'waiting').length} waiting)
-              </span>
-            )}
-          </span>
-        </div>
-      )}
-
-      {/* Changed-since indicator */}
-      {plan.content_changed_since_status && plan.status_changed_at && (
-        <div className="text-[10px] text-amber-400/50 flex items-center gap-1.5">
-          <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" strokeLinecap="round" />
-            <line x1="12" y1="16" x2="12.01" y2="16" strokeLinecap="round" />
-          </svg>
-          Plan content changed since last marked as {statusConfig.label.toLowerCase()}
-        </div>
-      )}
-
-      {/* Unincorporated changes banner */}
-      {unincorporatedCount > 0 && (
-        <div className="text-[10px] text-teal-400/60 bg-teal-400/5 rounded-lg px-3 py-2 flex items-center gap-2">
-          <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-          </svg>
-          {unincorporatedCount} approved change{unincorporatedCount !== 1 ? 's' : ''} not yet added to official plan
-          {onScrollToChanges && (
+          {isApproved && !readOnly && onScrollToChanges && (
             <button
               type="button"
               onClick={onScrollToChanges}
-              className="ml-auto text-teal-400/80 hover:text-teal-400 transition-colors underline"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium text-sandstone/70 bg-sandstone/10 hover:bg-sandstone/20 transition-colors"
             >
-              View
+              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+              </svg>
+              New Change
             </button>
+          )}
+        </div>
+      </div>
+
+      {/* Compact status line — replaces separate banners */}
+      {(isApproved || isUnlocked || unresolvedOpenItems.length > 0 || unincorporatedCount > 0 || (plan.content_changed_since_status && plan.status_changed_at)) && (
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px]">
+          {isApproved && (
+            <span className="text-emerald-400/50">Locked — create a change to modify</span>
+          )}
+          {isUnlocked && (
+            <span className="text-amber-400/50">Unlocked for editing — re-approve when done</span>
+          )}
+          {unresolvedOpenItems.length > 0 && (
+            <span className="text-amber-400/50">
+              {unresolvedOpenItems.length} unresolved item{unresolvedOpenItems.length !== 1 ? 's' : ''}
+              {unresolvedOpenItems.filter((i) => i.status === 'waiting').length > 0 && (
+                <span className="text-cream/25"> ({unresolvedOpenItems.filter((i) => i.status === 'waiting').length} waiting)</span>
+              )}
+            </span>
+          )}
+          {unincorporatedCount > 0 && (
+            <span className="text-teal-400/50">
+              {unincorporatedCount} change{unincorporatedCount !== 1 ? 's' : ''} not yet incorporated
+              {onScrollToChanges && (
+                <button type="button" onClick={onScrollToChanges} className="ml-1 text-teal-400/70 hover:text-teal-400 underline">view</button>
+              )}
+            </span>
+          )}
+          {plan.content_changed_since_status && plan.status_changed_at && (
+            <span className="text-amber-400/40">Content changed since {statusConfig.label.toLowerCase()}</span>
           )}
         </div>
       )}
 
-      {/* Scope */}
+      {/* 1. Scope */}
       <div onClick={isApproved ? handleEditAttempt : undefined}>
-        <label className="text-[10px] text-cream/30 uppercase tracking-wider font-medium block mb-1.5">Scope</label>
+        <label className="text-[10px] text-cream/30 uppercase tracking-wider font-medium block mb-1">Scope</label>
         <InlineEdit
           value={plan.scope}
           onSave={(text) => updatePlanScope(text)}
@@ -425,83 +394,48 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
         />
       </div>
 
-      {/* Structured lists */}
-      <div className="space-y-4" onClick={isApproved ? handleEditAttempt : undefined}>
-        <div>
-          <label className="text-[10px] text-cream/30 uppercase tracking-wider font-medium block mb-1.5">
-            What&apos;s Included
-          </label>
-          <PlanItemList
-            items={plan.included}
-            onAdd={(text) => addPlanItem('included', text)}
-            onUpdate={(id, text) => updatePlanItem(id, { text })}
-            onDelete={deletePlanItem}
-            readOnly={readOnly || isApproved}
-            emptyMessage="No items listed yet."
-            addPlaceholder="Add included item..."
-          />
-        </div>
+      {/* 2. Documents & Files */}
+      <DocumentsSection api={api} inline planApprovedAt={plan.approved_at} />
 
-        <div>
-          <label className="text-[10px] text-cream/30 uppercase tracking-wider font-medium block mb-1.5">
-            What&apos;s Not Included
-          </label>
-          <PlanItemList
-            items={plan.not_included}
-            onAdd={(text) => addPlanItem('not_included', text)}
-            onUpdate={(id, text) => updatePlanItem(id, { text })}
-            onDelete={deletePlanItem}
-            readOnly={readOnly || isApproved}
-            emptyMessage="Nothing excluded yet."
-            addPlaceholder="Add excluded item..."
-          />
-        </div>
-
-        <div>
-          <label className="text-[10px] text-cream/30 uppercase tracking-wider font-medium block mb-1.5">
-            Open Items
-          </label>
-          <OpenItemsList
-            items={plan.open_items}
-            onAdd={(text) => addOpenItem(text)}
-            onUpdate={(id, updates) => updateOpenItem(id, updates)}
-            onResolve={(id, note) => resolveOpenItem(id, note)}
-            onDelete={deleteOpenItem}
-            readOnly={readOnly || isApproved}
-            emptyMessage="No open items — all decisions made."
-            addPlaceholder="Add something that needs deciding..."
-          />
-        </div>
+      {/* 3. Unresolved Items */}
+      <div onClick={isApproved ? handleEditAttempt : undefined}>
+        <label className="text-[10px] text-cream/30 uppercase tracking-wider font-medium block mb-1">
+          Unresolved Items
+        </label>
+        <OpenItemsList
+          items={plan.open_items}
+          onAdd={(text) => addOpenItem(text)}
+          onUpdate={(id, updates) => updateOpenItem(id, updates)}
+          onResolve={(id, note) => resolveOpenItem(id, note)}
+          onDelete={deleteOpenItem}
+          readOnly={readOnly || isApproved}
+          emptyMessage="No unresolved items — all decisions made."
+          addPlaceholder="Add something that needs deciding..."
+        />
       </div>
 
-      {/* Budget */}
+      {/* 4. Budget — compact inline */}
       {!showBudget && !readOnly && !isApproved && (
         <button
           type="button"
           onClick={() => setShowBudget(true)}
-          className="text-[11px] text-cream/30 hover:text-cream/50 transition-colors"
+          className="text-[10px] text-cream/25 hover:text-cream/40 transition-colors"
         >
           + Add budget details
         </button>
       )}
 
       {showBudget && (
-        <div className="pt-4 border-t border-cream/[0.06]" onClick={isApproved ? handleEditAttempt : undefined}>
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] text-cream/40 uppercase tracking-wider font-medium">Budget Overview</span>
+        <div className="pt-3 border-t border-cream/[0.04]" onClick={isApproved ? handleEditAttempt : undefined}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">Budget</span>
             {!readOnly && !isApproved && !budget.baseline_amount && !budget.budget_note && approvedChanges.length === 0 && (
-              <button
-                type="button"
-                onClick={() => setShowBudget(false)}
-                className="text-[10px] text-cream/20 hover:text-cream/40 transition-colors"
-              >
-                Hide
-              </button>
+              <button type="button" onClick={() => setShowBudget(false)} className="text-[10px] text-cream/20 hover:text-cream/40 transition-colors">Hide</button>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div>
-              <label className="text-[10px] text-cream/30 block mb-1">Baseline Amount</label>
+              <label className="text-[10px] text-cream/25 block mb-0.5">Baseline</label>
               <InlineEdit
                 value={budget.baseline_amount || ''}
                 onSave={(v) => updateBudget({ baseline_amount: v ? formatCost(v) : undefined })}
@@ -512,91 +446,136 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
               />
             </div>
             <div>
-              <label className="text-[10px] text-cream/30 block mb-1">Approved Changes</label>
-              <div className="flex items-baseline gap-2">
+              <label className="text-[10px] text-cream/25 block mb-0.5">Changes</label>
+              <div className="flex items-baseline gap-1.5">
                 {approvedChanges.length > 0 ? (
                   <span className="text-sm text-emerald-400/70">
                     {approvedChanges.length} approved
                     {approvedCostSum !== null && (
-                      <span className="text-cream/40 ml-1">
-                        ({approvedCostSum >= 0 ? '+' : ''}${Math.abs(approvedCostSum).toLocaleString()})
-                      </span>
+                      <span className="text-cream/40 ml-1">({approvedCostSum >= 0 ? '+' : ''}${Math.abs(approvedCostSum).toLocaleString()})</span>
                     )}
                   </span>
                 ) : (
-                  <span className="text-sm text-cream/30">None yet</span>
-                )}
-                {onScrollToChanges && approvedChanges.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={onScrollToChanges}
-                    className="text-[10px] text-sandstone/50 hover:text-sandstone transition-colors"
-                  >
-                    See Changes
-                  </button>
+                  <span className="text-sm text-cream/30">None</span>
                 )}
               </div>
             </div>
             <div>
-              <label className="text-[10px] text-cream/30 block mb-1">Current Total</label>
+              <label className="text-[10px] text-cream/25 block mb-0.5">Total</label>
               {computedTotal !== null ? (
-                <div>
-                  <span className="text-sm text-cream/70 font-medium">
-                    ${computedTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                  </span>
-                  <p className="text-[9px] text-cream/25 mt-0.5 leading-tight">
-                    Auto-calculated from baseline{approvedCostSum ? ' + approved changes' : ''}. May not reflect all costs.
-                  </p>
-                </div>
+                <span className="text-sm text-cream/70 font-medium">
+                  ${computedTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </span>
               ) : (
-                <span className="text-sm text-cream/30 italic">
-                  {budget.baseline_amount ? 'Enter parseable amounts' : 'Set baseline first'}
+                <span className="text-sm text-cream/25 italic">
+                  {budget.baseline_amount ? 'Enter amounts' : 'Set baseline'}
                 </span>
               )}
             </div>
           </div>
-          <div>
-            <label className="text-[10px] text-cream/30 block mb-1">Budget Note</label>
-            <InlineEdit
-              value={budget.budget_note || ''}
-              onSave={(v) => updateBudget({ budget_note: v || undefined })}
-              placeholder="Any additional budget context..."
-              readOnly={readOnly || isApproved}
-              displayClassName="text-xs text-cream/50"
-              className="text-xs"
-            />
-          </div>
+          {(budget.budget_note || (!readOnly && !isApproved)) && (
+            <div className="mt-2">
+              <InlineEdit
+                value={budget.budget_note || ''}
+                onSave={(v) => updateBudget({ budget_note: v || undefined })}
+                placeholder="Budget notes..."
+                readOnly={readOnly || isApproved}
+                displayClassName="text-xs text-cream/40"
+                className="text-xs"
+              />
+            </div>
+          )}
         </div>
       )}
 
-      {/* Documents & Photos — inline within the plan card */}
-      <DocumentsSection api={api} inline planApprovedAt={plan.approved_at} />
+      {/* Legacy: included / not-included (read-only, shown only when data exists) */}
+      {(plan.included.length > 0 || plan.not_included.length > 0) && (
+        <details className="pt-3 border-t border-cream/[0.04]">
+          <summary className="text-[10px] text-cream/25 cursor-pointer hover:text-cream/40 transition-colors select-none">
+            Legacy Plan Details ({plan.included.length + plan.not_included.length} items)
+          </summary>
+          <div className="mt-2 space-y-2">
+            {plan.included.length > 0 && (
+              <div>
+                <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium block mb-1">What&apos;s Included</span>
+                <ul className="space-y-0.5">
+                  {plan.included.map((item) => (
+                    <li key={item.id} className="text-xs text-cream/40 pl-2 border-l border-cream/10">{item.text}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {plan.not_included.length > 0 && (
+              <div>
+                <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium block mb-1">Not Included</span>
+                <ul className="space-y-0.5">
+                  {plan.not_included.map((item) => (
+                    <li key={item.id} className="text-xs text-cream/40 pl-2 border-l border-cream/10">{item.text}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </details>
+      )}
 
-      {/* Primary CTA when approved — bias toward Create Change (PCV1-053) */}
-      {isApproved && !readOnly && onScrollToChanges && (
+      {/* 5. Incorporated Changes — collapsed by default */}
+      {incorporatedChanges.length > 0 && (
         <div className="pt-3 border-t border-cream/[0.04]">
           <button
             type="button"
-            onClick={onScrollToChanges}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-sandstone bg-sandstone/10 hover:bg-sandstone/20 rounded-lg transition-colors"
+            onClick={() => setShowIncorporated(!showIncorporated)}
+            className="flex items-center gap-2 w-full text-left"
           >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+            <svg
+              className={`w-3 h-3 text-cream/20 transition-transform ${showIncorporated ? 'rotate-90' : ''}`}
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            >
+              <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Create a Change
+            <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">
+              Incorporated Changes
+            </span>
+            <span className="text-[10px] text-cream/20">{incorporatedChanges.length}</span>
           </button>
-          <p className="text-[10px] text-cream/25 mt-1">
-            Something changed? Log it here so you have a record of what was agreed.
-          </p>
+
+          {showIncorporated && (
+            <div className="mt-2 space-y-1.5">
+              {incorporatedChanges.map((c) => (
+                <div key={c.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-teal-400/[0.03] border border-teal-400/[0.06]">
+                  <svg className="w-3 h-3 text-teal-400/40 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span className="text-xs text-cream/60 flex-1 truncate">{c.title}</span>
+                  {c.cost_impact && (
+                    <span className="text-[10px] text-cream/30 shrink-0">{c.cost_impact}</span>
+                  )}
+                  {c.incorporated_at && (
+                    <span className="text-[10px] text-cream/20 shrink-0 hidden md:inline">
+                      {new Date(c.incorporated_at).toLocaleDateString()}
+                    </span>
+                  )}
+                  {api.collectionId && (
+                    <Link
+                      href={`/app/tools/project-summary/${api.collectionId}/change/${c.id}`}
+                      className="text-[10px] text-sandstone/30 hover:text-sandstone transition-colors shrink-0"
+                    >
+                      View
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {/* Approval metadata */}
       {plan.approved_at && (
-        <div className="text-[10px] text-cream/25 pt-2 border-t border-cream/[0.04]">
-          {isApproved ? 'Approved' : 'Last approved'} on {new Date(plan.approved_at).toLocaleDateString()}
+        <div className="text-[10px] text-cream/20 pt-2 border-t border-cream/[0.04]">
+          {isApproved ? 'Approved' : 'Last approved'} {new Date(plan.approved_at).toLocaleDateString()}
           {plan.approved_by && ` by ${plan.approved_by}`}
-          {plan.revision_number != null && plan.revision_number > 0 && ` (revision ${plan.revision_number})`}
+          {plan.revision_number != null && plan.revision_number > 0 && ` (rev ${plan.revision_number})`}
         </div>
       )}
     </div>

@@ -240,6 +240,7 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
               onClearInitialRef={() => setCommentRef(null)}
               forceExpand={forceExpandComments}
               hideCollapsedTab
+              collectionId={collectionId}
             />
           )}
         </div>

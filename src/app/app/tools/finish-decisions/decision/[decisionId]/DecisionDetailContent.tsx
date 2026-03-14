@@ -1142,6 +1142,7 @@ export function DecisionDetailContent({
         onClearFilter={undefined}
         currentUserId={session?.user?.id ?? null}
         highlightCommentId={deepLinkCommentId}
+        collectionId={collectionId}
       />
       </div>{/* end flex wrapper */}
 

@@ -202,6 +202,27 @@ export async function POST(request: Request, { params }: Params) {
     },
   })
 
+  // Parse @[Name](userId) mentions and create CommentMention rows
+  const mentionRe = /@\[([^\]]+)\]\(([^)]+)\)/g
+  const mentionedUserIds: string[] = []
+  let mentionMatch: RegExpExecArray | null
+  while ((mentionMatch = mentionRe.exec(text)) !== null) {
+    mentionedUserIds.push(mentionMatch[2])
+  }
+  if (mentionedUserIds.length > 0) {
+    // Deduplicate and exclude self
+    const uniqueIds = [...new Set(mentionedUserIds)].filter((uid) => uid !== userId)
+    if (uniqueIds.length > 0) {
+      prisma.commentMention.createMany({
+        data: uniqueIds.map((uid) => ({
+          commentId: comment.id,
+          userId: uid,
+        })),
+        skipDuplicates: true,
+      }).catch(() => {})
+    }
+  }
+
   // Fire-and-forget activity event with full structured metadata
   const snippet = text.length > 60 ? text.slice(0, 59) + '…' : text
   const hasOptionRef = refEntityLabel && typeof refEntityLabel === 'string'

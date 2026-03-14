@@ -1222,6 +1222,7 @@ export function OptionDetailContent({
           hasUnread={hasUnreadComments}
           forceExpand={hasUnreadComments}
           hideCollapsedTab
+          collectionId={collectionId}
         />
 
         </div>{/* end flex wrapper */}

@@ -154,6 +154,7 @@ export interface SummaryChange {
   attachments?: ChangeAttachment[]
   created_at: string
   updated_at: string
+  updated_by?: string
 }
 
 export interface ProjectSummaryPayload {

@@ -1,3 +1,4 @@
+import { upload } from '@vercel/blob/client'
 import type { PunchlistPhoto } from './types'
 
 // ---- Shared seed data for autocomplete ----
@@ -82,37 +83,30 @@ export function resizeImage(file: File, maxDim = 1600, quality = 0.75): Promise<
 
 export async function uploadFile(file: File): Promise<PunchlistPhoto> {
   const resized = await resizeImage(file)
-  const formData = new FormData()
-  formData.append('file', resized)
 
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 30_000)
+  // Step 1: Upload directly to Vercel Blob
+  const blob = await upload(resized.name, resized, {
+    access: 'public',
+    handleUploadUrl: '/api/tools/punchlist/upload',
+  })
 
-  let res: Response
+  const id = `ph_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+
+  // Step 2: Generate thumbnail via server
+  let thumbnailUrl = blob.url
   try {
-    res = await fetch('/api/tools/punchlist/upload', {
+    const thumbRes = await fetch('/api/generate-thumbnail', {
       method: 'POST',
-      body: formData,
-      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageUrl: blob.url, prefix: 'punchlist' }),
     })
-  } catch (err) {
-    clearTimeout(timeout)
-    if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error('Upload timed out. Check your connection and try again.')
+    if (thumbRes.ok) {
+      const thumbData = await thumbRes.json()
+      if (thumbData.thumbnailUrl) thumbnailUrl = thumbData.thumbnailUrl
     }
-    throw err
-  }
-  clearTimeout(timeout)
-
-  if (!res.ok) {
-    let msg = `Upload failed (${res.status})`
-    try {
-      const data = await res.json()
-      if (data.error) msg = data.error
-    } catch { /* non-JSON response */ }
-    throw new Error(msg)
+  } catch {
+    // Fall back to full-size URL
   }
 
-  const { url, thumbnailUrl, id } = await res.json()
-  return { id, url, thumbnailUrl, uploadedAt: new Date().toISOString() }
+  return { id, url: blob.url, thumbnailUrl, uploadedAt: new Date().toISOString() }
 }

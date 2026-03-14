@@ -42,6 +42,8 @@ interface Props {
   hideCollapsedTab?: boolean
   /** Default collapsed state when no stored preference exists (default: false = expanded) */
   defaultCollapsed?: boolean
+  /** Collection ID for @mention picker */
+  collectionId?: string
 }
 
 export interface CommentSidebarHandle {
@@ -74,6 +76,7 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
   inline,
   hideCollapsedTab,
   defaultCollapsed = false,
+  collectionId,
 }: Props, ref: React.Ref<CommentSidebarHandle>) {
   // Use stored preference if available, otherwise respect defaultCollapsed prop
   const [collapsed, setCollapsed] = useState(() => {
@@ -127,6 +130,7 @@ export const CollapsibleCommentSidebar = forwardRef<CommentSidebarHandle, Props>
     onClearFilter,
     currentUserId,
     highlightCommentId,
+    collectionId,
   }
 
   return (

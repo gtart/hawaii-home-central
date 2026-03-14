@@ -134,7 +134,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     }
     const openItems = plan.open_items.filter((i) => i.status === 'open' || i.status === 'waiting')
     if (openItems.length > 0) {
-      lines.push('OPEN ITEMS')
+      lines.push('UNRESOLVED ITEMS')
       openItems.forEach((i) => lines.push(`  - [${i.status}] ${i.text}`))
       lines.push('')
     }
@@ -257,9 +257,9 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       <ToolPageHeader
         toolKey="project_summary"
         title="Track Your Plans"
-        description="Your project plan, what's included and excluded, budget overview, and a record of every change along the way."
+        description="Your project plan, scope, budget overview, and a record of every change along the way."
         accessLevel={access}
-        hasContent={payload.plan.scope.length > 0 || payload.documents.length > 0 || payload.changes.length > 0 || payload.plan.included.length > 0 || payload.plan.not_included.length > 0 || payload.plan.open_items.length > 0}
+        hasContent={payload.plan.scope.length > 0 || payload.documents.length > 0 || payload.changes.length > 0 || payload.plan.open_items.length > 0 || payload.plan.included.length > 0 || payload.plan.not_included.length > 0}
         collectionId={collectionId}
         collectionName={titleOverride ?? collectionTitle ?? undefined}
         eyebrowLabel="Track Your Plans"
@@ -394,6 +394,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
           refPickerLabel="Tag an entry"
           hideCollapsedTab
           defaultCollapsed
+          collectionId={collectionId}
         />
       </div>
     </>

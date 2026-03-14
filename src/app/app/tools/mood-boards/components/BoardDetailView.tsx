@@ -1266,6 +1266,7 @@ export function BoardDetailView({ board, api, readOnly, toolAccess, collectionId
           onClearInitialRef={() => setDraftRef(null)}
           onNavigateToRef={(ideaId) => setSelectedIdeaId(ideaId)}
           pageSize={10}
+          collectionId={collectionId}
         />
       )}
 

@@ -318,7 +318,7 @@ function IdeaCardTile({
         {/* Meta row: origin, time, comments */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {commentCount && commentCount > 0 ? (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-sandstone/15 text-sandstone text-[10px] font-medium">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-sandstone/15 text-sandstone text-[11px] font-medium">
               💬 {commentCount}
             </span>
           ) : null}
@@ -336,8 +336,8 @@ function IdeaCardTile({
         {/* Latest comment preview */}
         {latestOptionComment && (
           <div className="border-l-2 border-sandstone/20 pl-2 py-0.5">
-            <p className="text-[10px] text-cream/45 line-clamp-2 leading-relaxed">
-              <span className="font-medium text-cream/55">{latestOptionComment.authorName.split(' ')[0]}:</span>{' '}
+            <p className="text-xs text-cream/55 line-clamp-2 leading-relaxed">
+              <span className="font-medium text-cream/70">{latestOptionComment.authorName.split(' ')[0]}:</span>{' '}
               <span className="italic">{latestOptionComment.text.length > 60 ? latestOptionComment.text.slice(0, 60) + '...' : latestOptionComment.text}</span>
             </p>
           </div>
@@ -358,16 +358,16 @@ function IdeaCardTile({
                   }}
                   placeholder="Add a comment..."
                   rows={2}
-                  className="w-full px-2.5 py-1.5 bg-cream/5 border border-cream/15 text-cream text-xs rounded-lg placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40 resize-none"
+                  className="w-full px-2.5 py-1.5 bg-cream/5 border border-cream/15 text-cream text-sm rounded-lg placeholder:text-cream/25 focus:outline-none focus:border-sandstone/40 resize-none"
                 />
                 <div className="flex items-center gap-1.5 justify-end">
                   <button type="button" onClick={() => { setCommenting(false); setCommentText('') }}
-                    className="text-[10px] text-cream/40 hover:text-cream/60 transition-colors px-2 py-0.5">
+                    className="text-[11px] text-cream/40 hover:text-cream/60 transition-colors px-2 py-0.5">
                     Cancel
                   </button>
                   <button type="button" onClick={handleSubmitComment}
                     disabled={!commentText.trim()}
-                    className="text-[10px] px-2.5 py-1 bg-sandstone/20 text-sandstone rounded-md hover:bg-sandstone/30 transition-colors disabled:opacity-30">
+                    className="text-[11px] px-2.5 py-1 bg-sandstone/20 text-sandstone rounded-md hover:bg-sandstone/30 transition-colors disabled:opacity-30">
                     Send
                   </button>
                 </div>
@@ -376,7 +376,7 @@ function IdeaCardTile({
               <button
                 type="button"
                 onClick={() => setCommenting(true)}
-                className="w-full text-left text-[10px] px-2.5 py-1.5 rounded-lg bg-cream/5 text-cream/30 hover:text-cream/50 hover:bg-cream/8 transition-colors"
+                className="w-full text-left text-xs px-2.5 py-1.5 rounded-lg bg-cream/5 text-cream/30 hover:text-cream/50 hover:bg-cream/8 transition-colors"
               >
                 Comment...
               </button>

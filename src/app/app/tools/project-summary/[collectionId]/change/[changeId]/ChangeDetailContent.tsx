@@ -119,7 +119,7 @@ function StatusDropdown({
               Unresolved Items
             </h3>
             <p className="text-xs text-cream/50 leading-relaxed">
-              This change has <strong className="text-amber-400">{unresolvedItemCount} unresolved open item{unresolvedItemCount !== 1 ? 's' : ''}</strong>.
+              This change has <strong className="text-amber-400">{unresolvedItemCount} unresolved item{unresolvedItemCount !== 1 ? 's' : ''}</strong>.
               You can still proceed, but the items will remain tracked.
             </p>
             <div className="flex gap-2 justify-end pt-1">
@@ -270,6 +270,19 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
               />
             </div>
 
+            {/* Metadata: created + last edited */}
+            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-cream/20 mb-3">
+              {change.created_at && (
+                <span>Created {new Date(change.created_at).toLocaleDateString()}</span>
+              )}
+              {change.updated_at && change.updated_at !== change.created_at && (
+                <span>
+                  Last edited {new Date(change.updated_at).toLocaleDateString()}
+                  {change.updated_by && ` by ${change.updated_by}`}
+                </span>
+              )}
+            </div>
+
             {/* Incorporation / changed-since indicators */}
             {change.incorporated && change.incorporated_at && (
               <div className="text-[10px] text-teal-400/50 bg-teal-400/5 rounded-md px-2.5 py-1.5 mb-3 flex items-center gap-1.5">
@@ -294,7 +307,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
 
             <div className="space-y-3">
               <div>
-                <label className="text-[10px] text-cream/30 block mb-0.5">Description</label>
+                <label className="text-[10px] text-cream/30 block mb-0.5">Scope / What&apos;s Changed</label>
                 <InlineEdit
                   value={change.description || ''}
                   onSave={(v) => updateChange(change.id, { description: v || undefined })}
@@ -306,9 +319,8 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 />
               </div>
 
-              {/* Rationale — why this change happened (PCV1-043) */}
               <div>
-                <label className="text-[10px] text-cream/30 block mb-0.5">Why This Changed</label>
+                <label className="text-[10px] text-cream/30 block mb-0.5">Reason (optional)</label>
                 <InlineEdit
                   value={change.rationale || ''}
                   onSave={(v) => updateChange(change.id, { rationale: v || undefined })}
@@ -320,47 +332,49 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-[10px] text-cream/30 block mb-0.5">Requested By</label>
-                  <InlineEdit
-                    value={change.requested_by || ''}
-                    onSave={(v) => updateChange(change.id, { requested_by: v || undefined })}
-                    placeholder="Who requested?"
-                    readOnly={readOnly}
-                    displayClassName="text-sm text-cream/60"
-                    className="text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-cream/30 block mb-0.5">Estimated Cost</label>
-                  <InlineEdit
-                    value={change.proposed_cost_impact || ''}
-                    onSave={(v) => updateChange(change.id, { proposed_cost_impact: v ? formatCost(v) : undefined })}
-                    placeholder="e.g. +$1,200"
-                    readOnly={readOnly}
-                    displayClassName="text-sm text-cream/50"
-                    className="text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-cream/30 block mb-0.5">Estimated Schedule</label>
-                  <InlineEdit
-                    value={change.proposed_schedule_impact || ''}
-                    onSave={(v) => updateChange(change.id, { proposed_schedule_impact: v || undefined })}
-                    placeholder="e.g. +2 weeks"
-                    readOnly={readOnly}
-                    displayClassName="text-sm text-cream/50"
-                    className="text-sm"
-                  />
-                </div>
+              <div>
+                <label className="text-[10px] text-cream/30 block mb-0.5">Requested By</label>
+                <InlineEdit
+                  value={change.requested_by || ''}
+                  onSave={(v) => updateChange(change.id, { requested_by: v || undefined })}
+                  placeholder="Who requested?"
+                  readOnly={readOnly}
+                  displayClassName="text-sm text-cream/60"
+                  className="text-sm"
+                />
               </div>
 
-              {/* Final agreed impact — shown when different from proposed or when populated (PCV1-044) */}
-              {(change.cost_impact || change.schedule_impact || !readOnly) && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Budget: proposed vs final side by side on desktop, stacked on mobile */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="rounded-lg bg-cream/[0.02] border border-cream/[0.04] p-3 space-y-2">
+                  <span className="text-[10px] text-cream/25 uppercase tracking-wider font-medium">Proposed</span>
                   <div>
-                    <label className="text-[10px] text-cream/30 block mb-0.5">Final Cost</label>
+                    <label className="text-[10px] text-cream/30 block mb-0.5">Cost</label>
+                    <InlineEdit
+                      value={change.proposed_cost_impact || ''}
+                      onSave={(v) => updateChange(change.id, { proposed_cost_impact: v ? formatCost(v) : undefined })}
+                      placeholder="e.g. +$1,200"
+                      readOnly={readOnly}
+                      displayClassName="text-sm text-cream/50"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-cream/30 block mb-0.5">Schedule</label>
+                    <InlineEdit
+                      value={change.proposed_schedule_impact || ''}
+                      onSave={(v) => updateChange(change.id, { proposed_schedule_impact: v || undefined })}
+                      placeholder="e.g. +2 weeks"
+                      readOnly={readOnly}
+                      displayClassName="text-sm text-cream/50"
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="rounded-lg bg-cream/[0.02] border border-cream/[0.04] p-3 space-y-2">
+                  <span className="text-[10px] text-cream/25 uppercase tracking-wider font-medium">Final</span>
+                  <div>
+                    <label className="text-[10px] text-cream/30 block mb-0.5">Cost</label>
                     <InlineEdit
                       value={change.cost_impact || ''}
                       onSave={(v) => updateChange(change.id, { cost_impact: v ? formatCost(v) : undefined })}
@@ -371,7 +385,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] text-cream/30 block mb-0.5">Final Schedule</label>
+                    <label className="text-[10px] text-cream/30 block mb-0.5">Schedule</label>
                     <InlineEdit
                       value={change.schedule_impact || ''}
                       onSave={(v) => updateChange(change.id, { schedule_impact: v || undefined })}
@@ -382,49 +396,11 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                     />
                   </div>
                 </div>
-              )}
-
-              {/* Affects Plan Sections (PCV1-019) */}
-              <div>
-                <label className="text-[10px] text-cream/30 block mb-1">Affects Plan Sections</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {['scope', 'included', 'not_included', 'budget', 'open_items'].map((section) => {
-                    const labels: Record<string, string> = {
-                      scope: 'Scope',
-                      included: 'Included',
-                      not_included: 'Not Included',
-                      budget: 'Budget',
-                      open_items: 'Open Items',
-                    }
-                    const isActive = (change.affects_sections || []).includes(section)
-                    return (
-                      <button
-                        key={section}
-                        type="button"
-                        disabled={readOnly}
-                        onClick={() => {
-                          const current = change.affects_sections || []
-                          const next = isActive
-                            ? current.filter((s) => s !== section)
-                            : [...current, section]
-                          updateChange(change.id, { affects_sections: next.length > 0 ? next : undefined })
-                        }}
-                        className={`text-[10px] px-2 py-1 rounded-md transition-colors ${
-                          isActive
-                            ? 'bg-sandstone/15 text-sandstone/80'
-                            : 'bg-cream/[0.03] text-cream/25 hover:text-cream/40 hover:bg-cream/5'
-                        } ${readOnly ? 'cursor-default' : ''}`}
-                      >
-                        {labels[section]}
-                      </button>
-                    )
-                  })}
-                </div>
               </div>
 
-              {/* Contractor Response */}
+              {/* Note from Contractor */}
               <div>
-                <label className="text-[10px] text-cream/30 block mb-0.5">Contractor Response</label>
+                <label className="text-[10px] text-cream/30 block mb-0.5">Note from Contractor (optional)</label>
                 <InlineEdit
                   value={change.contractor_response || ''}
                   onSave={(v) => updateChange(change.id, { contractor_response: v || undefined })}
@@ -438,11 +414,11 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
 
               {(change.final_note || !readOnly) && (
                 <div>
-                  <label className="text-[10px] text-cream/30 block mb-0.5">Final Note</label>
+                  <label className="text-[10px] text-cream/30 block mb-0.5">Additional Notes (optional)</label>
                   <InlineEdit
                     value={change.final_note || ''}
                     onSave={(v) => updateChange(change.id, { final_note: v || undefined })}
-                    placeholder="Resolution or outcome..."
+                    placeholder="Any additional notes..."
                     readOnly={readOnly}
                     multiline
                     displayClassName="text-xs text-cream/50"
@@ -451,10 +427,10 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 </div>
               )}
 
-              {/* Change Open Items (PCV1-009) */}
+              {/* Change Unresolved Items (PCV1-009) */}
               <div>
                 <label className="text-[10px] text-cream/30 uppercase tracking-wider font-medium block mb-1.5">
-                  Open Items
+                  Unresolved Items
                 </label>
                 <OpenItemsList
                   items={change.open_items || []}
@@ -463,8 +439,8 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                   onResolve={(id, note) => updateChangeOpenItem(change.id, id, { status: 'resolved', resolution_note: note })}
                   onDelete={(id) => deleteChangeOpenItem(change.id, id)}
                   readOnly={readOnly}
-                  emptyMessage="No open items for this change."
-                  addPlaceholder="Add an open item for this change..."
+                  emptyMessage="No unresolved items for this change."
+                  addPlaceholder="Add an unresolved item for this change..."
                 />
               </div>
 
@@ -531,6 +507,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 <AttachMenu
                   readOnly={readOnly}
                   onAttach={(link) => addLink(change.id, link)}
+                  projectId={api.projectId}
                 />
               </div>
             </div>
@@ -718,6 +695,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
           onAddComment={changeComments.addComment}
           onDeleteComment={changeComments.deleteComment}
           defaultCollapsed
+          collectionId={collectionId}
         />
       </div>
     </>

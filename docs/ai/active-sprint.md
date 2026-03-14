@@ -1,45 +1,45 @@
 # Active Sprint
 
-## Current: Plan & Changes Rebuild v1 (March 13, 2026)
+## Current: Track Plans UI Redesign (March 13, 2026)
 
 ### Sprint Doc
-`docs/ai/active-sprint-plan-changes-v1.md`
+`docs/ai/sprints/track-plans-ui-redesign.md`
 
 ### Objective
-Rebuild the Plan & Changes feature so it behaves like a trusted homeowner plan record with one official plan, formal changes, explicit open items, and a clear audit trail.
+Major UI overhaul of Track Plans — compact plan card, file management improvements, change order tabs, field redesign, and cross-tool entity picker.
 
 ### Commits
-- `e78b17e` — Plan & Changes Rebuild v1: all 58 issues (PCV1-001 through PCV1-058)
-- *(pending)* — Codex audit response: fixes for issues #1–#4
+- *(pending)*
 
 ### Files Changed (Sprint)
-- `src/data/project-summary.ts`
-- `src/app/app/tools/project-summary/constants.ts`
-- `src/app/app/tools/project-summary/ToolContent.tsx`
-- `src/app/app/tools/project-summary/useProjectSummaryState.ts`
 - `src/app/app/tools/project-summary/components/CurrentPlanSection.tsx`
 - `src/app/app/tools/project-summary/components/ChangesSection.tsx`
-- `src/app/app/tools/project-summary/components/MilestoneTimeline.tsx`
+- `src/app/app/tools/project-summary/components/DocumentsSection.tsx`
+- `src/app/app/tools/project-summary/ToolContent.tsx`
 - `src/app/app/tools/project-summary/[collectionId]/change/[changeId]/ChangeDetailContent.tsx`
-- `src/app/api/collections/previews/route.ts`
-- `src/components/app/CollectionsPickerView.tsx`
+- `src/app/app/tools/project-summary/components/AttachMenu.tsx`
+- `src/app/app/tools/project-summary/components/FileDetailPanel.tsx` (new)
+- `src/app/app/tools/project-summary/components/EntityPickerModal.tsx` (new)
+- `src/app/app/tools/project-summary/components/OpenItemsList.tsx`
+- `src/app/app/tools/project-summary/components/SectionHeader.tsx`
+- `src/app/api/collections/[id]/entities/route.ts` (new)
+- `src/app/api/tools/entities/route.ts` (new)
 
 ### Status
-- [x] All 58 issues implemented (PCV1-001 through PCV1-058)
-- [x] Self-verified by Claude (see ledger and phase reviews)
-- [x] TypeScript passes (`npx tsc --noEmit` — only pre-existing e2e error)
-- [x] Production build passes (`npm run build`)
-- [x] Codex audit complete — 4 issues found
-- [x] Claude response: all 4 Codex issues fixed
-- [ ] Deploy to production
-
-### Codex Audit
-- **Audit file:** `docs/ai/reviews/codex/2026-03-13-plan-changes-v1-audit.md`
-- **Response file:** `docs/ai/reviews/claude/plan-changes-v1-codex-response.md`
+- [x] Phase 1: Plan Card Cleanup (PLAN-001, 002, 003)
+- [x] Phase 2: File Management (PLAN-004, 005)
+- [x] Phase 3: Change Order Redesign (PLAN-006, 007, 008, 009)
+- [x] Phase 4: Cross-Tool + Polish (PLAN-010, 011)
+- [x] TypeScript passes
+- [x] Production build passes
+- [ ] Codex review
 
 ---
 
 ## Previous Sprints (Completed)
+- Comment Readability + Email Notifications (March 13, 2026) — *(pending commit)*
+- Plan & Changes Rebuild v1 (March 13, 2026) — `e78b17e`, `6888bdc`
+- UX Fixes: Track Plans/Choose Selections/Fix Issues (March 13, 2026) — `c61237e`
 - Homeowner Homepage Design Sprint (March 13, 2026) — `6076c0a`
 - Plan & Changes Migration (March 2026)
 - Selection-Options UI Improvements (March 10, 2026)
