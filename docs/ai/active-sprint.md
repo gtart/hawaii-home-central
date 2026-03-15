@@ -9,7 +9,7 @@
 | **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-14 |
-| **Commits** | `67ffe4c`, follow-up TBD |
+| **Commits** | `67ffe4c`, `8e19c20` |
 
 ## Handoff State
 
