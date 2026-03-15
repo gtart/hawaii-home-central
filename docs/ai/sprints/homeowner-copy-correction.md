@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-14
 **Objective**: Revise copy across marketing and app surfaces so the product sounds like a practical homeowner organizer — not renovation management software. Narrow the promise, soften inflated claims, and make the Change Log feel like a lightweight record tool.
-**Status**: implementation
+**Status**: ready_for_codex
 
 ---
 

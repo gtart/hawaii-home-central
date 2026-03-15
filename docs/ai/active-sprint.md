@@ -6,16 +6,16 @@
 |-------|-------|
 | **Sprint** | Homeowner Copy Correction — Marketing + App Surfaces |
 | **Sprint Doc** | `docs/ai/sprints/homeowner-copy-correction.md` |
-| **Status** | `implementation` |
+| **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-14 |
-| **Commits** | — |
+| **Commits** | `34f0d0f` |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | Implementation in progress — revising copy across marketing and app surfaces |
+| **Current Handoff** | All 5 issues implemented, build passes, deployed. Ready for Codex review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
