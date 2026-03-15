@@ -4,18 +4,18 @@
 
 | Field | Value |
 |-------|-------|
-| **Sprint** | Living Plan Refactor (Track Plans / Project Summary) |
-| **Sprint Doc** | `docs/ai/sprints/living-plan-refactor.md` |
+| **Sprint** | Project Change Log (Homeowner Version) |
+| **Sprint Doc** | `docs/ai/sprints/project-change-log.md` |
 | **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-14 |
-| **Commits** | pending |
+| **Commits** | pending push |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | All 14 issues implemented — awaiting Codex review |
+| **Current Handoff** | All issues (PCL-001–010) done, Claude Verified: pass. Awaiting Codex review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
@@ -40,6 +40,7 @@ When entering this repo, read in this order:
 ---
 
 ## Previous Sprints (Completed)
+- Living Plan Refactor (Track Plans / Project Summary) (March 14, 2026) — `4687598`
 - Track Plans — Mental Model Simplification + Usability Fixes (March 13, 2026) — `ready_for_codex`
 - Track Plans UI Redesign (March 13, 2026) — `d202610`
 - Comment Readability + Email Notifications (March 13, 2026) — `d202610`

@@ -131,6 +131,10 @@ export interface SummaryChange {
   description?: string
   /** Why this change happened — context for future reference (PCV1-043) */
   rationale?: string
+  /** Category — Plan, Electrical, Plumbing, etc. */
+  category?: string
+  /** Room or area — e.g. Kitchen, Master Bath */
+  room?: string
   requested_by?: string
   status: ChangeStatus
   /** Proposed cost impact — initial estimate before final agreement (PCV1-044) */
@@ -432,6 +436,8 @@ function coerceChange(raw: unknown): SummaryChange | null {
     title: isString(raw.title) ? raw.title : 'Untitled',
     ...(isString(raw.description) ? { description: raw.description } : {}),
     ...(isString(raw.rationale) ? { rationale: raw.rationale } : {}),
+    ...(isString(raw.category) ? { category: raw.category } : {}),
+    ...(isString(raw.room) ? { room: raw.room } : {}),
     ...(isString(raw.requested_by) ? { requested_by: raw.requested_by } : {}),
     status,
     ...(isString(raw.proposed_cost_impact) ? { proposed_cost_impact: raw.proposed_cost_impact } : {}),

@@ -8,9 +8,10 @@ import { CollapsibleCommentSidebar, type CommentSidebarHandle } from '@/componen
 import type { RefEntity } from '@/components/app/CommentThread'
 import { useComments } from '@/hooks/useComments'
 import { useProjectSummaryState } from './useProjectSummaryState'
-import { CurrentPlanSection } from './components/CurrentPlanSection'
+import { DocumentsSection } from './components/DocumentsSection'
 import { ChangesSection } from './components/ChangesSection'
 import { MilestoneTimeline } from './components/MilestoneTimeline'
+import { InlineEdit } from './components/InlineEdit'
 import type { SummaryLinkType } from '@/data/project-summary'
 
 /** Draft data from CreateProjectSummaryEntryButton — local-only, not persisted until explicit save. */
@@ -37,7 +38,6 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
   const [titleOverride, setTitleOverride] = useState<string | null>(null)
   const [copiedSummary, setCopiedSummary] = useState(false)
   const commentSidebarRef = useRef<CommentSidebarHandle>(null)
-  const changesSectionRef = useRef<HTMLDivElement>(null)
   const searchParams = useSearchParams()
 
   const handleRename = useCallback(async (newTitle: string) => {
@@ -49,7 +49,6 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
         body: JSON.stringify({ title: newTitle }),
       })
     } catch {
-      // revert on failure
       setTitleOverride(null)
     }
   }, [collectionId])
@@ -67,24 +66,24 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     }
   }, [collectionId, router])
 
-  /** Copy plan summary to clipboard as formatted text */
+  /** Copy change log summary to clipboard */
   const handleCopySummary = useCallback(() => {
-    const { plan, budget, changes } = payload
+    const { plan, changes, documents } = payload
     const lines: string[] = []
-    lines.push('PLAN SUMMARY')
-    lines.push(`Status: ${plan.status === 'approved' ? 'Locked' : plan.status === 'unlocked' ? 'Unlocked for Revision' : 'Draft'}`)
-    if (plan.approved_at) lines.push(`Approved: ${new Date(plan.approved_at).toLocaleDateString()}`)
+    lines.push('PROJECT CHANGE LOG')
     lines.push('')
-    if (plan.scope) { lines.push('SCOPE'); lines.push(plan.scope); lines.push('') }
-    if (budget.baseline_amount) {
-      lines.push('BUDGET')
-      lines.push(`  Baseline: ${budget.baseline_amount}`)
-      if (budget.budget_note) lines.push(`  Note: ${budget.budget_note}`)
+    if (plan.scope) { lines.push('PROJECT DESCRIPTION'); lines.push(plan.scope); lines.push('') }
+    const currentDocs = documents.filter((d) => d.isCurrent)
+    if (currentDocs.length > 0) {
+      lines.push('CURRENT REFERENCE FILES')
+      currentDocs.forEach((d) => {
+        lines.push(`  - ${d.label}${d.docType ? ` (${d.docType})` : ''}`)
+      })
       lines.push('')
     }
     const activeChanges = changes.filter((c) => c.status !== 'closed')
     if (activeChanges.length > 0) {
-      lines.push('CHANGE ORDERS')
+      lines.push('CHANGE LOG')
       activeChanges.forEach((c) => {
         const parts = [`  - ${c.title}`]
         if (c.cost_impact) parts.push(`(${c.cost_impact})`)
@@ -98,10 +97,10 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     })
   }, [payload])
 
-  // Draft state from CreateProjectSummaryEntryButton — local only, no persistence until user saves
+  // Draft state from CreateProjectSummaryEntryButton
   const [prefillDraft, setPrefillDraft] = useState<PrefillDraft | null>(null)
 
-  // Focus target from URL query param (e.g. ?focus=change-<id>)
+  // Focus target from URL query param
   const focusTarget = useMemo<FocusTarget | null>(() => {
     const raw = searchParams.get('focus')
     if (!raw) return null
@@ -119,7 +118,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     targetType: 'collection',
     targetId: collectionId,
   })
-  // Build ref entities for comment tagging (changes only)
+
   const commentRefEntities: RefEntity[] = useMemo(() => [
     ...payload.changes.map((c) => ({ id: c.id, label: `Change: ${c.title}` })),
   ], [payload.changes])
@@ -138,7 +137,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     commentSidebarRef.current?.toggle()
   }, [])
 
-  // Read prefill context from sessionStorage into draft state — NO writes, NO persistence
+  // Read prefill context from sessionStorage
   useEffect(() => {
     if (!isLoaded || readOnly) return
     try {
@@ -167,10 +166,6 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     setPrefillDraft(null)
   }, [])
 
-  const handleScrollToChanges = useCallback(() => {
-    changesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [])
-
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -184,7 +179,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       <div className="text-center py-24">
         <h2 className="font-serif text-2xl text-cream mb-2">No Access</h2>
         <p className="text-cream/65 text-sm">
-          You don&apos;t have access to this plan.
+          You don&apos;t have access to this change log.
         </p>
       </div>
     )
@@ -194,16 +189,16 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     <>
       <ToolPageHeader
         toolKey="project_summary"
-        title="Your Plan"
-        description="Your source of truth for scope, documents, and project changes."
+        title="Project Change Log"
+        description="Keep a simple record of what changed during your renovation. Track the latest files you're working from and log important decisions so nothing gets lost."
         accessLevel={access}
         hasContent={payload.plan.scope.length > 0 || payload.documents.length > 0 || payload.changes.length > 0}
         collectionId={collectionId}
         collectionName={titleOverride ?? collectionTitle ?? undefined}
-        eyebrowLabel="Track Your Plans"
-        toolLabel="Track Your Plans"
+        eyebrowLabel="Project Change Log"
+        toolLabel="Project Change Log"
         backHref="/app/tools/project-summary"
-        backLabel="All Plans"
+        backLabel="All Logs"
         onRename={readOnly ? undefined : handleRename}
         onArchive={readOnly ? undefined : handleArchive}
         actions={(
@@ -211,14 +206,14 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
             <InstanceSwitcher
               toolKey="project_summary"
               currentCollectionId={collectionId}
-              itemNoun="plan"
+              itemNoun="log"
             />
             {/* Copy Summary */}
             <button
               type="button"
               onClick={handleCopySummary}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cream/65 hover:text-cream/80 bg-stone-200 hover:bg-stone-hover transition-colors"
-              title="Copy plan summary to clipboard"
+              title="Copy change log summary to clipboard"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 {copiedSummary ? (
@@ -260,24 +255,37 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
 
       <div className="md:flex md:gap-6 md:items-start">
         <div className="flex-1 min-w-0 space-y-8">
-          {/* The plan — flows as document content, not a boxed widget */}
-          <CurrentPlanSection
-            api={api}
-            onScrollToChanges={handleScrollToChanges}
-          />
-
-          {/* Change Orders — amendments beneath the plan */}
-          <div ref={changesSectionRef}>
-            <ChangesSection
-              api={api}
-              commentCounts={commentCounts}
-              prefillDraft={prefillDraft}
-              onDraftConsumed={handleDraftConsumed}
-              focusEntryId={focusTarget?.section === 'changes' ? focusTarget.entryId : undefined}
+          {/* Project description — simple, optional context */}
+          <div>
+            <InlineEdit
+              value={payload.plan.scope}
+              onSave={(text) => api.updatePlanScope(text)}
+              placeholder="Add a brief project description (optional) — e.g. 'Kitchen and bath renovation, started Jan 2026'"
+              readOnly={readOnly}
+              multiline
+              displayClassName="text-sm text-cream/70 leading-relaxed"
+              className="text-sm leading-relaxed"
             />
           </div>
 
-          {/* History — concise changelog */}
+          {/* Disclaimer */}
+          <p className="text-[10px] text-cream/35 leading-relaxed">
+            This tool is for homeowner organization and reference only. It is not the official construction record. Always confirm final plans, approvals, and scope with your contractor or design team.
+          </p>
+
+          {/* Zone 1 — Latest Reference Files */}
+          <DocumentsSection api={api} />
+
+          {/* Zone 2 — Change Log */}
+          <ChangesSection
+            api={api}
+            commentCounts={commentCounts}
+            prefillDraft={prefillDraft}
+            onDraftConsumed={handleDraftConsumed}
+            focusEntryId={focusTarget?.section === 'changes' ? focusTarget.entryId : undefined}
+          />
+
+          {/* Activity — collapsed at bottom */}
           <MilestoneTimeline milestones={payload.milestones} />
         </div>
 

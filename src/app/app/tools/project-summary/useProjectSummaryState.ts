@@ -649,7 +649,7 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
   // ── Changes ──
 
   const addChange = useCallback(
-    (change: { title: string; description?: string; rationale?: string; requested_by?: string; status?: ChangeStatus; cost_impact?: string }) => {
+    (change: { title: string; description?: string; rationale?: string; category?: string; room?: string; requested_by?: string; status?: ChangeStatus; cost_impact?: string }) => {
       const id = genId()
       const ts = now()
       const events: ActivityEventHint[] = [{
@@ -668,6 +668,8 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
             title: change.title,
             description: change.description,
             rationale: change.rationale,
+            category: change.category,
+            room: change.room,
             requested_by: change.requested_by,
             status: change.status || 'requested',
             cost_impact: change.cost_impact,

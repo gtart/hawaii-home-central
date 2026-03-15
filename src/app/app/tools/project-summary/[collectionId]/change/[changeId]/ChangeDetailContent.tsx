@@ -3,14 +3,13 @@
 import { Suspense, useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import { useProjectSummaryState } from '../../../useProjectSummaryState'
-import { SIMPLE_STATUS_CONFIG, SIMPLE_STATUS_ORDER, toSimpleStatus } from '../../../constants'
-import type { SimpleChangeStatus } from '../../../constants'
+import { CHANGE_LOG_STATUS_CONFIG, CHANGE_LOG_STATUS_ORDER, toChangeLogStatus, CHANGE_CATEGORIES } from '../../../constants'
+import type { ChangeLogStatus, ChangeCategory } from '../../../constants'
 import { InlineEdit } from '../../../components/InlineEdit'
 import { StatusBadge } from '../../../components/StatusBadge'
 import { uploadProjectSummaryFile } from '../../../uploadProjectSummaryFile'
 import { CollapsibleCommentSidebar, type CommentSidebarHandle } from '@/components/app/CollapsibleCommentSidebar'
 import { useComments } from '@/hooks/useComments'
-import { OpenItemsList } from '../../../components/OpenItemsList'
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -18,27 +17,14 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-/** Normalize a cost string into dollar format if it looks like a number */
-function formatCost(raw: string): string {
-  const trimmed = raw.trim()
-  if (!trimmed) return trimmed
-  if (trimmed.includes('$')) return trimmed
-  const match = trimmed.match(/^([+-]?)\s*([0-9][0-9,]*\.?\d*)$/)
-  if (!match) return trimmed
-  const sign = match[1]
-  const num = parseFloat(match[2].replace(/,/g, ''))
-  if (isNaN(num)) return trimmed
-  return `${sign}$${num.toLocaleString()}`
-}
-
-/** Simplified status dropdown — 3 statuses for v1 self-tracking */
+/** Status dropdown — 5 homeowner-friendly statuses */
 function StatusDropdown({
   status,
   onChange,
   readOnly,
 }: {
-  status: SimpleChangeStatus
-  onChange: (status: SimpleChangeStatus) => void
+  status: ChangeLogStatus
+  onChange: (status: ChangeLogStatus) => void
   readOnly?: boolean
 }) {
   const [open, setOpen] = useState(false)
@@ -53,7 +39,7 @@ function StatusDropdown({
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
-  const config = SIMPLE_STATUS_CONFIG[status]
+  const config = CHANGE_LOG_STATUS_CONFIG[status]
 
   return (
     <div className="relative" ref={ref}>
@@ -65,9 +51,9 @@ function StatusDropdown({
         readOnly={readOnly}
       />
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 min-w-[150px] rounded-lg border border-cream/15 bg-basalt shadow-xl py-1">
-          {SIMPLE_STATUS_ORDER.map((s) => {
-            const cfg = SIMPLE_STATUS_CONFIG[s]
+        <div className="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-cream/15 bg-basalt shadow-xl py-1">
+          {CHANGE_LOG_STATUS_ORDER.map((s) => {
+            const cfg = CHANGE_LOG_STATUS_CONFIG[s]
             const isActive = s === status
             return (
               <button
@@ -94,9 +80,72 @@ function StatusDropdown({
   )
 }
 
+/** Category dropdown for detail view */
+function CategoryDropdown({
+  value,
+  onChange,
+  readOnly,
+}: {
+  value?: string
+  onChange: (category: string | undefined) => void
+  readOnly?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  if (readOnly) {
+    return <span className="text-sm text-cream/70">{value || '—'}</span>
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="bg-stone-200 border border-cream/15 rounded-md px-2 py-1.5 text-xs text-cream/70 outline-none hover:border-cream/35 transition-colors flex items-center gap-1"
+      >
+        {value || 'Select category'}
+        <svg className="w-3 h-3 text-cream/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 min-w-[140px] rounded-lg border border-cream/15 bg-basalt shadow-xl py-1 max-h-[240px] overflow-y-auto">
+          <button
+            type="button"
+            onClick={() => { onChange(undefined); setOpen(false) }}
+            className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${!value ? 'text-sandstone' : 'text-cream/70 hover:bg-stone-hover'}`}
+          >
+            None
+          </button>
+          {CHANGE_CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => { onChange(cat); setOpen(false) }}
+              className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${value === cat ? 'text-sandstone' : 'text-cream/70 hover:bg-stone-hover'}`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Content({ collectionId, changeId }: { collectionId: string; changeId: string }) {
   const api = useProjectSummaryState({ collectionId })
-  const { payload, isLoaded, readOnly, updateChange, incorporateChange, addChangeAttachment, removeChangeAttachment, updateChangePrivateNotes, addChangeOpenItem, updateChangeOpenItem, deleteChangeOpenItem } = api
+  const { payload, isLoaded, readOnly, updateChange, addChangeAttachment, removeChangeAttachment, updateChangePrivateNotes } = api
 
   const change = useMemo(
     () => payload.changes.find((c) => c.id === changeId),
@@ -111,8 +160,6 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
   const [urlLabelInput, setUrlLabelInput] = useState('')
   const [showUrlForm, setShowUrlForm] = useState(false)
   const [confirmDeleteAttachment, setConfirmDeleteAttachment] = useState<string | null>(null)
-  const [showIncorporateDialog, setShowIncorporateDialog] = useState(false)
-  const [incorporateNote, setIncorporateNote] = useState('')
 
   const changeComments = useComments({
     collectionId,
@@ -174,18 +221,17 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
     return (
       <div className="text-center py-24">
         <h2 className="font-serif text-2xl text-cream mb-2">Change Not Found</h2>
-        <p className="text-cream/65 text-sm mb-4">This change may have been deleted.</p>
+        <p className="text-cream/65 text-sm mb-4">This entry may have been deleted.</p>
         <Link
           href={`/app/tools/project-summary/${collectionId}`}
           className="text-sandstone hover:text-sandstone-light text-sm transition-colors"
         >
-          Back to Plan
+          Back to Change Log
         </Link>
       </div>
     )
   }
 
-  const canIncorporate = (change.status === 'accepted_by_contractor' || change.status === 'done') && !change.incorporated
   const attachments = change.attachments || []
 
   return (
@@ -199,7 +245,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Back to Plan
+          Back to Change Log
         </Link>
       </div>
 
@@ -216,16 +262,16 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 className="text-lg font-serif font-medium"
               />
               <StatusDropdown
-                status={toSimpleStatus(change.status)}
+                status={toChangeLogStatus(change.status)}
                 onChange={(s) => {
-                  const storageStatus = SIMPLE_STATUS_CONFIG[s].storageStatus
+                  const storageStatus = CHANGE_LOG_STATUS_CONFIG[s].storageStatus
                   updateChange(change.id, { status: storageStatus })
                 }}
                 readOnly={readOnly}
               />
             </div>
 
-            {/* Metadata: created + last edited */}
+            {/* Metadata */}
             <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-cream/35 mb-3">
               {change.created_at && (
                 <span>Created {new Date(change.created_at).toLocaleDateString()}</span>
@@ -238,35 +284,14 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
               )}
             </div>
 
-            {/* Incorporation / changed-since indicators */}
-            {change.incorporated && change.incorporated_at && (
-              <div className="text-[10px] text-teal-400/50 bg-teal-400/8 rounded-md px-2.5 py-1.5 mb-3 flex items-center gap-1.5">
-                <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Added to plan on {new Date(change.incorporated_at).toLocaleDateString()}
-                {change.incorporated_by && ` by ${change.incorporated_by}`}
-              </div>
-            )}
-
-            {change.changed_since_accepted && (
-              <div className="text-[10px] text-amber-400/50 bg-amber-400/8 rounded-md px-2.5 py-1.5 mb-3 flex items-center gap-1.5">
-                <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" strokeLinecap="round" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" strokeLinecap="round" />
-                </svg>
-                Edited since contractor accepted
-              </div>
-            )}
-
             <div className="space-y-3">
+              {/* Description */}
               <div>
-                <label className="text-[10px] text-cream/45 block mb-0.5">Scope / What&apos;s Changed</label>
+                <label className="text-[10px] text-cream/45 block mb-0.5">Notes</label>
                 <InlineEdit
                   value={change.description || ''}
                   onSave={(v) => updateChange(change.id, { description: v || undefined })}
-                  placeholder="Describe the change..."
+                  placeholder="Add details about this change..."
                   readOnly={readOnly}
                   multiline
                   displayClassName="text-sm text-cream/70 leading-relaxed"
@@ -274,102 +299,77 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 />
               </div>
 
-              <div>
-                <label className="text-[10px] text-cream/45 block mb-0.5">Reason (optional)</label>
-                <InlineEdit
-                  value={change.rationale || ''}
-                  onSave={(v) => updateChange(change.id, { rationale: v || undefined })}
-                  placeholder="Why did this change happen? What prompted it?"
-                  readOnly={readOnly}
-                  multiline
-                  displayClassName="text-sm text-cream/70 leading-relaxed"
-                  className="text-sm leading-relaxed"
-                />
+              {/* Category + Room */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] text-cream/45 block mb-0.5">Category</label>
+                  <CategoryDropdown
+                    value={change.category}
+                    onChange={(cat) => updateChange(change.id, { category: cat })}
+                    readOnly={readOnly}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-cream/45 block mb-0.5">Room / Area</label>
+                  <InlineEdit
+                    value={change.room || ''}
+                    onSave={(v) => updateChange(change.id, { room: v || undefined })}
+                    placeholder="e.g. Kitchen, Master Bath"
+                    readOnly={readOnly}
+                    displayClassName="text-sm text-cream/70"
+                    className="text-sm"
+                  />
+                </div>
               </div>
 
+              {/* Cost impact — simple field */}
               <div>
-                <label className="text-[10px] text-cream/45 block mb-0.5">Requested By</label>
+                <label className="text-[10px] text-cream/45 block mb-0.5">Cost Impact</label>
                 <InlineEdit
-                  value={change.requested_by || ''}
-                  onSave={(v) => updateChange(change.id, { requested_by: v || undefined })}
-                  placeholder="Who requested?"
+                  value={change.cost_impact || ''}
+                  onSave={(v) => updateChange(change.id, { cost_impact: v || undefined })}
+                  placeholder="e.g. +$2,500 or TBD"
                   readOnly={readOnly}
                   displayClassName="text-sm text-cream/70"
                   className="text-sm"
                 />
               </div>
 
-              {/* Budget: proposed vs final side by side on desktop, stacked on mobile */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="rounded-lg bg-stone-50 border border-cream/15 p-3 space-y-2">
-                  <span className="text-[10px] text-cream/40 uppercase tracking-wider font-medium">Proposed</span>
-                  <div>
-                    <label className="text-[10px] text-cream/45 block mb-0.5">Cost</label>
-                    <InlineEdit
-                      value={change.proposed_cost_impact || ''}
-                      onSave={(v) => updateChange(change.id, { proposed_cost_impact: v ? formatCost(v) : undefined })}
-                      placeholder="e.g. +$1,200"
-                      readOnly={readOnly}
-                      displayClassName="text-sm text-cream/65"
-                      className="text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-cream/45 block mb-0.5">Schedule</label>
-                    <InlineEdit
-                      value={change.proposed_schedule_impact || ''}
-                      onSave={(v) => updateChange(change.id, { proposed_schedule_impact: v || undefined })}
-                      placeholder="e.g. +2 weeks"
-                      readOnly={readOnly}
-                      displayClassName="text-sm text-cream/65"
-                      className="text-sm"
-                    />
-                  </div>
+              {/* Reason */}
+              {(change.rationale || !readOnly) && (
+                <div>
+                  <label className="text-[10px] text-cream/45 block mb-0.5">Reason (optional)</label>
+                  <InlineEdit
+                    value={change.rationale || ''}
+                    onSave={(v) => updateChange(change.id, { rationale: v || undefined })}
+                    placeholder="Why did this change happen?"
+                    readOnly={readOnly}
+                    multiline
+                    displayClassName="text-sm text-cream/70 leading-relaxed"
+                    className="text-sm leading-relaxed"
+                  />
                 </div>
-                <div className="rounded-lg bg-stone-50 border border-cream/15 p-3 space-y-2">
-                  <span className="text-[10px] text-cream/40 uppercase tracking-wider font-medium">Final</span>
-                  <div>
-                    <label className="text-[10px] text-cream/45 block mb-0.5">Cost</label>
-                    <InlineEdit
-                      value={change.cost_impact || ''}
-                      onSave={(v) => updateChange(change.id, { cost_impact: v ? formatCost(v) : undefined })}
-                      placeholder="Agreed cost impact"
-                      readOnly={readOnly}
-                      displayClassName="text-sm text-cream/70"
-                      className="text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-cream/45 block mb-0.5">Schedule</label>
-                    <InlineEdit
-                      value={change.schedule_impact || ''}
-                      onSave={(v) => updateChange(change.id, { schedule_impact: v || undefined })}
-                      placeholder="Agreed schedule impact"
-                      readOnly={readOnly}
-                      displayClassName="text-sm text-cream/70"
-                      className="text-sm"
-                    />
-                  </div>
+              )}
+
+              {/* Participants */}
+              {(change.requested_by || !readOnly) && (
+                <div>
+                  <label className="text-[10px] text-cream/45 block mb-0.5">Participants (optional)</label>
+                  <InlineEdit
+                    value={change.requested_by || ''}
+                    onSave={(v) => updateChange(change.id, { requested_by: v || undefined })}
+                    placeholder="Who was involved in this decision?"
+                    readOnly={readOnly}
+                    displayClassName="text-sm text-cream/70"
+                    className="text-sm"
+                  />
                 </div>
-              </div>
+              )}
 
-              {/* Note from Contractor */}
-              <div>
-                <label className="text-[10px] text-cream/45 block mb-0.5">Note from Contractor (optional)</label>
-                <InlineEdit
-                  value={change.contractor_response || ''}
-                  onSave={(v) => updateChange(change.id, { contractor_response: v || undefined })}
-                  placeholder="Contractor's response to this change..."
-                  readOnly={readOnly}
-                  multiline
-                  displayClassName="text-sm text-cream/70 leading-relaxed"
-                  className="text-sm leading-relaxed"
-                />
-              </div>
-
+              {/* Additional notes */}
               {(change.final_note || !readOnly) && (
                 <div>
-                  <label className="text-[10px] text-cream/45 block mb-0.5">Additional Notes (optional)</label>
+                  <label className="text-[10px] text-cream/45 block mb-0.5">Additional Notes</label>
                   <InlineEdit
                     value={change.final_note || ''}
                     onSave={(v) => updateChange(change.id, { final_note: v || undefined })}
@@ -379,83 +379,6 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                     displayClassName="text-xs text-cream/65"
                     className="text-xs"
                   />
-                </div>
-              )}
-
-              {/* Change — Open Questions */}
-              <div>
-                <label className="text-[10px] text-cream/45 uppercase tracking-wider font-medium block mb-1.5">
-                  Open Questions
-                </label>
-                <OpenItemsList
-                  items={change.open_items || []}
-                  onAdd={(text) => addChangeOpenItem(change.id, text)}
-                  onUpdate={(id, updates) => updateChangeOpenItem(change.id, id, updates)}
-                  onResolve={(id, note) => updateChangeOpenItem(change.id, id, { status: 'resolved', resolution_note: note })}
-                  onDelete={(id) => deleteChangeOpenItem(change.id, id)}
-                  readOnly={readOnly}
-                  emptyMessage="Nothing left to decide for this change."
-                  addPlaceholder="Add something that needs deciding for this change..."
-                />
-              </div>
-
-              {/* Incorporate action — guided dialog with merge note */}
-              {canIncorporate && !readOnly && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => { setShowIncorporateDialog(true); setIncorporateNote('') }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-teal-400 bg-teal-400/10 hover:bg-teal-400/20 rounded-md transition-colors"
-                  >
-                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                    </svg>
-                    Add to Your Plan
-                  </button>
-                  {showIncorporateDialog && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
-                      <div className="w-full max-w-md rounded-xl border border-cream/15 bg-basalt p-6 shadow-2xl space-y-4">
-                        <h3 className="text-base font-semibold text-cream">Add to Your Plan</h3>
-                        <p className="text-sm text-cream/70 leading-relaxed">
-                          This will mark <span className="text-cream/90">&ldquo;{change.title}&rdquo;</span> as part of your plan.
-                        </p>
-                        {(change.cost_impact || change.schedule_impact) && (
-                          <div className="rounded-lg bg-stone-50 border border-cream/12 px-3 py-2 space-y-1">
-                            <div className="text-[10px] text-cream/45 uppercase tracking-wider font-medium">Impact</div>
-                            {change.cost_impact && <div className="text-xs text-cream/70">Cost: <span className="text-cream/90">{change.cost_impact}</span></div>}
-                            {change.schedule_impact && <div className="text-xs text-cream/70">Schedule: <span className="text-cream/90">{change.schedule_impact}</span></div>}
-                          </div>
-                        )}
-                        <div>
-                          <label className="text-[10px] text-cream/45 block mb-1">Note (optional)</label>
-                          <textarea
-                            value={incorporateNote}
-                            onChange={(e) => setIncorporateNote(e.target.value)}
-                            placeholder="Any notes about adding this to the plan..."
-                            rows={2}
-                            className="w-full bg-stone-200 border border-cream/15 rounded-md px-3 py-2 text-xs text-cream/70 placeholder-cream/35 outline-none focus:border-sandstone/30 resize-none"
-                          />
-                        </div>
-                        <div className="flex gap-2 justify-end">
-                          <button type="button" onClick={() => setShowIncorporateDialog(false)} className="px-3 py-1.5 text-xs text-cream/55 hover:text-cream/70 transition-colors">Cancel</button>
-                          <button
-                            type="button"
-                            onClick={() => { incorporateChange(change.id, undefined, incorporateNote.trim() || undefined); setShowIncorporateDialog(false) }}
-                            className="px-3 py-1.5 text-xs bg-teal-400/20 text-teal-400 hover:bg-teal-400/30 rounded-md transition-colors"
-                          >
-                            Add to Your Plan
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Links — hidden for v1 self-tracking, data preserved */}
-              {change.links.length > 0 && (
-                <div className="text-[10px] text-cream/35">
-                  {change.links.length} linked item{change.links.length !== 1 ? 's' : ''}
                 </div>
               )}
             </div>

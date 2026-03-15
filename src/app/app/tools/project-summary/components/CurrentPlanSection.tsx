@@ -403,7 +403,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
       </div>
 
       {/* 2. Documents & Files */}
-      <DocumentsSection api={api} inline planApprovedAt={plan.approved_at} />
+      <DocumentsSection api={api} />
 
       {/* 3. Budget — compact inline */}
       {!showBudget && !readOnly && !isLocked && (

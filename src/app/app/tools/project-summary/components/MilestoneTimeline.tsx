@@ -93,7 +93,7 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
         >
           <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <h2 className="text-sm font-semibold text-cream/90 flex-1">Changelog</h2>
+        <h2 className="text-sm font-semibold text-cream/90 flex-1">Activity</h2>
         <span className="text-[11px] text-cream/50 tabular-nums">{majorMilestones.length} event{majorMilestones.length !== 1 ? 's' : ''}</span>
       </button>
 

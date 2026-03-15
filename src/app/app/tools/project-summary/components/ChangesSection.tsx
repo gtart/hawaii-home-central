@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { SIMPLE_STATUS_CONFIG, SIMPLE_STATUS_ORDER, toSimpleStatus } from '../constants'
-import type { SimpleChangeStatus } from '../constants'
+import { CHANGE_LOG_STATUS_CONFIG, CHANGE_LOG_STATUS_ORDER, toChangeLogStatus, CHANGE_CATEGORIES } from '../constants'
+import type { ChangeLogStatus, ChangeCategory } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
 import type { PrefillDraft } from '../ToolContent'
 import { InlineEdit } from './InlineEdit'
@@ -18,14 +18,14 @@ interface ChangesSectionProps {
   focusEntryId?: string
 }
 
-/** Simplified status dropdown — 3 statuses for v1 self-tracking */
+/** Status dropdown — 5 homeowner-friendly statuses */
 function StatusDropdown({
   status,
   onChange,
   readOnly,
 }: {
-  status: SimpleChangeStatus
-  onChange: (status: SimpleChangeStatus) => void
+  status: ChangeLogStatus
+  onChange: (status: ChangeLogStatus) => void
   readOnly?: boolean
 }) {
   const [open, setOpen] = useState(false)
@@ -40,7 +40,7 @@ function StatusDropdown({
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
-  const config = SIMPLE_STATUS_CONFIG[status]
+  const config = CHANGE_LOG_STATUS_CONFIG[status]
 
   return (
     <div className="relative" ref={ref}>
@@ -52,9 +52,9 @@ function StatusDropdown({
         readOnly={readOnly}
       />
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 min-w-[150px] rounded-lg border border-cream/15 bg-basalt shadow-xl py-1">
-          {SIMPLE_STATUS_ORDER.map((s) => {
-            const cfg = SIMPLE_STATUS_CONFIG[s]
+        <div className="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-cream/15 bg-basalt shadow-xl py-1">
+          {CHANGE_LOG_STATUS_ORDER.map((s) => {
+            const cfg = CHANGE_LOG_STATUS_CONFIG[s]
             const isActive = s === status
             return (
               <button
@@ -81,88 +81,87 @@ function StatusDropdown({
   )
 }
 
-/** Cost impact selector — None / Yes, amount known / Yes, amount TBD */
-function CostImpactField({
+/** Category dropdown */
+function CategoryDropdown({
   value,
-  onSave,
+  onChange,
   readOnly,
 }: {
-  value: string | undefined
-  onSave: (v: string | undefined) => void
+  value?: string
+  onChange: (category: string | undefined) => void
   readOnly?: boolean
 }) {
-  const [mode, setMode] = useState<'none' | 'known' | 'tbd'>(
-    value === 'TBD' ? 'tbd' : value ? 'known' : 'none'
-  )
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
 
   if (readOnly) {
-    if (!value) return <span className="text-xs text-cream/50">No cost impact</span>
-    return <span className="text-xs text-cream/70">{value}</span>
+    if (!value) return null
+    return <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-200 text-cream/55">{value}</span>
   }
 
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => { setMode('none'); onSave(undefined) }}
-          className={`text-[10px] px-2 py-1 rounded transition-colors ${
-            mode === 'none' ? 'bg-cream/15 text-cream/80' : 'text-cream/40 hover:text-cream/55'
-          }`}
-        >
-          None
-        </button>
-        <button
-          type="button"
-          onClick={() => { setMode('known') }}
-          className={`text-[10px] px-2 py-1 rounded transition-colors ${
-            mode === 'known' ? 'bg-cream/15 text-cream/80' : 'text-cream/40 hover:text-cream/55'
-          }`}
-        >
-          Yes, amount known
-        </button>
-        <button
-          type="button"
-          onClick={() => { setMode('tbd'); onSave('TBD') }}
-          className={`text-[10px] px-2 py-1 rounded transition-colors ${
-            mode === 'tbd' ? 'bg-cream/15 text-cream/80' : 'text-cream/40 hover:text-cream/55'
-          }`}
-        >
-          Yes, TBD
-        </button>
-      </div>
-      {mode === 'known' && (
-        <InlineEdit
-          value={value === 'TBD' ? '' : (value || '')}
-          onSave={(v) => onSave(v || undefined)}
-          placeholder="e.g. +$2,500"
-          displayClassName="text-xs text-cream/70"
-          className="text-xs"
-        />
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+          value ? 'bg-stone-200 text-cream/55 hover:bg-stone-hover' : 'text-cream/30 hover:text-cream/45'
+        }`}
+      >
+        {value || 'Category'}
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 min-w-[140px] rounded-lg border border-cream/15 bg-basalt shadow-xl py-1 max-h-[240px] overflow-y-auto">
+          <button
+            type="button"
+            onClick={() => { onChange(undefined); setOpen(false) }}
+            className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${!value ? 'text-sandstone' : 'text-cream/70 hover:bg-stone-hover'}`}
+          >
+            None
+          </button>
+          {CHANGE_CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => { onChange(cat); setOpen(false) }}
+              className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${value === cat ? 'text-sandstone' : 'text-cream/70 hover:bg-stone-hover'}`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   )
 }
 
 export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsumed, focusEntryId }: ChangesSectionProps) {
-  const { payload, readOnly, addChange, updateChange, deleteChange, incorporateChange, addChangeAttachment } = api
+  const { payload, readOnly, addChange, updateChange, deleteChange, addChangeAttachment } = api
   const { changes } = payload
   const [showAddForm, setShowAddForm] = useState(false)
   const [newTitle, setNewTitle] = useState('')
-  const [newRationale, setNewRationale] = useState('')
-  const [newCostMode, setNewCostMode] = useState<'none' | 'known' | 'tbd'>('none')
-  const [newCostAmount, setNewCostAmount] = useState('')
+  const [newNotes, setNewNotes] = useState('')
+  const [newCategory, setNewCategory] = useState<ChangeCategory | ''>('')
+  const [newRoom, setNewRoom] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [uploadingChangeId, setUploadingChangeId] = useState<string | null>(null)
   const changeFileInputRef = useRef<HTMLInputElement>(null)
-  const [incorporatingChangeId, setIncorporatingChangeId] = useState<string | null>(null)
   const focusRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!prefillDraft) return
     setNewTitle(prefillDraft.title)
-    setNewRationale(prefillDraft.description)
+    setNewNotes(prefillDraft.description)
     setShowAddForm(true)
   }, [prefillDraft])
 
@@ -179,16 +178,16 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
 
   function handleAdd() {
     if (!newTitle.trim()) return
-    const costImpact = newCostMode === 'tbd' ? 'TBD' : newCostMode === 'known' && newCostAmount.trim() ? newCostAmount.trim() : undefined
     addChange({
       title: newTitle.trim(),
-      rationale: newRationale.trim() || undefined,
-      cost_impact: costImpact,
+      description: newNotes.trim() || undefined,
+      category: newCategory || undefined,
+      room: newRoom.trim() || undefined,
     })
     setNewTitle('')
-    setNewRationale('')
-    setNewCostMode('none')
-    setNewCostAmount('')
+    setNewNotes('')
+    setNewCategory('')
+    setNewRoom('')
     setShowAddForm(false)
     onDraftConsumed?.()
   }
@@ -196,21 +195,20 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
   function handleCancelAdd() {
     setShowAddForm(false)
     setNewTitle('')
-    setNewRationale('')
-    setNewCostMode('none')
-    setNewCostAmount('')
+    setNewNotes('')
+    setNewCategory('')
+    setNewRoom('')
     if (prefillDraft) onDraftConsumed?.()
   }
 
-  // Split into active vs canceled
+  // Split into active vs superseded
   const activeChanges = changes.filter((c) => c.status !== 'closed')
-  const canceledChanges = changes.filter((c) => c.status === 'closed')
+  const supersededChanges = changes.filter((c) => c.status === 'closed')
 
   function renderChangeRow(change: typeof changes[0]) {
     const isExpanded = expandedId === change.id
     const commentCount = commentCounts?.get(change.id) || 0
-    const simpleStatus = toSimpleStatus(change.status)
-    const canIncorporate = (change.status === 'accepted_by_contractor' || change.status === 'done') && !change.incorporated
+    const logStatus = toChangeLogStatus(change.status)
 
     return (
       <div
@@ -220,7 +218,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
           change.id === focusEntryId ? 'border-sandstone/30 ring-1 ring-sandstone/20' : 'border-cream/12'
         }`}
       >
-        {/* Header row */}
+        {/* Header row — summary-first */}
         <div
           className="flex items-center gap-3 px-3 py-2.5 cursor-pointer"
           onClick={() => setExpandedId(isExpanded ? null : change.id)}
@@ -234,17 +232,25 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
 
           <span className="text-sm text-cream/80 flex-1 truncate">{change.title}</span>
 
-          {change.incorporated && (
-            <span className="text-[9px] text-teal-400/50 bg-teal-400/5 px-1.5 py-0.5 rounded-full shrink-0 hidden md:inline-flex">
-              In Plan
+          {/* Category pill */}
+          {change.category && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-200 text-cream/50 shrink-0 hidden md:inline">
+              {change.category as string}
+            </span>
+          )}
+
+          {/* Room/area */}
+          {change.room && (
+            <span className="text-[10px] text-cream/40 shrink-0 hidden md:inline">
+              {change.room as string}
             </span>
           )}
 
           <div onClick={(e) => e.stopPropagation()}>
             <StatusDropdown
-              status={simpleStatus}
+              status={logStatus}
               onChange={(s) => {
-                const storageStatus = SIMPLE_STATUS_CONFIG[s].storageStatus
+                const storageStatus = CHANGE_LOG_STATUS_CONFIG[s].storageStatus
                 updateChange(change.id, { status: storageStatus })
               }}
               readOnly={readOnly}
@@ -303,7 +309,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setConfirmDelete(change.id) }}
                 className="shrink-0 text-cream/30 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100"
-                title="Delete change order"
+                title="Delete entry"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
@@ -313,15 +319,15 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
           )}
         </div>
 
-        {/* Expanded detail — simplified for v1 */}
+        {/* Expanded detail */}
         {isExpanded && (
           <div className="px-3 pb-3 pt-1 border-t border-cream/12 space-y-2">
             <div>
-              <label className="text-[10px] text-cream/55 block mb-0.5">What Changed</label>
+              <label className="text-[10px] text-cream/55 block mb-0.5">Notes</label>
               <InlineEdit
                 value={change.description || ''}
                 onSave={(v) => updateChange(change.id, { description: v || undefined })}
-                placeholder="Describe what changed..."
+                placeholder="Add details about this change..."
                 readOnly={readOnly}
                 multiline
                 displayClassName="text-xs text-cream/70"
@@ -329,31 +335,47 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
               />
             </div>
 
-            <div>
-              <label className="text-[10px] text-cream/55 block mb-0.5">Why</label>
-              <InlineEdit
-                value={change.rationale || ''}
-                onSave={(v) => updateChange(change.id, { rationale: v || undefined })}
-                placeholder="Why was this change needed?"
-                readOnly={readOnly}
-                multiline
-                displayClassName="text-xs text-cream/70"
-                className="text-xs"
-              />
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-cream/40">Category:</span>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <CategoryDropdown
+                    value={change.category as string | undefined}
+                    onChange={(cat) => updateChange(change.id, { category: cat })}
+                    readOnly={readOnly}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-cream/40">Room/Area:</span>
+                <InlineEdit
+                  value={(change.room as string) || ''}
+                  onSave={(v) => updateChange(change.id, { room: v || undefined })}
+                  placeholder="e.g. Kitchen"
+                  readOnly={readOnly}
+                  displayClassName="text-[10px] text-cream/55"
+                  className="text-[10px]"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="text-[10px] text-cream/55 block mb-0.5">Cost Impact</label>
-              <CostImpactField
-                value={change.cost_impact}
-                onSave={(v) => updateChange(change.id, { cost_impact: v })}
-                readOnly={readOnly}
-              />
-            </div>
+            {(change.cost_impact || !readOnly) && (
+              <div>
+                <label className="text-[10px] text-cream/55 block mb-0.5">Cost Impact</label>
+                <InlineEdit
+                  value={change.cost_impact || ''}
+                  onSave={(v) => updateChange(change.id, { cost_impact: v || undefined })}
+                  placeholder="e.g. +$2,500 or TBD"
+                  readOnly={readOnly}
+                  displayClassName="text-xs text-cream/70"
+                  className="text-xs"
+                />
+              </div>
+            )}
 
             {(change.final_note || !readOnly) && (
               <div>
-                <label className="text-[10px] text-cream/55 block mb-0.5">Notes</label>
+                <label className="text-[10px] text-cream/55 block mb-0.5">Additional Notes</label>
                 <InlineEdit
                   value={change.final_note || ''}
                   onSave={(v) => updateChange(change.id, { final_note: v || undefined })}
@@ -362,30 +384,6 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                   displayClassName="text-xs text-cream/55"
                   className="text-xs"
                 />
-              </div>
-            )}
-
-            {/* Incorporate action */}
-            {canIncorporate && !readOnly && (
-              <button
-                type="button"
-                onClick={() => {
-                  incorporateChange(change.id)
-                  setIncorporatingChangeId(null)
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-teal-400 bg-teal-400/10 hover:bg-teal-400/20 rounded-md transition-colors"
-              >
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                </svg>
-                Add to Plan
-              </button>
-            )}
-
-            {/* Incorporation traceability */}
-            {change.incorporated && change.incorporated_at && (
-              <div className="text-[10px] text-teal-400/40">
-                Added to plan on {new Date(change.incorporated_at).toLocaleDateString()}
               </div>
             )}
 
@@ -425,7 +423,6 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
                 ))}
               </div>
             )}
-
           </div>
         )}
       </div>
@@ -466,7 +463,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
       {/* Section header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <h2 className="text-sm font-semibold text-cream/90">Change Orders</h2>
+          <h2 className="text-sm font-semibold text-cream/90">Change Log</h2>
           {changes.length > 0 && (
             <span className="text-[11px] text-cream/45 tabular-nums">{changes.length}</span>
           )}
@@ -480,37 +477,37 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
             <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
             </svg>
-            Add Change Order
+            Log a Change
           </button>
         )}
       </div>
 
       {changes.length === 0 && !showAddForm && (
-        <p className="text-sm text-cream/55">
-          No change orders yet. When something changes from the original plan — new work, different materials, or removed scope — add it here so you have a record.
+        <p className="text-sm text-cream/50">
+          No changes logged yet. When something changes — a moved outlet, an updated plan, a new material choice — log it here so nothing gets lost.
         </p>
       )}
 
-      {/* Active change orders */}
+      {/* Active changes */}
       {activeChanges.length > 0 && (
         <div className="space-y-2">
           {activeChanges.map((change) => renderChangeRow(change))}
         </div>
       )}
 
-      {/* Canceled — collapsed */}
-      {canceledChanges.length > 0 && (
+      {/* Superseded — collapsed */}
+      {supersededChanges.length > 0 && (
         <details>
           <summary className="text-[10px] text-cream/45 cursor-pointer hover:text-cream/55 transition-colors select-none">
-            {canceledChanges.length} canceled
+            {supersededChanges.length} superseded
           </summary>
           <div className="mt-2 space-y-2">
-            {canceledChanges.map((change) => renderChangeRow(change))}
+            {supersededChanges.map((change) => renderChangeRow(change))}
           </div>
         </details>
       )}
 
-      {/* Add form — simplified v1 */}
+      {/* Add form */}
       {showAddForm && !readOnly && (
         <div className="p-4 rounded-lg border border-cream/15 bg-stone-50 space-y-3">
           <div>
@@ -519,7 +516,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
               type="text"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="e.g. Added recessed lighting in kitchen"
+              placeholder="e.g. Moved kitchen outlet to island, Changed cabinet finish to white oak"
               className="w-full bg-stone-200 border border-cream/15 rounded-md px-3 py-2 text-sm text-cream/90 placeholder-cream/35 outline-none focus:border-sandstone/30"
               autoFocus
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleAdd(); if (e.key === 'Escape') handleCancelAdd() }}
@@ -527,56 +524,36 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
           </div>
 
           <div>
-            <label className="text-[10px] text-cream/55 block mb-1">Why?</label>
+            <label className="text-[10px] text-cream/55 block mb-1">Notes (optional)</label>
             <textarea
-              value={newRationale}
-              onChange={(e) => setNewRationale(e.target.value)}
-              placeholder="Why was this change needed?"
+              value={newNotes}
+              onChange={(e) => setNewNotes(e.target.value)}
+              placeholder="Any details, context, or reason for the change..."
               rows={2}
               className="w-full bg-stone-200 border border-cream/15 rounded-md px-3 py-2 text-xs text-cream/70 placeholder-cream/35 outline-none focus:border-sandstone/30 resize-none"
             />
           </div>
 
-          <div>
-            <label className="text-[10px] text-cream/55 block mb-1">Cost impact</label>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setNewCostMode('none')}
-                className={`text-[10px] px-2 py-1 rounded transition-colors ${
-                  newCostMode === 'none' ? 'bg-cream/15 text-cream/80' : 'text-cream/40 hover:text-cream/55'
-                }`}
-              >
-                None
-              </button>
-              <button
-                type="button"
-                onClick={() => setNewCostMode('known')}
-                className={`text-[10px] px-2 py-1 rounded transition-colors ${
-                  newCostMode === 'known' ? 'bg-cream/15 text-cream/80' : 'text-cream/40 hover:text-cream/55'
-                }`}
-              >
-                Yes, amount known
-              </button>
-              <button
-                type="button"
-                onClick={() => setNewCostMode('tbd')}
-                className={`text-[10px] px-2 py-1 rounded transition-colors ${
-                  newCostMode === 'tbd' ? 'bg-cream/15 text-cream/80' : 'text-cream/40 hover:text-cream/55'
-                }`}
-              >
-                Yes, TBD
-              </button>
+          <div className="flex items-center gap-4 flex-wrap">
+            <div>
+              <label className="text-[10px] text-cream/55 block mb-1">Category</label>
+              <div className="relative">
+                <CategoryDropdown
+                  value={newCategory || undefined}
+                  onChange={(cat) => setNewCategory((cat as ChangeCategory) || '')}
+                />
+              </div>
             </div>
-            {newCostMode === 'known' && (
+            <div className="flex-1 min-w-[120px]">
+              <label className="text-[10px] text-cream/55 block mb-1">Room / Area</label>
               <input
                 type="text"
-                value={newCostAmount}
-                onChange={(e) => setNewCostAmount(e.target.value)}
-                placeholder="e.g. +$2,500"
-                className="mt-1.5 w-full max-w-[200px] bg-stone-200 border border-cream/15 rounded-md px-3 py-1.5 text-xs text-cream/70 placeholder-cream/35 outline-none focus:border-sandstone/30"
+                value={newRoom}
+                onChange={(e) => setNewRoom(e.target.value)}
+                placeholder="e.g. Kitchen, Master Bath"
+                className="w-full bg-stone-200 border border-cream/15 rounded-md px-2 py-1.5 text-xs text-cream/70 placeholder-cream/35 outline-none focus:border-sandstone/30"
               />
-            )}
+            </div>
           </div>
 
           <div className="flex gap-2 justify-end pt-1">
@@ -593,7 +570,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
               disabled={!newTitle.trim()}
               className="px-3 py-1.5 text-xs bg-sandstone/20 text-sandstone hover:bg-sandstone/30 rounded-md transition-colors disabled:opacity-30"
             >
-              Add Change Order
+              Log Change
             </button>
           </div>
         </div>
