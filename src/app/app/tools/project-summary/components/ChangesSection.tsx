@@ -276,9 +276,9 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
             />
           </div>
 
-          {/* Indicators — desktop only, subtle */}
+          {/* Indicators — visible on all sizes */}
           {(change.attachments?.length || 0) > 0 && (
-            <span className="text-cream/30 shrink-0 hidden md:block">
+            <span className="text-cream/30 shrink-0">
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -286,7 +286,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
           )}
 
           {commentCount > 0 && (
-            <span className="text-[10px] text-cream/30 shrink-0 hidden md:inline tabular-nums">
+            <span className="text-[10px] text-cream/30 shrink-0 tabular-nums">
               {commentCount}
             </span>
           )}

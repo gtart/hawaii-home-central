@@ -86,14 +86,14 @@ function CommentThread({
 
   return (
     <div className="space-y-3">
-      <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">Comments</span>
+      <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">Notes</span>
 
       {isLoading && comments.length === 0 && (
         <p className="text-xs text-cream/20 italic">Loading...</p>
       )}
 
       {!isLoading && comments.length === 0 && (
-        <p className="text-xs text-cream/20 italic">No comments yet.</p>
+        <p className="text-xs text-cream/20 italic">No notes yet.</p>
       )}
 
       <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -114,7 +114,7 @@ function CommentThread({
             type="text"
             value={newText}
             onChange={(e) => setNewText(e.target.value)}
-            placeholder="Add a comment..."
+            placeholder="Add a note..."
             className="flex-1 bg-cream/5 border border-cream/10 rounded-md px-3 py-1.5 text-xs text-cream/70 placeholder-cream/20 outline-none focus:border-sandstone/30"
             onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
           />

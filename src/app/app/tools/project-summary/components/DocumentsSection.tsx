@@ -228,49 +228,47 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
           )}
         </div>
 
-        {/* Mark outdated */}
+        {/* Actions — visible on mobile, hover-reveal on desktop */}
         {!readOnly && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { isCurrent: false }) }}
-            className="shrink-0 text-[10px] px-1.5 py-0.5 rounded text-cream/30 hover:text-cream/50 hover:bg-stone-200 transition-colors opacity-0 group-hover:opacity-100"
-            title="Mark as outdated"
-          >
-            Archive
-          </button>
-        )}
-
-        {/* Delete */}
-        {!readOnly && (
-          confirmDelete === doc.id ? (
-            <div className="flex items-center gap-1 shrink-0">
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); deleteDocument(doc.id); setConfirmDelete(null) }}
-                className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors"
-              >
-                Delete
-              </button>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }}
-                className="text-[10px] text-cream/45 hover:text-cream/50 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
+          <div className="flex items-center gap-1 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }}
-              className="shrink-0 text-cream/20 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100"
-              title="Delete file"
+              onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { isCurrent: false }) }}
+              className="text-[10px] px-1.5 py-0.5 rounded text-cream/30 hover:text-cream/50 hover:bg-stone-200 transition-colors"
+              title="Mark as outdated"
             >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              Archive
             </button>
-          )
+            {confirmDelete === doc.id ? (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); deleteDocument(doc.id); setConfirmDelete(null) }}
+                  className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors"
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }}
+                  className="text-[10px] text-cream/45 hover:text-cream/50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }}
+                className="text-cream/20 hover:text-red-400/50 transition-colors"
+                title="Delete file"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
+          </div>
         )}
       </div>
     )
@@ -292,47 +290,47 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
           )}
         </div>
 
+        {/* Actions — visible on mobile, hover-reveal on desktop */}
         {!readOnly && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { isCurrent: true }) }}
-            className="shrink-0 text-[10px] px-1.5 py-0.5 rounded text-cream/30 hover:text-emerald-400/70 hover:bg-emerald-400/8 transition-colors opacity-0 group-hover:opacity-100"
-            title="Mark as current"
-          >
-            Restore
-          </button>
-        )}
-
-        {!readOnly && (
-          confirmDelete === doc.id ? (
-            <div className="flex items-center gap-1 shrink-0">
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); deleteDocument(doc.id); setConfirmDelete(null) }}
-                className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors"
-              >
-                Delete
-              </button>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }}
-                className="text-[10px] text-cream/45 hover:text-cream/50 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
+          <div className="flex items-center gap-1 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }}
-              className="shrink-0 text-cream/20 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100"
-              title="Delete file"
+              onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { isCurrent: true }) }}
+              className="text-[10px] px-1.5 py-0.5 rounded text-cream/30 hover:text-emerald-400/70 hover:bg-emerald-400/8 transition-colors"
+              title="Mark as current"
             >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              Restore
             </button>
-          )
+            {confirmDelete === doc.id ? (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); deleteDocument(doc.id); setConfirmDelete(null) }}
+                  className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors"
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }}
+                  className="text-[10px] text-cream/45 hover:text-cream/50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }}
+                className="text-cream/20 hover:text-red-400/50 transition-colors"
+                title="Delete file"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
+          </div>
         )}
       </div>
     )
