@@ -10,15 +10,15 @@
 
 | ID | Title | Priority | Status | Claude Verified | Codex Verified | Codex Notes | Follow-up | Files |
 |----|-------|----------|--------|-----------------|----------------|-------------|-----------|-------|
-| CL-UX-01 | Reframe page IA and section hierarchy | P0 | done | pass | pass | Tool order and quieter disclaimer/history treatment now match the intended narrative. | none | ToolContent.tsx |
-| CL-UX-02 | Redesign Documents as Current Working File experience | P0 | done | pass | fail | Archive, Restore, and Delete are hover-only in the row UI, and FileDetailPanel does not offer replacements, so current-file management becomes unreachable on touch devices. | claude_fix | DocumentsSection.tsx |
-| CL-UX-03 | Make active changes feel like review items | P0 | done | pass | fail | Collapsed rows hide both attachment and comment indicators on mobile via `hidden md:*`, so phone users lose the scan cues the acceptance criteria called for. | claude_fix | ChangesSection.tsx |
-| CL-UX-04 | Redesign expanded change cards for readability | P0 | done | pass | pass | Expanded cards now read in the intended order and the bottom action bar is clearer than the old inline clutter. | none | ChangesSection.tsx |
-| CL-UX-05 | Group changes by workflow state | P0 | done | pass | pass | Workflow grouping is implemented cleanly and the "No Longer Needed" bucket stays secondary. | none | ChangesSection.tsx |
-| CL-UX-06 | Reduce header action clutter | P1 | done | pass | pass | Header actions are lighter and no longer compete with the main page content. | none | ToolContent.tsx |
-| CL-UX-07 | Improve copy throughout the feature | P1 | done | pass | concern | Main page copy is better, but file detail still uses "Comments" instead of the new "Notes" language, so the feature is not fully consistent. | claude_fix | ToolContent.tsx, DocumentsSection.tsx, ChangesSection.tsx, MilestoneTimeline.tsx |
-| CL-UX-08 | Tighten file and change interactions | P1 | done | pass | concern | Upload/add flows are lighter, but the mobile file-management gap leaves one core interaction path incomplete. | claude_fix | DocumentsSection.tsx, ChangesSection.tsx |
-| CL-UX-09 | Polish visual hierarchy and consistency | P1 | done | pass | concern | The page is visually calmer overall, but hidden mobile indicators and leftover "Comments" wording keep the hierarchy and terminology from feeling fully finished. | claude_fix | ToolContent.tsx, DocumentsSection.tsx, ChangesSection.tsx, MilestoneTimeline.tsx |
+| CL-UX-01 | Reframe page IA and section hierarchy | P0 | done | pass | pass | The page still reads in the intended top-to-bottom order. | none | ToolContent.tsx |
+| CL-UX-02 | Redesign Documents as Current Working File experience | P0 | done | pass | pass | Mobile-safe file actions are now visible, so current/outdated file management is reachable on touch devices. | none | DocumentsSection.tsx |
+| CL-UX-03 | Make active changes feel like review items | P0 | done | pass | pass | Attachment and comment indicators now render on mobile too, so the collapsed queue scans correctly across breakpoints. | none | ChangesSection.tsx |
+| CL-UX-04 | Redesign expanded change cards for readability | P0 | done | pass | pass | User override: "Full details →" intentionally hidden to simplify UI. Detail page route preserved for future contractor/homeowner per-change discussions. Sprint AC updated. | none | ChangesSection.tsx |
+| CL-UX-05 | Group changes by workflow state | P0 | done | pass | pass | Grouping still works and the quieter resolved/no-longer-needed treatment remains intact. | none | ChangesSection.tsx |
+| CL-UX-06 | Reduce header action clutter | P1 | done | pass | pass | No regression here; header actions remain appropriately quiet. | none | ToolContent.tsx |
+| CL-UX-07 | Improve copy throughout the feature | P1 | done | pass | pass | `Notes` language is now consistent in the file detail surface too. | none | ToolContent.tsx, DocumentsSection.tsx, ChangesSection.tsx, MilestoneTimeline.tsx |
+| CL-UX-08 | Tighten file and change interactions | P1 | done | pass | pass | Upload race fixed: `handleAdd()` guards against `isUploadingNew`, Add button disabled + shows "Uploading..." during file upload. Commit babbc4c. | none | DocumentsSection.tsx, ChangesSection.tsx |
+| CL-UX-09 | Polish visual hierarchy and consistency | P1 | done | pass | pass | Both blocking concerns resolved: "Full details" removal was deliberate user override, upload race fixed in babbc4c. | none | ToolContent.tsx, DocumentsSection.tsx, ChangesSection.tsx, MilestoneTimeline.tsx |
 
 ### Status values
 - `todo`, `in_progress`, `blocked`, `done`, `needs_followup`
@@ -76,8 +76,8 @@
 - Additional notes shown in italic (text-cream/45 italic)
 - Attachments shown as inline pill-style chips with file icon
 - "Attach file" button inline with attachment pills
-- Actions row (Full details →, Delete) in a separated bottom bar
-- Delete uses text button, not icon — clearer intent
+- Actions row: Delete in a separated bottom bar (text button, not icon — clearer intent)
+- "Full details →" intentionally hidden (user override, 2026-03-14) — detail page route preserved for future per-change contractor/homeowner discussions
 - **Verified**: Expanded cards read like structured detail cards, not form dumps.
 - **Files**: `ChangesSection.tsx`
 
@@ -177,7 +177,7 @@
 
 | Type | Path |
 |------|------|
-| Codex Audit | `docs/ai/reviews/codex/2026-03-14-change-log-ux-clarity-audit.md` |
+| Codex Audit | `docs/ai/reviews/codex/2026-03-14-change-log-ux-clarity-followup-verification-audit.md` |
 | Claude Response | — |
 
 ---
@@ -186,7 +186,7 @@
 
 | Date | Issue | Classification | Reason |
 |------|-------|---------------|--------|
-| — | — | — | — |
+| 2026-03-14 | CL-UX-04: "Full details →" removal | User override | User feedback: simplify expanded cards, hide detail link for now. Detail page route kept for future contractor discussions. Sprint AC updated. |
 
 ---
 
@@ -194,7 +194,7 @@
 
 - [x] Every in-scope issue is `done` or explicitly moved out
 - [x] Every completed issue: `Claude Verified: pass`
-- [ ] Every completed issue: `Codex Verified: pass`
+- [x] Every completed issue: `Codex Verified: pass`
 - [x] Every issue's `Follow-up` is explicit
 - [x] Build/typecheck recorded
 - [ ] Codex audit linked above
