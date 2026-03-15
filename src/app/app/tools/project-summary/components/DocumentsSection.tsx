@@ -130,32 +130,42 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
   const currentDocs = documents.filter((d) => d.isCurrent !== false)
   const outdatedDocs = documents.filter((d) => d.isCurrent === false)
 
-  function renderDocRow(doc: typeof documents[0]) {
-    const iconType = fileTypeIcon(doc.mimeType)
+  function renderFileIcon(mimeType?: string) {
+    const iconType = fileTypeIcon(mimeType)
+    if (iconType === 'pdf') {
+      return (
+        <svg className="w-5 h-5 text-red-400/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
+          <text x="7" y="18" fontSize="6" fill="currentColor" stroke="none" fontWeight="bold">PDF</text>
+        </svg>
+      )
+    }
+    if (iconType === 'image') {
+      return (
+        <svg className="w-5 h-5 text-blue-400/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )
+    }
+    return (
+      <svg className="w-5 h-5 text-cream/35 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )
+  }
+
+  function renderCurrentDoc(doc: typeof documents[0]) {
     return (
       <div
         key={doc.id}
-        className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-stone-50 border border-cream/12 group cursor-pointer hover:border-cream/15 transition-colors"
+        className="flex items-start gap-3 px-4 py-3 rounded-lg bg-stone-50 border border-emerald-400/10 group cursor-pointer hover:border-emerald-400/20 transition-colors"
         onClick={() => setSelectedDocId(doc.id)}
       >
-        {iconType === 'pdf' ? (
-          <svg className="w-4 h-4 text-red-400/40 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
-            <text x="7" y="18" fontSize="6" fill="currentColor" stroke="none" fontWeight="bold">PDF</text>
-          </svg>
-        ) : iconType === 'image' ? (
-          <svg className="w-4 h-4 text-blue-400/40 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="8.5" cy="8.5" r="1.5" />
-            <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ) : (
-          <svg className="w-4 h-4 text-cream/40 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
+        {renderFileIcon(doc.mimeType)}
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -163,17 +173,12 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               value={doc.label}
               onSave={(label) => updateDocument(doc.id, { label })}
               readOnly={readOnly}
-              displayClassName="text-sm text-cream/80 font-medium"
+              displayClassName="text-sm text-cream/85 font-medium"
               className="text-sm font-medium"
             />
             {doc.docType && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-200 text-cream/50">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-200 text-cream/45">
                 {DOC_TYPE_LABELS[doc.docType]}
-              </span>
-            )}
-            {doc.isCurrent && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-400/12 text-emerald-400/70">
-                Current
               </span>
             )}
           </div>
@@ -183,6 +188,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               href={doc.fileUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className="text-[11px] text-sandstone/50 hover:text-sandstone transition-colors flex items-center gap-1 mt-0.5"
             >
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -197,6 +203,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               href={doc.url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className="text-[11px] text-sandstone/50 hover:text-sandstone transition-colors truncate block mt-0.5"
             >
               {doc.url}
@@ -204,8 +211,8 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
           )}
 
           {doc.uploadedAt && (
-            <span className="text-[10px] text-cream/45 block mt-0.5">
-              Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
+            <span className="text-[10px] text-cream/35 block mt-0.5">
+              Added {new Date(doc.uploadedAt).toLocaleDateString()}
             </span>
           )}
 
@@ -215,25 +222,21 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               onSave={(note) => updateDocument(doc.id, { note: note || undefined })}
               placeholder="Add a note..."
               readOnly={readOnly}
-              displayClassName="text-xs text-cream/55 mt-1"
+              displayClassName="text-xs text-cream/50 mt-1"
               className="text-xs mt-1"
             />
           )}
         </div>
 
-        {/* Current / Outdated toggle */}
+        {/* Mark outdated */}
         {!readOnly && (
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { isCurrent: !doc.isCurrent }) }}
-            className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded transition-colors ${
-              doc.isCurrent
-                ? 'bg-emerald-400/12 text-emerald-400/70 hover:bg-emerald-400/20'
-                : 'bg-stone-200 text-cream/40 hover:text-cream/55'
-            }`}
-            title={doc.isCurrent ? 'Mark as outdated' : 'Mark as current'}
+            onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { isCurrent: false }) }}
+            className="shrink-0 text-[10px] px-1.5 py-0.5 rounded text-cream/30 hover:text-cream/50 hover:bg-stone-200 transition-colors opacity-0 group-hover:opacity-100"
+            title="Mark as outdated"
           >
-            {doc.isCurrent ? 'Current' : 'Outdated'}
+            Archive
           </button>
         )}
 
@@ -260,7 +263,69 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }}
-              className="shrink-0 text-cream/30 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100"
+              className="shrink-0 text-cream/20 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100"
+              title="Delete file"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )
+        )}
+      </div>
+    )
+  }
+
+  function renderOutdatedDoc(doc: typeof documents[0]) {
+    return (
+      <div
+        key={doc.id}
+        className="flex items-center gap-3 px-3 py-2 rounded-lg bg-stone-50/50 border border-cream/8 group cursor-pointer hover:border-cream/12 transition-colors"
+        onClick={() => setSelectedDocId(doc.id)}
+      >
+        {renderFileIcon(doc.mimeType)}
+
+        <div className="flex-1 min-w-0">
+          <span className="text-xs text-cream/50 truncate block">{doc.label}</span>
+          {doc.docType && (
+            <span className="text-[10px] text-cream/30">{DOC_TYPE_LABELS[doc.docType]}</span>
+          )}
+        </div>
+
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { isCurrent: true }) }}
+            className="shrink-0 text-[10px] px-1.5 py-0.5 rounded text-cream/30 hover:text-emerald-400/70 hover:bg-emerald-400/8 transition-colors opacity-0 group-hover:opacity-100"
+            title="Mark as current"
+          >
+            Restore
+          </button>
+        )}
+
+        {!readOnly && (
+          confirmDelete === doc.id ? (
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); deleteDocument(doc.id); setConfirmDelete(null) }}
+                className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors"
+              >
+                Delete
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }}
+                className="text-[10px] text-cream/45 hover:text-cream/50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }}
+              className="shrink-0 text-cream/20 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100"
               title="Delete file"
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -286,7 +351,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
   ) : null
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Hidden quick-upload input */}
       <input
         ref={quickUploadRef}
@@ -299,18 +364,13 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
 
       {/* Section header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <h2 className="text-sm font-semibold text-cream/90">Latest Reference Files</h2>
-          {documents.length > 0 && (
-            <span className="text-[11px] text-cream/45 tabular-nums">{documents.length}</span>
-          )}
-        </div>
+        <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider">Current Working Files</h2>
         {!readOnly && (
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setShowAddForm(!showAddForm)}
-              className="text-[10px] text-cream/35 hover:text-cream/55 transition-colors"
+              className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors"
             >
               Link URL
             </button>
@@ -318,7 +378,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               type="button"
               onClick={() => quickUploadRef.current?.click()}
               disabled={isUploading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-sandstone/80 hover:text-sandstone bg-sandstone/10 hover:bg-sandstone/15 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-sandstone/70 hover:text-sandstone bg-sandstone/8 hover:bg-sandstone/12 transition-colors disabled:opacity-50"
               title="Upload file"
             >
               {isUploading ? (
@@ -328,16 +388,18 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
-              {isUploading ? 'Uploading...' : 'Upload File'}
+              {isUploading ? 'Uploading...' : 'Upload'}
             </button>
           </div>
         )}
       </div>
 
+      {/* Empty state */}
       {documents.length === 0 && !showAddForm && (
-        <p className="text-sm text-cream/50">
-          No reference files yet. Upload the files you&apos;re currently working from — plans, specs, contracts, photos.
-        </p>
+        <div className="rounded-lg border border-dashed border-cream/12 px-4 py-6 text-center">
+          <p className="text-sm text-cream/45 mb-1">No files yet</p>
+          <p className="text-xs text-cream/30">Upload the plans, specs, or contracts you&apos;re currently working from.</p>
+        </div>
       )}
 
       {uploadError && (
@@ -347,31 +409,31 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
       {/* Current files */}
       {currentDocs.length > 0 && (
         <div className="space-y-2">
-          {currentDocs.map(renderDocRow)}
+          {currentDocs.map(renderCurrentDoc)}
         </div>
       )}
 
       {/* Outdated files — collapsed */}
       {outdatedDocs.length > 0 && (
-        <details>
-          <summary className="text-[10px] text-cream/40 cursor-pointer hover:text-cream/55 transition-colors select-none">
-            {outdatedDocs.length} outdated file{outdatedDocs.length !== 1 ? 's' : ''}
+        <details className="mt-2">
+          <summary className="text-[10px] text-cream/30 cursor-pointer hover:text-cream/45 transition-colors select-none">
+            {outdatedDocs.length} older file{outdatedDocs.length !== 1 ? 's' : ''}
           </summary>
-          <div className="mt-2 space-y-2">
-            {outdatedDocs.map(renderDocRow)}
+          <div className="mt-2 space-y-1.5">
+            {outdatedDocs.map(renderOutdatedDoc)}
           </div>
         </details>
       )}
 
-      {/* Add form */}
+      {/* Add form (URL link) */}
       {showAddForm && !readOnly && (
-        <div className="p-3 rounded-lg border border-cream/15 bg-stone-50 space-y-2">
+        <div className="p-3 rounded-lg border border-cream/12 bg-stone-50 space-y-2">
           <input
             type="text"
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
             placeholder="File name"
-            className="w-full bg-stone-200 border border-cream/15 rounded-md px-3 py-2 text-sm text-cream/90 placeholder-cream/35 outline-none focus:border-sandstone/30"
+            className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-sm text-cream/90 placeholder-cream/30 outline-none focus:border-sandstone/30"
             autoFocus
             onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setShowAddForm(false) }}
           />
@@ -380,19 +442,19 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               <button
                 type="button"
                 onClick={() => setDocTypeOpen(!docTypeOpen)}
-                className="bg-stone-200 border border-cream/15 rounded-md px-2 py-1.5 text-xs text-cream/70 outline-none hover:border-cream/35 transition-colors flex items-center gap-1 whitespace-nowrap"
+                className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1.5 text-xs text-cream/60 outline-none hover:border-cream/25 transition-colors flex items-center gap-1 whitespace-nowrap"
               >
-                {newDocType ? DOC_TYPE_LABELS[newDocType] : 'Type (optional)'}
-                <svg className="w-3 h-3 text-cream/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                {newDocType ? DOC_TYPE_LABELS[newDocType] : 'Type'}
+                <svg className="w-3 h-3 text-cream/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
               {docTypeOpen && (
-                <div className="absolute left-0 top-8 z-50 w-36 rounded-lg border border-cream/15 bg-basalt shadow-xl py-1">
+                <div className="absolute left-0 top-8 z-50 w-36 rounded-lg border border-cream/12 bg-basalt shadow-xl py-1">
                   <button
                     type="button"
                     onClick={() => { setNewDocType(''); setDocTypeOpen(false) }}
-                    className={`w-full px-3 py-1.5 text-left text-xs transition-colors ${!newDocType ? 'text-sandstone' : 'text-cream/70 hover:bg-stone-hover'}`}
+                    className={`w-full px-3 py-1.5 text-left text-xs transition-colors ${!newDocType ? 'text-sandstone' : 'text-cream/60 hover:bg-stone-hover'}`}
                   >
                     None
                   </button>
@@ -401,7 +463,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
                       key={key}
                       type="button"
                       onClick={() => { setNewDocType(key as DocType); setDocTypeOpen(false) }}
-                      className={`w-full px-3 py-1.5 text-left text-xs transition-colors ${newDocType === key ? 'text-sandstone' : 'text-cream/70 hover:bg-stone-hover'}`}
+                      className={`w-full px-3 py-1.5 text-left text-xs transition-colors ${newDocType === key ? 'text-sandstone' : 'text-cream/60 hover:bg-stone-hover'}`}
                     >
                       {label}
                     </button>
@@ -414,7 +476,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               value={newUrl}
               onChange={(e) => setNewUrl(e.target.value)}
               placeholder="URL"
-              className="flex-1 bg-stone-200 border border-cream/15 rounded-md px-2 py-1.5 text-xs text-cream/70 placeholder-cream/35 outline-none focus:border-sandstone/30"
+              className="flex-1 bg-stone-200 border border-cream/12 rounded-md px-2 py-1.5 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30"
             />
           </div>
 
@@ -432,7 +494,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-cream/55 hover:text-cream/70 bg-stone-200 hover:bg-stone-hover border border-cream/15 rounded-md transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-cream/45 hover:text-cream/60 bg-stone-200 hover:bg-stone-hover border border-cream/12 rounded-md transition-colors disabled:opacity-50"
             >
               {isUploading ? (
                 <div className="w-3 h-3 border border-cream/20 border-t-cream/50 rounded-full animate-spin" />
@@ -441,9 +503,8 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
-              {isUploading ? 'Uploading...' : 'Or Upload File'}
+              {isUploading ? 'Uploading...' : 'Or upload a file'}
             </button>
-            <span className="text-[10px] text-cream/35">PDF, DOC, DOCX, images — max 20MB</span>
           </div>
 
           {uploadError && (
@@ -454,7 +515,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
             <button
               type="button"
               onClick={() => { setShowAddForm(false); setUploadError(null) }}
-              className="px-3 py-1.5 text-xs text-cream/55 hover:text-cream/70 transition-colors"
+              className="px-3 py-1.5 text-xs text-cream/45 hover:text-cream/60 transition-colors"
             >
               Cancel
             </button>
@@ -462,9 +523,9 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               type="button"
               onClick={handleAdd}
               disabled={!newLabel.trim()}
-              className="px-3 py-1.5 text-xs bg-sandstone/20 text-sandstone hover:bg-sandstone/30 rounded-md transition-colors disabled:opacity-30"
+              className="px-3 py-1.5 text-xs bg-sandstone/15 text-sandstone hover:bg-sandstone/25 rounded-md transition-colors disabled:opacity-30"
             >
-              Add File
+              Add
             </button>
           </div>
         </div>

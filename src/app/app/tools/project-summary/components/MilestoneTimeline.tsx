@@ -49,31 +49,31 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
 
   function renderEvent(milestone: (typeof sorted)[0]) {
     return (
-      <div key={milestone.id} className="relative pl-6 pb-4 last:pb-0">
+      <div key={milestone.id} className="relative pl-6 pb-3 last:pb-0">
         {/* Dot on timeline */}
-        <div className="absolute left-[-5px] top-1 w-2.5 h-2.5 rounded-full bg-cream/15 border border-cream/35" />
+        <div className="absolute left-[-4px] top-1.5 w-2 h-2 rounded-full bg-cream/10 border border-cream/25" />
 
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
-            <svg className="w-3 h-3 text-cream/45 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="w-3 h-3 text-cream/30 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d={getEventIcon(milestone.event)} />
             </svg>
-            <span className="text-xs text-cream/70">{milestone.label}</span>
+            <span className="text-xs text-cream/55">{milestone.label}</span>
           </div>
 
-          <div className="flex items-center gap-2 text-[10px] text-cream/50">
+          <div className="flex items-center gap-2 text-[10px] text-cream/30">
             <span>{new Date(milestone.timestamp).toLocaleDateString()}</span>
             <span>{new Date(milestone.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             {milestone.actor && (
               <>
-                <span>•</span>
+                <span>·</span>
                 <span>{milestone.actor}</span>
               </>
             )}
           </div>
 
           {milestone.note && (
-            <p className="text-[10px] text-cream/55 mt-0.5">{milestone.note}</p>
+            <p className="text-[10px] text-cream/40 mt-0.5">{milestone.note}</p>
           )}
         </div>
       </div>
@@ -81,26 +81,26 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
   }
 
   return (
-    <div className="rounded-xl border border-cream/14 bg-stone-50">
+    <div className="rounded-xl border border-cream/8 bg-stone-50/50">
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center gap-3 px-5 py-4 w-full text-left"
+        className="flex items-center gap-3 px-4 py-3 w-full text-left"
       >
         <svg
-          className={`w-3 h-3 text-cream/45 transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
+          className={`w-3 h-3 text-cream/30 transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
           viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
         >
           <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <h2 className="text-sm font-semibold text-cream/90 flex-1">Activity</h2>
-        <span className="text-[11px] text-cream/50 tabular-nums">{majorMilestones.length} event{majorMilestones.length !== 1 ? 's' : ''}</span>
+        <h2 className="text-xs font-semibold text-cream/40 uppercase tracking-wider flex-1">History</h2>
+        <span className="text-[10px] text-cream/30 tabular-nums">{majorMilestones.length}</span>
       </button>
 
       {/* Show content when expanded */}
       {isExpanded && (
-        <div className="px-5 pb-4">
-          <div className="relative ml-3 border-l border-cream/14">
+        <div className="px-4 pb-3">
+          <div className="relative ml-3 border-l border-cream/10">
             {(showAll ? sorted : previewItems).map(renderEvent)}
           </div>
 
@@ -108,9 +108,9 @@ export function MilestoneTimeline({ milestones }: MilestoneTimelineProps) {
             <button
               type="button"
               onClick={() => setShowAll(!showAll)}
-              className="mt-2 ml-3 text-[11px] text-sandstone/50 hover:text-sandstone transition-colors"
+              className="mt-2 ml-3 text-[10px] text-cream/30 hover:text-cream/50 transition-colors"
             >
-              {showAll ? 'Show less' : `Show all ${sorted.length} events`}
+              {showAll ? 'Show less' : `Show all ${sorted.length}`}
             </button>
           )}
         </div>

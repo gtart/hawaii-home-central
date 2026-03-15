@@ -63,7 +63,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     if (plan.scope) { lines.push('PROJECT DESCRIPTION'); lines.push(plan.scope); lines.push('') }
     const currentDocs = documents.filter((d) => d.isCurrent)
     if (currentDocs.length > 0) {
-      lines.push('CURRENT REFERENCE FILES')
+      lines.push('CURRENT WORKING FILES')
       currentDocs.forEach((d) => {
         lines.push(`  - ${d.label}${d.docType ? ` (${d.docType})` : ''}`)
       })
@@ -71,7 +71,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     }
     const activeChanges = changes.filter((c) => c.status !== 'closed')
     if (activeChanges.length > 0) {
-      lines.push('CHANGE LOG')
+      lines.push('CHANGES')
       activeChanges.forEach((c) => {
         const parts = [`  - ${c.title}`]
         if (c.cost_impact) parts.push(`(${c.cost_impact})`)
@@ -145,33 +145,33 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     <>
       <ToolPageHeader
         toolKey="project_summary"
-        title="Project Change Log"
-        description="Keep a simple record of what changed during your renovation. Track the latest files you're working from and log important decisions so nothing gets lost."
+        title="Change Log"
+        description="Track what you're building from, what changed, and what still needs follow-up."
         accessLevel={access}
         hasContent={payload.plan.scope.length > 0 || payload.documents.length > 0 || payload.changes.length > 0}
         collectionId={collectionId}
         collectionName={titleOverride ?? collectionTitle ?? undefined}
-        eyebrowLabel="Project Change Log"
-        toolLabel="Project Change Log"
+        eyebrowLabel="Change Log"
+        toolLabel="Change Log"
         backHref="/app/tools/project-summary"
         backLabel="All Logs"
         onRename={readOnly ? undefined : handleRename}
         onArchive={readOnly ? undefined : handleArchive}
         actions={(
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <InstanceSwitcher
               toolKey="project_summary"
               currentCollectionId={collectionId}
               itemNoun="log"
             />
-            {/* Copy Summary */}
+            {/* Copy Summary — icon-only on mobile, compact on desktop */}
             <button
               type="button"
               onClick={handleCopySummary}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cream/65 hover:text-cream/80 bg-stone-200 hover:bg-stone-hover transition-colors"
-              title="Copy change log summary to clipboard"
+              className="inline-flex items-center gap-1.5 p-2 md:px-3 md:py-1.5 rounded-lg text-xs text-cream/45 hover:text-cream/65 hover:bg-stone-hover transition-colors"
+              title="Copy summary to clipboard"
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 {copiedSummary ? (
                   <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
                 ) : (
@@ -181,19 +181,20 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
                   </>
                 )}
               </svg>
-              <span className="hidden md:inline">{copiedSummary ? 'Copied' : 'Copy Summary'}</span>
+              <span className="hidden md:inline">{copiedSummary ? 'Copied' : 'Copy'}</span>
             </button>
+            {/* Comments toggle — icon-only on mobile */}
             <button
               type="button"
               onClick={handleOpenComments}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cream/65 hover:text-cream/80 bg-stone-200 hover:bg-stone-hover transition-colors"
+              className="inline-flex items-center gap-1.5 p-2 md:px-3 md:py-1.5 rounded-lg text-xs text-cream/45 hover:text-cream/65 hover:bg-stone-hover transition-colors"
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              Comments
+              <span className="hidden md:inline">Notes</span>
               {collComments.comments.length > 0 && (
-                <span className="bg-cream/15 text-cream/55 text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
+                <span className="bg-cream/10 text-cream/45 text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
                   {collComments.comments.length}
                 </span>
               )}
@@ -210,42 +211,42 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       )}
 
       <div className="md:flex md:gap-6 md:items-start">
-        <div className="flex-1 min-w-0 space-y-8">
-          {/* Project description — simple, optional context */}
+        <div className="flex-1 min-w-0 space-y-10">
+          {/* Project description — brief context */}
           <div>
             <InlineEdit
               value={payload.plan.scope}
               onSave={(text) => api.updatePlanScope(text)}
-              placeholder="Add a brief project description (optional) — e.g. 'Kitchen and bath renovation, started Jan 2026'"
+              placeholder="Add a project description — e.g. 'Kitchen and bath renovation, started Jan 2026'"
               readOnly={readOnly}
               multiline
-              displayClassName="text-sm text-cream/70 leading-relaxed"
+              displayClassName="text-sm text-cream/65 leading-relaxed"
               className="text-sm leading-relaxed"
             />
           </div>
 
-          {/* Disclaimer */}
-          <p className="text-[10px] text-cream/35 leading-relaxed">
-            This tool is for homeowner organization and reference only. It is not the official construction record. Always confirm final plans, approvals, and scope with your contractor or design team.
-          </p>
-
-          {/* Zone 1 — Latest Reference Files */}
+          {/* Zone 1 — Current Working Files */}
           <DocumentsSection api={api} />
 
-          {/* Zone 2 — Change Log */}
+          {/* Zone 2 — Changes */}
           <ChangesSection
             api={api}
             commentCounts={commentCounts}
             focusEntryId={focusTarget?.section === 'changes' ? focusTarget.entryId : undefined}
           />
 
-          {/* Activity — collapsed at bottom */}
+          {/* Zone 3 — Activity (collapsed, secondary) */}
           <MilestoneTimeline milestones={payload.milestones} />
+
+          {/* Disclaimer — bottom, quiet */}
+          <p className="text-[10px] text-cream/25 leading-relaxed">
+            For your reference only — not the official construction record. Confirm plans, approvals, and scope with your contractor.
+          </p>
         </div>
 
         <CollapsibleCommentSidebar
           ref={commentSidebarRef}
-          title="Comments"
+          title="Notes"
           storageKey="project_summary_comments_collapsed"
           comments={collComments.comments}
           isLoading={collComments.isLoading}
@@ -254,7 +255,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
           onDeleteComment={collComments.deleteComment}
           refEntities={commentRefEntities}
           refEntityType="entry"
-          refPickerLabel="Tag an entry"
+          refPickerLabel="Tag a change"
           hideCollapsedTab
           defaultCollapsed
           collectionId={collectionId}

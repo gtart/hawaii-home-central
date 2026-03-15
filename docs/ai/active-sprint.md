@@ -4,19 +4,19 @@
 
 | Field | Value |
 |-------|-------|
-| **Sprint** | Homeowner Copy Simplification |
-| **Sprint Doc** | `docs/ai/sprints/homeowner-copy-simplification.md` |
-| **Status** | `ready_for_codex` |
+| **Sprint** | Change Log UX Clarity |
+| **Sprint Doc** | `docs/ai/sprints/change-log-ux-clarity.md` |
+| **Status** | `implementation` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-14 |
-| **Commits** | `67ffe4c`, `8e19c20` |
+| **Commits** | — |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | Codex findings addressed: dashboard/sidebar reordered to Fix List → Selections → Change Log; "plan entry" badge renamed to "linked change". Awaiting re-review. |
-| **Latest Codex Audit** | `docs/ai/reviews/codex/2026-03-14-homeowner-copy-simplification-audit.md` |
+| **Current Handoff** | Implementation in progress — refactoring Change Log UI for clarity, hierarchy, and homeowner-friendliness |
+| **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
 ## Reading Order
@@ -40,6 +40,7 @@ When entering this repo, read in this order:
 ---
 
 ## Previous Sprints (Completed)
+- Homeowner Copy Simplification (March 14, 2026) — `67ffe4c`, `8e19c20`
 - Project Change Log (Homeowner Version) (March 14, 2026) — `0a17ed7`, `1511cf6`, `70ee830`, `aff1f21`
 - Living Plan Refactor (Track Plans / Project Summary) (March 14, 2026) — `4687598`
 - Track Plans — Mental Model Simplification + Usability Fixes (March 13, 2026) — `ready_for_codex`
