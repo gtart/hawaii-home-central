@@ -367,7 +367,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }}
                 className="text-cream/20 hover:text-red-400/50 transition-colors"
-                title="Delete file"
+                title="Delete"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
@@ -407,7 +407,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
 
       {/* Section header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider">Current Working Files</h2>
+        <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider">Plan Resources</h2>
         {!readOnly && (
           <div className="flex items-center gap-2">
             <button
@@ -442,13 +442,13 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               type="button"
               onClick={() => { setShowTextForm(!showTextForm); setShowAddForm(false) }}
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-cream/45 hover:text-cream/60 bg-cream/5 hover:bg-cream/8 transition-colors"
-              title="Add text content"
+              title="Add written content"
             >
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              Write
+              Add Content
             </button>
           </div>
         )}
@@ -457,8 +457,8 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
       {/* Empty state */}
       {documents.length === 0 && !showAddForm && (
         <div className="rounded-lg border border-dashed border-cream/12 px-4 py-6 text-center">
-          <p className="text-sm text-cream/45 mb-1">No files yet</p>
-          <p className="text-xs text-cream/30">Upload the plans, specs, or contracts you&apos;re currently working from.</p>
+          <p className="text-sm text-cream/45 mb-1">No resources yet</p>
+          <p className="text-xs text-cream/30">Upload files, add links, or write content to keep your plan materials in one place.</p>
         </div>
       )}
 
@@ -477,7 +477,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
       {outdatedDocs.length > 0 && (
         <details className="mt-2">
           <summary className="text-[10px] text-cream/30 cursor-pointer hover:text-cream/45 transition-colors select-none">
-            {outdatedDocs.length} older file{outdatedDocs.length !== 1 ? 's' : ''}
+            {outdatedDocs.length} archived{outdatedDocs.length !== 1 ? '' : ''}
           </summary>
           <div className="mt-2 space-y-1.5">
             {outdatedDocs.map(renderOutdatedDoc)}

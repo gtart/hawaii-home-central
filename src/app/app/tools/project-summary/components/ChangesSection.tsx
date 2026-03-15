@@ -14,7 +14,7 @@ interface ChangesSectionProps {
   focusEntryId?: string
 }
 
-/** Status dropdown — 5 homeowner-friendly statuses */
+/** Status dropdown — 4 homeowner-friendly statuses */
 function StatusDropdown({
   status,
   onChange,

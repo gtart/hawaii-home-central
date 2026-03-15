@@ -16,8 +16,8 @@
 | CLG-304 | Rename plan-level Notes to Discussion | P1 | done | pass | pass | Header button and sidebar now consistently say Discussion. | none | ToolContent.tsx |
 | CLG-305 | Fix duplicate Notes in file detail panel | P1 | done | pass | pass | File detail naming now cleanly separates Description from Discussion. | none | FileDetailPanel.tsx |
 | CLG-306 | Make original filename explicit | P1 | done | pass | pass | Original filename is now visible in file detail metadata when present. | none | FileDetailPanel.tsx |
-| CLG-307 | Remove or reframe weak header actions | P1 | done | pass | concern | The top row now has Upload, Link, and Write, but the Link form still includes an `Or upload a file` action, which reintroduces the mixed-mode flow this cleanup was trying to simplify. | none | ToolContent.tsx, DocumentsSection.tsx |
-| CLG-308 | Add text-based plan content entries | P0 | done | pass | concern | Current text entries are distinct, but archived text entries fall back to the generic outdated-file row and lose the Text badge/body-preview distinction in the same resource list. | none | project-summary.ts, DocumentsSection.tsx, FileDetailPanel.tsx |
+| CLG-307 | Remove or reframe weak header actions | P1 | done | pass | pass | The header now presents Upload, Link, and Write as clean separate resource actions, and the Link form stays link-only. | none | ToolContent.tsx, DocumentsSection.tsx |
+| CLG-308 | Add text-based plan content entries | P0 | done | pass | pass | Text entries now carry through the full model: optional body/contentType fields, distinct current and archived list styling, and editable content in the detail panel. | none | project-summary.ts, DocumentsSection.tsx, FileDetailPanel.tsx |
 | CLG-309 | Clarify comment hierarchy naming | P1 | done | pass | pass | Main tool-surface conversation naming now uses Discussion consistently. | none | ToolContent.tsx, FileDetailPanel.tsx |
 
 ### Status values
@@ -160,10 +160,10 @@
 
 - [ ] Every in-scope issue is `done` or explicitly moved out
 - [ ] Every completed issue: `Claude Verified: pass`
-- [ ] Every completed issue: `Codex Verified: pass`
+- [x] Every completed issue: `Codex Verified: pass`
 - [ ] Every issue's `Follow-up` is explicit
 - [x] Build/typecheck recorded
-- [ ] Codex audit linked above
+- [x] Codex audit linked above
 - [ ] Claude response linked above (if follow-up occurred)
 - [ ] `docs/ai/active-sprint.md` status set to `complete`
 

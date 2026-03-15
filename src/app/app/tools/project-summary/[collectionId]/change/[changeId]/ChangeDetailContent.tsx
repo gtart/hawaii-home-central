@@ -17,7 +17,7 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-/** Status dropdown — 5 homeowner-friendly statuses */
+/** Status dropdown — 4 homeowner-friendly statuses */
 function StatusDropdown({
   status,
   onChange,
@@ -287,7 +287,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
             <div className="space-y-3">
               {/* Description */}
               <div>
-                <label className="text-[10px] text-cream/45 block mb-0.5">Notes</label>
+                <label className="text-[10px] text-cream/45 block mb-0.5">Description</label>
                 <InlineEdit
                   value={change.description || ''}
                   onSave={(v) => updateChange(change.id, { description: v || undefined })}
@@ -547,7 +547,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Comments
+            Discussion
             {changeComments.comments.length > 0 && (
               <span className="bg-cream/15 text-cream/55 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
                 {changeComments.comments.length}
