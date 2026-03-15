@@ -20,7 +20,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     href: '/app/tools/mood-boards',
     title: 'Mood Boards',
     description:
-      'Collect and organize inspiration from anywhere\u2014then turn your favorites into real decisions.',
+      'Save and organize inspiration so you can reference it when making decisions.',
     stage: 'Get Inspired',
   },
   {
@@ -28,7 +28,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     href: '/app/tools/before-you-sign',
     title: 'Contract Checklist',
     description:
-      'Compare contractors and bids using the same criteria\u2014so nothing gets missed.',
+      'Compare bids side by side so you know what you\u2019re agreeing to.',
     stage: 'Select the Right Pro',
   },
   {
@@ -36,7 +36,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     href: '/app/tools/finish-decisions',
     title: 'Choose Selections',
     description:
-      'Track the choices you need to make\u2014tile, countertops, hardware\u2014and what you picked.',
+      'Keep track of every finish and fixture you need to pick\u2014countertops, tile, hardware\u2014so nothing slips through.',
     stage: 'Choose Your Finishes',
   },
   {
@@ -44,7 +44,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     href: '/app/tools/punchlist',
     title: 'Fix Issues',
     description:
-      'Track fixes and share with your contractor.',
+      'Log every fix and follow up until it\u2019s done. Share the list with your contractor so everyone\u2019s on the same page.',
     stage: 'Build',
   },
   {
@@ -59,9 +59,9 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'project_summary',
     href: '/app/tools/project-summary',
-    title: 'Track Plans',
+    title: 'Change Log',
     description:
-      'Your project plan, what\'s included and excluded, budget overview, and a record of every change along the way.',
+      'Keep a simple record of what changed during your renovation\u2014so nothing gets lost.',
     stage: 'Build',
   },
 ]

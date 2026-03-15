@@ -28,13 +28,13 @@ export function DashboardCardPlanAndChanges({
   if (!hasItems) {
     return (
       <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/70 mb-2">Track Plans</p>
-        <p className="text-sm text-cream/50 mb-4">Track your project plan and any changes along the way.</p>
+        <p className="text-sm font-medium text-cream/70 mb-2">Change Log</p>
+        <p className="text-sm text-cream/50 mb-4">Keep a record of what changed during your renovation.</p>
         <Link
           href="/app/tools/project-summary"
           className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
         >
-          Start a Plan
+          Start Logging
         </Link>
       </div>
     )
@@ -45,28 +45,19 @@ export function DashboardCardPlanAndChanges({
   const primarySummary = summaries[0]
   const planCount = summaries.length
 
-  // Meta line: "2 plans · 3 changes pending review"
+  // Meta line: "2 logs · 3 changes to follow up on"
   const metaParts: string[] = []
-  metaParts.push(`${planCount} plan${planCount !== 1 ? 's' : ''}`)
+  metaParts.push(`${planCount} log${planCount !== 1 ? 's' : ''}`)
   if (totalActiveChanges > 0) {
-    metaParts.push(`${totalActiveChanges} change${totalActiveChanges !== 1 ? 's' : ''} pending review`)
+    metaParts.push(`${totalActiveChanges} change${totalActiveChanges !== 1 ? 's' : ''} to follow up on`)
   }
-
-  // Plan exists but no changes yet — show plan signal
-  const planSignals: string[] = []
-  if (primarySummary.planItemCount > 0) planSignals.push(`${primarySummary.planItemCount} plan item${primarySummary.planItemCount !== 1 ? 's' : ''}`)
-  if (primarySummary.hasBudget) planSignals.push('budget set')
 
   if (totalActiveChanges === 0 && totalChanges === 0) {
     return (
       <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/70 mb-2">Track Plans</p>
+        <p className="text-sm font-medium text-cream/70 mb-2">Change Log</p>
         <p className="text-[11px] text-cream/45 mb-2">{metaParts.join(' · ')}</p>
-        {planSignals.length > 0 ? (
-          <p className="text-sm text-cream/65 mb-1">Plan documented · {planSignals.join(', ')}. No changes yet.</p>
-        ) : (
-          <p className="text-sm text-cream/65 mb-1">No changes recorded yet.</p>
-        )}
+        <p className="text-sm text-cream/65 mb-1">No changes recorded yet.</p>
         <p className="text-[11px] text-cream/40 mb-3">
           Updated {relativeTime(primarySummary.updatedAt)}
         </p>
@@ -74,7 +65,7 @@ export function DashboardCardPlanAndChanges({
           href="/app/tools/project-summary"
           className="inline-flex items-center px-4 py-2 border border-cream/15 text-cream/65 text-sm font-medium rounded-button hover:bg-stone-200 transition-colors"
         >
-          View Plan
+          View Log
         </Link>
       </div>
     )
@@ -83,7 +74,7 @@ export function DashboardCardPlanAndChanges({
   // Active state
   return (
     <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-      <p className="text-sm font-medium text-cream/70 mb-1">Track Plans</p>
+      <p className="text-sm font-medium text-cream/70 mb-1">Change Log</p>
       <p className="text-[11px] text-cream/45 mb-3">{metaParts.join(' · ')}</p>
       <div className="flex items-baseline gap-3 mb-1">
         {totalActiveChanges > 0 ? (
@@ -105,7 +96,7 @@ export function DashboardCardPlanAndChanges({
         href="/app/tools/project-summary"
         className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
       >
-        Review Plan
+        Review Changes
       </Link>
     </div>
   )

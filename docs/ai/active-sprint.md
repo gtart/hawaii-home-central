@@ -4,18 +4,18 @@
 
 | Field | Value |
 |-------|-------|
-| **Sprint** | Project Change Log (Homeowner Version) |
-| **Sprint Doc** | `docs/ai/sprints/project-change-log.md` |
+| **Sprint** | Homeowner Copy Simplification |
+| **Sprint Doc** | `docs/ai/sprints/homeowner-copy-simplification.md` |
 | **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-14 |
-| **Commits** | `0a17ed7`, `1511cf6`, `70ee830` |
+| **Commits** | — |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | All issues done. Cross-tool buttons hidden in `70ee830`. Ready for final re-review. |
+| **Current Handoff** | All issues (HCC-001–010) done, Claude Verified: pass. Awaiting Codex review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
@@ -40,6 +40,7 @@ When entering this repo, read in this order:
 ---
 
 ## Previous Sprints (Completed)
+- Project Change Log (Homeowner Version) (March 14, 2026) — `0a17ed7`, `1511cf6`, `70ee830`, `aff1f21`
 - Living Plan Refactor (Track Plans / Project Summary) (March 14, 2026) — `4687598`
 - Track Plans — Mental Model Simplification + Usability Fixes (March 13, 2026) — `ready_for_codex`
 - Track Plans UI Redesign (March 13, 2026) — `d202610`

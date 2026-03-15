@@ -42,7 +42,7 @@ export function DashboardPage() {
     if (totalHigh > 0) attentionItems.push(`${totalHigh} urgent fix${totalHigh !== 1 ? 'es' : ''}`)
     if (totalStale > 0) attentionItems.push(`${totalStale} stale issue${totalStale !== 1 ? 's' : ''}`)
     if (totalDeciding > 0) attentionItems.push(`${totalDeciding} selection${totalDeciding !== 1 ? 's' : ''} to decide`)
-    if (totalActiveChanges > 0) attentionItems.push(`${totalActiveChanges} active change${totalActiveChanges !== 1 ? 's' : ''}`)
+    if (totalActiveChanges > 0) attentionItems.push(`${totalActiveChanges} change${totalActiveChanges !== 1 ? 's' : ''} to follow up on`)
     if (attentionItems.length === 0 && totalOpen > 0) attentionItems.push(`${totalOpen} open issue${totalOpen !== 1 ? 's' : ''}`)
   }
 

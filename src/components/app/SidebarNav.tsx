@@ -33,7 +33,7 @@ const NAV_ITEMS = [
 const MANAGE_ITEMS = [
   {
     href: '/app/tools/project-summary',
-    label: 'Track Plans',
+    label: 'Change Log',
     matchMode: 'prefix' as const,
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -205,7 +205,7 @@ export function SidebarNav() {
           <div className="mx-4 my-3 border-t border-cream/10" />
 
         <p className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-wider text-cream/45">
-          Manage Renovation
+          Your Tools
         </p>
         {MANAGE_ITEMS.map((item) => {
           const active = isActive(pathname, item.href, item.matchMode)
@@ -233,7 +233,7 @@ export function SidebarNav() {
         })}
 
         <p className="px-4 pt-4 pb-1 text-[10px] uppercase tracking-wider text-cream/40">
-          Preparation
+          Getting Started
         </p>
         {GETTING_STARTED_ITEMS.map((item) => {
           const active = isActive(pathname, item.href, item.matchMode)

@@ -35,7 +35,7 @@ const TYPE_LABEL: Record<string, string> = {
   change: 'Change',
 }
 
-/** Build a deep-link URL to the specific entry in Plan & Changes */
+/** Build a deep-link URL to the specific entry in Change Log */
 function entryHref(item: LinkedEntry): string {
   return `/app/tools/project-summary/${item.collectionId}?focus=change-${item.entryId}`
 }

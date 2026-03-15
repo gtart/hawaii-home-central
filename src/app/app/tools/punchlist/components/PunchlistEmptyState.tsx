@@ -26,7 +26,7 @@ export function PunchlistEmptyState({ readOnly, api }: Props) {
           No fixes yet
         </h2>
         <p className="text-cream/50 text-sm mb-6 max-w-md mx-auto">
-          Add your first item to start tracking fixes.
+          Add issues as you spot them. Share the list with your contractor so everyone knows what still needs to get done.
         </p>
         {!readOnly && (
           <button

@@ -25,11 +25,11 @@ export function OnboardingView({
   return (
     <div className="py-8 max-w-md mx-auto">
       <h2 className="font-serif text-2xl md:text-3xl text-sandstone mb-2">
-        Add your first selection to make
+        What do you need to pick?
       </h2>
 
       <p className="text-sm text-cream/65 leading-relaxed mb-6">
-        Add the things you need to decide on — countertops, flooring, fixtures — and track your picks.
+        List the finishes and fixtures you need to decide on — countertops, tile, hardware — and keep track of what you chose.
       </p>
 
       {/* Add selection input */}

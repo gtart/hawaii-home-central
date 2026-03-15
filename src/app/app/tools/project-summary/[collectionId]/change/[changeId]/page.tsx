@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { ChangeDetailContent } from './ChangeDetailContent'
 
 export const metadata: Metadata = {
-  title: 'Change Detail — Plan & Changes',
+  title: 'Change Detail — Change Log',
 }
 
 export default async function ChangeDetailPage({

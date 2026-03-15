@@ -64,7 +64,7 @@ function deriveActions(data: DashboardResponse): ActionItem[] {
     const targetSummary = summaries.find((l) => l.activeChangeCount > 0)
     const base = targetSummary ? `/app/tools/project-summary/${targetSummary.id}` : '/app/tools/project-summary'
     actions.push({
-      label: `${totalActiveChanges} active change${totalActiveChanges !== 1 ? 's' : ''} to review`,
+      label: `${totalActiveChanges} change${totalActiveChanges !== 1 ? 's' : ''} to follow up on`,
       href: base,
     })
   }

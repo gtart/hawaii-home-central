@@ -33,7 +33,7 @@ export function DashboardCardFixList({
     return (
       <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
         <p className="text-sm font-medium text-cream/70 mb-2">Fix Issues</p>
-        <p className="text-sm text-cream/50 mb-4">Log issues as you find them during walkthrough or construction.</p>
+        <p className="text-sm text-cream/50 mb-4">Keep a running list of fixes — add items as you spot them, share with your contractor, and check them off as they get done.</p>
         <Link
           href="/app/tools/punchlist"
           className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
