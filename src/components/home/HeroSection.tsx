@@ -12,7 +12,7 @@ const BENEFITS = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
-    text: 'Better finishes — organize decisions before your contractor needs them',
+    text: 'Keep selections from getting lost — save decisions, notes, and links in one place',
   },
   {
     icon: (
@@ -20,7 +20,7 @@ const BENEFITS = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
-    text: 'Fewer delays — track every punch-list item so nothing stalls the schedule',
+    text: 'Stay on top of loose ends — keep a running fix list during the build and walkthrough',
   },
   {
     icon: (
@@ -28,7 +28,7 @@ const BENEFITS = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
     ),
-    text: 'Easy sharing — send a read-only link to your contractor, designer, or family',
+    text: 'Easier conversations — share what you\u2019re tracking when you need to get aligned',
   },
 ]
 
@@ -61,8 +61,8 @@ export function HeroSection() {
         </h1>
 
         <p className="text-lg md:text-xl text-cream/70 mb-10 max-w-3xl mx-auto leading-relaxed">
-          Free tools that help you pick finishes, track punch-list items, and
-          share progress with your contractor—built for Hawai&#x02BB;i&apos;s unique challenges.
+          Free tools and guidance to help you keep track of decisions, fix items,
+          and changes during your Hawai&#x02BB;i renovation.
         </p>
 
         {/* Benefit bullets */}

@@ -309,13 +309,13 @@ export function ToolContent({
         {!localOnly && (
           <ToolPageHeader
             toolKey="finish_decisions"
-            title="Choose Selections"
-            description="Track the choices you need to make—and what you picked."
+            title="Selections"
+            description="Keep your renovation choices organized so finishes, fixtures, and notes stay in one place."
             accessLevel={access}
             hasContent={v4State.selections.length > 0}
             collectionId={workspaceCollectionId}
-            eyebrowLabel="Choose Selections"
-            toolLabel="Choose Selections"
+            eyebrowLabel="Selections"
+            toolLabel="Selections"
             scopes={tagScopes}
             scopeLabel="Labels"
             buildExportUrl={({ projectId: pid, selectedScopeIds, scopeMode, includeNotes, includeComments, includePhotos }) => {

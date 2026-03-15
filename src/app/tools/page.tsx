@@ -9,7 +9,7 @@ import { ToolPreviewCards } from './ToolPreviewCards'
 export const metadata: Metadata = {
   title: 'Tools',
   description:
-    'Tools for every part of a Hawaiʻi renovation — save ideas, compare bids, lock decisions, and track punch items. Currently in limited beta.',
+    'Simple homeowner tools for keeping track of selections, changes, and fix items during a Hawaiʻi renovation. Currently in limited beta.',
 }
 
 export default async function ToolsMarketingPage() {
@@ -38,10 +38,10 @@ export default async function ToolsMarketingPage() {
               Tools
             </h1>
             <p className="text-lg text-cream/70 mb-4 max-w-3xl mx-auto text-center leading-relaxed">
-              Tools for every part of a Hawai&#x02BB;i renovation&mdash;use them anytime.
+              Simple tools to help you stay organized during your renovation.
             </p>
             <p className="text-cream/70 text-sm mb-2 max-w-2xl mx-auto text-center leading-relaxed">
-              Pick any tool below. Each one solves a specific headache&mdash;without spreadsheets and endless texts.
+              Start with the tool that matches the problem you have right now&mdash;keeping track of fix items, decisions, or changes.
             </p>
             <p className="text-cream/50 text-sm mb-12 max-w-2xl mx-auto text-center">
               Limited beta (waitlist + whitelist). Request access to get approved.

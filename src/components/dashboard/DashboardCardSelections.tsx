@@ -34,7 +34,7 @@ export function DashboardCardSelections({
   if (!hasItems || totalAll === 0) {
     return (
       <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/70 mb-2">Choose Selections</p>
+        <p className="text-sm font-medium text-cream/70 mb-2">Selections</p>
         <p className="text-sm text-cream/50 mb-4">Track finishes, fixtures, and materials you need to pick.</p>
         <Link
           href="/app/tools/finish-decisions"
@@ -50,7 +50,7 @@ export function DashboardCardSelections({
   if (totalActive === 0) {
     return (
       <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/70 mb-2">Choose Selections</p>
+        <p className="text-sm font-medium text-cream/70 mb-2">Selections</p>
         <p className="text-sm text-cream/65 mb-1">All {totalDone} decided</p>
         {lastUpdated && (
           <p className="text-[11px] text-cream/40 mb-3">Updated {relativeTime(lastUpdated)}</p>
@@ -77,7 +77,7 @@ export function DashboardCardSelections({
 
   return (
     <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-      <p className="text-sm font-medium text-cream/70 mb-3">Choose Selections</p>
+      <p className="text-sm font-medium text-cream/70 mb-3">Selections</p>
       <div className="flex items-baseline gap-3 mb-1">
         <span className="text-2xl font-semibold text-cream tabular-nums">{totalActive}</span>
         <span className="text-sm text-cream/55">to decide</span>

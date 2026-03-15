@@ -4,10 +4,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Sprint** | — (none active) |
-| **Sprint Doc** | — |
-| **Status** | `complete` |
-| **Owner** | — |
+| **Sprint** | Homeowner Copy Correction — Marketing + App Surfaces |
+| **Sprint Doc** | `docs/ai/sprints/homeowner-copy-correction.md` |
+| **Status** | `implementation` |
+| **Owner** | Claude |
 | **Last Updated** | 2026-03-14 |
 | **Commits** | — |
 
@@ -15,8 +15,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | — |
-| **Latest Codex Audit** | `docs/ai/reviews/codex/2026-03-14-change-log-ux-clarity-followup-verification-audit.md` |
+| **Current Handoff** | Implementation in progress — revising copy across marketing and app surfaces |
+| **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
 ## Reading Order

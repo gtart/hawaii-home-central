@@ -79,7 +79,7 @@ export function BeforeYouSignReport({ collectionIdOverride }: { collectionIdOver
 
   const [settings, setSettings] = useState<ReportSettings>({
     companyName: 'HawaiiHomeCentral.com',
-    reportTitle: 'Contract Checklist Report',
+    reportTitle: 'Bid Checklist Report',
     footerText: 'Created at HawaiiHomeCentral.com',
   })
 
@@ -89,7 +89,7 @@ export function BeforeYouSignReport({ collectionIdOverride }: { collectionIdOver
         const res = await fetch('/api/tools/punchlist/report-settings')
         if (res.ok) {
           const data = await res.json()
-          setSettings((prev) => ({ ...prev, ...data, reportTitle: 'Contract Checklist Report' }))
+          setSettings((prev) => ({ ...prev, ...data, reportTitle: 'Bid Checklist Report' }))
         }
       } catch {
         // use defaults
@@ -140,7 +140,7 @@ export function BeforeYouSignReport({ collectionIdOverride }: { collectionIdOver
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-white">
         <p className="text-gray-600 font-medium">No contractors to display</p>
-        <p className="text-gray-400 text-sm">Add contractors to your Contract Checklist first.</p>
+        <p className="text-gray-400 text-sm">Add contractors to your Bid Checklist first.</p>
       </div>
     )
   }

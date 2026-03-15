@@ -36,7 +36,7 @@ export function DashboardCardContractChecklist({
     <div className="bg-basalt-50 rounded-card border border-cream/10 p-4 md:p-5">
       <div className="flex items-center justify-between">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-cream/50 mb-0.5">Contract Checklist</p>
+          <p className="text-sm font-medium text-cream/50 mb-0.5">Bid Checklist</p>
           <p className="text-xs text-cream/30">
             {statusText}
             {checklists[0]?.updatedAt && <> &middot; {relativeTime(checklists[0].updatedAt)}</>}

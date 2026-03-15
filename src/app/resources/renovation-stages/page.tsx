@@ -115,8 +115,8 @@ export default function RenovationStagesPage() {
                 />
                 <Card
                   href="/login?callbackUrl=/app/tools/before-you-sign"
-                  title="Contract Checklist"
-                  description="Walk through each bid with the same checklist."
+                  title="Bid Checklist"
+                  description="Compare bids with the same checklist before you sign."
                 />
                 <Card
                   href="/login?callbackUrl=/app/tools/punchlist"

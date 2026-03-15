@@ -30,7 +30,7 @@ const STAGES: StageEntry[] = [
     tool: {
       title: 'Mood Boards',
       description:
-        'Save inspiration from across the web\u2014product pages, design blogs, retailer sites\u2014and organize ideas into boards before turning your favorites into real selections.',
+        'Save inspiration and product ideas in one place before you narrow down your actual selections.',
       ctaText: 'Request early access',
       ctaHref: '/login?callbackUrl=/app/tools/mood-boards',
       steps: [
@@ -48,11 +48,11 @@ const STAGES: StageEntry[] = [
   {
     number: 2,
     title: 'Hire & Contract',
-    subtitle: 'Compare bids and lock expectations.',
+    subtitle: 'Compare bids and ask better questions before you sign.',
     tool: {
-      title: 'Contract Checklist',
+      title: 'Bid Checklist',
       description:
-        'Walk through each bid against the same checklist\u2014so nothing gets missed and you sign with confidence.',
+        'Use the same checklist for each bid so it\u2019s easier to spot gaps, allowances, and unclear scope.',
       ctaText: 'Request early access',
       ctaHref: '/login?callbackUrl=/app/tools/before-you-sign',
       steps: [
@@ -74,7 +74,7 @@ const STAGES: StageEntry[] = [
     tool: {
       title: 'Selections',
       description:
-        'Always know what\u2019s decided, what\u2019s next, and what\u2019s blocking\u2014by organizing decisions by room instead of texts and screenshots.',
+        'Keep renovation decisions organized by room so links, notes, and final picks don\u2019t get lost.',
       ctaText: 'Request early access',
       ctaHref: '/login?callbackUrl=/app/tools/finish-decisions',
       steps: [
@@ -96,7 +96,7 @@ const STAGES: StageEntry[] = [
     tool: {
       title: 'Fix List',
       description:
-        'Track fixes and punch list items in real time\u2014and share a clean report with your contractor.',
+        'Keep a running list of fix items and walkthrough notes so you can follow up clearly.',
       ctaText: 'Request early access',
       ctaHref: '/login?callbackUrl=/app/tools/punchlist',
       steps: [

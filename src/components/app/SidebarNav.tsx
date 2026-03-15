@@ -33,7 +33,7 @@ const NAV_ITEMS = [
 const MANAGE_ITEMS = [
   {
     href: '/app/tools/punchlist',
-    label: 'Fix Issues',
+    label: 'Fix List',
     matchMode: 'prefix' as const,
     badgeKey: 'fixListOpen' as const,
     icon: (
@@ -45,7 +45,7 @@ const MANAGE_ITEMS = [
   },
   {
     href: '/app/tools/finish-decisions',
-    label: 'Choose Selections',
+    label: 'Selections',
     matchMode: 'prefix' as const,
     badgeKey: 'selectionsNeedDecisions' as const,
     icon: (
@@ -85,7 +85,7 @@ const GETTING_STARTED_ITEMS = [
   },
   {
     href: '/app/tools/before-you-sign',
-    label: 'Contract Checklist',
+    label: 'Bid Checklist',
     matchMode: 'prefix' as const,
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

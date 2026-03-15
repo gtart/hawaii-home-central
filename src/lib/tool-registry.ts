@@ -26,25 +26,25 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'before_you_sign',
     href: '/app/tools/before-you-sign',
-    title: 'Contract Checklist',
+    title: 'Bid Checklist',
     description:
-      'Compare bids side by side so you know what you\u2019re agreeing to.',
+      'Compare bids with a simple checklist so missing details are easier to spot.',
     stage: 'Select the Right Pro',
   },
   {
     toolKey: 'finish_decisions',
     href: '/app/tools/finish-decisions',
-    title: 'Choose Selections',
+    title: 'Selections',
     description:
-      'Keep track of every finish and fixture you need to pick\u2014countertops, tile, hardware\u2014so nothing slips through.',
+      'Keep your renovation choices organized so finishes, fixtures, and notes stay in one place.',
     stage: 'Choose Your Finishes',
   },
   {
     toolKey: 'punchlist',
     href: '/app/tools/punchlist',
-    title: 'Fix Issues',
+    title: 'Fix List',
     description:
-      'Log every fix and follow up until it\u2019s done. Share the list with your contractor so everyone\u2019s on the same page.',
+      'Keep a running list of fix items and follow-ups during the build and final walkthrough.',
     stage: 'Build',
   },
   {
@@ -61,7 +61,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     href: '/app/tools/project-summary',
     title: 'Change Log',
     description:
-      'Keep a simple record of what changed during your renovation\u2014so nothing gets lost.',
+      'Keep track of what changed, what files seem current, and what still needs confirmation.',
     stage: 'Build',
   },
 ]

@@ -17,7 +17,7 @@ const TABS = [
   },
   {
     href: '/app/tools/punchlist',
-    label: 'Fix Issues',
+    label: 'Fix List',
     matchMode: 'prefix' as const,
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -28,7 +28,7 @@ const TABS = [
   },
   {
     href: '/app/tools/finish-decisions',
-    label: 'Choose Selections',
+    label: 'Selections',
     matchMode: 'prefix' as const,
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -54,7 +54,7 @@ const MORE_ITEMS = [
   },
   {
     href: '/app/tools/before-you-sign',
-    label: 'Contract Checklist',
+    label: 'Bid Checklist',
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />

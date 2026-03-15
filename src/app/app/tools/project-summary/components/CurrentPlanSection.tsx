@@ -43,10 +43,10 @@ function UnlockPrompt({
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M7 11V7a5 5 0 019.9-1" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        Unlock Plan to Make Corrections
+        Unlock to Edit
       </h3>
       <p className="text-xs text-cream/65 leading-relaxed">
-        Unlocking lets you edit the plan directly. When you&apos;re done, re-lock it to keep it as your source of truth.
+        Unlocking lets you edit the record directly. Lock it again when you&apos;re done.
       </p>
       <textarea
         value={reason}
@@ -106,7 +106,7 @@ function LockedPlanInterventionDialog({
       <div className="w-full max-w-md rounded-xl border border-cream/15 bg-basalt p-6 shadow-2xl space-y-4">
         <h3 className="text-base font-semibold text-cream">This plan is locked</h3>
         <p className="text-sm text-cream/70 leading-relaxed">
-          Your plan is locked to protect the agreed-upon scope. You can either correct the plan directly or add a formal change order.
+          This record is locked so your current plan notes stay stable. You can unlock it to make a correction or log a new change below.
         </p>
         <div className="space-y-2">
           <button
@@ -114,9 +114,9 @@ function LockedPlanInterventionDialog({
             onClick={onUnlock}
             className="w-full text-left px-4 py-3 rounded-lg border border-amber-400/20 bg-amber-400/8 hover:bg-amber-400/12 transition-colors"
           >
-            <div className="text-sm font-medium text-amber-400">Unlock &amp; Correct Plan</div>
+            <div className="text-sm font-medium text-amber-400">Unlock and Edit</div>
             <div className="text-xs text-cream/55 mt-0.5">
-              Fix a typo, update scope details, or make a correction. Re-lock when done.
+              Use this for a correction or small update to the current record. Lock it again when you&apos;re done.
             </div>
           </button>
           <button
@@ -124,9 +124,9 @@ function LockedPlanInterventionDialog({
             onClick={onAddChange}
             className="w-full text-left px-4 py-3 rounded-lg border border-emerald-400/20 bg-emerald-400/8 hover:bg-emerald-400/12 transition-colors"
           >
-            <div className="text-sm font-medium text-emerald-400">Add a Change Order</div>
+            <div className="text-sm font-medium text-emerald-400">Log a Change</div>
             <div className="text-xs text-cream/55 mt-0.5">
-              Log a formal amendment — new work, different materials, added or removed scope.
+              Use this for a new change, field update, material swap, or scope change you want to keep track of.
             </div>
           </button>
         </div>
@@ -353,7 +353,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 5v14M5 12h14" strokeLinecap="round" />
               </svg>
-              Add Change Order
+              Log a Change
             </button>
           )}
         </div>
@@ -366,7 +366,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M7 11V7a5 5 0 019.9-1" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Plan is unlocked for corrections. Re-lock when done to keep it as your source of truth.
+          Record is unlocked for editing. Lock it again when you&apos;re done to preserve the current version.
         </div>
       )}
 
@@ -374,16 +374,16 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
       {plan.status === 'working' && !plan.scope && payload.documents.length === 0 && !readOnly && (
         <div className="rounded-lg bg-stone-50 border border-cream/10 px-4 py-3">
           <p className="text-xs text-cream/65 leading-relaxed mb-2">
-            Start building your plan. When everything looks right, lock it to keep it as your source of truth.
+            Start your project record. Add the current scope, files, and notes you want to keep track of in one place.
           </p>
           <ol className="text-[11px] text-cream/60 space-y-1 list-decimal list-inside">
             <li>Describe the scope of work</li>
             <li>Add files (contracts, specs, photos)</li>
             <li>Set a budget if you have one</li>
-            <li>Lock the plan when ready</li>
+            <li>Lock this record when you want to preserve the current version</li>
           </ol>
           <p className="text-[10px] text-cream/50 mt-2">
-            After locking, corrections are handled by unlocking, and new scope changes are tracked as change orders below.
+            After locking, you can unlock to make a correction or log a new change below.
           </p>
         </div>
       )}

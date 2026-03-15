@@ -147,17 +147,17 @@ function BYSContent({ collectionId }: { collectionId?: string }) {
     <>
       <ToolPageHeader
         toolKey="before_you_sign"
-        title="Contract Checklist"
-        description="Spot missing scope and lock expectations before you sign—by walking each bid through the same checklist."
+        title="Bid Checklist"
+        description="Compare bids with a simple checklist so missing details are easier to spot."
         accessLevel={access}
         hasContent={contractors.length > 0}
         collectionId={collectionId}
         collectionName={collectionTitle || undefined}
-        eyebrowLabel="Contract Checklist"
+        eyebrowLabel="Bid Checklist"
         backHref={collectionId ? '/app/tools/before-you-sign' : undefined}
         backLabel={collectionId ? 'All Checklists' : undefined}
         headerSlot={collectionId ? <InstanceSwitcher toolKey="before_you_sign" currentCollectionId={collectionId} itemNoun="checklist" /> : undefined}
-        toolLabel="Contract Checklist"
+        toolLabel="Bid Checklist"
         scopes={[]}
         scopeLabel="Contractors"
         buildExportUrl={(opts) => {

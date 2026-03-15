@@ -146,7 +146,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       <ToolPageHeader
         toolKey="project_summary"
         title="Change Log"
-        description="Track what you're building from, what changed, and what still needs follow-up."
+        description="Keep a simple record of what changed, which files you're working from, and what still needs confirmation."
         accessLevel={access}
         hasContent={payload.plan.scope.length > 0 || payload.documents.length > 0 || payload.changes.length > 0}
         collectionId={collectionId}
@@ -240,7 +240,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
 
           {/* Disclaimer — bottom, quiet */}
           <p className="text-[10px] text-cream/25 leading-relaxed">
-            For your reference only — not the official construction record. Confirm plans, approvals, and scope with your contractor.
+            For your own reference and organization only — not the official construction record. Confirm final plans, approvals, and scope with your contractor or design team.
           </p>
         </div>
 

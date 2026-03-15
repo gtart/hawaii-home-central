@@ -12,10 +12,10 @@ import type {
 } from '@/server/dashboard'
 
 const HELPER_COPY: Record<string, string> = {
-  mood_boards: 'Save inspiration and products you might use.',
-  finish_decisions: 'Choose finishes by room (tile, paint, fixtures, etc.).',
-  before_you_sign: 'Compare bids and avoid gotchas before you sign.',
-  punchlist: 'Track issues during the build and final walkthrough.',
+  mood_boards: 'Save inspiration and product ideas you want to come back to.',
+  finish_decisions: 'Keep track of finish and fixture decisions by room.',
+  before_you_sign: 'Compare bids with the same checklist before you sign.',
+  punchlist: 'Keep a running fix list during the build and final walkthrough.',
 }
 
 function relativeTime(dateStr: string): string {

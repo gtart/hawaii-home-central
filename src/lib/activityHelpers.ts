@@ -50,10 +50,10 @@ export function eventHref(event: ActivityFeedEvent): string {
 
 export const FILTER_CHIPS: { key: string | undefined; label: string }[] = [
   { key: undefined, label: 'All' },
-  { key: 'punchlist', label: 'Fix Issues' },
-  { key: 'finish_decisions', label: 'Choose Selections' },
+  { key: 'punchlist', label: 'Fix List' },
+  { key: 'finish_decisions', label: 'Selections' },
   { key: 'mood_boards', label: 'Mood Boards' },
-  { key: 'before_you_sign', label: 'Contract Checklist' },
+  { key: 'before_you_sign', label: 'Bid Checklist' },
   { key: 'project_summary', label: 'Change Log' },
   { key: 'project_alignment', label: 'Change Log' },
 ]

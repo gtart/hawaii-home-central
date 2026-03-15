@@ -107,7 +107,7 @@ export const RENOVATION_STAGES: RenovationStage[] = [
       'Not getting lien waiver language in the contract',
     ],
     related: [
-      { kind: 'tool', title: 'Contract Checklist', href: '/app/tools/before-you-sign' },
+      { kind: 'tool', title: 'Bid Checklist', href: '/app/tools/before-you-sign' },
       { kind: 'guide', title: 'Fair Bid Checklist', href: '/resources/playbooks/fair-bid-checklist' },
       { kind: 'guide', title: 'Responsibility Matrix', href: '/resources/playbooks/responsibility-matrix' },
     ],
@@ -143,7 +143,7 @@ export const RENOVATION_STAGES: RenovationStage[] = [
     ],
     related: [
       { kind: 'guide', title: 'Responsibility Matrix', href: '/resources/playbooks/responsibility-matrix' },
-      { kind: 'tool', title: 'Contract Checklist', href: '/app/tools/before-you-sign' },
+      { kind: 'tool', title: 'Bid Checklist', href: '/app/tools/before-you-sign' },
     ],
   },
   {

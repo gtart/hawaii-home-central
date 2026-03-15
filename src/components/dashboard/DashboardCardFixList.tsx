@@ -32,7 +32,7 @@ export function DashboardCardFixList({
   if (!hasItems) {
     return (
       <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/70 mb-2">Fix Issues</p>
+        <p className="text-sm font-medium text-cream/70 mb-2">Fix List</p>
         <p className="text-sm text-cream/50 mb-4">Keep a running list of fixes — add items as you spot them, share with your contractor, and check them off as they get done.</p>
         <Link
           href="/app/tools/punchlist"
@@ -48,7 +48,7 @@ export function DashboardCardFixList({
   if (totalOpen === 0) {
     return (
       <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/70 mb-2">Fix Issues</p>
+        <p className="text-sm font-medium text-cream/70 mb-2">Fix List</p>
         <p className="text-sm text-cream/65 mb-1">All issues resolved</p>
         {lastUpdated && (
           <p className="text-[11px] text-cream/40 mb-3">Updated {relativeTime(lastUpdated)}</p>
@@ -75,7 +75,7 @@ export function DashboardCardFixList({
 
   return (
     <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-      <p className="text-sm font-medium text-cream/70 mb-3">Fix Issues</p>
+      <p className="text-sm font-medium text-cream/70 mb-3">Fix List</p>
       <div className="flex items-baseline gap-3 mb-1">
         <span className="text-2xl font-semibold text-cream tabular-nums">{totalOpen}</span>
         <span className="text-sm text-cream/55">open</span>

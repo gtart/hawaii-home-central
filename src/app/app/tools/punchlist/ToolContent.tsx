@@ -121,17 +121,17 @@ function PunchlistContent({ collectionId }: { collectionId?: string }) {
     <>
       <ToolPageHeader
         toolKey="punchlist"
-        title="Fix Issues"
-        description="Track fixes and share with your contractor."
+        title="Fix List"
+        description="Keep a running list of fix items and follow-ups during the build and final walkthrough."
         accessLevel={access}
         hasContent={payload.items.length > 0}
         collectionId={collectionId}
         collectionName={titleOverride || collectionTitle || undefined}
-        eyebrowLabel="Fix Issues"
+        eyebrowLabel="Fix List"
         backHref={collectionId ? '/app/tools/punchlist' : undefined}
         backLabel={collectionId ? 'All Fix Lists' : undefined}
         headerSlot={collectionId ? <InstanceSwitcher toolKey="punchlist" currentCollectionId={collectionId} itemNoun="list" /> : undefined}
-        toolLabel="Fix Issues"
+        toolLabel="Fix List"
         scopes={uniqueLocations.map((loc) => ({ id: loc, name: loc }))}
         scopeLabel="Locations"
         customLinkTab={

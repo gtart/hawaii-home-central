@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { CollectionPickerWrapper } from './CollectionPickerWrapper'
 
 export const metadata: Metadata = {
-  title: 'Fix Issues',
+  title: 'Fix List',
 }
 
 export default function PunchlistPage() {
