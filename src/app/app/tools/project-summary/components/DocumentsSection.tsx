@@ -57,7 +57,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
     addDocument({
       label: newLabel.trim(),
       ...(newDocType ? { docType: newDocType } : {}),
-      doc_scope: 'plan',
+      doc_scope: 'reference',
       ...(newUrl.trim() ? { url: newUrl.trim() } : {}),
       isCurrent: true,
     })
@@ -79,7 +79,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
       addDocument({
         label: newLabel.trim() || file.name.replace(/\.[^.]+$/, ''),
         ...(newDocType ? { docType: newDocType } : {}),
-        doc_scope: 'plan',
+        doc_scope: 'reference',
         fileUrl: result.url,
         fileName: result.fileName,
         fileSize: result.fileSize,
@@ -110,7 +110,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
       const result = await uploadProjectSummaryFile(file)
       addDocument({
         label: file.name.replace(/\.[^.]+$/, ''),
-        doc_scope: 'plan',
+        doc_scope: 'reference',
         fileUrl: result.url,
         fileName: result.fileName,
         fileSize: result.fileSize,

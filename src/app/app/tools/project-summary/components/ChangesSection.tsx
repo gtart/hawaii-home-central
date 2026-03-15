@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { CHANGE_LOG_STATUS_CONFIG, CHANGE_LOG_STATUS_ORDER, toChangeLogStatus, CHANGE_CATEGORIES } from '../constants'
 import type { ChangeLogStatus, ChangeCategory } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
-import type { PrefillDraft } from '../ToolContent'
 import { InlineEdit } from './InlineEdit'
 import { StatusBadge } from './StatusBadge'
 import { uploadProjectSummaryFile } from '../uploadProjectSummaryFile'
@@ -13,8 +12,6 @@ import { uploadProjectSummaryFile } from '../uploadProjectSummaryFile'
 interface ChangesSectionProps {
   api: ProjectSummaryStateAPI
   commentCounts?: Map<string, number>
-  prefillDraft?: PrefillDraft | null
-  onDraftConsumed?: () => void
   focusEntryId?: string
 }
 
@@ -144,7 +141,7 @@ function CategoryDropdown({
   )
 }
 
-export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsumed, focusEntryId }: ChangesSectionProps) {
+export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSectionProps) {
   const { payload, readOnly, addChange, updateChange, deleteChange, addChangeAttachment } = api
   const { changes } = payload
   const [showAddForm, setShowAddForm] = useState(false)
@@ -152,18 +149,12 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
   const [newNotes, setNewNotes] = useState('')
   const [newCategory, setNewCategory] = useState<ChangeCategory | ''>('')
   const [newRoom, setNewRoom] = useState('')
+  const [newStatus, setNewStatus] = useState<ChangeLogStatus>('noted')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [uploadingChangeId, setUploadingChangeId] = useState<string | null>(null)
   const changeFileInputRef = useRef<HTMLInputElement>(null)
   const focusRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!prefillDraft) return
-    setNewTitle(prefillDraft.title)
-    setNewNotes(prefillDraft.description)
-    setShowAddForm(true)
-  }, [prefillDraft])
 
   useEffect(() => {
     if (!focusEntryId) return
@@ -178,18 +169,20 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
 
   function handleAdd() {
     if (!newTitle.trim()) return
+    const storageStatus = CHANGE_LOG_STATUS_CONFIG[newStatus].storageStatus
     addChange({
       title: newTitle.trim(),
       description: newNotes.trim() || undefined,
       category: newCategory || undefined,
       room: newRoom.trim() || undefined,
+      status: storageStatus,
     })
     setNewTitle('')
     setNewNotes('')
     setNewCategory('')
     setNewRoom('')
+    setNewStatus('noted')
     setShowAddForm(false)
-    onDraftConsumed?.()
   }
 
   function handleCancelAdd() {
@@ -198,7 +191,7 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
     setNewNotes('')
     setNewCategory('')
     setNewRoom('')
-    if (prefillDraft) onDraftConsumed?.()
+    setNewStatus('noted')
   }
 
   // Split into active vs superseded
@@ -230,21 +223,15 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
             <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
 
-          <span className="text-sm text-cream/80 flex-1 truncate">{change.title}</span>
-
-          {/* Category pill */}
-          {change.category && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-200 text-cream/50 shrink-0 hidden md:inline">
-              {change.category as string}
-            </span>
-          )}
-
-          {/* Room/area */}
-          {change.room && (
-            <span className="text-[10px] text-cream/40 shrink-0 hidden md:inline">
-              {change.room as string}
-            </span>
-          )}
+          <div className="flex-1 min-w-0">
+            <span className="text-sm text-cream/80 truncate block">{change.title}</span>
+            {/* Category + room — visible on all sizes */}
+            {(change.category || change.room) && (
+              <span className="text-[10px] text-cream/45 truncate block mt-0.5">
+                {[change.category, change.room].filter(Boolean).join(' · ')}
+              </span>
+            )}
+          </div>
 
           <div onClick={(e) => e.stopPropagation()}>
             <StatusDropdown
@@ -535,6 +522,13 @@ export function ChangesSection({ api, commentCounts, prefillDraft, onDraftConsum
           </div>
 
           <div className="flex items-center gap-4 flex-wrap">
+            <div>
+              <label className="text-[10px] text-cream/55 block mb-1">Status</label>
+              <StatusDropdown
+                status={newStatus}
+                onChange={(s) => setNewStatus(s)}
+              />
+            </div>
             <div>
               <label className="text-[10px] text-cream/55 block mb-1">Category</label>
               <div className="relative">

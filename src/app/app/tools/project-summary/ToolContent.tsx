@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { Suspense, useState, useMemo, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
@@ -12,18 +12,6 @@ import { DocumentsSection } from './components/DocumentsSection'
 import { ChangesSection } from './components/ChangesSection'
 import { MilestoneTimeline } from './components/MilestoneTimeline'
 import { InlineEdit } from './components/InlineEdit'
-import type { SummaryLinkType } from '@/data/project-summary'
-
-/** Draft data from CreateProjectSummaryEntryButton — local-only, not persisted until explicit save. */
-export interface PrefillDraft {
-  title: string
-  description: string
-  linkType: SummaryLinkType
-  toolKey?: string
-  collectionId?: string
-  entityId?: string
-  entityLabel: string
-}
 
 /** Parsed focus target from URL query param ?focus=change-<id> */
 export interface FocusTarget {
@@ -97,9 +85,6 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     })
   }, [payload])
 
-  // Draft state from CreateProjectSummaryEntryButton
-  const [prefillDraft, setPrefillDraft] = useState<PrefillDraft | null>(null)
-
   // Focus target from URL query param
   const focusTarget = useMemo<FocusTarget | null>(() => {
     const raw = searchParams.get('focus')
@@ -135,35 +120,6 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
 
   const handleOpenComments = useCallback(() => {
     commentSidebarRef.current?.toggle()
-  }, [])
-
-  // Read prefill context from sessionStorage
-  useEffect(() => {
-    if (!isLoaded || readOnly) return
-    try {
-      const raw = sessionStorage.getItem('hhc_project_summary_create_link')
-      if (!raw) return
-      sessionStorage.removeItem('hhc_project_summary_create_link')
-      const data = JSON.parse(raw)
-      if (data?.entity_label && data?.artifact_type && data?.entity_id) {
-        const linkType = data.artifact_type === 'selection' ? 'selection' as const : 'fix_item' as const
-        setPrefillDraft({
-          title: data.entity_label,
-          description: `Linked from ${linkType === 'selection' ? 'Selections' : 'Fix List'}`,
-          linkType,
-          toolKey: data.tool_key,
-          collectionId: data.collection_id,
-          entityId: data.entity_id,
-          entityLabel: data.entity_label,
-        })
-      }
-    } catch {
-      // ignore malformed sessionStorage
-    }
-  }, [isLoaded, readOnly])
-
-  const handleDraftConsumed = useCallback(() => {
-    setPrefillDraft(null)
   }, [])
 
   if (!isLoaded) {
@@ -280,8 +236,6 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
           <ChangesSection
             api={api}
             commentCounts={commentCounts}
-            prefillDraft={prefillDraft}
-            onDraftConsumed={handleDraftConsumed}
             focusEntryId={focusTarget?.section === 'changes' ? focusTarget.entryId : undefined}
           />
 

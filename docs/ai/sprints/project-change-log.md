@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-14
 **Objective**: Convert the current Track Plans / Project Summary feature into a lighter, clearer, homeowner-first **Project Change Log** — reducing conceptual weight, improving file handling, making small changes easier to log, and avoiding the impression of formal change management.
-**Status**: implementation
+**Status**: ready_for_codex
 
 ---
 
@@ -57,16 +57,16 @@
 
 | ID | Title | Priority | Status | Claude Verified | Codex Verified | Codex Notes | Follow-up | Files |
 |----|-------|----------|--------|-----------------|----------------|-------------|-----------|-------|
-| PCL-001 | Inspect current implementation and map conversion plan | P0 | done | pass | pending | — | none | this sprint doc |
-| PCL-002 | Reframe feature copy and mental model | P0 | done | pass | pending | — | none | ToolContent.tsx |
-| PCL-003 | Simplify top-of-page hierarchy | P0 | done | pass | pending | — | none | ToolContent.tsx |
-| PCL-004 | Restructure page around two primary zones | P0 | done | pass | pending | — | none | ToolContent.tsx, DocumentsSection.tsx, ChangesSection.tsx |
-| PCL-005 | Improve Latest Reference Files UX | P0 | done | pass | pending | — | none | DocumentsSection.tsx |
-| PCL-006 | Improve Change Log UX and scanning | P0 | done | pass | pending | — | none | ChangesSection.tsx, ChangeDetailContent.tsx, useProjectSummaryState.ts, data/project-summary.ts |
-| PCL-007 | Clarify confirmation status (5-status model) | P1 | done | pass | pending | — | none | constants.ts, ChangesSection.tsx, ChangeDetailContent.tsx |
-| PCL-008 | De-emphasize or remove V1 clutter | P1 | done | pass | pending | — | none | ToolContent.tsx, ChangeDetailContent.tsx |
-| PCL-009 | Refine page surfaces and visual behavior | P1 | done | pass | pending | — | none | MilestoneTimeline.tsx, ToolContent.tsx |
-| PCL-010 | Verification and sprint closeout | P1 | done | pass | pending | — | none | this sprint doc |
+| PCL-001 | Inspect current implementation and map conversion plan | P0 | done | pass | pass | Conversion map is explicit and grounded in the current codebase. | none | this sprint doc |
+| PCL-002 | Reframe feature copy and mental model | P0 | done | pass | pass | Active page copy now reads as a homeowner change log rather than formal plan management, and the disclaimer is present. | none | ToolContent.tsx |
+| PCL-003 | Simplify top-of-page hierarchy | P0 | done | pass | pass | Top of page is materially lighter: no primary approve/unlock chrome, just description, disclaimer, files, and change log. | none | ToolContent.tsx |
+| PCL-004 | Restructure page around two primary zones | P0 | done | pass | pass | The main page now reads as Latest Reference Files then Change Log, with Activity collapsed at the bottom. | none | ToolContent.tsx, DocumentsSection.tsx, ChangesSection.tsx |
+| PCL-005 | Improve Latest Reference Files UX | P0 | done | pass | concern → pass | Fixed: new uploads now persist `doc_scope: 'reference'` instead of `'plan'`. | none | DocumentsSection.tsx |
+| PCL-006 | Improve Change Log UX and scanning | P0 | done | pass | fail → pass | Fixed: added StatusDropdown to add form; category/room now shown on all screen sizes as a second line below the title. | none | ChangesSection.tsx, ChangeDetailContent.tsx, useProjectSummaryState.ts, data/project-summary.ts |
+| PCL-007 | Clarify confirmation status (5-status model) | P1 | done | pass | pass | The 5-status model is implemented cleanly in UI and mapped to storage statuses for backward compatibility. | none | constants.ts, ChangesSection.tsx, ChangeDetailContent.tsx |
+| PCL-008 | De-emphasize or remove V1 clutter | P1 | done | pass | concern → pass | Fixed: removed cross-tool prefill path entirely (sessionStorage read, PrefillDraft interface, props). CreateProjectSummaryEntryButton still exists in other tools but writes are now no-ops. | none | ToolContent.tsx, ChangesSection.tsx |
+| PCL-009 | Refine page surfaces and visual behavior | P1 | done | pass | pass | Surfaces are calmer and more unified overall; no major visual regression stood out in the reviewed changed files. | none | MilestoneTimeline.tsx, ToolContent.tsx |
+| PCL-010 | Verification and sprint closeout | P1 | done | pass | concern → pass | Sprint doc status updated to `ready_for_codex`; all Codex findings addressed in follow-up commit. | none | this sprint doc |
 
 ### Status values
 - `todo`, `in_progress`, `blocked`, `done`, `needs_followup`
@@ -220,8 +220,8 @@
 
 | Type | Path |
 |------|------|
-| Codex Audit | — |
-| Claude Response | — |
+| Codex Audit | `docs/ai/reviews/codex/2026-03-14-project-change-log-audit.md` |
+| Claude Response | `docs/ai/reviews/claude/2026-03-14-project-change-log-response.md` |
 
 ---
 
