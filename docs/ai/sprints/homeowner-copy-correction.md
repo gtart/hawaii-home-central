@@ -77,10 +77,25 @@ All "before" strings from the sprint specification match the actual current code
 - **Files**: `src/app/tools/page.tsx`, `src/components/home/HeroSection.tsx`, `src/components/home/WhatYouGetSection.tsx`, `src/app/tools/ToolPreviewCards.tsx`
 
 ### HCR-003: Revise shared tool descriptions and auth dashboard/helper copy
-- tool-registry.ts: all 4 visible tool descriptions revised
+- tool-registry.ts: all 4 visible tool titles renamed + descriptions revised
+  - `Fix Issues` → `Fix List`
+  - `Choose Selections` → `Selections`
+  - `Contract Checklist` → `Bid Checklist`
+  - Change Log description revised
 - ToolGrid.tsx + DashboardView.tsx: HELPER_COPY aligned (4 strings each)
-- SidebarNav.tsx: "Fix Issues" → "Fix List", "Choose Selections" → "Selections", "Contract Checklist" → "Bid Checklist"
-- **Files**: `src/lib/tool-registry.ts`, `src/components/app/ToolGrid.tsx`, `src/components/app/DashboardView.tsx`, `src/components/app/SidebarNav.tsx`
+- SidebarNav.tsx: labels match new tool names
+- MobileBottomNav.tsx: labels match new tool names
+- activityHelpers.ts: FILTER_CHIPS labels match new tool names
+- Dashboard cards renamed: DashboardCardFixList → "Fix List", DashboardCardSelections → "Selections", DashboardCardContractChecklist → "Bid Checklist"
+- Tool page headers and metadata updated in:
+  - `src/app/app/tools/punchlist/page.tsx` + `ToolContent.tsx`: title → "Fix List", description revised
+  - `src/app/app/tools/finish-decisions/page.tsx` + `ToolContent.tsx`: title → "Selections", description revised
+  - `src/app/app/tools/before-you-sign/page.tsx` + `BeforeYouSignContent.tsx`: title → "Bid Checklist", description revised
+  - `src/app/app/tools/before-you-sign/report/page.tsx` + `[collectionId]/report/page.tsx` + `BeforeYouSignReport.tsx`: report title → "Bid Checklist Report"
+- Data files: `src/data/renovation-stages.ts` tool references → "Bid Checklist"
+- Resource pages: `src/app/resources/renovation-stages/page.tsx` card title/description updated
+- **Primary files**: `src/lib/tool-registry.ts`, `src/components/app/ToolGrid.tsx`, `src/components/app/DashboardView.tsx`, `src/components/app/SidebarNav.tsx`
+- **Consistency files**: `src/components/app/MobileBottomNav.tsx`, `src/lib/activityHelpers.ts`, `src/components/dashboard/DashboardCardFixList.tsx`, `src/components/dashboard/DashboardCardSelections.tsx`, `src/components/dashboard/DashboardCardContractChecklist.tsx`, `src/app/app/tools/punchlist/ToolContent.tsx`, `src/app/app/tools/punchlist/page.tsx`, `src/app/app/tools/finish-decisions/ToolContent.tsx`, `src/app/app/tools/finish-decisions/page.tsx`, `src/app/app/tools/before-you-sign/BeforeYouSignContent.tsx`, `src/app/app/tools/before-you-sign/page.tsx`, `src/app/app/tools/before-you-sign/report/page.tsx`, `src/app/app/tools/before-you-sign/[collectionId]/report/page.tsx`, `src/app/app/tools/before-you-sign/report/BeforeYouSignReport.tsx`, `src/data/renovation-stages.ts`, `src/app/resources/renovation-stages/page.tsx`
 
 ### HCR-004: Revise Change Log feature copy
 - ToolContent.tsx description and disclaimer revised
@@ -88,6 +103,7 @@ All "before" strings from the sprint specification match the actual current code
 - **Files**: `src/app/app/tools/project-summary/ToolContent.tsx`, `src/app/app/tools/project-summary/components/CurrentPlanSection.tsx`
 
 ### HCR-005: Consistency pass and sprint verification
+- No remaining references to old tool names ("Fix Issues", "Choose Selections", "Contract Checklist") in user-facing UI across the files listed in HCR-003
 - Product sounds narrower and more honest
 - Homepage/tools page no longer overpromise
 - Fix List reads as practical lead tool
@@ -95,7 +111,9 @@ All "before" strings from the sprint specification match the actual current code
 - Change Log reads as lightweight homeowner record
 - Sidebar/dashboard/helper copy coherent
 - Build passes
-- **Files**: all target files
+- **Known deferred**: Playbook body prose (`fair-bid-checklist/PlaybookContent.tsx`, `responsibility-matrix/PlaybookContent.tsx`) still say "Contract Checklist" — editorial review needed
+- **Known deferred**: `CLAUDE.md` tool names table references old names
+- **Files**: all files listed in HCR-002, HCR-003, and HCR-004
 
 ---
 
