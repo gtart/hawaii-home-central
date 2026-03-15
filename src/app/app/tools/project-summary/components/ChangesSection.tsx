@@ -486,7 +486,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
       {supersededChanges.length > 0 && (
         <details>
           <summary className="text-[10px] text-cream/45 cursor-pointer hover:text-cream/55 transition-colors select-none">
-            {supersededChanges.length} superseded
+            {supersededChanges.length} no longer needed
           </summary>
           <div className="mt-2 space-y-2">
             {supersededChanges.map((change) => renderChangeRow(change))}

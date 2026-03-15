@@ -34,8 +34,8 @@ export const CHANGE_STATUS_CONFIG: Record<ChangeStatus, { label: string; shortLa
     bgColor: 'bg-emerald-300/12',
   },
   closed: {
-    label: 'Superseded',
-    shortLabel: 'Superseded',
+    label: 'No Longer Needed',
+    shortLabel: 'Not Needed',
     color: 'text-cream/45',
     bgColor: 'bg-cream/8',
   },
@@ -72,7 +72,7 @@ export const CHANGE_LOG_STATUS_CONFIG: Record<ChangeLogStatus, { label: string; 
     storageStatus: 'done',
   },
   superseded: {
-    label: 'Superseded',
+    label: 'No Longer Needed',
     color: 'text-cream/45',
     bgColor: 'bg-cream/8',
     storageStatus: 'closed',
