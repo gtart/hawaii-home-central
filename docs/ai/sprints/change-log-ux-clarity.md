@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-14
 **Objective**: Refactor the Change Log UI so it is clearly organized around: one current working file area, focused changes-to-review area, cleaner resolved section, quieter history, simpler copy, fewer competing actions, and better visual hierarchy. The page should feel like a calm homeowner clarity tool, not construction-document control software.
-**Status**: implementation
+**Status**: complete
 
 ---
 
@@ -197,9 +197,9 @@
 - [x] Every completed issue: `Codex Verified: pass`
 - [x] Every issue's `Follow-up` is explicit
 - [x] Build/typecheck recorded
-- [ ] Codex audit linked above
-- [ ] Claude response linked above (if follow-up occurred)
-- [ ] `docs/ai/active-sprint.md` status set to `complete`
+- [x] Codex audit linked above
+- [x] Claude response linked above (if follow-up occurred)
+- [x] `docs/ai/active-sprint.md` status set to `complete`
 
 ---
 
