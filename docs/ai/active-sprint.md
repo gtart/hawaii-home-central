@@ -9,14 +9,14 @@
 | **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-14 |
-| **Commits** | `67ffe4c` |
+| **Commits** | `67ffe4c`, follow-up TBD |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | All issues (HCC-001–010) done, Claude Verified: pass. Awaiting Codex review. |
-| **Latest Codex Audit** | — |
+| **Current Handoff** | Codex findings addressed: dashboard/sidebar reordered to Fix List → Selections → Change Log; "plan entry" badge renamed to "linked change". Awaiting re-review. |
+| **Latest Codex Audit** | `docs/ai/reviews/codex/2026-03-14-homeowner-copy-simplification-audit.md` |
 | **Latest Claude Response** | — |
 
 ## Reading Order

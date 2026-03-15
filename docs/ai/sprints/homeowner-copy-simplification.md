@@ -50,16 +50,16 @@
 
 | ID | Title | Priority | Status | Claude Verified | Codex Verified | Codex Notes | Follow-up | Files |
 |----|-------|----------|--------|-----------------|----------------|-------------|-----------|-------|
-| HCC-001 | Audit current copy surfaces and identify problems | P0 | done | pass | pending | — | none | this sprint doc |
-| HCC-002 | Simplify dashboard / home / tool-entry copy | P0 | done | pass | pending | — | none | DashboardPage.tsx, DashboardCardPlanAndChanges.tsx, DashboardCardFixList.tsx, DashboardNextActions.tsx |
-| HCC-003 | Rework tool cards / descriptions to reflect homeowner value | P0 | done | pass | pending | — | none | tool-registry.ts, SidebarNav.tsx, activityHelpers.ts |
-| HCC-004 | Simplify page-level headings, helper copy, and explainer text | P0 | done | pass | pending | — | none | PunchlistEmptyState.tsx, OnboardingView.tsx, project-summary page.tsx files |
-| HCC-005 | Remove workflow-heavy language in Project Change Log | P0 | done | pass | pending | — | none | tool-registry.ts, SidebarNav.tsx, activityHelpers.ts, DashboardCardPlanAndChanges.tsx, page.tsx (x3), ProjectSummaryLinkBadge.tsx |
-| HCC-006 | Reposition Fix List as clearest practical starting tool | P1 | done | pass | pending | — | none | tool-registry.ts, DashboardCardFixList.tsx, PunchlistEmptyState.tsx |
-| HCC-007 | De-emphasize lower-priority tools through copy | P1 | done | pass | pending | — | none | tool-registry.ts |
-| HCC-008 | Improve button labels, actions, and microcopy | P1 | done | pass | pending | — | none | DashboardCardPlanAndChanges.tsx |
-| HCC-009 | Keep tone consistent across app | P1 | done | pass | pending | — | none | all files above |
-| HCC-010 | Verification and sprint closeout | P1 | done | pass | pending | — | none | this sprint doc |
+| HCC-001 | Audit current copy surfaces and identify problems | P0 | done | pass | pass | Audit is specific and maps cleanly to the changed surfaces. | none | this sprint doc |
+| HCC-002 | Simplify dashboard / home / tool-entry copy | P0 | done | pass | concern | Copy is lighter, but the primary dashboard grid still leads with Change Log instead of Fix Issues, so the intended product hierarchy is not reflected in the first scan. | claude_fix — fixed: reordered dashboard grid to Fix List → Selections → Change Log | DashboardPage.tsx, DashboardCardPlanAndChanges.tsx, DashboardCardFixList.tsx, DashboardNextActions.tsx, DashboardToolGrid.tsx |
+| HCC-003 | Rework tool cards / descriptions to reflect homeowner value | P0 | done | pass | concern | Descriptions are improved, but the sidebar still orders Change Log before Choose Selections and Fix Issues, which weakens the claimed homeowner-first hierarchy. | claude_fix — fixed: reordered sidebar to Fix Issues → Choose Selections → Change Log | tool-registry.ts, SidebarNav.tsx, activityHelpers.ts |
+| HCC-004 | Simplify page-level headings, helper copy, and explainer text | P0 | done | pass | pass | The changed page titles, empty state, and onboarding copy are shorter and clearer. | none | PunchlistEmptyState.tsx, OnboardingView.tsx, project-summary page.tsx files |
+| HCC-005 | Remove workflow-heavy language in Project Change Log | P0 | done | pass | concern | Main renamed surfaces pass, but ProjectSummaryLinkBadge still shows "plan entry/entries" on selection and fix-item detail screens, so the old framing is not fully removed. | claude_fix — fixed: changed to "linked change/changes" | tool-registry.ts, SidebarNav.tsx, activityHelpers.ts, DashboardCardPlanAndChanges.tsx, page.tsx (x3), ProjectSummaryLinkBadge.tsx |
+| HCC-006 | Reposition Fix List as clearest practical starting tool | P1 | done | pass | concern | Fix List copy is strongest, but it is still placed after Change Log and Selections in primary navigation and dashboard order. | claude_fix — fixed: Fix List now first in both dashboard grid and sidebar | tool-registry.ts, DashboardCardFixList.tsx, PunchlistEmptyState.tsx, DashboardToolGrid.tsx, SidebarNav.tsx |
+| HCC-007 | De-emphasize lower-priority tools through copy | P1 | done | pass | pass | Mood Boards and Contract Checklist read more secondary and less inflated. | none | tool-registry.ts |
+| HCC-008 | Improve button labels, actions, and microcopy | P1 | done | pass | pass | Start/View/Review labels on the dashboard card are more concrete and easier to understand. | none | DashboardCardPlanAndChanges.tsx |
+| HCC-009 | Keep tone consistent across app | P1 | done | pass | concern | Most surfaces are calmer, but the visible "plan entry" badge and the still-leading Change Log placement keep the tone and hierarchy from feeling fully aligned. | claude_fix — fixed: badge updated and hierarchy reordered | all files above |
+| HCC-010 | Verification and sprint closeout | P1 | done | pass | concern | Self-review overstates completion because the hierarchy and one visible plan-term leak remain. | claude_fix — fixed: both issues addressed | this sprint doc |
 
 ### Status values
 - `todo`, `in_progress`, `blocked`, `done`, `needs_followup`
@@ -152,9 +152,11 @@
 | `src/app/app/tools/project-summary/page.tsx` | Title: "Plan & Changes" → "Change Log" |
 | `src/app/app/tools/project-summary/[collectionId]/page.tsx` | Title: "Plan & Changes" → "Change Log" |
 | `src/app/app/tools/project-summary/[collectionId]/change/[changeId]/page.tsx` | Title: "Change Detail — Plan & Changes" → "Change Detail — Change Log" |
-| `src/components/app/ProjectSummaryLinkBadge.tsx` | Comment: "Plan & Changes" → "Change Log" |
+| `src/components/app/ProjectSummaryLinkBadge.tsx` | Comment: "Plan & Changes" → "Change Log"; badge text: "plan entry/entries" → "linked change/changes" |
 | `src/app/app/tools/punchlist/components/PunchlistEmptyState.tsx` | Stronger empty state: explains share-with-contractor value |
 | `src/app/app/tools/finish-decisions/components/OnboardingView.tsx` | Heading: "Add your first selection to make" → "What do you need to pick?", sharper description |
+| `src/components/dashboard/DashboardToolGrid.tsx` | Reordered primary grid: Fix List → Selections → Change Log; secondary section header: "Preparation" → "Getting Started" |
+| `src/components/app/SidebarNav.tsx` | Reordered MANAGE_ITEMS: Fix Issues → Choose Selections → Change Log |
 
 ---
 
@@ -205,7 +207,7 @@
 
 | Type | Path |
 |------|------|
-| Codex Audit | — |
+| Codex Audit | `docs/ai/reviews/codex/2026-03-14-homeowner-copy-simplification-audit.md` |
 | Claude Response | — |
 
 ---

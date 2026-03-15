@@ -32,14 +32,14 @@ const NAV_ITEMS = [
 
 const MANAGE_ITEMS = [
   {
-    href: '/app/tools/project-summary',
-    label: 'Change Log',
+    href: '/app/tools/punchlist',
+    label: 'Fix Issues',
     matchMode: 'prefix' as const,
+    badgeKey: 'fixListOpen' as const,
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" strokeLinecap="round" strokeLinejoin="round" />
-        <rect x="9" y="3" width="6" height="4" rx="1" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M8 12h8M8 16h5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -57,14 +57,14 @@ const MANAGE_ITEMS = [
     ),
   },
   {
-    href: '/app/tools/punchlist',
-    label: 'Fix Issues',
+    href: '/app/tools/project-summary',
+    label: 'Change Log',
     matchMode: 'prefix' as const,
-    badgeKey: 'fixListOpen' as const,
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="9" y="3" width="6" height="4" rx="1" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M8 12h8M8 16h5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },

@@ -83,7 +83,7 @@ export function ProjectSummaryLinkBadge({ projectId, entityId }: Props) {
           <path d="M8 12h8M8 16h5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <span className="text-[11px] text-cream/50 font-medium">
-          {items.length} plan {items.length !== 1 ? 'entries' : 'entry'}
+          {items.length} linked {items.length !== 1 ? 'changes' : 'change'}
         </span>
       </div>
       <div className="border-t border-cream/[0.04] divide-y divide-cream/[0.04]">

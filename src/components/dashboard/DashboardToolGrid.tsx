@@ -39,16 +39,16 @@ export function DashboardToolGrid({
     <>
       {/* Primary — your active renovation areas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        <DashboardCardPlanAndChanges data={data} isLoading={false} />
-        <DashboardCardSelections data={data} isLoading={false} />
         <DashboardCardFixList data={data} isLoading={false} />
+        <DashboardCardSelections data={data} isLoading={false} />
+        <DashboardCardPlanAndChanges data={data} isLoading={false} />
       </div>
 
       {/* Secondary — preparation tools, shown smaller and less prominent */}
       {showSecondary && (
         <>
           <h2 className="text-[11px] uppercase tracking-wider text-cream/45 mb-3">
-            Preparation
+            Getting Started
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
             <DashboardCardMoodBoards data={data} isLoading={false} />
