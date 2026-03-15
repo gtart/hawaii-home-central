@@ -11,7 +11,7 @@ import { PhotoLightbox } from './PhotoLightbox'
 import { uploadFile } from '../utils'
 import { DestinationPicker } from '@/components/app/DestinationPicker'
 import { ProjectSummaryLinkBadge } from '@/components/app/ProjectSummaryLinkBadge'
-import { CreateProjectSummaryEntryButton } from '@/components/app/CreateProjectSummaryEntryButton'
+// CreateProjectSummaryEntryButton hidden — cross-tool linking deferred
 import { useCollectionTransfer } from '@/hooks/useCollectionTransfer'
 
 type EditingField = 'title' | 'location' | 'assignee' | 'priority' | 'notes' | null
@@ -434,19 +434,10 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
             )}
           </div>
 
-          {/* Cross-tool: Project Summary entries linked to this fix item */}
+          {/* Cross-tool: Project Summary link badge (create-entry button hidden — cross-tool linking deferred) */}
           {projectId && (
             <div className="space-y-2">
               <ProjectSummaryLinkBadge projectId={projectId} entityId={item.id} />
-              {!readOnly && (
-                <CreateProjectSummaryEntryButton
-                  artifactType="fix_item"
-                  entityId={item.id}
-                  entityLabel={item.title}
-                  toolKey="punchlist"
-                  collectionId={collectionId}
-                />
-              )}
             </div>
           )}
 

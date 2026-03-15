@@ -38,7 +38,7 @@ import { SelectionShareSheet } from '../../components/SelectionShareSheet'
 import { useSelectionLastVisited } from '@/hooks/useSelectionLastVisited'
 import type { SelectionVisibility, SelectionAccess } from '@/data/finish-decisions'
 import { ProjectSummaryLinkBadge } from '@/components/app/ProjectSummaryLinkBadge'
-import { CreateProjectSummaryEntryButton } from '@/components/app/CreateProjectSummaryEntryButton'
+// CreateProjectSummaryEntryButton hidden — cross-tool linking deferred
 
 function mapAccess(a: string | null): 'OWNER' | 'EDIT' | 'VIEW' | null {
   if (!a) return null
@@ -880,19 +880,10 @@ export function DecisionDetailContent({
           </p>
         )}
 
-        {/* Cross-tool: Project Summary entries linked to this selection */}
+        {/* Cross-tool: Project Summary link badge (create-entry button hidden — cross-tool linking deferred) */}
         {currentProject?.id && (
           <div className="mb-4 space-y-2">
             <ProjectSummaryLinkBadge projectId={currentProject.id} entityId={decisionId} />
-            {workspaceAccess !== 'VIEWER' && foundDecision && (
-              <CreateProjectSummaryEntryButton
-                artifactType="selection"
-                entityId={decisionId}
-                entityLabel={foundDecision.title}
-                toolKey="finish_decisions"
-                collectionId={collectionId}
-              />
-            )}
           </div>
         )}
 
