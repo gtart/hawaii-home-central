@@ -9,13 +9,13 @@
 | **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-14 |
-| **Commits** | `0a17ed7`, `1511cf6` |
+| **Commits** | `0a17ed7`, `1511cf6`, `70ee830` |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | All issues done. Codex findings addressed in `1511cf6`. Ready for re-review. |
+| **Current Handoff** | All issues done. Cross-tool buttons hidden in `70ee830`. Ready for final re-review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 

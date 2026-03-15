@@ -64,9 +64,9 @@
 | PCL-005 | Improve Latest Reference Files UX | P0 | done | pass | concern → pass | Fixed: new uploads now persist `doc_scope: 'reference'` instead of `'plan'`. | none | DocumentsSection.tsx |
 | PCL-006 | Improve Change Log UX and scanning | P0 | done | pass | fail → pass | Fixed: added StatusDropdown to add form; category/room now shown on all screen sizes as a second line below the title. | none | ChangesSection.tsx, ChangeDetailContent.tsx, useProjectSummaryState.ts, data/project-summary.ts |
 | PCL-007 | Clarify confirmation status (5-status model) | P1 | done | pass | pass | The 5-status model is implemented cleanly in UI and mapped to storage statuses for backward compatibility. | none | constants.ts, ChangesSection.tsx, ChangeDetailContent.tsx |
-| PCL-008 | De-emphasize or remove V1 clutter | P1 | done | pass | concern → pass | Fixed: removed cross-tool prefill path entirely (sessionStorage read, PrefillDraft interface, props). CreateProjectSummaryEntryButton still exists in other tools but writes are now no-ops. | none | ToolContent.tsx, ChangesSection.tsx |
+| PCL-008 | De-emphasize or remove V1 clutter | P1 | done | pass | concern → pass | Fixed: removed CreateProjectSummaryEntryButton from Selections and Fix List detail pages. Link badges remain. | none | ToolContent.tsx, ChangesSection.tsx, DecisionDetailContent.tsx, PunchlistItemDetail.tsx |
 | PCL-009 | Refine page surfaces and visual behavior | P1 | done | pass | pass | Surfaces are calmer and more unified overall; no major visual regression stood out in the reviewed changed files. | none | MilestoneTimeline.tsx, ToolContent.tsx |
-| PCL-010 | Verification and sprint closeout | P1 | done | pass | concern → pass | Sprint doc status updated to `ready_for_codex`; all Codex findings addressed in follow-up commit. | none | this sprint doc |
+| PCL-010 | Verification and sprint closeout | P1 | done | pass | concern → pass | All Codex findings addressed across 3 follow-up commits. | none | this sprint doc |
 
 ### Status values
 - `todo`, `in_progress`, `blocked`, `done`, `needs_followup`
@@ -220,7 +220,7 @@
 
 | Type | Path |
 |------|------|
-| Codex Audit | `docs/ai/reviews/codex/2026-03-14-project-change-log-audit.md` |
+| Codex Audit | `docs/ai/reviews/codex/2026-03-14-project-change-log-followup-verification-audit.md` |
 | Claude Response | `docs/ai/reviews/claude/2026-03-14-project-change-log-response.md` |
 
 ---
