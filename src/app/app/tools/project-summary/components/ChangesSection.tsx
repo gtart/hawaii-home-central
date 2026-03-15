@@ -199,7 +199,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
   }, [focusEntryId, changes])
 
   function handleAdd() {
-    if (!newTitle.trim()) return
+    if (!newTitle.trim() || isUploadingNew) return
     const storageStatus = CHANGE_LOG_STATUS_CONFIG[newStatus].storageStatus
     const changeId = addChange({
       title: newTitle.trim(),
@@ -681,10 +681,10 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
             <button
               type="button"
               onClick={handleAdd}
-              disabled={!newTitle.trim()}
+              disabled={!newTitle.trim() || isUploadingNew}
               className="px-4 py-1.5 text-xs bg-sandstone/15 text-sandstone hover:bg-sandstone/25 rounded-md transition-colors disabled:opacity-30"
             >
-              Add
+              {isUploadingNew ? 'Uploading...' : 'Add'}
             </button>
           </div>
         </div>
