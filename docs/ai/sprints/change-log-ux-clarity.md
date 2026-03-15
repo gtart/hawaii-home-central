@@ -10,15 +10,15 @@
 
 | ID | Title | Priority | Status | Claude Verified | Codex Verified | Codex Notes | Follow-up | Files |
 |----|-------|----------|--------|-----------------|----------------|-------------|-----------|-------|
-| CL-UX-01 | Reframe page IA and section hierarchy | P0 | done | pass | pending | — | — | ToolContent.tsx |
-| CL-UX-02 | Redesign Documents as Current Working File experience | P0 | done | pass | pending | — | — | DocumentsSection.tsx |
-| CL-UX-03 | Make active changes feel like review items | P0 | done | pass | pending | — | — | ChangesSection.tsx |
-| CL-UX-04 | Redesign expanded change cards for readability | P0 | done | pass | pending | — | — | ChangesSection.tsx |
-| CL-UX-05 | Group changes by workflow state | P0 | done | pass | pending | — | — | ChangesSection.tsx |
-| CL-UX-06 | Reduce header action clutter | P1 | done | pass | pending | — | — | ToolContent.tsx |
-| CL-UX-07 | Improve copy throughout the feature | P1 | done | pass | pending | — | — | ToolContent.tsx, DocumentsSection.tsx, ChangesSection.tsx, MilestoneTimeline.tsx |
-| CL-UX-08 | Tighten file and change interactions | P1 | done | pass | pending | — | — | DocumentsSection.tsx, ChangesSection.tsx |
-| CL-UX-09 | Polish visual hierarchy and consistency | P1 | done | pass | pending | — | — | ToolContent.tsx, DocumentsSection.tsx, ChangesSection.tsx, MilestoneTimeline.tsx |
+| CL-UX-01 | Reframe page IA and section hierarchy | P0 | done | pass | pass | Tool order and quieter disclaimer/history treatment now match the intended narrative. | none | ToolContent.tsx |
+| CL-UX-02 | Redesign Documents as Current Working File experience | P0 | done | pass | fail | Archive, Restore, and Delete are hover-only in the row UI, and FileDetailPanel does not offer replacements, so current-file management becomes unreachable on touch devices. | claude_fix | DocumentsSection.tsx |
+| CL-UX-03 | Make active changes feel like review items | P0 | done | pass | fail | Collapsed rows hide both attachment and comment indicators on mobile via `hidden md:*`, so phone users lose the scan cues the acceptance criteria called for. | claude_fix | ChangesSection.tsx |
+| CL-UX-04 | Redesign expanded change cards for readability | P0 | done | pass | pass | Expanded cards now read in the intended order and the bottom action bar is clearer than the old inline clutter. | none | ChangesSection.tsx |
+| CL-UX-05 | Group changes by workflow state | P0 | done | pass | pass | Workflow grouping is implemented cleanly and the "No Longer Needed" bucket stays secondary. | none | ChangesSection.tsx |
+| CL-UX-06 | Reduce header action clutter | P1 | done | pass | pass | Header actions are lighter and no longer compete with the main page content. | none | ToolContent.tsx |
+| CL-UX-07 | Improve copy throughout the feature | P1 | done | pass | concern | Main page copy is better, but file detail still uses "Comments" instead of the new "Notes" language, so the feature is not fully consistent. | claude_fix | ToolContent.tsx, DocumentsSection.tsx, ChangesSection.tsx, MilestoneTimeline.tsx |
+| CL-UX-08 | Tighten file and change interactions | P1 | done | pass | concern | Upload/add flows are lighter, but the mobile file-management gap leaves one core interaction path incomplete. | claude_fix | DocumentsSection.tsx, ChangesSection.tsx |
+| CL-UX-09 | Polish visual hierarchy and consistency | P1 | done | pass | concern | The page is visually calmer overall, but hidden mobile indicators and leftover "Comments" wording keep the hierarchy and terminology from feeling fully finished. | claude_fix | ToolContent.tsx, DocumentsSection.tsx, ChangesSection.tsx, MilestoneTimeline.tsx |
 
 ### Status values
 - `todo`, `in_progress`, `blocked`, `done`, `needs_followup`
@@ -177,7 +177,7 @@
 
 | Type | Path |
 |------|------|
-| Codex Audit | — |
+| Codex Audit | `docs/ai/reviews/codex/2026-03-14-change-log-ux-clarity-audit.md` |
 | Claude Response | — |
 
 ---

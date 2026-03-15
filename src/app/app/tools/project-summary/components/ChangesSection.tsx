@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import Link from 'next/link'
 import { CHANGE_LOG_STATUS_CONFIG, CHANGE_LOG_STATUS_ORDER, toChangeLogStatus, CHANGE_CATEGORIES } from '../constants'
 import type { ChangeLogStatus, ChangeCategory } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
@@ -156,10 +155,15 @@ function getWorkflowGroup(logStatus: ChangeLogStatus): WorkflowGroup {
   }
 }
 
-const WORKFLOW_GROUP_CONFIG: Record<WorkflowGroup, { label: string; emptyLabel: string }> = {
-  needs_followup: { label: 'Needs Follow-Up', emptyLabel: 'No changes needing follow-up' },
-  resolved: { label: 'Resolved', emptyLabel: 'No resolved changes yet' },
-  no_longer_needed: { label: 'No Longer Needed', emptyLabel: '' },
+/** Format cost display — prefix with $ if the user hasn't included a currency symbol */
+function formatCostDisplay(cost: string): string {
+  const trimmed = cost.trim()
+  if (!trimmed) return ''
+  // If already starts with $, +$, -$, or other currency symbols, leave it
+  if (/^[+\-]?\s*[$€£¥]/.test(trimmed) || /^[$€£¥]/.test(trimmed)) return trimmed
+  // If it's just a number or +/- number, prefix with $
+  if (/^[+\-]?\s*[\d,.]/.test(trimmed)) return `$${trimmed}`
+  return trimmed
 }
 
 export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSectionProps) {
@@ -170,12 +174,18 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
   const [newNotes, setNewNotes] = useState('')
   const [newCategory, setNewCategory] = useState<ChangeCategory | ''>('')
   const [newRoom, setNewRoom] = useState('')
+  const [newCost, setNewCost] = useState('')
+  const [newTimeline, setNewTimeline] = useState('')
   const [newStatus, setNewStatus] = useState<ChangeLogStatus>('noted')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [uploadingChangeId, setUploadingChangeId] = useState<string | null>(null)
+  const [isUploadingNew, setIsUploadingNew] = useState(false)
   const changeFileInputRef = useRef<HTMLInputElement>(null)
+  const newChangeFileInputRef = useRef<HTMLInputElement>(null)
   const focusRef = useRef<HTMLDivElement>(null)
+  // Track pending attachment for new change (before it's created)
+  const [newAttachments, setNewAttachments] = useState<Array<{ url: string; label: string; fileName: string; fileSize: number; mimeType: string }>>([])
 
   useEffect(() => {
     if (!focusEntryId) return
@@ -191,28 +201,63 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
   function handleAdd() {
     if (!newTitle.trim()) return
     const storageStatus = CHANGE_LOG_STATUS_CONFIG[newStatus].storageStatus
-    addChange({
+    const changeId = addChange({
       title: newTitle.trim(),
       description: newNotes.trim() || undefined,
       category: newCategory || undefined,
       room: newRoom.trim() || undefined,
       status: storageStatus,
+      cost_impact: newCost.trim() || undefined,
+      schedule_impact: newTimeline.trim() || undefined,
     })
-    setNewTitle('')
-    setNewNotes('')
-    setNewCategory('')
-    setNewRoom('')
-    setNewStatus('noted')
-    setShowAddForm(false)
+    // Attach any uploaded files to the new change
+    if (changeId && newAttachments.length > 0) {
+      for (const att of newAttachments) {
+        addChangeAttachment(changeId, {
+          type: 'file',
+          url: att.url,
+          label: att.label,
+          fileName: att.fileName,
+          fileSize: att.fileSize,
+          mimeType: att.mimeType,
+          uploadedAt: new Date().toISOString(),
+        })
+      }
+    }
+    resetAddForm()
   }
 
-  function handleCancelAdd() {
+  function resetAddForm() {
     setShowAddForm(false)
     setNewTitle('')
     setNewNotes('')
     setNewCategory('')
     setNewRoom('')
+    setNewCost('')
+    setNewTimeline('')
     setNewStatus('noted')
+    setNewAttachments([])
+  }
+
+  async function handleNewChangeFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsUploadingNew(true)
+    try {
+      const result = await uploadProjectSummaryFile(file)
+      setNewAttachments((prev) => [...prev, {
+        url: result.url,
+        label: file.name.replace(/\.[^.]+$/, ''),
+        fileName: result.fileName,
+        fileSize: result.fileSize,
+        mimeType: result.mimeType,
+      }])
+    } catch {
+      // silently fail
+    } finally {
+      setIsUploadingNew(false)
+      if (newChangeFileInputRef.current) newChangeFileInputRef.current.value = ''
+    }
   }
 
   // Group changes by workflow state
@@ -260,9 +305,9 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
             <span className="text-sm text-cream/80 truncate block leading-snug">{change.title}</span>
           </div>
 
-          {/* Cost impact — always visible if present */}
+          {/* Cost impact — always visible if present, with $ formatting */}
           {change.cost_impact && (
-            <span className="text-[10px] text-cream/45 shrink-0 tabular-nums">{change.cost_impact}</span>
+            <span className="text-[10px] text-cream/45 shrink-0 tabular-nums">{formatCostDisplay(change.cost_impact)}</span>
           )}
 
           <div onClick={(e) => e.stopPropagation()}>
@@ -295,8 +340,8 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
         {/* Expanded detail card */}
         {isExpanded && (
           <div className="px-3 pb-3 border-t border-cream/8">
-            {/* Primary: what changed + context */}
             <div className="pt-3 space-y-3">
+              {/* Description */}
               <div>
                 <InlineEdit
                   value={change.description || ''}
@@ -309,7 +354,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
                 />
               </div>
 
-              {/* Metadata row: category, room, cost */}
+              {/* Metadata row: category, room, cost, timeline */}
               <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                   <CategoryDropdown
@@ -338,6 +383,19 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
                       placeholder="e.g. +$2,500"
                       readOnly={readOnly}
                       displayClassName="text-[10px] text-cream/45 tabular-nums"
+                      className="text-[10px]"
+                    />
+                  </div>
+                )}
+                {(change.schedule_impact || !readOnly) && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-cream/25">Timeline:</span>
+                    <InlineEdit
+                      value={change.schedule_impact || ''}
+                      onSave={(v) => updateChange(change.id, { schedule_impact: v || undefined })}
+                      placeholder="e.g. +2 weeks"
+                      readOnly={readOnly}
+                      displayClassName="text-[10px] text-cream/45"
                       className="text-[10px]"
                     />
                   </div>
@@ -400,17 +458,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
             </div>
 
             {/* Bottom actions row */}
-            <div className="flex items-center justify-between mt-3 pt-2 border-t border-cream/6">
-              <div className="flex items-center gap-3">
-                {api.collectionId && (
-                  <Link
-                    href={`/app/tools/project-summary/${api.collectionId}/change/${change.id}`}
-                    className="text-[10px] text-sandstone/50 hover:text-sandstone transition-colors"
-                  >
-                    Full details →
-                  </Link>
-                )}
-              </div>
+            <div className="flex items-center justify-end mt-3 pt-2 border-t border-cream/6">
               {!readOnly && (
                 confirmDelete === change.id ? (
                   <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -480,6 +528,15 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
         }}
       />
 
+      {/* Hidden file input for new change form uploads */}
+      <input
+        ref={newChangeFileInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.heic,.heif,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf"
+        className="hidden"
+        onChange={handleNewChangeFileUpload}
+      />
+
       {/* Section header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider">Changes</h2>
@@ -505,31 +562,30 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
         </div>
       )}
 
-      {/* Add form */}
+      {/* Add form — matches expanded card fields */}
       {showAddForm && !readOnly && (
         <div className="p-4 rounded-lg border border-cream/12 bg-stone-50 space-y-3">
-          <div>
-            <input
-              type="text"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="What changed?"
-              className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2.5 text-sm text-cream/90 placeholder-cream/30 outline-none focus:border-sandstone/30"
-              autoFocus
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleAdd(); if (e.key === 'Escape') handleCancelAdd() }}
-            />
-          </div>
+          {/* Title */}
+          <input
+            type="text"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            placeholder="What changed?"
+            className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2.5 text-sm text-cream/90 placeholder-cream/30 outline-none focus:border-sandstone/30"
+            autoFocus
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleAdd(); if (e.key === 'Escape') resetAddForm() }}
+          />
 
-          <div>
-            <textarea
-              value={newNotes}
-              onChange={(e) => setNewNotes(e.target.value)}
-              placeholder="Details or context (optional)"
-              rows={2}
-              className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-xs text-cream/65 placeholder-cream/30 outline-none focus:border-sandstone/30 resize-none"
-            />
-          </div>
+          {/* Description */}
+          <textarea
+            value={newNotes}
+            onChange={(e) => setNewNotes(e.target.value)}
+            placeholder="What happened and why..."
+            rows={2}
+            className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-xs text-cream/65 placeholder-cream/30 outline-none focus:border-sandstone/30 resize-none"
+          />
 
+          {/* Metadata row: status, category, room */}
           <div className="flex items-center gap-3 flex-wrap">
             <div onClick={(e) => e.stopPropagation()}>
               <StatusDropdown
@@ -550,10 +606,74 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
             />
           </div>
 
+          {/* Cost + Timeline row */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-cream/25">Cost:</span>
+              <input
+                type="text"
+                value={newCost}
+                onChange={(e) => setNewCost(e.target.value)}
+                placeholder="e.g. +$2,500"
+                className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30 w-28"
+              />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-cream/25">Timeline:</span>
+              <input
+                type="text"
+                value={newTimeline}
+                onChange={(e) => setNewTimeline(e.target.value)}
+                placeholder="e.g. +2 weeks"
+                className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30 w-28"
+              />
+            </div>
+          </div>
+
+          {/* File attachments */}
+          <div className="flex items-start gap-2 flex-wrap">
+            {newAttachments.map((att, i) => (
+              <span
+                key={i}
+                className="inline-flex items-center gap-1 text-[10px] text-cream/45 bg-stone-200 px-2 py-1 rounded"
+              >
+                <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="truncate max-w-[120px]">{att.label}</span>
+                <button
+                  type="button"
+                  onClick={() => setNewAttachments((prev) => prev.filter((_, idx) => idx !== i))}
+                  className="text-cream/30 hover:text-cream/50 transition-colors ml-0.5"
+                >
+                  <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={() => newChangeFileInputRef.current?.click()}
+              disabled={isUploadingNew}
+              className="inline-flex items-center gap-1.5 text-[10px] text-cream/30 hover:text-cream/50 bg-stone-200 hover:bg-stone-hover px-2 py-1 rounded transition-colors disabled:opacity-50"
+            >
+              {isUploadingNew ? (
+                <div className="w-3 h-3 border border-cream/20 border-t-cream/50 rounded-full animate-spin" />
+              ) : (
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                </svg>
+              )}
+              {isUploadingNew ? 'Uploading...' : 'Attach file'}
+            </button>
+          </div>
+
+          {/* Actions */}
           <div className="flex gap-2 justify-end pt-1">
             <button
               type="button"
-              onClick={handleCancelAdd}
+              onClick={resetAddForm}
               className="px-3 py-1.5 text-xs text-cream/45 hover:text-cream/60 transition-colors"
             >
               Cancel
@@ -570,12 +690,9 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
         </div>
       )}
 
-      {/* Needs Follow-Up group */}
+      {/* Changes — grouped by state, no "Needs Follow-Up" label */}
       {grouped.needs_followup.length > 0 && (
         <div className="space-y-1.5">
-          {hasAnyChanges && grouped.resolved.length + grouped.no_longer_needed.length > 0 && (
-            <h3 className="text-[10px] text-amber-400/60 uppercase tracking-wider font-medium mb-2">Needs Follow-Up</h3>
-          )}
           {grouped.needs_followup.map((change) => renderCollapsedRow(change))}
         </div>
       )}
@@ -583,7 +700,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
       {/* Resolved group */}
       {grouped.resolved.length > 0 && (
         <div className="space-y-1.5">
-          {hasAnyChanges && grouped.needs_followup.length + grouped.no_longer_needed.length > 0 && (
+          {hasAnyChanges && grouped.needs_followup.length > 0 && (
             <h3 className="text-[10px] text-emerald-400/60 uppercase tracking-wider font-medium mb-2">Resolved</h3>
           )}
           {grouped.resolved.map((change) => renderCollapsedRow(change))}
