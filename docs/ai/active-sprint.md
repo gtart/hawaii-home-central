@@ -4,18 +4,18 @@
 
 | Field | Value |
 |-------|-------|
-| **Sprint** | Homeowner Copy Correction — Marketing + App Surfaces |
-| **Sprint Doc** | `docs/ai/sprints/homeowner-copy-correction.md` |
+| **Sprint** | Change Log / Track Plans Cleanup |
+| **Sprint Doc** | `docs/ai/sprints/change-log-cleanup.md` |
 | **Status** | `ready_for_codex` |
 | **Owner** | Claude |
-| **Last Updated** | 2026-03-14 |
-| **Commits** | `34f0d0f` |
+| **Last Updated** | 2026-03-15 |
+| **Commits** | — |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | All 5 issues implemented, build passes, deployed. Ready for Codex review. |
+| **Current Handoff** | All 9 issues implemented, build passes. Ready for Codex review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
@@ -40,6 +40,7 @@ When entering this repo, read in this order:
 ---
 
 ## Previous Sprints (Completed)
+- Homeowner Copy Correction (March 14, 2026) — `34f0d0f` (ready_for_codex)
 - Change Log UX Clarity (March 14, 2026) — `89ccbfb`, `554d522`, `1c43b02`, `babbc4c`, `d352ad2`
 - Homeowner Copy Simplification (March 14, 2026) — `67ffe4c`, `8e19c20`
 - Project Change Log (Homeowner Version) (March 14, 2026) — `0a17ed7`, `1511cf6`, `70ee830`, `aff1f21`

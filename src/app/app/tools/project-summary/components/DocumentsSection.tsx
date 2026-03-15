@@ -30,15 +30,17 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
   const { documents } = payload
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [showTextForm, setShowTextForm] = useState(false)
   const [newLabel, setNewLabel] = useState('')
   const [newDocType, setNewDocType] = useState<DocType | ''>('')
   const [newUrl, setNewUrl] = useState('')
+  const [newTextTitle, setNewTextTitle] = useState('')
+  const [newTextBody, setNewTextBody] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [docTypeOpen, setDocTypeOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const docTypeRef = useRef<HTMLDivElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const quickUploadRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -56,6 +58,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
     if (!newLabel.trim()) return
     addDocument({
       label: newLabel.trim(),
+      contentType: 'link',
       ...(newDocType ? { docType: newDocType } : {}),
       doc_scope: 'reference',
       ...(newUrl.trim() ? { url: newUrl.trim() } : {}),
@@ -67,36 +70,18 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
     setShowAddForm(false)
   }
 
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setIsUploading(true)
-    setUploadError(null)
-
-    try {
-      const result = await uploadProjectSummaryFile(file)
-      addDocument({
-        label: newLabel.trim() || file.name.replace(/\.[^.]+$/, ''),
-        ...(newDocType ? { docType: newDocType } : {}),
-        doc_scope: 'reference',
-        fileUrl: result.url,
-        fileName: result.fileName,
-        fileSize: result.fileSize,
-        mimeType: result.mimeType,
-        uploadedAt: new Date().toISOString(),
-        isCurrent: true,
-      })
-      setNewLabel('')
-      setNewDocType('')
-      setNewUrl('')
-      setShowAddForm(false)
-    } catch (err) {
-      setUploadError(err instanceof Error ? err.message : 'Upload failed')
-    } finally {
-      setIsUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    }
+  function handleAddText() {
+    if (!newTextTitle.trim()) return
+    addDocument({
+      label: newTextTitle.trim(),
+      contentType: 'text',
+      body: newTextBody.trim() || undefined,
+      doc_scope: 'reference',
+      isCurrent: true,
+    })
+    setNewTextTitle('')
+    setNewTextBody('')
+    setShowTextForm(false)
   }
 
   async function handleQuickUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -158,7 +143,98 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
     )
   }
 
+  function renderTextIcon() {
+    return (
+      <svg className="w-5 h-5 text-sandstone/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )
+  }
+
+  function renderDocActions(doc: typeof documents[0]) {
+    if (readOnly) return null
+    return (
+      <div className="flex items-center gap-1 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { isCurrent: false }) }}
+          className="text-[10px] px-1.5 py-0.5 rounded text-cream/30 hover:text-cream/50 hover:bg-stone-200 transition-colors"
+          title="Mark as outdated"
+        >
+          Archive
+        </button>
+        {confirmDelete === doc.id ? (
+          <>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); deleteDocument(doc.id); setConfirmDelete(null) }}
+              className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors"
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }}
+              className="text-[10px] text-cream/45 hover:text-cream/50 transition-colors"
+            >
+              Cancel
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }}
+            className="text-cream/20 hover:text-red-400/50 transition-colors"
+            title="Delete"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        )}
+      </div>
+    )
+  }
+
   function renderCurrentDoc(doc: typeof documents[0]) {
+    const isTextEntry = doc.contentType === 'text'
+
+    if (isTextEntry) {
+      return (
+        <div
+          key={doc.id}
+          className="px-4 py-3 rounded-lg bg-stone-50 border border-sandstone/10 group cursor-pointer hover:border-sandstone/20 transition-colors"
+          onClick={() => setSelectedDocId(doc.id)}
+        >
+          <div className="flex items-start gap-3">
+            {renderTextIcon()}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <InlineEdit
+                  value={doc.label}
+                  onSave={(label) => updateDocument(doc.id, { label })}
+                  readOnly={readOnly}
+                  displayClassName="text-sm text-cream/85 font-medium"
+                  className="text-sm font-medium"
+                />
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-sandstone/10 text-sandstone/60">Text</span>
+              </div>
+              {doc.body && (
+                <p className="text-xs text-cream/50 mt-1 line-clamp-2 leading-relaxed">{doc.body}</p>
+              )}
+              {doc.created_at && (
+                <span className="text-[10px] text-cream/35 block mt-1">
+                  Added {new Date(doc.created_at).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+            {renderDocActions(doc)}
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div
         key={doc.id}
@@ -219,7 +295,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
             <InlineEdit
               value={doc.note || ''}
               onSave={(note) => updateDocument(doc.id, { note: note || undefined })}
-              placeholder="Add a note..."
+              placeholder="Add a description..."
               readOnly={readOnly}
               displayClassName="text-xs text-cream/50 mt-1"
               className="text-xs mt-1"
@@ -227,65 +303,34 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
           )}
         </div>
 
-        {/* Actions — visible on mobile, hover-reveal on desktop */}
-        {!readOnly && (
-          <div className="flex items-center gap-1 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { isCurrent: false }) }}
-              className="text-[10px] px-1.5 py-0.5 rounded text-cream/30 hover:text-cream/50 hover:bg-stone-200 transition-colors"
-              title="Mark as outdated"
-            >
-              Archive
-            </button>
-            {confirmDelete === doc.id ? (
-              <>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); deleteDocument(doc.id); setConfirmDelete(null) }}
-                  className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors"
-                >
-                  Delete
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }}
-                  className="text-[10px] text-cream/45 hover:text-cream/50 transition-colors"
-                >
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }}
-                className="text-cream/20 hover:text-red-400/50 transition-colors"
-                title="Delete file"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            )}
-          </div>
-        )}
+        {renderDocActions(doc)}
       </div>
     )
   }
 
   function renderOutdatedDoc(doc: typeof documents[0]) {
+    const isTextEntry = doc.contentType === 'text'
+
     return (
       <div
         key={doc.id}
         className="flex items-center gap-3 px-3 py-2 rounded-lg bg-stone-50/50 border border-cream/8 group cursor-pointer hover:border-cream/12 transition-colors"
         onClick={() => setSelectedDocId(doc.id)}
       >
-        {renderFileIcon(doc.mimeType)}
+        {isTextEntry ? renderTextIcon() : renderFileIcon(doc.mimeType)}
 
         <div className="flex-1 min-w-0">
-          <span className="text-xs text-cream/50 truncate block">{doc.label}</span>
-          {doc.docType && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-cream/50 truncate">{doc.label}</span>
+            {isTextEntry && (
+              <span className="text-[9px] px-1 py-0.5 rounded bg-sandstone/8 text-sandstone/40">Text</span>
+            )}
+          </div>
+          {!isTextEntry && doc.docType && (
             <span className="text-[10px] text-cream/30">{DOC_TYPE_LABELS[doc.docType]}</span>
+          )}
+          {isTextEntry && doc.body && (
+            <p className="text-[10px] text-cream/30 truncate mt-0.5">{doc.body}</p>
           )}
         </div>
 
@@ -343,6 +388,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
       collectionId={collectionId}
       onClose={() => setSelectedDocId(null)}
       onUpdateNote={(note) => updateDocument(selectedDoc.id, { note: note || undefined })}
+      onUpdateBody={(body) => updateDocument(selectedDoc.id, { body: body || undefined })}
       readOnly={readOnly}
     />
   ) : null
@@ -366,13 +412,6 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setShowAddForm(!showAddForm)}
-              className="text-[10px] text-cream/30 hover:text-cream/50 transition-colors"
-            >
-              Link URL
-            </button>
-            <button
-              type="button"
               onClick={() => quickUploadRef.current?.click()}
               disabled={isUploading}
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-sandstone/70 hover:text-sandstone bg-sandstone/8 hover:bg-sandstone/12 transition-colors disabled:opacity-50"
@@ -386,6 +425,30 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
                 </svg>
               )}
               {isUploading ? 'Uploading...' : 'Upload'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowAddForm(!showAddForm); setShowTextForm(false) }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-cream/45 hover:text-cream/60 bg-cream/5 hover:bg-cream/8 transition-colors"
+              title="Add a link"
+            >
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Link
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowTextForm(!showTextForm); setShowAddForm(false) }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-cream/45 hover:text-cream/60 bg-cream/5 hover:bg-cream/8 transition-colors"
+              title="Add text content"
+            >
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Write
             </button>
           </div>
         )}
@@ -429,7 +492,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
             type="text"
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
-            placeholder="File name"
+            placeholder="Link name"
             className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-sm text-cream/90 placeholder-cream/30 outline-none focus:border-sandstone/30"
             autoFocus
             onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setShowAddForm(false) }}
@@ -477,33 +540,6 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
             />
           </div>
 
-          {/* File upload */}
-          <div className="flex items-center gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
-              onChange={handleFileUpload}
-              className="hidden"
-              disabled={isUploading}
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-              className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-cream/45 hover:text-cream/60 bg-stone-200 hover:bg-stone-hover border border-cream/12 rounded-md transition-colors disabled:opacity-50"
-            >
-              {isUploading ? (
-                <div className="w-3 h-3 border border-cream/20 border-t-cream/50 rounded-full animate-spin" />
-              ) : (
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-              {isUploading ? 'Uploading...' : 'Or upload a file'}
-            </button>
-          </div>
-
           {uploadError && (
             <p className="text-[11px] text-red-400/70">{uploadError}</p>
           )}
@@ -520,6 +556,45 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               type="button"
               onClick={handleAdd}
               disabled={!newLabel.trim()}
+              className="px-3 py-1.5 text-xs bg-sandstone/15 text-sandstone hover:bg-sandstone/25 rounded-md transition-colors disabled:opacity-30"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Add text content form */}
+      {showTextForm && !readOnly && (
+        <div className="p-3 rounded-lg border border-cream/12 bg-stone-50 space-y-2">
+          <input
+            type="text"
+            value={newTextTitle}
+            onChange={(e) => setNewTextTitle(e.target.value)}
+            placeholder="Title — e.g. 'Scope addendum' or 'Spec notes'"
+            className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-sm text-cream/90 placeholder-cream/30 outline-none focus:border-sandstone/30"
+            autoFocus
+            onKeyDown={(e) => { if (e.key === 'Escape') { setShowTextForm(false); setNewTextTitle(''); setNewTextBody('') } }}
+          />
+          <textarea
+            value={newTextBody}
+            onChange={(e) => setNewTextBody(e.target.value)}
+            placeholder="Write your content here..."
+            rows={6}
+            className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-xs text-cream/65 placeholder-cream/30 outline-none focus:border-sandstone/30 resize-y"
+          />
+          <div className="flex gap-2 justify-end">
+            <button
+              type="button"
+              onClick={() => { setShowTextForm(false); setNewTextTitle(''); setNewTextBody('') }}
+              className="px-3 py-1.5 text-xs text-cream/45 hover:text-cream/60 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleAddText}
+              disabled={!newTextTitle.trim()}
               className="px-3 py-1.5 text-xs bg-sandstone/15 text-sandstone hover:bg-sandstone/25 rounded-md transition-colors disabled:opacity-30"
             >
               Add

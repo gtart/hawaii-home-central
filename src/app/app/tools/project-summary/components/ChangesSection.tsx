@@ -140,21 +140,6 @@ function CategoryDropdown({
   )
 }
 
-type WorkflowGroup = 'needs_followup' | 'resolved' | 'no_longer_needed'
-
-function getWorkflowGroup(logStatus: ChangeLogStatus): WorkflowGroup {
-  switch (logStatus) {
-    case 'noted':
-    case 'needs_confirmation':
-      return 'needs_followup'
-    case 'confirmed':
-    case 'completed':
-      return 'resolved'
-    case 'superseded':
-      return 'no_longer_needed'
-  }
-}
-
 /** Format cost display — prefix with $ if the user hasn't included a currency symbol */
 function formatCostDisplay(cost: string): string {
   const trimmed = cost.trim()
@@ -260,17 +245,10 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
     }
   }
 
-  // Group changes by workflow state
-  const grouped = {
-    needs_followup: [] as typeof changes,
-    resolved: [] as typeof changes,
-    no_longer_needed: [] as typeof changes,
-  }
-  for (const change of changes) {
-    const logStatus = toChangeLogStatus(change.status)
-    const group = getWorkflowGroup(logStatus)
-    grouped[group].push(change)
-  }
+  // Flat reverse-chronological list (newest first)
+  const sortedChanges = [...changes].sort((a, b) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  )
 
   function renderCollapsedRow(change: typeof changes[0]) {
     const isExpanded = expandedId === change.id
@@ -690,33 +668,11 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
         </div>
       )}
 
-      {/* Changes — grouped by state, no "Needs Follow-Up" label */}
-      {grouped.needs_followup.length > 0 && (
+      {/* Changes — flat reverse-chronological list */}
+      {sortedChanges.length > 0 && (
         <div className="space-y-1.5">
-          {grouped.needs_followup.map((change) => renderCollapsedRow(change))}
+          {sortedChanges.map((change) => renderCollapsedRow(change))}
         </div>
-      )}
-
-      {/* Resolved group */}
-      {grouped.resolved.length > 0 && (
-        <div className="space-y-1.5">
-          {hasAnyChanges && grouped.needs_followup.length > 0 && (
-            <h3 className="text-[10px] text-emerald-400/60 uppercase tracking-wider font-medium mb-2">Resolved</h3>
-          )}
-          {grouped.resolved.map((change) => renderCollapsedRow(change))}
-        </div>
-      )}
-
-      {/* No Longer Needed group — collapsed */}
-      {grouped.no_longer_needed.length > 0 && (
-        <details>
-          <summary className="text-[10px] text-cream/25 cursor-pointer hover:text-cream/40 transition-colors select-none">
-            {grouped.no_longer_needed.length} no longer needed
-          </summary>
-          <div className="mt-2 space-y-1.5">
-            {grouped.no_longer_needed.map((change) => renderCollapsedRow(change))}
-          </div>
-        </details>
       )}
     </div>
   )

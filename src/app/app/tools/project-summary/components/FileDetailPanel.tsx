@@ -10,6 +10,7 @@ interface FileDetailPanelProps {
   collectionId: string
   onClose: () => void
   onUpdateNote: (note: string) => void
+  onUpdateBody?: (body: string) => void
   readOnly?: boolean
 }
 
@@ -86,14 +87,14 @@ function CommentThread({
 
   return (
     <div className="space-y-3">
-      <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">Notes</span>
+      <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">Discussion</span>
 
       {isLoading && comments.length === 0 && (
         <p className="text-xs text-cream/20 italic">Loading...</p>
       )}
 
       {!isLoading && comments.length === 0 && (
-        <p className="text-xs text-cream/20 italic">No notes yet.</p>
+        <p className="text-xs text-cream/20 italic">No discussion yet.</p>
       )}
 
       <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -114,7 +115,7 @@ function CommentThread({
             type="text"
             value={newText}
             onChange={(e) => setNewText(e.target.value)}
-            placeholder="Add a note..."
+            placeholder="Add a comment..."
             className="flex-1 bg-cream/5 border border-cream/10 rounded-md px-3 py-1.5 text-xs text-cream/70 placeholder-cream/20 outline-none focus:border-sandstone/30"
             onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit() }}
           />
@@ -132,10 +133,13 @@ function CommentThread({
   )
 }
 
-export function FileDetailPanel({ document: doc, collectionId, onClose, onUpdateNote, readOnly }: FileDetailPanelProps) {
+export function FileDetailPanel({ document: doc, collectionId, onClose, onUpdateNote, onUpdateBody, readOnly }: FileDetailPanelProps) {
   const [editingNote, setEditingNote] = useState(false)
   const [noteValue, setNoteValue] = useState(doc.note || '')
+  const [editingBody, setEditingBody] = useState(false)
+  const [bodyValue, setBodyValue] = useState(doc.body || '')
   const backdropRef = useRef<HTMLDivElement>(null)
+  const isTextEntry = doc.contentType === 'text'
 
   const { comments, isLoading, addComment, deleteComment, editComment } = useComments({
     collectionId,
@@ -143,11 +147,13 @@ export function FileDetailPanel({ document: doc, collectionId, onClose, onUpdate
     targetId: doc.id,
   })
 
-  // Sync note when doc changes
+  // Sync note/body when doc changes
   useEffect(() => {
     setNoteValue(doc.note || '')
     setEditingNote(false)
-  }, [doc.id, doc.note])
+    setBodyValue(doc.body || '')
+    setEditingBody(false)
+  }, [doc.id, doc.note, doc.body])
 
   // Close on Escape
   useEffect(() => {
@@ -183,25 +189,71 @@ export function FileDetailPanel({ document: doc, collectionId, onClose, onUpdate
 
       {/* Body — scrollable */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
-        {/* Preview / icon */}
-        <div className="flex justify-center">
-          {isImage && doc.fileUrl ? (
-            <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
-              <img
-                src={doc.fileUrl}
-                alt={doc.label}
-                className="max-h-48 rounded-lg border border-cream/10 object-contain"
-              />
-            </a>
-          ) : (
-            <FileIcon mimeType={doc.mimeType} className="w-16 h-16" />
-          )}
-        </div>
+        {/* Preview / icon / text body */}
+        {isTextEntry ? (
+          <div className="space-y-2">
+            <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">Content</span>
+            {editingBody ? (
+              <div className="space-y-2">
+                <textarea
+                  value={bodyValue}
+                  onChange={(e) => setBodyValue(e.target.value)}
+                  rows={10}
+                  className="w-full bg-cream/5 border border-cream/10 rounded-md px-3 py-2 text-xs text-cream/70 placeholder-cream/20 outline-none focus:border-sandstone/30 resize-y"
+                  autoFocus
+                />
+                <div className="flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => { setBodyValue(doc.body || ''); setEditingBody(false) }}
+                    className="px-2 py-1 text-[10px] text-cream/40 hover:text-cream/60 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { onUpdateBody?.(bodyValue.trim()); setEditingBody(false) }}
+                    className="px-2 py-1 text-[10px] bg-sandstone/20 text-sandstone hover:bg-sandstone/30 rounded transition-colors"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div
+                onClick={!readOnly ? () => setEditingBody(true) : undefined}
+                className={`text-xs leading-relaxed whitespace-pre-wrap ${doc.body ? 'text-cream/60' : 'text-cream/20 italic'} ${!readOnly ? 'cursor-pointer hover:text-cream/70' : ''}`}
+              >
+                {doc.body || (readOnly ? 'No content.' : 'Click to add content...')}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            {isImage && doc.fileUrl ? (
+              <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={doc.fileUrl}
+                  alt={doc.label}
+                  className="max-h-48 rounded-lg border border-cream/10 object-contain"
+                />
+              </a>
+            ) : (
+              <FileIcon mimeType={doc.mimeType} className="w-16 h-16" />
+            )}
+          </div>
+        )}
 
         {/* Metadata */}
         <div className="space-y-1.5">
           <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">Details</span>
           <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+            {doc.fileName && (
+              <>
+                <span className="text-cream/30">Original file</span>
+                <span className="text-cream/60 break-all">{doc.fileName}</span>
+              </>
+            )}
             {doc.docType && (
               <>
                 <span className="text-cream/30">Type</span>
@@ -257,9 +309,9 @@ export function FileDetailPanel({ document: doc, collectionId, onClose, onUpdate
           </a>
         )}
 
-        {/* Note */}
+        {/* Description */}
         <div className="space-y-1.5">
-          <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">Note</span>
+          <span className="text-[10px] text-cream/30 uppercase tracking-wider font-medium">Description</span>
           {editingNote ? (
             <div className="space-y-2">
               <textarea
@@ -291,7 +343,7 @@ export function FileDetailPanel({ document: doc, collectionId, onClose, onUpdate
               onClick={!readOnly ? () => setEditingNote(true) : undefined}
               className={`text-xs ${doc.note ? 'text-cream/60' : 'text-cream/20 italic'} ${!readOnly ? 'cursor-pointer hover:text-cream/70' : ''} whitespace-pre-wrap`}
             >
-              {doc.note || (readOnly ? 'No note.' : 'Click to add a note...')}
+              {doc.note || (readOnly ? 'No description.' : 'Click to add a description...')}
             </div>
           )}
         </div>

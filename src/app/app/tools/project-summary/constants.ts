@@ -16,22 +16,22 @@ export const CHANGE_STATUS_CONFIG: Record<ChangeStatus, { label: string; shortLa
     bgColor: 'bg-amber-400/12',
   },
   approved_by_homeowner: {
-    label: 'Confirmed',
-    shortLabel: 'Confirmed',
+    label: 'Added to Plan',
+    shortLabel: 'Added',
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-400/12',
   },
   accepted_by_contractor: {
-    label: 'Completed',
-    shortLabel: 'Done',
-    color: 'text-emerald-300',
-    bgColor: 'bg-emerald-300/12',
+    label: 'Added to Plan',
+    shortLabel: 'Added',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-400/12',
   },
   done: {
-    label: 'Completed',
-    shortLabel: 'Done',
-    color: 'text-emerald-300',
-    bgColor: 'bg-emerald-300/12',
+    label: 'Added to Plan',
+    shortLabel: 'Added',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-400/12',
   },
   closed: {
     label: 'No Longer Needed',
@@ -41,10 +41,10 @@ export const CHANGE_STATUS_CONFIG: Record<ChangeStatus, { label: string; shortLa
   },
 }
 
-// ── Homeowner-friendly 5-status model ──
-// Maps 5 user-facing statuses to underlying storage statuses
+// ── Homeowner-friendly 4-status model ──
+// Maps 4 user-facing statuses to underlying storage statuses
 
-export type ChangeLogStatus = 'noted' | 'needs_confirmation' | 'confirmed' | 'completed' | 'superseded'
+export type ChangeLogStatus = 'noted' | 'needs_confirmation' | 'added_to_plan' | 'superseded'
 
 export const CHANGE_LOG_STATUS_CONFIG: Record<ChangeLogStatus, { label: string; color: string; bgColor: string; storageStatus: ChangeStatus }> = {
   noted: {
@@ -59,17 +59,11 @@ export const CHANGE_LOG_STATUS_CONFIG: Record<ChangeLogStatus, { label: string; 
     bgColor: 'bg-amber-400/12',
     storageStatus: 'awaiting_homeowner',
   },
-  confirmed: {
-    label: 'Confirmed',
+  added_to_plan: {
+    label: 'Added to Plan',
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-400/12',
     storageStatus: 'approved_by_homeowner',
-  },
-  completed: {
-    label: 'Completed',
-    color: 'text-emerald-300',
-    bgColor: 'bg-emerald-300/12',
-    storageStatus: 'done',
   },
   superseded: {
     label: 'No Longer Needed',
@@ -79,7 +73,7 @@ export const CHANGE_LOG_STATUS_CONFIG: Record<ChangeLogStatus, { label: string; 
   },
 }
 
-export const CHANGE_LOG_STATUS_ORDER: ChangeLogStatus[] = ['noted', 'needs_confirmation', 'confirmed', 'completed', 'superseded']
+export const CHANGE_LOG_STATUS_ORDER: ChangeLogStatus[] = ['noted', 'needs_confirmation', 'added_to_plan', 'superseded']
 
 /** Map a storage ChangeStatus to the homeowner-facing status */
 export function toChangeLogStatus(status: ChangeStatus): ChangeLogStatus {
@@ -89,10 +83,9 @@ export function toChangeLogStatus(status: ChangeStatus): ChangeLogStatus {
     case 'awaiting_homeowner':
       return 'needs_confirmation'
     case 'approved_by_homeowner':
-      return 'confirmed'
     case 'accepted_by_contractor':
     case 'done':
-      return 'completed'
+      return 'added_to_plan'
     case 'closed':
       return 'superseded'
   }

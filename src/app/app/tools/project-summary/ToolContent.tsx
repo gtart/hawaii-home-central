@@ -24,7 +24,6 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
   const { payload, isLoaded, isSyncing, access, readOnly, noAccess, title: collectionTitle } = api
   const router = useRouter()
   const [titleOverride, setTitleOverride] = useState<string | null>(null)
-  const [copiedSummary, setCopiedSummary] = useState(false)
   const commentSidebarRef = useRef<CommentSidebarHandle>(null)
   const searchParams = useSearchParams()
 
@@ -53,37 +52,6 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       // ignore
     }
   }, [collectionId, router])
-
-  /** Copy change log summary to clipboard */
-  const handleCopySummary = useCallback(() => {
-    const { plan, changes, documents } = payload
-    const lines: string[] = []
-    lines.push('PROJECT CHANGE LOG')
-    lines.push('')
-    if (plan.scope) { lines.push('PROJECT DESCRIPTION'); lines.push(plan.scope); lines.push('') }
-    const currentDocs = documents.filter((d) => d.isCurrent)
-    if (currentDocs.length > 0) {
-      lines.push('CURRENT WORKING FILES')
-      currentDocs.forEach((d) => {
-        lines.push(`  - ${d.label}${d.docType ? ` (${d.docType})` : ''}`)
-      })
-      lines.push('')
-    }
-    const activeChanges = changes.filter((c) => c.status !== 'closed')
-    if (activeChanges.length > 0) {
-      lines.push('CHANGES')
-      activeChanges.forEach((c) => {
-        const parts = [`  - ${c.title}`]
-        if (c.cost_impact) parts.push(`(${c.cost_impact})`)
-        lines.push(parts.join(' '))
-      })
-      lines.push('')
-    }
-    navigator.clipboard.writeText(lines.join('\n')).then(() => {
-      setCopiedSummary(true)
-      setTimeout(() => setCopiedSummary(false), 2000)
-    })
-  }, [payload])
 
   // Focus target from URL query param
   const focusTarget = useMemo<FocusTarget | null>(() => {
@@ -164,26 +132,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
               currentCollectionId={collectionId}
               itemNoun="log"
             />
-            {/* Copy Summary — icon-only on mobile, compact on desktop */}
-            <button
-              type="button"
-              onClick={handleCopySummary}
-              className="inline-flex items-center gap-1.5 p-2 md:px-3 md:py-1.5 rounded-lg text-xs text-cream/45 hover:text-cream/65 hover:bg-stone-hover transition-colors"
-              title="Copy summary to clipboard"
-            >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                {copiedSummary ? (
-                  <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
-                ) : (
-                  <>
-                    <rect x="9" y="9" width="13" height="13" rx="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" strokeLinecap="round" strokeLinejoin="round" />
-                  </>
-                )}
-              </svg>
-              <span className="hidden md:inline">{copiedSummary ? 'Copied' : 'Copy'}</span>
-            </button>
-            {/* Comments toggle — icon-only on mobile */}
+            {/* Discussion toggle — icon-only on mobile */}
             <button
               type="button"
               onClick={handleOpenComments}
@@ -192,7 +141,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="hidden md:inline">Notes</span>
+              <span className="hidden md:inline">Discussion</span>
               {collComments.comments.length > 0 && (
                 <span className="bg-cream/10 text-cream/45 text-[10px] font-medium px-1.5 py-0.5 rounded-full tabular-nums">
                   {collComments.comments.length}
@@ -212,12 +161,13 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
 
       <div className="md:flex md:gap-6 md:items-start">
         <div className="flex-1 min-w-0 space-y-10">
-          {/* Project description — brief context */}
+          {/* Scope of Work */}
           <div>
+            <label className="text-xs font-semibold text-cream/50 uppercase tracking-wider block mb-2">Scope of Work</label>
             <InlineEdit
               value={payload.plan.scope}
               onSave={(text) => api.updatePlanScope(text)}
-              placeholder="Add a project description — e.g. 'Kitchen and bath renovation, started Jan 2026'"
+              placeholder="What are you renovating? e.g. 'Full kitchen and master bath remodel'"
               readOnly={readOnly}
               multiline
               displayClassName="text-sm text-cream/65 leading-relaxed"
@@ -246,7 +196,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
 
         <CollapsibleCommentSidebar
           ref={commentSidebarRef}
-          title="Notes"
+          title="Discussion"
           storageKey="project_summary_comments_collapsed"
           comments={collComments.comments}
           isLoading={collComments.isLoading}

@@ -33,9 +33,15 @@ export interface SummaryLink {
   label: string
 }
 
+export type DocumentContentType = 'file' | 'link' | 'text'
+
 export interface SummaryDocument {
   id: string
   label: string
+  /** Discriminator: 'file' (uploaded), 'link' (URL-only), 'text' (long-form content). Defaults to 'file' for backward compat. */
+  contentType?: DocumentContentType
+  /** Long-form text body — only for contentType 'text' */
+  body?: string
   docType?: DocType
   doc_scope?: DocScope
   date?: string
@@ -265,12 +271,16 @@ function coerceLinks(raw: unknown): SummaryLink[] {
   return raw.map(coerceLink).filter((l): l is SummaryLink => l !== null)
 }
 
+const VALID_CONTENT_TYPES: ReadonlySet<string> = new Set<DocumentContentType>(['file', 'link', 'text'])
+
 function coerceDocument(raw: unknown): SummaryDocument | null {
   if (!isObject(raw)) return null
   const ts = new Date().toISOString()
   return {
     id: isString(raw.id) ? raw.id : crypto.randomUUID(),
     label: isString(raw.label) ? raw.label : 'Untitled',
+    ...(isString(raw.contentType) && VALID_CONTENT_TYPES.has(raw.contentType) ? { contentType: raw.contentType as DocumentContentType } : {}),
+    ...(isString(raw.body) ? { body: raw.body } : {}),
     ...(isString(raw.docType) && VALID_DOC_TYPES.has(raw.docType) ? { docType: raw.docType as DocType } : {}),
     ...(isString(raw.doc_scope) && VALID_DOC_SCOPES.has(raw.doc_scope) ? { doc_scope: raw.doc_scope as DocScope } : {}),
     ...(isString(raw.date) ? { date: raw.date } : {}),
