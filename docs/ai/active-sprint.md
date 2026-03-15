@@ -9,13 +9,13 @@
 | **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-14 |
-| **Commits** | `0a17ed7` |
+| **Commits** | `0a17ed7`, `1511cf6` |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | All issues (PCL-001–010) done, Claude Verified: pass. Awaiting Codex review. |
+| **Current Handoff** | All issues done. Codex findings addressed in `1511cf6`. Ready for re-review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
