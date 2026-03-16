@@ -5,12 +5,11 @@ import Link from 'next/link'
 import { useProject } from '@/contexts/ProjectContext'
 import { useDashboard } from '@/hooks/useDashboard'
 import { useInboxCount } from '@/hooks/useInboxCount'
-import { useUnseenActivityCount } from '@/hooks/useUnseenActivityCount'
 import { DashboardToolGrid } from './DashboardToolGrid'
 import { DashboardNextActions } from './DashboardNextActions'
+import { DashboardFeed } from './DashboardFeed'
 import { QuickCaptureSheet } from '@/components/app/QuickCaptureSheet'
 import { SortWizard } from '@/components/app/SortWizard'
-import { ActivityPanel } from '@/components/app/ActivityPanel'
 
 interface CapturedResult {
   id: string
@@ -21,51 +20,62 @@ interface CapturedResult {
   note?: string | null
 }
 
+function deriveStateSentence(data: {
+  fixLists: { highPriorityCount: number; staleCount: number; openCount: number }[]
+  selectionLists: { notStartedCount: number; decidingCount: number }[]
+  projectSummaries: { activeChangeCount: number }[]
+  noNews: { isQuiet: boolean }
+}): string {
+  const totalHigh = data.fixLists.reduce((s, l) => s + l.highPriorityCount, 0)
+  const totalOpen = data.fixLists.reduce((s, l) => s + l.openCount, 0)
+  const totalDeciding = data.selectionLists.reduce((s, l) => s + l.notStartedCount + l.decidingCount, 0)
+  const totalActiveChanges = data.projectSummaries.reduce((s, l) => s + l.activeChangeCount, 0)
+
+  const parts: string[] = []
+
+  if (totalHigh > 0) {
+    parts.push(`${totalHigh} urgent fix${totalHigh !== 1 ? 'es' : ''}`)
+  } else if (totalOpen > 0) {
+    parts.push(`${totalOpen} open fix${totalOpen !== 1 ? 'es' : ''}`)
+  }
+  if (totalDeciding > 0) {
+    parts.push(`${totalDeciding} selection${totalDeciding !== 1 ? 's' : ''} to decide`)
+  }
+  if (totalActiveChanges > 0) {
+    parts.push(`${totalActiveChanges} plan change${totalActiveChanges !== 1 ? 's' : ''} pending`)
+  }
+
+  if (parts.length === 0) {
+    if (data.noNews.isQuiet) return 'All caught up. Nothing needs your attention right now.'
+    return 'Everything looks good.'
+  }
+
+  return parts.join(' · ')
+}
+
 export function DashboardPage() {
   const { currentProject } = useProject()
   const { data, isLoading } = useDashboard()
   const { total: inboxCount, refetch: refetchInbox } = useInboxCount()
   const [showCapture, setShowCapture] = useState(false)
   const [sortItem, setSortItem] = useState<CapturedResult | null>(null)
-  const [showActivity, setShowActivity] = useState(false)
-  const { count: unseenCount, markSeen: markActivitySeen } = useUnseenActivityCount()
 
-  // Derive attention summary for hero
-  const attentionItems: string[] = []
-  if (data) {
-    const totalHigh = (data.fixLists ?? []).reduce((s, l) => s + l.highPriorityCount, 0)
-    const totalStale = (data.fixLists ?? []).reduce((s, l) => s + l.staleCount, 0)
-    const totalOpen = (data.fixLists ?? []).reduce((s, l) => s + l.openCount, 0)
-    const totalDeciding = (data.selectionLists ?? []).reduce((s, l) => s + l.notStartedCount + l.decidingCount, 0)
-    const totalActiveChanges = (data.projectSummaries ?? []).reduce((s, l) => s + l.activeChangeCount, 0)
-
-    if (totalHigh > 0) attentionItems.push(`${totalHigh} urgent fix${totalHigh !== 1 ? 'es' : ''}`)
-    if (totalStale > 0) attentionItems.push(`${totalStale} stale issue${totalStale !== 1 ? 's' : ''}`)
-    if (totalDeciding > 0) attentionItems.push(`${totalDeciding} selection${totalDeciding !== 1 ? 's' : ''} to decide`)
-    if (totalActiveChanges > 0) attentionItems.push(`${totalActiveChanges} change${totalActiveChanges !== 1 ? 's' : ''} to follow up on`)
-    if (attentionItems.length === 0 && totalOpen > 0) attentionItems.push(`${totalOpen} open issue${totalOpen !== 1 ? 's' : ''}`)
-  }
+  const stateSentence = data ? deriveStateSentence(data) : null
 
   return (
     <div className="pt-32 pb-24 px-6">
       <div className="max-w-4xl mx-auto">
-        {/* Hero — project identity + attention summary */}
-        <div className="mb-6">
+        {/* ── Hero: project name + state sentence ── */}
+        <div className="mb-5">
           <h1 className="text-2xl font-semibold text-cream mb-1">
             {currentProject?.name ?? 'My Renovation'}
           </h1>
-          {!isLoading && attentionItems.length > 0 ? (
-            <p className="text-sm text-cream/65">
-              {attentionItems.join(' \u00b7 ')}
-            </p>
-          ) : !isLoading && data?.noNews.isQuiet ? (
-            <p className="text-sm text-cream/65">Nothing needs your attention right now.</p>
-          ) : !isLoading ? (
-            <p className="text-sm text-cream/55">Everything looks good.</p>
-          ) : null}
+          {!isLoading && stateSentence && (
+            <p className="text-sm text-cream/60">{stateSentence}</p>
+          )}
         </div>
 
-        {/* Actions — Capture (primary), Inbox + Activity (secondary, lighter) */}
+        {/* ── Quick actions row ── */}
         <div className="flex items-center gap-2 sm:gap-3 mb-6">
           <button
             type="button"
@@ -80,7 +90,7 @@ export function DashboardPage() {
           </button>
           <Link
             href="/app/inbox"
-            className="inline-flex items-center gap-1.5 px-3 py-2.5 text-cream/65 text-sm rounded-lg hover:text-cream/80 hover:bg-stone-hover transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 px-3 py-2.5 text-cream/60 text-sm rounded-lg hover:text-cream/80 hover:bg-stone-hover transition-colors whitespace-nowrap"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M22 12h-6l-2 3H10l-2-3H2" strokeLinecap="round" strokeLinejoin="round" />
@@ -93,28 +103,23 @@ export function DashboardPage() {
               </span>
             )}
           </Link>
-          <button
-            type="button"
-            onClick={() => { setShowActivity(true); markActivitySeen() }}
-            className="inline-flex items-center gap-1.5 px-3 py-2.5 text-cream/65 text-sm rounded-lg hover:text-cream/80 hover:bg-stone-hover transition-colors whitespace-nowrap"
-          >
-            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Activity
-            {unseenCount > 0 && (
-              <span className="w-2 h-2 rounded-full bg-sandstone shrink-0" />
-            )}
-          </button>
         </div>
 
-        {/* Next actions — what to do first */}
+        {/* ── Needs attention / continuation prompts ── */}
         {!isLoading && (
           <DashboardNextActions data={data} />
         )}
 
-        {/* Tool cards */}
-        <DashboardToolGrid data={data} isLoading={isLoading} />
+        {/* ── Recent activity feed (inline, not behind a panel) ── */}
+        <div className="mb-8">
+          <DashboardFeed />
+        </div>
+
+        {/* ── Tool summaries (lower, less dominant) ── */}
+        <div>
+          <h2 className="text-[11px] uppercase tracking-wider text-cream/30 mb-3">Your tools</h2>
+          <DashboardToolGrid data={data} isLoading={isLoading} />
+        </div>
 
       </div>
 
@@ -140,9 +145,6 @@ export function DashboardPage() {
           }}
         />
       )}
-
-      {/* Activity Panel */}
-      {showActivity && <ActivityPanel onClose={() => setShowActivity(false)} />}
     </div>
   )
 }

@@ -4,18 +4,18 @@
 
 | Field | Value |
 |-------|-------|
-| **Sprint** | Core Tool Hierarchy and Visibility Cleanup |
-| **Sprint Doc** | `docs/ai/sprints/core-tool-hierarchy-cleanup.md` |
+| **Sprint** | Feed-First App Home |
+| **Sprint Doc** | `docs/ai/sprints/feed-first-app-home.md` |
 | **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-16 |
-| **Commits** | `5aac4b7` |
+| **Commits** | — |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | All 4 issues implemented, build passes. Ready for Codex review. |
+| **Current Handoff** | All 5 issues implemented, build passes. Ready for Codex review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
@@ -40,6 +40,7 @@ When entering this repo, read in this order:
 ---
 
 ## Previous Sprints (Completed)
+- Core Tool Hierarchy and Visibility Cleanup (March 16, 2026) — `5aac4b7`, `4acb09a`
 - Public Positioning Reset Around Fix List (March 16, 2026) — `f487fd5`, `70311c9`
 - Change Log — Plan's Files & Change Attachments (March 15, 2026)
 - Change Log / Track Plans Follow-Up Polish (March 15, 2026) — `6594b04`

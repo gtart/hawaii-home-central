@@ -5,7 +5,6 @@ import { relativeTime } from '@/lib/relativeTime'
 import type { DashboardResponse } from '@/server/dashboard'
 
 function deriveSuggestion(data: DashboardResponse): { label: string; href: string } | null {
-  // Suggest the most impactful next step
   const fixLists = data.fixLists ?? []
   const totalHigh = fixLists.reduce((s, l) => s + l.highPriorityCount, 0)
   if (totalHigh > 0) {
@@ -26,32 +25,27 @@ function deriveSuggestion(data: DashboardResponse): { label: string; href: strin
     }
   }
 
-  const bys = data.beforeYouSign ?? []
-  const totalContractors = bys.reduce((s, c) => s + c.contractorCount, 0)
-  const totalSelected = bys.reduce((s, c) => s + c.selectedContractorCount, 0)
-  if (totalContractors > 0 && totalSelected < totalContractors) {
-    return {
-      label: `Compare ${totalContractors - totalSelected} contractor${totalContractors - totalSelected !== 1 ? 's' : ''}`,
-      href: '/app/tools/before-you-sign',
-    }
+  // Default: suggest Fix List as most universally useful
+  return {
+    label: 'Add something to your Fix List',
+    href: '/app/tools/punchlist',
   }
-
-  return null
 }
 
 export function QuietBanner({ lastActivityAt, data }: { lastActivityAt?: string; data?: DashboardResponse | null }) {
   const suggestion = data ? deriveSuggestion(data) : null
 
   return (
-    <div className="bg-basalt-50 rounded-card border border-cream/10 px-5 py-4 mb-6 text-center">
-      <p className="text-sm text-cream/50">All caught up — nothing needs your attention right now.</p>
-      {lastActivityAt && (
-        <p className="text-[11px] text-cream/25 mt-1">Last activity: {relativeTime(lastActivityAt)}</p>
-      )}
+    <div className="bg-basalt-50 rounded-card border border-cream/8 px-5 py-5 mb-6">
+      <p className="text-sm text-cream/50 mb-1">All caught up.</p>
+      <p className="text-xs text-cream/30">
+        Nothing needs your attention right now.
+        {lastActivityAt && <> Last activity {relativeTime(lastActivityAt)}.</>}
+      </p>
       {suggestion && (
         <Link
           href={suggestion.href}
-          className="inline-flex items-center gap-1 text-[11px] text-sandstone/60 hover:text-sandstone transition-colors mt-2"
+          className="inline-flex items-center gap-1 text-xs text-sandstone/60 hover:text-sandstone transition-colors mt-3"
         >
           {suggestion.label}
           <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
