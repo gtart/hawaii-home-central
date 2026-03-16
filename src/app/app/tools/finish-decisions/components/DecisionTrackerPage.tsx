@@ -737,11 +737,11 @@ export function DecisionTrackerPage({
               <table className="hidden md:table w-full border-collapse">
                 <thead>
                   <tr className="text-[11px] text-cream/45 uppercase tracking-wider">
-                    {selectedIds.size > 0 && !readOnly && (
+                    {!readOnly && (
                       <th className="w-10 pb-2 pl-2 text-left">
                         <input
                           type="checkbox"
-                          checked={selectedIds.size === sortedDecisions.length}
+                          checked={selectedIds.size > 0 && selectedIds.size === sortedDecisions.length}
                           onChange={() => {
                             if (selectedIds.size === sortedDecisions.length) {
                               deselectAll()
@@ -782,22 +782,9 @@ export function DecisionTrackerPage({
                     return (
                       <tr
                         key={decision.id}
-                        className="group border-t border-cream/10 first:border-t-0 hover:bg-stone-50 transition-colors cursor-pointer"
-                        onClick={(e) => {
-                          // Allow checkbox clicks without navigating
-                          if ((e.target as HTMLElement).closest('input[type="checkbox"]')) return
-                          if (!readOnly && selectedIds.size > 0) {
-                            toggleSelect(decision.id)
-                          }
-                        }}
-                        onContextMenu={(e) => {
-                          if (!readOnly) {
-                            e.preventDefault()
-                            toggleSelect(decision.id)
-                          }
-                        }}
+                        className="group border-t border-cream/10 first:border-t-0 hover:bg-stone-50 transition-colors"
                       >
-                        {selectedIds.size > 0 && !readOnly && (
+                        {!readOnly && (
                           <td className="w-10 py-2.5 pl-2">
                             <input
                               type="checkbox"
@@ -897,12 +884,25 @@ export function DecisionTrackerPage({
                   const thumbUrl = getDecisionThumb(decision)
 
                   return (
-                    <Link
+                    <div
                       key={decision.id}
-                      href={buildDecisionHref({ decisionId: decision.id, collectionId })}
-                      className="block bg-stone rounded-xl border border-cream/15 hover:border-sandstone/30 transition-colors"
+                      className="bg-stone rounded-xl border border-cream/15 hover:border-sandstone/30 transition-colors"
                     >
-                      <div className="flex items-center gap-3 px-4 py-3 group">
+                      <div className="flex items-center gap-0">
+                        {!readOnly && (
+                          <div className="pl-3 py-3 shrink-0">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(decision.id)}
+                              onChange={() => toggleSelect(decision.id)}
+                              className="accent-sandstone w-4 h-4 cursor-pointer"
+                            />
+                          </div>
+                        )}
+                      <Link
+                        href={buildDecisionHref({ decisionId: decision.id, collectionId })}
+                        className="flex items-center gap-3 px-4 py-3 group flex-1 min-w-0"
+                      >
                         {thumbUrl ? (
                           <img src={thumbUrl} alt="" className="w-11 h-11 rounded-lg object-cover shrink-0" loading="lazy" />
                         ) : (
@@ -936,8 +936,9 @@ export function DecisionTrackerPage({
                         <svg className="w-4 h-4 text-cream/25 group-hover:text-cream/50 transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
+                      </Link>
                       </div>
-                    </Link>
+                    </div>
                   )
                 })}
                     </React.Fragment>
