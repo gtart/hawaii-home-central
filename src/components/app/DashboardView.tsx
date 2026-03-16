@@ -17,6 +17,7 @@ const HELPER_COPY: Record<string, string> = {
   finish_decisions: 'Keep track of finish and fixture decisions by room.',
   before_you_sign: 'Compare bids with the same checklist before you sign.',
   punchlist: 'Keep a running fix list during the build and final walkthrough.',
+  project_summary: 'Track your scope of work, plan changes, and cost impacts.',
 }
 
 function relativeTime(dateStr: string): string {
@@ -65,12 +66,22 @@ function getMoodBoardStats(boards: MoodBoardSummary[]): AggregatedStats[] {
   ]
 }
 
+function getProjectSummaryStats(summaries: DashboardResponse['projectSummaries']): AggregatedStats[] {
+  if (summaries.length === 0) return []
+  const activeChanges = summaries.reduce((s, l) => s + l.activeChangeCount, 0)
+  const totalChanges = summaries.reduce((s, l) => s + l.changeCount, 0)
+  if (totalChanges === 0) return []
+  if (activeChanges > 0) return [{ label: `active change${activeChanges !== 1 ? 's' : ''}`, value: String(activeChanges) }]
+  return [{ label: `change${totalChanges !== 1 ? 's' : ''} logged`, value: String(totalChanges) }]
+}
+
 function getToolStats(toolKey: string, data: DashboardResponse | null): AggregatedStats[] {
   if (!data) return []
   switch (toolKey) {
     case 'finish_decisions': return getSelectionListStats(data.selectionLists)
     case 'punchlist': return getFixListStats(data.fixLists)
     case 'mood_boards': return getMoodBoardStats(data.moodBoards)
+    case 'project_summary': return getProjectSummaryStats(data.projectSummaries)
     default: return []
   }
 }
@@ -82,6 +93,7 @@ function isToolEmpty(toolKey: string, data: DashboardResponse | null): boolean {
     case 'punchlist': return data.fixLists.length === 0
     case 'mood_boards': return data.moodBoards.length === 0
     case 'before_you_sign': return true // Not a collection-based tool yet
+    case 'project_summary': return data.projectSummaries.length === 0
     default: return true
   }
 }
@@ -93,6 +105,7 @@ function getLastActivity(toolKey: string, data: DashboardResponse | null): strin
     case 'finish_decisions': collections = data.selectionLists; break
     case 'punchlist': collections = data.fixLists; break
     case 'mood_boards': collections = data.moodBoards; break
+    case 'project_summary': collections = data.projectSummaries; break
     default: return null
   }
   if (collections.length === 0) return null

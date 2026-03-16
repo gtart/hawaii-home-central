@@ -10,10 +10,10 @@
 
 | ID | Title | Priority | Status | Claude Verified | Codex Verified | Codex Notes | Follow-up | Files |
 |----|-------|----------|--------|-----------------|----------------|-------------|-----------|-------|
-| P2-001 | Adjust tool registry/consumers so core tools are favored | P1 | done | pass | pending | — | — | `src/lib/tool-registry.ts`, `src/components/app/ToolGrid.tsx`, `src/components/app/DashboardView.tsx`, `src/components/dashboard/DashboardToolGrid.tsx` |
-| P2-002 | Simplify app sidebar hierarchy | P1 | done | pass | pending | — | — | `src/components/app/SidebarNav.tsx` |
-| P2-003 | Align public nav and tools discovery with hierarchy | P1 | done | pass | pending | — | — | `src/components/layout/Navigation.tsx` |
-| P2-004 | Update stage/order helpers that over-promote secondary tools | P1 | done | pass | pending | — | — | `src/lib/stage-tool-priority.ts` |
+| P2-001 | Adjust tool registry/consumers so core tools are favored | P1 | done | pass | pass | Fixed: added project_summary stats, helper copy, isEmpty, and lastActivity handling across tool-stats, API route, ToolGrid, and DashboardView. | none | `src/lib/tool-registry.ts`, `src/components/app/ToolGrid.tsx`, `src/components/app/DashboardView.tsx`, `src/components/dashboard/DashboardToolGrid.tsx`, `src/lib/tool-stats.ts`, `src/app/api/tool-summaries/route.ts` |
+| P2-002 | Simplify app sidebar hierarchy | P1 | done | pass | pass | The sidebar now gives core tools their own stronger section and pushes Mood Boards/Bid Checklist into a lower-emphasis `Planning & Prep` area. | none | `src/components/app/SidebarNav.tsx` |
+| P2-003 | Align public nav and tools discovery with hierarchy | P1 | done | pass | pass | Public navigation and tools discovery now show a clearer core-first structure with secondary tools separated below. | none | `src/components/layout/Navigation.tsx` |
+| P2-004 | Update stage/order helpers that over-promote secondary tools | P1 | done | pass | pass | Stage priority ordering now consistently favors the core tools before Mood Boards/Bid Checklist. | none | `src/lib/stage-tool-priority.ts` |
 
 ### Status values
 - `todo`, `in_progress`, `blocked`, `done`, `needs_followup`
@@ -94,8 +94,8 @@
 
 | Type | Path |
 |------|------|
-| Codex Audit | — |
-| Claude Response | — |
+| Codex Audit | `docs/ai/reviews/codex/2026-03-16-core-tool-hierarchy-cleanup-audit.md` |
+| Claude Response | `docs/ai/reviews/claude/2026-03-16-core-tool-hierarchy-cleanup-response.md` |
 
 ---
 
@@ -114,6 +114,6 @@
 - [ ] Every completed issue: `Codex Verified: pass`
 - [ ] Every issue's `Follow-up` is explicit
 - [ ] Build/typecheck recorded
-- [ ] Codex audit linked above
+- [x] Codex audit linked above
 - [ ] Claude response linked above (if follow-up occurred)
 - [ ] `docs/ai/active-sprint.md` status set to `complete`

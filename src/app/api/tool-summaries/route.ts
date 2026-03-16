@@ -45,6 +45,18 @@ function computeStats(toolKey: string, raw: unknown): ToolStats {
       return { boardCount, ideaCount }
     }
 
+    if (toolKey === 'project_summary') {
+      const changes = Array.isArray(payload?.changes)
+        ? (payload.changes as Array<{ status?: string }>)
+        : []
+      const documents = Array.isArray(payload?.documents) ? payload.documents : []
+      const plan = payload?.plan as Record<string, unknown> | undefined
+      const scopeItems = Array.isArray(plan?.scope) ? plan.scope : []
+      const totalChanges = changes.length
+      const activeChanges = changes.filter((c) => c.status !== 'not_needed' && c.status !== 'confirmed').length
+      return { totalChanges, activeChanges, documents: (documents as unknown[]).length, scopeItems: (scopeItems as unknown[]).length }
+    }
+
     return {}
   } catch {
     return {}

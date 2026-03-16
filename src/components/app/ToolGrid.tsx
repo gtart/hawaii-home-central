@@ -20,6 +20,7 @@ const HELPER_COPY: Record<string, string> = {
   finish_decisions: 'Keep track of finish and fixture decisions by room.',
   before_you_sign: 'Compare bids with the same checklist before you sign.',
   punchlist: 'Keep a running fix list during the build and final walkthrough.',
+  project_summary: 'Track your scope of work, plan changes, and cost impacts.',
 }
 
 function relativeTime(dateStr: string): string {

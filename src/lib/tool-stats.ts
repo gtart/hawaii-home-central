@@ -33,6 +33,12 @@ export function getDashboardStats(toolKey: string, stats?: Record<string, unknow
       { label: 'Ideas', value: String(ideaCount) },
     ]
   }
+  if (toolKey === 'project_summary') {
+    const activeChanges = (stats.activeChanges as number | undefined) ?? 0
+    const totalChanges = (stats.totalChanges as number | undefined) ?? 0
+    if (totalChanges === 0) return []
+    return [{ label: activeChanges > 0 ? `active change${activeChanges !== 1 ? 's' : ''}` : `change${totalChanges !== 1 ? 's' : ''} logged`, value: String(activeChanges > 0 ? activeChanges : totalChanges) }]
+  }
   return []
 }
 
@@ -42,5 +48,10 @@ export function isToolEmpty(toolKey: string, stats?: Record<string, unknown>): b
   if (toolKey === 'finish_decisions') return ((stats.total as number) ?? 0) === 0
   if (toolKey === 'before_you_sign') return ((stats.contractorCount as number) ?? 0) === 0
   if (toolKey === 'punchlist') return ((stats.total as number) ?? 0) === 0
+  if (toolKey === 'project_summary') {
+    const totalChanges = (stats.totalChanges as number) ?? 0
+    const scopeItems = (stats.scopeItems as number) ?? 0
+    return totalChanges === 0 && scopeItems === 0
+  }
   return true
 }
