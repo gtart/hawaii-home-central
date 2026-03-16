@@ -13,6 +13,15 @@ import { ChangesSection } from './components/ChangesSection'
 import { MilestoneTimeline } from './components/MilestoneTimeline'
 import { InlineEdit } from './components/InlineEdit'
 
+/** Auto-prefix $ on numeric cost values */
+function formatCostDisplay(cost: string): string {
+  const trimmed = cost.trim()
+  if (!trimmed) return ''
+  if (/^[+\-]?\s*[$€£¥]/.test(trimmed) || /^[$€£¥]/.test(trimmed)) return trimmed
+  if (/^[+\-]?\s*[\d,.]/.test(trimmed)) return `$${trimmed}`
+  return trimmed
+}
+
 /** Parsed focus target from URL query param ?focus=change-<id> */
 export interface FocusTarget {
   section: 'changes'
@@ -307,7 +316,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
                           )}
                           <div className="flex items-center gap-3 mt-1 flex-wrap">
                             {change.cost_impact && (
-                              <span className="text-xs text-cream/60 tabular-nums">Cost: {change.cost_impact}</span>
+                              <span className="text-xs text-cream/60 tabular-nums">Cost: {formatCostDisplay(change.cost_impact)}</span>
                             )}
                             {change.schedule_impact && (
                               <span className="text-xs text-cream/60">Est. end: {change.schedule_impact}</span>
@@ -337,7 +346,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
                 ) : (
                   <InlineEdit
                     value={payload.budget.baseline_amount || ''}
-                    onSave={(v) => api.updateBudget({ baseline_amount: v || undefined })}
+                    onSave={(v) => api.updateBudget({ baseline_amount: v ? formatCostDisplay(v) : undefined })}
                     placeholder="e.g. $85,000"
                     readOnly={readOnly}
                     displayClassName="text-sm text-cream/70 tabular-nums"

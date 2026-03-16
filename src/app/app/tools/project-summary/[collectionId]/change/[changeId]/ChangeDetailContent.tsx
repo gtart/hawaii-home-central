@@ -11,6 +11,15 @@ import { uploadProjectSummaryFile } from '../../../uploadProjectSummaryFile'
 import { CollapsibleCommentSidebar, type CommentSidebarHandle } from '@/components/app/CollapsibleCommentSidebar'
 import { useComments } from '@/hooks/useComments'
 
+/** Auto-prefix $ on numeric cost values */
+function formatCostDisplay(cost: string): string {
+  const trimmed = cost.trim()
+  if (!trimmed) return ''
+  if (/^[+\-]?\s*[$€£¥]/.test(trimmed) || /^[$€£¥]/.test(trimmed)) return trimmed
+  if (/^[+\-]?\s*[\d,.]/.test(trimmed)) return `$${trimmed}`
+  return trimmed
+}
+
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
@@ -255,7 +264,7 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 <label className="text-[10px] text-cream/45 block mb-0.5">Cost Impact</label>
                 <InlineEdit
                   value={change.cost_impact || ''}
-                  onSave={(v) => updateChange(change.id, { cost_impact: v || undefined })}
+                  onSave={(v) => updateChange(change.id, { cost_impact: v ? formatCostDisplay(v) : undefined })}
                   placeholder="e.g. +$2,500 or TBD"
                   readOnly={readOnly}
                   displayClassName="text-sm text-cream/70"

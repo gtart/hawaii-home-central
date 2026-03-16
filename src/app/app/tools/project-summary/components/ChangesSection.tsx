@@ -228,7 +228,7 @@ export const ChangesSection = forwardRef<ChangesSectionHandle, ChangesSectionPro
       title: newTitle.trim(),
       description: newDescription.trim() || undefined,
       status: 'requested',
-      cost_impact: newCost.trim() || undefined,
+      cost_impact: newCost.trim() ? formatCostDisplay(newCost.trim()) : undefined,
       schedule_impact: newTimeline.trim() || undefined,
     })
     setNewTitle('')
@@ -261,7 +261,7 @@ export const ChangesSection = forwardRef<ChangesSectionHandle, ChangesSectionPro
               <span className="text-xs text-cream/50">Cost:</span>
               <InlineEdit
                 value={change.cost_impact || ''}
-                onSave={(v) => updateChange(change.id, { cost_impact: v || undefined })}
+                onSave={(v) => updateChange(change.id, { cost_impact: v ? formatCostDisplay(v) : undefined })}
                 placeholder="e.g. +$2,500"
                 readOnly={readOnly}
                 displayClassName="text-xs text-cream/60 tabular-nums"
