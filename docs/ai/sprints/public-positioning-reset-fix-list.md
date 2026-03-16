@@ -10,11 +10,11 @@
 
 | ID | Title | Priority | Status | Claude Verified | Codex Verified | Codex Notes | Follow-up | Files |
 |----|-------|----------|--------|-----------------|----------------|-------------|-----------|-------|
-| POS-001 | Rewrite homepage hero around Fix List wedge | P1 | done | pass | pending | — | — | `src/components/home/HeroSection.tsx` |
-| POS-002 | Rework homepage supporting sections | P1 | done | pass | pending | — | — | `src/components/home/FeatureCards.tsx`, `src/components/home/WhatYouGetSection.tsx` |
-| POS-003 | Reframe tools page around core vs secondary | P1 | done | pass | pending | — | — | `src/app/tools/page.tsx`, `src/app/tools/ToolPreviewCards.tsx` |
-| POS-004 | Align auth-facing copy with new message | P1 | done | pass | pending | — | — | `src/app/login/LoginContent.tsx` |
-| POS-005 | Unify labels across touched public surfaces | P1 | done | pass | pending | — | — | `src/lib/tool-registry.ts`, `src/lib/activityHelpers.ts`, `src/components/app/SidebarNav.tsx`, `src/components/dashboard/DashboardCardPlanAndChanges.tsx`, page.tsx files, `ChangeDetailContent.tsx`, `ToolContent.tsx` |
+| POS-001 | Rewrite homepage hero around Fix List wedge | P1 | done | pass | pass | The hero now leads with a specific fix-items job, names the companion tools, and keeps the CTA stack calm and practical. | none | `src/components/home/HeroSection.tsx` |
+| POS-002 | Rework homepage supporting sections | P1 | done | pass | pass | Fixed: footer line replaced with "step-by-step renovation guides to help you plan ahead" — no more stories/directory mention. | none | `src/components/home/FeatureCards.tsx`, `src/components/home/WhatYouGetSection.tsx` |
+| POS-003 | Reframe tools page around core vs secondary | P1 | done | pass | pass | Fix List is the clear lead tool, Selections and Plan & Changes read as secondary core tools, and Mood Boards/Bid Checklist are positioned as prep-stage support. | none | `src/app/tools/page.tsx`, `src/app/tools/ToolPreviewCards.tsx` |
+| POS-004 | Align auth-facing copy with new message | P1 | done | pass | pass | The login and waitlist states now match the calmer public message without overselling the product. | none | `src/app/login/LoginContent.tsx` |
+| POS-005 | Unify labels across touched public surfaces | P1 | done | pass | pass | In the touched public surfaces, tool naming is aligned around Fix List, Selections, and Plan & Changes. | none | `src/lib/tool-registry.ts`, `src/lib/activityHelpers.ts`, `src/components/app/SidebarNav.tsx`, `src/components/dashboard/DashboardCardPlanAndChanges.tsx`, page.tsx files, `ChangeDetailContent.tsx`, `ToolContent.tsx` |
 
 ### Status values
 - `todo`, `in_progress`, `blocked`, `done`, `needs_followup`
@@ -117,8 +117,8 @@
 
 | Type | Path |
 |------|------|
-| Codex Audit | — |
-| Claude Response | — |
+| Codex Audit | `docs/ai/reviews/codex/2026-03-16-public-positioning-reset-fix-list-audit.md` |
+| Claude Response | `docs/ai/reviews/claude/2026-03-16-public-positioning-reset-fix-list-response.md` |
 
 ---
 
@@ -137,6 +137,6 @@
 - [ ] Every completed issue: `Codex Verified: pass`
 - [ ] Every issue's `Follow-up` is explicit
 - [ ] Build/typecheck recorded
-- [ ] Codex audit linked above
+- [x] Codex audit linked above
 - [ ] Claude response linked above (if follow-up occurred)
 - [ ] `docs/ai/active-sprint.md` status set to `complete`
