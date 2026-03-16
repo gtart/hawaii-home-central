@@ -100,7 +100,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
   const [newNotes, setNewNotes] = useState('')
   const [newCost, setNewCost] = useState('')
   const [newTimeline, setNewTimeline] = useState('')
-  const [newStatus, setNewStatus] = useState<ChangeLogStatus>('noted')
+  const [newStatus, setNewStatus] = useState<ChangeLogStatus>('pending')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [uploadingChangeId, setUploadingChangeId] = useState<string | null>(null)
@@ -168,7 +168,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
     setNewNotes('')
     setNewCost('')
     setNewTimeline('')
-    setNewStatus('noted')
+    setNewStatus('pending')
     setNewAttachments([])
   }
 

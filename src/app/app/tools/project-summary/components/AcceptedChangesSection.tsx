@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef } from 'react'
-import { CHANGE_LOG_STATUS_CONFIG } from '../constants'
+import { CHANGE_LOG_STATUS_CONFIG, toChangeLogStatus } from '../constants'
 import type { ChangeLogStatus } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
 import { InlineEdit } from './InlineEdit'
@@ -55,8 +55,8 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
 
   function handleRemoveFromPlan(changeId: string, target: 'pending' | 'closed') {
     const storageStatus = target === 'pending'
-      ? CHANGE_LOG_STATUS_CONFIG['noted' as ChangeLogStatus].storageStatus
-      : CHANGE_LOG_STATUS_CONFIG['superseded' as ChangeLogStatus].storageStatus
+      ? CHANGE_LOG_STATUS_CONFIG['pending' as ChangeLogStatus].storageStatus
+      : CHANGE_LOG_STATUS_CONFIG['not_needed' as ChangeLogStatus].storageStatus
     updateChange(changeId, { status: storageStatus })
     setConfirmRemoveId(null)
     setExpandedId(null)
@@ -210,11 +210,15 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
                     />
                   </div>
 
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${CHANGE_LOG_STATUS_CONFIG[toChangeLogStatus(change.status)].bgColor} ${CHANGE_LOG_STATUS_CONFIG[toChangeLogStatus(change.status)].color}`}>
+                    {CHANGE_LOG_STATUS_CONFIG[toChangeLogStatus(change.status)].label}
+                  </span>
+
                   {change.cost_impact && (
-                    <span className="text-[10px] text-cream/40 shrink-0 tabular-nums">{change.cost_impact}</span>
+                    <span className="text-[10px] text-cream/50 shrink-0 tabular-nums">{change.cost_impact}</span>
                   )}
 
-                  <div className="flex items-center gap-2 shrink-0 text-[10px] text-cream/30 tabular-nums">
+                  <div className="flex items-center gap-2 shrink-0 text-[10px] text-cream/40 tabular-nums">
                     <span>{new Date(change.created_at).toLocaleDateString()}</span>
                     {(change.created_by || change.updated_by) && (
                       <span className="hidden md:inline">{change.created_by || change.updated_by}</span>

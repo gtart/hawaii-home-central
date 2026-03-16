@@ -44,50 +44,43 @@ export const CHANGE_STATUS_CONFIG: Record<ChangeStatus, { label: string; shortLa
 // ── Homeowner-friendly 4-status model ──
 // Maps 4 user-facing statuses to underlying storage statuses
 
-export type ChangeLogStatus = 'noted' | 'needs_confirmation' | 'added_to_plan' | 'superseded'
+export type ChangeLogStatus = 'pending' | 'confirmed' | 'not_needed'
 
 export const CHANGE_LOG_STATUS_CONFIG: Record<ChangeLogStatus, { label: string; color: string; bgColor: string; storageStatus: ChangeStatus }> = {
-  noted: {
-    label: 'Noted',
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-400/12',
-    storageStatus: 'requested',
-  },
-  needs_confirmation: {
-    label: 'Needs Confirmation',
+  pending: {
+    label: 'Pending',
     color: 'text-amber-400',
     bgColor: 'bg-amber-400/12',
-    storageStatus: 'awaiting_homeowner',
+    storageStatus: 'requested',
   },
-  added_to_plan: {
-    label: 'Added to Plan',
+  confirmed: {
+    label: 'Confirmed',
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-400/12',
     storageStatus: 'approved_by_homeowner',
   },
-  superseded: {
+  not_needed: {
     label: 'No Longer Needed',
-    color: 'text-cream/45',
+    color: 'text-cream/55',
     bgColor: 'bg-cream/8',
     storageStatus: 'closed',
   },
 }
 
-export const CHANGE_LOG_STATUS_ORDER: ChangeLogStatus[] = ['noted', 'needs_confirmation', 'added_to_plan', 'superseded']
+export const CHANGE_LOG_STATUS_ORDER: ChangeLogStatus[] = ['pending', 'confirmed', 'not_needed']
 
 /** Map a storage ChangeStatus to the homeowner-facing status */
 export function toChangeLogStatus(status: ChangeStatus): ChangeLogStatus {
   switch (status) {
     case 'requested':
-      return 'noted'
     case 'awaiting_homeowner':
-      return 'needs_confirmation'
+      return 'pending'
     case 'approved_by_homeowner':
     case 'accepted_by_contractor':
     case 'done':
-      return 'added_to_plan'
+      return 'confirmed'
     case 'closed':
-      return 'superseded'
+      return 'not_needed'
   }
 }
 

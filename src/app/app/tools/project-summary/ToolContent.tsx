@@ -93,11 +93,12 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     commentSidebarRef.current?.toggle()
   }, [])
 
-  // Compute budget totals: baseline + accepted change costs
-  const budgetSummary = useMemo(() => {
-    const acceptedChanges = payload.changes.filter((c) => ADDED_STATUSES.has(c.status))
+  // Compute budget totals: baseline + confirmed + pending change costs
+  const CONFIRMED_STATUSES = new Set(['approved_by_homeowner', 'accepted_by_contractor', 'done'])
+  const PENDING_STATUSES = new Set(['requested', 'awaiting_homeowner'])
 
-    // Parse a dollar string like "$85,000", "+$2,500", "-$1,000", "2500" into cents
+  const budgetSummary = useMemo(() => {
+    // Parse a dollar string like "$85,000", "+$2,500", "-$1,000", "2500" into a number
     function parseDollars(s?: string): number | null {
       if (!s) return null
       const cleaned = s.replace(/[,$\s]/g, '')
@@ -108,16 +109,26 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     }
 
     const baseline = parseDollars(payload.budget.baseline_amount)
-    let changeCostsTotal = 0
-    let hasChangeCosts = false
-    for (const c of acceptedChanges) {
+
+    let confirmedTotal = 0
+    let hasConfirmed = false
+    let pendingTotal = 0
+    let hasPending = false
+
+    for (const c of payload.changes) {
       const amt = parseDollars(c.cost_impact)
-      if (amt !== null) {
-        changeCostsTotal += amt
-        hasChangeCosts = true
+      if (amt === null) continue
+      if (CONFIRMED_STATUSES.has(c.status)) {
+        confirmedTotal += amt
+        hasConfirmed = true
+      } else if (PENDING_STATUSES.has(c.status)) {
+        pendingTotal += amt
+        hasPending = true
       }
     }
 
+    const changeCostsTotal = confirmedTotal + pendingTotal
+    const hasChangeCosts = hasConfirmed || hasPending
     const total = baseline !== null ? baseline + changeCostsTotal : hasChangeCosts ? changeCostsTotal : null
 
     function fmt(n: number): string {
@@ -126,13 +137,23 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       return n < 0 ? `-$${formatted}` : `$${formatted}`
     }
 
+    function fmtSigned(n: number): string {
+      return n >= 0 ? `+${fmt(n)}` : fmt(n)
+    }
+
     return {
       baseline,
+      confirmedTotal,
+      hasConfirmed,
+      pendingTotal,
+      hasPending,
       changeCostsTotal,
       hasChangeCosts,
       total,
       baselineFormatted: baseline !== null ? fmt(baseline) : null,
-      changeCostsFormatted: hasChangeCosts ? (changeCostsTotal >= 0 ? `+${fmt(changeCostsTotal)}` : fmt(changeCostsTotal)) : null,
+      confirmedFormatted: hasConfirmed ? fmtSigned(confirmedTotal) : null,
+      pendingFormatted: hasPending ? fmtSigned(pendingTotal) : null,
+      changeCostsFormatted: hasChangeCosts ? fmtSigned(changeCostsTotal) : null,
       totalFormatted: total !== null ? fmt(total) : null,
     }
   }, [payload.budget.baseline_amount, payload.changes])
@@ -262,7 +283,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
                     className="text-sm"
                   />
                 )}
-                {/* Breakdown: base + changes */}
+                {/* Breakdown: base + confirmed + pending */}
                 {budgetSummary.totalFormatted && (
                   <div className="mt-1 space-y-0.5">
                     <div className="flex items-center gap-2">
@@ -276,9 +297,14 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
                         className="text-[10px]"
                       />
                     </div>
-                    {budgetSummary.hasChangeCosts && (
+                    {budgetSummary.hasConfirmed && (
                       <span className="text-[10px] text-cream/45 block">
-                        Changes: <span className={`tabular-nums ${budgetSummary.changeCostsTotal > 0 ? 'text-amber-400/70' : 'text-emerald-400/70'}`}>{budgetSummary.changeCostsFormatted}</span>
+                        Confirmed: <span className={`tabular-nums ${budgetSummary.confirmedTotal > 0 ? 'text-amber-400/70' : 'text-emerald-400/70'}`}>{budgetSummary.confirmedFormatted}</span>
+                      </span>
+                    )}
+                    {budgetSummary.hasPending && (
+                      <span className="text-[10px] text-cream/45 block">
+                        Pending: <span className="tabular-nums text-cream/50">{budgetSummary.pendingFormatted}</span>
                       </span>
                     )}
                   </div>
