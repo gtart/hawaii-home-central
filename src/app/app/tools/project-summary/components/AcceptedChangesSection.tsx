@@ -200,8 +200,14 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
                     <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
 
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm text-cream/80 truncate block">{change.title}</span>
+                  <div className="flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
+                    <InlineEdit
+                      value={change.title}
+                      onSave={(title) => updateChange(change.id, { title })}
+                      readOnly={readOnly}
+                      displayClassName="text-sm text-cream/90 font-medium truncate block"
+                      className="text-sm font-medium"
+                    />
                   </div>
 
                   {change.cost_impact && (
@@ -230,14 +236,14 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
                     <div className="pt-3 space-y-4">
                       {/* Change Request (scope) */}
                       <div>
-                        <label className="text-[10px] text-cream/35 uppercase tracking-wider block mb-1">Change Request</label>
+                        <label className="text-[10px] text-cream/50 uppercase tracking-wider block mb-1">Change Request</label>
                         <InlineEdit
                           value={change.description || ''}
                           onSave={(v) => updateChange(change.id, { description: v || undefined })}
                           placeholder="Describe the change..."
                           readOnly={readOnly}
                           multiline
-                          displayClassName="text-sm text-cream/60 leading-relaxed"
+                          displayClassName="text-sm text-cream/80 leading-relaxed"
                           className="text-sm leading-relaxed"
                         />
                       </div>
@@ -245,24 +251,24 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
                       {/* Budget + Est End Date row */}
                       <div className="flex flex-wrap gap-6">
                         <div className="flex-1 min-w-[120px]">
-                          <label className="text-[10px] text-cream/35 uppercase tracking-wider block mb-1">Budget</label>
+                          <label className="text-[10px] text-cream/50 uppercase tracking-wider block mb-1">Budget</label>
                           <InlineEdit
                             value={change.cost_impact || ''}
                             onSave={(v) => updateChange(change.id, { cost_impact: v || undefined })}
                             placeholder="e.g. +$2,500"
                             readOnly={readOnly}
-                            displayClassName="text-sm text-cream/60 tabular-nums"
+                            displayClassName="text-sm text-cream/80 tabular-nums"
                             className="text-sm"
                           />
                         </div>
                         <div className="min-w-[120px]">
-                          <label className="text-[10px] text-cream/35 uppercase tracking-wider block mb-1">Est. End Date</label>
+                          <label className="text-[10px] text-cream/50 uppercase tracking-wider block mb-1">Est. End Date</label>
                           <InlineEdit
                             value={change.schedule_impact || ''}
                             onSave={(v) => updateChange(change.id, { schedule_impact: v || undefined })}
                             placeholder="e.g. June 2026"
                             readOnly={readOnly}
-                            displayClassName="text-sm text-cream/60"
+                            displayClassName="text-sm text-cream/80"
                             className="text-sm"
                           />
                         </div>
@@ -271,14 +277,14 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
                       {/* Budget notes / rationale */}
                       {(change.rationale || change.final_note || !readOnly) && (
                         <div>
-                          <label className="text-[10px] text-cream/35 uppercase tracking-wider block mb-1">Notes</label>
+                          <label className="text-[10px] text-cream/50 uppercase tracking-wider block mb-1">Notes</label>
                           <InlineEdit
                             value={change.rationale || change.final_note || ''}
                             onSave={(v) => updateChange(change.id, { rationale: v || undefined })}
                             placeholder="Budget notes, rationale..."
                             readOnly={readOnly}
                             multiline
-                            displayClassName="text-xs text-cream/45 leading-relaxed"
+                            displayClassName="text-xs text-cream/65 leading-relaxed"
                             className="text-xs leading-relaxed"
                           />
                         </div>
@@ -287,7 +293,7 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
                       {/* Attachments (Plan Files for this change) */}
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <label className="text-[10px] text-cream/35 uppercase tracking-wider">Files</label>
+                          <label className="text-[10px] text-cream/50 uppercase tracking-wider">Files</label>
                           {!readOnly && (
                             <div className="flex items-center gap-2">
                               <button

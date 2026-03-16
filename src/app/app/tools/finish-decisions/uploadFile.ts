@@ -1,5 +1,3 @@
-import { upload } from '@vercel/blob/client'
-
 export interface UploadFileResult {
   url: string
   thumbnailUrl?: string
@@ -35,11 +33,18 @@ export async function uploadFile(file: File): Promise<UploadFileResult> {
     throw new Error('File too large. Max 40MB')
   }
 
-  // Step 1: Upload directly to Vercel Blob
-  const blob = await upload(file.name, file, {
-    access: 'public',
-    handleUploadUrl: '/api/tools/finish-decisions/upload-file',
+  // Step 1: Upload via server-side put()
+  const formData = new FormData()
+  formData.append('file', file)
+  const uploadRes = await fetch('/api/tools/finish-decisions/upload-file', {
+    method: 'POST',
+    body: formData,
   })
+  if (!uploadRes.ok) {
+    const data = await uploadRes.json().catch(() => ({}))
+    throw new Error(data.error || `Upload failed (${uploadRes.status})`)
+  }
+  const blob = await uploadRes.json()
 
   const id = `file_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
   const isImage = isImageFile(file)

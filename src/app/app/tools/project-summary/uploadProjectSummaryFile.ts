@@ -1,5 +1,3 @@
-import { upload } from '@vercel/blob/client'
-
 export interface UploadResult {
   url: string
   fileName: string
@@ -38,20 +36,28 @@ export async function uploadProjectSummaryFile(
     throw new Error('Invalid file type. Allowed: images, PDF, Office docs, TXT, CSV')
   }
 
-  // Upload directly to Vercel Blob from the browser.
-  // The handleUploadUrl validates auth + access and returns a client token.
-  const blob = await upload(file.name, file, {
-    access: 'public',
-    handleUploadUrl: '/api/tools/project-summary/upload',
+  // Upload via server-side put() — no callback needed.
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const res = await fetch('/api/tools/project-summary/upload', {
+    method: 'POST',
+    body: formData,
   })
 
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.error || `Upload failed (${res.status})`)
+  }
+
+  const data = await res.json()
   const id = `ps_doc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
 
   return {
-    url: blob.url,
+    url: data.url,
     fileName: file.name,
     fileSize: file.size,
-    mimeType: blob.contentType || file.type || 'application/octet-stream',
+    mimeType: data.contentType || file.type || 'application/octet-stream',
     id,
   }
 }

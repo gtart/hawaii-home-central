@@ -1,4 +1,3 @@
-import { upload } from '@vercel/blob/client'
 import type { PunchlistPhoto } from './types'
 
 // ---- Shared seed data for autocomplete ----
@@ -84,16 +83,23 @@ export function resizeImage(file: File, maxDim = 1600, quality = 0.75): Promise<
 export async function uploadFile(file: File): Promise<PunchlistPhoto> {
   const resized = await resizeImage(file)
 
-  // Step 1: Upload directly to Vercel Blob
-  const blob = await upload(resized.name, resized, {
-    access: 'public',
-    handleUploadUrl: '/api/tools/punchlist/upload',
+  // Step 1: Upload via server-side put()
+  const formData = new FormData()
+  formData.append('file', resized)
+  const uploadRes = await fetch('/api/tools/punchlist/upload', {
+    method: 'POST',
+    body: formData,
   })
+  if (!uploadRes.ok) {
+    const data = await uploadRes.json().catch(() => ({}))
+    throw new Error(data.error || `Upload failed (${uploadRes.status})`)
+  }
+  const blob = await uploadRes.json()
 
   const id = `ph_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
 
   // Step 2: Generate thumbnail via server
-  let thumbnailUrl = blob.url
+  let thumbnailUrl = blob.url as string
   try {
     const thumbRes = await fetch('/api/generate-thumbnail', {
       method: 'POST',
