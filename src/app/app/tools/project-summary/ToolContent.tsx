@@ -93,6 +93,50 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     commentSidebarRef.current?.toggle()
   }, [])
 
+  // Compute budget totals: baseline + accepted change costs
+  const budgetSummary = useMemo(() => {
+    const acceptedChanges = payload.changes.filter((c) => ADDED_STATUSES.has(c.status))
+
+    // Parse a dollar string like "$85,000", "+$2,500", "-$1,000", "2500" into cents
+    function parseDollars(s?: string): number | null {
+      if (!s) return null
+      const cleaned = s.replace(/[,$\s]/g, '')
+      const match = cleaned.match(/^([+-]?)(\d+\.?\d*)/)
+      if (!match) return null
+      const val = parseFloat(match[2])
+      return match[1] === '-' ? -val : val
+    }
+
+    const baseline = parseDollars(payload.budget.baseline_amount)
+    let changeCostsTotal = 0
+    let hasChangeCosts = false
+    for (const c of acceptedChanges) {
+      const amt = parseDollars(c.cost_impact)
+      if (amt !== null) {
+        changeCostsTotal += amt
+        hasChangeCosts = true
+      }
+    }
+
+    const total = baseline !== null ? baseline + changeCostsTotal : hasChangeCosts ? changeCostsTotal : null
+
+    function fmt(n: number): string {
+      const abs = Math.abs(n)
+      const formatted = abs >= 1000 ? abs.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : abs.toString()
+      return n < 0 ? `-$${formatted}` : `$${formatted}`
+    }
+
+    return {
+      baseline,
+      changeCostsTotal,
+      hasChangeCosts,
+      total,
+      baselineFormatted: baseline !== null ? fmt(baseline) : null,
+      changeCostsFormatted: hasChangeCosts ? (changeCostsTotal >= 0 ? `+${fmt(changeCostsTotal)}` : fmt(changeCostsTotal)) : null,
+      totalFormatted: total !== null ? fmt(total) : null,
+    }
+  }, [payload.budget.baseline_amount, payload.changes])
+
   // Compute estimated end date from accepted changes' schedule_impact
   const estimatedEndDate = useMemo(() => {
     const acceptedChanges = payload.changes.filter((c) => ADDED_STATUSES.has(c.status))
@@ -203,24 +247,50 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
 
             {/* Budget + Estimated End Date */}
             <div className="flex flex-wrap gap-6">
-              <div className="flex-1 min-w-[140px]">
+              <div className="flex-1 min-w-[160px]">
                 <label className="text-[10px] text-cream/35 uppercase tracking-wider block mb-1">Budget</label>
-                <InlineEdit
-                  value={payload.budget.baseline_amount || ''}
-                  onSave={(v) => api.updateBudget({ baseline_amount: v || undefined })}
-                  placeholder="e.g. $85,000"
-                  readOnly={readOnly}
-                  displayClassName="text-sm text-cream/70 tabular-nums"
-                  className="text-sm"
-                />
+                {/* Total */}
+                {budgetSummary.totalFormatted ? (
+                  <span className="text-sm text-cream/70 tabular-nums font-medium block">{budgetSummary.totalFormatted}</span>
+                ) : (
+                  <InlineEdit
+                    value={payload.budget.baseline_amount || ''}
+                    onSave={(v) => api.updateBudget({ baseline_amount: v || undefined })}
+                    placeholder="e.g. $85,000"
+                    readOnly={readOnly}
+                    displayClassName="text-sm text-cream/70 tabular-nums"
+                    className="text-sm"
+                  />
+                )}
+                {/* Breakdown: base + changes */}
+                {budgetSummary.totalFormatted && (
+                  <div className="mt-1 space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-cream/30">Base:</span>
+                      <InlineEdit
+                        value={payload.budget.baseline_amount || ''}
+                        onSave={(v) => api.updateBudget({ baseline_amount: v || undefined })}
+                        placeholder="e.g. $85,000"
+                        readOnly={readOnly}
+                        displayClassName="text-[10px] text-cream/45 tabular-nums"
+                        className="text-[10px]"
+                      />
+                    </div>
+                    {budgetSummary.hasChangeCosts && (
+                      <span className="text-[10px] text-cream/30 block">
+                        Changes: <span className={`tabular-nums ${budgetSummary.changeCostsTotal > 0 ? 'text-amber-400/60' : 'text-emerald-400/60'}`}>{budgetSummary.changeCostsFormatted}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
                 {(payload.budget.budget_note || !readOnly) && (
                   <InlineEdit
                     value={payload.budget.budget_note || ''}
                     onSave={(v) => api.updateBudget({ budget_note: v || undefined })}
                     placeholder="Budget notes..."
                     readOnly={readOnly}
-                    displayClassName="text-[10px] text-cream/35 mt-0.5"
-                    className="text-[10px] mt-0.5"
+                    displayClassName="text-[10px] text-cream/35 mt-1"
+                    className="text-[10px] mt-1"
                   />
                 )}
               </div>
