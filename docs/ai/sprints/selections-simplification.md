@@ -10,13 +10,13 @@
 
 | ID | Title | Priority | Status | Claude Verified | Codex Verified | Codex Notes | Follow-up | Files |
 |----|-------|----------|--------|-----------------|----------------|-------------|-----------|-------|
-| P4-001 | Reframe Selections list around Selection Boards | P1 | done | pass | pending | — | — | `DecisionTrackerPage.tsx` |
-| P4-002 | Simplify quick-add/new-selection flow | P1 | done | pass | pending | — | — | `DecisionTrackerPage.tsx` |
-| P4-003 | Make add option/idea dominant next step | P1 | done | pass | pending | — | — | `OnboardingView.tsx`, `DecisionTrackerPage.tsx` |
-| P4-004 | Tags as main lightweight org structure | P1 | done | pass | pending | — | — | `DecisionTrackerPage.tsx` |
-| P4-005 | Reduce visible complexity in workspace | P1 | done | pass | pending | — | — | `DecisionTrackerPage.tsx` |
-| P4-006 | Make pick-one / final selection clearer | P1 | done | pass | pending | — | — | `DecisionTrackerPage.tsx` |
-| P4-007 | Improve empty states and first-use onboarding | P2 | done | pass | pending | — | — | `OnboardingView.tsx`, `ToolContent.tsx` |
+| P4-001 | Reframe Selections list around Selection Boards | P1 | done | pass | pass | Fixed: removed separate chevron column, Updated column now wraps the link. Desktop table is now 4 columns (thumb, Selection, Status, Updated). | none | `DecisionTrackerPage.tsx` |
+| P4-002 | Simplify quick-add/new-selection flow | P1 | done | pass | pass | The quick-add flow is more focused, with the primary CTA first and the contextual inline prompt in a clearer container. | none | `DecisionTrackerPage.tsx` |
+| P4-003 | Make add option/idea dominant next step | P1 | done | pass | pass | The onboarding flow now clearly teaches the board model and points the user toward adding options/ideas next. | none | `OnboardingView.tsx`, `DecisionTrackerPage.tsx` |
+| P4-004 | Tags as main lightweight org structure | P1 | done | pass | pass | Tags are now inline in the main Selection column, location is folded in there too, and filtering remains accessible. | none | `DecisionTrackerPage.tsx` |
+| P4-005 | Reduce visible complexity in workspace | P1 | done | pass | pass | The toolbar and filter surface are materially simpler, with sort/filter consolidation and hidden bulk controls until selection starts. | none | `DecisionTrackerPage.tsx` |
+| P4-006 | Make pick-one / final selection clearer | P1 | done | pass | pass | The selected option treatment is visibly stronger in both desktop rows and mobile cards. | none | `DecisionTrackerPage.tsx` |
+| P4-007 | Improve empty states and first-use onboarding | P2 | done | pass | pass | Fixed: read-only empty state now says "No selection boards have been created yet." | none | `OnboardingView.tsx`, `ToolContent.tsx`, `DecisionTrackerPage.tsx` |
 
 ---
 
@@ -110,8 +110,8 @@
 
 | Type | Path |
 |------|------|
-| Codex Audit | — |
-| Claude Response | — |
+| Codex Audit | `docs/ai/reviews/codex/2026-03-16-selections-simplification-audit.md` |
+| Claude Response | `docs/ai/reviews/claude/2026-03-16-selections-simplification-response.md` |
 
 ---
 
@@ -130,6 +130,6 @@
 - [ ] Every completed issue: `Codex Verified: pass`
 - [ ] Every issue's `Follow-up` is explicit
 - [x] Build/typecheck recorded
-- [ ] Codex audit linked above
+- [x] Codex audit linked above
 - [ ] Claude response linked above (if follow-up occurred)
 - [ ] `docs/ai/active-sprint.md` status set to `complete`

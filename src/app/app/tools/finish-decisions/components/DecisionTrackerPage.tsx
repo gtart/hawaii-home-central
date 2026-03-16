@@ -420,7 +420,7 @@ export function DecisionTrackerPage({
       {/* Empty state for read-only */}
       {!hasDecisions && readOnly && (
         <div className="bg-stone rounded-card p-8 text-center">
-          <p className="text-cream/65">This list doesn&apos;t have any selections yet.</p>
+          <p className="text-cream/65">No selection boards have been created yet.</p>
         </div>
       )}
 
@@ -757,7 +757,6 @@ export function DecisionTrackerPage({
                     <th className="text-left font-medium pb-2">Selection</th>
                     <th className="text-left font-medium pb-2 w-24">Status</th>
                     <th className="text-left font-medium pb-2 w-28">Updated</th>
-                    <th className="w-8 pb-2" />
                   </tr>
                 </thead>
                 <tbody>
@@ -867,13 +866,8 @@ export function DecisionTrackerPage({
                           </span>
                         </td>
                         <td className="py-2.5 pr-3 text-[11px] text-cream/45">
-                          {relativeTime(decision.updatedAt)}
-                        </td>
-                        <td className="py-2.5 pr-2">
-                          <Link href={buildDecisionHref({ decisionId: decision.id, collectionId })}>
-                            <svg className="w-4 h-4 text-cream/25 group-hover:text-cream/50 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
+                          <Link href={buildDecisionHref({ decisionId: decision.id, collectionId })} className="hover:text-cream/65 transition-colors">
+                            {relativeTime(decision.updatedAt)}
                           </Link>
                         </td>
                       </tr>
