@@ -175,15 +175,15 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
             />
           </div>
 
-          {/* Zone 1 — Plan's Files */}
-          <DocumentsSection api={api} />
-
-          {/* Zone 2 — Changes */}
+          {/* Zone 1 — Changes */}
           <ChangesSection
             api={api}
             commentCounts={commentCounts}
             focusEntryId={focusTarget?.section === 'changes' ? focusTarget.entryId : undefined}
           />
+
+          {/* Zone 2 — Plan's Files */}
+          <DocumentsSection api={api} />
 
           {/* Zone 3 — Activity (collapsed, secondary) */}
           <MilestoneTimeline milestones={payload.milestones} />

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import type { DocType } from '@/data/project-summary'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import type { DocType, SummaryDocument, ChangeAttachment } from '@/data/project-summary'
 import { DOC_TYPE_LABELS } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
 import { uploadProjectSummaryFile } from '../uploadProjectSummaryFile'
@@ -18,16 +18,26 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function fileTypeIcon(mimeType?: string): string {
-  if (!mimeType) return 'doc'
-  if (mimeType.startsWith('image/')) return 'image'
-  if (mimeType === 'application/pdf') return 'pdf'
-  return 'doc'
+/** Unified row: either a real SummaryDocument or a change-attachment reference */
+interface FileRow {
+  id: string
+  label: string
+  url?: string          // download URL (fileUrl or url)
+  fileSize?: number
+  mimeType?: string
+  addedAt?: string      // ISO date string
+  sourceChangeTitle?: string
+  isChangeRef: boolean  // true = from a change attachment, not a real document
+  docId?: string        // real document id (for actions/detail panel)
+  contentType?: string  // 'file' | 'link' | 'text'
+  body?: string
+  isCurrent?: boolean
+  docType?: DocType
 }
 
 export function DocumentsSection({ api }: DocumentsSectionProps) {
   const { payload, readOnly, addDocument, updateDocument, deleteDocument, collectionId } = api
-  const { documents } = payload
+  const { documents, changes } = payload
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [showTextForm, setShowTextForm] = useState(false)
@@ -53,6 +63,66 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [docTypeOpen])
+
+  // Build unified file list: documents + change file attachments (deduped)
+  const allFiles = useMemo<FileRow[]>(() => {
+    const rows: FileRow[] = []
+    const seenUrls = new Set<string>()
+
+    // 1. Real documents (current only)
+    for (const doc of documents) {
+      if (doc.isCurrent === false) continue
+      const url = doc.fileUrl || doc.url
+      if (url) seenUrls.add(url)
+      rows.push({
+        id: doc.id,
+        label: doc.label,
+        url: doc.fileUrl || doc.url,
+        fileSize: doc.fileSize,
+        mimeType: doc.mimeType,
+        addedAt: doc.uploadedAt || doc.created_at,
+        sourceChangeTitle: doc.sourceChangeTitle,
+        isChangeRef: false,
+        docId: doc.id,
+        contentType: doc.contentType || 'file',
+        body: doc.body,
+        isCurrent: doc.isCurrent,
+        docType: doc.docType,
+      })
+    }
+
+    // 2. File attachments from changes (not already in documents)
+    for (const change of changes) {
+      if (!change.attachments?.length) continue
+      for (const att of change.attachments) {
+        if (att.type !== 'file' || !att.url) continue
+        if (seenUrls.has(att.url)) continue
+        seenUrls.add(att.url)
+        rows.push({
+          id: `changeatt_${change.id}_${att.id}`,
+          label: att.label,
+          url: att.url,
+          fileSize: att.fileSize,
+          mimeType: att.mimeType,
+          addedAt: att.uploadedAt,
+          sourceChangeTitle: change.title,
+          isChangeRef: true,
+          contentType: 'file',
+        })
+      }
+    }
+
+    // Sort newest first
+    rows.sort((a, b) => {
+      const da = a.addedAt ? new Date(a.addedAt).getTime() : 0
+      const db = b.addedAt ? new Date(b.addedAt).getTime() : 0
+      return db - da
+    })
+
+    return rows
+  }, [documents, changes])
+
+  const outdatedDocs = documents.filter((d) => d.isCurrent === false)
 
   function handleAdd() {
     if (!newLabel.trim()) return
@@ -111,64 +181,23 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
     }
   }
 
-  // Separate current vs outdated
-  const currentDocs = documents.filter((d) => d.isCurrent !== false)
-  const outdatedDocs = documents.filter((d) => d.isCurrent === false)
-
-  function renderFileIcon(mimeType?: string) {
-    const iconType = fileTypeIcon(mimeType)
-    if (iconType === 'pdf') {
-      return (
-        <svg className="w-5 h-5 text-red-400/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
-          <text x="7" y="18" fontSize="6" fill="currentColor" stroke="none" fontWeight="bold">PDF</text>
-        </svg>
-      )
-    }
-    if (iconType === 'image') {
-      return (
-        <svg className="w-5 h-5 text-blue-400/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="8.5" cy="8.5" r="1.5" />
-          <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      )
-    }
-    return (
-      <svg className="w-5 h-5 text-cream/35 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    )
-  }
-
-  function renderTextIcon() {
-    return (
-      <svg className="w-5 h-5 text-sandstone/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    )
-  }
-
-  function renderDocActions(doc: typeof documents[0]) {
+  function renderDocActions(docId: string) {
     if (readOnly) return null
     return (
       <div className="flex items-center gap-1 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { isCurrent: false }) }}
+          onClick={(e) => { e.stopPropagation(); updateDocument(docId, { isCurrent: false }) }}
           className="text-[10px] px-1.5 py-0.5 rounded text-cream/30 hover:text-cream/50 hover:bg-stone-200 transition-colors"
           title="Mark as outdated"
         >
           Archive
         </button>
-        {confirmDelete === doc.id ? (
+        {confirmDelete === docId ? (
           <>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); deleteDocument(doc.id); setConfirmDelete(null) }}
+              onClick={(e) => { e.stopPropagation(); deleteDocument(docId); setConfirmDelete(null) }}
               className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors"
             >
               Delete
@@ -184,7 +213,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
         ) : (
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }}
+            onClick={(e) => { e.stopPropagation(); setConfirmDelete(docId) }}
             className="text-cream/20 hover:text-red-400/50 transition-colors"
             title="Delete"
           >
@@ -192,200 +221,6 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-        )}
-      </div>
-    )
-  }
-
-  function renderCurrentDoc(doc: typeof documents[0]) {
-    const isTextEntry = doc.contentType === 'text'
-
-    if (isTextEntry) {
-      return (
-        <div
-          key={doc.id}
-          className="px-4 py-3 rounded-lg bg-stone-50 border border-sandstone/10 group cursor-pointer hover:border-sandstone/20 transition-colors"
-          onClick={() => setSelectedDocId(doc.id)}
-        >
-          <div className="flex items-start gap-3">
-            {renderTextIcon()}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <InlineEdit
-                  value={doc.label}
-                  onSave={(label) => updateDocument(doc.id, { label })}
-                  readOnly={readOnly}
-                  displayClassName="text-sm text-cream/85 font-medium"
-                  className="text-sm font-medium"
-                />
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-sandstone/10 text-sandstone/60">Text</span>
-              </div>
-              {doc.body && (
-                <p className="text-xs text-cream/50 mt-1 line-clamp-2 leading-relaxed">{doc.body}</p>
-              )}
-              {doc.sourceChangeTitle && (
-                <span className="text-[10px] text-cream/35 block mt-1">
-                  From change: <span className="text-cream/45">{doc.sourceChangeTitle}</span>
-                </span>
-              )}
-              {doc.created_at && (
-                <span className="text-[10px] text-cream/35 block mt-1">
-                  Added {new Date(doc.created_at).toLocaleDateString()}
-                </span>
-              )}
-            </div>
-            {renderDocActions(doc)}
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <div
-        key={doc.id}
-        className="flex items-start gap-3 px-4 py-3 rounded-lg bg-stone-50 border border-emerald-400/10 group cursor-pointer hover:border-emerald-400/20 transition-colors"
-        onClick={() => setSelectedDocId(doc.id)}
-      >
-        {renderFileIcon(doc.mimeType)}
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <InlineEdit
-              value={doc.label}
-              onSave={(label) => updateDocument(doc.id, { label })}
-              readOnly={readOnly}
-              displayClassName="text-sm text-cream/85 font-medium"
-              className="text-sm font-medium"
-            />
-            {doc.docType && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-200 text-cream/45">
-                {DOC_TYPE_LABELS[doc.docType]}
-              </span>
-            )}
-          </div>
-
-          {doc.fileUrl && (
-            <a
-              href={doc.fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="text-[11px] text-sandstone/50 hover:text-sandstone transition-colors flex items-center gap-1 mt-0.5"
-            >
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Download{doc.fileSize ? ` (${formatFileSize(doc.fileSize)})` : ''}
-            </a>
-          )}
-          {doc.url && !doc.fileUrl && (
-            <a
-              href={doc.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="text-[11px] text-sandstone/50 hover:text-sandstone transition-colors truncate block mt-0.5"
-            >
-              {doc.url}
-            </a>
-          )}
-
-          {doc.uploadedAt && (
-            <span className="text-[10px] text-cream/35 block mt-0.5">
-              Added {new Date(doc.uploadedAt).toLocaleDateString()}
-            </span>
-          )}
-
-          {doc.sourceChangeTitle && (
-            <span className="text-[10px] text-cream/35 block mt-0.5">
-              From change: <span className="text-cream/45">{doc.sourceChangeTitle}</span>
-            </span>
-          )}
-
-          {(doc.note || !readOnly) && (
-            <InlineEdit
-              value={doc.note || ''}
-              onSave={(note) => updateDocument(doc.id, { note: note || undefined })}
-              placeholder="Add a description..."
-              readOnly={readOnly}
-              displayClassName="text-xs text-cream/50 mt-1"
-              className="text-xs mt-1"
-            />
-          )}
-        </div>
-
-        {renderDocActions(doc)}
-      </div>
-    )
-  }
-
-  function renderOutdatedDoc(doc: typeof documents[0]) {
-    const isTextEntry = doc.contentType === 'text'
-
-    return (
-      <div
-        key={doc.id}
-        className="flex items-center gap-3 px-3 py-2 rounded-lg bg-stone-50/50 border border-cream/8 group cursor-pointer hover:border-cream/12 transition-colors"
-        onClick={() => setSelectedDocId(doc.id)}
-      >
-        {isTextEntry ? renderTextIcon() : renderFileIcon(doc.mimeType)}
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-cream/50 truncate">{doc.label}</span>
-            {isTextEntry && (
-              <span className="text-[9px] px-1 py-0.5 rounded bg-sandstone/8 text-sandstone/40">Text</span>
-            )}
-          </div>
-          {!isTextEntry && doc.docType && (
-            <span className="text-[10px] text-cream/30">{DOC_TYPE_LABELS[doc.docType]}</span>
-          )}
-          {isTextEntry && doc.body && (
-            <p className="text-[10px] text-cream/30 truncate mt-0.5">{doc.body}</p>
-          )}
-        </div>
-
-        {/* Actions — visible on mobile, hover-reveal on desktop */}
-        {!readOnly && (
-          <div className="flex items-center gap-1 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { isCurrent: true }) }}
-              className="text-[10px] px-1.5 py-0.5 rounded text-cream/30 hover:text-emerald-400/70 hover:bg-emerald-400/8 transition-colors"
-              title="Mark as current"
-            >
-              Restore
-            </button>
-            {confirmDelete === doc.id ? (
-              <>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); deleteDocument(doc.id); setConfirmDelete(null) }}
-                  className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors"
-                >
-                  Delete
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }}
-                  className="text-[10px] text-cream/45 hover:text-cream/50 transition-colors"
-                >
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }}
-                className="text-cream/20 hover:text-red-400/50 transition-colors"
-                title="Delete"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            )}
-          </div>
         )}
       </div>
     )
@@ -465,33 +300,203 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
         )}
       </div>
 
-      {/* Empty state */}
-      {documents.length === 0 && !showAddForm && (
-        <div className="rounded-lg border border-dashed border-cream/12 px-4 py-6 text-center">
-          <p className="text-sm text-cream/45 mb-1">No files yet</p>
-          <p className="text-xs text-cream/30">Plans, contracts, agreed-upon images, and other reference files. Files from accepted changes are added here automatically.</p>
-        </div>
-      )}
-
       {uploadError && (
         <p className="text-[11px] text-red-400/70">{uploadError}</p>
       )}
 
-      {/* Current files */}
-      {currentDocs.length > 0 && (
-        <div className="space-y-2">
-          {currentDocs.map(renderCurrentDoc)}
+      {/* Empty state */}
+      {allFiles.length === 0 && !showAddForm && !showTextForm && (
+        <div className="rounded-lg border border-dashed border-cream/12 px-4 py-6 text-center">
+          <p className="text-sm text-cream/45 mb-1">No files yet</p>
+          <p className="text-xs text-cream/30">Plans, contracts, agreed-upon images, and other reference files. Files from changes appear here automatically.</p>
         </div>
       )}
 
-      {/* Outdated files — collapsed */}
+      {/* Files table */}
+      {allFiles.length > 0 && (
+        <div className="rounded-lg border border-cream/12 overflow-hidden">
+          {/* Desktop table */}
+          <table className="w-full hidden md:table">
+            <thead>
+              <tr className="border-b border-cream/8">
+                <th className="text-left text-[10px] text-cream/35 font-medium uppercase tracking-wider px-4 py-2">File</th>
+                <th className="text-left text-[10px] text-cream/35 font-medium uppercase tracking-wider px-4 py-2">Added</th>
+                <th className="text-right text-[10px] text-cream/35 font-medium uppercase tracking-wider px-4 py-2">Download</th>
+                {!readOnly && <th className="w-24" />}
+              </tr>
+            </thead>
+            <tbody>
+              {allFiles.map((row) => (
+                <tr
+                  key={row.id}
+                  className="border-b border-cream/6 last:border-0 group hover:bg-stone-50/50 transition-colors cursor-pointer"
+                  onClick={() => row.docId ? setSelectedDocId(row.docId) : undefined}
+                >
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm text-cream/80 truncate">{row.label}</span>
+                      {row.contentType === 'text' && (
+                        <span className="text-[9px] px-1 py-0.5 rounded bg-sandstone/10 text-sandstone/60 shrink-0">Text</span>
+                      )}
+                      {row.sourceChangeTitle && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-cream/5 text-cream/35 shrink-0 truncate max-w-[160px]" title={`From: ${row.sourceChangeTitle}`}>
+                          From: {row.sourceChangeTitle}
+                        </span>
+                      )}
+                    </div>
+                    {row.contentType === 'text' && row.body && (
+                      <p className="text-[10px] text-cream/35 mt-0.5 line-clamp-1">{row.body}</p>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5 whitespace-nowrap">
+                    <span className="text-[11px] text-cream/40 tabular-nums">
+                      {row.addedAt ? new Date(row.addedAt).toLocaleDateString() : '—'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                    {row.url ? (
+                      <a
+                        href={row.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1.5 text-[11px] text-sandstone/60 hover:text-sandstone transition-colors"
+                      >
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        {row.fileSize ? formatFileSize(row.fileSize) : 'Open'}
+                      </a>
+                    ) : (
+                      <span className="text-[11px] text-cream/25">—</span>
+                    )}
+                  </td>
+                  {!readOnly && (
+                    <td className="px-2 py-2.5 text-right">
+                      {row.docId && renderDocActions(row.docId)}
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Mobile list */}
+          <div className="md:hidden divide-y divide-cream/6">
+            {allFiles.map((row) => (
+              <div
+                key={row.id}
+                className="px-4 py-3 group"
+                onClick={() => row.docId ? setSelectedDocId(row.docId) : undefined}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm text-cream/80 truncate">{row.label}</span>
+                      {row.contentType === 'text' && (
+                        <span className="text-[9px] px-1 py-0.5 rounded bg-sandstone/10 text-sandstone/60">Text</span>
+                      )}
+                    </div>
+                    {row.sourceChangeTitle && (
+                      <span className="text-[10px] text-cream/35 block mt-0.5">
+                        From: <span className="text-cream/45">{row.sourceChangeTitle}</span>
+                      </span>
+                    )}
+                    {row.contentType === 'text' && row.body && (
+                      <p className="text-[10px] text-cream/35 mt-0.5 line-clamp-1">{row.body}</p>
+                    )}
+                    <div className="flex items-center gap-3 mt-1">
+                      {row.addedAt && (
+                        <span className="text-[10px] text-cream/30 tabular-nums">
+                          {new Date(row.addedAt).toLocaleDateString()}
+                        </span>
+                      )}
+                      {row.url && (
+                        <a
+                          href={row.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-[10px] text-sandstone/60 hover:text-sandstone transition-colors"
+                        >
+                          <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          {row.fileSize ? formatFileSize(row.fileSize) : 'Open'}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  {!readOnly && row.docId && renderDocActions(row.docId)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Archived files — collapsed */}
       {outdatedDocs.length > 0 && (
         <details className="mt-2">
           <summary className="text-[10px] text-cream/30 cursor-pointer hover:text-cream/45 transition-colors select-none">
-            {outdatedDocs.length} archived{outdatedDocs.length !== 1 ? '' : ''}
+            {outdatedDocs.length} archived
           </summary>
           <div className="mt-2 space-y-1.5">
-            {outdatedDocs.map(renderOutdatedDoc)}
+            {outdatedDocs.map((doc) => (
+              <div
+                key={doc.id}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg bg-stone-50/50 border border-cream/8 group cursor-pointer hover:border-cream/12 transition-colors"
+                onClick={() => setSelectedDocId(doc.id)}
+              >
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs text-cream/50 truncate block">{doc.label}</span>
+                  {doc.docType && (
+                    <span className="text-[10px] text-cream/30">{DOC_TYPE_LABELS[doc.docType]}</span>
+                  )}
+                </div>
+                {!readOnly && (
+                  <div className="flex items-center gap-1 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); updateDocument(doc.id, { isCurrent: true }) }}
+                      className="text-[10px] px-1.5 py-0.5 rounded text-cream/30 hover:text-emerald-400/70 hover:bg-emerald-400/8 transition-colors"
+                      title="Mark as current"
+                    >
+                      Restore
+                    </button>
+                    {confirmDelete === doc.id ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); deleteDocument(doc.id); setConfirmDelete(null) }}
+                          className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors"
+                        >
+                          Delete
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setConfirmDelete(null) }}
+                          className="text-[10px] text-cream/45 hover:text-cream/50 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setConfirmDelete(doc.id) }}
+                        className="text-cream/20 hover:text-red-400/50 transition-colors"
+                        title="Delete"
+                      >
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </details>
       )}
@@ -550,10 +555,6 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               className="flex-1 bg-stone-200 border border-cream/12 rounded-md px-2 py-1.5 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30"
             />
           </div>
-
-          {uploadError && (
-            <p className="text-[11px] text-red-400/70">{uploadError}</p>
-          )}
 
           <div className="flex gap-2 justify-end">
             <button
