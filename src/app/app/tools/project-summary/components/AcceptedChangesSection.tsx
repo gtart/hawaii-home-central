@@ -124,15 +124,18 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
                   </td>
                   <td className="px-3 py-2.5 whitespace-nowrap">
                     <span className="text-[11px] text-cream/40">
-                      {change.requested_by || change.updated_by || '—'}
+                      {change.created_by || change.requested_by || change.updated_by || '—'}
                     </span>
                   </td>
                   <td className="px-3 py-2.5 whitespace-nowrap">
-                    <span className="text-[11px] text-cream/40 tabular-nums">
-                      {change.updated_at !== change.created_at
-                        ? new Date(change.updated_at).toLocaleDateString()
-                        : '—'}
-                    </span>
+                    {change.updated_at !== change.created_at ? (
+                      <span className="text-[11px] text-cream/40 tabular-nums">
+                        {new Date(change.updated_at).toLocaleDateString()}
+                        {change.updated_by && <span className="text-cream/30"> by {change.updated_by}</span>}
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-cream/40">—</span>
+                    )}
                   </td>
                   {!readOnly && (
                     <td className="px-2 py-2.5 text-right">
@@ -189,8 +192,8 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
                     )}
                     <div className="flex items-center gap-3 mt-1 text-[10px] text-cream/30">
                       <span className="tabular-nums">{new Date(change.created_at).toLocaleDateString()}</span>
-                      {(change.requested_by || change.updated_by) && (
-                        <span>by {change.requested_by || change.updated_by}</span>
+                      {(change.created_by || change.requested_by || change.updated_by) && (
+                        <span>by {change.created_by || change.requested_by || change.updated_by}</span>
                       )}
                       {change.cost_impact && (
                         <span className="tabular-nums">{change.cost_impact}</span>

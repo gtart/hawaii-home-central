@@ -64,7 +64,7 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
         const p = ensureShape(prev)
         return {
           ...p,
-          plan: { ...p.plan, scope, content_changed_since_status: true, updated_at: now() },
+          plan: { ...p.plan, scope, content_changed_since_status: true, updated_at: now(), updated_by: currentUserName },
         }
       }, events)
     },
@@ -676,8 +676,10 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
             schedule_impact: change.schedule_impact,
             incorporated: false,
             links: [],
+            created_by: currentUserName,
             created_at: ts,
             updated_at: ts,
+            updated_by: currentUserName,
           }],
         }
       }, events)

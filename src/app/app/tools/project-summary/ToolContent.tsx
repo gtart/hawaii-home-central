@@ -196,7 +196,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
               {payload.plan.updated_at && (
                 <p className="text-[10px] text-cream/25 mt-1.5">
                   Last modified {new Date(payload.plan.updated_at).toLocaleDateString()}
-                  {payload.plan.approved_by && ` by ${payload.plan.approved_by}`}
+                  {payload.plan.updated_by && ` by ${payload.plan.updated_by}`}
                 </p>
               )}
             </div>

@@ -134,6 +134,7 @@ export interface CurrentPlan {
   // Revision tracking (PCV1-008)
   revision_number?: number
   updated_at: string
+  updated_by?: string
 }
 
 export interface SummaryChange {
@@ -167,6 +168,7 @@ export interface SummaryChange {
   open_items?: OpenItem[]
   links: SummaryLink[]
   attachments?: ChangeAttachment[]
+  created_by?: string
   created_at: string
   updated_at: string
   updated_by?: string
