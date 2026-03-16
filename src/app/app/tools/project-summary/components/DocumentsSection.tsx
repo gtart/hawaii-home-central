@@ -354,7 +354,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
 
       {/* Section header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider">Plan&apos;s Files</h2>
+        <h2 className="text-xs font-semibold text-cream/65 uppercase tracking-wider">Plan&apos;s Files</h2>
         {!readOnly && (
           <div className="flex items-center gap-2">
             <button
@@ -408,8 +408,8 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
       {/* Empty state */}
       {allFiles.length === 0 && !showAddForm && !showTextForm && (
         <div className="rounded-lg border border-dashed border-cream/12 px-4 py-6 text-center">
-          <p className="text-sm text-cream/45 mb-1">No files yet</p>
-          <p className="text-xs text-cream/30">Plans, contracts, agreed-upon images, and other reference files. Files from changes appear here automatically.</p>
+          <p className="text-sm text-cream/55 mb-1">No files yet</p>
+          <p className="text-xs text-cream/40">Plans, contracts, agreed-upon images, and other reference files. Files from changes appear here automatically.</p>
         </div>
       )}
 
@@ -420,9 +420,9 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
           <table className="w-full hidden md:table">
             <thead>
               <tr className="border-b border-cream/8">
-                <th className="text-left text-[10px] text-cream/35 font-medium uppercase tracking-wider px-4 py-2">File</th>
-                <th className="text-left text-[10px] text-cream/35 font-medium uppercase tracking-wider px-4 py-2">Added</th>
-                <th className="text-right text-[10px] text-cream/35 font-medium uppercase tracking-wider px-4 py-2">Download</th>
+                <th className="text-left text-[10px] text-cream/50 font-medium uppercase tracking-wider px-4 py-2">File</th>
+                <th className="text-left text-[10px] text-cream/50 font-medium uppercase tracking-wider px-4 py-2">Added</th>
+                <th className="text-right text-[10px] text-cream/50 font-medium uppercase tracking-wider px-4 py-2">Download</th>
                 {!readOnly && <th className="w-24" />}
               </tr>
             </thead>

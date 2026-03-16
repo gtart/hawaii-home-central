@@ -227,18 +227,18 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
           <div className="rounded-xl border border-cream/10 bg-stone-50/30 p-5 md:p-6 space-y-8">
             {/* Scope of Work */}
             <div>
-              <label className="text-xs font-semibold text-cream/50 uppercase tracking-wider block mb-2">Scope of Work</label>
+              <label className="text-xs font-semibold text-cream/65 uppercase tracking-wider block mb-2">Scope of Work</label>
               <InlineEdit
                 value={payload.plan.scope}
                 onSave={(text) => api.updatePlanScope(text)}
                 placeholder="What are you renovating? e.g. 'Full kitchen and master bath remodel'"
                 readOnly={readOnly}
                 multiline
-                displayClassName="text-sm text-cream/65 leading-relaxed"
+                displayClassName="text-sm text-cream/80 leading-relaxed"
                 className="text-sm leading-relaxed"
               />
               {payload.plan.updated_at && (
-                <p className="text-[10px] text-cream/25 mt-1.5">
+                <p className="text-[10px] text-cream/40 mt-1.5">
                   Last modified {new Date(payload.plan.updated_at).toLocaleDateString()}
                   {payload.plan.updated_by && ` by ${payload.plan.updated_by}`}
                 </p>
@@ -248,10 +248,10 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
             {/* Budget + Estimated End Date */}
             <div className="flex flex-wrap gap-6">
               <div className="flex-1 min-w-[160px]">
-                <label className="text-[10px] text-cream/35 uppercase tracking-wider block mb-1">Budget</label>
+                <label className="text-[10px] text-cream/50 uppercase tracking-wider block mb-1">Budget</label>
                 {/* Total */}
                 {budgetSummary.totalFormatted ? (
-                  <span className="text-sm text-cream/70 tabular-nums font-medium block">{budgetSummary.totalFormatted}</span>
+                  <span className="text-sm text-cream/85 tabular-nums font-medium block">{budgetSummary.totalFormatted}</span>
                 ) : (
                   <InlineEdit
                     value={payload.budget.baseline_amount || ''}
@@ -266,19 +266,19 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
                 {budgetSummary.totalFormatted && (
                   <div className="mt-1 space-y-0.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-cream/30">Base:</span>
+                      <span className="text-[10px] text-cream/45">Base:</span>
                       <InlineEdit
                         value={payload.budget.baseline_amount || ''}
                         onSave={(v) => api.updateBudget({ baseline_amount: v || undefined })}
                         placeholder="e.g. $85,000"
                         readOnly={readOnly}
-                        displayClassName="text-[10px] text-cream/45 tabular-nums"
+                        displayClassName="text-[10px] text-cream/60 tabular-nums"
                         className="text-[10px]"
                       />
                     </div>
                     {budgetSummary.hasChangeCosts && (
-                      <span className="text-[10px] text-cream/30 block">
-                        Changes: <span className={`tabular-nums ${budgetSummary.changeCostsTotal > 0 ? 'text-amber-400/60' : 'text-emerald-400/60'}`}>{budgetSummary.changeCostsFormatted}</span>
+                      <span className="text-[10px] text-cream/45 block">
+                        Changes: <span className={`tabular-nums ${budgetSummary.changeCostsTotal > 0 ? 'text-amber-400/70' : 'text-emerald-400/70'}`}>{budgetSummary.changeCostsFormatted}</span>
                       </span>
                     )}
                   </div>
@@ -289,17 +289,17 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
                     onSave={(v) => api.updateBudget({ budget_note: v || undefined })}
                     placeholder="Budget notes..."
                     readOnly={readOnly}
-                    displayClassName="text-[10px] text-cream/35 mt-1"
+                    displayClassName="text-[10px] text-cream/50 mt-1"
                     className="text-[10px] mt-1"
                   />
                 )}
               </div>
               <div className="min-w-[140px]">
-                <label className="text-[10px] text-cream/35 uppercase tracking-wider block mb-1">Estimated End Date</label>
+                <label className="text-[10px] text-cream/50 uppercase tracking-wider block mb-1">Estimated End Date</label>
                 {estimatedEndDate ? (
-                  <span className="text-sm text-cream/70">{estimatedEndDate} from accepted changes</span>
+                  <span className="text-sm text-cream/80">{estimatedEndDate} from accepted changes</span>
                 ) : (
-                  <span className="text-sm text-cream/35 italic">No timeline data yet</span>
+                  <span className="text-sm text-cream/45 italic">No timeline data yet</span>
                 )}
               </div>
             </div>

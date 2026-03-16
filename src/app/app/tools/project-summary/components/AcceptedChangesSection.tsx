@@ -126,7 +126,7 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
       {/* Section header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider">Changes Added to Plan</h2>
+          <h2 className="text-xs font-semibold text-cream/65 uppercase tracking-wider">Changes Added to Plan</h2>
           {acceptedChanges.length > 0 && (
             <span className="text-[10px] text-cream/30 tabular-nums">{acceptedChanges.length}</span>
           )}
@@ -167,7 +167,7 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
 
       {/* Empty state */}
       {acceptedChanges.length === 0 && !showAddForm && (
-        <p className="text-xs text-cream/30 italic">No changes added to the plan yet.</p>
+        <p className="text-xs text-cream/40 italic">No changes added to the plan yet.</p>
       )}
 
       {uploadError && (

@@ -264,7 +264,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
             <div className="pt-3 space-y-3">
               {/* Change request */}
               <div>
-                <span className="text-[10px] text-cream/25 block mb-0.5">Change request</span>
+                <span className="text-[10px] text-cream/40 block mb-0.5">Change request</span>
                 <InlineEdit
                   value={change.description || ''}
                   onSave={(v) => updateChange(change.id, { description: v || undefined })}
@@ -279,7 +279,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
               <div className="flex items-center gap-4 flex-wrap">
                 {(change.cost_impact || !readOnly) && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-cream/25">Cost:</span>
+                    <span className="text-[10px] text-cream/40">Cost:</span>
                     <InlineEdit
                       value={change.cost_impact || ''}
                       onSave={(v) => updateChange(change.id, { cost_impact: v || undefined })}
@@ -292,7 +292,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
                 )}
                 {(change.schedule_impact || !readOnly) && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-cream/25">Est. end date:</span>
+                    <span className="text-[10px] text-cream/40">Est. end date:</span>
                     <InlineEdit
                       value={change.schedule_impact || ''}
                       onSave={(v) => updateChange(change.id, { schedule_impact: v || undefined })}
@@ -452,14 +452,14 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
       {/* Section header + tabs */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-1">
-          <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider mr-2">Changes pending your review</h2>
+          <h2 className="text-xs font-semibold text-cream/65 uppercase tracking-wider mr-2">Changes pending your review</h2>
           <button
             type="button"
             onClick={() => setActiveTab('pending')}
             className={`text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded transition-colors ${
               activeTab === 'pending'
                 ? 'text-cream/70 bg-cream/5'
-                : 'text-cream/30 hover:text-cream/50'
+                : 'text-cream/45 hover:text-cream/60'
             }`}
           >
             Pending
@@ -473,7 +473,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
             className={`text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded transition-colors ${
               activeTab === 'closed'
                 ? 'text-cream/70 bg-cream/5'
-                : 'text-cream/30 hover:text-cream/50'
+                : 'text-cream/45 hover:text-cream/60'
             }`}
           >
             No Longer Needed
@@ -501,12 +501,12 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleAdd(); if (e.key === 'Escape') resetAddForm() }}
           />
           <div>
-            <span className="text-[10px] text-cream/25 block mb-0.5">Change request</span>
+            <span className="text-[10px] text-cream/40 block mb-0.5">Change request</span>
             <textarea
               value={newNotes}
               onChange={(e) => setNewNotes(e.target.value)}
               rows={2}
-              className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-xs text-cream/65 placeholder-cream/30 outline-none focus:border-sandstone/30 resize-none"
+              className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-xs text-cream/75 placeholder-cream/35 outline-none focus:border-sandstone/30 resize-none"
             />
           </div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -516,12 +516,12 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-cream/25">Cost:</span>
-              <input type="text" value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="e.g. +$2,500" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30 w-28" />
+              <span className="text-[10px] text-cream/40">Cost:</span>
+              <input type="text" value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="e.g. +$2,500" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/75 placeholder-cream/35 outline-none focus:border-sandstone/30 w-28" />
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-cream/25">Est. end date:</span>
-              <input type="text" value={newTimeline} onChange={(e) => setNewTimeline(e.target.value)} placeholder="e.g. June 2026" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30 w-28" />
+              <span className="text-[10px] text-cream/40">Est. end date:</span>
+              <input type="text" value={newTimeline} onChange={(e) => setNewTimeline(e.target.value)} placeholder="e.g. June 2026" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/75 placeholder-cream/35 outline-none focus:border-sandstone/30 w-28" />
             </div>
           </div>
           <div className="flex items-start gap-2 flex-wrap">
@@ -553,8 +553,8 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
         <div className="rounded-lg border border-dashed border-cream/12 px-4 py-6 text-center">
           {activeTab === 'pending' ? (
             <>
-              <p className="text-sm text-cream/45 mb-1">No pending changes</p>
-              <p className="text-xs text-cream/30">When something changes — a moved outlet, a new material, an updated plan — log it here.</p>
+              <p className="text-sm text-cream/55 mb-1">No pending changes</p>
+              <p className="text-xs text-cream/40">When something changes — a moved outlet, a new material, an updated plan — log it here.</p>
             </>
           ) : (
             <p className="text-sm text-cream/45">No closed changes</p>
