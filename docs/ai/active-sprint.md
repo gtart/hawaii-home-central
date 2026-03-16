@@ -6,16 +6,16 @@
 |-------|-------|
 | **Sprint** | Selections Simplification into Selection Boards |
 | **Sprint Doc** | `docs/ai/sprints/selections-simplification.md` |
-| **Status** | `implementation` |
+| **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-16 |
-| **Commits** | — |
+| **Commits** | `7258c40` |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | Sprint started. 7 issues in scope. |
+| **Current Handoff** | All 7 issues implemented, build passes. Ready for Codex review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
