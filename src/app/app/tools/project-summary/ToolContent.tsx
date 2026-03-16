@@ -8,6 +8,7 @@ import { CollapsibleCommentSidebar, type CommentSidebarHandle } from '@/componen
 import type { RefEntity } from '@/components/app/CommentThread'
 import { useComments } from '@/hooks/useComments'
 import { useProjectSummaryState } from './useProjectSummaryState'
+import { AcceptedChangesSection } from './components/AcceptedChangesSection'
 import { DocumentsSection } from './components/DocumentsSection'
 import { ChangesSection } from './components/ChangesSection'
 import { MilestoneTimeline } from './components/MilestoneTimeline'
@@ -175,17 +176,20 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
             />
           </div>
 
-          {/* Zone 1 — Changes */}
+          {/* Zone 1 — Changes added to plan (read-only, inline with scope) */}
+          <AcceptedChangesSection api={api} />
+
+          {/* Zone 2 — Plan's Files */}
+          <DocumentsSection api={api} />
+
+          {/* Zone 3 — Pending Change Requests + No Longer Needed */}
           <ChangesSection
             api={api}
             commentCounts={commentCounts}
             focusEntryId={focusTarget?.section === 'changes' ? focusTarget.entryId : undefined}
           />
 
-          {/* Zone 2 — Plan's Files */}
-          <DocumentsSection api={api} />
-
-          {/* Zone 3 — Activity (collapsed, secondary) */}
+          {/* Zone 4 — History */}
           <MilestoneTimeline milestones={payload.milestones} />
 
           {/* Disclaimer — bottom, quiet */}

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { CHANGE_LOG_STATUS_CONFIG, CHANGE_LOG_STATUS_ORDER, toChangeLogStatus, CHANGE_CATEGORIES } from '../constants'
-import type { ChangeLogStatus, ChangeCategory } from '../constants'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { CHANGE_LOG_STATUS_CONFIG, CHANGE_LOG_STATUS_ORDER, toChangeLogStatus } from '../constants'
+import type { ChangeLogStatus } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
 import { InlineEdit } from './InlineEdit'
 import { StatusBadge } from './StatusBadge'
@@ -77,88 +77,27 @@ function StatusDropdown({
   )
 }
 
-/** Category dropdown */
-function CategoryDropdown({
-  value,
-  onChange,
-  readOnly,
-}: {
-  value?: string
-  onChange: (category: string | undefined) => void
-  readOnly?: boolean
-}) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [open])
-
-  if (readOnly) {
-    if (!value) return null
-    return <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-200 text-cream/45">{value}</span>
-  }
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
-          value ? 'bg-stone-200 text-cream/45 hover:bg-stone-hover' : 'text-cream/25 hover:text-cream/40'
-        }`}
-      >
-        {value || '+ Category'}
-      </button>
-      {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 min-w-[140px] rounded-lg border border-cream/12 bg-basalt shadow-xl py-1 max-h-[240px] overflow-y-auto">
-          <button
-            type="button"
-            onClick={() => { onChange(undefined); setOpen(false) }}
-            className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${!value ? 'text-sandstone' : 'text-cream/60 hover:bg-stone-hover'}`}
-          >
-            None
-          </button>
-          {CHANGE_CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => { onChange(cat); setOpen(false) }}
-              className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${value === cat ? 'text-sandstone' : 'text-cream/60 hover:bg-stone-hover'}`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 /** Format cost display — prefix with $ if the user hasn't included a currency symbol */
 function formatCostDisplay(cost: string): string {
   const trimmed = cost.trim()
   if (!trimmed) return ''
-  // If already starts with $, +$, -$, or other currency symbols, leave it
   if (/^[+\-]?\s*[$€£¥]/.test(trimmed) || /^[$€£¥]/.test(trimmed)) return trimmed
-  // If it's just a number or +/- number, prefix with $
   if (/^[+\-]?\s*[\d,.]/.test(trimmed)) return `$${trimmed}`
   return trimmed
 }
 
+type Tab = 'pending' | 'closed'
+
+const PENDING_STATUSES = new Set(['requested', 'awaiting_homeowner'])
+const ADDED_STATUSES = new Set(['approved_by_homeowner', 'accepted_by_contractor', 'done'])
+
 export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSectionProps) {
   const { payload, readOnly, addChange, updateChange, deleteChange, addChangeAttachment } = api
   const { changes } = payload
+  const [activeTab, setActiveTab] = useState<Tab>('pending')
   const [showAddForm, setShowAddForm] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newNotes, setNewNotes] = useState('')
-  const [newCategory, setNewCategory] = useState<ChangeCategory | ''>('')
-  const [newRoom, setNewRoom] = useState('')
   const [newCost, setNewCost] = useState('')
   const [newTimeline, setNewTimeline] = useState('')
   const [newStatus, setNewStatus] = useState<ChangeLogStatus>('noted')
@@ -170,8 +109,21 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
   const changeFileInputRef = useRef<HTMLInputElement>(null)
   const newChangeFileInputRef = useRef<HTMLInputElement>(null)
   const focusRef = useRef<HTMLDivElement>(null)
-  // Track pending attachment for new change (before it's created)
   const [newAttachments, setNewAttachments] = useState<Array<{ url: string; label: string; fileName: string; fileSize: number; mimeType: string }>>([])
+
+  const pendingChanges = useMemo(
+    () => changes
+      .filter((c) => PENDING_STATUSES.has(c.status))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    [changes]
+  )
+
+  const closedChanges = useMemo(
+    () => changes
+      .filter((c) => c.status === 'closed')
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    [changes]
+  )
 
   useEffect(() => {
     if (!focusEntryId) return
@@ -190,13 +142,10 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
     const changeId = addChange({
       title: newTitle.trim(),
       description: newNotes.trim() || undefined,
-      category: newCategory || undefined,
-      room: newRoom.trim() || undefined,
       status: storageStatus,
       cost_impact: newCost.trim() || undefined,
       schedule_impact: newTimeline.trim() || undefined,
     })
-    // Attach any uploaded files to the new change
     if (changeId && newAttachments.length > 0) {
       for (const att of newAttachments) {
         addChangeAttachment(changeId, {
@@ -217,8 +166,6 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
     setShowAddForm(false)
     setNewTitle('')
     setNewNotes('')
-    setNewCategory('')
-    setNewRoom('')
     setNewCost('')
     setNewTimeline('')
     setNewStatus('noted')
@@ -246,10 +193,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
     }
   }
 
-  // Flat reverse-chronological list (newest first)
-  const sortedChanges = [...changes].sort((a, b) =>
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  )
+  const visibleChanges = activeTab === 'pending' ? pendingChanges : closedChanges
 
   function renderCollapsedRow(change: typeof changes[0]) {
     const isExpanded = expandedId === change.id
@@ -284,7 +228,6 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
             <span className="text-sm text-cream/80 truncate block leading-snug">{change.title}</span>
           </div>
 
-          {/* Cost impact — always visible if present, with $ formatting */}
           {change.cost_impact && (
             <span className="text-[10px] text-cream/45 shrink-0 tabular-nums">{formatCostDisplay(change.cost_impact)}</span>
           )}
@@ -300,7 +243,6 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
             />
           </div>
 
-          {/* Indicators — visible on all sizes */}
           {(change.attachments?.length || 0) > 0 && (
             <span className="text-cream/30 shrink-0">
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -469,11 +411,9 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
     )
   }
 
-  const hasAnyChanges = changes.length > 0
-
   return (
-    <div className="space-y-6">
-      {/* Hidden file input for inline change uploads */}
+    <div className="space-y-4">
+      {/* Hidden file inputs */}
       <input
         ref={changeFileInputRef}
         type="file"
@@ -501,8 +441,6 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
           }
         }}
       />
-
-      {/* Hidden file input for new change form uploads */}
       <input
         ref={newChangeFileInputRef}
         type="file"
@@ -511,9 +449,39 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
         onChange={handleNewChangeFileUpload}
       />
 
-      {/* Section header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider">Changes</h2>
+      {/* Section header + tabs */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-1">
+          <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider mr-2">Change Requests</h2>
+          <button
+            type="button"
+            onClick={() => setActiveTab('pending')}
+            className={`text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded transition-colors ${
+              activeTab === 'pending'
+                ? 'text-cream/70 bg-cream/5'
+                : 'text-cream/30 hover:text-cream/50'
+            }`}
+          >
+            Pending
+            {pendingChanges.length > 0 && (
+              <span className="ml-1 text-[10px] font-normal tabular-nums">{pendingChanges.length}</span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('closed')}
+            className={`text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded transition-colors ${
+              activeTab === 'closed'
+                ? 'text-cream/70 bg-cream/5'
+                : 'text-cream/30 hover:text-cream/50'
+            }`}
+          >
+            No Longer Needed
+            {closedChanges.length > 0 && (
+              <span className="ml-1 text-[10px] font-normal tabular-nums">{closedChanges.length}</span>
+            )}
+          </button>
+        </div>
         {!readOnly && !showAddForm && (
           <button
             type="button"
@@ -532,18 +500,9 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
         <p className="text-[11px] text-red-400/70">{uploadError}</p>
       )}
 
-      {/* Empty state */}
-      {!hasAnyChanges && !showAddForm && (
-        <div className="rounded-lg border border-dashed border-cream/12 px-4 py-6 text-center">
-          <p className="text-sm text-cream/45 mb-1">No changes yet</p>
-          <p className="text-xs text-cream/30">When something changes — a moved outlet, a new material, an updated plan — log it here.</p>
-        </div>
-      )}
-
-      {/* Add form — matches expanded card fields */}
+      {/* Add form */}
       {showAddForm && !readOnly && (
         <div className="p-4 rounded-lg border border-cream/12 bg-stone-50 space-y-3">
-          {/* Title */}
           <input
             type="text"
             value={newTitle}
@@ -553,8 +512,6 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
             autoFocus
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleAdd(); if (e.key === 'Escape') resetAddForm() }}
           />
-
-          {/* Change request */}
           <div>
             <span className="text-[10px] text-cream/25 block mb-0.5">Change request</span>
             <textarea
@@ -564,105 +521,63 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
               className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-xs text-cream/65 placeholder-cream/30 outline-none focus:border-sandstone/30 resize-none"
             />
           </div>
-
-          {/* Metadata row: status */}
           <div className="flex items-center gap-3 flex-wrap">
             <div onClick={(e) => e.stopPropagation()}>
-              <StatusDropdown
-                status={newStatus}
-                onChange={(s) => setNewStatus(s)}
-              />
+              <StatusDropdown status={newStatus} onChange={(s) => setNewStatus(s)} />
             </div>
           </div>
-
-          {/* Cost + Timeline row */}
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] text-cream/25">Cost:</span>
-              <input
-                type="text"
-                value={newCost}
-                onChange={(e) => setNewCost(e.target.value)}
-                placeholder="e.g. +$2,500"
-                className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30 w-28"
-              />
+              <input type="text" value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="e.g. +$2,500" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30 w-28" />
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] text-cream/25">Timeline:</span>
-              <input
-                type="text"
-                value={newTimeline}
-                onChange={(e) => setNewTimeline(e.target.value)}
-                placeholder="e.g. +2 weeks"
-                className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30 w-28"
-              />
+              <input type="text" value={newTimeline} onChange={(e) => setNewTimeline(e.target.value)} placeholder="e.g. +2 weeks" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30 w-28" />
             </div>
           </div>
-
-          {/* File attachments */}
           <div className="flex items-start gap-2 flex-wrap">
             {newAttachments.map((att, i) => (
-              <span
-                key={i}
-                className="inline-flex items-center gap-1 text-[10px] text-cream/45 bg-stone-200 px-2 py-1 rounded"
-              >
+              <span key={i} className="inline-flex items-center gap-1 text-[10px] text-cream/45 bg-stone-200 px-2 py-1 rounded">
                 <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <span className="truncate max-w-[120px]">{att.label}</span>
-                <button
-                  type="button"
-                  onClick={() => setNewAttachments((prev) => prev.filter((_, idx) => idx !== i))}
-                  className="text-cream/30 hover:text-cream/50 transition-colors ml-0.5"
-                >
-                  <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                <button type="button" onClick={() => setNewAttachments((prev) => prev.filter((_, idx) => idx !== i))} className="text-cream/30 hover:text-cream/50 transition-colors ml-0.5">
+                  <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </button>
               </span>
             ))}
-            <button
-              type="button"
-              onClick={() => newChangeFileInputRef.current?.click()}
-              disabled={isUploadingNew}
-              className="inline-flex items-center gap-1.5 text-[10px] text-cream/30 hover:text-cream/50 bg-stone-200 hover:bg-stone-hover px-2 py-1 rounded transition-colors disabled:opacity-50"
-            >
-              {isUploadingNew ? (
-                <div className="w-3 h-3 border border-cream/20 border-t-cream/50 rounded-full animate-spin" />
-              ) : (
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                </svg>
-              )}
+            <button type="button" onClick={() => newChangeFileInputRef.current?.click()} disabled={isUploadingNew} className="inline-flex items-center gap-1.5 text-[10px] text-cream/30 hover:text-cream/50 bg-stone-200 hover:bg-stone-hover px-2 py-1 rounded transition-colors disabled:opacity-50">
+              {isUploadingNew ? <div className="w-3 h-3 border border-cream/20 border-t-cream/50 rounded-full animate-spin" /> : <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" strokeLinecap="round" /></svg>}
               {isUploadingNew ? 'Uploading...' : 'Attach file'}
             </button>
           </div>
-
-          {/* Actions */}
           <div className="flex gap-2 justify-end pt-1">
-            <button
-              type="button"
-              onClick={resetAddForm}
-              className="px-3 py-1.5 text-xs text-cream/45 hover:text-cream/60 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleAdd}
-              disabled={!newTitle.trim() || isUploadingNew}
-              className="px-4 py-1.5 text-xs bg-sandstone/15 text-sandstone hover:bg-sandstone/25 rounded-md transition-colors disabled:opacity-30"
-            >
-              {isUploadingNew ? 'Uploading...' : 'Add'}
-            </button>
+            <button type="button" onClick={resetAddForm} className="px-3 py-1.5 text-xs text-cream/45 hover:text-cream/60 transition-colors">Cancel</button>
+            <button type="button" onClick={handleAdd} disabled={!newTitle.trim() || isUploadingNew} className="px-4 py-1.5 text-xs bg-sandstone/15 text-sandstone hover:bg-sandstone/25 rounded-md transition-colors disabled:opacity-30">{isUploadingNew ? 'Uploading...' : 'Add'}</button>
           </div>
         </div>
       )}
 
-      {/* Changes — flat reverse-chronological list */}
-      {sortedChanges.length > 0 && (
+      {/* Empty state */}
+      {visibleChanges.length === 0 && !showAddForm && (
+        <div className="rounded-lg border border-dashed border-cream/12 px-4 py-6 text-center">
+          {activeTab === 'pending' ? (
+            <>
+              <p className="text-sm text-cream/45 mb-1">No pending changes</p>
+              <p className="text-xs text-cream/30">When something changes — a moved outlet, a new material, an updated plan — log it here.</p>
+            </>
+          ) : (
+            <p className="text-sm text-cream/45">No closed changes</p>
+          )}
+        </div>
+      )}
+
+      {/* Changes list */}
+      {visibleChanges.length > 0 && (
         <div className="space-y-1.5">
-          {sortedChanges.map((change) => renderCollapsedRow(change))}
+          {visibleChanges.map((change) => renderCollapsedRow(change))}
         </div>
       )}
     </div>
