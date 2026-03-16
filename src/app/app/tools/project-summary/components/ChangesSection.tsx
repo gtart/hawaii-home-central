@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, forwardRef, useImperativeHandle } from 'react'
 import { CHANGE_LOG_STATUS_CONFIG, CHANGE_LOG_STATUS_ORDER, toChangeLogStatus } from '../constants'
 import type { ChangeLogStatus } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
@@ -14,7 +14,12 @@ interface ChangesSectionProps {
   focusEntryId?: string
 }
 
-/** Status dropdown — 4 homeowner-friendly statuses */
+export interface ChangesSectionHandle {
+  scrollToAndAdd: () => void
+  scrollToChange: (id: string) => void
+}
+
+/** Status dropdown — 3 homeowner-friendly statuses */
 function StatusDropdown({
   status,
   onChange,
@@ -86,25 +91,46 @@ function formatCostDisplay(cost: string): string {
   return trimmed
 }
 
-const PENDING_STATUSES = new Set(['requested', 'awaiting_homeowner'])
-const ADDED_STATUSES = new Set(['approved_by_homeowner', 'accepted_by_contractor', 'done'])
-
-export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSectionProps) {
-  const { payload, readOnly, updateChange, deleteChange, addChangeAttachment } = api
+export const ChangesSection = forwardRef<ChangesSectionHandle, ChangesSectionProps>(
+  function ChangesSection({ api, commentCounts, focusEntryId }, ref) {
+  const { payload, readOnly, addChange, updateChange, deleteChange, addChangeAttachment } = api
   const { changes } = payload
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [uploadingChangeId, setUploadingChangeId] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [newTitle, setNewTitle] = useState('')
+  const [newDescription, setNewDescription] = useState('')
+  const [newCost, setNewCost] = useState('')
+  const [newTimeline, setNewTimeline] = useState('')
   const changeFileInputRef = useRef<HTMLInputElement>(null)
   const focusRef = useRef<HTMLDivElement>(null)
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const addFormRef = useRef<HTMLInputElement>(null)
 
-  const closedChanges = useMemo(
-    () => changes
-      .filter((c) => c.status === 'closed')
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+  // All changes sorted newest first
+  const allChanges = useMemo(
+    () => [...changes].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
     [changes]
   )
+
+  useImperativeHandle(ref, () => ({
+    scrollToAndAdd() {
+      setShowAddForm(true)
+      requestAnimationFrame(() => {
+        sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        setTimeout(() => addFormRef.current?.focus(), 400)
+      })
+    },
+    scrollToChange(id: string) {
+      setExpandedId(id)
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`change-row-${id}`)
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      })
+    },
+  }))
 
   useEffect(() => {
     if (!focusEntryId) return
@@ -117,7 +143,21 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
     }
   }, [focusEntryId, changes])
 
-  const visibleChanges = closedChanges
+  function handleAdd() {
+    if (!newTitle.trim()) return
+    addChange({
+      title: newTitle.trim(),
+      description: newDescription.trim() || undefined,
+      status: 'requested',
+      cost_impact: newCost.trim() || undefined,
+      schedule_impact: newTimeline.trim() || undefined,
+    })
+    setNewTitle('')
+    setNewDescription('')
+    setNewCost('')
+    setNewTimeline('')
+    setShowAddForm(false)
+  }
 
   function renderCollapsedRow(change: typeof changes[0]) {
     const isExpanded = expandedId === change.id
@@ -127,6 +167,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
     return (
       <div
         key={change.id}
+        id={`change-row-${change.id}`}
         ref={change.id === focusEntryId ? focusRef : undefined}
         className={`rounded-lg border transition-colors ${
           change.id === focusEntryId
@@ -153,7 +194,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
           </div>
 
           {change.cost_impact && (
-            <span className="text-[10px] text-cream/45 shrink-0 tabular-nums">{formatCostDisplay(change.cost_impact)}</span>
+            <span className="text-[10px] text-cream/50 shrink-0 tabular-nums">{formatCostDisplay(change.cost_impact)}</span>
           )}
 
           <div onClick={(e) => e.stopPropagation()}>
@@ -209,7 +250,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
                       onSave={(v) => updateChange(change.id, { cost_impact: v || undefined })}
                       placeholder="e.g. +$2,500"
                       readOnly={readOnly}
-                      displayClassName="text-[10px] text-cream/45 tabular-nums"
+                      displayClassName="text-[10px] text-cream/50 tabular-nums"
                       className="text-[10px]"
                     />
                   </div>
@@ -222,26 +263,12 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
                       onSave={(v) => updateChange(change.id, { schedule_impact: v || undefined })}
                       placeholder="e.g. June 2026"
                       readOnly={readOnly}
-                      displayClassName="text-[10px] text-cream/45"
+                      displayClassName="text-[10px] text-cream/50"
                       className="text-[10px]"
                     />
                   </div>
                 )}
               </div>
-
-              {/* Additional notes */}
-              {(change.final_note || !readOnly) && (
-                <div>
-                  <InlineEdit
-                    value={change.final_note || ''}
-                    onSave={(v) => updateChange(change.id, { final_note: v || undefined })}
-                    placeholder="Additional notes..."
-                    readOnly={readOnly}
-                    displayClassName="text-xs text-cream/45 italic"
-                    className="text-xs"
-                  />
-                </div>
-              )}
 
               {/* Attachments */}
               {((change.attachments?.length || 0) > 0 || !readOnly) && (
@@ -295,39 +322,29 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
                   )}
                 </div>
               )}
-            </div>
 
-            {/* Bottom actions row */}
-            <div className="flex items-center justify-end mt-3 pt-2 border-t border-cream/6">
-              {!readOnly && (
-                confirmDelete === change.id ? (
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      onClick={() => { deleteChange(change.id); setConfirmDelete(null) }}
-                      className="text-[10px] text-red-400/70 hover:text-red-400 transition-colors"
-                    >
-                      Confirm delete
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDelete(null)}
-                      className="text-[10px] text-cream/35 hover:text-cream/50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setConfirmDelete(change.id) }}
-                    className="text-[10px] text-cream/20 hover:text-red-400/50 transition-colors"
-                    title="Delete"
-                  >
-                    Delete
-                  </button>
-                )
-              )}
+              {/* Metadata footer */}
+              <div className="flex items-center justify-between pt-2 border-t border-cream/6 text-[10px] text-cream/30">
+                <span>
+                  Created {new Date(change.created_at).toLocaleDateString()}
+                  {change.created_by && ` by ${change.created_by}`}
+                  {change.updated_at !== change.created_at && (
+                    <> · Modified {new Date(change.updated_at).toLocaleDateString()}
+                      {change.updated_by && ` by ${change.updated_by}`}
+                    </>
+                  )}
+                </span>
+                {!readOnly && (
+                  confirmDelete === change.id ? (
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <button type="button" onClick={() => { deleteChange(change.id); setConfirmDelete(null) }} className="text-red-400/70 hover:text-red-400 transition-colors">Confirm delete</button>
+                      <button type="button" onClick={() => setConfirmDelete(null)} className="text-cream/35 hover:text-cream/50 transition-colors">Cancel</button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setConfirmDelete(change.id) }} className="text-cream/20 hover:text-red-400/50 transition-colors">Delete</button>
+                  )
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -336,8 +353,8 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
   }
 
   return (
-    <div className="space-y-4">
-      {/* Hidden file inputs */}
+    <div ref={sectionRef} className="space-y-4">
+      {/* Hidden file input */}
       <input
         ref={changeFileInputRef}
         type="file"
@@ -365,31 +382,81 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
           }
         }}
       />
+
       {/* Section header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider">No Longer Needed</h2>
-          {closedChanges.length > 0 && (
-            <span className="text-[10px] text-cream/35 tabular-nums">{closedChanges.length}</span>
-          )}
-        </div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xs font-semibold text-cream/65 uppercase tracking-wider">Change Log</h2>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-sandstone/70 hover:text-sandstone bg-sandstone/8 hover:bg-sandstone/12 transition-colors"
+          >
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+            </svg>
+            Add a change
+          </button>
+        )}
       </div>
 
       {uploadError && (
         <p className="text-[11px] text-red-400/70">{uploadError}</p>
       )}
 
+      {/* Add form */}
+      {showAddForm && !readOnly && (
+        <div className="p-4 rounded-lg border border-cream/12 bg-stone-50 space-y-3">
+          <input
+            ref={addFormRef}
+            type="text"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            placeholder="What changed?"
+            className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2.5 text-sm text-cream/90 placeholder-cream/35 outline-none focus:border-sandstone/30"
+            autoFocus
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleAdd(); if (e.key === 'Escape') setShowAddForm(false) }}
+          />
+          <div>
+            <span className="text-[10px] text-cream/40 block mb-0.5">Change request</span>
+            <textarea
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              rows={2}
+              className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-xs text-cream/75 placeholder-cream/35 outline-none focus:border-sandstone/30 resize-none"
+            />
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-cream/40">Cost:</span>
+              <input type="text" value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="e.g. +$2,500" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/75 placeholder-cream/35 outline-none focus:border-sandstone/30 w-28" />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-cream/40">Est. end date:</span>
+              <input type="text" value={newTimeline} onChange={(e) => setNewTimeline(e.target.value)} placeholder="e.g. June 2026" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/75 placeholder-cream/35 outline-none focus:border-sandstone/30 w-28" />
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end pt-1">
+            <button type="button" onClick={() => setShowAddForm(false)} className="px-3 py-1.5 text-xs text-cream/45 hover:text-cream/60 transition-colors">Cancel</button>
+            <button type="button" onClick={handleAdd} disabled={!newTitle.trim()} className="px-4 py-1.5 text-xs bg-sandstone/15 text-sandstone hover:bg-sandstone/25 rounded-md transition-colors disabled:opacity-30">Add</button>
+          </div>
+        </div>
+      )}
+
       {/* Empty state */}
-      {visibleChanges.length === 0 && (
-        <p className="text-xs text-cream/35 italic">No changes marked as no longer needed.</p>
+      {allChanges.length === 0 && !showAddForm && (
+        <div className="rounded-lg border border-dashed border-cream/12 px-4 py-6 text-center">
+          <p className="text-sm text-cream/55 mb-1">No changes yet</p>
+          <p className="text-xs text-cream/40">When something changes — a moved outlet, a new material, an updated plan — log it here.</p>
+        </div>
       )}
 
       {/* Changes list */}
-      {visibleChanges.length > 0 && (
+      {allChanges.length > 0 && (
         <div className="space-y-1.5">
-          {visibleChanges.map((change) => renderCollapsedRow(change))}
+          {allChanges.map((change) => renderCollapsedRow(change))}
         </div>
       )}
     </div>
   )
-}
+})

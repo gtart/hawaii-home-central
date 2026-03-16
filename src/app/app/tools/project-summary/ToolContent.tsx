@@ -8,7 +8,6 @@ import { CollapsibleCommentSidebar, type CommentSidebarHandle } from '@/componen
 import type { RefEntity } from '@/components/app/CommentThread'
 import { useComments } from '@/hooks/useComments'
 import { useProjectSummaryState } from './useProjectSummaryState'
-import { AcceptedChangesSection } from './components/AcceptedChangesSection'
 import { DocumentsSection } from './components/DocumentsSection'
 import { ChangesSection } from './components/ChangesSection'
 import { MilestoneTimeline } from './components/MilestoneTimeline'
@@ -28,6 +27,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
   const router = useRouter()
   const [titleOverride, setTitleOverride] = useState<string | null>(null)
   const commentSidebarRef = useRef<CommentSidebarHandle>(null)
+  const changesSectionRef = useRef<{ scrollToAndAdd: () => void; scrollToChange: (id: string) => void }>(null)
   const searchParams = useSearchParams()
 
   const handleRename = useCallback(async (newTitle: string) => {
@@ -93,9 +93,17 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     commentSidebarRef.current?.toggle()
   }, [])
 
-  // Compute budget totals: baseline + confirmed + pending change costs
   const CONFIRMED_STATUSES = new Set(['approved_by_homeowner', 'accepted_by_contractor', 'done'])
-  const PENDING_STATUSES = new Set(['requested', 'awaiting_homeowner'])
+  const PENDING_STATUSES_SET = new Set(['requested', 'awaiting_homeowner'])
+
+  const confirmedChanges = useMemo(
+    () => payload.changes
+      .filter((c) => CONFIRMED_STATUSES.has(c.status))
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
+    [payload.changes]
+  )
+
+  // Compute budget totals: baseline + confirmed + pending change costs
 
   const budgetSummary = useMemo(() => {
     // Parse a dollar string like "$85,000", "+$2,500", "-$1,000", "2500" into a number
@@ -121,7 +129,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       if (CONFIRMED_STATUSES.has(c.status)) {
         confirmedTotal += amt
         hasConfirmed = true
-      } else if (PENDING_STATUSES.has(c.status)) {
+      } else if (PENDING_STATUSES_SET.has(c.status)) {
         pendingTotal += amt
         hasPending = true
       }
@@ -248,7 +256,21 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
           <div className="rounded-xl border border-cream/10 bg-stone-50/30 p-5 md:p-6 space-y-8">
             {/* Scope of Work */}
             <div>
-              <label className="text-xs font-semibold text-cream/65 uppercase tracking-wider block mb-2">Scope of Work</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-semibold text-cream/65 uppercase tracking-wider">Scope of Work</label>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={() => changesSectionRef.current?.scrollToAndAdd()}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-sandstone/70 hover:text-sandstone bg-sandstone/8 hover:bg-sandstone/12 transition-colors"
+                  >
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                    </svg>
+                    Add a change
+                  </button>
+                )}
+              </div>
               <InlineEdit
                 value={payload.plan.scope}
                 onSave={(text) => api.updatePlanScope(text)}
@@ -264,13 +286,50 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
                   {payload.plan.updated_by && ` by ${payload.plan.updated_by}`}
                 </p>
               )}
+
+              {/* ── Confirmed amendments — inline under scope ── */}
+              {confirmedChanges.length > 0 && (
+                <div className="mt-4 border-t border-cream/8 pt-3 space-y-3">
+                  {confirmedChanges.map((change) => (
+                    <div key={change.id} className="group">
+                      <div className="flex items-start gap-2">
+                        <span className="text-emerald-400/60 text-xs font-medium shrink-0 mt-0.5">Added to Plan:</span>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm text-cream/85 font-medium">{change.title}</span>
+                          {change.description && (
+                            <p className="text-sm text-cream/65 leading-relaxed mt-0.5">{change.description}</p>
+                          )}
+                          <div className="flex items-center gap-3 mt-1 flex-wrap">
+                            {change.cost_impact && (
+                              <span className="text-[11px] text-cream/50 tabular-nums">{change.cost_impact}</span>
+                            )}
+                            {change.schedule_impact && (
+                              <span className="text-[11px] text-cream/50">Est. {change.schedule_impact}</span>
+                            )}
+                            <span className="text-[10px] text-cream/35 tabular-nums">
+                              {new Date(change.updated_at || change.created_at).toLocaleDateString()}
+                              {(change.updated_by || change.created_by) && ` · ${change.updated_by || change.created_by}`}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => changesSectionRef.current?.scrollToChange(change.id)}
+                              className="text-[10px] text-sandstone/50 hover:text-sandstone transition-colors md:opacity-0 md:group-hover:opacity-100"
+                            >
+                              View details →
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Budget + Estimated End Date */}
             <div className="flex flex-wrap gap-6">
               <div className="flex-1 min-w-[160px]">
                 <label className="text-[10px] text-cream/50 uppercase tracking-wider block mb-1">Budget</label>
-                {/* Total */}
                 {budgetSummary.totalFormatted ? (
                   <span className="text-sm text-cream/85 tabular-nums font-medium block">{budgetSummary.totalFormatted}</span>
                 ) : (
@@ -283,7 +342,6 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
                     className="text-sm"
                   />
                 )}
-                {/* Breakdown: base + confirmed + pending */}
                 {budgetSummary.totalFormatted && (
                   <div className="mt-1 space-y-0.5">
                     <div className="flex items-center gap-2">
@@ -330,15 +388,13 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
               </div>
             </div>
 
-            {/* Changes added to plan */}
-            <AcceptedChangesSection api={api} />
-
             {/* Plan's Files */}
             <DocumentsSection api={api} />
           </div>
 
-          {/* ═══ PENDING CHANGES — outside the plan group ═══ */}
+          {/* ═══ CHANGE LOG — all changes with full editing ═══ */}
           <ChangesSection
+            ref={changesSectionRef}
             api={api}
             commentCounts={commentCounts}
             focusEntryId={focusTarget?.section === 'changes' ? focusTarget.entryId : undefined}
