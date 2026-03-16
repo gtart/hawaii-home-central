@@ -18,6 +18,107 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'])
+const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif'])
+
+function isImageFile(row: { mimeType?: string; url?: string; label?: string }): boolean {
+  if (row.mimeType && IMAGE_MIMES.has(row.mimeType)) return true
+  const name = row.url || row.label || ''
+  const ext = name.toLowerCase().match(/\.[^.?#]+/)?.[0]
+  return ext ? IMAGE_EXTS.has(ext) : false
+}
+
+function isPdfFile(row: { mimeType?: string; url?: string; label?: string }): boolean {
+  if (row.mimeType === 'application/pdf') return true
+  const name = row.url || row.label || ''
+  return /\.pdf(\?|$)/i.test(name)
+}
+
+function isDocFile(row: { mimeType?: string; url?: string; label?: string }): boolean {
+  const docMimes = new Set([
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  ])
+  if (row.mimeType && docMimes.has(row.mimeType)) return true
+  const name = row.url || row.label || ''
+  return /\.(docx?|xlsx?|pptx?)(\?|$)/i.test(name)
+}
+
+/** Renders a thumbnail for images, or a type-specific icon for PDF/Doc/generic files */
+function FileIcon({ row, size = 'md' }: { row: FileRow; size?: 'sm' | 'md' }) {
+  const dim = size === 'sm' ? 'w-8 h-8' : 'w-10 h-10'
+  const iconDim = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'
+
+  if (row.contentType === 'text') {
+    return (
+      <div className={`${dim} rounded bg-sandstone/8 flex items-center justify-center shrink-0`}>
+        <svg className={`${iconDim} text-sandstone/50`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+    )
+  }
+
+  if (row.contentType === 'link') {
+    return (
+      <div className={`${dim} rounded bg-cream/5 flex items-center justify-center shrink-0`}>
+        <svg className={`${iconDim} text-cream/35`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+    )
+  }
+
+  // Image → thumbnail
+  if (isImageFile(row) && row.url) {
+    return (
+      <div className={`${dim} rounded overflow-hidden bg-stone-200 shrink-0`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={row.url}
+          alt={row.label}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      </div>
+    )
+  }
+
+  // PDF
+  if (isPdfFile(row)) {
+    return (
+      <div className={`${dim} rounded bg-red-500/8 flex items-center justify-center shrink-0`}>
+        <span className="text-[9px] font-bold text-red-400/70 uppercase tracking-wide">PDF</span>
+      </div>
+    )
+  }
+
+  // Office docs
+  if (isDocFile(row)) {
+    return (
+      <div className={`${dim} rounded bg-blue-500/8 flex items-center justify-center shrink-0`}>
+        <span className="text-[9px] font-bold text-blue-400/70 uppercase tracking-wide">DOC</span>
+      </div>
+    )
+  }
+
+  // Generic file
+  return (
+    <div className={`${dim} rounded bg-cream/5 flex items-center justify-center shrink-0`}>
+      <svg className={`${iconDim} text-cream/30`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  )
+}
+
 /** Unified row: either a real SummaryDocument or a change-attachment reference */
 interface FileRow {
   id: string
@@ -333,20 +434,25 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
                   onClick={() => row.docId ? setSelectedDocId(row.docId) : undefined}
                 >
                   <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-sm text-cream/80 truncate">{row.label}</span>
-                      {row.contentType === 'text' && (
-                        <span className="text-[9px] px-1 py-0.5 rounded bg-sandstone/10 text-sandstone/60 shrink-0">Text</span>
-                      )}
-                      {row.sourceChangeTitle && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-cream/5 text-cream/35 shrink-0 truncate max-w-[160px]" title={`From: ${row.sourceChangeTitle}`}>
-                          From: {row.sourceChangeTitle}
-                        </span>
-                      )}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <FileIcon row={row} size="md" />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-cream/80 truncate">{row.label}</span>
+                          {row.contentType === 'text' && (
+                            <span className="text-[9px] px-1 py-0.5 rounded bg-sandstone/10 text-sandstone/60 shrink-0">Text</span>
+                          )}
+                          {row.sourceChangeTitle && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-cream/5 text-cream/35 shrink-0 truncate max-w-[160px]" title={`From: ${row.sourceChangeTitle}`}>
+                              From: {row.sourceChangeTitle}
+                            </span>
+                          )}
+                        </div>
+                        {row.contentType === 'text' && row.body && (
+                          <p className="text-[10px] text-cream/35 mt-0.5 line-clamp-1">{row.body}</p>
+                        )}
+                      </div>
                     </div>
-                    {row.contentType === 'text' && row.body && (
-                      <p className="text-[10px] text-cream/35 mt-0.5 line-clamp-1">{row.body}</p>
-                    )}
                   </td>
                   <td className="px-4 py-2.5 whitespace-nowrap">
                     <span className="text-[11px] text-cream/40 tabular-nums">
@@ -389,7 +495,8 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
                 className="px-4 py-3 group"
                 onClick={() => row.docId ? setSelectedDocId(row.docId) : undefined}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <FileIcon row={row} size="sm" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm text-cream/80 truncate">{row.label}</span>
