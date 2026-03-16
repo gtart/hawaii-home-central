@@ -20,6 +20,8 @@ export interface FocusTarget {
   entryId: string
 }
 
+const ADDED_STATUSES = new Set(['approved_by_homeowner', 'accepted_by_contractor', 'done'])
+
 function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
   const api = useProjectSummaryState({ collectionId })
   const { payload, isLoaded, isSyncing, access, readOnly, noAccess, title: collectionTitle } = api
@@ -90,6 +92,21 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
   const handleOpenComments = useCallback(() => {
     commentSidebarRef.current?.toggle()
   }, [])
+
+  // Compute estimated end date from accepted changes' schedule_impact
+  const estimatedEndDate = useMemo(() => {
+    const acceptedChanges = payload.changes.filter((c) => ADDED_STATUSES.has(c.status))
+    // Look for the latest schedule impact that looks like a date or "+X weeks/months"
+    let latestWeeks = 0
+    for (const c of acceptedChanges) {
+      if (!c.schedule_impact) continue
+      const weeksMatch = c.schedule_impact.match(/\+?\s*(\d+)\s*week/i)
+      const monthsMatch = c.schedule_impact.match(/\+?\s*(\d+)\s*month/i)
+      if (weeksMatch) latestWeeks = Math.max(latestWeeks, parseInt(weeksMatch[1]))
+      if (monthsMatch) latestWeeks = Math.max(latestWeeks, parseInt(monthsMatch[1]) * 4)
+    }
+    return latestWeeks > 0 ? `+${latestWeeks} week${latestWeeks !== 1 ? 's' : ''}` : null
+  }, [payload.changes])
 
   if (!isLoaded) {
     return (
@@ -162,34 +179,76 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
 
       <div className="md:flex md:gap-6 md:items-start">
         <div className="flex-1 min-w-0 space-y-10">
-          {/* Scope of Work */}
-          <div>
-            <label className="text-xs font-semibold text-cream/50 uppercase tracking-wider block mb-2">Scope of Work</label>
-            <InlineEdit
-              value={payload.plan.scope}
-              onSave={(text) => api.updatePlanScope(text)}
-              placeholder="What are you renovating? e.g. 'Full kitchen and master bath remodel'"
-              readOnly={readOnly}
-              multiline
-              displayClassName="text-sm text-cream/65 leading-relaxed"
-              className="text-sm leading-relaxed"
-            />
+          {/* ═══ THE PLAN — bordered visual group ═══ */}
+          <div className="rounded-xl border border-cream/10 bg-stone-50/30 p-5 md:p-6 space-y-8">
+            {/* Scope of Work */}
+            <div>
+              <label className="text-xs font-semibold text-cream/50 uppercase tracking-wider block mb-2">Scope of Work</label>
+              <InlineEdit
+                value={payload.plan.scope}
+                onSave={(text) => api.updatePlanScope(text)}
+                placeholder="What are you renovating? e.g. 'Full kitchen and master bath remodel'"
+                readOnly={readOnly}
+                multiline
+                displayClassName="text-sm text-cream/65 leading-relaxed"
+                className="text-sm leading-relaxed"
+              />
+              {payload.plan.updated_at && (
+                <p className="text-[10px] text-cream/25 mt-1.5">
+                  Last modified {new Date(payload.plan.updated_at).toLocaleDateString()}
+                  {payload.plan.approved_by && ` by ${payload.plan.approved_by}`}
+                </p>
+              )}
+            </div>
+
+            {/* Budget + Estimated End Date */}
+            <div className="flex flex-wrap gap-6">
+              <div className="flex-1 min-w-[140px]">
+                <label className="text-[10px] text-cream/35 uppercase tracking-wider block mb-1">Budget</label>
+                <InlineEdit
+                  value={payload.budget.baseline_amount || ''}
+                  onSave={(v) => api.updateBudget({ baseline_amount: v || undefined })}
+                  placeholder="e.g. $85,000"
+                  readOnly={readOnly}
+                  displayClassName="text-sm text-cream/70 tabular-nums"
+                  className="text-sm"
+                />
+                {(payload.budget.budget_note || !readOnly) && (
+                  <InlineEdit
+                    value={payload.budget.budget_note || ''}
+                    onSave={(v) => api.updateBudget({ budget_note: v || undefined })}
+                    placeholder="Budget notes..."
+                    readOnly={readOnly}
+                    displayClassName="text-[10px] text-cream/35 mt-0.5"
+                    className="text-[10px] mt-0.5"
+                  />
+                )}
+              </div>
+              <div className="min-w-[140px]">
+                <label className="text-[10px] text-cream/35 uppercase tracking-wider block mb-1">Estimated End Date</label>
+                {estimatedEndDate ? (
+                  <span className="text-sm text-cream/70">{estimatedEndDate} from accepted changes</span>
+                ) : (
+                  <span className="text-sm text-cream/35 italic">No timeline data yet</span>
+                )}
+              </div>
+            </div>
+
+            {/* Changes added to plan */}
+            <AcceptedChangesSection api={api} />
+
+            {/* Plan's Files */}
+            <DocumentsSection api={api} />
           </div>
 
-          {/* Zone 1 — Changes added to plan (read-only, inline with scope) */}
-          <AcceptedChangesSection api={api} />
-
-          {/* Zone 2 — Plan's Files */}
-          <DocumentsSection api={api} />
-
-          {/* Zone 3 — Pending Change Requests + No Longer Needed */}
+          {/* ═══ PENDING CHANGES — outside the plan group ═══ */}
           <ChangesSection
             api={api}
             commentCounts={commentCounts}
             focusEntryId={focusTarget?.section === 'changes' ? focusTarget.entryId : undefined}
           />
 
-          {/* Zone 4 — History */}
+          {/* ═══ HISTORY ═══ */}
           <MilestoneTimeline milestones={payload.milestones} />
 
           {/* Disclaimer — bottom, quiet */}

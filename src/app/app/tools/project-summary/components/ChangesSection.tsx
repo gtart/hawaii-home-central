@@ -292,11 +292,11 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
                 )}
                 {(change.schedule_impact || !readOnly) && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-cream/25">Timeline:</span>
+                    <span className="text-[10px] text-cream/25">Est. end date:</span>
                     <InlineEdit
                       value={change.schedule_impact || ''}
                       onSave={(v) => updateChange(change.id, { schedule_impact: v || undefined })}
-                      placeholder="e.g. +2 weeks"
+                      placeholder="e.g. June 2026"
                       readOnly={readOnly}
                       displayClassName="text-[10px] text-cream/45"
                       className="text-[10px]"
@@ -482,18 +482,6 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
             )}
           </button>
         </div>
-        {!readOnly && !showAddForm && (
-          <button
-            type="button"
-            onClick={() => setShowAddForm(true)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-sandstone/70 hover:text-sandstone bg-sandstone/8 hover:bg-sandstone/12 transition-colors"
-          >
-            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-            </svg>
-            Add Change
-          </button>
-        )}
       </div>
 
       {uploadError && (
@@ -532,8 +520,8 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
               <input type="text" value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="e.g. +$2,500" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30 w-28" />
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-cream/25">Timeline:</span>
-              <input type="text" value={newTimeline} onChange={(e) => setNewTimeline(e.target.value)} placeholder="e.g. +2 weeks" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30 w-28" />
+              <span className="text-[10px] text-cream/25">Est. end date:</span>
+              <input type="text" value={newTimeline} onChange={(e) => setNewTimeline(e.target.value)} placeholder="e.g. June 2026" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30 w-28" />
             </div>
           </div>
           <div className="flex items-start gap-2 flex-wrap">
