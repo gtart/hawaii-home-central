@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useMemo, useRef } from 'react'
-import { CHANGE_LOG_STATUS_CONFIG, toChangeLogStatus } from '../constants'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { CHANGE_LOG_STATUS_CONFIG, CHANGE_LOG_STATUS_ORDER, toChangeLogStatus } from '../constants'
 import type { ChangeLogStatus } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
 import { InlineEdit } from './InlineEdit'
+import { StatusBadge } from './StatusBadge'
 import { uploadProjectSummaryFile } from '../uploadProjectSummaryFile'
 
 interface AcceptedChangesSectionProps {
@@ -17,7 +18,70 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-const ADDED_STATUSES = new Set(['approved_by_homeowner', 'accepted_by_contractor', 'done'])
+const ACTIVE_STATUSES = new Set(['requested', 'awaiting_homeowner', 'approved_by_homeowner', 'accepted_by_contractor', 'done'])
+
+/** Inline status dropdown for the plan section */
+function PlanStatusDropdown({
+  status,
+  onChange,
+  readOnly,
+}: {
+  status: ChangeLogStatus
+  onChange: (status: ChangeLogStatus) => void
+  readOnly?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  const config = CHANGE_LOG_STATUS_CONFIG[status]
+
+  return (
+    <div className="relative" ref={ref}>
+      <StatusBadge
+        label={config.label}
+        color={config.color}
+        bgColor={config.bgColor}
+        onClick={readOnly ? undefined : () => setOpen(!open)}
+        readOnly={readOnly}
+      />
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 min-w-[160px] rounded-lg border border-cream/15 bg-basalt shadow-xl py-1">
+          {CHANGE_LOG_STATUS_ORDER.map((s) => {
+            const cfg = CHANGE_LOG_STATUS_CONFIG[s]
+            const isActive = s === status
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (s !== status) onChange(s)
+                  setOpen(false)
+                }}
+                className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors ${
+                  isActive ? 'bg-stone-200' : 'hover:bg-stone-hover'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${cfg.bgColor} ${isActive ? 'ring-1 ring-cream/35' : ''}`} />
+                <span className={cfg.color}>{cfg.label}</span>
+                {isActive && <span className="text-cream/35 ml-auto text-[10px]">Current</span>}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
   const { payload, readOnly, updateChange, addChange, addChangeAttachment, removeChangeAttachment } = api
@@ -36,9 +100,9 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const uploadForChangeId = useRef<string | null>(null)
 
-  const acceptedChanges = useMemo(
+  const activeChanges = useMemo(
     () => payload.changes
-      .filter((c) => ADDED_STATUSES.has(c.status))
+      .filter((c) => ACTIVE_STATUSES.has(c.status))
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
     [payload.changes]
   )
@@ -47,7 +111,7 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
     if (!newTitle.trim()) return
     addChange({
       title: newTitle.trim(),
-      status: 'approved_by_homeowner',
+      status: 'requested',
     })
     setNewTitle('')
     setShowAddForm(false)
@@ -126,9 +190,9 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
       {/* Section header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-xs font-semibold text-cream/65 uppercase tracking-wider">Changes Added to Plan</h2>
-          {acceptedChanges.length > 0 && (
-            <span className="text-[10px] text-cream/30 tabular-nums">{acceptedChanges.length}</span>
+          <h2 className="text-xs font-semibold text-cream/65 uppercase tracking-wider">Changes</h2>
+          {activeChanges.length > 0 && (
+            <span className="text-[10px] text-cream/30 tabular-nums">{activeChanges.length}</span>
           )}
         </div>
         {!readOnly && (
@@ -166,8 +230,8 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
       )}
 
       {/* Empty state */}
-      {acceptedChanges.length === 0 && !showAddForm && (
-        <p className="text-xs text-cream/40 italic">No changes added to the plan yet.</p>
+      {activeChanges.length === 0 && !showAddForm && (
+        <p className="text-xs text-cream/40 italic">No changes yet.</p>
       )}
 
       {uploadError && (
@@ -175,9 +239,9 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
       )}
 
       {/* Changes list */}
-      {acceptedChanges.length > 0 && (
+      {activeChanges.length > 0 && (
         <div className="space-y-2">
-          {acceptedChanges.map((change) => {
+          {activeChanges.map((change) => {
             const isExpanded = expandedId === change.id
             const attachments = change.attachments || []
 
@@ -210,9 +274,16 @@ export function AcceptedChangesSection({ api }: AcceptedChangesSectionProps) {
                     />
                   </div>
 
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${CHANGE_LOG_STATUS_CONFIG[toChangeLogStatus(change.status)].bgColor} ${CHANGE_LOG_STATUS_CONFIG[toChangeLogStatus(change.status)].color}`}>
-                    {CHANGE_LOG_STATUS_CONFIG[toChangeLogStatus(change.status)].label}
-                  </span>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <PlanStatusDropdown
+                      status={toChangeLogStatus(change.status)}
+                      onChange={(s) => {
+                        const storageStatus = CHANGE_LOG_STATUS_CONFIG[s].storageStatus
+                        updateChange(change.id, { status: storageStatus })
+                      }}
+                      readOnly={readOnly}
+                    />
+                  </div>
 
                   {change.cost_impact && (
                     <span className="text-[10px] text-cream/50 shrink-0 tabular-nums">{change.cost_impact}</span>

@@ -86,37 +86,18 @@ function formatCostDisplay(cost: string): string {
   return trimmed
 }
 
-type Tab = 'pending' | 'closed'
-
 const PENDING_STATUSES = new Set(['requested', 'awaiting_homeowner'])
 const ADDED_STATUSES = new Set(['approved_by_homeowner', 'accepted_by_contractor', 'done'])
 
 export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSectionProps) {
-  const { payload, readOnly, addChange, updateChange, deleteChange, addChangeAttachment } = api
+  const { payload, readOnly, updateChange, deleteChange, addChangeAttachment } = api
   const { changes } = payload
-  const [activeTab, setActiveTab] = useState<Tab>('pending')
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [newTitle, setNewTitle] = useState('')
-  const [newNotes, setNewNotes] = useState('')
-  const [newCost, setNewCost] = useState('')
-  const [newTimeline, setNewTimeline] = useState('')
-  const [newStatus, setNewStatus] = useState<ChangeLogStatus>('pending')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [uploadingChangeId, setUploadingChangeId] = useState<string | null>(null)
-  const [isUploadingNew, setIsUploadingNew] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const changeFileInputRef = useRef<HTMLInputElement>(null)
-  const newChangeFileInputRef = useRef<HTMLInputElement>(null)
   const focusRef = useRef<HTMLDivElement>(null)
-  const [newAttachments, setNewAttachments] = useState<Array<{ url: string; label: string; fileName: string; fileSize: number; mimeType: string }>>([])
-
-  const pendingChanges = useMemo(
-    () => changes
-      .filter((c) => PENDING_STATUSES.has(c.status))
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
-    [changes]
-  )
 
   const closedChanges = useMemo(
     () => changes
@@ -136,64 +117,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
     }
   }, [focusEntryId, changes])
 
-  function handleAdd() {
-    if (!newTitle.trim() || isUploadingNew) return
-    const storageStatus = CHANGE_LOG_STATUS_CONFIG[newStatus].storageStatus
-    const changeId = addChange({
-      title: newTitle.trim(),
-      description: newNotes.trim() || undefined,
-      status: storageStatus,
-      cost_impact: newCost.trim() || undefined,
-      schedule_impact: newTimeline.trim() || undefined,
-    })
-    if (changeId && newAttachments.length > 0) {
-      for (const att of newAttachments) {
-        addChangeAttachment(changeId, {
-          type: 'file',
-          url: att.url,
-          label: att.label,
-          fileName: att.fileName,
-          fileSize: att.fileSize,
-          mimeType: att.mimeType,
-          uploadedAt: new Date().toISOString(),
-        })
-      }
-    }
-    resetAddForm()
-  }
-
-  function resetAddForm() {
-    setShowAddForm(false)
-    setNewTitle('')
-    setNewNotes('')
-    setNewCost('')
-    setNewTimeline('')
-    setNewStatus('pending')
-    setNewAttachments([])
-  }
-
-  async function handleNewChangeFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setIsUploadingNew(true)
-    try {
-      const result = await uploadProjectSummaryFile(file)
-      setNewAttachments((prev) => [...prev, {
-        url: result.url,
-        label: file.name.replace(/\.[^.]+$/, ''),
-        fileName: result.fileName,
-        fileSize: result.fileSize,
-        mimeType: result.mimeType,
-      }])
-    } catch (err) {
-      setUploadError(err instanceof Error ? err.message : 'Upload failed')
-    } finally {
-      setIsUploadingNew(false)
-      if (newChangeFileInputRef.current) newChangeFileInputRef.current.value = ''
-    }
-  }
-
-  const visibleChanges = activeTab === 'pending' ? pendingChanges : closedChanges
+  const visibleChanges = closedChanges
 
   function renderCollapsedRow(change: typeof changes[0]) {
     const isExpanded = expandedId === change.id
@@ -441,46 +365,13 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
           }
         }}
       />
-      <input
-        ref={newChangeFileInputRef}
-        type="file"
-        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.heic,.heif,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf"
-        className="hidden"
-        onChange={handleNewChangeFileUpload}
-      />
-
-      {/* Section header + tabs */}
+      {/* Section header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-1">
-          <h2 className="text-xs font-semibold text-cream/65 uppercase tracking-wider mr-2">Changes pending your review</h2>
-          <button
-            type="button"
-            onClick={() => setActiveTab('pending')}
-            className={`text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded transition-colors ${
-              activeTab === 'pending'
-                ? 'text-cream/70 bg-cream/5'
-                : 'text-cream/45 hover:text-cream/60'
-            }`}
-          >
-            Pending
-            {pendingChanges.length > 0 && (
-              <span className="ml-1 text-[10px] font-normal tabular-nums">{pendingChanges.length}</span>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('closed')}
-            className={`text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded transition-colors ${
-              activeTab === 'closed'
-                ? 'text-cream/70 bg-cream/5'
-                : 'text-cream/45 hover:text-cream/60'
-            }`}
-          >
-            No Longer Needed
-            {closedChanges.length > 0 && (
-              <span className="ml-1 text-[10px] font-normal tabular-nums">{closedChanges.length}</span>
-            )}
-          </button>
+        <div className="flex items-center gap-2">
+          <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider">No Longer Needed</h2>
+          {closedChanges.length > 0 && (
+            <span className="text-[10px] text-cream/35 tabular-nums">{closedChanges.length}</span>
+          )}
         </div>
       </div>
 
@@ -488,78 +379,9 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
         <p className="text-[11px] text-red-400/70">{uploadError}</p>
       )}
 
-      {/* Add form */}
-      {showAddForm && !readOnly && (
-        <div className="p-4 rounded-lg border border-cream/12 bg-stone-50 space-y-3">
-          <input
-            type="text"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            placeholder="What changed?"
-            className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2.5 text-sm text-cream/90 placeholder-cream/30 outline-none focus:border-sandstone/30"
-            autoFocus
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleAdd(); if (e.key === 'Escape') resetAddForm() }}
-          />
-          <div>
-            <span className="text-[10px] text-cream/40 block mb-0.5">Change request</span>
-            <textarea
-              value={newNotes}
-              onChange={(e) => setNewNotes(e.target.value)}
-              rows={2}
-              className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-xs text-cream/75 placeholder-cream/35 outline-none focus:border-sandstone/30 resize-none"
-            />
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <div onClick={(e) => e.stopPropagation()}>
-              <StatusDropdown status={newStatus} onChange={(s) => setNewStatus(s)} />
-            </div>
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-cream/40">Cost:</span>
-              <input type="text" value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="e.g. +$2,500" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/75 placeholder-cream/35 outline-none focus:border-sandstone/30 w-28" />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-cream/40">Est. end date:</span>
-              <input type="text" value={newTimeline} onChange={(e) => setNewTimeline(e.target.value)} placeholder="e.g. June 2026" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/75 placeholder-cream/35 outline-none focus:border-sandstone/30 w-28" />
-            </div>
-          </div>
-          <div className="flex items-start gap-2 flex-wrap">
-            {newAttachments.map((att, i) => (
-              <span key={i} className="inline-flex items-center gap-1 text-[10px] text-cream/45 bg-stone-200 px-2 py-1 rounded">
-                <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <span className="truncate max-w-[120px]">{att.label}</span>
-                <button type="button" onClick={() => setNewAttachments((prev) => prev.filter((_, idx) => idx !== i))} className="text-cream/30 hover:text-cream/50 transition-colors ml-0.5">
-                  <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </button>
-              </span>
-            ))}
-            <button type="button" onClick={() => newChangeFileInputRef.current?.click()} disabled={isUploadingNew} className="inline-flex items-center gap-1.5 text-[10px] text-cream/30 hover:text-cream/50 bg-stone-200 hover:bg-stone-hover px-2 py-1 rounded transition-colors disabled:opacity-50">
-              {isUploadingNew ? <div className="w-3 h-3 border border-cream/20 border-t-cream/50 rounded-full animate-spin" /> : <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" strokeLinecap="round" /></svg>}
-              {isUploadingNew ? 'Uploading...' : 'Attach file'}
-            </button>
-          </div>
-          <div className="flex gap-2 justify-end pt-1">
-            <button type="button" onClick={resetAddForm} className="px-3 py-1.5 text-xs text-cream/45 hover:text-cream/60 transition-colors">Cancel</button>
-            <button type="button" onClick={handleAdd} disabled={!newTitle.trim() || isUploadingNew} className="px-4 py-1.5 text-xs bg-sandstone/15 text-sandstone hover:bg-sandstone/25 rounded-md transition-colors disabled:opacity-30">{isUploadingNew ? 'Uploading...' : 'Add'}</button>
-          </div>
-        </div>
-      )}
-
       {/* Empty state */}
-      {visibleChanges.length === 0 && !showAddForm && (
-        <div className="rounded-lg border border-dashed border-cream/12 px-4 py-6 text-center">
-          {activeTab === 'pending' ? (
-            <>
-              <p className="text-sm text-cream/55 mb-1">No pending changes</p>
-              <p className="text-xs text-cream/40">When something changes — a moved outlet, a new material, an updated plan — log it here.</p>
-            </>
-          ) : (
-            <p className="text-sm text-cream/45">No closed changes</p>
-          )}
-        </div>
+      {visibleChanges.length === 0 && (
+        <p className="text-xs text-cream/35 italic">No changes marked as no longer needed.</p>
       )}
 
       {/* Changes list */}
