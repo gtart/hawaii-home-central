@@ -48,7 +48,7 @@ export function DashboardToolGrid({
       {showSecondary && (
         <>
           <h2 className="text-[11px] uppercase tracking-wider text-cream/45 mb-3">
-            Getting Started
+            Planning &amp; Prep
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
             <DashboardCardMoodBoards data={data} isLoading={false} />

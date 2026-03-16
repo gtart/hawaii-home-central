@@ -44,12 +44,12 @@ export const STAGE_PICKER_OPTIONS: StagePickerOption[] = [
 /** Valid stage IDs for validation. */
 export const VALID_STAGE_IDS = STAGE_PICKER_OPTIONS.map((o) => o.id)
 
-/** Tool priority per stage — first tool is the primary recommendation. */
+/** Tool priority per stage — first tool is the primary recommendation. Core tools before secondary. */
 export const STAGE_TOOL_PRIORITY: Record<string, string[]> = {
-  plan: ['project_summary', 'mood_boards', 'finish_decisions', 'before_you_sign', 'punchlist'],
-  'hire-contract': ['before_you_sign', 'project_summary', 'mood_boards', 'finish_decisions', 'punchlist'],
-  'permits-schedule': ['project_summary', 'finish_decisions', 'before_you_sign', 'mood_boards', 'punchlist'],
-  'decide-order': ['finish_decisions', 'project_summary', 'mood_boards', 'before_you_sign', 'punchlist'],
+  plan: ['project_summary', 'finish_decisions', 'punchlist', 'mood_boards', 'before_you_sign'],
+  'hire-contract': ['project_summary', 'finish_decisions', 'punchlist', 'before_you_sign', 'mood_boards'],
+  'permits-schedule': ['project_summary', 'finish_decisions', 'punchlist', 'before_you_sign', 'mood_boards'],
+  'decide-order': ['finish_decisions', 'project_summary', 'punchlist', 'mood_boards', 'before_you_sign'],
   'build-closeout': ['punchlist', 'project_summary', 'finish_decisions', 'mood_boards', 'before_you_sign'],
 }
 

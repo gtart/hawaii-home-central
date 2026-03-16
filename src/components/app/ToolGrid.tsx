@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useProject } from '@/contexts/ProjectContext'
-import { VISIBLE_TOOL_REGISTRY } from '@/lib/tool-registry'
+import { CORE_TOOL_REGISTRY, SECONDARY_TOOL_REGISTRY } from '@/lib/tool-registry'
 import { getDashboardStats, isToolEmpty } from '@/lib/tool-stats'
+import type { ToolRegistryEntry } from '@/lib/tool-registry'
 
 interface ToolSummary {
   toolKey: string
@@ -44,6 +45,88 @@ function getInitials(name: string | null): string {
   return parts[0].slice(0, 2).toUpperCase()
 }
 
+function ToolRow({ tool, summary }: { tool: ToolRegistryEntry; summary?: ToolSummary }) {
+  const dashStats = getDashboardStats(tool.toolKey, summary?.stats)
+  const empty = isToolEmpty(tool.toolKey, summary?.stats)
+  const helperLine = HELPER_COPY[tool.toolKey]
+  const user = summary?.updatedBy
+
+  return (
+    <Link
+      href={tool.href}
+      className="group flex items-center gap-4 p-4 md:p-5 bg-basalt-50 rounded-card border border-cream/5 hover:border-sandstone/20 transition-colors"
+    >
+      {/* Left: title + description */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <h3 className="font-serif text-lg text-sandstone group-hover:text-sandstone-light transition-colors truncate">
+            {tool.title}
+          </h3>
+          <span className="hidden sm:inline text-[10px] uppercase tracking-wider text-cream/25 shrink-0">
+            {tool.stage}
+          </span>
+        </div>
+        {helperLine && (
+          <p className="text-cream/45 text-xs leading-relaxed line-clamp-1">{helperLine}</p>
+        )}
+
+        {/* Last activity line */}
+        <div className="flex items-center gap-2 text-[11px] text-cream/30 mt-1.5">
+          {summary ? (
+            <>
+              {user && (
+                <span className="inline-flex items-center gap-1">
+                  {user.image ? (
+                    <Image
+                      src={user.image}
+                      alt=""
+                      width={14}
+                      height={14}
+                      className="w-3.5 h-3.5 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="w-3.5 h-3.5 rounded-full bg-cream/10 flex items-center justify-center text-[8px] font-semibold text-cream/40">
+                      {getInitials(user.name)}
+                    </span>
+                  )}
+                  <span>{user.name || 'Someone'}</span>
+                </span>
+              )}
+              <span>{relativeTime(summary.updatedAt)}</span>
+            </>
+          ) : (
+            <span className="text-cream/20">Not started</span>
+          )}
+        </div>
+      </div>
+
+      {/* Right: stats or CTA */}
+      <div className="flex items-center gap-4 shrink-0">
+        {!empty && dashStats.length > 0 && (
+          <div className="hidden sm:flex gap-4">
+            {dashStats.map((s) => (
+              <div key={s.label} className="text-right">
+                <p className="text-xl font-semibold text-cream tabular-nums leading-tight">{s.value}</p>
+                <p className="text-[10px] text-cream/35 uppercase tracking-wide">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+        <span className={`inline-flex items-center px-4 py-2 text-xs font-medium rounded-button transition-colors ${
+          empty
+            ? 'bg-sandstone text-basalt group-hover:bg-sandstone-light'
+            : 'border border-sandstone/30 text-sandstone group-hover:bg-sandstone/10'
+        }`}>
+          {empty ? 'Start' : 'Continue'}
+        </span>
+        <svg className="w-4 h-4 text-cream/20 group-hover:text-cream/40 transition-colors hidden sm:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+    </Link>
+  )
+}
+
 export function ToolGrid() {
   const { currentProject } = useProject()
   const [summaries, setSummaries] = useState<ToolSummary[]>([])
@@ -63,15 +146,16 @@ export function ToolGrid() {
   }, [currentProject?.id])
 
   // Members: filter by explicit tool access. Owners: always see all tools.
-  const visibleTools = currentProject?.role === 'MEMBER' && currentProject.toolAccess
-    ? VISIBLE_TOOL_REGISTRY.filter((t) =>
-        currentProject.toolAccess!.some((a) => a.toolKey === t.toolKey)
-      )
-    : VISIBLE_TOOL_REGISTRY
+  const filterByAccess = (tools: ToolRegistryEntry[]) =>
+    currentProject?.role === 'MEMBER' && currentProject.toolAccess
+      ? tools.filter((t) => currentProject.toolAccess!.some((a) => a.toolKey === t.toolKey))
+      : tools
 
+  const coreTools = filterByAccess(CORE_TOOL_REGISTRY)
+  const secondaryTools = filterByAccess(SECONDARY_TOOL_REGISTRY)
   const summaryMap = new Map(summaries.map((s) => [s.toolKey, s]))
 
-  if (visibleTools.length === 0) {
+  if (coreTools.length === 0 && secondaryTools.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-cream/40 text-sm">
@@ -82,90 +166,27 @@ export function ToolGrid() {
   }
 
   return (
-    <div className="space-y-3">
-      {visibleTools.map((tool) => {
-        const summary = summaryMap.get(tool.toolKey)
-        const dashStats = getDashboardStats(tool.toolKey, summary?.stats)
-        const empty = isToolEmpty(tool.toolKey, summary?.stats)
-        const helperLine = HELPER_COPY[tool.toolKey]
-        const user = summary?.updatedBy
+    <div>
+      {/* Core tools */}
+      <div className="space-y-3">
+        {coreTools.map((tool) => (
+          <ToolRow key={tool.toolKey} tool={tool} summary={summaryMap.get(tool.toolKey)} />
+        ))}
+      </div>
 
-        return (
-          <Link
-            key={tool.toolKey}
-            href={tool.href}
-            className="group flex items-center gap-4 p-4 md:p-5 bg-basalt-50 rounded-card border border-cream/5 hover:border-sandstone/20 transition-colors"
-          >
-            {/* Left: title + description */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-0.5">
-                <h3 className="font-serif text-lg text-sandstone group-hover:text-sandstone-light transition-colors truncate">
-                  {tool.title}
-                </h3>
-                <span className="hidden sm:inline text-[10px] uppercase tracking-wider text-cream/25 shrink-0">
-                  {tool.stage}
-                </span>
-              </div>
-              {helperLine && (
-                <p className="text-cream/45 text-xs leading-relaxed line-clamp-1">{helperLine}</p>
-              )}
-
-              {/* Last activity line */}
-              <div className="flex items-center gap-2 text-[11px] text-cream/30 mt-1.5">
-                {summary ? (
-                  <>
-                    {user && (
-                      <span className="inline-flex items-center gap-1">
-                        {user.image ? (
-                          <Image
-                            src={user.image}
-                            alt=""
-                            width={14}
-                            height={14}
-                            className="w-3.5 h-3.5 rounded-full object-cover"
-                          />
-                        ) : (
-                          <span className="w-3.5 h-3.5 rounded-full bg-cream/10 flex items-center justify-center text-[8px] font-semibold text-cream/40">
-                            {getInitials(user.name)}
-                          </span>
-                        )}
-                        <span>{user.name || 'Someone'}</span>
-                      </span>
-                    )}
-                    <span>{relativeTime(summary.updatedAt)}</span>
-                  </>
-                ) : (
-                  <span className="text-cream/20">Not started</span>
-                )}
-              </div>
-            </div>
-
-            {/* Right: stats or CTA */}
-            <div className="flex items-center gap-4 shrink-0">
-              {!empty && dashStats.length > 0 && (
-                <div className="hidden sm:flex gap-4">
-                  {dashStats.map((s) => (
-                    <div key={s.label} className="text-right">
-                      <p className="text-xl font-semibold text-cream tabular-nums leading-tight">{s.value}</p>
-                      <p className="text-[10px] text-cream/35 uppercase tracking-wide">{s.label}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <span className={`inline-flex items-center px-4 py-2 text-xs font-medium rounded-button transition-colors ${
-                empty
-                  ? 'bg-sandstone text-basalt group-hover:bg-sandstone-light'
-                  : 'border border-sandstone/30 text-sandstone group-hover:bg-sandstone/10'
-              }`}>
-                {empty ? 'Start' : 'Continue'}
-              </span>
-              <svg className="w-4 h-4 text-cream/20 group-hover:text-cream/40 transition-colors hidden sm:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-          </Link>
-        )
-      })}
+      {/* Secondary tools */}
+      {secondaryTools.length > 0 && (
+        <div className="mt-8">
+          <p className="text-[10px] uppercase tracking-wider text-cream/35 mb-3">
+            Planning &amp; Prep
+          </p>
+          <div className="space-y-2">
+            {secondaryTools.map((tool) => (
+              <ToolRow key={tool.toolKey} tool={tool} summary={summaryMap.get(tool.toolKey)} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

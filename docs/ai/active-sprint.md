@@ -4,8 +4,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Sprint** | Public Positioning Reset Around Fix List |
-| **Sprint Doc** | `docs/ai/sprints/public-positioning-reset-fix-list.md` |
+| **Sprint** | Core Tool Hierarchy and Visibility Cleanup |
+| **Sprint Doc** | `docs/ai/sprints/core-tool-hierarchy-cleanup.md` |
 | **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-16 |
@@ -15,7 +15,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | All 5 issues implemented, build passes. Ready for Codex review. |
+| **Current Handoff** | All 4 issues implemented, build passes. Ready for Codex review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
@@ -40,6 +40,8 @@ When entering this repo, read in this order:
 ---
 
 ## Previous Sprints (Completed)
+- Public Positioning Reset Around Fix List (March 16, 2026) — `f487fd5`, `70311c9`
+- Change Log — Plan's Files & Change Attachments (March 15, 2026)
 - Change Log / Track Plans Follow-Up Polish (March 15, 2026) — `6594b04`
 - Change Log / Track Plans Cleanup (March 15, 2026) — `d48155f`
 - Homeowner Copy Correction (March 14, 2026) — `34f0d0f` (ready_for_codex)

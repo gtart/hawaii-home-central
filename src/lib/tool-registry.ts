@@ -12,9 +12,40 @@ export interface ToolRegistryEntry {
   stage: string
   /** If true, tool is hidden from user-facing grids/nav but remains in TOOL_LABELS/TOOL_PATHS for backward compat */
   hidden?: boolean
+  /** Core tools are surfaced prominently; non-core tools are accessible but secondary */
+  core?: boolean
 }
 
 export const TOOL_REGISTRY: ToolRegistryEntry[] = [
+  // Core tools — surfaced first and most prominently
+  {
+    toolKey: 'punchlist',
+    href: '/app/tools/punchlist',
+    title: 'Fix List',
+    description:
+      'Keep a running list of fix items and follow-ups during the build and final walkthrough.',
+    stage: 'Build',
+    core: true,
+  },
+  {
+    toolKey: 'finish_decisions',
+    href: '/app/tools/finish-decisions',
+    title: 'Selections',
+    description:
+      'Keep your renovation choices organized so finishes, fixtures, and notes stay in one place.',
+    stage: 'Choose Your Finishes',
+    core: true,
+  },
+  {
+    toolKey: 'project_summary',
+    href: '/app/tools/project-summary',
+    title: 'Plan & Changes',
+    description:
+      'Track your scope of work, plan changes, and cost impacts in one place.',
+    stage: 'Build',
+    core: true,
+  },
+  // Secondary tools — accessible but less prominent
   {
     toolKey: 'mood_boards',
     href: '/app/tools/mood-boards',
@@ -31,22 +62,7 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
       'Compare bids with a simple checklist so missing details are easier to spot.',
     stage: 'Select the Right Pro',
   },
-  {
-    toolKey: 'finish_decisions',
-    href: '/app/tools/finish-decisions',
-    title: 'Selections',
-    description:
-      'Keep your renovation choices organized so finishes, fixtures, and notes stay in one place.',
-    stage: 'Choose Your Finishes',
-  },
-  {
-    toolKey: 'punchlist',
-    href: '/app/tools/punchlist',
-    title: 'Fix List',
-    description:
-      'Keep a running list of fix items and follow-ups during the build and final walkthrough.',
-    stage: 'Build',
-  },
+  // Hidden tools — backward compat only
   {
     toolKey: 'project_alignment',
     href: '/app/tools/project-alignment',
@@ -56,18 +72,16 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
     stage: 'Build',
     hidden: true,
   },
-  {
-    toolKey: 'project_summary',
-    href: '/app/tools/project-summary',
-    title: 'Plan & Changes',
-    description:
-      'Track your scope of work, plan changes, and cost impacts in one place.',
-    stage: 'Build',
-  },
 ]
 
 /** Visible (non-hidden) tools for user-facing grids and navigation */
 export const VISIBLE_TOOL_REGISTRY = TOOL_REGISTRY.filter((t) => !t.hidden)
+
+/** Core tools only */
+export const CORE_TOOL_REGISTRY = TOOL_REGISTRY.filter((t) => t.core)
+
+/** Secondary (non-core, non-hidden) tools */
+export const SECONDARY_TOOL_REGISTRY = TOOL_REGISTRY.filter((t) => !t.core && !t.hidden)
 
 /** toolKey → user-facing title (e.g. "Fix List", "Selection Lists") */
 export const TOOL_LABELS: Record<string, string> = Object.fromEntries(

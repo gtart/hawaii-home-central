@@ -232,8 +232,8 @@ export function SidebarNav() {
           )
         })}
 
-        <p className="px-4 pt-4 pb-1 text-[10px] uppercase tracking-wider text-cream/40">
-          Getting Started
+        <p className="px-4 pt-4 pb-1 text-[10px] uppercase tracking-wider text-cream/30">
+          Planning &amp; Prep
         </p>
         {GETTING_STARTED_ITEMS.map((item) => {
           const active = isActive(pathname, item.href, item.matchMode)
@@ -241,10 +241,10 @@ export function SidebarNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm transition-colors ${
+              className={`flex items-center gap-3 px-4 py-2 mx-2 rounded-lg text-[13px] transition-colors ${
                 active
                   ? 'bg-sandstone/10 text-sandstone'
-                  : 'text-cream/50 hover:text-cream/70 hover:bg-cream/5'
+                  : 'text-cream/40 hover:text-cream/60 hover:bg-cream/5'
               }`}
             >
               {item.icon}

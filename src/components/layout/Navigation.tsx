@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import { UserMenu } from '@/components/auth/UserMenu'
 import { ProjectSwitcher } from '@/components/app/ProjectSwitcher'
-import { VISIBLE_TOOL_REGISTRY } from '@/lib/tool-registry'
+import { CORE_TOOL_REGISTRY, SECONDARY_TOOL_REGISTRY, VISIBLE_TOOL_REGISTRY } from '@/lib/tool-registry'
 import { useProjectOptional } from '@/contexts/ProjectContext'
 
 interface NavLink {
@@ -66,9 +66,11 @@ export function Navigation() {
 
   // Filter tools by activation state (empty array = all tools active)
   const activeKeys = projectCtx?.currentProject?.activeToolKeys ?? []
-  const navTools = activeKeys.length > 0
-    ? VISIBLE_TOOL_REGISTRY.filter((t) => activeKeys.includes(t.toolKey))
-    : VISIBLE_TOOL_REGISTRY
+  const filterByActive = (tools: typeof VISIBLE_TOOL_REGISTRY) =>
+    activeKeys.length > 0 ? tools.filter((t) => activeKeys.includes(t.toolKey)) : tools
+  const navTools = filterByActive(VISIBLE_TOOL_REGISTRY)
+  const navCoreTools = filterByActive(CORE_TOOL_REGISTRY)
+  const navSecondaryTools = filterByActive(SECONDARY_TOOL_REGISTRY)
 
   // Marketing nav for visitors, app nav for logged-in users
   const primaryLinks: NavLink[] = isLoggedIn
@@ -207,7 +209,7 @@ export function Navigation() {
                           </div>
                           {toolsOpen && (
                             <div className="absolute left-0 top-full mt-2 bg-basalt-50 border border-cream/10 rounded-card shadow-lg py-2 min-w-[200px]">
-                              {navTools.map((tool) => (
+                              {navCoreTools.map((tool) => (
                                 <Link
                                   key={tool.toolKey}
                                   href={tool.href}
@@ -221,6 +223,25 @@ export function Navigation() {
                                   {tool.title}
                                 </Link>
                               ))}
+                              {navSecondaryTools.length > 0 && (
+                                <>
+                                  <div className="mx-3 my-1.5 border-t border-cream/8" />
+                                  {navSecondaryTools.map((tool) => (
+                                    <Link
+                                      key={tool.toolKey}
+                                      href={tool.href}
+                                      className={cn(
+                                        'block px-4 py-2 text-sm transition-colors',
+                                        pathname.startsWith(tool.href)
+                                          ? 'text-sandstone'
+                                          : 'text-cream/50 hover:text-cream/70 hover:bg-cream/5'
+                                      )}
+                                    >
+                                      {tool.title}
+                                    </Link>
+                                  ))}
+                                </>
+                              )}
                             </div>
                           )}
                         </div>
@@ -443,7 +464,7 @@ export function Navigation() {
                         </button>
                         {mobileToolsOpen && (
                           <ul className="pl-8 pb-1 space-y-0.5">
-                            {navTools.map((tool) => (
+                            {navCoreTools.map((tool) => (
                               <li key={tool.toolKey}>
                                 <Link
                                   href={tool.href}
@@ -458,6 +479,26 @@ export function Navigation() {
                                 </Link>
                               </li>
                             ))}
+                            {navSecondaryTools.length > 0 && (
+                              <>
+                                <li className="mx-1 my-1 border-t border-cream/8" aria-hidden="true" />
+                                {navSecondaryTools.map((tool) => (
+                                  <li key={tool.toolKey}>
+                                    <Link
+                                      href={tool.href}
+                                      className={cn(
+                                        'block py-1.5 text-sm transition-colors',
+                                        pathname.startsWith(tool.href)
+                                          ? 'text-sandstone'
+                                          : 'text-cream/35 hover:text-cream/55'
+                                      )}
+                                    >
+                                      {tool.title}
+                                    </Link>
+                                  </li>
+                                ))}
+                              </>
+                            )}
                           </ul>
                         )}
                       </>
