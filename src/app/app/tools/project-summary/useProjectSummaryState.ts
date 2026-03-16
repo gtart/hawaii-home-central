@@ -962,6 +962,7 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
     conflictBanner: collResult.conflictBanner,
     viewOnlyAttempt: collResult.viewOnlyAttempt,
     collectionId: collResult.collectionId,
+    currentUserName,
     // Plan
     updatePlanScope,
     updatePlanStatus,

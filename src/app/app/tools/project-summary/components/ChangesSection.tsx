@@ -82,6 +82,40 @@ function StatusDropdown({
   )
 }
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'])
+function isImage(att: { mimeType?: string; url?: string }) {
+  if (att.mimeType && IMAGE_MIMES.has(att.mimeType)) return true
+  return /\.(jpg|jpeg|png|webp|gif|heic|heif)(\?|$)/i.test(att.url || '')
+}
+function isPdf(att: { mimeType?: string; url?: string }) {
+  return att.mimeType === 'application/pdf' || /\.pdf(\?|$)/i.test(att.url || '')
+}
+function isDoc(att: { mimeType?: string; url?: string }) {
+  return /\.(docx?|xlsx?|pptx?)(\?|$)/i.test(att.url || '')
+}
+
+function AttachmentIcon({ att }: { att: { type: string; mimeType?: string; url?: string; label: string } }) {
+  if (att.type === 'text') {
+    return <div className="w-8 h-8 rounded bg-sandstone/8 flex items-center justify-center shrink-0"><svg className="w-4 h-4 text-sandstone/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
+  }
+  if (isImage(att) && att.url) {
+    return <div className="w-8 h-8 rounded overflow-hidden bg-stone-200 shrink-0">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={att.url} alt={att.label} className="w-full h-full object-cover" loading="lazy" /></div>
+  }
+  if (isPdf(att)) {
+    return <div className="w-8 h-8 rounded bg-red-500/8 flex items-center justify-center shrink-0"><span className="text-[8px] font-bold text-red-400/70 uppercase">PDF</span></div>
+  }
+  if (isDoc(att)) {
+    return <div className="w-8 h-8 rounded bg-blue-500/8 flex items-center justify-center shrink-0"><span className="text-[8px] font-bold text-blue-400/70 uppercase">DOC</span></div>
+  }
+  return <div className="w-8 h-8 rounded bg-cream/5 flex items-center justify-center shrink-0"><svg className="w-4 h-4 text-cream/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" /><path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
+}
+
 /** Format cost display — prefix with $ if the user hasn't included a currency symbol */
 function formatCostDisplay(cost: string): string {
   const trimmed = cost.trim()
@@ -209,7 +243,7 @@ export const ChangesSection = forwardRef<ChangesSectionHandle, ChangesSectionPro
       <div className="pt-3 space-y-3">
         {/* Change request */}
         <div>
-          <span className="text-[10px] text-cream/40 block mb-0.5">Change request</span>
+          <span className="text-xs text-cream/50 block mb-0.5">Change request</span>
           <InlineEdit
             value={change.description || ''}
             onSave={(v) => updateChange(change.id, { description: v || undefined })}
@@ -224,59 +258,79 @@ export const ChangesSection = forwardRef<ChangesSectionHandle, ChangesSectionPro
         <div className="flex items-center gap-4 flex-wrap">
           {(change.cost_impact || !readOnly) && (
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-cream/40">Cost:</span>
+              <span className="text-xs text-cream/50">Cost:</span>
               <InlineEdit
                 value={change.cost_impact || ''}
                 onSave={(v) => updateChange(change.id, { cost_impact: v || undefined })}
                 placeholder="e.g. +$2,500"
                 readOnly={readOnly}
-                displayClassName="text-[10px] text-cream/50 tabular-nums"
+                displayClassName="text-xs text-cream/60 tabular-nums"
                 className="text-[10px]"
               />
             </div>
           )}
           {(change.schedule_impact || !readOnly) && (
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-cream/40">Est. end date:</span>
+              <span className="text-xs text-cream/50">Est. end date:</span>
               <InlineEdit
                 value={change.schedule_impact || ''}
                 onSave={(v) => updateChange(change.id, { schedule_impact: v || undefined })}
                 placeholder="e.g. June 2026"
                 readOnly={readOnly}
-                displayClassName="text-[10px] text-cream/50"
+                displayClassName="text-xs text-cream/60"
                 className="text-[10px]"
               />
             </div>
           )}
         </div>
 
-        {/* Attachments */}
+        {/* Attachments table */}
         {((change.attachments?.length || 0) > 0 || !readOnly) && (
-          <div className="flex items-start gap-2 flex-wrap">
-            {(change.attachments || []).map((att) => (
-              att.url ? (
-                <a key={att.id} href={att.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-cream/45 hover:text-cream/60 bg-stone-200 px-2 py-1 rounded transition-colors">
-                  <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  <span className="truncate max-w-[120px]">{att.label}</span>
-                </a>
-              ) : (
-                <span key={att.id} className="inline-flex items-center gap-1 text-[10px] text-cream/45 bg-stone-200 px-2 py-1 rounded">
-                  <svg className="w-2.5 h-2.5 shrink-0 text-sandstone/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  <span className="truncate max-w-[120px]">{att.label}</span>
-                </span>
-              )
-            ))}
-            {!readOnly && (
-              <button type="button" onClick={() => { setUploadingChangeId(change.id); setTimeout(() => changeFileInputRef.current?.click(), 0) }} disabled={uploadingChangeId === change.id} className="inline-flex items-center gap-1 text-[10px] text-cream/30 hover:text-cream/50 bg-stone-200 px-2 py-1 rounded transition-colors disabled:opacity-50">
-                {uploadingChangeId === change.id ? <div className="w-2.5 h-2.5 border border-cream/20 border-t-cream/50 rounded-full animate-spin" /> : <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" strokeLinecap="round" /></svg>}
-                {uploadingChangeId === change.id ? 'Uploading...' : 'Attach file'}
-              </button>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-cream/50">Files</span>
+              {!readOnly && (
+                <button type="button" onClick={() => { setUploadingChangeId(change.id); setTimeout(() => changeFileInputRef.current?.click(), 0) }} disabled={uploadingChangeId === change.id} className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs text-sandstone/60 hover:text-sandstone bg-sandstone/8 hover:bg-sandstone/12 transition-colors disabled:opacity-50">
+                  {uploadingChangeId === change.id ? <div className="w-3 h-3 border border-cream/20 border-t-cream/50 rounded-full animate-spin" /> : <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                  {uploadingChangeId === change.id ? 'Uploading...' : 'Upload'}
+                </button>
+              )}
+            </div>
+            {(change.attachments || []).length > 0 && (
+              <div className="rounded-lg border border-cream/10 divide-y divide-cream/6">
+                {(change.attachments || []).map((att) => (
+                  <div key={att.id} className="flex items-center gap-3 px-3 py-2">
+                    <AttachmentIcon att={att} />
+                    <div className="flex-1 min-w-0">
+                      {att.url ? (
+                        <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-sm text-cream/80 hover:text-cream/95 truncate block transition-colors">{att.label}</a>
+                      ) : (
+                        <span className="text-sm text-cream/80 truncate block">{att.label}</span>
+                      )}
+                      {att.type === 'text' && att.body && (
+                        <p className="text-xs text-cream/40 mt-0.5 line-clamp-1">{att.body}</p>
+                      )}
+                    </div>
+                    {att.uploadedAt && (
+                      <span className="text-xs text-cream/45 shrink-0 tabular-nums">{new Date(att.uploadedAt).toLocaleDateString()}</span>
+                    )}
+                    {att.url && att.fileSize ? (
+                      <a href={att.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-sandstone/60 hover:text-sandstone shrink-0 transition-colors">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        {formatFileSize(att.fileSize)}
+                      </a>
+                    ) : att.url ? (
+                      <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-xs text-sandstone/60 hover:text-sandstone shrink-0 transition-colors">Open</a>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
 
         {/* Metadata footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-cream/6 text-[10px] text-cream/30">
+        <div className="flex items-center justify-between pt-2 border-t border-cream/6 text-xs text-cream/40">
           <span>
             Created {new Date(change.created_at).toLocaleDateString()}
             {change.created_by && ` by ${change.created_by}`}
@@ -441,7 +495,7 @@ export const ChangesSection = forwardRef<ChangesSectionHandle, ChangesSectionPro
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleAdd(); if (e.key === 'Escape') setShowAddForm(false) }}
           />
           <div>
-            <span className="text-[10px] text-cream/40 block mb-0.5">Change request</span>
+            <span className="text-xs text-cream/50 block mb-0.5">Change request</span>
             <textarea
               value={newDescription}
               onChange={(e) => setNewDescription(e.target.value)}
@@ -451,11 +505,11 @@ export const ChangesSection = forwardRef<ChangesSectionHandle, ChangesSectionPro
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-cream/40">Cost:</span>
+              <span className="text-xs text-cream/50">Cost:</span>
               <input type="text" value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="e.g. +$2,500" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/75 placeholder-cream/35 outline-none focus:border-sandstone/30 w-28" />
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-cream/40">Est. end date:</span>
+              <span className="text-xs text-cream/50">Est. end date:</span>
               <input type="text" value={newTimeline} onChange={(e) => setNewTimeline(e.target.value)} placeholder="e.g. June 2026" className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/75 placeholder-cream/35 outline-none focus:border-sandstone/30 w-28" />
             </div>
           </div>
@@ -541,13 +595,13 @@ export const ChangesSection = forwardRef<ChangesSectionHandle, ChangesSectionPro
                         </div>
                       </td>
                       <td className="px-4 py-2.5 whitespace-nowrap">
-                        <span className="text-[11px] text-cream/45 tabular-nums">{new Date(change.created_at).toLocaleDateString()}</span>
+                        <span className="text-xs text-cream/55 tabular-nums">{new Date(change.created_at).toLocaleDateString()}</span>
                       </td>
                       <td className="px-4 py-2.5 whitespace-nowrap">
-                        <span className="text-[11px] text-cream/45 truncate block max-w-[100px]">{change.created_by || '—'}</span>
+                        <span className="text-xs text-cream/55 truncate block max-w-[100px]">{change.created_by || '—'}</span>
                       </td>
                       <td className="px-4 py-2.5 text-right whitespace-nowrap">
-                        <span className="text-[11px] text-cream/50 tabular-nums">{change.cost_impact ? formatCostDisplay(change.cost_impact) : '—'}</span>
+                        <span className="text-xs text-cream/60 tabular-nums">{change.cost_impact ? formatCostDisplay(change.cost_impact) : '—'}</span>
                       </td>
                       <td className="px-4 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
                         <StatusDropdown

@@ -127,6 +127,7 @@ interface FileRow {
   fileSize?: number
   mimeType?: string
   addedAt?: string      // ISO date string
+  addedBy?: string      // who uploaded/added
   sourceChangeTitle?: string
   isChangeRef: boolean  // true = from a change attachment, not a real document
   docId?: string        // real document id (for actions/detail panel)
@@ -137,7 +138,7 @@ interface FileRow {
 }
 
 export function DocumentsSection({ api }: DocumentsSectionProps) {
-  const { payload, readOnly, addDocument, updateDocument, deleteDocument, collectionId } = api
+  const { payload, readOnly, addDocument, updateDocument, deleteDocument, collectionId, currentUserName } = api
   const { documents, changes } = payload
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
@@ -182,6 +183,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
         fileSize: doc.fileSize,
         mimeType: doc.mimeType,
         addedAt: doc.uploadedAt || doc.created_at,
+        addedBy: doc.uploadedBy,
         sourceChangeTitle: doc.sourceChangeTitle,
         isChangeRef: false,
         docId: doc.id,
@@ -206,6 +208,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
           fileSize: att.fileSize,
           mimeType: att.mimeType,
           addedAt: att.uploadedAt,
+          addedBy: att.uploadedBy,
           sourceChangeTitle: change.title,
           isChangeRef: true,
           contentType: 'file',
@@ -271,6 +274,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
         fileName: result.fileName,
         fileSize: result.fileSize,
         mimeType: result.mimeType,
+        uploadedBy: currentUserName,
         uploadedAt: new Date().toISOString(),
         isCurrent: true,
       })
@@ -422,6 +426,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               <tr className="border-b border-cream/8">
                 <th className="text-left text-[10px] text-cream/50 font-medium uppercase tracking-wider px-4 py-2">File</th>
                 <th className="text-left text-[10px] text-cream/50 font-medium uppercase tracking-wider px-4 py-2">Added</th>
+                <th className="text-left text-[10px] text-cream/50 font-medium uppercase tracking-wider px-4 py-2">By</th>
                 <th className="text-right text-[10px] text-cream/50 font-medium uppercase tracking-wider px-4 py-2">Download</th>
                 {!readOnly && <th className="w-24" />}
               </tr>
@@ -455,9 +460,12 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
                     </div>
                   </td>
                   <td className="px-4 py-2.5 whitespace-nowrap">
-                    <span className="text-[11px] text-cream/40 tabular-nums">
+                    <span className="text-xs text-cream/50 tabular-nums">
                       {row.addedAt ? new Date(row.addedAt).toLocaleDateString() : '—'}
                     </span>
+                  </td>
+                  <td className="px-4 py-2.5 whitespace-nowrap">
+                    <span className="text-xs text-cream/50 truncate block max-w-[100px]">{row.addedBy || '—'}</span>
                   </td>
                   <td className="px-4 py-2.5 text-right whitespace-nowrap">
                     {row.url ? (
@@ -514,8 +522,9 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
                     )}
                     <div className="flex items-center gap-3 mt-1">
                       {row.addedAt && (
-                        <span className="text-[10px] text-cream/30 tabular-nums">
+                        <span className="text-[10px] text-cream/40 tabular-nums">
                           {new Date(row.addedAt).toLocaleDateString()}
+                          {row.addedBy && ` · ${row.addedBy}`}
                         </span>
                       )}
                       {row.url && (

@@ -293,27 +293,29 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
                   {confirmedChanges.map((change) => (
                     <div key={change.id} className="group">
                       <div className="flex items-start gap-2">
-                        <span className="text-emerald-400/60 text-xs font-medium shrink-0 mt-0.5">Added to Plan:</span>
+                        <span className="text-emerald-400/70 text-xs font-medium shrink-0 mt-0.5">Added to Plan</span>
                         <div className="flex-1 min-w-0">
-                          <span className="text-sm text-cream/85 font-medium">{change.title}</span>
+                          <div className="flex items-baseline gap-2 flex-wrap">
+                            <span className="text-sm text-cream/90 font-medium">{change.title}</span>
+                            <span className="text-xs text-cream/50 tabular-nums">
+                              {new Date(change.updated_at || change.created_at).toLocaleDateString()}
+                              {(change.updated_by || change.created_by) && ` by ${change.updated_by || change.created_by}`}
+                            </span>
+                          </div>
                           {change.description && (
-                            <p className="text-sm text-cream/65 leading-relaxed mt-0.5">{change.description}</p>
+                            <p className="text-sm text-cream/70 leading-relaxed mt-0.5">{change.description}</p>
                           )}
                           <div className="flex items-center gap-3 mt-1 flex-wrap">
                             {change.cost_impact && (
-                              <span className="text-[11px] text-cream/50 tabular-nums">{change.cost_impact}</span>
+                              <span className="text-xs text-cream/60 tabular-nums">Cost: {change.cost_impact}</span>
                             )}
                             {change.schedule_impact && (
-                              <span className="text-[11px] text-cream/50">Est. {change.schedule_impact}</span>
+                              <span className="text-xs text-cream/60">Est. end: {change.schedule_impact}</span>
                             )}
-                            <span className="text-[10px] text-cream/35 tabular-nums">
-                              {new Date(change.updated_at || change.created_at).toLocaleDateString()}
-                              {(change.updated_by || change.created_by) && ` · ${change.updated_by || change.created_by}`}
-                            </span>
                             <button
                               type="button"
                               onClick={() => changesSectionRef.current?.scrollToChange(change.id)}
-                              className="text-[10px] text-sandstone/50 hover:text-sandstone transition-colors md:opacity-0 md:group-hover:opacity-100"
+                              className="text-xs text-sandstone/50 hover:text-sandstone transition-colors md:opacity-0 md:group-hover:opacity-100"
                             >
                               View details →
                             </button>
