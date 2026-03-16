@@ -4,18 +4,18 @@
 
 | Field | Value |
 |-------|-------|
-| **Sprint** | Feed-First App Home |
-| **Sprint Doc** | `docs/ai/sprints/feed-first-app-home.md` |
-| **Status** | `ready_for_codex` |
+| **Sprint** | Selections Simplification into Selection Boards |
+| **Sprint Doc** | `docs/ai/sprints/selections-simplification.md` |
+| **Status** | `implementation` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-16 |
-| **Commits** | `2eb5056` |
+| **Commits** | — |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | All 5 issues implemented, build passes. Ready for Codex review. |
+| **Current Handoff** | Sprint started. 7 issues in scope. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
@@ -40,6 +40,7 @@ When entering this repo, read in this order:
 ---
 
 ## Previous Sprints (Completed)
+- Feed-First App Home (March 16, 2026) — `2eb5056`, `9438608`
 - Core Tool Hierarchy and Visibility Cleanup (March 16, 2026) — `5aac4b7`, `4acb09a`
 - Public Positioning Reset Around Fix List (March 16, 2026) — `f487fd5`, `70311c9`
 - Change Log — Plan's Files & Change Attachments (March 15, 2026)

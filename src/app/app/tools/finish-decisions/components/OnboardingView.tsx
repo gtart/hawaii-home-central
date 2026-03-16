@@ -23,17 +23,18 @@ export function OnboardingView({
   }
 
   return (
-    <div className="py-8 max-w-md mx-auto">
-      <h2 className="font-serif text-2xl md:text-3xl text-sandstone mb-2">
-        What do you need to pick?
+    <div className="py-10 max-w-md mx-auto text-center">
+      <h2 className="font-serif text-2xl md:text-3xl text-sandstone mb-3">
+        Start a selection board
       </h2>
 
-      <p className="text-sm text-cream/65 leading-relaxed mb-6">
-        List the finishes and fixtures you need to decide on — countertops, tile, hardware — and keep track of what you chose.
+      <p className="text-sm text-cream/60 leading-relaxed mb-8">
+        Each board is one decision — like picking a faucet, tile, or cabinet color.
+        Add a few options, compare them, and pick the one you want.
       </p>
 
-      {/* Add selection input */}
-      <div className="bg-stone rounded-xl p-5 border border-cream/15 mb-5">
+      {/* Quick-add */}
+      <div className="bg-stone rounded-xl p-5 border border-cream/15 mb-5 text-left">
         <label className="block text-sm font-medium text-cream/80 mb-2">
           What do you need to choose?
         </label>
@@ -44,37 +45,40 @@ export function OnboardingView({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
             placeholder="e.g. Countertop, Faucet, Cabinet color"
-            className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
+            className="flex-1 bg-basalt border border-cream/15 rounded-lg px-3 py-2.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/50"
           />
           <button
             type="button"
             onClick={handleAdd}
             disabled={!inputValue.trim()}
-            className="px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+            className="px-5 py-2.5 bg-sandstone text-basalt text-sm font-medium rounded-lg hover:bg-sandstone-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
           >
             Add
           </button>
         </div>
+        <p className="text-[11px] text-cream/40 mt-2">
+          You can add more boards anytime. Each one holds options you&apos;re comparing.
+        </p>
       </div>
 
       {/* Divider */}
       <div className="flex items-center gap-3 mb-5">
         <div className="flex-1 h-px bg-cream/10" />
-        <span className="text-xs text-cream/45">or</span>
+        <span className="text-xs text-cream/40">or start with ideas</span>
         <div className="flex-1 h-px bg-cream/10" />
       </div>
 
-      {/* Decision Pack CTA */}
+      {/* Packs CTA */}
       <button
         type="button"
         onClick={onOpenPackChooser}
         className="w-full text-left px-5 py-4 bg-stone rounded-xl border border-cream/15 hover:border-sandstone/30 transition-colors group"
       >
         <span className="text-sm font-medium text-cream group-hover:text-sandstone transition-colors">
-          Add a Selection Pack
+          Browse Selection Packs
         </span>
-        <p className="text-xs text-cream/55 mt-1 leading-relaxed">
-          Packs add common selections and curated options — so you don&apos;t miss anything.
+        <p className="text-xs text-cream/50 mt-1 leading-relaxed">
+          Pre-made boards with curated options — a fast way to get started without missing anything.
         </p>
       </button>
     </div>

@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-16
 **Objective**: Rework /app homepage from dashboard-with-numbers to a continuation/feed surface that answers "what changed, what needs attention, where do I continue."
-**Status**: implementation
+**Status**: complete
 
 ---
 
@@ -86,7 +86,7 @@
 
 | Type | Path |
 |------|------|
-| Codex Audit | `docs/ai/reviews/codex/2026-03-16-feed-first-app-home-audit.md` |
+| Codex Audit | `docs/ai/reviews/codex/2026-03-16-feed-first-app-home-followup-verification-audit.md` |
 | Claude Response | `docs/ai/reviews/claude/2026-03-16-feed-first-app-home-response.md` |
 
 ---

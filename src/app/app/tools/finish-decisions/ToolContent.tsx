@@ -310,7 +310,7 @@ export function ToolContent({
           <ToolPageHeader
             toolKey="finish_decisions"
             title="Selections"
-            description="Keep your renovation choices organized so finishes, fixtures, and notes stay in one place."
+            description="Create a board for each decision, add the options you're considering, and pick the one you want."
             accessLevel={access}
             hasContent={v4State.selections.length > 0}
             collectionId={workspaceCollectionId}
