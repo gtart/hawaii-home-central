@@ -3,8 +3,8 @@
 import { Suspense, useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import { useProjectSummaryState } from '../../../useProjectSummaryState'
-import { CHANGE_LOG_STATUS_CONFIG, CHANGE_LOG_STATUS_ORDER, toChangeLogStatus, CHANGE_CATEGORIES } from '../../../constants'
-import type { ChangeLogStatus, ChangeCategory } from '../../../constants'
+import { CHANGE_LOG_STATUS_CONFIG, CHANGE_LOG_STATUS_ORDER, toChangeLogStatus } from '../../../constants'
+import type { ChangeLogStatus } from '../../../constants'
 import { InlineEdit } from '../../../components/InlineEdit'
 import { StatusBadge } from '../../../components/StatusBadge'
 import { uploadProjectSummaryFile } from '../../../uploadProjectSummaryFile'
@@ -74,69 +74,6 @@ function StatusDropdown({
               </button>
             )
           })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-/** Category dropdown for detail view */
-function CategoryDropdown({
-  value,
-  onChange,
-  readOnly,
-}: {
-  value?: string
-  onChange: (category: string | undefined) => void
-  readOnly?: boolean
-}) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [open])
-
-  if (readOnly) {
-    return <span className="text-sm text-cream/70">{value || '—'}</span>
-  }
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="bg-stone-200 border border-cream/15 rounded-md px-2 py-1.5 text-xs text-cream/70 outline-none hover:border-cream/35 transition-colors flex items-center gap-1"
-      >
-        {value || 'Select category'}
-        <svg className="w-3 h-3 text-cream/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-      {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 min-w-[140px] rounded-lg border border-cream/15 bg-basalt shadow-xl py-1 max-h-[240px] overflow-y-auto">
-          <button
-            type="button"
-            onClick={() => { onChange(undefined); setOpen(false) }}
-            className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${!value ? 'text-sandstone' : 'text-cream/70 hover:bg-stone-hover'}`}
-          >
-            None
-          </button>
-          {CHANGE_CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => { onChange(cat); setOpen(false) }}
-              className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${value === cat ? 'text-sandstone' : 'text-cream/70 hover:bg-stone-hover'}`}
-            >
-              {cat}
-            </button>
-          ))}
         </div>
       )}
     </div>
@@ -300,41 +237,17 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
             </div>
 
             <div className="space-y-3">
-              {/* Description */}
+              {/* Change request */}
               <div>
-                <label className="text-[10px] text-cream/45 block mb-0.5">Description</label>
+                <label className="text-[10px] text-cream/45 block mb-0.5">Change request</label>
                 <InlineEdit
                   value={change.description || ''}
                   onSave={(v) => updateChange(change.id, { description: v || undefined })}
-                  placeholder="Add details about this change..."
                   readOnly={readOnly}
                   multiline
                   displayClassName="text-sm text-cream/70 leading-relaxed"
                   className="text-sm leading-relaxed"
                 />
-              </div>
-
-              {/* Category + Room */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[10px] text-cream/45 block mb-0.5">Category</label>
-                  <CategoryDropdown
-                    value={change.category}
-                    onChange={(cat) => updateChange(change.id, { category: cat })}
-                    readOnly={readOnly}
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-cream/45 block mb-0.5">Room / Area</label>
-                  <InlineEdit
-                    value={change.room || ''}
-                    onSave={(v) => updateChange(change.id, { room: v || undefined })}
-                    placeholder="e.g. Kitchen, Master Bath"
-                    readOnly={readOnly}
-                    displayClassName="text-sm text-cream/70"
-                    className="text-sm"
-                  />
-                </div>
               </div>
 
               {/* Cost impact — simple field */}

@@ -9,8 +9,10 @@ export interface UploadResult {
 }
 
 const ALLOWED_EXTENSIONS = new Set([
-  '.jpg', '.jpeg', '.png', '.webp',
+  '.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif',
   '.pdf', '.doc', '.docx',
+  '.xls', '.xlsx', '.ppt', '.pptx',
+  '.txt', '.csv', '.rtf',
 ])
 
 const MAX_SIZE = 40 * 1024 * 1024 // 40MB
@@ -33,7 +35,7 @@ export async function uploadProjectSummaryFile(
 
   const ext = getFileExt(file.name)
   if (ext && !ALLOWED_EXTENSIONS.has(ext)) {
-    throw new Error('Invalid file type. Allowed: JPEG, PNG, WebP, PDF, DOC, DOCX')
+    throw new Error('Invalid file type. Allowed: images, PDF, Office docs, TXT, CSV')
   }
 
   // Upload directly to Vercel Blob from the browser.

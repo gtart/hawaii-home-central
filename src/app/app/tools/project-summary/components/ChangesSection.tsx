@@ -166,6 +166,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [uploadingChangeId, setUploadingChangeId] = useState<string | null>(null)
   const [isUploadingNew, setIsUploadingNew] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const changeFileInputRef = useRef<HTMLInputElement>(null)
   const newChangeFileInputRef = useRef<HTMLInputElement>(null)
   const focusRef = useRef<HTMLDivElement>(null)
@@ -237,8 +238,8 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
         fileSize: result.fileSize,
         mimeType: result.mimeType,
       }])
-    } catch {
-      // silently fail
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
       setIsUploadingNew(false)
       if (newChangeFileInputRef.current) newChangeFileInputRef.current.value = ''
@@ -319,12 +320,12 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
         {isExpanded && (
           <div className="px-3 pb-3 border-t border-cream/8">
             <div className="pt-3 space-y-3">
-              {/* Description */}
+              {/* Change request */}
               <div>
+                <span className="text-[10px] text-cream/25 block mb-0.5">Change request</span>
                 <InlineEdit
                   value={change.description || ''}
                   onSave={(v) => updateChange(change.id, { description: v || undefined })}
-                  placeholder="What happened and why..."
                   readOnly={readOnly}
                   multiline
                   displayClassName="text-sm text-cream/65 leading-relaxed"
@@ -332,26 +333,8 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
                 />
               </div>
 
-              {/* Metadata row: category, room, cost, timeline */}
+              {/* Metadata row: cost, timeline */}
               <div className="flex items-center gap-4 flex-wrap">
-                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                  <CategoryDropdown
-                    value={change.category as string | undefined}
-                    onChange={(cat) => updateChange(change.id, { category: cat })}
-                    readOnly={readOnly}
-                  />
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-cream/25">Area:</span>
-                  <InlineEdit
-                    value={(change.room as string) || ''}
-                    onSave={(v) => updateChange(change.id, { room: v || undefined })}
-                    placeholder="e.g. Kitchen"
-                    readOnly={readOnly}
-                    displayClassName="text-[10px] text-cream/45"
-                    className="text-[10px]"
-                  />
-                </div>
                 {(change.cost_impact || !readOnly) && (
                   <div className="flex items-center gap-1.5">
                     <span className="text-[10px] text-cream/25">Cost:</span>
@@ -510,8 +493,8 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
               mimeType: result.mimeType,
               uploadedAt: new Date().toISOString(),
             })
-          } catch {
-            // silently fail for inline
+          } catch (err) {
+            setUploadError(err instanceof Error ? err.message : 'Upload failed')
           } finally {
             setUploadingChangeId(null)
             if (changeFileInputRef.current) changeFileInputRef.current.value = ''
@@ -545,6 +528,10 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
         )}
       </div>
 
+      {uploadError && (
+        <p className="text-[11px] text-red-400/70">{uploadError}</p>
+      )}
+
       {/* Empty state */}
       {!hasAnyChanges && !showAddForm && (
         <div className="rounded-lg border border-dashed border-cream/12 px-4 py-6 text-center">
@@ -567,16 +554,18 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleAdd(); if (e.key === 'Escape') resetAddForm() }}
           />
 
-          {/* Description */}
-          <textarea
-            value={newNotes}
-            onChange={(e) => setNewNotes(e.target.value)}
-            placeholder="What happened and why..."
-            rows={2}
-            className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-xs text-cream/65 placeholder-cream/30 outline-none focus:border-sandstone/30 resize-none"
-          />
+          {/* Change request */}
+          <div>
+            <span className="text-[10px] text-cream/25 block mb-0.5">Change request</span>
+            <textarea
+              value={newNotes}
+              onChange={(e) => setNewNotes(e.target.value)}
+              rows={2}
+              className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-xs text-cream/65 placeholder-cream/30 outline-none focus:border-sandstone/30 resize-none"
+            />
+          </div>
 
-          {/* Metadata row: status, category, room */}
+          {/* Metadata row: status */}
           <div className="flex items-center gap-3 flex-wrap">
             <div onClick={(e) => e.stopPropagation()}>
               <StatusDropdown
@@ -584,17 +573,6 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
                 onChange={(s) => setNewStatus(s)}
               />
             </div>
-            <CategoryDropdown
-              value={newCategory || undefined}
-              onChange={(cat) => setNewCategory((cat as ChangeCategory) || '')}
-            />
-            <input
-              type="text"
-              value={newRoom}
-              onChange={(e) => setNewRoom(e.target.value)}
-              placeholder="Room / Area"
-              className="bg-stone-200 border border-cream/12 rounded-md px-2 py-1 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30 w-32"
-            />
           </div>
 
           {/* Cost + Timeline row */}
