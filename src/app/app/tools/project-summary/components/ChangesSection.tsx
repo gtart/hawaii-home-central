@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, forwardRef, useImperativeHandle } from 'react'
+import React, { useState, useEffect, useRef, useMemo, forwardRef, useImperativeHandle } from 'react'
 import { CHANGE_LOG_STATUS_CONFIG, CHANGE_LOG_STATUS_ORDER, toChangeLogStatus } from '../constants'
 import type { ChangeLogStatus } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
@@ -105,15 +105,60 @@ export const ChangesSection = forwardRef<ChangesSectionHandle, ChangesSectionPro
   const [newCost, setNewCost] = useState('')
   const [newTimeline, setNewTimeline] = useState('')
   const changeFileInputRef = useRef<HTMLInputElement>(null)
-  const focusRef = useRef<HTMLDivElement>(null)
+  // focusRef removed — using getElementById for focus scrolling
   const sectionRef = useRef<HTMLDivElement>(null)
   const addFormRef = useRef<HTMLInputElement>(null)
 
-  // All changes sorted newest first
-  const allChanges = useMemo(
-    () => [...changes].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
-    [changes]
-  )
+  type SortKey = 'status' | 'title' | 'date' | 'cost' | 'addedBy'
+  type SortDir = 'asc' | 'desc'
+  const [sortKey, setSortKey] = useState<SortKey>('status')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
+
+  const STATUS_PRIORITY: Record<string, number> = {
+    pending: 0,
+    confirmed: 1,
+    not_needed: 2,
+  }
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
+
+  // All changes sorted by selected column
+  const allChanges = useMemo(() => {
+    const sorted = [...changes]
+    const dir = sortDir === 'asc' ? 1 : -1
+
+    sorted.sort((a, b) => {
+      switch (sortKey) {
+        case 'status': {
+          const pa = STATUS_PRIORITY[toChangeLogStatus(a.status)] ?? 9
+          const pb = STATUS_PRIORITY[toChangeLogStatus(b.status)] ?? 9
+          if (pa !== pb) return (pa - pb) * dir
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        }
+        case 'title':
+          return a.title.localeCompare(b.title) * dir
+        case 'date':
+          return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * dir
+        case 'cost': {
+          const ca = parseFloat((a.cost_impact || '0').replace(/[^0-9.\-+]/g, '')) || 0
+          const cb = parseFloat((b.cost_impact || '0').replace(/[^0-9.\-+]/g, '')) || 0
+          return (ca - cb) * dir
+        }
+        case 'addedBy':
+          return (a.created_by || '').localeCompare(b.created_by || '') * dir
+        default:
+          return 0
+      }
+    })
+    return sorted
+  }, [changes, sortKey, sortDir])
 
   useImperativeHandle(ref, () => ({
     scrollToAndAdd() {
@@ -138,7 +183,7 @@ export const ChangesSection = forwardRef<ChangesSectionHandle, ChangesSectionPro
     if (exists) {
       setExpandedId(focusEntryId)
       requestAnimationFrame(() => {
-        focusRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        document.getElementById(`change-row-${focusEntryId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       })
     }
   }, [focusEntryId, changes])
@@ -159,6 +204,103 @@ export const ChangesSection = forwardRef<ChangesSectionHandle, ChangesSectionPro
     setShowAddForm(false)
   }
 
+  function renderExpandedDetail(change: typeof changes[0]) {
+    return (
+      <div className="pt-3 space-y-3">
+        {/* Change request */}
+        <div>
+          <span className="text-[10px] text-cream/40 block mb-0.5">Change request</span>
+          <InlineEdit
+            value={change.description || ''}
+            onSave={(v) => updateChange(change.id, { description: v || undefined })}
+            readOnly={readOnly}
+            multiline
+            displayClassName="text-sm text-cream/65 leading-relaxed"
+            className="text-sm leading-relaxed"
+          />
+        </div>
+
+        {/* Metadata row: cost, timeline */}
+        <div className="flex items-center gap-4 flex-wrap">
+          {(change.cost_impact || !readOnly) && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-cream/40">Cost:</span>
+              <InlineEdit
+                value={change.cost_impact || ''}
+                onSave={(v) => updateChange(change.id, { cost_impact: v || undefined })}
+                placeholder="e.g. +$2,500"
+                readOnly={readOnly}
+                displayClassName="text-[10px] text-cream/50 tabular-nums"
+                className="text-[10px]"
+              />
+            </div>
+          )}
+          {(change.schedule_impact || !readOnly) && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-cream/40">Est. end date:</span>
+              <InlineEdit
+                value={change.schedule_impact || ''}
+                onSave={(v) => updateChange(change.id, { schedule_impact: v || undefined })}
+                placeholder="e.g. June 2026"
+                readOnly={readOnly}
+                displayClassName="text-[10px] text-cream/50"
+                className="text-[10px]"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Attachments */}
+        {((change.attachments?.length || 0) > 0 || !readOnly) && (
+          <div className="flex items-start gap-2 flex-wrap">
+            {(change.attachments || []).map((att) => (
+              att.url ? (
+                <a key={att.id} href={att.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-cream/45 hover:text-cream/60 bg-stone-200 px-2 py-1 rounded transition-colors">
+                  <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <span className="truncate max-w-[120px]">{att.label}</span>
+                </a>
+              ) : (
+                <span key={att.id} className="inline-flex items-center gap-1 text-[10px] text-cream/45 bg-stone-200 px-2 py-1 rounded">
+                  <svg className="w-2.5 h-2.5 shrink-0 text-sandstone/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <span className="truncate max-w-[120px]">{att.label}</span>
+                </span>
+              )
+            ))}
+            {!readOnly && (
+              <button type="button" onClick={() => { setUploadingChangeId(change.id); setTimeout(() => changeFileInputRef.current?.click(), 0) }} disabled={uploadingChangeId === change.id} className="inline-flex items-center gap-1 text-[10px] text-cream/30 hover:text-cream/50 bg-stone-200 px-2 py-1 rounded transition-colors disabled:opacity-50">
+                {uploadingChangeId === change.id ? <div className="w-2.5 h-2.5 border border-cream/20 border-t-cream/50 rounded-full animate-spin" /> : <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" strokeLinecap="round" /></svg>}
+                {uploadingChangeId === change.id ? 'Uploading...' : 'Attach file'}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Metadata footer */}
+        <div className="flex items-center justify-between pt-2 border-t border-cream/6 text-[10px] text-cream/30">
+          <span>
+            Created {new Date(change.created_at).toLocaleDateString()}
+            {change.created_by && ` by ${change.created_by}`}
+            {change.updated_at !== change.created_at && (
+              <> · Modified {new Date(change.updated_at).toLocaleDateString()}
+                {change.updated_by && ` by ${change.updated_by}`}
+              </>
+            )}
+          </span>
+          {!readOnly && (
+            confirmDelete === change.id ? (
+              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                <button type="button" onClick={() => { deleteChange(change.id); setConfirmDelete(null) }} className="text-red-400/70 hover:text-red-400 transition-colors">Confirm delete</button>
+                <button type="button" onClick={() => setConfirmDelete(null)} className="text-cream/35 hover:text-cream/50 transition-colors">Cancel</button>
+              </div>
+            ) : (
+              <button type="button" onClick={(e) => { e.stopPropagation(); setConfirmDelete(change.id) }} className="text-cream/20 hover:text-red-400/50 transition-colors">Delete</button>
+            )
+          )}
+        </div>
+      </div>
+    )
+  }
+
   function renderCollapsedRow(change: typeof changes[0]) {
     const isExpanded = expandedId === change.id
     const commentCount = commentCounts?.get(change.id) || 0
@@ -168,7 +310,7 @@ export const ChangesSection = forwardRef<ChangesSectionHandle, ChangesSectionPro
       <div
         key={change.id}
         id={`change-row-${change.id}`}
-        ref={change.id === focusEntryId ? focusRef : undefined}
+
         className={`rounded-lg border transition-colors ${
           change.id === focusEntryId
             ? 'border-sandstone/30 ring-1 ring-sandstone/15 bg-stone-50'
@@ -226,126 +368,7 @@ export const ChangesSection = forwardRef<ChangesSectionHandle, ChangesSectionPro
         {/* Expanded detail card */}
         {isExpanded && (
           <div className="px-3 pb-3 border-t border-cream/8">
-            <div className="pt-3 space-y-3">
-              {/* Change request */}
-              <div>
-                <span className="text-[10px] text-cream/40 block mb-0.5">Change request</span>
-                <InlineEdit
-                  value={change.description || ''}
-                  onSave={(v) => updateChange(change.id, { description: v || undefined })}
-                  readOnly={readOnly}
-                  multiline
-                  displayClassName="text-sm text-cream/65 leading-relaxed"
-                  className="text-sm leading-relaxed"
-                />
-              </div>
-
-              {/* Metadata row: cost, timeline */}
-              <div className="flex items-center gap-4 flex-wrap">
-                {(change.cost_impact || !readOnly) && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-cream/40">Cost:</span>
-                    <InlineEdit
-                      value={change.cost_impact || ''}
-                      onSave={(v) => updateChange(change.id, { cost_impact: v || undefined })}
-                      placeholder="e.g. +$2,500"
-                      readOnly={readOnly}
-                      displayClassName="text-[10px] text-cream/50 tabular-nums"
-                      className="text-[10px]"
-                    />
-                  </div>
-                )}
-                {(change.schedule_impact || !readOnly) && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-cream/40">Est. end date:</span>
-                    <InlineEdit
-                      value={change.schedule_impact || ''}
-                      onSave={(v) => updateChange(change.id, { schedule_impact: v || undefined })}
-                      placeholder="e.g. June 2026"
-                      readOnly={readOnly}
-                      displayClassName="text-[10px] text-cream/50"
-                      className="text-[10px]"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Attachments */}
-              {((change.attachments?.length || 0) > 0 || !readOnly) && (
-                <div className="flex items-start gap-2 flex-wrap">
-                  {(change.attachments || []).map((att) => (
-                    att.url ? (
-                      <a
-                        key={att.id}
-                        href={att.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[10px] text-cream/45 hover:text-cream/60 bg-stone-200 px-2 py-1 rounded transition-colors"
-                      >
-                        <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span className="truncate max-w-[120px]">{att.label}</span>
-                      </a>
-                    ) : (
-                      <span
-                        key={att.id}
-                        className="inline-flex items-center gap-1 text-[10px] text-cream/45 bg-stone-200 px-2 py-1 rounded"
-                      >
-                        <svg className="w-2.5 h-2.5 shrink-0 text-sandstone/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span className="truncate max-w-[120px]">{att.label}</span>
-                      </span>
-                    )
-                  ))}
-                  {!readOnly && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUploadingChangeId(change.id)
-                        setTimeout(() => changeFileInputRef.current?.click(), 0)
-                      }}
-                      disabled={uploadingChangeId === change.id}
-                      className="inline-flex items-center gap-1 text-[10px] text-cream/30 hover:text-cream/50 bg-stone-200 px-2 py-1 rounded transition-colors disabled:opacity-50"
-                    >
-                      {uploadingChangeId === change.id ? (
-                        <div className="w-2.5 h-2.5 border border-cream/20 border-t-cream/50 rounded-full animate-spin" />
-                      ) : (
-                        <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                        </svg>
-                      )}
-                      {uploadingChangeId === change.id ? 'Uploading...' : 'Attach file'}
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Metadata footer */}
-              <div className="flex items-center justify-between pt-2 border-t border-cream/6 text-[10px] text-cream/30">
-                <span>
-                  Created {new Date(change.created_at).toLocaleDateString()}
-                  {change.created_by && ` by ${change.created_by}`}
-                  {change.updated_at !== change.created_at && (
-                    <> · Modified {new Date(change.updated_at).toLocaleDateString()}
-                      {change.updated_by && ` by ${change.updated_by}`}
-                    </>
-                  )}
-                </span>
-                {!readOnly && (
-                  confirmDelete === change.id ? (
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                      <button type="button" onClick={() => { deleteChange(change.id); setConfirmDelete(null) }} className="text-red-400/70 hover:text-red-400 transition-colors">Confirm delete</button>
-                      <button type="button" onClick={() => setConfirmDelete(null)} className="text-cream/35 hover:text-cream/50 transition-colors">Cancel</button>
-                    </div>
-                  ) : (
-                    <button type="button" onClick={(e) => { e.stopPropagation(); setConfirmDelete(change.id) }} className="text-cream/20 hover:text-red-400/50 transition-colors">Delete</button>
-                  )
-                )}
-              </div>
-            </div>
+            {renderExpandedDetail(change)}
           </div>
         )}
       </div>
@@ -451,10 +474,109 @@ export const ChangesSection = forwardRef<ChangesSectionHandle, ChangesSectionPro
         </div>
       )}
 
-      {/* Changes list */}
+      {/* Changes table */}
       {allChanges.length > 0 && (
-        <div className="space-y-1.5">
-          {allChanges.map((change) => renderCollapsedRow(change))}
+        <div className="rounded-lg border border-cream/12 overflow-hidden">
+          {/* Desktop table */}
+          <table className="w-full hidden md:table">
+            <thead>
+              <tr className="border-b border-cream/8">
+                {([
+                  ['title', 'Change', 'text-left'],
+                  ['date', 'Added', 'text-left'],
+                  ['addedBy', 'By', 'text-left'],
+                  ['cost', 'Cost Impact', 'text-right'],
+                  ['status', 'Status', 'text-right'],
+                ] as [SortKey, string, string][]).map(([key, label, align]) => (
+                  <th
+                    key={key}
+                    className={`${align} text-[10px] text-cream/50 font-medium uppercase tracking-wider px-4 py-2 cursor-pointer hover:text-cream/70 transition-colors select-none`}
+                    onClick={() => toggleSort(key)}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      {label}
+                      {sortKey === key && (
+                        <svg className={`w-2.5 h-2.5 ${sortDir === 'desc' ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M18 15l-6-6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {allChanges.map((change) => {
+                const isExpanded = expandedId === change.id
+                const logStatus = toChangeLogStatus(change.status)
+                const cfg = CHANGE_LOG_STATUS_CONFIG[logStatus]
+                return (
+                  <React.Fragment key={change.id}>
+                    <tr
+                      id={`change-row-${change.id}`}
+              
+                      className={`border-b border-cream/6 last:border-0 cursor-pointer transition-colors ${
+                        change.id === focusEntryId
+                          ? 'bg-sandstone/5'
+                          : isExpanded
+                            ? 'bg-stone-50/80'
+                            : 'hover:bg-stone-50/50'
+                      }`}
+                      onClick={() => setExpandedId(isExpanded ? null : change.id)}
+                    >
+                      <td className="px-4 py-2.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <svg
+                            className={`w-3 h-3 text-cream/25 transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                          >
+                            <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <span className="text-sm text-cream/80 truncate">{change.title}</span>
+                          {(change.attachments?.length || 0) > 0 && (
+                            <svg className="w-3 h-3 text-cream/25 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-2.5 whitespace-nowrap">
+                        <span className="text-[11px] text-cream/45 tabular-nums">{new Date(change.created_at).toLocaleDateString()}</span>
+                      </td>
+                      <td className="px-4 py-2.5 whitespace-nowrap">
+                        <span className="text-[11px] text-cream/45 truncate block max-w-[100px]">{change.created_by || '—'}</span>
+                      </td>
+                      <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                        <span className="text-[11px] text-cream/50 tabular-nums">{change.cost_impact ? formatCostDisplay(change.cost_impact) : '—'}</span>
+                      </td>
+                      <td className="px-4 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
+                        <StatusDropdown
+                          status={logStatus}
+                          onChange={(s) => {
+                            const storageStatus = CHANGE_LOG_STATUS_CONFIG[s].storageStatus
+                            updateChange(change.id, { status: storageStatus })
+                          }}
+                          readOnly={readOnly}
+                        />
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={5} className="px-4 pb-4 pt-0 border-b border-cream/8 bg-stone-50/60">
+                          {renderExpandedDetail(change)}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                )
+              })}
+            </tbody>
+          </table>
+
+          {/* Mobile list */}
+          <div className="md:hidden divide-y divide-cream/6">
+            {allChanges.map((change) => renderCollapsedRow(change))}
+          </div>
         </div>
       )}
     </div>
