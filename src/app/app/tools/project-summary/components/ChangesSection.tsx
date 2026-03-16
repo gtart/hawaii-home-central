@@ -452,7 +452,7 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
       {/* Section header + tabs */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-1">
-          <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider mr-2">Change Requests</h2>
+          <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider mr-2">Changes pending your review</h2>
           <button
             type="button"
             onClick={() => setActiveTab('pending')}
