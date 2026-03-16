@@ -54,8 +54,8 @@ export const FILTER_CHIPS: { key: string | undefined; label: string }[] = [
   { key: 'finish_decisions', label: 'Selections' },
   { key: 'mood_boards', label: 'Mood Boards' },
   { key: 'before_you_sign', label: 'Bid Checklist' },
-  { key: 'project_summary', label: 'Change Log' },
-  { key: 'project_alignment', label: 'Change Log' },
+  { key: 'project_summary', label: 'Plan & Changes' },
+  { key: 'project_alignment', label: 'Plan & Changes' },
 ]
 
 /** Group day label for activity list */

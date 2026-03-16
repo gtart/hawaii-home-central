@@ -4,18 +4,18 @@
 
 | Field | Value |
 |-------|-------|
-| **Sprint** | Change Log — Plan's Files & Change Attachments |
-| **Sprint Doc** | `docs/ai/sprints/change-log-files-and-attachments.md` |
+| **Sprint** | Public Positioning Reset Around Fix List |
+| **Sprint Doc** | `docs/ai/sprints/public-positioning-reset-fix-list.md` |
 | **Status** | `ready_for_codex` |
 | **Owner** | Claude |
-| **Last Updated** | 2026-03-15 |
+| **Last Updated** | 2026-03-16 |
 | **Commits** | — |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | All 6 issues implemented, build passes. Ready for Codex review. |
+| **Current Handoff** | All 5 issues implemented, build passes. Ready for Codex review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 

@@ -28,8 +28,8 @@ export function DashboardCardPlanAndChanges({
   if (!hasItems) {
     return (
       <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/70 mb-2">Change Log</p>
-        <p className="text-sm text-cream/50 mb-4">Keep a record of what changed during your renovation.</p>
+        <p className="text-sm font-medium text-cream/70 mb-2">Plan & Changes</p>
+        <p className="text-sm text-cream/50 mb-4">Track your scope of work and plan changes.</p>
         <Link
           href="/app/tools/project-summary"
           className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
@@ -55,7 +55,7 @@ export function DashboardCardPlanAndChanges({
   if (totalActiveChanges === 0 && totalChanges === 0) {
     return (
       <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/70 mb-2">Change Log</p>
+        <p className="text-sm font-medium text-cream/70 mb-2">Plan & Changes</p>
         <p className="text-[11px] text-cream/45 mb-2">{metaParts.join(' · ')}</p>
         <p className="text-sm text-cream/65 mb-1">No changes recorded yet.</p>
         <p className="text-[11px] text-cream/40 mb-3">
@@ -74,7 +74,7 @@ export function DashboardCardPlanAndChanges({
   // Active state
   return (
     <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-      <p className="text-sm font-medium text-cream/70 mb-1">Change Log</p>
+      <p className="text-sm font-medium text-cream/70 mb-1">Plan & Changes</p>
       <p className="text-[11px] text-cream/45 mb-3">{metaParts.join(' · ')}</p>
       <div className="flex items-baseline gap-3 mb-1">
         {totalActiveChanges > 0 ? (

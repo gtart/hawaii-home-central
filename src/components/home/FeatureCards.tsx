@@ -3,23 +3,23 @@ import { FadeInSection } from '@/components/effects/FadeInSection'
 
 const FEATURES = [
   {
-    title: 'Guides & Tools',
+    title: 'Fix List',
     description:
-      'Interactive tools and step-by-step guides tailored for Hawaiʻi conditions and regulations.',
-    href: '/hawaii-home-renovation',
+      'Track punch list items, walkthrough notes, and loose ends — nothing slips through the cracks.',
+    href: '/tools',
     badge: 'Live',
   },
   {
-    title: 'Lessons From Real Renovations',
+    title: 'Selections',
     description:
-      'Real stories from Hawaiʻi homeowners — what worked, what didn\'t, and what they wish they knew.',
-    href: '/stories',
+      'Save your finish choices, product links, and notes so decisions don\u2019t get lost in texts.',
+    href: '/tools',
   },
   {
-    title: 'Trusted Pros Directory',
+    title: 'Plan & Changes',
     description:
-      'A curated directory of vetted contractors and trades, built on real referrals and verified work.',
-    href: '/directory',
+      'Keep a clear record of what was agreed on and what changed during the build.',
+    href: '/tools',
   },
 ]
 
@@ -32,16 +32,16 @@ export function FeatureCards() {
             id="features-heading"
             className="font-serif text-3xl md:text-4xl text-sandstone mb-4 text-center"
           >
-            What we help you do
+            Practical tools for the messy parts
           </h2>
           <p className="text-cream/60 text-center mb-12 max-w-2xl mx-auto">
-            Guides, tools, and community&mdash;built for Hawai&#x02BB;i homeowners.
+            Simple, focused tools for the things that usually get lost during a renovation.
           </p>
         </FadeInSection>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {FEATURES.map((feature, index) => (
-            <FadeInSection key={feature.href} delay={index * 100}>
+            <FadeInSection key={feature.title} delay={index * 100}>
               <Card
                 href={feature.href}
                 title={feature.title}
@@ -54,7 +54,7 @@ export function FeatureCards() {
 
         <FadeInSection delay={300}>
           <p className="text-cream/40 text-sm text-center mt-8">
-            Plus real renovation stories and a trusted pros directory.
+            Plus renovation guides, real homeowner stories, and a trusted pros directory.
           </p>
         </FadeInSection>
       </div>

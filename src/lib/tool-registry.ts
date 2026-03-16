@@ -59,9 +59,9 @@ export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   {
     toolKey: 'project_summary',
     href: '/app/tools/project-summary',
-    title: 'Change Log',
+    title: 'Plan & Changes',
     description:
-      'Keep track of what changed, what files seem current, and what still needs confirmation.',
+      'Track your scope of work, plan changes, and cost impacts in one place.',
     stage: 'Build',
   },
 ]

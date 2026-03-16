@@ -12,23 +12,23 @@ const BENEFITS = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
-    text: 'Keep selections from getting lost — save decisions, notes, and links in one place',
+    text: 'Track fix items and walkthrough punch lists so nothing gets missed',
   },
   {
     icon: (
       <svg className="w-5 h-5 text-sandstone" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
       </svg>
     ),
-    text: 'Stay on top of loose ends — keep a running fix list during the build and walkthrough',
+    text: 'Save selections, notes, and links before they get buried in texts and emails',
   },
   {
     icon: (
       <svg className="w-5 h-5 text-sandstone" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
       </svg>
     ),
-    text: 'Easier conversations — share what you\u2019re tracking when you need to get aligned',
+    text: 'Keep a clear record of plan changes so you know what was agreed on',
   },
 ]
 
@@ -56,13 +56,13 @@ export function HeroSection() {
           id="hero-heading"
           className="font-serif text-4xl md:text-5xl lg:text-6xl text-cream leading-tight mb-6"
         >
-          Your Hawai&#x02BB;i renovation,{' '}
-          <span className="text-sandstone">organized</span>.
+          Keep track of what still needs{' '}
+          <span className="text-sandstone">fixing</span>.
         </h1>
 
         <p className="text-lg md:text-xl text-cream/70 mb-10 max-w-3xl mx-auto leading-relaxed">
-          Free tools and guidance to help you keep track of decisions, fix items,
-          and changes during your Hawai&#x02BB;i renovation.
+          A calmer way to manage fix items, selections, and plan changes
+          during your Hawai&#x02BB;i renovation.
         </p>
 
         {/* Benefit bullets */}
@@ -77,7 +77,7 @@ export function HeroSection() {
 
         {/* Truth line */}
         <p className="text-cream/40 text-xs tracking-wide uppercase mb-6">
-          In early beta &middot; Built for Hawai&#x02BB;i homeowners
+          Free to use &middot; Built for Hawai&#x02BB;i homeowners
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
@@ -94,7 +94,7 @@ export function HeroSection() {
         </div>
 
         <p className="text-cream/50 text-sm max-w-md mx-auto">
-          We&apos;re opening access in waves. Join the list to get invited.
+          We&apos;re opening access in waves. Request an invite to get started.
         </p>
       </div>
     </section>

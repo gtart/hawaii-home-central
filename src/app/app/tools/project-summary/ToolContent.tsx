@@ -213,16 +213,16 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
     <>
       <ToolPageHeader
         toolKey="project_summary"
-        title="Change Log"
-        description="Keep a simple record of what changed, which files you're working from, and what still needs confirmation."
+        title="Plan & Changes"
+        description="Track your scope of work, plan changes, and cost impacts in one place."
         accessLevel={access}
         hasContent={payload.plan.scope.length > 0 || payload.documents.length > 0 || payload.changes.length > 0}
         collectionId={collectionId}
         collectionName={titleOverride ?? collectionTitle ?? undefined}
-        eyebrowLabel="Change Log"
-        toolLabel="Change Log"
+        eyebrowLabel="Plan & Changes"
+        toolLabel="Plan & Changes"
         backHref="/app/tools/project-summary"
-        backLabel="All Logs"
+        backLabel="All Plans"
         onRename={readOnly ? undefined : handleRename}
         onArchive={readOnly ? undefined : handleArchive}
         actions={(

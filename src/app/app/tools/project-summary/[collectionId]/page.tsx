@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { ProjectSummaryCollectionContent } from './ProjectSummaryCollectionContent'
 
 export const metadata: Metadata = {
-  title: 'Change Log',
+  title: 'Plan & Changes',
 }
 
 export default async function ProjectSummaryCollectionPage({

@@ -2,19 +2,9 @@ import { FadeInSection } from '@/components/effects/FadeInSection'
 
 const OUTCOMES = [
   {
-    heading: 'Organized renovation files',
+    heading: 'A running fix list you can actually trust',
     description:
-      'Every contractor bid, finish decision, and punch list item in one place.',
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-      </svg>
-    ),
-  },
-  {
-    heading: 'A clear record of every decision',
-    description:
-      'No more searching through texts and emails for what you decided.',
+      'Every punch list item, walkthrough note, and loose end tracked in one place — not scattered across texts and photos.',
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
@@ -24,9 +14,19 @@ const OUTCOMES = [
     ),
   },
   {
-    heading: 'Better bid comparisons',
+    heading: 'Selections saved, not scattered',
     description:
-      'Use a simple checklist to compare bids and spot missing details before you sign.',
+      'Tile, counters, fixtures — save what you picked, where you found it, and why.',
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+      </svg>
+    ),
+  },
+  {
+    heading: 'A clear record when things change',
+    description:
+      'Track plan changes, cost impacts, and what was agreed on — so nothing gets lost along the way.',
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />

@@ -105,12 +105,12 @@ export function LoginContent() {
               Not Yet Available
             </h1>
             <p className="text-cream/70 leading-relaxed">
-              We&apos;re in early beta, opening access in waves. Your email isn&apos;t on the list yet.
+              We&apos;re in early beta and opening access in waves. Your email isn&apos;t on the list yet.
             </p>
           </div>
           <div className="bg-basalt-50 rounded-card p-6 text-center">
             <p className="text-cream/60 text-sm mb-4">
-              Request early access and we&apos;ll invite you when the next wave opens.
+              Request access and we&apos;ll invite you when the next wave opens. It&apos;s free.
             </p>
             <Link href="/waitlist">
               <Button variant="primary" size="lg" className="w-full" data-umami-event="login-denied-request-access">
@@ -188,7 +188,7 @@ export function LoginContent() {
               You&apos;re on the list!
             </h1>
             <p className="text-cream/70 leading-relaxed mb-6">
-              We&apos;ll email you when the next access wave opens. In the meantime, check out our free guides.
+              We&apos;ll email you when the next wave opens. In the meantime, check out our free renovation guides.
             </p>
             <p className="text-cream/40 text-sm">Redirecting to guides...</p>
           </div>
@@ -204,7 +204,7 @@ export function LoginContent() {
               We&apos;re in Early Beta
             </h1>
             <p className="text-cream/70 leading-relaxed">
-              Request access and we&apos;ll invite you when the next wave opens.
+              Free tools to track fix items, selections, and plan changes during your renovation. Request access and we&apos;ll invite you when the next wave opens.
             </p>
           </div>
 
@@ -264,7 +264,7 @@ export function LoginContent() {
             Sign In
           </h1>
           <p className="text-cream/70 leading-relaxed">
-            Sign in to run tools and save your progress across devices.
+            Sign in to track fix items, save selections, and keep a record of changes.
           </p>
         </div>
 
