@@ -254,6 +254,12 @@ export function FileDetailPanel({ document: doc, collectionId, onClose, onUpdate
                 <span className="text-cream/60 break-all">{doc.fileName}</span>
               </>
             )}
+            {doc.sourceChangeTitle && (
+              <>
+                <span className="text-cream/30">From change</span>
+                <span className="text-cream/60">{doc.sourceChangeTitle}</span>
+              </>
+            )}
             {doc.docType && (
               <>
                 <span className="text-cream/30">Type</span>

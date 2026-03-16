@@ -398,18 +398,31 @@ export function ChangesSection({ api, commentCounts, focusEntryId }: ChangesSect
               {((change.attachments?.length || 0) > 0 || !readOnly) && (
                 <div className="flex items-start gap-2 flex-wrap">
                   {(change.attachments || []).map((att) => (
-                    <a
-                      key={att.id}
-                      href={att.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[10px] text-cream/45 hover:text-cream/60 bg-stone-200 px-2 py-1 rounded transition-colors"
-                    >
-                      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span className="truncate max-w-[120px]">{att.label}</span>
-                    </a>
+                    att.url ? (
+                      <a
+                        key={att.id}
+                        href={att.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[10px] text-cream/45 hover:text-cream/60 bg-stone-200 px-2 py-1 rounded transition-colors"
+                      >
+                        <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <span className="truncate max-w-[120px]">{att.label}</span>
+                      </a>
+                    ) : (
+                      <span
+                        key={att.id}
+                        className="inline-flex items-center gap-1 text-[10px] text-cream/45 bg-stone-200 px-2 py-1 rounded"
+                      >
+                        <svg className="w-2.5 h-2.5 shrink-0 text-sandstone/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <span className="truncate max-w-[120px]">{att.label}</span>
+                      </span>
+                    )
                   ))}
                   {!readOnly && (
                     <button

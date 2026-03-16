@@ -716,8 +716,43 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
           changedSinceAccepted = undefined
         }
 
+        // Auto-promote attachments to Plan's Files when status moves to "Added to Plan"
+        const ADDED_TO_PLAN_STATUSES: ChangeStatus[] = ['approved_by_homeowner', 'accepted_by_contractor', 'done']
+        const isMovingToAddedToPlan = updates.status
+          && ADDED_TO_PLAN_STATUSES.includes(updates.status)
+          && !ADDED_TO_PLAN_STATUSES.includes(change.status)
+        const promotedDocs: SummaryDocument[] = []
+        if (isMovingToAddedToPlan && change.attachments?.length) {
+          const existingUrls = new Set(p.documents.map((d) => d.fileUrl || d.url).filter(Boolean))
+          const ts = now()
+          for (const att of change.attachments) {
+            // Skip if already promoted (by matching URL)
+            if (att.url && existingUrls.has(att.url)) continue
+            promotedDocs.push({
+              id: genId(),
+              label: att.label,
+              contentType: att.type === 'text' ? 'text' : att.type === 'url' ? 'link' : 'file',
+              ...(att.body ? { body: att.body } : {}),
+              ...(att.type === 'file' && att.url ? { fileUrl: att.url } : {}),
+              ...(att.type === 'url' && att.url ? { url: att.url } : {}),
+              ...(att.fileName ? { fileName: att.fileName } : {}),
+              ...(att.fileSize ? { fileSize: att.fileSize } : {}),
+              ...(att.mimeType ? { mimeType: att.mimeType } : {}),
+              ...(att.uploadedAt ? { uploadedAt: att.uploadedAt } : {}),
+              isCurrent: true,
+              doc_scope: 'reference',
+              sourceChangeId: change.id,
+              sourceChangeTitle: change.title,
+              sort_order: p.documents.length + promotedDocs.length,
+              created_at: ts,
+              updated_at: ts,
+            })
+          }
+        }
+
         return {
           ...p,
+          documents: promotedDocs.length > 0 ? [...p.documents, ...promotedDocs] : p.documents,
           changes: p.changes.map((c) =>
             c.id === id ? {
               ...c,

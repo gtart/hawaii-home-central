@@ -55,6 +55,9 @@ export interface SummaryDocument {
   mimeType?: string
   uploadedBy?: string
   uploadedAt?: string
+  /** If this document was auto-promoted from a change attachment */
+  sourceChangeId?: string
+  sourceChangeTitle?: string
   sort_order: number
   created_at: string
   updated_at: string
@@ -62,9 +65,11 @@ export interface SummaryDocument {
 
 export interface ChangeAttachment {
   id: string
-  type: 'file' | 'url'
-  url: string
+  type: 'file' | 'url' | 'text'
+  url?: string
   label: string
+  /** Long-form text body — only for type 'text' */
+  body?: string
   fileName?: string
   fileSize?: number
   mimeType?: string
@@ -294,6 +299,8 @@ function coerceDocument(raw: unknown): SummaryDocument | null {
     ...(isString(raw.mimeType) ? { mimeType: raw.mimeType } : {}),
     ...(isString(raw.uploadedBy) ? { uploadedBy: raw.uploadedBy } : {}),
     ...(isString(raw.uploadedAt) ? { uploadedAt: raw.uploadedAt } : {}),
+    ...(isString(raw.sourceChangeId) ? { sourceChangeId: raw.sourceChangeId } : {}),
+    ...(isString(raw.sourceChangeTitle) ? { sourceChangeTitle: raw.sourceChangeTitle } : {}),
     sort_order: typeof raw.sort_order === 'number' ? raw.sort_order : 0,
     created_at: isString(raw.created_at) ? raw.created_at : ts,
     updated_at: isString(raw.updated_at) ? raw.updated_at : ts,
@@ -302,12 +309,16 @@ function coerceDocument(raw: unknown): SummaryDocument | null {
 
 function coerceAttachment(raw: unknown): ChangeAttachment | null {
   if (!isObject(raw)) return null
-  if (!isString(raw.id) || !isString(raw.url)) return null
+  if (!isString(raw.id)) return null
+  // Text attachments don't require a URL; file/url types do
+  const type = raw.type === 'url' ? 'url' : raw.type === 'text' ? 'text' : 'file'
+  if (type !== 'text' && !isString(raw.url)) return null
   return {
     id: raw.id,
-    type: raw.type === 'url' ? 'url' : 'file',
-    url: raw.url,
+    type,
+    ...(isString(raw.url) ? { url: raw.url } : {}),
     label: isString(raw.label) ? raw.label : 'Untitled',
+    ...(isString(raw.body) ? { body: raw.body } : {}),
     ...(isString(raw.fileName) ? { fileName: raw.fileName } : {}),
     ...(typeof raw.fileSize === 'number' ? { fileSize: raw.fileSize } : {}),
     ...(isString(raw.mimeType) ? { mimeType: raw.mimeType } : {}),

@@ -159,6 +159,9 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
   const [urlInput, setUrlInput] = useState('')
   const [urlLabelInput, setUrlLabelInput] = useState('')
   const [showUrlForm, setShowUrlForm] = useState(false)
+  const [showTextForm, setShowTextForm] = useState(false)
+  const [newTextTitle, setNewTextTitle] = useState('')
+  const [newTextBody, setNewTextBody] = useState('')
   const [confirmDeleteAttachment, setConfirmDeleteAttachment] = useState<string | null>(null)
 
   const changeComments = useComments({
@@ -207,6 +210,18 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
     setUrlInput('')
     setUrlLabelInput('')
     setShowUrlForm(false)
+  }
+
+  function handleAddText() {
+    if (!newTextTitle.trim() || !change) return
+    addChangeAttachment(change.id, {
+      type: 'text',
+      label: newTextTitle.trim(),
+      body: newTextBody.trim() || undefined,
+    })
+    setNewTextTitle('')
+    setNewTextBody('')
+    setShowTextForm(false)
   }
 
   if (!isLoaded) {
@@ -409,8 +424,17 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
 
           {/* Attachments */}
           <div className="rounded-xl border border-cream/12 bg-stone-50 p-5">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.heic,.heif,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf"
+              onChange={handleFileUpload}
+              className="hidden"
+              disabled={isUploading}
+            />
+
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-semibold text-cream/90">
+              <span className="text-xs font-semibold text-cream/50 uppercase tracking-wider">
                 Attachments
                 {attachments.length > 0 && (
                   <span className="ml-1.5 text-cream/45 font-normal">{attachments.length}</span>
@@ -420,24 +444,10 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setShowUrlForm(!showUrlForm)}
-                    className="text-[11px] text-cream/45 hover:text-cream/65 transition-colors"
-                  >
-                    + Add URL
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    disabled={isUploading}
-                  />
-                  <button
-                    type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="flex items-center gap-1 text-[11px] text-cream/45 hover:text-cream/65 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-sandstone/70 hover:text-sandstone bg-sandstone/8 hover:bg-sandstone/12 transition-colors disabled:opacity-50"
+                    title="Upload file"
                   >
                     {isUploading ? (
                       <div className="w-3 h-3 border border-cream/20 border-t-cream/50 rounded-full animate-spin" />
@@ -446,7 +456,31 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
-                    Upload File
+                    {isUploading ? 'Uploading...' : 'Upload'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowUrlForm(!showUrlForm); setShowTextForm(false) }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-cream/45 hover:text-cream/60 bg-cream/5 hover:bg-cream/8 transition-colors"
+                    title="Add a link"
+                  >
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Link
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowTextForm(!showTextForm); setShowUrlForm(false) }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-cream/45 hover:text-cream/60 bg-cream/5 hover:bg-cream/8 transition-colors"
+                    title="Add written content"
+                  >
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Add Content
                   </button>
                 </div>
               )}
@@ -458,66 +492,111 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
 
             {/* URL add form */}
             {showUrlForm && !readOnly && (
-              <div className="mb-3 p-2 rounded-lg border border-cream/15 bg-stone-50 space-y-2">
+              <div className="mb-3 p-3 rounded-lg border border-cream/12 bg-stone-50 space-y-2">
+                <input
+                  type="text"
+                  value={urlLabelInput}
+                  onChange={(e) => setUrlLabelInput(e.target.value)}
+                  placeholder="Link name"
+                  className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-sm text-cream/90 placeholder-cream/30 outline-none focus:border-sandstone/30"
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddUrl(); if (e.key === 'Escape') setShowUrlForm(false) }}
+                />
                 <input
                   type="url"
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
                   placeholder="URL"
-                  className="w-full bg-stone-200 border border-cream/15 rounded-md px-2 py-1.5 text-xs text-cream/80 placeholder-cream/35 outline-none focus:border-sandstone/30"
-                  autoFocus
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddUrl(); if (e.key === 'Escape') setShowUrlForm(false) }}
-                />
-                <input
-                  type="text"
-                  value={urlLabelInput}
-                  onChange={(e) => setUrlLabelInput(e.target.value)}
-                  placeholder="Label (optional)"
-                  className="w-full bg-stone-200 border border-cream/15 rounded-md px-2 py-1.5 text-xs text-cream/80 placeholder-cream/35 outline-none focus:border-sandstone/30"
+                  className="w-full bg-stone-200 border border-cream/12 rounded-md px-2 py-1.5 text-xs text-cream/60 placeholder-cream/30 outline-none focus:border-sandstone/30"
                   onKeyDown={(e) => { if (e.key === 'Enter') handleAddUrl() }}
                 />
                 <div className="flex gap-2 justify-end">
-                  <button type="button" onClick={() => setShowUrlForm(false)} className="px-2 py-1 text-[10px] text-cream/45 hover:text-cream/65">Cancel</button>
-                  <button type="button" onClick={handleAddUrl} disabled={!urlInput.trim()} className="px-2 py-1 text-[10px] bg-sandstone/20 text-sandstone hover:bg-sandstone/30 rounded-md disabled:opacity-30">Add</button>
+                  <button type="button" onClick={() => setShowUrlForm(false)} className="px-3 py-1.5 text-xs text-cream/45 hover:text-cream/60 transition-colors">Cancel</button>
+                  <button type="button" onClick={handleAddUrl} disabled={!urlInput.trim()} className="px-3 py-1.5 text-xs bg-sandstone/15 text-sandstone hover:bg-sandstone/25 rounded-md transition-colors disabled:opacity-30">Add</button>
                 </div>
               </div>
             )}
 
-            {attachments.length === 0 && !showUrlForm && (
-              <p className="text-sm text-cream/45 italic">No attachments yet.</p>
+            {/* Text content add form */}
+            {showTextForm && !readOnly && (
+              <div className="mb-3 p-3 rounded-lg border border-cream/12 bg-stone-50 space-y-2">
+                <input
+                  type="text"
+                  value={newTextTitle}
+                  onChange={(e) => setNewTextTitle(e.target.value)}
+                  placeholder="Title — e.g. 'Scope note' or 'Decision rationale'"
+                  className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-sm text-cream/90 placeholder-cream/30 outline-none focus:border-sandstone/30"
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === 'Escape') { setShowTextForm(false); setNewTextTitle(''); setNewTextBody('') } }}
+                />
+                <textarea
+                  value={newTextBody}
+                  onChange={(e) => setNewTextBody(e.target.value)}
+                  placeholder="Write your content here..."
+                  rows={4}
+                  className="w-full bg-stone-200 border border-cream/12 rounded-md px-3 py-2 text-xs text-cream/65 placeholder-cream/30 outline-none focus:border-sandstone/30 resize-y"
+                />
+                <div className="flex gap-2 justify-end">
+                  <button type="button" onClick={() => { setShowTextForm(false); setNewTextTitle(''); setNewTextBody('') }} className="px-3 py-1.5 text-xs text-cream/45 hover:text-cream/60 transition-colors">Cancel</button>
+                  <button type="button" onClick={handleAddText} disabled={!newTextTitle.trim()} className="px-3 py-1.5 text-xs bg-sandstone/15 text-sandstone hover:bg-sandstone/25 rounded-md transition-colors disabled:opacity-30">Add</button>
+                </div>
+              </div>
+            )}
+
+            {attachments.length === 0 && !showUrlForm && !showTextForm && (
+              <p className="text-xs text-cream/30 italic">No attachments yet.</p>
             )}
 
             <div className="space-y-1.5">
               {attachments.map((att) => (
-                <div key={att.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-stone-50 border border-cream/15 group">
-                  {att.type === 'file' ? (
-                    <svg className="w-3.5 h-3.5 text-cream/40 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <div key={att.id} className={`flex items-start gap-2 px-3 py-2 rounded-lg border group ${att.type === 'text' ? 'border-sandstone/10 bg-stone-50' : 'border-cream/12 bg-stone-50'}`}>
+                  {att.type === 'text' ? (
+                    <svg className="w-3.5 h-3.5 text-sandstone/50 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ) : att.type === 'file' ? (
+                    <svg className="w-3.5 h-3.5 text-cream/40 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
                       <path d="M14 2v6h6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ) : (
-                    <svg className="w-3.5 h-3.5 text-cream/40 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <svg className="w-3.5 h-3.5 text-cream/40 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" strokeLinecap="round" strokeLinejoin="round" />
                       <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
-                  <a
-                    href={att.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-cream/70 hover:text-cream/90 transition-colors truncate flex-1"
-                  >
-                    {att.label}
-                    {att.fileSize ? ` (${formatFileSize(att.fileSize)})` : ''}
-                  </a>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      {att.url ? (
+                        <a
+                          href={att.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-cream/70 hover:text-cream/90 transition-colors truncate"
+                        >
+                          {att.label}
+                          {att.fileSize ? ` (${formatFileSize(att.fileSize)})` : ''}
+                        </a>
+                      ) : (
+                        <span className="text-xs text-cream/70 truncate">{att.label}</span>
+                      )}
+                      {att.type === 'text' && (
+                        <span className="text-[9px] px-1 py-0.5 rounded bg-sandstone/10 text-sandstone/60">Text</span>
+                      )}
+                    </div>
+                    {att.type === 'text' && att.body && (
+                      <p className="text-[10px] text-cream/40 mt-0.5 line-clamp-2">{att.body}</p>
+                    )}
+                  </div>
                   {att.uploadedAt && (
-                    <span className="text-[10px] text-cream/35 shrink-0">
+                    <span className="text-[10px] text-cream/35 shrink-0 mt-0.5">
                       {new Date(att.uploadedAt).toLocaleDateString()}
                     </span>
                   )}
                   {!readOnly && (
                     confirmDeleteAttachment === att.id ? (
-                      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-1 shrink-0 mt-0.5" onClick={(e) => e.stopPropagation()}>
                         <button type="button" onClick={() => { removeChangeAttachment(change.id, att.id); setConfirmDeleteAttachment(null) }} className="text-[10px] text-red-400/70 hover:text-red-400">Remove</button>
                         <button type="button" onClick={() => setConfirmDeleteAttachment(null)} className="text-[10px] text-cream/45 hover:text-cream/65">Cancel</button>
                       </div>
@@ -525,7 +604,8 @@ function Content({ collectionId, changeId }: { collectionId: string; changeId: s
                       <button
                         type="button"
                         onClick={() => setConfirmDeleteAttachment(att.id)}
-                        className="shrink-0 text-cream/30 hover:text-red-400/50 transition-colors opacity-0 group-hover:opacity-100"
+                        className="shrink-0 mt-0.5 text-cream/30 hover:text-red-400/50 transition-colors md:opacity-0 md:group-hover:opacity-100"
+                        title="Delete"
                       >
                         <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />

@@ -223,6 +223,11 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
               {doc.body && (
                 <p className="text-xs text-cream/50 mt-1 line-clamp-2 leading-relaxed">{doc.body}</p>
               )}
+              {doc.sourceChangeTitle && (
+                <span className="text-[10px] text-cream/35 block mt-1">
+                  From change: <span className="text-cream/45">{doc.sourceChangeTitle}</span>
+                </span>
+              )}
               {doc.created_at && (
                 <span className="text-[10px] text-cream/35 block mt-1">
                   Added {new Date(doc.created_at).toLocaleDateString()}
@@ -288,6 +293,12 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
           {doc.uploadedAt && (
             <span className="text-[10px] text-cream/35 block mt-0.5">
               Added {new Date(doc.uploadedAt).toLocaleDateString()}
+            </span>
+          )}
+
+          {doc.sourceChangeTitle && (
+            <span className="text-[10px] text-cream/35 block mt-0.5">
+              From change: <span className="text-cream/45">{doc.sourceChangeTitle}</span>
             </span>
           )}
 
@@ -407,7 +418,7 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
 
       {/* Section header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider">Plan Resources</h2>
+        <h2 className="text-xs font-semibold text-cream/50 uppercase tracking-wider">Plan&apos;s Files</h2>
         {!readOnly && (
           <div className="flex items-center gap-2">
             <button
@@ -457,8 +468,8 @@ export function DocumentsSection({ api }: DocumentsSectionProps) {
       {/* Empty state */}
       {documents.length === 0 && !showAddForm && (
         <div className="rounded-lg border border-dashed border-cream/12 px-4 py-6 text-center">
-          <p className="text-sm text-cream/45 mb-1">No resources yet</p>
-          <p className="text-xs text-cream/30">Upload files, add links, or write content to keep your plan materials in one place.</p>
+          <p className="text-sm text-cream/45 mb-1">No files yet</p>
+          <p className="text-xs text-cream/30">Plans, contracts, agreed-upon images, and other reference files. Files from accepted changes are added here automatically.</p>
         </div>
       )}
 

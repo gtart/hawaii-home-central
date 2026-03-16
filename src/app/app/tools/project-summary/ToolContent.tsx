@@ -175,7 +175,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
             />
           </div>
 
-          {/* Zone 1 — Plan Resources */}
+          {/* Zone 1 — Plan's Files */}
           <DocumentsSection api={api} />
 
           {/* Zone 2 — Changes */}

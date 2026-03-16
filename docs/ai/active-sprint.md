@@ -4,9 +4,9 @@
 
 | Field | Value |
 |-------|-------|
-| **Sprint** | Change Log / Track Plans Follow-Up Polish |
-| **Sprint Doc** | `docs/ai/sprints/change-log-polish.md` |
-| **Status** | `complete` |
+| **Sprint** | Change Log — Plan's Files & Change Attachments |
+| **Sprint Doc** | `docs/ai/sprints/change-log-files-and-attachments.md` |
+| **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-15 |
 | **Commits** | — |
@@ -15,7 +15,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | Sprint complete. All 6 issues pass Claude + Codex verification. |
+| **Current Handoff** | All 6 issues implemented, build passes. Ready for Codex review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
@@ -40,6 +40,7 @@ When entering this repo, read in this order:
 ---
 
 ## Previous Sprints (Completed)
+- Change Log / Track Plans Follow-Up Polish (March 15, 2026) — `6594b04`
 - Change Log / Track Plans Cleanup (March 15, 2026) — `d48155f`
 - Homeowner Copy Correction (March 14, 2026) — `34f0d0f` (ready_for_codex)
 - Change Log UX Clarity (March 14, 2026) — `89ccbfb`, `554d522`, `1c43b02`, `babbc4c`, `d352ad2`
