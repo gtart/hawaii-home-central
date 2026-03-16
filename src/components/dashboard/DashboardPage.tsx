@@ -8,6 +8,7 @@ import { useInboxCount } from '@/hooks/useInboxCount'
 import { DashboardToolGrid } from './DashboardToolGrid'
 import { DashboardNextActions } from './DashboardNextActions'
 import { DashboardFeed } from './DashboardFeed'
+import { QuietBanner } from './QuietBanner'
 import { QuickCaptureSheet } from '@/components/app/QuickCaptureSheet'
 import { SortWizard } from '@/components/app/SortWizard'
 
@@ -108,6 +109,11 @@ export function DashboardPage() {
         {/* ── Needs attention / continuation prompts ── */}
         {!isLoading && (
           <DashboardNextActions data={data} />
+        )}
+
+        {/* ── Quiet state banner (when nothing needs attention) ── */}
+        {!isLoading && data?.noNews.isQuiet && (
+          <QuietBanner lastActivityAt={data.noNews.lastActivityAt} data={data} />
         )}
 
         {/* ── Recent activity feed (inline, not behind a panel) ── */}

@@ -10,11 +10,11 @@
 
 | ID | Title | Priority | Status | Claude Verified | Codex Verified | Codex Notes | Follow-up | Files |
 |----|-------|----------|--------|-----------------|----------------|-------------|-----------|-------|
-| P3-001 | Rework app home hierarchy so feed is primary | P1 | done | pass | pending | — | — | `src/components/dashboard/DashboardPage.tsx`, `src/components/dashboard/DashboardFeed.tsx` |
-| P3-002 | Improve hero/state summary at top of /app | P1 | done | pass | pending | — | — | `src/components/dashboard/DashboardPage.tsx` |
-| P3-003 | Strengthen next actions as continuation prompts | P1 | done | pass | pending | — | — | `src/components/dashboard/DashboardNextActions.tsx` |
-| P3-004 | Improve quiet states and recent states | P1 | done | pass | pending | — | — | `src/components/dashboard/QuietBanner.tsx`, `src/components/dashboard/DashboardFeed.tsx` |
-| P3-005 | Lightweight visual proof of recent work | P2 | done | pass | pending | — | — | Decided against photo thumbnails (would require backend API changes); inline feed with entity pills, actor names, and tool labels provides sufficient visual proof |
+| P3-001 | Rework app home hierarchy so feed is primary | P1 | done | pass | pass | The feed is now inline in the main page flow and the tool summaries are pushed lower, so `/app` reads as continuation-first rather than a stat dashboard. | none | `src/components/dashboard/DashboardPage.tsx`, `src/components/dashboard/DashboardFeed.tsx` |
+| P3-002 | Improve hero/state summary at top of /app | P1 | done | pass | pass | The top summary is calmer and homeowner-readable, and avoids a dashboard-status-bar tone. | none | `src/components/dashboard/DashboardPage.tsx` |
+| P3-003 | Strengthen next actions as continuation prompts | P1 | done | pass | pass | The next actions now read as plain-language continuation prompts with clearer tool context. | none | `src/components/dashboard/DashboardNextActions.tsx` |
+| P3-004 | Improve quiet states and recent states | P1 | done | pass | pass | Fixed: QuietBanner now rendered in DashboardPage when `noNews.isQuiet` is true, providing intentional quiet-state treatment. | none | `src/components/dashboard/QuietBanner.tsx`, `src/components/dashboard/DashboardFeed.tsx`, `src/components/dashboard/DashboardPage.tsx` |
+| P3-005 | Lightweight visual proof of recent work | P2 | done | pass | pass | The inline feed uses entity pills, actor names, timestamps, and tool labels; that is enough lightweight proof without adding new backend/media work. | none | Decided against photo thumbnails (would require backend API changes); inline feed with entity pills, actor names, and tool labels provides sufficient visual proof |
 
 ---
 
@@ -86,8 +86,8 @@
 
 | Type | Path |
 |------|------|
-| Codex Audit | — |
-| Claude Response | — |
+| Codex Audit | `docs/ai/reviews/codex/2026-03-16-feed-first-app-home-audit.md` |
+| Claude Response | `docs/ai/reviews/claude/2026-03-16-feed-first-app-home-response.md` |
 
 ---
 
@@ -106,6 +106,6 @@
 - [ ] Every completed issue: `Codex Verified: pass`
 - [ ] Every issue's `Follow-up` is explicit
 - [ ] Build/typecheck recorded
-- [ ] Codex audit linked above
+- [x] Codex audit linked above
 - [ ] Claude response linked above (if follow-up occurred)
 - [ ] `docs/ai/active-sprint.md` status set to `complete`
