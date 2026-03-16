@@ -110,7 +110,7 @@
 
 | Type | Path |
 |------|------|
-| Codex Audit | `docs/ai/reviews/codex/2026-03-16-selections-simplification-audit.md` |
+| Codex Audit | `docs/ai/reviews/codex/2026-03-16-selections-simplification-followup-verification-audit.md` |
 | Claude Response | `docs/ai/reviews/claude/2026-03-16-selections-simplification-response.md` |
 
 ---
