@@ -188,34 +188,30 @@ export function PunchlistItemDetail({ item, api, collectionId, projectId, onClos
 
           {editingField === 'title' ? (
             <div className="flex-1 mx-3">
-              <input
-                type="text"
+              <textarea
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
-                onKeyDown={handleFieldKeyDown}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveField() }
+                  if (e.key === 'Escape') { setEditingField(null) }
+                }}
                 onBlur={saveField}
                 autoFocus
-                className="w-full bg-stone-200 border border-sandstone/40 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/60"
+                rows={Math.min(3, Math.max(1, Math.ceil((editValue?.length || 0) / 40)))}
+                className="w-full bg-stone-200 border border-sandstone/40 rounded-lg px-3 py-1.5 text-sm text-cream placeholder:text-cream/45 focus:outline-none focus:border-sandstone/60 resize-none"
                 placeholder="Item title..."
               />
             </div>
           ) : (
-            <h2 className="text-base font-medium text-cream truncate flex-1 mx-3 text-center group/title">
+            <h2
+              className={`text-base font-medium text-cream flex-1 mx-3 text-center line-clamp-3 ${!readOnly ? 'cursor-pointer hover:text-sandstone/90 transition-colors' : ''}`}
+              onClick={!readOnly ? () => startEditing('title') : undefined}
+              title={!readOnly ? 'Click to edit title' : undefined}
+            >
               <span className="text-cream/45">#{item.itemNumber}</span>{' '}
-              {item.title || <span className="text-cream/55 italic font-normal">Untitled</span>}
-              {!readOnly && (
-                <button
-                  type="button"
-                  onClick={() => startEditing('title')}
-                  className="inline-block ml-1.5 align-middle p-0.5 text-cream/30 hover:text-sandstone transition-colors"
-                  aria-label="Edit title"
-                >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              )}
+              {item.title
+                ? (item.title.length > 200 ? item.title.slice(0, 200) + '…' : item.title)
+                : <span className="text-cream/55 italic font-normal">Untitled</span>}
             </h2>
           )}
 
