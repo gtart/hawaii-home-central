@@ -9,13 +9,13 @@
 | **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-16 |
-| **Commits** | `1a83f5a` |
+| **Commits** | `1a83f5a`, `45db171` |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | All 6 issues implemented, build passes. Ready for Codex review. |
+| **Current Handoff** | All 9 issues implemented (VP-001–VP-009), build passes. Ready for Codex review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
