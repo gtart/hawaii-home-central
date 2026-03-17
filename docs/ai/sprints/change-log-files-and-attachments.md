@@ -10,12 +10,12 @@
 
 | ID | Title | Priority | Status | Claude Verified | Codex Verified | Codex Notes | Follow-up | Files |
 |----|-------|----------|--------|-----------------|----------------|-------------|-----------|-------|
-| CLG-501 | Rename resources section to Plan's Files + microcopy | P1 | done | pass | pending | — | none | DocumentsSection.tsx, ToolContent.tsx |
-| CLG-502 | Add sourceChangeId/sourceChangeTitle to SummaryDocument | P0 | done | pass | pending | — | none | project-summary.ts |
-| CLG-503 | Auto-promote change attachments when status → Added to Plan | P0 | done | pass | pending | — | none | useProjectSummaryState.ts |
-| CLG-504 | Show source-change provenance on auto-promoted documents | P1 | done | pass | pending | — | none | DocumentsSection.tsx, FileDetailPanel.tsx |
-| CLG-505 | Extend ChangeAttachment to support text content | P1 | done | pass | pending | — | none | project-summary.ts |
-| CLG-506 | Upgrade change detail page with Upload/Link/Add Content | P0 | done | pass | pending | — | none | ChangeDetailContent.tsx, ChangesSection.tsx |
+| CLG-501 | Rename resources section to Plan's Files + microcopy | P1 | done | pass | concern | The new header/microcopy landed, but the section still exposes `Link` and `Add Content` actions and also receives auto-promoted link/text attachments, so `Plan's Files` no longer matches what the surface actually contains. | claude_fix | DocumentsSection.tsx, ToolContent.tsx |
+| CLG-502 | Add sourceChangeId/sourceChangeTitle to SummaryDocument | P0 | done | pass | pass | The new provenance fields are present on `SummaryDocument` and load through coercion without breaking old payloads. | none | project-summary.ts |
+| CLG-503 | Auto-promote change attachments when status → Added to Plan | P0 | done | pass | pass | Status transition promotion logic is present, dedupes by URL, and maps file/link/text attachments into documents with change provenance. | none | useProjectSummaryState.ts |
+| CLG-504 | Show source-change provenance on auto-promoted documents | P1 | done | pass | pass | Current documents now show `From change: ...`, and the detail panel metadata includes a `From change` row. | none | DocumentsSection.tsx, FileDetailPanel.tsx |
+| CLG-505 | Extend ChangeAttachment to support text content | P1 | done | pass | pass | Change attachments now support `text`, optional URL, and body coercion for backward-compatible loading. | none | project-summary.ts |
+| CLG-506 | Upgrade change detail page with Upload/Link/Add Content | P0 | done | pass | pass | The change detail attachment area now supports Upload/Link/Add Content, and inline change rows handle text attachments without forcing a URL. | none | ChangeDetailContent.tsx, ChangesSection.tsx |
 
 ### Status values
 - `todo`, `in_progress`, `blocked`, `done`, `needs_followup`
@@ -134,6 +134,6 @@
 - [ ] Every completed issue: `Codex Verified: pass`
 - [ ] Every issue's `Follow-up` is explicit
 - [x] Build/typecheck recorded
-- [ ] Codex audit linked above
+- [x] Codex audit linked above
 - [ ] Claude response linked above (if follow-up occurred)
 - [ ] `docs/ai/active-sprint.md` status set to `complete`
