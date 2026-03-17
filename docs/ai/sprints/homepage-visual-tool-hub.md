@@ -10,13 +10,13 @@
 
 | ID | Title | Priority | Status | Claude Verified | Codex Verified | Codex Notes | Follow-up | Files |
 |----|-------|----------|--------|-----------------|----------------|-------------|-----------|-------|
-| P1-001 | Rebuild homepage hierarchy around 3 core tool cards | P1 | done | pass | pending | — | — | `DashboardPage.tsx` |
-| P1-002 | Redesign tool cards with story previews | P1 | done | pass | pending | — | — | `DashboardCardFixList.tsx`, `DashboardCardSelections.tsx`, `DashboardCardPlanAndChanges.tsx` |
-| P1-003 | Implement per-tool recent-story aggregation | P1 | done | pass | pending | — | — | `src/server/dashboard/index.ts` |
-| P1-004 | Demote mixed global activity feed | P1 | done | pass | pending | — | — | `DashboardPage.tsx` |
-| P1-005 | Simplify project summary / reduce text clutter | P1 | done | pass | pending | — | — | `DashboardPage.tsx` |
-| P1-006 | Improve empty/low-activity states | P1 | done | pass | pending | — | — | `DashboardCardFixList.tsx`, `DashboardCardSelections.tsx`, `DashboardCardPlanAndChanges.tsx` |
-| P1-007 | Optional side/bottom sheet expansion | P2 | done | pass | pending | — | — | Documented: not implemented — card-level CTAs are strong enough and previews are compact. Sheet expansion would add complexity without clear benefit at this stage. |
+| P1-001 | Rebuild homepage hierarchy around 3 core tool cards | P1 | done | pass | pass | Core tool cards are the first primary content after the compact project header. | None. | `DashboardPage.tsx` |
+| P1-002 | Redesign tool cards with story previews | P1 | done | pass | pass | Cards are clickable, hoverable, and show compact preview rows with thumbnail support. | None. | `DashboardCardFixList.tsx`, `DashboardCardSelections.tsx`, `DashboardCardPlanAndChanges.tsx` |
+| P1-003 | Implement per-tool recent-story aggregation | P1 | done | pass | pass | Fixed: Plan & Changes previews now sort and timestamp by `updated_at` with `created_at` fallback. | none | `src/server/dashboard/index.ts` |
+| P1-004 | Demote mixed global activity feed | P1 | done | pass | pass | Feed is collapsed behind a `Recent activity` toggle and no longer dominates the page. | None. | `DashboardPage.tsx` |
+| P1-005 | Simplify project summary / reduce text clutter | P1 | done | pass | pass | Header is reduced to project name plus a compact state sentence; legacy continuation modules are removed from the primary flow. | None. | `DashboardPage.tsx` |
+| P1-006 | Improve empty/low-activity states | P1 | done | pass | pass | Each core card teaches the tool purpose and provides a clear CTA when empty. | None. | `DashboardCardFixList.tsx`, `DashboardCardSelections.tsx`, `DashboardCardPlanAndChanges.tsx` |
+| P1-007 | Optional side/bottom sheet expansion | P2 | done | pass | pass | Non-implementation is documented, and the card-level navigation remains clear without added sheet complexity. | None. | Documented: not implemented — card-level CTAs are strong enough and previews are compact. Sheet expansion would add complexity without clear benefit at this stage. |
 
 ---
 
@@ -101,8 +101,8 @@
 
 | Type | Path |
 |------|------|
-| Codex Audit | — |
-| Claude Response | — |
+| Codex Audit | `docs/ai/reviews/codex/2026-03-16-homepage-visual-tool-hub-audit.md` |
+| Claude Response | `docs/ai/reviews/claude/2026-03-16-homepage-visual-tool-hub-response.md` |
 
 ---
 
@@ -121,6 +121,6 @@
 - [ ] Every completed issue: `Codex Verified: pass`
 - [ ] Every issue's `Follow-up` is explicit
 - [x] Build/typecheck recorded
-- [ ] Codex audit linked above
+- [x] Codex audit linked above
 - [ ] Claude response linked above (if follow-up occurred)
 - [ ] `docs/ai/active-sprint.md` status set to `complete`

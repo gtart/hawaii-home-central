@@ -461,7 +461,11 @@ export async function getDashboardData(userId: string, projectId: string): Promi
     if (!col) continue
     const psPayload = ensureShape(col.payload)
     const recentChanges = [...psPayload.changes]
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .sort((a, b) => {
+        const aTime = new Date(a.updated_at || a.created_at).getTime()
+        const bTime = new Date(b.updated_at || b.created_at).getTime()
+        return bTime - aTime
+      })
       .slice(0, 3)
     for (const change of recentChanges) {
       const doneStatuses = ['done', 'closed'] as const
@@ -483,7 +487,7 @@ export async function getDashboardData(userId: string, projectId: string): Promi
         id: change.id,
         title: change.title,
         event: change.cost_impact ? `${statusLabel} · ${change.cost_impact}` : statusLabel,
-        timestamp: change.created_at,
+        timestamp: change.updated_at || change.created_at,
         thumbnailUrl: thumb,
         href: `/app/tools/project-summary/${ps.id}`,
       })
