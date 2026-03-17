@@ -86,6 +86,15 @@ export interface RecentActivityExcerpt {
   createdAt: string
 }
 
+export interface ToolPreviewItem {
+  id: string
+  title: string
+  event: string
+  timestamp: string
+  thumbnailUrl?: string
+  href: string
+}
+
 export interface DashboardResponse {
   selectionLists: SelectionListSummary[]
   fixLists: FixListSummary[]
@@ -95,6 +104,11 @@ export interface DashboardResponse {
   toolMeta: Record<ToolKey, ToolShareMeta>
   noNews: { isQuiet: boolean; lastActivityAt?: string }
   recentActivity: Partial<Record<ToolKey, RecentActivityExcerpt[]>>
+  toolPreviews: {
+    fixList: ToolPreviewItem[]
+    selections: ToolPreviewItem[]
+    planChanges: ToolPreviewItem[]
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -369,6 +383,113 @@ export async function getDashboardData(userId: string, projectId: string): Promi
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Per-tool previews: extract recent meaningful items from payload data
+  // ---------------------------------------------------------------------------
+
+  // Fix List previews: most recently updated open items with photos
+  const fixListPreviews: ToolPreviewItem[] = []
+  for (const fl of fixLists) {
+    const col = collections.find((c) => c.id === fl.id)
+    if (!col) continue
+    const payload = col.payload as PunchlistPayload | null
+    const items = (payload?.items ?? []) as PunchlistItem[]
+    const recentItems = [...items]
+      .filter((i) => i.status === 'OPEN')
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, 3)
+    for (const item of recentItems) {
+      const thumb = item.photos?.[0]?.thumbnailUrl || item.photos?.[0]?.url
+      const event = item.priority === 'HIGH' ? 'Urgent' : 'Open'
+      fixListPreviews.push({
+        id: item.id,
+        title: item.title || item.location || 'Fix item',
+        event: item.location ? `${event} · ${item.location}` : event,
+        timestamp: item.updatedAt,
+        thumbnailUrl: thumb || undefined,
+        href: `/app/tools/punchlist/${fl.id}`,
+      })
+    }
+  }
+
+  // Selections previews: most recently updated boards (from raw payload, not normalized)
+  const selectionsPreviews: ToolPreviewItem[] = []
+  for (const sl of selectionLists) {
+    const col = collections.find((c) => c.id === sl.id)
+    if (!col) continue
+    const rawPayload = col.payload as Record<string, unknown> | null
+    const rawSelections = (rawPayload?.selections ?? []) as Array<Record<string, unknown>>
+    const recentSels = [...rawSelections]
+      .sort((a, b) => new Date(String(b.updatedAt || '')).getTime() - new Date(String(a.updatedAt || '')).getTime())
+      .slice(0, 3)
+    for (const sel of recentSels) {
+      const options = (Array.isArray(sel.options) ? sel.options : []) as Array<Record<string, unknown>>
+      let thumb: string | undefined
+      const picked = options.find((o) => o.isSelected)
+      const optWithImg = picked || options.find((o) => {
+        const imgs = o.images as unknown[] | undefined
+        return (imgs && imgs.length > 0) || o.thumbnailUrl || o.imageUrl
+      })
+      if (optWithImg) {
+        const imgs = optWithImg.images as Array<{ thumbnailUrl?: string; url?: string }> | undefined
+        if (imgs && imgs.length > 0) {
+          thumb = imgs[0].thumbnailUrl || imgs[0].url
+        }
+        if (!thumb) {
+          thumb = (optWithImg.thumbnailUrl as string) || (optWithImg.imageUrl as string) || undefined
+        }
+      }
+      const pickedName = picked ? String(picked.name || '') : undefined
+      const event = pickedName
+        ? `Picked: ${pickedName}`
+        : `${options.length} option${options.length !== 1 ? 's' : ''}`
+      selectionsPreviews.push({
+        id: String(sel.id || ''),
+        title: String(sel.title || 'Selection'),
+        event,
+        timestamp: String(sel.updatedAt || col.updatedAt.toISOString()),
+        thumbnailUrl: thumb,
+        href: `/app/tools/finish-decisions/${sl.id}`,
+      })
+    }
+  }
+
+  // Plan & Changes previews: most recent changes
+  const planChangesPreviews: ToolPreviewItem[] = []
+  for (const ps of projectSummaries) {
+    const col = collections.find((c) => c.id === ps.id)
+    if (!col) continue
+    const psPayload = ensureShape(col.payload)
+    const recentChanges = [...psPayload.changes]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 3)
+    for (const change of recentChanges) {
+      const doneStatuses = ['done', 'closed'] as const
+      const statusLabel = doneStatuses.includes(change.status as typeof doneStatuses[number]) ? 'Done' : 'Active'
+      // Try to find a thumbnail from attachments
+      let thumb: string | undefined
+      if (change.attachments) {
+        for (const att of change.attachments) {
+          if (att.type === 'file' && att.url) {
+            const ext = att.url.split('.').pop()?.toLowerCase() || ''
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+              thumb = att.url
+              break
+            }
+          }
+        }
+      }
+      planChangesPreviews.push({
+        id: change.id,
+        title: change.title,
+        event: change.cost_impact ? `${statusLabel} · ${change.cost_impact}` : statusLabel,
+        timestamp: change.created_at,
+        thumbnailUrl: thumb,
+        href: `/app/tools/project-summary/${ps.id}`,
+      })
+    }
+  }
+
   return {
     selectionLists,
     fixLists,
@@ -378,5 +499,10 @@ export async function getDashboardData(userId: string, projectId: string): Promi
     toolMeta,
     noNews: { isQuiet, lastActivityAt },
     recentActivity,
+    toolPreviews: {
+      fixList: fixListPreviews.slice(0, 3),
+      selections: selectionsPreviews.slice(0, 3),
+      planChanges: planChangesPreviews.slice(0, 3),
+    },
   }
 }

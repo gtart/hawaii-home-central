@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import type { DashboardResponse } from '@/server/dashboard'
+import type { DashboardResponse, ToolPreviewItem } from '@/server/dashboard'
 import { relativeTime } from '@/lib/relativeTime'
 
 export function DashboardCardFixList({
@@ -14,96 +14,86 @@ export function DashboardCardFixList({
   if (isLoading) {
     return (
       <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6 animate-pulse">
-        <div className="h-3 w-16 bg-stone-200 rounded mb-4" />
-        <div className="h-8 w-20 bg-stone-200 rounded mb-2" />
-        <div className="h-3 w-48 bg-stone-200 rounded" />
+        <div className="h-4 w-20 bg-stone-200 rounded mb-4" />
+        <div className="h-6 w-16 bg-stone-200 rounded mb-3" />
+        <div className="space-y-2">
+          <div className="h-10 bg-stone-200 rounded" />
+          <div className="h-10 bg-stone-200 rounded" />
+        </div>
       </div>
     )
   }
 
   const lists = data?.fixLists ?? []
   const totalOpen = lists.reduce((s, l) => s + l.openCount, 0)
-  const totalStale = lists.reduce((s, l) => s + l.staleCount, 0)
   const totalHigh = lists.reduce((s, l) => s + l.highPriorityCount, 0)
   const hasItems = lists.length > 0
-  const lastUpdated = lists.length > 0 ? lists[0].updatedAt : null
+  const previews = data?.toolPreviews?.fixList ?? []
 
-  // Not started
+  // Not started — empty state
   if (!hasItems) {
     return (
-      <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/70 mb-2">Fix List</p>
-        <p className="text-sm text-cream/50 mb-4">Keep a running list of fixes — add items as you spot them, share with your contractor, and check them off as they get done.</p>
-        <Link
-          href="/app/tools/punchlist"
-          className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
-        >
-          Start Tracking
-        </Link>
-      </div>
+      <Link href="/app/tools/punchlist" className="block bg-stone rounded-card border border-cream/15 hover:border-sandstone/30 transition-colors p-5 md:p-6 group">
+        <p className="text-sm font-medium text-cream/80 mb-2 group-hover:text-sandstone transition-colors">Fix List</p>
+        <p className="text-sm text-cream/45 mb-3 leading-relaxed">
+          Keep a running list of things that need fixing — walkthrough notes, punch items, loose ends.
+        </p>
+        <span className="inline-flex items-center text-sm text-sandstone/70 group-hover:text-sandstone transition-colors">
+          Start tracking
+          <svg className="w-3.5 h-3.5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      </Link>
     )
-  }
-
-  // All caught up
-  if (totalOpen === 0) {
-    return (
-      <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-        <p className="text-sm font-medium text-cream/70 mb-2">Fix List</p>
-        <p className="text-sm text-cream/65 mb-1">All issues resolved</p>
-        {lastUpdated && (
-          <p className="text-[11px] text-cream/40 mb-3">Updated {relativeTime(lastUpdated)}</p>
-        )}
-        <Link
-          href="/app/tools/punchlist"
-          className="inline-flex items-center px-4 py-2 border border-cream/15 text-cream/65 text-sm font-medium rounded-button hover:bg-stone-200 transition-colors"
-        >
-          View Issues
-        </Link>
-      </div>
-    )
-  }
-
-  // Active — has open items
-  let statusLine: string
-  if (totalHigh > 0) {
-    statusLine = `${totalHigh} high-priority issue${totalHigh !== 1 ? 's' : ''} to review`
-  } else if (totalStale > 0) {
-    statusLine = `${totalStale} issue${totalStale !== 1 ? 's' : ''} stale for 2+ weeks`
-  } else {
-    statusLine = `${totalOpen} open issue${totalOpen !== 1 ? 's' : ''} to work through`
   }
 
   return (
-    <div className="bg-stone rounded-card border border-cream/15 p-5 md:p-6">
-      <p className="text-sm font-medium text-cream/70 mb-3">Fix List</p>
-      <div className="flex items-baseline gap-3 mb-1">
-        <span className="text-2xl font-semibold text-cream tabular-nums">{totalOpen}</span>
-        <span className="text-sm text-cream/55">open</span>
-        {totalStale > 0 && (
-          <>
-            <span className="text-cream/30">&middot;</span>
-            <span className="text-sm text-amber-400/70">{totalStale} stale</span>
-          </>
+    <Link href="/app/tools/punchlist" className="block bg-stone rounded-card border border-cream/15 hover:border-sandstone/30 transition-colors p-5 md:p-6 group">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-medium text-cream/80 group-hover:text-sandstone transition-colors">Fix List</p>
+        {totalOpen > 0 && (
+          <span className="text-xs text-cream/40">{totalOpen} open{totalHigh > 0 ? ` · ${totalHigh} urgent` : ''}</span>
         )}
-        {totalHigh > 0 && (
-          <>
-            <span className="text-cream/30">&middot;</span>
-            <span className="text-sm text-red-400/70">{totalHigh} urgent</span>
-          </>
+        {totalOpen === 0 && (
+          <span className="text-xs text-emerald-400/60">All resolved</span>
         )}
       </div>
-      <p className="text-xs text-cream/50 mb-2">{statusLine}</p>
-      {lastUpdated && (
-        <p className="text-[11px] text-cream/40 mb-4">
-          Updated {relativeTime(lastUpdated)}{lists[0].updatedByName ? ` by ${lists[0].updatedByName.split(' ')[0]}` : ''}
-        </p>
+
+      {/* Story previews */}
+      {previews.length > 0 ? (
+        <div className="space-y-2">
+          {previews.map((p) => (
+            <PreviewRow key={p.id} item={p} />
+          ))}
+        </div>
+      ) : totalOpen === 0 ? (
+        <p className="text-xs text-cream/35">No open issues right now.</p>
+      ) : (
+        <p className="text-xs text-cream/35">Open issues to review.</p>
       )}
-      <Link
-        href="/app/tools/punchlist"
-        className="inline-flex items-center px-4 py-2 bg-sandstone text-basalt text-sm font-medium rounded-button hover:bg-sandstone-light transition-colors"
-      >
-        Review Fixes
-      </Link>
+    </Link>
+  )
+}
+
+function PreviewRow({ item }: { item: ToolPreviewItem }) {
+  return (
+    <div className="flex items-center gap-3">
+      {item.thumbnailUrl ? (
+        <img src={item.thumbnailUrl} alt="" className="w-9 h-9 rounded-lg object-cover shrink-0" loading="lazy" />
+      ) : (
+        <div className="w-9 h-9 rounded-lg bg-stone-200 shrink-0 flex items-center justify-center">
+          <svg className="w-4 h-4 text-cream/25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" strokeLinecap="round" />
+            <rect x="9" y="3" width="6" height="4" rx="1" />
+          </svg>
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-cream/70 truncate">{item.title}</p>
+        <p className="text-[10px] text-cream/35">{item.event} · {relativeTime(item.timestamp)}</p>
+      </div>
     </div>
   )
 }
