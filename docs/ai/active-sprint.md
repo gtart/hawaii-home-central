@@ -6,16 +6,16 @@
 |-------|-------|
 | **Sprint** | Selections Cleanup — Final Choice in Flow, Less Management UI |
 | **Sprint Doc** | `docs/ai/sprints/selections-cleanup-final-choice.md` |
-| **Status** | `implementation` |
+| **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-16 |
-| **Commits** | — |
+| **Commits** | `b63445d` |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | Sprint started. 6 issues in scope. |
+| **Current Handoff** | All 6 issues implemented, build passes. Ready for Codex review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
