@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useMemo, useCallback, useRef } from 'react'
+import { Suspense, useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ToolPageHeader } from '@/components/app/ToolPageHeader'
 import { InstanceSwitcher } from '@/components/app/InstanceSwitcher'
@@ -64,6 +64,15 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
       // ignore
     }
   }, [collectionId, router])
+
+  // Auto-open add change form from ?add=change (dashboard CTA)
+  useEffect(() => {
+    if (searchParams.get('add') === 'change') {
+      // Small delay to let the section mount
+      const t = setTimeout(() => changesSectionRef.current?.scrollToAndAdd(), 300)
+      return () => clearTimeout(t)
+    }
+  }, [searchParams])
 
   // Focus target from URL query param
   const focusTarget = useMemo<FocusTarget | null>(() => {

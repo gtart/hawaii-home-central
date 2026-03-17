@@ -61,7 +61,7 @@ export function PunchlistPage({ api, collectionId, projectId, commentCounts, onO
   const [viewingId, setViewingId] = useState<string | null>(() => searchParams.get('highlight'))
   const [expandedLocations, setExpandedLocations] = useState(false)
   const [expandedAssignees, setExpandedAssignees] = useState(false)
-  const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const [quickAddOpen, setQuickAddOpen] = useState(() => searchParams.get('add') === 'true')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkMenuOpen, setBulkMenuOpen] = useState<'status' | 'assignee' | 'location' | 'priority' | null>(null)
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)

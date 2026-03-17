@@ -16,6 +16,9 @@
 | VP-004 | Improve option card hierarchy | P1 | done | pass | pending | — | — | `IdeasBoard.tsx` |
 | VP-005 | Improve spacing rhythm and action hierarchy | P1 | done | pass | pending | — | — | `IdeasBoard.tsx`, `DecisionDetailContent.tsx` |
 | VP-006 | Option detail polish | P2 | done | pass | pending | — | — | `OptionDetailContent.tsx` |
+| VP-007 | Fix broken thumbnails on /app homepage | P1 | done | pass | pending | — | — | `DashboardCardFixList.tsx`, `DashboardCardSelections.tsx`, `DashboardCardPlanAndChanges.tsx` |
+| VP-008 | Deep link from preview items to actual items | P1 | done | pass | pending | — | — | `DashboardCard*.tsx`, `src/server/dashboard/index.ts` |
+| VP-009 | Add quick-capture CTAs (+Add Fix, +Add Selection, +Add Change) | P1 | done | pass | pending | — | — | `DashboardCard*.tsx`, `PunchlistPage.tsx`, `DecisionTrackerPage.tsx`, `ToolContent.tsx` |
 
 ---
 
@@ -65,6 +68,25 @@
 - Comment text in action row updated
 - **Files**: `OptionDetailContent.tsx`
 
+### VP-007: Fix broken thumbnails on /app homepage
+- Dashboard preview rows now use `displayUrl()` to proxy external images past hotlink protection
+- `ImageWithFallback` renders graceful SVG fallbacks instead of broken img tags
+- **Files**: `DashboardCardFixList.tsx`, `DashboardCardSelections.tsx`, `DashboardCardPlanAndChanges.tsx`
+
+### VP-008: Deep link from preview items to actual items
+- Fix List previews deep link to `?highlight={itemId}` (scrolls to item)
+- Selections previews deep link to `/decision/{decisionId}` (individual decision page)
+- Plan Changes previews deep link to `?focus=change-{changeId}` (scrolls to change)
+- Preview rows are clickable `<Link>` elements with hover state, independent of card-level link
+- **Files**: `DashboardCard*.tsx`, `src/server/dashboard/index.ts`
+
+### VP-009: Add quick-capture CTAs
+- Each card has a `+ Add fix` / `+ Add selection` / `+ Add change` link at the bottom
+- Fix List: navigates to tool page with `?add=true`, auto-opens quick-add strip
+- Selections: navigates with `?add=true`, auto-shows inline add input
+- Plan Changes: navigates with `?add=change`, auto-scrolls to and opens add change form
+- **Files**: `DashboardCard*.tsx`, `PunchlistPage.tsx`, `DecisionTrackerPage.tsx`, `ToolContent.tsx` (project-summary)
+
 ---
 
 ## Files Changed
@@ -77,6 +99,13 @@
 | `src/app/app/tools/finish-decisions/components/SelectionsBoardView.tsx` | "No final selected" → "No final choice" |
 | `src/app/app/tools/finish-decisions/decision/[decisionId]/DecisionDetailContent.tsx` | "No final selected" → "No final choice", "mark as final" → "final choice". Desktop/mobile controls softened (smaller text, lower opacity). |
 | `src/app/app/tools/finish-decisions/decision/[decisionId]/option/[optionId]/OptionDetailContent.tsx` | "Final Decision" → "Final choice" across button, badge, and comments |
+| `src/components/dashboard/DashboardCardFixList.tsx` | `displayUrl` + `ImageWithFallback` for thumbnails. Preview rows are deep-linked `<Link>`. Card restructured (div wrapper). "+Add fix" CTA. |
+| `src/components/dashboard/DashboardCardSelections.tsx` | Same thumbnail fix. Deep-linked rows. "+Add selection" CTA. |
+| `src/components/dashboard/DashboardCardPlanAndChanges.tsx` | Same thumbnail fix. Deep-linked rows. "+Add change" CTA. |
+| `src/server/dashboard/index.ts` | Item-level deep links: Fix List `?highlight=`, Selections `/decision/{id}`, Changes `?focus=change-{id}` |
+| `src/app/app/tools/punchlist/components/PunchlistPage.tsx` | `?add=true` auto-opens quick-add strip |
+| `src/app/app/tools/finish-decisions/components/DecisionTrackerPage.tsx` | `?add=true` auto-shows add input |
+| `src/app/app/tools/project-summary/ToolContent.tsx` | `?add=change` auto-scrolls to and opens add change form |
 
 ---
 

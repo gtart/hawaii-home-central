@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import type { DashboardResponse, ToolPreviewItem } from '@/server/dashboard'
 import { relativeTime } from '@/lib/relativeTime'
+import { displayUrl } from '@/lib/finishDecisionsImages'
+import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 
 export function DashboardCardSelections({
   data,
@@ -52,20 +54,20 @@ export function DashboardCardSelections({
   }
 
   return (
-    <Link href="/app/tools/finish-decisions" className="block bg-stone rounded-card border border-cream/15 hover:border-sandstone/30 transition-colors p-5 md:p-6 group">
+    <div className="bg-stone rounded-card border border-cream/15 hover:border-sandstone/30 transition-colors p-5 md:p-6 group">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <Link href="/app/tools/finish-decisions" className="flex items-center justify-between mb-3">
         <p className="text-sm font-medium text-cream/80 group-hover:text-sandstone transition-colors">Selections</p>
         {totalActive > 0 ? (
           <span className="text-xs text-cream/40">{totalActive} to decide{totalDone > 0 ? ` · ${totalDone} done` : ''}</span>
         ) : (
           <span className="text-xs text-emerald-400/60">All {totalDone} decided</span>
         )}
-      </div>
+      </Link>
 
       {/* Story previews */}
       {previews.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-0.5">
           {previews.map((p) => (
             <PreviewRow key={p.id} item={p} />
           ))}
@@ -75,28 +77,47 @@ export function DashboardCardSelections({
       ) : (
         <p className="text-xs text-cream/35">Boards waiting for your picks.</p>
       )}
-    </Link>
+
+      {/* Quick add CTA */}
+      <Link
+        href="/app/tools/finish-decisions?add=true"
+        className="inline-flex items-center gap-1 mt-3 text-[11px] text-sandstone/60 hover:text-sandstone transition-colors"
+      >
+        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round" />
+          <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round" />
+        </svg>
+        Add selection
+      </Link>
+    </div>
   )
 }
 
 function PreviewRow({ item }: { item: ToolPreviewItem }) {
   return (
-    <div className="flex items-center gap-3">
-      {item.thumbnailUrl ? (
-        <img src={item.thumbnailUrl} alt="" className="w-9 h-9 rounded-lg object-cover shrink-0" loading="lazy" />
-      ) : (
-        <div className="w-9 h-9 rounded-lg bg-stone-200 shrink-0 flex items-center justify-center">
-          <svg className="w-4 h-4 text-cream/25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <circle cx="8.5" cy="8.5" r="1.5" />
-            <path d="M21 15l-5-5L5 21" />
-          </svg>
-        </div>
-      )}
+    <Link
+      href={item.href}
+      onClick={(e) => e.stopPropagation()}
+      className="flex items-center gap-3 -mx-1.5 px-1.5 py-1 rounded-lg hover:bg-cream/5 transition-colors"
+    >
+      <ImageWithFallback
+        src={item.thumbnailUrl ? displayUrl(item.thumbnailUrl) : undefined}
+        alt=""
+        className="w-9 h-9 rounded-lg object-cover shrink-0"
+        fallback={
+          <div className="w-9 h-9 rounded-lg bg-stone-200 shrink-0 flex items-center justify-center">
+            <svg className="w-4 h-4 text-cream/25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <path d="M21 15l-5-5L5 21" />
+            </svg>
+          </div>
+        }
+      />
       <div className="flex-1 min-w-0">
         <p className="text-xs text-cream/70 truncate">{item.title}</p>
         <p className="text-[10px] text-cream/35">{item.event} · {relativeTime(item.timestamp)}</p>
       </div>
-    </div>
+    </Link>
   )
 }

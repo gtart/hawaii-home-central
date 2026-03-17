@@ -118,7 +118,7 @@ export function DecisionTrackerPage({
   const [toast, setToast] = useState<{ message: string; kitId: string } | null>(null)
   const [simpleToast, setSimpleToast] = useState<string | null>(null)
   const [addInputValue, setAddInputValue] = useState('')
-  const [addInputVisible, setAddInputVisible] = useState(false)
+  const [addInputVisible, setAddInputVisible] = useState(() => searchParams.get('add') === 'true')
 
   // Bulk select state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())

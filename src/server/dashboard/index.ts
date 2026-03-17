@@ -407,7 +407,7 @@ export async function getDashboardData(userId: string, projectId: string): Promi
         event: item.location ? `${event} · ${item.location}` : event,
         timestamp: item.updatedAt,
         thumbnailUrl: thumb || undefined,
-        href: `/app/tools/punchlist/${fl.id}`,
+        href: `/app/tools/punchlist/${fl.id}?highlight=${item.id}`,
       })
     }
   }
@@ -449,7 +449,7 @@ export async function getDashboardData(userId: string, projectId: string): Promi
         event,
         timestamp: String(sel.updatedAt || col.updatedAt.toISOString()),
         thumbnailUrl: thumb,
-        href: `/app/tools/finish-decisions/${sl.id}`,
+        href: `/app/tools/finish-decisions/decision/${String(sel.id || '')}`,
       })
     }
   }
@@ -489,7 +489,7 @@ export async function getDashboardData(userId: string, projectId: string): Promi
         event: change.cost_impact ? `${statusLabel} · ${change.cost_impact}` : statusLabel,
         timestamp: change.updated_at || change.created_at,
         thumbnailUrl: thumb,
-        href: `/app/tools/project-summary/${ps.id}`,
+        href: `/app/tools/project-summary/${ps.id}?focus=change-${change.id}`,
       })
     }
   }
