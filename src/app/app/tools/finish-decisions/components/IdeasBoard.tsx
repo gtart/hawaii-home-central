@@ -254,7 +254,11 @@ function IdeaCardTile({
       aria-label={`Open option: ${option.name || 'Untitled'}`}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
-      className="w-full rounded-xl overflow-hidden bg-basalt border border-cream/15 hover:border-cream/30 transition-colors text-left group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/50"
+      className={`w-full rounded-xl overflow-hidden text-left group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/50 transition-colors ${
+        option.isSelected
+          ? 'bg-sandstone/5 border-2 border-sandstone/40 ring-1 ring-sandstone/20 shadow-md shadow-sandstone/5'
+          : 'bg-basalt border border-cream/15 hover:border-cream/30'
+      }`}
     >
       {/* Image area — only Final pill overlays here */}
       {hasImage && (
@@ -274,17 +278,17 @@ function IdeaCardTile({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onToggleFinal() }}
-              className={`absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full transition-all ${
+              className={`absolute top-2 left-2 flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-lg transition-all ${
                 option.isSelected
-                  ? 'bg-sandstone text-basalt'
+                  ? 'bg-sandstone text-basalt shadow-sm'
                   : 'bg-black/40 text-white/70 opacity-60 sm:opacity-0 group-hover:opacity-100'
               }`}
             >
-              {option.isSelected ? '⭐ Final' : '☆ Final'}
+              {option.isSelected ? '✓ Final choice' : '☆ Pick this'}
             </button>
           ) : option.isSelected ? (
-            <span className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 bg-sandstone text-basalt text-[10px] font-semibold rounded-full">
-              ⭐ Final
+            <span className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 bg-sandstone text-basalt text-[11px] font-semibold rounded-lg shadow-sm">
+              ✓ Final choice
             </span>
           ) : null}
         </div>
@@ -390,20 +394,20 @@ function IdeaCardTile({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onToggleFinal() }}
-              className={`text-[10px] px-2 py-0.5 rounded-full transition-colors ${
+              className={`text-[11px] px-2.5 py-1 rounded-lg transition-colors ${
                 option.isSelected
-                  ? 'bg-sandstone text-basalt font-semibold'
+                  ? 'bg-sandstone text-basalt font-semibold shadow-sm'
                   : 'bg-sandstone/10 text-sandstone/60 border border-sandstone/20 hover:bg-sandstone/20 hover:text-sandstone'
               }`}
             >
-              {option.isSelected ? '⭐ Final' : '☆ Final'}
+              {option.isSelected ? '✓ Final choice' : '☆ Pick this'}
             </button>
           </div>
         )}
         {!hasImage && !onToggleFinal && option.isSelected && (
           <div className="flex justify-end pt-0.5">
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-sandstone text-basalt font-semibold">
-              ⭐ Final
+            <span className="text-[11px] px-2.5 py-1 rounded-lg bg-sandstone text-basalt font-semibold shadow-sm">
+              ✓ Final choice
             </span>
           </div>
         )}
@@ -790,13 +794,19 @@ export function IdeasBoard({
 
           {/* Card grid (1+ ideas) — desktop always shows all, mobile collapses */}
           {decision.options.length >= 1 && (() => {
-            const mobileVisible = expanded ? decision.options : decision.options.slice(0, MOBILE_VISIBLE_COUNT)
-            const hiddenCount = decision.options.length - MOBILE_VISIBLE_COUNT
+            // Pin final-selected option to first position
+            const orderedOptions = (() => {
+              const selected = decision.options.find((o) => o.isSelected)
+              if (!selected) return decision.options
+              return [selected, ...decision.options.filter((o) => !o.isSelected)]
+            })()
+            const mobileVisible = expanded ? orderedOptions : orderedOptions.slice(0, MOBILE_VISIBLE_COUNT)
+            const hiddenCount = orderedOptions.length - MOBILE_VISIBLE_COUNT
             return (
               <>
-                {/* Desktop: always show all cards */}
+                {/* Desktop: always show all cards, selected first */}
                 <div className="hidden md:block md:columns-3 md:gap-3 mb-3">
-                  {decision.options.map((opt) => {
+                  {orderedOptions.map((opt) => {
                     const optComments = comments.filter((c) => c.refEntityId === opt.id)
                     const latestCmt = optComments.length > 0 ? optComments.reduce((latest, c) => c.createdAt > latest.createdAt ? c : latest) : null
                     return (

@@ -731,13 +731,13 @@ export function DecisionDetailContent({
               </button>
             )}
           </div>
-          {/* Row 2: status + priority + due (compact) */}
-          <div className="flex items-center gap-2 mt-2">
+          {/* Row 2: status + priority + due (subdued, compact) */}
+          <div className="flex items-center gap-1.5 mt-1.5">
             <select
               value={foundDecision.status}
               onChange={(e) => !readOnly && handleStatusChange(e.target.value as StatusV3)}
               disabled={readOnly}
-              className={`shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${statusCfg.pillClass}`}
+              className={`shrink-0 px-2 py-1 text-[11px] font-medium rounded border cursor-pointer focus:outline-none focus:ring-1 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${statusCfg.pillClass}`}
             >
               {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
                 <option key={key} value={key}>{config.label}</option>
@@ -747,20 +747,24 @@ export function DecisionDetailContent({
               value={foundDecision.priority || ''}
               onChange={(e) => !readOnly && updateDecision({ priority: (e.target.value || undefined) as SelectionPriority | undefined })}
               disabled={readOnly}
-              className={`shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-stone text-cream/55 border-cream/15'}`}
+              className={`shrink-0 px-2 py-1 text-[11px] font-medium rounded border cursor-pointer focus:outline-none focus:ring-1 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-stone text-cream/45 border-cream/10'}`}
             >
               <option value="">Priority</option>
               {Object.entries(SELECTION_PRIORITY_CONFIG).map(([key, config]) => (
                 <option key={key} value={key}>{config.label}</option>
               ))}
             </select>
-            <input
-              type="date"
-              value={foundDecision.dueDate || ''}
-              onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
-              disabled={readOnly}
-              className="bg-stone text-cream rounded-input px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sandstone [color-scheme:dark] disabled:opacity-50 shrink-0"
-            />
+            {foundDecision.dueDate ? (
+              <span className="text-[11px] text-cream/45">Due {formattedDue}</span>
+            ) : !readOnly && (
+              <input
+                type="date"
+                value=""
+                onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
+                className="bg-stone text-cream/45 rounded px-1.5 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-sandstone [color-scheme:dark] shrink-0"
+                title="Set due date"
+              />
+            )}
           </div>
         </div>
 
@@ -858,91 +862,20 @@ export function DecisionDetailContent({
           </div>
         </div>
 
-        {/* Warnings (keep visible) */}
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs mb-2">
+        {/* Compact meta line: status log + warnings */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-cream/40 mb-3">
+          {latestStatusLog && foundDecision.status !== 'deciding' && (
+            <span>
+              {(STATUS_CONFIG_V3[latestStatusLog.status] ?? STATUS_CONFIG_V3.deciding).label} by {latestStatusLog.markedBy}
+            </span>
+          )}
           {doneWithoutFinal && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/10 text-red-400 text-[10px] font-medium rounded-full border border-red-400/20">
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
               No final selected
             </span>
           )}
-        </div>
-
-        {/* Status marked-by line */}
-        {latestStatusLog && foundDecision.status !== 'deciding' && (
-          <p className="text-[11px] text-cream/45 mb-4">
-            Marked {(STATUS_CONFIG_V3[latestStatusLog.status] ?? STATUS_CONFIG_V3.deciding).label} by {latestStatusLog.markedBy} on{' '}
-            {new Date(latestStatusLog.markedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-          </p>
-        )}
-
-        {/* Cross-tool: Project Summary link badge (create-entry button hidden — cross-tool linking deferred) */}
-        {currentProject?.id && (
-          <div className="mb-4 space-y-2">
+          {currentProject?.id && (
             <ProjectSummaryLinkBadge projectId={currentProject.id} entityId={decisionId} />
-          </div>
-        )}
-
-        {/* Final Decision */}
-        <div className="mb-4">
-          {finalPick ? (() => {
-            const hero = getHeroImage(finalPick)
-            const thumbUrl = hero ? displayUrl(hero.thumbnailUrl || hero.url) : null
-            return (
-              <div className="bg-sandstone/10 border border-sandstone/25 rounded-xl p-4 flex items-center gap-4 overflow-hidden">
-                {thumbUrl && (
-                  <img src={thumbUrl} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-sandstone shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span className="text-[10px] uppercase tracking-wider text-sandstone font-semibold">Final Decision</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => router.push(buildOptionHref({ decisionId, optionId: finalPick.id }))}
-                    className="text-sm font-medium text-cream hover:text-cream/90 transition-colors truncate block w-full max-w-full text-left"
-                  >
-                    {finalPick.name || 'Untitled'}
-                  </button>
-                  {foundDecision.finalSelection && (
-                    <p className="text-[11px] text-cream/55">
-                      Chosen by {foundDecision.finalSelection.selectedBy} &middot;{' '}
-                      {new Date(foundDecision.finalSelection.selectedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                    </p>
-                  )}
-                </div>
-                {!readOnly && (
-                  <button
-                    type="button"
-                    onClick={() => selectOption(finalPick.id)}
-                    className="shrink-0 text-[10px] text-cream/45 hover:text-cream/65 transition-colors"
-                  >
-                    Unselect
-                  </button>
-                )}
-              </div>
-            )
-          })() : (
-            <div className="border-2 border-dashed border-cream/15 rounded-xl p-6 text-center">
-              <svg className="w-8 h-8 text-cream/35 mx-auto mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 8v4l2 2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <p className="text-sm font-medium text-cream/55">No final decision yet</p>
-              <p className="text-xs text-cream/45">Choose from the options below</p>
-              {doneWithoutFinal && (
-                <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 bg-red-500/10 text-red-400 text-[10px] font-medium rounded-full border border-red-400/20">
-                  Marked Done without a pick
-                </span>
-              )}
-            </div>
           )}
         </div>
 
@@ -956,6 +889,9 @@ export function DecisionDetailContent({
                 {foundDecision.options.length}
               </span>
             </h2>
+            {!finalPick && foundDecision.options.length > 0 && (
+              <span className="text-[11px] text-cream/35 hidden sm:inline">Pick one to mark as final</span>
+            )}
             {guidanceTipCount > 0 && (
               <button
                 type="button"

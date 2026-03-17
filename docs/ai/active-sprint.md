@@ -4,18 +4,18 @@
 
 | Field | Value |
 |-------|-------|
-| **Sprint** | Homepage Rebuild: Visual Tool Cards + Contextual Story Previews |
-| **Sprint Doc** | `docs/ai/sprints/homepage-visual-tool-hub.md` |
-| **Status** | `ready_for_codex` |
+| **Sprint** | Selections Cleanup — Final Choice in Flow, Less Management UI |
+| **Sprint Doc** | `docs/ai/sprints/selections-cleanup-final-choice.md` |
+| **Status** | `implementation` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-16 |
-| **Commits** | `90c3e4b` |
+| **Commits** | — |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | All 7 issues implemented, build passes. Ready for Codex review. |
+| **Current Handoff** | Sprint started. 6 issues in scope. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
@@ -40,6 +40,7 @@ When entering this repo, read in this order:
 ---
 
 ## Previous Sprints (Completed)
+- Homepage Rebuild: Visual Tool Cards + Story Previews (March 16, 2026) — `90c3e4b`, `99650bd`
 - Selections Simplification into Selection Boards (March 16, 2026) — `7258c40`, `274adf9`
 - Feed-First App Home (March 16, 2026) — `2eb5056`, `9438608`
 - Core Tool Hierarchy and Visibility Cleanup (March 16, 2026) — `5aac4b7`, `4acb09a`
