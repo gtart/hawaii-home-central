@@ -6,16 +6,16 @@
 |-------|-------|
 | **Sprint** | Homepage Rebuild: Visual Tool Cards + Contextual Story Previews |
 | **Sprint Doc** | `docs/ai/sprints/homepage-visual-tool-hub.md` |
-| **Status** | `implementation` |
+| **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-16 |
-| **Commits** | — |
+| **Commits** | `90c3e4b` |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | Sprint started. 7 issues in scope. |
+| **Current Handoff** | All 7 issues implemented, build passes. Ready for Codex review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
