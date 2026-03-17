@@ -112,7 +112,7 @@ export function EarlyAccessSignupForm() {
           disabled={status === 'submitting'}
           aria-label="Email address"
         />
-        <Button type="submit" disabled={status === 'submitting'} className="w-full" data-umami-event="waitlist-email-submit">
+        <Button type="submit" disabled={status === 'submitting'} className="w-full" data-ph-capture-click="waitlist-email-submit">
           {status === 'submitting' ? 'Submitting...' : 'Request access'}
         </Button>
       </form>
@@ -128,7 +128,7 @@ export function EarlyAccessSignupForm() {
         onClick={() => signIn('google', { callbackUrl: '/waitlist?source=google' })}
         variant="secondary"
         className="w-full flex items-center justify-center gap-3"
-        data-umami-event="waitlist-google-signup"
+        data-ph-capture-click="waitlist-google-signup"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
           <path

@@ -121,14 +121,14 @@ function ToolCardComponent({ tool, index }: { tool: ToolCard; index: number }) {
         <div className="mt-4 space-y-2">
           <div className="flex gap-3">
             <Link href="/waitlist" className="flex-1">
-              <Button variant="primary" size="md" className="w-full" data-umami-event={`tool-request-access-${slug}`}>
+              <Button variant="primary" size="md" className="w-full" data-ph-capture-click={`tool-request-access-${slug}`}>
                 Request Early Access
               </Button>
             </Link>
             <button
               type="button"
               onClick={() => setIsOpen(!isOpen)}
-              data-umami-event={`tool-preview-${slug}`}
+              data-ph-capture-click={`tool-preview-${slug}`}
               className={cn(
                 'flex-1 py-2.5 rounded-button text-sm font-medium transition-colors border',
                 isOpen
@@ -142,7 +142,7 @@ function ToolCardComponent({ tool, index }: { tool: ToolCard; index: number }) {
           <Link
             href={tool.ctaHref}
             className="block text-center text-xs text-cream/40 hover:text-cream/60 transition-colors pt-1"
-            data-umami-event={`tool-sign-in-${slug}`}
+            data-ph-capture-click={`tool-sign-in-${slug}`}
           >
             Have access? Sign in &rarr;
           </Link>
@@ -179,14 +179,14 @@ function ToolCardComponent({ tool, index }: { tool: ToolCard; index: number }) {
 
             <div className="space-y-2">
               <Link href="/waitlist">
-                <Button variant="primary" size="sm" className="w-full" data-umami-event={`tool-preview-request-access-${slug}`}>
+                <Button variant="primary" size="sm" className="w-full" data-ph-capture-click={`tool-preview-request-access-${slug}`}>
                   Request Early Access
                 </Button>
               </Link>
               <Link
                 href={tool.ctaHref}
                 className="block text-center text-xs text-cream/40 hover:text-cream/60 transition-colors pt-1"
-                data-umami-event={`tool-preview-sign-in-${slug}`}
+                data-ph-capture-click={`tool-preview-sign-in-${slug}`}
               >
                 Have access? Sign in &rarr;
               </Link>

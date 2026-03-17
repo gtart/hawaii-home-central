@@ -80,7 +80,7 @@ export function NewsletterPrompt({ onClose }: { onClose: () => void }) {
             disabled={isSubmitting}
             size="lg"
             className="w-full"
-            data-umami-event="newsletter-opt-in"
+            data-ph-capture-click="newsletter-opt-in"
           >
             {copy.newsletter_prompt_opt_in_label}
           </Button>
@@ -90,7 +90,7 @@ export function NewsletterPrompt({ onClose }: { onClose: () => void }) {
             variant="ghost"
             size="sm"
             className="w-full"
-            data-umami-event="newsletter-skip"
+            data-ph-capture-click="newsletter-skip"
           >
             {copy.newsletter_prompt_skip_label}
           </Button>

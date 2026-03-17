@@ -57,7 +57,7 @@ export function Footer() {
               <a
                 href={`mailto:${EMAIL}`}
                 className="text-sandstone hover:text-sandstone-light transition-colors"
-                data-umami-event="footer-contact-email"
+                data-ph-capture-click="footer-contact-email"
               >
                 {EMAIL}
               </a>
