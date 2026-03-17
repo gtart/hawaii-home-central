@@ -264,7 +264,7 @@ export function CompareModal({
                             : 'bg-cream/10 text-cream/70 hover:bg-cream/30 hover:text-cream/90'
                         }`}
                       >
-                        {opt.isSelected ? '✓ Final Decision' : 'Mark as Final'}
+                        {opt.isSelected ? '✓ Final choice' : 'Pick as final'}
                       </button>
                     </div>
                   )}

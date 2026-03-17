@@ -4,12 +4,12 @@
 
 | Field | Value |
 |-------|-------|
-| **Sprint** | Selections Cleanup — Final Choice in Flow, Less Management UI |
-| **Sprint Doc** | `docs/ai/sprints/selections-cleanup-final-choice.md` |
+| **Sprint** | Selections Visual Polish — Calmer, More Visual, More Deliberate |
+| **Sprint Doc** | `docs/ai/sprints/selections-visual-polish.md` |
 | **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-16 |
-| **Commits** | `b63445d` |
+| **Commits** | pending |
 
 ## Handoff State
 
@@ -40,6 +40,7 @@ When entering this repo, read in this order:
 ---
 
 ## Previous Sprints (Completed)
+- Selections Cleanup — Final Choice in Flow (March 16, 2026) — `b63445d`, `9e2aac2`
 - Homepage Rebuild: Visual Tool Cards + Story Previews (March 16, 2026) — `90c3e4b`, `99650bd`
 - Selections Simplification into Selection Boards (March 16, 2026) — `7258c40`, `274adf9`
 - Feed-First App Home (March 16, 2026) — `2eb5056`, `9438608`

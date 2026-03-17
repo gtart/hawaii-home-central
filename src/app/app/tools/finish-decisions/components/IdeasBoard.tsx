@@ -254,10 +254,10 @@ function IdeaCardTile({
       aria-label={`Open option: ${option.name || 'Untitled'}`}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
-      className={`w-full rounded-xl overflow-hidden text-left group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/50 transition-colors ${
+      className={`w-full rounded-xl overflow-hidden text-left group cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/50 transition-all ${
         option.isSelected
-          ? 'bg-sandstone/5 border-2 border-sandstone/40 ring-1 ring-sandstone/20 shadow-md shadow-sandstone/5'
-          : 'bg-basalt border border-cream/15 hover:border-cream/30'
+          ? 'bg-sandstone/8 border-2 border-sandstone/50 ring-2 ring-sandstone/15 shadow-lg shadow-sandstone/10'
+          : 'bg-basalt border border-cream/12 hover:border-cream/25'
       }`}
     >
       {/* Image area — only Final pill overlays here */}
@@ -295,47 +295,37 @@ function IdeaCardTile({
       )}
 
       {/* Content area */}
-      <div className="p-2.5 space-y-1.5">
-        {/* Voting emojis + overflow menu (above title) */}
-        {(votingRow || overflowMenu) && (
-          <div className="flex items-center gap-1">
-            {votingRow}
-            {overflowMenu}
-          </div>
-        )}
-
-        {/* Name */}
-        <p className="text-sm text-cream font-medium leading-snug line-clamp-2">
-          {option.name || <span className="text-cream/45 italic">Untitled</span>}
-        </p>
+      <div className="p-3 space-y-1.5">
+        {/* Name + overflow */}
+        <div className="flex items-start gap-1">
+          <p className="text-sm text-cream font-medium leading-snug line-clamp-2 flex-1">
+            {option.name || <span className="text-cream/45 italic">Untitled</span>}
+          </p>
+          {overflowMenu && <div className="shrink-0 -mt-0.5">{overflowMenu}</div>}
+        </div>
 
         {/* Price */}
         {option.price && (
           <p className="text-xs text-sandstone font-medium">{displayPrice(option.price)}</p>
         )}
 
-        {/* Notes/Specs preview */}
-        {(option.specs || option.notes) && (
-          <p className="text-[11px] text-cream/50 line-clamp-1">{option.specs || option.notes}</p>
-        )}
-
-        {/* Meta row: origin, time, comments */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        {/* Compact meta: comments, files, time */}
+        <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-cream/40">
           {commentCount && commentCount > 0 ? (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-sandstone/15 text-sandstone text-[11px] font-medium">
+            <span className="inline-flex items-center gap-0.5 text-cream/55">
               💬 {commentCount}
             </span>
           ) : null}
           {(option.documents?.length ?? 0) > 0 && (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-cream/10 text-cream/55 text-[10px] font-medium">
+            <span className="inline-flex items-center gap-0.5 text-cream/45">
               📎 {option.documents!.length}
             </span>
           )}
-          <span className="text-[10px] text-cream/50">
-            {option.origin && <span className="text-cream/55">{option.origin.kitLabel} · </span>}
-            {relativeTime(lastCommentAt || option.updatedAt)}
-          </span>
+          <span>{relativeTime(lastCommentAt || option.updatedAt)}</span>
         </div>
+
+        {/* Voting row — below core info */}
+        {votingRow && <div className="pt-0.5">{votingRow}</div>}
 
         {/* Latest comment preview */}
         {latestOptionComment && (

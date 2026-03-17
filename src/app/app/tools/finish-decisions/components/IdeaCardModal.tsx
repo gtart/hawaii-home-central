@@ -583,11 +583,11 @@ export function IdeaCardModal({
                     : 'bg-cream/10 text-cream/70 hover:bg-cream/35'
                 }`}
               >
-                {option.isSelected ? 'Final Decision' : 'Mark as Final Decision'}
+                {option.isSelected ? '✓ Final choice' : 'Pick as final'}
               </button>
             ) : option.isSelected ? (
               <span className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-sandstone text-basalt">
-                Final Decision
+                ✓ Final choice
               </span>
             ) : null}
 

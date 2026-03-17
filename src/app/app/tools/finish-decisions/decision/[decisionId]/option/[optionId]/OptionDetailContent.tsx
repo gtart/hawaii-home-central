@@ -697,9 +697,9 @@ export function OptionDetailContent({
             />
           </div>
 
-          {/* Action row: Voting + Final Decision | Move/Copy/Delete */}
+          {/* Action row: Voting + Final choice | Move/Copy/Delete */}
           <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-cream/12">
-            {/* LEFT GROUP: Voting + Final Decision */}
+            {/* LEFT GROUP: Voting + Final choice */}
             {!readOnly ? (
               <div className="flex items-center gap-1">
                 {(['love', 'up', 'down'] as const).map((type) => {
@@ -759,11 +759,11 @@ export function OptionDetailContent({
                     : 'bg-sandstone/15 text-sandstone hover:bg-sandstone/25'
                 }`}
               >
-                {option.isSelected ? 'Final Decision' : 'Mark as Final'}
+                {option.isSelected ? '✓ Final choice' : 'Pick as final'}
               </button>
             ) : option.isSelected ? (
               <span className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-sandstone text-basalt">
-                Final Decision
+                ✓ Final choice
               </span>
             ) : null}
 
@@ -971,13 +971,13 @@ export function OptionDetailContent({
           {/* ── RIGHT COLUMN: Price, specs, links, files, comments ── */}
           <div className="space-y-4 mt-5 md:mt-0">
 
-            {/* Final Decision badge */}
+            {/* Final choice badge */}
             {option.isSelected && (
               <div className="bg-sandstone/10 border border-sandstone/25 rounded-xl px-3 py-2.5 flex items-center gap-2">
                 <svg className="w-4 h-4 text-sandstone shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span className="text-xs font-semibold text-sandstone uppercase tracking-wider">Final Decision</span>
+                <span className="text-xs font-semibold text-sandstone uppercase tracking-wider">Final choice</span>
               </div>
             )}
 

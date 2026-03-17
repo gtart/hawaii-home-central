@@ -731,13 +731,13 @@ export function DecisionDetailContent({
               </button>
             )}
           </div>
-          {/* Row 2: status + priority + due (subdued, compact) */}
-          <div className="flex items-center gap-1.5 mt-1.5">
+          {/* Row 2: status + priority + due (light, subdued) */}
+          <div className="flex items-center gap-1.5 mt-1">
             <select
               value={foundDecision.status}
               onChange={(e) => !readOnly && handleStatusChange(e.target.value as StatusV3)}
               disabled={readOnly}
-              className={`shrink-0 px-2 py-1 text-[11px] font-medium rounded border cursor-pointer focus:outline-none focus:ring-1 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${statusCfg.pillClass}`}
+              className={`shrink-0 px-2 py-0.5 text-[10px] font-medium rounded border cursor-pointer focus:outline-none focus:ring-1 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] opacity-80 ${statusCfg.pillClass}`}
             >
               {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
                 <option key={key} value={key}>{config.label}</option>
@@ -747,7 +747,7 @@ export function DecisionDetailContent({
               value={foundDecision.priority || ''}
               onChange={(e) => !readOnly && updateDecision({ priority: (e.target.value || undefined) as SelectionPriority | undefined })}
               disabled={readOnly}
-              className={`shrink-0 px-2 py-1 text-[11px] font-medium rounded border cursor-pointer focus:outline-none focus:ring-1 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-stone text-cream/45 border-cream/10'}`}
+              className={`shrink-0 px-2 py-0.5 text-[10px] font-medium rounded border cursor-pointer focus:outline-none focus:ring-1 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] opacity-80 ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-stone text-cream/40 border-cream/8'}`}
             >
               <option value="">Priority</option>
               {Object.entries(SELECTION_PRIORITY_CONFIG).map(([key, config]) => (
@@ -755,13 +755,13 @@ export function DecisionDetailContent({
               ))}
             </select>
             {foundDecision.dueDate ? (
-              <span className="text-[11px] text-cream/45">Due {formattedDue}</span>
+              <span className="text-[10px] text-cream/40">Due {formattedDue}</span>
             ) : !readOnly && (
               <input
                 type="date"
                 value=""
                 onChange={(e) => updateDecision({ dueDate: e.target.value || null })}
-                className="bg-stone text-cream/45 rounded px-1.5 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-sandstone [color-scheme:dark] shrink-0"
+                className="bg-stone text-cream/35 rounded px-1.5 py-0.5 text-[10px] focus:outline-none focus:ring-1 focus:ring-sandstone [color-scheme:dark] shrink-0"
                 title="Set due date"
               />
             )}
@@ -788,12 +788,12 @@ export function DecisionDetailContent({
             </h1>
           )}
           {/* Row 2: Status + Priority + Due date + Comment trigger */}
-          <div className="flex items-center gap-2 mt-2 flex-wrap">
+          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
             <select
               value={foundDecision.status}
               onChange={(e) => !readOnly && handleStatusChange(e.target.value as StatusV3)}
               disabled={readOnly}
-              className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${statusCfg.pillClass}`}
+              className={`px-2 py-1 text-[11px] font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] opacity-80 ${statusCfg.pillClass}`}
             >
               {Object.entries(STATUS_CONFIG_V3).map(([key, config]) => (
                 <option key={key} value={key}>{config.label}</option>
@@ -803,7 +803,7 @@ export function DecisionDetailContent({
               value={foundDecision.priority || ''}
               onChange={(e) => !readOnly && updateDecision({ priority: (e.target.value || undefined) as SelectionPriority | undefined })}
               disabled={readOnly}
-              className={`px-2.5 py-1.5 text-xs font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-stone text-cream/55 border-cream/15'}`}
+              className={`px-2 py-1 text-[11px] font-medium rounded-lg border cursor-pointer focus:outline-none focus:ring-2 focus:ring-sandstone/40 disabled:cursor-default [color-scheme:dark] opacity-80 ${foundDecision.priority ? SELECTION_PRIORITY_CONFIG[foundDecision.priority].className + ' border-current/20' : 'bg-stone text-cream/45 border-cream/10'}`}
             >
               <option value="">Priority</option>
               {Object.entries(SELECTION_PRIORITY_CONFIG).map(([key, config]) => (
@@ -811,7 +811,7 @@ export function DecisionDetailContent({
               ))}
             </select>
             {foundDecision.dueDate && (
-              <span className="text-[11px] text-cream/55">Due {formattedDue}</span>
+              <span className="text-[10px] text-cream/45">Due {formattedDue}</span>
             )}
             <CommentTriggerButton
               commentCount={userComments.length}
@@ -871,7 +871,7 @@ export function DecisionDetailContent({
           )}
           {doneWithoutFinal && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500/10 text-red-400 text-[10px] font-medium rounded-full border border-red-400/20">
-              No final selected
+              No final choice
             </span>
           )}
           {currentProject?.id && (
@@ -890,7 +890,7 @@ export function DecisionDetailContent({
               </span>
             </h2>
             {!finalPick && foundDecision.options.length > 0 && (
-              <span className="text-[11px] text-cream/35 hidden sm:inline">Pick one to mark as final</span>
+              <span className="text-[11px] text-cream/35 hidden sm:inline">Pick one as your final choice</span>
             )}
             {guidanceTipCount > 0 && (
               <button
