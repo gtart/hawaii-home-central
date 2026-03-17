@@ -322,63 +322,61 @@ export function SaveFromWebContent() {
     if (!capturedContent) return
 
     const newOption = capturedToSelectionOption(capturedContent, selectedUrls, { name, notes, price, specs })
+    const targetId = selectedSelectionId
 
-    const currentSelections = (fdState as FinishDecisionsPayloadV4).selections || []
-    let resolvedSelectionId = selectedSelectionId
-    let resolvedSelectionName = ''
+    // Use a single setState call that reads from prev (not stale fdState)
+    // to avoid race conditions when a selection was just created
+    let resolvedName = ''
+    let resolvedId = ''
 
-    // Validate selection still exists
-    if (resolvedSelectionId && !currentSelections.find((s) => s.id === resolvedSelectionId)) {
-      resolvedSelectionId = null
-    }
+    setFdState((prev) => {
+      const payload = prev as FinishDecisionsPayloadV4
+      const selections = payload.selections || []
+      const now = new Date().toISOString()
 
-    if (resolvedSelectionId) {
-      // Add option to existing selection
-      const target = currentSelections.find((s) => s.id === resolvedSelectionId)
-      resolvedSelectionName = target?.title || 'Selection'
+      // Check if target selection exists in the LATEST state
+      const target = targetId ? selections.find((s) => s.id === targetId) : null
 
-      setFdState((prev) => {
-        const payload = prev as FinishDecisionsPayloadV4
-        const selections = payload.selections || []
-        const newSelections = selections.map((s) =>
-          s.id === resolvedSelectionId
-            ? { ...s, options: [...(s.options || []), newOption], updatedAt: new Date().toISOString() }
-            : s
-        )
-        return { ...payload, selections: newSelections }
-      })
-    } else {
-      // Create a new selection with the captured content's name
-      const ts = new Date().toISOString()
-      const newSelId = genId('sel')
-      resolvedSelectionId = newSelId
-      resolvedSelectionName = name.trim() || capturedContent.title || 'New Selection'
+      if (target) {
+        // Add option to existing selection
+        resolvedName = target.title || 'Selection'
+        resolvedId = target.id
+        return {
+          ...payload,
+          selections: selections.map((s) =>
+            s.id === target.id
+              ? { ...s, options: [...(s.options || []), newOption], updatedAt: now }
+              : s
+          ),
+        }
+      } else {
+        // Create a new selection with the option included
+        const newSelId = genId('sel')
+        resolvedName = name.trim() || capturedContent.title || 'New Selection'
+        resolvedId = newSelId
 
-      const newSelection: SelectionV4 = {
-        id: newSelId,
-        title: resolvedSelectionName,
-        status: 'deciding',
-        notes: '',
-        options: [newOption],
-        tags: [],
-        createdAt: ts,
-        updatedAt: ts,
+        const newSelection: SelectionV4 = {
+          id: newSelId,
+          title: resolvedName,
+          status: 'deciding',
+          notes: '',
+          options: [newOption],
+          tags: [],
+          createdAt: now,
+          updatedAt: now,
+        }
+
+        return { ...payload, selections: [...selections, newSelection] }
       }
-
-      setFdState((prev) => {
-        const payload = prev as FinishDecisionsPayloadV4
-        return { ...payload, selections: [...(payload.selections || []), newSelection] }
-      })
-    }
+    })
 
     // Persist the resolved selection for next visit
-    if (resolvedSelectionId) {
-      try { localStorage.setItem(LAST_SELECTION_KEY, resolvedSelectionId) } catch { /* ignore */ }
+    if (resolvedId) {
+      try { localStorage.setItem(LAST_SELECTION_KEY, resolvedId) } catch { /* ignore */ }
     }
-
     setSavedDestination('finish_decisions')
-    setSavedSelectionName(resolvedSelectionName)
-    setSavedSelectionId(resolvedSelectionId || '')
+    setSavedSelectionName(resolvedName)
+    setSavedSelectionId(resolvedId)
     setSaved(true)
   }
 
