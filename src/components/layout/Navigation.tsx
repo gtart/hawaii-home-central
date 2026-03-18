@@ -9,6 +9,7 @@ import { UserMenu } from '@/components/auth/UserMenu'
 import { ProjectSwitcher } from '@/components/app/ProjectSwitcher'
 import { CORE_TOOL_REGISTRY, SECONDARY_TOOL_REGISTRY, VISIBLE_TOOL_REGISTRY } from '@/lib/tool-registry'
 import { useProjectOptional } from '@/contexts/ProjectContext'
+import { FeedbackFormModal } from './FeedbackFormModal'
 
 interface NavLink {
   href: string
@@ -25,6 +26,7 @@ export function Navigation() {
   const [toolsOpen, setToolsOpen] = useState(false)
   const [mobileProjectsOpen, setMobileProjectsOpen] = useState(false)
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
   const toolsRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
@@ -314,11 +316,33 @@ export function Navigation() {
                   </div>
                 </li>
               </ul>
+              <button
+                type="button"
+                onClick={() => setFeedbackOpen(true)}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-cream/50 hover:text-sandstone bg-cream/5 hover:bg-cream/8 rounded-lg transition-colors"
+                data-ph-capture-click="nav-feedback-open"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Feedback
+              </button>
               <UserMenu />
             </div>
 
             {/* Mobile: UserMenu + hamburger */}
             <div className="lg:hidden flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setFeedbackOpen(true)}
+                className="sm:hidden p-2 text-cream/50 hover:text-sandstone transition-colors"
+                aria-label="Submit feedback"
+                data-ph-capture-click="nav-feedback-open"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
               <UserMenu />
               <button
                 className="p-2 text-cream hover:text-sandstone transition-colors"
@@ -531,6 +555,7 @@ export function Navigation() {
           )}
         </nav>
       </header>
+      <FeedbackFormModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </>
   )
 }

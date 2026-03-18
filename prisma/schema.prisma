@@ -724,6 +724,32 @@ model StorySubmission {
   @@index([createdAt])
 }
 
+model FeedbackSubmission {
+  id              String   @id @default(cuid())
+  message         String
+  email           String?
+  // Device & context
+  ipAddress       String?
+  userAgent       String?
+  language        String?    // Accept-Language header
+  referrer        String?    // HTTP Referer
+  pageUrl         String?    // Page user was on when submitting
+  screenSize      String?    // e.g. "1920x1080"
+  timezone        String?    // e.g. "Pacific/Honolulu"
+  platform        String?    // e.g. "MacIntel", "Win32", "iPhone"
+  // Geolocation (from Vercel headers / ip-api)
+  city            String?
+  region          String?
+  country         String?
+  latitude        String?
+  longitude       String?
+  // Timestamps
+  submittedAt     DateTime   // Client-reported local time
+  createdAt       DateTime   @default(now())
+
+  @@index([createdAt])
+}
+
 // ─── Activity Feed ──────────────────────────────────
 
 model ActivityEvent {
