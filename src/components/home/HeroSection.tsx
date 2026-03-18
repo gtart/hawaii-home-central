@@ -69,10 +69,10 @@ export function HeroSection() {
         </p>
 
         {/* Benefit bullets */}
-        <ul className="flex flex-col items-center gap-3 mb-10 max-w-xl mx-auto" aria-label="Key benefits">
+        <ul className="inline-flex flex-col gap-3 mb-10 text-left" aria-label="Key benefits">
           {BENEFITS.map((b) => (
-            <li key={b.text} className="flex items-start gap-3 text-left">
-              <span className="shrink-0 mt-0.5" aria-hidden="true">{b.icon}</span>
+            <li key={b.text} className="flex items-start gap-3">
+              <span className="shrink-0 w-5 mt-0.5" aria-hidden="true">{b.icon}</span>
               <span className="text-cream/80 text-sm md:text-base">{b.text}</span>
             </li>
           ))}
