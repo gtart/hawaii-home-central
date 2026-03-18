@@ -3,7 +3,7 @@ import { FadeInSection } from '@/components/effects/FadeInSection'
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'Learn about Hawaii Home Central and our mission to help homeowners renovate, maintain, and enjoy their homes with confidence.',
+  description: 'Hawaii Home Central is a free set of tools and resources for Hawaiʻi homeowners dealing with renovations, repairs, and home upkeep.',
 }
 
 export default function AboutPage() {
@@ -17,17 +17,21 @@ export default function AboutPage() {
         </FadeInSection>
 
         <FadeInSection delay={100}>
-          <div className="space-y-6 text-cream/80 leading-relaxed">
-            <p>
-              Hawaii Home Central started after a few friends and I lived through the same surprise: renovating a home is less about inspiration and more about navigating complexity—especially in Hawaiʻi. Even with excellent professionals, the process can be intense.
+          <div className="space-y-5 text-cream/80 leading-relaxed">
+            <p className="text-lg md:text-xl text-cream/90 font-medium">
+              We built this site because taking care of a home can be a pain in the a$$.
             </p>
 
             <p>
-              One of the biggest challenges is coordination: so many moving pieces, so many specialties, tight calendars, changing sequences, and a constant stream of decisions that stack up fast. Then you run into the bigger system issues—scattered information, and differing incentives between homeowners, trades, suppliers, and everyone in between—plus the simple reality that trust is hard to verify.
+              Repairs are expensive. Renovating is stressful. And the list of things to deal with somehow never gets shorter&mdash;especially in Hawai&#x02BB;i, where everything costs more, takes longer, and comes with its own set of surprises.
             </p>
 
             <p>
-              This site is my attempt to turn hard-earned lessons into a clearer path—so the next homeowner can renovate, maintain, and enjoy their home with more confidence.
+              So we wanted to build something actually useful: free tools and resources to help Hawai&#x02BB;i homeowners stay organized during renovation projects, keep track of repairs, and deal with ongoing home upkeep without losing their minds.
+            </p>
+
+            <p>
+              We&apos;re still figuring out what&apos;s most helpful, so the site will keep changing as we learn and get feedback. If something&apos;s broken or missing, that&apos;s probably because we haven&apos;t gotten to it yet.
             </p>
           </div>
         </FadeInSection>
@@ -38,7 +42,7 @@ export default function AboutPage() {
               Our Mission
             </h2>
             <p className="text-cream/70 italic">
-              Great pros matter. This site helps homeowners show up informed, so projects go better for everyone.
+              Help homeowners show up more organized and informed&mdash;so projects go better for everyone, including the pros.
             </p>
           </div>
         </FadeInSection>
@@ -51,21 +55,35 @@ export default function AboutPage() {
             <ul className="space-y-4 text-cream/80">
               <li className="flex gap-4">
                 <span className="text-sandstone">01</span>
-                <span>Informed homeowners make better partners for contractors.</span>
+                <span>Organized homeowners make better partners for contractors.</span>
               </li>
               <li className="flex gap-4">
                 <span className="text-sandstone">02</span>
-                <span>Trust should be earned through verified work, not just marketing.</span>
+                <span>Trust should be earned through real work, not just marketing.</span>
               </li>
               <li className="flex gap-4">
                 <span className="text-sandstone">03</span>
-                <span>Hawaiʻi&apos;s unique conditions deserve locally-tailored guidance.</span>
+                <span>Hawai&#x02BB;i&apos;s conditions are unique and deserve locally-tailored guidance.</span>
               </li>
               <li className="flex gap-4">
                 <span className="text-sandstone">04</span>
-                <span>Real stories teach more than glossy before-and-afters.</span>
+                <span>Real stories from real homeowners are more useful than glossy before-and-afters.</span>
               </li>
             </ul>
+          </div>
+        </FadeInSection>
+
+        <FadeInSection delay={400}>
+          <div className="mt-12 p-8 bg-basalt-50 rounded-card text-center">
+            <p className="text-cream/70 mb-3">
+              Got ideas, feedback, story tips, or great pros we should know about?
+            </p>
+            <a
+              href="mailto:hello@hawaiihomecentral.com"
+              className="text-lg text-sandstone hover:text-sandstone-light transition-colors font-medium"
+            >
+              hello@hawaiihomecentral.com
+            </a>
           </div>
         </FadeInSection>
       </div>

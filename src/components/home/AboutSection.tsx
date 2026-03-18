@@ -14,22 +14,37 @@ export function AboutSection() {
           Why Hawaii Home Central?
         </h2>
 
-        <div className="space-y-6 text-cream/80 leading-relaxed">
-          <p>
-            Hawaii Home Central started after a few friends and I lived through the same surprise: renovating a home is less about inspiration and more about navigating complexity—especially in Hawaiʻi. Even with excellent professionals, the process can be intense.
+        <div className="space-y-5 text-cream/80 leading-relaxed">
+          <p className="text-lg md:text-xl text-cream/90 font-medium">
+            We built this site because taking care of a home can be a pain in the a$$.
           </p>
 
           <p>
-            One of the biggest challenges is coordination: so many moving pieces, so many specialties, tight calendars, changing sequences, and a constant stream of decisions that stack up fast. Then you run into the bigger system issues—scattered information, and differing incentives between homeowners, trades, suppliers, and everyone in between—plus the simple reality that trust is hard to verify.
+            Repairs are expensive. Renovating is stressful. And the list of things to deal with somehow never gets shorter.
           </p>
 
           <p>
-            This site is my attempt to turn hard-earned lessons into a clearer path—so the next homeowner can renovate, maintain, and enjoy their home with more confidence.
+            So we wanted to build something actually useful for Hawai&#x02BB;i homeowners: free tools and resources to help with renovation projects, repairs, and ongoing home upkeep.
+          </p>
+
+          <p>
+            We&apos;re still figuring out what&apos;s most helpful, so the site will keep changing as we learn and get feedback.
+          </p>
+
+          <p>
+            Got ideas, feedback, story tips, or great pros we should know about?{' '}
+            Send them to{' '}
+            <a
+              href="mailto:hello@hawaiihomecentral.com"
+              className="text-sandstone hover:text-sandstone-light transition-colors"
+            >
+              hello@hawaiihomecentral.com
+            </a>.
           </p>
         </div>
 
         <p className="mt-8 text-sandstone/80 text-center italic">
-          Great pros matter. This site helps homeowners show up informed, so projects go better for everyone.
+          We&apos;re also working on a Pro Directory and sharing renovation stories from across Hawai&#x02BB;i.
         </p>
       </FadeInSection>
     </section>

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const TAGLINE =
-  'A Hawai\u02BBi-first guide to renovating, maintaining, and loving your home.'
+  'Free tools and resources for Hawai\u02BBi homeowners tackling renovations, repairs, and upkeep.'
 const EMAIL = 'hello@hawaiihomecentral.com'
 
 const LEGAL_LINKS = [
@@ -26,13 +26,12 @@ export function Footer() {
       <div className="border-t border-cream/5 bg-basalt">
         <div className="max-w-7xl mx-auto px-6 py-8 text-center">
           <p className="text-sm text-cream/60 mb-2">
-            We&apos;re homeowners who&apos;ve been through it. We built Hawaii Home Central
-            to help other homeowners get the best out of their partnerships with contractors—and
-            get the most out of what their home has to offer.
+            We built Hawaii Home Central because home projects can get expensive, messy, and confusing fast.
+            These are free tools to help Hawai&#x02BB;i homeowners stay more organized and informed.
           </p>
           <p className="text-xs text-cream/40">
-            We&apos;re not contractors or attorneys. This isn&apos;t legal or professional
-            advice—just practical guidance and tools to help you stay organized and informed.
+            We&apos;re not contractors or attorneys. Nothing here is legal or professional
+            advice&mdash;just practical tools and resources from homeowners who&apos;ve been through it.
           </p>
         </div>
       </div>

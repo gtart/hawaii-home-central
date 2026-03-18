@@ -94,7 +94,7 @@ export function HeroSection() {
         </div>
 
         <p className="text-cream/50 text-sm max-w-md mx-auto">
-          We&apos;re opening access in waves. Request an invite to get started.
+          We&apos;re opening access in waves while we get things right. Request an invite to get started.
         </p>
       </div>
     </section>
