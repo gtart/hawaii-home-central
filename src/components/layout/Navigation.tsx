@@ -37,6 +37,13 @@ export function Navigation() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Allow other components to open the feedback form via custom event
+  useEffect(() => {
+    const handler = () => setFeedbackOpen(true)
+    window.addEventListener('open-feedback-form', handler)
+    return () => window.removeEventListener('open-feedback-form', handler)
+  }, [])
+
   // Close menus on route change
   useEffect(() => {
     setIsMobileMenuOpen(false)
@@ -325,7 +332,7 @@ export function Navigation() {
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                Feedback
+                Send feedback
               </button>
               <UserMenu />
             </div>

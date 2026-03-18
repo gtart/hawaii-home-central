@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { FadeInSection } from '@/components/effects/FadeInSection'
+import { FeedbackLink } from '@/components/layout/FeedbackLink'
 
 export const metadata: Metadata = {
   title: 'About',
@@ -78,12 +79,9 @@ export default function AboutPage() {
             <p className="text-cream/70 mb-3">
               Got ideas, feedback, story tips, or great pros we should know about?
             </p>
-            <a
-              href="mailto:hello@hawaiihomecentral.com"
-              className="text-lg text-sandstone hover:text-sandstone-light transition-colors font-medium"
-            >
-              hello@hawaiihomecentral.com
-            </a>
+            <FeedbackLink className="text-lg text-sandstone hover:text-sandstone-light transition-colors font-medium underline underline-offset-2">
+              Send them our way
+            </FeedbackLink>
           </div>
         </FadeInSection>
       </div>

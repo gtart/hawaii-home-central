@@ -82,8 +82,8 @@ export function FeedbackFormModal({ open, onClose }: FeedbackFormModalProps) {
       <div className="relative bg-basalt-50 border border-cream/10 rounded-card p-6 md:p-8 max-w-md w-full shadow-xl">
         {submitted ? (
           <div className="text-center py-4">
-            <p className="text-lg text-sandstone font-serif mb-2">Thank you!</p>
-            <p className="text-sm text-cream/60">We got your feedback and will take a look.</p>
+            <p className="text-lg text-sandstone font-serif mb-2">Mahalo!</p>
+            <p className="text-sm text-cream/60">We appreciate your feedback!</p>
           </div>
         ) : (
           <>

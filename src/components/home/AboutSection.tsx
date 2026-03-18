@@ -1,3 +1,5 @@
+'use client'
+
 import { FadeInSection } from '@/components/effects/FadeInSection'
 
 export function AboutSection() {
@@ -33,13 +35,13 @@ export function AboutSection() {
 
           <p>
             Got ideas, feedback, story tips, or great pros we should know about?{' '}
-            Send them to{' '}
-            <a
-              href="mailto:hello@hawaiihomecentral.com"
-              className="text-sandstone hover:text-sandstone-light transition-colors"
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event('open-feedback-form'))}
+              className="text-sandstone hover:text-sandstone-light transition-colors underline underline-offset-2"
             >
-              hello@hawaiihomecentral.com
-            </a>.
+              Send them our way
+            </button>.
           </p>
         </div>
 
