@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { PLAN_STATUS_CONFIG } from '../constants'
 import type { ProjectSummaryStateAPI } from '../useProjectSummaryState'
 import { InlineEdit } from './InlineEdit'
+import { ScopeSection } from './ScopeSection'
 import { OpenItemsList } from './OpenItemsList'
 import { DocumentsSection } from './DocumentsSection'
 
@@ -145,7 +146,7 @@ function LockedPlanInterventionDialog({
 export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectionProps) {
   const {
     payload, readOnly,
-    updatePlanScope,
+    updateScopeText, saveScope, updateScopeStatus, addScopeAttachment, removeScopeAttachment,
     approvePlan, unlockPlan, reapprovePlan,
     addOpenItem, updateOpenItem, resolveOpenItem, deleteOpenItem,
     updateBudget,
@@ -371,7 +372,7 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
       )}
 
       {/* Draft guidance — teach the workflow when plan is empty */}
-      {plan.status === 'working' && !plan.scope && payload.documents.length === 0 && !readOnly && (
+      {plan.status === 'working' && !plan.scope.text && payload.documents.length === 0 && !readOnly && (
         <div className="rounded-lg bg-stone-50 border border-cream/10 px-4 py-3">
           <p className="text-xs text-cream/65 leading-relaxed mb-2">
             Start your project record. Add the current scope, files, and notes you want to keep track of in one place.
@@ -390,15 +391,15 @@ export function CurrentPlanSection({ api, onScrollToChanges }: CurrentPlanSectio
 
       {/* 1. Scope — the main plan content */}
       <div onClick={isLocked ? handleEditAttempt : undefined}>
-        <label className="text-[10px] text-cream/55 uppercase tracking-wider font-medium block mb-1.5">Scope</label>
-        <InlineEdit
-          value={plan.scope}
-          onSave={(text) => updatePlanScope(text)}
-          placeholder="What work is being done? Describe the overall project so everyone's on the same page."
-          readOnly={readOnly || isLocked}
-          multiline
-          displayClassName="text-sm text-cream/80 leading-relaxed"
-          className="text-sm leading-relaxed"
+        <ScopeSection
+          scope={plan.scope}
+          onTextChange={updateScopeText}
+          onSave={saveScope}
+          onStatusChange={updateScopeStatus}
+          onAddAttachment={addScopeAttachment}
+          onRemoveAttachment={removeScopeAttachment}
+          readOnly={readOnly}
+          isLocked={isLocked}
         />
       </div>
 

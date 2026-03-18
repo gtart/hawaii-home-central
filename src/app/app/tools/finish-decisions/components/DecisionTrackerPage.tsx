@@ -72,6 +72,7 @@ export function DecisionTrackerPage({
   onUpdateSelections,
   onAcquireKit,
   onAddSelection,
+  onAddIdea,
   readOnly = false,
   kits = [],
   emojiMap = {},
@@ -88,6 +89,7 @@ export function DecisionTrackerPage({
   onUpdateSelections: (selections: SelectionV4[]) => void
   onAcquireKit?: (kitId: string) => void
   onAddSelection: (title: string) => void
+  onAddIdea?: (decisionId: string, name: string) => void
   readOnly?: boolean
   kits?: FinishDecisionKit[]
   emojiMap?: Record<string, string>
@@ -126,6 +128,10 @@ export function DecisionTrackerPage({
   const [bulkTagInput, setBulkTagInput] = useState('')
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
   const [bulkToast, setBulkToast] = useState<string | null>(null)
+
+  // Quick-add idea inline
+  const [quickAddId, setQuickAddId] = useState<string | null>(null)
+  const [quickAddValue, setQuickAddValue] = useState('')
 
   const [sortKey, setSortKey] = useState<SortKey>(() => {
     try {
@@ -757,6 +763,7 @@ export function DecisionTrackerPage({
                     <th className="text-left font-medium pb-2">Selection</th>
                     <th className="text-left font-medium pb-2 w-24">Status</th>
                     <th className="text-left font-medium pb-2 w-28">Updated</th>
+                    {!readOnly && onAddIdea && <th className="w-8 pb-2" />}
                   </tr>
                 </thead>
                 <tbody>
@@ -857,6 +864,62 @@ export function DecisionTrackerPage({
                             {relativeTime(decision.updatedAt)}
                           </Link>
                         </td>
+                        {!readOnly && onAddIdea && (
+                          <td className="py-2.5 pr-2">
+                            {quickAddId === decision.id ? (
+                              <form
+                                onSubmit={(e) => {
+                                  e.preventDefault()
+                                  if (quickAddValue.trim()) {
+                                    onAddIdea(decision.id, quickAddValue.trim())
+                                    setQuickAddValue('')
+                                    setQuickAddId(null)
+                                  }
+                                }}
+                                className="flex items-center gap-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <input
+                                  type="text"
+                                  value={quickAddValue}
+                                  onChange={(e) => setQuickAddValue(e.target.value)}
+                                  placeholder="Idea name..."
+                                  className="w-32 bg-stone-200 border border-cream/15 focus:border-sandstone/40 rounded px-2 py-1 text-xs text-cream/80 placeholder-cream/25 outline-none transition-colors"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Escape') { setQuickAddId(null); setQuickAddValue('') }
+                                  }}
+                                  onBlur={() => {
+                                    if (!quickAddValue.trim()) { setQuickAddId(null); setQuickAddValue('') }
+                                  }}
+                                />
+                                <button
+                                  type="submit"
+                                  disabled={!quickAddValue.trim()}
+                                  className="px-1.5 py-1 text-[10px] text-sandstone bg-sandstone/12 hover:bg-sandstone/18 rounded disabled:opacity-30 transition-colors"
+                                >
+                                  Add
+                                </button>
+                              </form>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  e.preventDefault()
+                                  setQuickAddId(decision.id)
+                                  setQuickAddValue('')
+                                }}
+                                className="opacity-0 group-hover:opacity-100 p-1 text-cream/30 hover:text-sandstone transition-all"
+                                title="Quick add idea"
+                              >
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                                </svg>
+                              </button>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     )
                   })}
@@ -938,6 +1001,48 @@ export function DecisionTrackerPage({
                         </svg>
                       </Link>
                       </div>
+                      {/* Mobile quick-add */}
+                      {!readOnly && onAddIdea && quickAddId === decision.id && (
+                        <div className="px-4 pb-3">
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault()
+                              if (quickAddValue.trim()) {
+                                onAddIdea(decision.id, quickAddValue.trim())
+                                setQuickAddValue('')
+                                setQuickAddId(null)
+                              }
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <input
+                              type="text"
+                              value={quickAddValue}
+                              onChange={(e) => setQuickAddValue(e.target.value)}
+                              placeholder="Idea name..."
+                              className="flex-1 bg-stone-200 border border-cream/15 focus:border-sandstone/40 rounded-lg px-3 py-1.5 text-xs text-cream/80 placeholder-cream/25 outline-none transition-colors"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Escape') { setQuickAddId(null); setQuickAddValue('') }
+                              }}
+                            />
+                            <button type="submit" disabled={!quickAddValue.trim()} className="px-2.5 py-1.5 text-xs text-sandstone bg-sandstone/12 hover:bg-sandstone/18 rounded-lg disabled:opacity-30 transition-colors">Add</button>
+                            <button type="button" onClick={() => { setQuickAddId(null); setQuickAddValue('') }} className="px-2 py-1.5 text-xs text-cream/35">Cancel</button>
+                          </form>
+                        </div>
+                      )}
+                      {!readOnly && onAddIdea && quickAddId !== decision.id && (
+                        <div className="px-4 pb-2">
+                          <button
+                            type="button"
+                            onClick={() => { setQuickAddId(decision.id); setQuickAddValue('') }}
+                            className="text-[11px] text-cream/35 hover:text-sandstone transition-colors flex items-center gap-1"
+                          >
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" strokeLinecap="round" /></svg>
+                            Add idea
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )
                 })}

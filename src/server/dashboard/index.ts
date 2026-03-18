@@ -206,7 +206,7 @@ function summarizeProjectSummary(id: string, title: string, updatedAt: Date, upd
     updatedAt: updatedAt.toISOString(),
     updatedByName,
     planStatus: payload.plan.status,
-    planScope: payload.plan.scope,
+    planScope: typeof payload.plan.scope === 'string' ? payload.plan.scope : payload.plan.scope?.text ?? '',
     includedCount,
     notIncludedCount,
     stillToDecideCount,

@@ -291,6 +291,32 @@ export function ToolContent({
     setState((prev) => ({ ...prev, selections }))
   }
 
+  const handleAddIdea = useCallback((decisionId: string, name: string) => {
+    const ts = new Date().toISOString()
+    const newOption: OptionV3 = {
+      id: crypto.randomUUID(),
+      name,
+      notes: '',
+      urls: [],
+      createdAt: ts,
+      updatedAt: ts,
+    }
+    const events: ActivityEventHint[] = [{
+      action: 'created',
+      entityType: 'option',
+      summaryText: `Added idea "${name}"`,
+      entityLabel: name,
+    }]
+    setState((prev) => ({
+      ...prev,
+      selections: prev.selections.map((s: SelectionV4) =>
+        s.id === decisionId
+          ? { ...s, options: [...s.options, newOption], updatedAt: ts }
+          : s
+      ),
+    }), events)
+  }, [setState])
+
   const handleUpdateAppliedKitIds = (appliedKitIds: string[]) => {
     setState((prev) => ({ ...prev, appliedKitIds }))
   }
@@ -371,6 +397,7 @@ export function ToolContent({
             onUpdateSelections={handleUpdateSelections}
             onAcquireKit={handleAcquireKit}
             onAddSelection={handleAddSelection}
+            onAddIdea={handleAddIdea}
             readOnly={readOnly}
             kits={kits}
             emojiMap={emojiMap}

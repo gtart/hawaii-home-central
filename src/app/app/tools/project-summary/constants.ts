@@ -1,4 +1,4 @@
-import type { ChangeStatus, PlanStatus, DocType } from '@/data/project-summary'
+import type { ChangeStatus, PlanStatus, DocType, ScopeStatus } from '@/data/project-summary'
 
 // ── Change status config (v2 — 6 statuses, underlying data model) ──
 
@@ -129,6 +129,23 @@ export const PLAN_STATUS_CONFIG: Record<PlanStatus, { label: string; color: stri
 }
 
 export const PLAN_STATUS_ORDER: PlanStatus[] = ['working', 'approved', 'unlocked']
+
+// ── Scope status config ──
+
+export const SCOPE_STATUS_CONFIG: Record<ScopeStatus, { label: string; color: string; bgColor: string }> = {
+  draft: {
+    label: 'Draft',
+    color: 'text-cream/65',
+    bgColor: 'bg-cream/8',
+  },
+  confirmed: {
+    label: 'Confirmed',
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-400/12',
+  },
+}
+
+export const SCOPE_STATUS_ORDER: ScopeStatus[] = ['draft', 'confirmed']
 
 // ── Document type labels ──
 

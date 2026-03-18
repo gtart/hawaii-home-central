@@ -16,6 +16,8 @@ import type {
   OpenItem,
   OpenItemStatus,
   Milestone,
+  ScopeStatus,
+  ScopeSnapshot,
 } from '@/data/project-summary'
 import { DEFAULT_PROJECT_SUMMARY_PAYLOAD, ensureShape } from '@/data/project-summary'
 
@@ -53,22 +55,162 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
 
   // ── Plan: Scope ──
 
-  const updatePlanScope = useCallback(
-    (scope: string) => {
+  const updateScopeText = useCallback(
+    (text: string) => {
+      setState((prev) => {
+        const p = ensureShape(prev)
+        return {
+          ...p,
+          plan: {
+            ...p.plan,
+            scope: { ...p.plan.scope, text, updated_at: now(), updated_by: currentUserName },
+            content_changed_since_status: true,
+            updated_at: now(),
+            updated_by: currentUserName,
+          },
+        }
+      })
+    },
+    [setState, currentUserName]
+  )
+
+  const saveScope = useCallback(
+    () => {
+      const ts = now()
       const events: ActivityEventHint[] = [{
         action: 'updated',
         entityType: 'summary',
-        summaryText: 'Updated plan scope',
+        summaryText: 'Saved scope of work',
+      }]
+      setState((prev) => {
+        const p = ensureShape(prev)
+        const snapshot: ScopeSnapshot = {
+          text: p.plan.scope.text,
+          saved_at: ts,
+          saved_by: currentUserName,
+        }
+        return {
+          ...p,
+          plan: {
+            ...p.plan,
+            scope: {
+              ...p.plan.scope,
+              id: p.plan.scope.id || genId(),
+              saved_at: ts,
+              saved_by: currentUserName,
+              snapshots: [...p.plan.scope.snapshots, snapshot],
+              updated_at: ts,
+              updated_by: currentUserName,
+            },
+            content_changed_since_status: true,
+            updated_at: ts,
+            updated_by: currentUserName,
+          },
+        }
+      }, events)
+    },
+    [setState, currentUserName]
+  )
+
+  const updateScopeStatus = useCallback(
+    (status: ScopeStatus) => {
+      const ts = now()
+      const events: ActivityEventHint[] = [{
+        action: 'status_changed',
+        entityType: 'summary',
+        summaryText: `Scope status changed to ${status}`,
+      }]
+      setState((prev) => {
+        const p = ensureShape(prev)
+        // Auto-snapshot on confirm if text changed since last save
+        const lastSnapshot = p.plan.scope.snapshots[p.plan.scope.snapshots.length - 1]
+        const needsSnapshot = status === 'confirmed' &&
+          p.plan.scope.text.length > 0 &&
+          (!lastSnapshot || lastSnapshot.text !== p.plan.scope.text)
+        const snapshot: ScopeSnapshot | null = needsSnapshot ? {
+          text: p.plan.scope.text,
+          saved_at: ts,
+          saved_by: currentUserName,
+        } : null
+        return {
+          ...p,
+          plan: {
+            ...p.plan,
+            scope: {
+              ...p.plan.scope,
+              id: p.plan.scope.id || genId(),
+              status,
+              ...(snapshot ? {
+                saved_at: ts,
+                saved_by: currentUserName,
+                snapshots: [...p.plan.scope.snapshots, snapshot],
+              } : {}),
+              updated_at: ts,
+              updated_by: currentUserName,
+            },
+            content_changed_since_status: true,
+            updated_at: ts,
+            updated_by: currentUserName,
+          },
+        }
+      }, events)
+    },
+    [setState, currentUserName]
+  )
+
+  const addScopeAttachment = useCallback(
+    (attachment: Omit<ChangeAttachment, 'id'>) => {
+      const attachId = genId()
+      const events: ActivityEventHint[] = [{
+        action: 'created',
+        entityType: 'attachment',
+        entityId: attachId,
+        summaryText: `Added scope attachment: "${attachment.label}"`,
+        entityLabel: attachment.label,
       }]
       setState((prev) => {
         const p = ensureShape(prev)
         return {
           ...p,
-          plan: { ...p.plan, scope, content_changed_since_status: true, updated_at: now(), updated_by: currentUserName },
+          plan: {
+            ...p.plan,
+            scope: {
+              ...p.plan.scope,
+              attachments: [...p.plan.scope.attachments, { ...attachment, id: attachId }],
+              updated_at: now(),
+              updated_by: currentUserName,
+            },
+            content_changed_since_status: true,
+            updated_at: now(),
+          },
         }
       }, events)
+      return attachId
     },
-    [setState]
+    [setState, currentUserName]
+  )
+
+  const removeScopeAttachment = useCallback(
+    (attachmentId: string) => {
+      setState((prev) => {
+        const p = ensureShape(prev)
+        return {
+          ...p,
+          plan: {
+            ...p.plan,
+            scope: {
+              ...p.plan.scope,
+              attachments: p.plan.scope.attachments.filter((a) => a.id !== attachmentId),
+              updated_at: now(),
+              updated_by: currentUserName,
+            },
+            content_changed_since_status: true,
+            updated_at: now(),
+          },
+        }
+      })
+    },
+    [setState, currentUserName]
   )
 
   // ── Plan: Status ──
@@ -963,8 +1105,13 @@ export function useProjectSummaryState(opts?: { collectionId?: string | null }) 
     viewOnlyAttempt: collResult.viewOnlyAttempt,
     collectionId: collResult.collectionId,
     currentUserName,
+    // Plan — Scope
+    updateScopeText,
+    saveScope,
+    updateScopeStatus,
+    addScopeAttachment,
+    removeScopeAttachment,
     // Plan
-    updatePlanScope,
     updatePlanStatus,
     approvePlan,
     unlockPlan,

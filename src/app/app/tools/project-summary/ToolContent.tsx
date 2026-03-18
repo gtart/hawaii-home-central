@@ -12,6 +12,7 @@ import { DocumentsSection } from './components/DocumentsSection'
 import { ChangesSection } from './components/ChangesSection'
 import { MilestoneTimeline } from './components/MilestoneTimeline'
 import { InlineEdit } from './components/InlineEdit'
+import { ScopeSection } from './components/ScopeSection'
 
 /** Auto-prefix $ on numeric cost values */
 function formatCostDisplay(cost: string): string {
@@ -225,7 +226,7 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
         title="Plan & Changes"
         description="Track your scope of work, plan changes, and cost impacts in one place."
         accessLevel={access}
-        hasContent={payload.plan.scope.length > 0 || payload.documents.length > 0 || payload.changes.length > 0}
+        hasContent={payload.plan.scope.text.length > 0 || payload.documents.length > 0 || payload.changes.length > 0}
         collectionId={collectionId}
         collectionName={titleOverride ?? collectionTitle ?? undefined}
         eyebrowLabel="Plan & Changes"
@@ -274,36 +275,15 @@ function ProjectSummaryContent({ collectionId }: { collectionId: string }) {
           <div className="rounded-xl border border-cream/10 bg-stone-50/30 p-5 md:p-6 space-y-8">
             {/* Scope of Work */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold text-cream/65 uppercase tracking-wider">Scope of Work</label>
-                {!readOnly && (
-                  <button
-                    type="button"
-                    onClick={() => changesSectionRef.current?.scrollToAndAdd()}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-sandstone/70 hover:text-sandstone bg-sandstone/8 hover:bg-sandstone/12 transition-colors"
-                  >
-                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                    </svg>
-                    Add a change
-                  </button>
-                )}
-              </div>
-              <InlineEdit
-                value={payload.plan.scope}
-                onSave={(text) => api.updatePlanScope(text)}
-                placeholder="What are you renovating? e.g. 'Full kitchen and master bath remodel'"
+              <ScopeSection
+                scope={payload.plan.scope}
+                onTextChange={api.updateScopeText}
+                onSave={api.saveScope}
+                onStatusChange={api.updateScopeStatus}
+                onAddAttachment={api.addScopeAttachment}
+                onRemoveAttachment={api.removeScopeAttachment}
                 readOnly={readOnly}
-                multiline
-                displayClassName="text-sm text-cream/80 leading-relaxed"
-                className="text-sm leading-relaxed"
               />
-              {payload.plan.updated_at && (
-                <p className="text-[10px] text-cream/40 mt-1.5">
-                  Last modified {new Date(payload.plan.updated_at).toLocaleDateString()}
-                  {payload.plan.updated_by && ` by ${payload.plan.updated_by}`}
-                </p>
-              )}
 
               {/* ── Confirmed amendments — inline under scope ── */}
               {confirmedChanges.length > 0 && (

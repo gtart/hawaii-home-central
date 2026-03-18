@@ -347,7 +347,7 @@ export async function GET(request: Request) {
     if (toolKey === 'project_summary') {
       try {
         const payload = ensureShape(coll.payload)
-        planScope = payload.plan.scope || undefined
+        planScope = payload.plan.scope.text || undefined
         planStatus = payload.plan.status
         includedCount = payload.plan.included.length
         notIncludedCount = payload.plan.not_included.length

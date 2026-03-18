@@ -23,6 +23,26 @@ export type OpenItemStatus = 'open' | 'waiting' | 'resolved' | 'closed'
 export type DocType = 'plan' | 'contract' | 'spec' | 'permit' | 'pricing' | 'other'
 export type DocScope = 'plan' | 'reference'
 export type SummaryLinkType = 'selection' | 'fix_item' | 'document'
+export type ScopeStatus = 'draft' | 'confirmed'
+
+export interface ScopeSnapshot {
+  text: string
+  saved_at: string
+  saved_by?: string
+}
+
+export interface ScopeObject {
+  id: string
+  text: string
+  status: ScopeStatus
+  saved_at?: string
+  saved_by?: string
+  snapshots: ScopeSnapshot[]
+  attachments: ChangeAttachment[]
+  created_at: string
+  updated_at: string
+  updated_by?: string
+}
 
 export interface SummaryLink {
   id: string
@@ -115,7 +135,7 @@ export interface Milestone {
 }
 
 export interface CurrentPlan {
-  scope: string
+  scope: ScopeObject
   included: PlanItem[]
   not_included: PlanItem[]
   /** @deprecated Use open_items instead. Kept for backward-compatible migration. */
@@ -192,7 +212,15 @@ export interface ProjectSummaryPayload {
 export const DEFAULT_PROJECT_SUMMARY_PAYLOAD: ProjectSummaryPayload = {
   version: 2,
   plan: {
-    scope: '',
+    scope: {
+      id: '',
+      text: '',
+      status: 'draft',
+      snapshots: [],
+      attachments: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
     included: [],
     not_included: [],
     still_to_decide: [],
@@ -247,6 +275,10 @@ export const VALID_LINK_TYPES: ReadonlySet<string> = new Set<SummaryLinkType>([
 
 export const VALID_PLAN_ITEM_CATEGORIES: ReadonlySet<string> = new Set<PlanItemCategory>([
   'included', 'not_included', 'still_to_decide',
+])
+
+export const VALID_SCOPE_STATUSES: ReadonlySet<string> = new Set<ScopeStatus>([
+  'draft', 'confirmed',
 ])
 
 // ── ensureShape — coerce unknown payload to valid ProjectSummaryPayload ──
@@ -332,6 +364,52 @@ function coerceAttachment(raw: unknown): ChangeAttachment | null {
 function coerceAttachments(raw: unknown): ChangeAttachment[] {
   if (!Array.isArray(raw)) return []
   return raw.map(coerceAttachment).filter((a): a is ChangeAttachment => a !== null)
+}
+
+function coerceScopeSnapshot(raw: unknown): ScopeSnapshot | null {
+  if (!isObject(raw)) return null
+  if (!isString(raw.text)) return null
+  return {
+    text: raw.text,
+    saved_at: isString(raw.saved_at) ? raw.saved_at : new Date().toISOString(),
+    ...(isString(raw.saved_by) ? { saved_by: raw.saved_by } : {}),
+  }
+}
+
+function coerceScopeObject(raw: unknown): ScopeObject {
+  const ts = new Date().toISOString()
+  // Legacy string migration
+  if (isString(raw)) {
+    return {
+      id: raw ? crypto.randomUUID() : '',
+      text: raw,
+      status: 'draft',
+      snapshots: [],
+      attachments: [],
+      created_at: ts,
+      updated_at: ts,
+    }
+  }
+  if (!isObject(raw)) {
+    return { id: '', text: '', status: 'draft', snapshots: [], attachments: [], created_at: ts, updated_at: ts }
+  }
+  const status: ScopeStatus = isString(raw.status) && VALID_SCOPE_STATUSES.has(raw.status)
+    ? raw.status as ScopeStatus : 'draft'
+  const snapshots: ScopeSnapshot[] = Array.isArray(raw.snapshots)
+    ? raw.snapshots.map(coerceScopeSnapshot).filter((s): s is ScopeSnapshot => s !== null)
+    : []
+  return {
+    id: isString(raw.id) ? raw.id : crypto.randomUUID(),
+    text: isString(raw.text) ? raw.text : '',
+    status,
+    ...(isString(raw.saved_at) ? { saved_at: raw.saved_at } : {}),
+    ...(isString(raw.saved_by) ? { saved_by: raw.saved_by } : {}),
+    snapshots,
+    attachments: coerceAttachments(raw.attachments),
+    created_at: isString(raw.created_at) ? raw.created_at : ts,
+    updated_at: isString(raw.updated_at) ? raw.updated_at : ts,
+    ...(isString(raw.updated_by) ? { updated_by: raw.updated_by } : {}),
+  }
 }
 
 function coercePlanItem(raw: unknown): PlanItem | null {
@@ -530,7 +608,7 @@ function migrateV1toV2(obj: Record<string, unknown>): ProjectSummaryPayload {
   return {
     version: 2,
     plan: {
-      scope: isString(summaryRaw.text) ? summaryRaw.text : '',
+      scope: coerceScopeObject(isString(summaryRaw.text) ? summaryRaw.text : ''),
       included: [],
       not_included: [],
       still_to_decide: [],
@@ -583,7 +661,7 @@ function coerceV2(obj: Record<string, unknown>): ProjectSummaryPayload {
   return {
     version: 2,
     plan: {
-      scope: isString(planRaw.scope) ? planRaw.scope : '',
+      scope: coerceScopeObject(planRaw.scope),
       included: coercePlanItems(planRaw.included),
       not_included: coercePlanItems(planRaw.not_included),
       still_to_decide: remainingStillToDecide,

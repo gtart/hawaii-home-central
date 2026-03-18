@@ -4,18 +4,18 @@
 
 | Field | Value |
 |-------|-------|
-| **Sprint** | Selections Visual Polish — Calmer, More Visual, More Deliberate |
-| **Sprint Doc** | `docs/ai/sprints/selections-visual-polish.md` |
-| **Status** | `ready_for_codex` |
+| **Sprint** | Quick Capture & Onboarding — Fix List + Selections |
+| **Sprint Doc** | `docs/ai/sprints/quick-capture-onboarding.md` |
+| **Status** | `implementation` |
 | **Owner** | Claude |
-| **Last Updated** | 2026-03-16 |
-| **Commits** | `1a83f5a`, `45db171` |
+| **Last Updated** | 2026-03-17 |
+| **Commits** | — |
 
 ## Handoff State
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | All 9 issues implemented (VP-001–VP-009), build passes. Ready for Codex review. |
+| **Current Handoff** | QC-005 done (inline quick-add idea per selection row). QC-001–QC-004 in progress. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
@@ -40,6 +40,7 @@ When entering this repo, read in this order:
 ---
 
 ## Previous Sprints (Completed)
+- Selections Visual Polish — Calmer, More Visual, More Deliberate (March 16, 2026) — `1a83f5a`, `45db171` (ready_for_codex)
 - Selections Cleanup — Final Choice in Flow (March 16, 2026) — `b63445d`, `9e2aac2`
 - Homepage Rebuild: Visual Tool Cards + Story Previews (March 16, 2026) — `90c3e4b`, `99650bd`
 - Selections Simplification into Selection Boards (March 16, 2026) — `7258c40`, `274adf9`
