@@ -54,22 +54,25 @@ export function HeroSection() {
       <div className="relative z-10 max-w-4xl mx-auto text-center">
         <h1
           id="hero-heading"
-          className="font-serif text-4xl md:text-5xl lg:text-6xl text-cream leading-tight mb-6"
+          className="font-serif text-4xl md:text-5xl lg:text-6xl text-cream leading-tight mb-4"
         >
-          Keep track of what still needs{' '}
-          <span className="text-sandstone">fixing</span>.
+          Owning a home in Hawai&#x02BB;i can be a{' '}
+          <span className="text-sandstone">pain in the a$$</span>.
         </h1>
 
-        <p className="text-lg md:text-xl text-cream/70 mb-10 max-w-3xl mx-auto leading-relaxed">
-          A calmer way to manage fix items, selections, and plan changes
-          during your Hawai&#x02BB;i renovation.
+        <p className="text-lg md:text-xl text-cream/60 mb-4 max-w-3xl mx-auto leading-relaxed">
+          Renovations cost more. Repairs take longer. And the list of things to deal with never gets shorter.
+        </p>
+
+        <p className="text-base md:text-lg text-cream/75 mb-10 max-w-2xl mx-auto leading-relaxed">
+          We built free tools to help you stay organized&mdash;so you can track fixes, compare selections, and keep your project on record without losing your mind.
         </p>
 
         {/* Benefit bullets */}
         <ul className="flex flex-col items-center gap-3 mb-10 max-w-xl mx-auto" aria-label="Key benefits">
           {BENEFITS.map((b) => (
-            <li key={b.text} className="flex items-center gap-3 text-left">
-              <span className="shrink-0" aria-hidden="true">{b.icon}</span>
+            <li key={b.text} className="flex items-start gap-3 text-left">
+              <span className="shrink-0 mt-0.5" aria-hidden="true">{b.icon}</span>
               <span className="text-cream/80 text-sm md:text-base">{b.text}</span>
             </li>
           ))}
