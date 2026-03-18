@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react'
 import { useProject } from '@/contexts/ProjectContext'
 import type { DashboardResponse } from '@/server/dashboard'
 
-export function useDashboard() {
+export function useDashboard(opts?: { skip?: boolean }) {
   const { currentProject } = useProject()
   const [data, setData] = useState<DashboardResponse | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(!opts?.skip)
 
   useEffect(() => {
-    if (!currentProject?.id) return
+    if (opts?.skip || !currentProject?.id) return
     let cancelled = false
     setIsLoading(true)
 
@@ -25,7 +25,7 @@ export function useDashboard() {
       })
 
     return () => { cancelled = true }
-  }, [currentProject?.id])
+  }, [currentProject?.id, opts?.skip])
 
   return { data, isLoading }
 }

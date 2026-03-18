@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useProject } from '@/contexts/ProjectContext'
 import { useDashboard } from '@/hooks/useDashboard'
 import { useInboxCount } from '@/hooks/useInboxCount'
+import type { DashboardResponse } from '@/server/dashboard'
 import { DashboardToolGrid } from './DashboardToolGrid'
 import { DashboardFeed } from './DashboardFeed'
 import { QuickCaptureSheet } from '@/components/app/QuickCaptureSheet'
@@ -38,9 +39,11 @@ function deriveStateSentence(data: {
   return parts.join(' · ')
 }
 
-export function DashboardPage() {
+export function DashboardPage({ prefetchedData }: { prefetchedData?: DashboardResponse | null }) {
   const { currentProject } = useProject()
-  const { data, isLoading } = useDashboard()
+  const { data: clientData, isLoading: clientLoading } = useDashboard({ skip: !!prefetchedData })
+  const data = prefetchedData ?? clientData
+  const isLoading = prefetchedData ? false : clientLoading
   const { total: inboxCount, refetch: refetchInbox } = useInboxCount()
   const [showCapture, setShowCapture] = useState(false)
   const [sortItem, setSortItem] = useState<CapturedResult | null>(null)
