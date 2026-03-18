@@ -47,6 +47,14 @@ Homeowners plan renovations, track selections, manage fix lists, and document pr
 - `npx tsc --noEmit` — type check
 - `npx vercel --prod` — deploy to production
 
+### Analytics (PostHog)
+- Both HHC and NewsFlash share the same PostHog project.
+- PostHog key: `phc_4uGAOTNvdXFYi8Kzhtw0YvcnOfbmSwHz6EyCs4ld2xP`
+- **Super property `app_name: "hhc"`** is registered at init to distinguish events from NewsFlash.
+- To filter in PostHog: `app_name = "hhc"` (this app) or `app_name = "newsflash"` (NewsFlash).
+- Integration: raw `<Script>` snippet in `src/app/layout.tsx` (not the posthog-js SDK).
+- Google Analytics also active: `G-G64TMLBFEC`.
+
 ### Key Registries
 - Tool metadata: `src/lib/tool-registry.ts`
 - Activity labels: `src/lib/activityHelpers.ts`
