@@ -749,7 +749,9 @@ export function OptionDetailContent({
               )
             })()}
 
-            {!readOnly ? (
+            {foundDecision?.systemKey === 'uncategorized' ? (
+              <span className="text-[10px] text-amber-400/60 px-2 py-1">Move to a board to finalize</span>
+            ) : !readOnly ? (
               <button
                 type="button"
                 onClick={selectOption}

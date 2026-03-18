@@ -202,6 +202,11 @@ export function DecisionTrackerPage({
   // Sort decisions
   const sortedDecisions = useMemo(() => {
     return [...filteredDecisions].sort((a, b) => {
+      // Pin uncategorized first
+      const aUncat = a.systemKey === 'uncategorized' ? 0 : 1
+      const bUncat = b.systemKey === 'uncategorized' ? 0 : 1
+      if (aUncat !== bUncat) return aUncat - bUncat
+
       switch (sortKey) {
         case 'created':
           return b.createdAt.localeCompare(a.createdAt)
@@ -855,9 +860,15 @@ export function DecisionTrackerPage({
                           </Link>
                         </td>
                         <td className="py-2.5 pr-3">
+                          {decision.systemKey === 'uncategorized' ? (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded border border-amber-400/20 bg-amber-400/10 text-amber-400 text-[10px] font-medium">
+                              Uncategorized
+                            </span>
+                          ) : (
                           <span className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium ${config.pillClass}`}>
                             {config.label}
                           </span>
+                          )}
                         </td>
                         <td className="py-2.5 pr-3 text-[11px] text-cream/45">
                           <Link href={buildDecisionHref({ decisionId: decision.id, collectionId })} className="hover:text-cream/65 transition-colors">

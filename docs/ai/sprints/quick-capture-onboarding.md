@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-17
 **Objective**: Remove friction from first-time use and daily capture across Fix List and Selections. Auto-create defaults so users skip empty states, add dashboard quick-add for both tools, and formalize the Uncategorized board for Selections.
-**Status**: implementation
+**Status**: ready_for_codex
 
 ---
 
@@ -10,10 +10,10 @@
 
 | ID | Title | Priority | Status | Claude Verified | Codex Verified | Codex Notes | Follow-up | Files |
 |----|-------|----------|--------|-----------------|----------------|-------------|-----------|-------|
-| QC-001 | Fix List: auto-create "Fix List #1" | P1 | todo | pending | pending | — | — | — |
-| QC-002 | Dashboard: quick-add fix item (pick/create list) | P1 | todo | pending | pending | — | — | — |
-| QC-003 | Dashboard: quick-add Selection Board or Idea to Board | P1 | todo | pending | pending | — | — | — |
-| QC-004 | Selections: Uncategorized board (auto-create, restrict final, move/copy) | P1 | todo | pending | pending | — | — | — |
+| QC-001 | Fix List: auto-create "Fix List #1" | P1 | done | pass | pending | — | — | `CollectionsPickerView.tsx`, `CollectionPickerWrapper.tsx` |
+| QC-002 | Dashboard: quick-add fix item (pick/create list) | P1 | done | pass | pending | — | — | `DashboardCardFixList.tsx` |
+| QC-003 | Dashboard: quick-add Selection Board or Idea to Board | P1 | done | pass | pending | — | — | `DashboardCardSelections.tsx` |
+| QC-004 | Selections: Uncategorized board (auto-create, restrict final, move/copy) | P1 | done | pass | pending | — | — | `finish-decisions.ts`, `DecisionDetailContent.tsx`, `OptionDetailContent.tsx`, `DecisionTrackerPage.tsx`, `ToolContent.tsx` |
 | QC-005 | Selections table: inline quick-add idea per row | P1 | done | pass | pending | — | — | `DecisionTrackerPage.tsx`, `ToolContent.tsx` |
 
 ### Status values
@@ -95,14 +95,22 @@
 
 | File | Change |
 |------|--------|
-| — | (will be populated during implementation) |
+| `src/components/app/CollectionsPickerView.tsx` | Added `autoCreateTitle` prop |
+| `src/app/app/tools/punchlist/CollectionPickerWrapper.tsx` | Pass `autoCreateTitle="Fix List #1"` |
+| `src/components/dashboard/DashboardCardFixList.tsx` | Inline quick-add form |
+| `src/components/dashboard/DashboardCardSelections.tsx` | "Add board" + "Add idea" inline forms |
+| `src/data/finish-decisions.ts` | Added `systemKey` to `SelectionV4` |
+| `src/app/app/tools/finish-decisions/ToolContent.tsx` | Migration preserves `systemKey`, `handleAddIdea` |
+| `src/app/app/tools/finish-decisions/components/DecisionTrackerPage.tsx` | Quick-add per row, uncategorized pinning + badge |
+| `src/app/app/tools/finish-decisions/decision/[decisionId]/DecisionDetailContent.tsx` | `hideFinalize` + banner for uncategorized |
+| `src/app/app/tools/finish-decisions/decision/[decisionId]/option/[optionId]/OptionDetailContent.tsx` | Block finalize for uncategorized |
 
 ---
 
 ## Build Verification
 
-- [ ] `npx tsc --noEmit` passes
-- [ ] `npm run build` passes
+- [x] `npx tsc --noEmit` passes
+- [x] `npm run build` passes (12.9s)
 
 ---
 

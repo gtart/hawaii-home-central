@@ -128,13 +128,14 @@ function migrateV3toV4(v3: FinishDecisionsPayloadV3): FinishDecisionsPayloadV4 {
       if (decision.systemKey === 'uncategorized' && decision.options.length === 0) continue
       const tags: string[] = roomTag ? [roomTag] : []
       selections.push({
-        id: decision.id, title: decision.systemKey === 'uncategorized' ? 'Unsorted' : decision.title,
+        id: decision.id, title: decision.systemKey === 'uncategorized' ? 'Uncategorized' : decision.title,
         status: decision.status, notes: decision.notes, options: decision.options, tags,
         dueDate: decision.dueDate, priority: decision.priority,
         dismissedSuggestionKeys: decision.dismissedSuggestionKeys,
         comments: decision.comments, picksByUser: decision.picksByUser,
         originKitId: decision.originKitId, finalSelection: decision.finalSelection,
         statusLog: decision.statusLog, files: decision.files, location: decision.location,
+        ...(decision.systemKey ? { systemKey: decision.systemKey } : {}),
         createdAt: decision.createdAt, updatedAt: decision.updatedAt,
       })
     }

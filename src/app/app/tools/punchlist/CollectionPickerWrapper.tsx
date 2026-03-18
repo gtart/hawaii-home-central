@@ -23,6 +23,7 @@ export function CollectionPickerWrapper() {
           itemNoun="fix list"
           previewMode="statuses"
           titleOverride="Your Fix Lists"
+          autoCreateTitle="Fix List #1"
           headerActions={
             <button
               type="button"

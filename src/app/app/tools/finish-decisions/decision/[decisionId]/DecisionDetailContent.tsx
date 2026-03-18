@@ -694,6 +694,14 @@ export function DecisionDetailContent({
           <span>Back to list</span>
         </button>
 
+        {/* Uncategorized banner */}
+        {foundDecision.systemKey === 'uncategorized' && (
+          <div className="rounded-lg bg-amber-400/8 border border-amber-400/20 px-4 py-2.5 mb-4 flex items-center gap-3">
+            <span className="text-amber-400 text-xs font-medium">Uncategorized</span>
+            <span className="text-[11px] text-cream/50">Ideas here need to be moved to a selection board before you can finalize them.</span>
+          </div>
+        )}
+
         {/* Desktop header — Row 1: title + comment trigger + share */}
         <div className="hidden md:block mb-2">
           <div className="flex items-center gap-3">
@@ -930,7 +938,7 @@ export function DecisionDetailContent({
               updateDecision({ options: foundDecision.options.filter((o) => o.id !== id) })
             }}
             onSelectOption={selectOption}
-            hideFinalize={false}
+            hideFinalize={foundDecision.systemKey === 'uncategorized'}
             hideCompare
             onUpdateDecision={updateDecision}
             onAddComment={addComment}

@@ -387,6 +387,7 @@ export interface SelectionV4 {
   location?: string
   visibility?: SelectionVisibility // default: 'workspace' (all workspace members can see)
   access?: SelectionAccess[] // only used when visibility === 'restricted'
+  systemKey?: SystemSelectionKey // system-managed selection (e.g. 'uncategorized')
   createdBy?: string // email of selection creator
   createdAt: string
   updatedAt: string

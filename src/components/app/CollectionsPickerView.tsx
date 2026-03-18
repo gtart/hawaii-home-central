@@ -65,6 +65,8 @@ interface CollectionsPickerViewProps {
   createHint?: string
   /** Default view mode when no user preference exists in localStorage */
   defaultView?: 'grid' | 'table'
+  /** When set, auto-create a collection with this title if none exist (skips empty state) */
+  autoCreateTitle?: string
 }
 
 function ThumbnailGrid({ imageUrls }: { imageUrls: string[] }) {
@@ -120,7 +122,7 @@ function ThumbnailGrid({ imageUrls }: { imageUrls: string[] }) {
   )
 }
 
-export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEmptyState, titleOverride, headerActions, createHint, defaultView }: CollectionsPickerViewProps) {
+export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEmptyState, titleOverride, headerActions, createHint, defaultView, autoCreateTitle }: CollectionsPickerViewProps) {
   const { currentProject } = useProject()
   const router = useRouter()
   const [collections, setCollections] = useState<CollectionSummary[]>([])
@@ -171,6 +173,26 @@ export function CollectionsPickerView({ toolKey, itemNoun, previewMode, customEm
     load()
     return () => { cancelled = true }
   }, [currentProject?.id, toolKey])
+
+  // Auto-create first collection if none exist and autoCreateTitle is set
+  const autoCreatedRef = useRef(false)
+  useEffect(() => {
+    if (loading || autoCreatedRef.current || !autoCreateTitle || !currentProject?.id) return
+    if (collections.length > 0 || archivedCollections.length > 0) return
+    autoCreatedRef.current = true
+    ;(async () => {
+      try {
+        const res = await fetch('/api/collections', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId: currentProject!.id, toolKey, title: autoCreateTitle }),
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        router.push(`${toolPath}/${data.collection.id}`)
+      } catch { /* ignore */ }
+    })()
+  }, [loading, collections.length, archivedCollections.length, autoCreateTitle, currentProject?.id, toolKey, toolPath, router])
 
   // Fetch preview data when previewMode is set
   useEffect(() => {

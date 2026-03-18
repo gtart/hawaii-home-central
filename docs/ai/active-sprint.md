@@ -6,7 +6,7 @@
 |-------|-------|
 | **Sprint** | Quick Capture & Onboarding — Fix List + Selections |
 | **Sprint Doc** | `docs/ai/sprints/quick-capture-onboarding.md` |
-| **Status** | `implementation` |
+| **Status** | `ready_for_codex` |
 | **Owner** | Claude |
 | **Last Updated** | 2026-03-17 |
 | **Commits** | — |
@@ -15,7 +15,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Handoff** | QC-005 done (inline quick-add idea per selection row). QC-001–QC-004 in progress. |
+| **Current Handoff** | All 5 issues implemented (QC-001–QC-005), build passes. Ready for Codex review. |
 | **Latest Codex Audit** | — |
 | **Latest Claude Response** | — |
 
