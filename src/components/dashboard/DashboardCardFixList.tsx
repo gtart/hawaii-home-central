@@ -92,14 +92,24 @@ export function DashboardCardFixList({
         items: [...(payload.items ?? []), newItem],
       }
 
-      // PATCH the collection
-      const patchRes = await fetch(`/api/collections/${listId}`, {
-        method: 'PATCH',
+      // Save the updated payload
+      const saveRes = await fetch(`/api/collections/${listId}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload: updatedPayload }),
+        body: JSON.stringify({
+          payload: updatedPayload,
+          revision: collData.updatedAt ? String(collData.updatedAt) : undefined,
+          events: [{
+            action: 'created',
+            entityType: 'item',
+            entityId: newItem.id,
+            summaryText: `Added fix: "${newItem.title}"`,
+            entityLabel: newItem.title,
+          }],
+        }),
       })
 
-      if (patchRes.ok) {
+      if (saveRes.ok) {
         setTitle('')
         setShowForm(false)
         setToast('Fix added')
