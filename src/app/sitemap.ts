@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
+import { RENOVATION_GUIDES_HIDDEN } from '@/lib/featureFlags'
 
 const BASE_URL = 'https://hawaiihomecentral.com'
 
@@ -16,14 +17,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     select: { slug: true, contentType: true, updatedAt: true },
   })
 
-  const cmsGuides = published
-    .filter((c) => c.contentType === 'GUIDE')
-    .map((c) => ({
-      url: `${BASE_URL}/hawaii-home-renovation/${c.slug}`,
-      lastModified: c.updatedAt.toISOString(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.7,
-    }))
+  const cmsGuides = RENOVATION_GUIDES_HIDDEN
+    ? []
+    : published
+        .filter((c) => c.contentType === 'GUIDE')
+        .map((c) => ({
+          url: `${BASE_URL}/hawaii-home-renovation/${c.slug}`,
+          lastModified: c.updatedAt.toISOString(),
+          changeFrequency: 'monthly' as const,
+          priority: 0.7,
+        }))
 
   const cmsStories = published
     .filter((c) => c.contentType === 'STORY')
@@ -35,9 +38,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
 
   // Fetch published collections
-  const collections = await prisma.collection.findMany({
-    select: { slug: true, updatedAt: true },
-  })
+  const collections = RENOVATION_GUIDES_HIDDEN
+    ? []
+    : await prisma.collection.findMany({
+        select: { slug: true, updatedAt: true },
+      })
 
   const collectionEntries = collections.map((c) => ({
     url: `${BASE_URL}/hawaii-home-renovation/collections/${c.slug}`,
@@ -45,6 +50,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'monthly' as const,
     priority: 0.6,
   }))
+
+  const renovationEntries: MetadataRoute.Sitemap = RENOVATION_GUIDES_HIDDEN
+    ? []
+    : [
+        { url: `${BASE_URL}/hawaii-home-renovation`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+        { url: `${BASE_URL}/resources/renovation-stages`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+        { url: `${BASE_URL}/resources/playbooks/fair-bid-checklist`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+        { url: `${BASE_URL}/resources/playbooks/responsibility-matrix`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+      ]
 
   return [
     // Core pages
@@ -59,10 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/disclaimer`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
 
     // Renovation Basics hub + guides
-    { url: `${BASE_URL}/hawaii-home-renovation`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${BASE_URL}/resources/renovation-stages`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE_URL}/resources/playbooks/fair-bid-checklist`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE_URL}/resources/playbooks/responsibility-matrix`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    ...renovationEntries,
     ...cmsGuides,
     ...collectionEntries,
 

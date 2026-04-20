@@ -9,6 +9,7 @@ import { UserMenu } from '@/components/auth/UserMenu'
 import { ProjectSwitcher } from '@/components/app/ProjectSwitcher'
 import { CORE_TOOL_REGISTRY, SECONDARY_TOOL_REGISTRY, VISIBLE_TOOL_REGISTRY } from '@/lib/tool-registry'
 import { useProjectOptional } from '@/contexts/ProjectContext'
+import { RENOVATION_GUIDES_HIDDEN } from '@/lib/featureFlags'
 import { FeedbackFormModal } from './FeedbackFormModal'
 
 interface NavLink {
@@ -82,7 +83,7 @@ export function Navigation() {
   const navSecondaryTools = filterByActive(SECONDARY_TOOL_REGISTRY)
 
   // Marketing nav for visitors, app nav for logged-in users
-  const primaryLinks: NavLink[] = isLoggedIn
+  const primaryLinksRaw: NavLink[] = isLoggedIn
     ? [
         { href: '/app', label: 'Home', matchMode: 'prefix' },
       ]
@@ -92,7 +93,7 @@ export function Navigation() {
         { href: '/stories', label: 'Stories' },
       ]
 
-  const moreLinks: NavLink[] = isLoggedIn
+  const moreLinksRaw: NavLink[] = isLoggedIn
     ? [
         { href: '/hawaii-home-renovation', label: 'Renovation Guides', matchMode: 'prefix' },
         { href: '/stories', label: 'Stories' },
@@ -106,6 +107,14 @@ export function Navigation() {
         { href: '/waitlist', label: 'Early Access' },
         { href: '/contact', label: 'Contact' },
       ]
+
+  const filterHidden = (links: NavLink[]) =>
+    RENOVATION_GUIDES_HIDDEN
+      ? links.filter((l) => l.href !== '/hawaii-home-renovation')
+      : links
+
+  const primaryLinks = filterHidden(primaryLinksRaw)
+  const moreLinks = filterHidden(moreLinksRaw)
 
   const isLinkActive = (link: NavLink) => {
     if (link.href === '/app') {

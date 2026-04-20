@@ -1,8 +1,20 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { RENOVATION_GUIDES_HIDDEN } from '@/lib/featureFlags'
 
 export function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname
+
+  // Renovation Guides temporarily hidden
+  if (
+    RENOVATION_GUIDES_HIDDEN &&
+    (path === '/hawaii-home-renovation' ||
+      path.startsWith('/hawaii-home-renovation/') ||
+      path === '/resources' ||
+      path.startsWith('/resources/'))
+  ) {
+    return NextResponse.redirect(new URL('/', req.url))
+  }
 
   // Maintenance mode — highest precedence
   if (process.env.MAINTENANCE_MODE === 'true') {
@@ -43,8 +55,11 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // Only run middleware on protected routes — not on public pages
     '/app/:path*',
     '/admin/:path*',
+    '/hawaii-home-renovation/:path*',
+    '/hawaii-home-renovation',
+    '/resources/:path*',
+    '/resources',
   ],
 }
