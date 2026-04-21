@@ -1,1 +1,1 @@
-export const RENOVATION_GUIDES_HIDDEN = true
+export const RENOVATION_GUIDES_HIDDEN = false
