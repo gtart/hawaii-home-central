@@ -14,12 +14,14 @@ const FEATURES = [
     description:
       'Save your finish choices, product links, and notes so decisions don\u2019t get lost in texts.',
     href: '/tools',
+    badge: 'Live',
   },
   {
     title: 'Plan & Changes',
     description:
       'Keep a clear record of what was agreed on and what changed during the build.',
     href: '/tools',
+    badge: 'Live',
   },
 ]
 
