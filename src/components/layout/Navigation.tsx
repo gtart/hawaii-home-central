@@ -348,17 +348,6 @@ export function Navigation() {
 
             {/* Mobile: UserMenu + hamburger */}
             <div className="lg:hidden flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setFeedbackOpen(true)}
-                className="sm:hidden p-2 text-cream/50 hover:text-sandstone transition-colors"
-                aria-label="Submit feedback"
-                data-ph-capture-click="nav-feedback-open"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
               <UserMenu />
               <button
                 className="p-2 text-cream hover:text-sandstone transition-colors"
@@ -567,6 +556,19 @@ export function Navigation() {
                   </Link>
                 </li>
               ))}
+              <li className="border-t border-cream/10 pt-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => { setFeedbackOpen(true); setIsMobileMenuOpen(false) }}
+                  className="flex items-center gap-2 py-2 text-sm text-cream/50 hover:text-cream/70 transition-colors"
+                  data-ph-capture-click="nav-feedback-open"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Send feedback
+                </button>
+              </li>
             </ul>
           )}
         </nav>
